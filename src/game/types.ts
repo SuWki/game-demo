@@ -101,6 +101,7 @@ export interface EnemyState {
   speed: number;
   radius: number;
   elite: boolean;
+  grazeCooldownSec: number;
 }
 
 export interface BulletState {
@@ -112,6 +113,7 @@ export interface BulletState {
   damage: number;
   lifeSec: number;
   pierceRemaining: number;
+  canEcho: boolean;
 }
 
 export interface PulseState {
@@ -149,6 +151,10 @@ export interface BattleState {
   playerY: number;
   eliteAlive: boolean;
   eliteSpawned: boolean;
+  critOverdriveSec: number;
+  critChain: number;
+  dashCharge: number;
+  dashDriveSec: number;
 }
 
 export interface NodeRecord {

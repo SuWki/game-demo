@@ -58,6 +58,12 @@ export class RunEngine {
 
   private readonly announcements: EngineAnnouncement[] = [];
 
+  private readonly routeMomentShown: Record<RouteId, boolean> = {
+    crit: false,
+    pierce: false,
+    dash: false,
+  };
+
   private firstUpgradeRecorded = false;
 
   private firstRouteHintRecorded = false;
@@ -185,6 +191,8 @@ export class RunEngine {
     const dt = deltaMs / 1000;
     battle.elapsedSec += dt;
     battle.remainingSec = Math.max(0, battle.remainingSec - dt);
+    battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - dt);
+    battle.dashDriveSec = Math.max(0, battle.dashDriveSec - dt);
 
     this.updatePlayerMovement(battle, dt);
     this.spawnEnemies(battle, dt);
@@ -278,6 +286,10 @@ export class RunEngine {
       playerY: CENTER_Y,
       eliteAlive: false,
       eliteSpawned: false,
+      critOverdriveSec: 0,
+      critChain: 0,
+      dashCharge: 0,
+      dashDriveSec: 0,
     };
     this.enqueueTip(`${getPhaseLabel(node.phase)}进入：${template.name}`);
     this.enqueueAudio('pressure');
@@ -471,22 +483,61 @@ export class RunEngine {
     battle.invulnerableSec = Math.max(0, battle.invulnerableSec - dt);
     battle.dashCooldownSec -= dt;
     if (this.state.stats.dashPulseDamage > 0 && battle.dashCooldownSec <= 0) {
-      battle.dashCooldownSec = this.state.stats.dashInterval;
-      battle.invulnerableSec = this.state.stats.dashInvulnerability;
+      const dashCharge = battle.dashCharge;
+      const dashRank = this.state.routeCounts.dash;
+      const pulseRadius = 76 + dashCharge * (this.state.maturedRoute === 'dash' ? 10 : 6);
+      const pulseDamage =
+        this.state.stats.dashPulseDamage +
+        dashCharge * (this.state.committedRoute === 'dash' ? 4 : 2) +
+        (this.state.maturedRoute === 'dash' ? 8 : 0);
+
+      battle.dashCooldownSec = Math.max(
+        1.6,
+        this.state.stats.dashInterval - (this.state.committedRoute === 'dash' ? 0.2 : 0),
+      );
+      battle.invulnerableSec =
+        this.state.stats.dashInvulnerability + (this.state.maturedRoute === 'dash' ? 0.12 : 0);
+      battle.dashDriveSec = Math.max(
+        battle.dashDriveSec,
+        (dashRank > 0 ? 0.9 : 0.4) + dashCharge * 0.18,
+      );
       battle.pulses.push({
         id: battle.nextPulseId++,
         x: battle.playerX,
         y: battle.playerY,
-        radius: 76,
+        radius: pulseRadius,
         lifeSec: 0.28,
       });
 
       for (const enemy of battle.enemies) {
         const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
-        if (distance <= 76) {
-          enemy.hp -= this.state.stats.dashPulseDamage;
+        if (distance <= pulseRadius) {
+          enemy.hp -= pulseDamage;
+          if (this.state.routeCounts.dash > 0) {
+            const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
+            const knockback = (this.state.committedRoute === 'dash' ? 34 : 18) + dashCharge * 5;
+            enemy.x += Math.cos(angle) * knockback;
+            enemy.y += Math.sin(angle) * knockback;
+          }
         }
       }
+
+      if (dashRank > 0) {
+        this.state.stats.hp = clamp(
+          this.state.stats.hp +
+            dashCharge * (this.state.committedRoute === 'dash' ? 1.4 : 0.7) +
+            (this.state.maturedRoute === 'dash' ? 2 : 0),
+          0,
+          this.state.stats.maxHp,
+        );
+      }
+
+      if (dashCharge >= 2 && !this.routeMomentShown.dash) {
+        this.routeMomentShown.dash = true;
+        this.enqueueTip('穿梭节奏开始接上了');
+      }
+
+      battle.dashCharge = 0;
     }
   }
 
@@ -504,6 +555,7 @@ export class RunEngine {
         speed: battle.enemySpeed * 0.85,
         radius: 22,
         elite: true,
+        grazeCooldownSec: 0,
       });
       this.enqueueTip('精英进入战场');
       this.enqueueAudio('pressure');
@@ -540,6 +592,7 @@ export class RunEngine {
         speed: battle.enemySpeed * battle.difficultyScale,
         radius: 10 + Math.random() * 4,
         elite: false,
+        grazeCooldownSec: 0,
       });
     }
   }
@@ -550,12 +603,19 @@ export class RunEngine {
       return;
     }
 
-    battle.fireCooldownSec = 1 / this.state.stats.fireRate;
+    const effectiveFireRate = this.getEffectiveFireRate(battle);
+    battle.fireCooldownSec = 1 / effectiveFireRate;
     const target = battle.enemies[0];
     const baseAngle = target
       ? Math.atan2(target.y - battle.playerY, target.x - battle.playerX)
       : -Math.PI / 2;
-    const shotCount = Math.max(1, this.state.stats.multishot);
+    let shotCount = Math.max(1, this.state.stats.multishot);
+    if (battle.critOverdriveSec > 0 && this.state.committedRoute === 'crit') {
+      shotCount += 1;
+    }
+    if (battle.dashDriveSec > 0 && this.state.maturedRoute === 'dash') {
+      shotCount += 1;
+    }
     const spreadCenter = (shotCount - 1) / 2;
 
     for (let index = 0; index < shotCount; index += 1) {
@@ -570,6 +630,7 @@ export class RunEngine {
         damage: this.state.stats.damage,
         lifeSec: 1.8,
         pierceRemaining: this.state.stats.pierce,
+        canEcho: this.state.routeCounts.pierce > 0,
       });
     }
   }
@@ -591,13 +652,26 @@ export class RunEngine {
           continue;
         }
 
-        const critical = Math.random() < this.state.stats.critChance;
+        const critical = Math.random() < this.getEffectiveCritChance(battle);
         const damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
         enemy.hp -= damage;
         this.enqueueAudio(critical ? 'crit' : 'hit');
         if (critical) {
+          battle.critOverdriveSec = Math.min(
+            4.2,
+            battle.critOverdriveSec + 0.45 + (this.state.committedRoute === 'crit' ? 0.25 : 0),
+          );
+          battle.critChain += 1;
           this.enqueueTip('暴击命中');
+          if (battle.critChain >= 2 && !this.routeMomentShown.crit) {
+            this.routeMomentShown.crit = true;
+            this.enqueueTip('暴击节奏开始升温');
+          }
+        } else if (battle.critChain > 0) {
+          battle.critChain = Math.max(0, battle.critChain - 1);
         }
+
+        this.trySpawnPierceEchoShots(battle, bullet, enemy);
 
         if (bullet.pierceRemaining > 0) {
           bullet.pierceRemaining -= 1;
@@ -623,8 +697,10 @@ export class RunEngine {
   private updateEnemies(battle: BattleState, dt: number): void {
     const survivors = [];
     for (const enemy of battle.enemies) {
+      enemy.grazeCooldownSec = Math.max(0, enemy.grazeCooldownSec - dt);
       if (enemy.hp <= 0) {
         battle.kills += 1;
+        this.handleEnemyDefeated(battle, enemy);
         if (enemy.elite) {
           battle.eliteAlive = false;
         }
@@ -636,9 +712,27 @@ export class RunEngine {
       enemy.y += Math.sin(angle) * enemy.speed * dt;
 
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
+      if (
+        this.state.routeCounts.dash > 0 &&
+        enemy.grazeCooldownSec <= 0 &&
+        distance <= enemy.radius + 68 &&
+        distance > enemy.radius + 18
+      ) {
+        enemy.grazeCooldownSec = 0.8;
+        battle.dashCharge = Math.min(6, battle.dashCharge + 1);
+        if (this.state.committedRoute === 'dash') {
+          battle.dashDriveSec = Math.max(battle.dashDriveSec, 0.7);
+          battle.dashCooldownSec = Math.max(0.75, battle.dashCooldownSec - 0.35);
+          this.state.stats.hp = clamp(this.state.stats.hp + 0.9, 0, this.state.stats.maxHp);
+        }
+      }
+
       if (distance <= enemy.radius + 12) {
         if (battle.invulnerableSec <= 0) {
-          const damage = enemy.elite ? 18 : 8;
+          let damage = enemy.elite ? 18 : 8;
+          if (this.state.routeCounts.dash > 0 && battle.dashDriveSec > 0) {
+            damage *= this.state.maturedRoute === 'dash' ? 0.55 : 0.72;
+          }
           this.state.stats.hp = clamp(this.state.stats.hp - damage, 0, this.state.stats.maxHp);
           battle.invulnerableSec = 0.35;
           this.enqueueAudio('pressure');
@@ -674,5 +768,111 @@ export class RunEngine {
       kind: 'audio',
       cue,
     });
+  }
+
+  private getEffectiveFireRate(battle: BattleState): number {
+    let fireRate = this.state.stats.fireRate;
+
+    if (battle.critOverdriveSec > 0) {
+      fireRate += 0.4 + this.state.routeCounts.crit * 0.12;
+      if (this.state.maturedRoute === 'crit') {
+        fireRate += 0.25;
+      }
+    }
+
+    if (battle.dashDriveSec > 0) {
+      fireRate += 0.35 + this.state.routeCounts.dash * 0.1;
+    }
+
+    return fireRate;
+  }
+
+  private getEffectiveCritChance(battle: BattleState): number {
+    let critChance = this.state.stats.critChance;
+
+    if (battle.critOverdriveSec > 0) {
+      critChance += 0.08;
+      if (this.state.committedRoute === 'crit') {
+        critChance += 0.08;
+      }
+      if (this.state.maturedRoute === 'crit') {
+        critChance += 0.08;
+      }
+    }
+
+    return clamp(critChance, 0, 0.95);
+  }
+
+  private trySpawnPierceEchoShots(battle: BattleState, bullet: BattleState['bullets'][number], currentEnemy: BattleState['enemies'][number]): void {
+    if (!bullet.canEcho || this.state.routeCounts.pierce <= 0) {
+      return;
+    }
+
+    const nearbyTargets = battle.enemies
+      .filter((enemy) => enemy.id !== currentEnemy.id && enemy.hp > 0)
+      .sort(
+        (left, right) =>
+          Math.hypot(left.x - currentEnemy.x, left.y - currentEnemy.y) -
+          Math.hypot(right.x - currentEnemy.x, right.y - currentEnemy.y),
+      );
+
+    if (nearbyTargets.length === 0) {
+      return;
+    }
+
+    let echoCount = 1;
+    if (this.state.stats.multishot > 1) {
+      echoCount += 1;
+    }
+    if (this.state.maturedRoute === 'pierce') {
+      echoCount += 1;
+    }
+
+    const echoTargets = nearbyTargets.slice(0, echoCount);
+    for (const target of echoTargets) {
+      const angle = Math.atan2(target.y - currentEnemy.y, target.x - currentEnemy.x);
+      battle.bullets.push({
+        id: battle.nextBulletId++,
+        x: currentEnemy.x,
+        y: currentEnemy.y,
+        vx: Math.cos(angle) * 320,
+        vy: Math.sin(angle) * 320,
+        damage: bullet.damage * (this.state.committedRoute === 'pierce' ? 0.72 : 0.58),
+        lifeSec: 0.75,
+        pierceRemaining: Math.max(0, this.state.stats.pierce - 1),
+        canEcho: false,
+      });
+    }
+
+    bullet.canEcho = false;
+    if (!this.routeMomentShown.pierce) {
+      this.routeMomentShown.pierce = true;
+      this.enqueueTip('穿透火力开始扇裂');
+    }
+  }
+
+  private handleEnemyDefeated(battle: BattleState, enemy: BattleState['enemies'][number]): void {
+    if (this.state.maturedRoute === 'crit' && battle.critOverdriveSec > 0) {
+      for (const target of battle.enemies) {
+        if (target.id === enemy.id || target.hp <= 0) {
+          continue;
+        }
+        const distance = Math.hypot(target.x - enemy.x, target.y - enemy.y);
+        if (distance <= 72) {
+          target.hp -= this.state.stats.damage * 0.45;
+        }
+      }
+    }
+
+    if (this.state.committedRoute === 'pierce') {
+      battle.fireCooldownSec = Math.max(0.04, battle.fireCooldownSec - 0.06);
+    }
+
+    if (this.state.routeCounts.dash > 0) {
+      battle.dashDriveSec = Math.max(battle.dashDriveSec, 0.35);
+      if (this.state.committedRoute === 'dash') {
+        this.state.stats.hp = clamp(this.state.stats.hp + 2, 0, this.state.stats.maxHp);
+      }
+    }
   }
 }
