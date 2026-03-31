@@ -7,6 +7,10 @@ interface NodeBlueprint {
   title: string;
   description: string;
   templateId?: NodeOption['templateId'];
+  templateCandidates?: Array<{
+    templateId: NonNullable<NodeOption['templateId']>;
+    weight?: number;
+  }>;
   difficultyScale?: number;
   isFinalPrep?: boolean;
 }
@@ -69,7 +73,16 @@ const ROUND_NODE_BLUEPRINTS: Record<number, NodeBlueprint[]> = {
       phase: 'late',
       title: '生存压制',
       description: '后段高压段，测试你的收尾能力。',
-      templateId: 'survival-rush',
+      templateCandidates: [
+        {
+          templateId: 'survival',
+          weight: 2,
+        },
+        {
+          templateId: 'survival-rush',
+          weight: 1,
+        },
+      ],
       difficultyScale: 1.24,
     },
     {
@@ -104,7 +117,16 @@ const ROUND_NODE_BLUEPRINTS: Record<number, NodeBlueprint[]> = {
       phase: 'finalBattle',
       title: '最终战',
       description: '用一场更高压的精英压制完成整局收束。',
-      templateId: 'elite-lockdown',
+      templateCandidates: [
+        {
+          templateId: 'elite',
+          weight: 1,
+        },
+        {
+          templateId: 'elite-lockdown',
+          weight: 2,
+        },
+      ],
       difficultyScale: 1.38,
     },
   ],
@@ -114,10 +136,32 @@ function resolveDescription(template: string, focusRoute: RouteId | null): strin
   return template.replace('{focusLabel}', focusRoute ? '当前方向' : '任一方向');
 }
 
+function pickTemplateId(
+  templateId: NodeOption['templateId'],
+  templateCandidates: NodeBlueprint['templateCandidates'],
+): NodeOption['templateId'] {
+  if (!templateCandidates || templateCandidates.length === 0) {
+    return templateId;
+  }
+
+  const totalWeight = templateCandidates.reduce((sum, candidate) => sum + (candidate.weight ?? 1), 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const candidate of templateCandidates) {
+    roll -= candidate.weight ?? 1;
+    if (roll <= 0) {
+      return candidate.templateId;
+    }
+  }
+
+  return templateCandidates[templateCandidates.length - 1].templateId;
+}
+
 function buildNode(blueprint: NodeBlueprint, focusRoute: RouteId | null): NodeOption {
   return {
     ...blueprint,
     description: resolveDescription(blueprint.description, focusRoute),
+    templateId: pickTemplateId(blueprint.templateId, blueprint.templateCandidates),
   };
 }
 
