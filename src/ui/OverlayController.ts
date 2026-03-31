@@ -166,7 +166,7 @@ export class OverlayController {
       eventDef.options.map(
         (option) => `
           <button class="choice-card" data-choice="${option.id}">
-            <span class="choice-type">${option.routeId ? ROUTE_NAME_MAP[option.routeId] : '事件'}</span>
+            <span class="choice-type">${this.getOptionTypeLabel(option.routeId)}</span>
             <strong>${option.label}</strong>
             <small>${option.description}</small>
           </button>
@@ -250,5 +250,12 @@ export class OverlayController {
     if (target) {
       target.onclick = handler;
     }
+  }
+
+  private getOptionTypeLabel(routeId: EventDefinition['options'][number]['routeId']): string {
+    if (!routeId || routeId === 'dominant') {
+      return '事件';
+    }
+    return ROUTE_NAME_MAP[routeId];
   }
 }

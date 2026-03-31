@@ -1,4 +1,5 @@
 export type RouteId = 'crit' | 'pierce' | 'dash';
+export type RouteReference = RouteId | 'dominant';
 export type NodeType = 'battle' | 'upgrade' | 'event';
 export type BattleTemplateId = 'elimination' | 'elite' | 'survival';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
@@ -19,11 +20,21 @@ export interface BattleTemplateDefinition {
   name: string;
   description: string;
   durationSec: number;
-  targetKills: number;
   spawnIntervalSec: number;
   enemyHp: number;
   enemySpeed: number;
   accent: number;
+  winCondition: {
+    type: 'kills' | 'elite' | 'survive';
+    target?: number;
+  };
+  eliteRule?: {
+    spawnAtSec: number;
+    hpMultiplier: number;
+    speedMultiplier: number;
+    radius: number;
+    regularEnemyCap: number;
+  };
 }
 
 export interface StatModifiers {
@@ -41,27 +52,56 @@ export interface StatModifiers {
   regeneration?: number;
 }
 
+export interface ContentSelectionProfile {
+  baseWeight?: number;
+  minRound?: number;
+  maxRound?: number;
+  noDominantRouteBonus?: number;
+  dominantRouteBonus?: number;
+  committedRouteBonus?: number;
+  maturedRouteBonus?: number;
+  offRouteMultiplier?: number;
+  finalPrepBonus?: number;
+  excludeFromFinalPrep?: boolean;
+}
+
+export type ContentEffect =
+  | {
+      type: 'stats';
+      modifiers: StatModifiers;
+    }
+  | {
+      type: 'heal';
+      amount: number;
+    }
+  | {
+      type: 'route';
+      routeId: RouteReference;
+    };
+
 export interface UpgradeDefinition {
   id: string;
   name: string;
   description: string;
   routeId?: RouteId;
-  modifiers: StatModifiers;
+  tags?: string[];
+  selection?: ContentSelectionProfile;
+  effects: ContentEffect[];
 }
 
 export interface EventOption {
   id: string;
   label: string;
   description: string;
-  routeId?: RouteId;
-  modifiers?: StatModifiers;
-  heal?: number;
+  routeId?: RouteReference;
+  effects?: ContentEffect[];
 }
 
 export interface EventDefinition {
   id: string;
   name: string;
   description: string;
+  selection?: ContentSelectionProfile;
   options: EventOption[];
 }
 

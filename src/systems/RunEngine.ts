@@ -1,19 +1,24 @@
-import { BATTLE_TEMPLATES } from '../data/battleTemplates';
-import { EVENT_CATALOG } from '../data/events';
+import {
+  BATTLE_TEMPLATES,
+  getBattleProgressText,
+  getBattleTargetKills,
+  getRegularEnemyCap,
+  isBattleVictory,
+  shouldSpawnElite,
+} from '../data/battleTemplates';
+import { rollEventDefinition, rollUpgradeChoices } from '../data/contentSelectors';
 import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
-import { UPGRADE_CATALOG } from '../data/upgrades';
 import type {
   BattleState,
+  ContentEffect,
   EventDefinition,
-  EventOption,
   NodeOption,
   PlayerStats,
   RouteId,
   RunOutcome,
   RunState,
   Services,
-  UpgradeDefinition,
 } from '../game/types';
 
 interface EngineAnnouncement {
@@ -47,10 +52,6 @@ function createBaseStats(): PlayerStats {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
-}
-
-function pickRandom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)];
 }
 
 export class RunEngine {
@@ -149,15 +150,12 @@ export class RunEngine {
       return;
     }
 
-    this.applyModifiers(upgrade.modifiers);
+    this.applyEffects(upgrade.effects);
     this.state.selectedUpgrades.push(upgrade.id);
     this.services.metrics.recordUpgradeSelected(upgrade.id, upgrade.routeId);
     if (!this.firstUpgradeRecorded) {
       this.services.metrics.markFirstUpgrade();
       this.firstUpgradeRecorded = true;
-    }
-    if (upgrade.routeId) {
-      this.advanceRoute(upgrade.routeId);
     }
 
     this.enqueueAudio('upgrade');
@@ -175,8 +173,9 @@ export class RunEngine {
       return;
     }
 
-    this.applyEventOption(option);
-    this.services.metrics.recordEventSelected(eventDef.id, option.id, option.routeId);
+    const optionRouteId = option.routeId === 'dominant' ? this.getDominantRoute() ?? undefined : option.routeId;
+    this.applyEffects(option.effects ?? []);
+    this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId);
     this.enqueueAudio('upgrade');
     this.enqueueTip(`${eventDef.name}：${option.label}`);
     this.advanceRound();
@@ -211,17 +210,7 @@ export class RunEngine {
       return;
     }
 
-    if (battle.templateId === 'elimination' && battle.kills >= battle.targetKills) {
-      this.completeBattle();
-      return;
-    }
-
-    if (battle.templateId === 'elite' && battle.eliteSpawned && !battle.eliteAlive) {
-      this.completeBattle();
-      return;
-    }
-
-    if (battle.templateId === 'survival' && battle.remainingSec <= 0) {
+    if (isBattleVictory(battle)) {
       this.completeBattle();
       return;
     }
@@ -236,14 +225,7 @@ export class RunEngine {
     if (!this.state.battle) {
       return '';
     }
-    const template = BATTLE_TEMPLATES[this.state.battle.templateId];
-    if (template.id === 'survival') {
-      return `${template.name} ${Math.ceil(this.state.battle.remainingSec)}s`;
-    }
-    if (template.id === 'elite') {
-      return `${template.name} ${this.state.battle.eliteAlive ? '击破精英' : '准备交火'}`;
-    }
-    return `${template.name} ${this.state.battle.kills}/${this.state.battle.targetKills}`;
+    return getBattleProgressText(this.state.battle);
   }
 
   public getDominantRoute(): RouteId | null {
@@ -265,7 +247,7 @@ export class RunEngine {
       description: template.description,
       durationSec: template.durationSec,
       remainingSec: template.durationSec,
-      targetKills: template.targetKills,
+      targetKills: getBattleTargetKills(template.id),
       spawnIntervalSec: template.spawnIntervalSec,
       enemyHp: template.enemyHp,
       enemySpeed: template.enemySpeed,
@@ -354,79 +336,12 @@ export class RunEngine {
     this.enqueueAudio('result');
   }
 
-  private rollUpgradeChoices(isFinalPrep: boolean): UpgradeDefinition[] {
-    const dominantRoute = this.getDominantRoute();
-
-    if (!dominantRoute) {
-      return [
-        UPGRADE_CATALOG.find((upgrade) => upgrade.id === 'crit-aim'),
-        UPGRADE_CATALOG.find((upgrade) => upgrade.id === 'pierce-core'),
-        UPGRADE_CATALOG.find((upgrade) => upgrade.id === 'dash-brush'),
-      ].filter(Boolean) as UpgradeDefinition[];
-    }
-
-    const sameRoute = UPGRADE_CATALOG.filter(
-      (upgrade) => upgrade.routeId === dominantRoute && !this.state.selectedUpgrades.includes(upgrade.id),
-    );
-    const offRoute = UPGRADE_CATALOG.filter(
-      (upgrade) => upgrade.routeId && upgrade.routeId !== dominantRoute && !this.state.selectedUpgrades.includes(upgrade.id),
-    );
-    const generic = UPGRADE_CATALOG.filter(
-      (upgrade) => !upgrade.routeId && !this.state.selectedUpgrades.includes(upgrade.id),
-    );
-
-    const pool: UpgradeDefinition[] = [];
-    const prioritizedPools = [
-      sameRoute,
-      isFinalPrep ? sameRoute : offRoute,
-      generic,
-      offRoute,
-      UPGRADE_CATALOG.filter((upgrade) => !this.state.selectedUpgrades.includes(upgrade.id)),
-    ];
-
-    for (const candidatePool of prioritizedPools) {
-      const remaining = candidatePool.filter((upgrade) => !pool.some((picked) => picked.id === upgrade.id));
-      if (remaining.length > 0) {
-        pool.push(pickRandom(remaining));
-      }
-      if (pool.length >= 3) {
-        break;
-      }
-    }
-
-    return pool.slice(0, 3);
+  private rollUpgradeChoices(isFinalPrep: boolean) {
+    return rollUpgradeChoices(this.state, isFinalPrep);
   }
 
   private rollEvent(): EventDefinition {
-    const dominantRoute = this.getDominantRoute();
-    const eventDef = pickRandom(EVENT_CATALOG);
-    if (eventDef.id !== 'route-calibration' || !dominantRoute) {
-      return eventDef;
-    }
-
-    return {
-      ...eventDef,
-      options: eventDef.options.map((option) =>
-        option.id === 'route-calibration-focus'
-          ? {
-              ...option,
-              routeId: dominantRoute,
-            }
-          : option,
-      ),
-    };
-  }
-
-  private applyEventOption(option: EventOption): void {
-    if (option.modifiers) {
-      this.applyModifiers(option.modifiers);
-    }
-    if (option.heal) {
-      this.state.stats.hp = clamp(this.state.stats.hp + option.heal, 0, this.state.stats.maxHp);
-    }
-    if (option.routeId) {
-      this.advanceRoute(option.routeId);
-    }
+    return rollEventDefinition(this.state);
   }
 
   private applyModifiers(modifiers: Partial<PlayerStats>): void {
@@ -443,6 +358,25 @@ export class RunEngine {
     this.state.stats.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
     this.state.stats.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
     this.state.stats.regeneration += modifiers.regeneration ?? 0;
+  }
+
+  private applyEffects(effects: ContentEffect[]): void {
+    for (const effect of effects) {
+      if (effect.type === 'stats') {
+        this.applyModifiers(effect.modifiers);
+        continue;
+      }
+
+      if (effect.type === 'heal') {
+        this.state.stats.hp = clamp(this.state.stats.hp + effect.amount, 0, this.state.stats.maxHp);
+        continue;
+      }
+
+      const routeId = effect.routeId === 'dominant' ? this.getDominantRoute() : effect.routeId;
+      if (routeId) {
+        this.advanceRoute(routeId);
+      }
+    }
   }
 
   private advanceRoute(routeId: RouteId): void {
@@ -543,17 +477,22 @@ export class RunEngine {
 
   private spawnEnemies(battle: BattleState, dt: number): void {
     battle.enemySpawnTimerSec -= dt;
-    if (battle.templateId === 'elite' && !battle.eliteSpawned && battle.elapsedSec >= 4) {
+    if (shouldSpawnElite(battle)) {
+      const template = BATTLE_TEMPLATES[battle.templateId];
+      const eliteRule = template.eliteRule;
+      if (!eliteRule) {
+        return;
+      }
       battle.eliteSpawned = true;
       battle.eliteAlive = true;
       battle.enemies.push({
         id: battle.nextEnemyId++,
         x: CENTER_X,
         y: -60,
-        hp: battle.enemyHp * battle.difficultyScale * 10,
-        maxHp: battle.enemyHp * battle.difficultyScale * 10,
-        speed: battle.enemySpeed * 0.85,
-        radius: 22,
+        hp: battle.enemyHp * battle.difficultyScale * eliteRule.hpMultiplier,
+        maxHp: battle.enemyHp * battle.difficultyScale * eliteRule.hpMultiplier,
+        speed: battle.enemySpeed * eliteRule.speedMultiplier,
+        radius: eliteRule.radius,
         elite: true,
         grazeCooldownSec: 0,
       });
@@ -563,7 +502,8 @@ export class RunEngine {
 
     while (battle.enemySpawnTimerSec <= 0) {
       battle.enemySpawnTimerSec += battle.spawnIntervalSec / battle.difficultyScale;
-      if (battle.templateId === 'elite' && battle.enemies.filter((enemy) => !enemy.elite).length >= 10) {
+      const regularEnemyCap = getRegularEnemyCap(battle.templateId);
+      if (regularEnemyCap !== null && battle.enemies.filter((enemy) => !enemy.elite).length >= regularEnemyCap) {
         break;
       }
 
