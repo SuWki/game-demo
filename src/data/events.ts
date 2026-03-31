@@ -172,4 +172,96 @@ export const EVENT_CATALOG: EventDefinition[] = [
       },
     ],
   },
+  {
+    id: 'targeted-telemetry',
+    name: '定向遥测',
+    description: '系统抓到一段更贴近当前路线的战斗遥测。要顺势压深，还是先换成更稳的整理？',
+    selection: {
+      baseWeight: 4,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 2,
+      maturedRouteBonus: 1,
+    },
+    options: [
+      {
+        id: 'targeted-telemetry-press',
+        label: '追当前窗口',
+        description: '把当前路线继续往前压一小步，并补一点基础火力。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              fireRate: 0.12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'targeted-telemetry-buffer',
+        label: '换一段缓冲',
+        description: '恢复 14 点耐久，并提高 6 点上限。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 6,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 14,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'salvage-bay',
+    name: '回收舱段',
+    description: '你截获了一段残留补给。现在拆成火力读数，还是拆成更稳的机体冗余？',
+    selection: {
+      baseWeight: 4,
+      noDominantRouteBonus: 1,
+      finalPrepBonus: 1,
+    },
+    options: [
+      {
+        id: 'salvage-bay-fire',
+        label: '拆成火控件',
+        description: '基础伤害上升，并补一点射速。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 5,
+              fireRate: 0.16,
+            },
+          },
+        ],
+      },
+      {
+        id: 'salvage-bay-guard',
+        label: '拆成缓冲甲',
+        description: '恢复 16 点耐久，并提高一点再生。',
+        effects: [
+          {
+            type: 'heal',
+            amount: 16,
+          },
+          {
+            type: 'stats',
+            modifiers: {
+              regeneration: 0.12,
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

@@ -83,6 +83,35 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
     ],
   },
   {
+    id: 'crit-heat',
+    name: '热区追击',
+    description: '暴击后更容易把下一拍也接成爆发段。',
+    routeId: 'crit',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3,
+      minRound: 2,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 4,
+      maturedRouteBonus: 2,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 5,
+          fireRate: 0.3,
+          critMultiplier: 0.35,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
     id: 'pierce-core',
     name: '穿甲校正',
     description: '子弹获得额外穿透层数。',
@@ -154,6 +183,35 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
         modifiers: {
           pierce: 1,
           fireRate: 0.35,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-ripple',
+    name: '回响切层',
+    description: '贯穿后的余势更足，打穿一层后更容易继续清开下一层。',
+    routeId: 'pierce',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3,
+      minRound: 2,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 4,
+      maturedRouteBonus: 2,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 4,
+          multishot: 1,
+          pierce: 1,
         },
       },
       {
@@ -238,6 +296,36 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
           regeneration: 0.35,
           dashPulseDamage: 6,
           moveSpeed: 14,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-rethread',
+    name: '回线续拍',
+    description: '穿梭后更快回到可控节奏，重新拉出下一次反打窗口。',
+    routeId: 'dash',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3,
+      minRound: 2,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 4,
+      maturedRouteBonus: 2,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.6,
+          dashInvulnerability: 0.12,
+          regeneration: 0.18,
+          moveSpeed: 8,
         },
       },
       {

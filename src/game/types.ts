@@ -1,7 +1,12 @@
 export type RouteId = 'crit' | 'pierce' | 'dash';
 export type RouteReference = RouteId | 'dominant';
 export type NodeType = 'battle' | 'upgrade' | 'event';
-export type BattleTemplateId = 'elimination' | 'elite' | 'survival';
+export type BattleTemplateId =
+  | 'elimination'
+  | 'elite'
+  | 'elite-lockdown'
+  | 'survival'
+  | 'survival-rush';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
 export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'result';
 export type RunOutcome = 'victory' | 'defeat';

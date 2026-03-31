@@ -36,6 +36,27 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       regularEnemyCap: 10,
     },
   },
+  'elite-lockdown': {
+    id: 'elite-lockdown',
+    name: '包围压制',
+    description: '精英更早带着护卫压上来，留给你的整理时间更少。',
+    durationSec: 30,
+    spawnIntervalSec: 1.05,
+    enemyHp: 21,
+    enemySpeed: 58,
+    accent: 0xff9b3d,
+    winCondition: {
+      type: 'elite',
+      target: 1,
+    },
+    eliteRule: {
+      spawnAtSec: 2.8,
+      hpMultiplier: 9.5,
+      speedMultiplier: 0.92,
+      radius: 22,
+      regularEnemyCap: 12,
+    },
+  },
   survival: {
     id: 'survival',
     name: '生存压制',
@@ -45,6 +66,19 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     enemyHp: 22,
     enemySpeed: 68,
     accent: 0xff5f7a,
+    winCondition: {
+      type: 'survive',
+    },
+  },
+  'survival-rush': {
+    id: 'survival-rush',
+    name: '紧逼生存',
+    description: '敌潮更快贴脸，考验你在高压下继续换位的能力。',
+    durationSec: 24,
+    spawnIntervalSec: 0.38,
+    enemyHp: 23,
+    enemySpeed: 74,
+    accent: 0xff4d68,
     winCondition: {
       type: 'survive',
     },

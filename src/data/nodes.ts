@@ -69,7 +69,7 @@ const ROUND_NODE_BLUEPRINTS: Record<number, NodeBlueprint[]> = {
       phase: 'late',
       title: '生存压制',
       description: '后段高压段，测试你的收尾能力。',
-      templateId: 'survival',
+      templateId: 'survival-rush',
       difficultyScale: 1.24,
     },
     {
@@ -104,7 +104,7 @@ const ROUND_NODE_BLUEPRINTS: Record<number, NodeBlueprint[]> = {
       phase: 'finalBattle',
       title: '最终战',
       description: '用一场更高压的精英压制完成整局收束。',
-      templateId: 'elite',
+      templateId: 'elite-lockdown',
       difficultyScale: 1.38,
     },
   ],
