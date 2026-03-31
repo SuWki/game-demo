@@ -364,16 +364,22 @@ export class RunEngine {
     );
 
     const pool: UpgradeDefinition[] = [];
-    if (sameRoute.length > 0) {
-      pool.push(pickRandom(sameRoute));
-    }
-    if (isFinalPrep && sameRoute.length > 1) {
-      pool.push(sameRoute.find((upgrade) => upgrade.id !== pool[0].id) ?? pickRandom(sameRoute));
-    } else if (offRoute.length > 0) {
-      pool.push(pickRandom(offRoute));
-    }
-    if (generic.length > 0) {
-      pool.push(pickRandom(generic));
+    const prioritizedPools = [
+      sameRoute,
+      isFinalPrep ? sameRoute : offRoute,
+      generic,
+      offRoute,
+      UPGRADE_CATALOG.filter((upgrade) => !this.state.selectedUpgrades.includes(upgrade.id)),
+    ];
+
+    for (const candidatePool of prioritizedPools) {
+      const remaining = candidatePool.filter((upgrade) => !pool.some((picked) => picked.id === upgrade.id));
+      if (remaining.length > 0) {
+        pool.push(pickRandom(remaining));
+      }
+      if (pool.length >= 3) {
+        break;
+      }
     }
 
     return pool.slice(0, 3);

@@ -13,6 +13,10 @@ export class GameScene extends Phaser.Scene {
 
   private resultHandled = false;
 
+  private lastHudKey = '';
+
+  private lastPanelKey = '';
+
   public constructor() {
     super('GameScene');
   }
@@ -22,6 +26,8 @@ export class GameScene extends Phaser.Scene {
     this.engine = new RunEngine(this.services);
     this.graphics = this.add.graphics();
     this.resultHandled = false;
+    this.lastHudKey = '';
+    this.lastPanelKey = '';
     this.syncOverlay();
     this.processAnnouncements();
   }
@@ -44,42 +50,68 @@ export class GameScene extends Phaser.Scene {
 
   private syncOverlay(): void {
     const state = this.engine.getState();
+    const hudSnapshot = this.createHudSnapshot();
+    const hudKey = JSON.stringify(hudSnapshot);
+    if (hudKey !== this.lastHudKey) {
+      this.services.overlay.showHud(hudSnapshot);
+      this.lastHudKey = hudKey;
+    }
+
     if (state.status === 'battle') {
-      this.services.overlay.hidePanel();
-      this.services.overlay.showHud(this.createHudSnapshot());
+      if (this.lastPanelKey) {
+        this.services.overlay.hidePanel();
+        this.lastPanelKey = '';
+      }
       return;
     }
 
-    this.services.overlay.showHud(this.createHudSnapshot());
     if (state.status === 'nodeChoice') {
-      this.services.overlay.showNodePanel(getPhaseLabel(state.phase), state.nodeOptions, (nodeId) => {
-        this.services.audio.play('click');
-        this.engine.chooseNode(nodeId);
-        this.processAnnouncements();
-        this.syncOverlay();
-      });
+      const panelKey = `node:${state.phase}:${state.nodeOptions.map((node) => node.id).join('|')}`;
+      if (panelKey !== this.lastPanelKey) {
+        this.services.overlay.showNodePanel(getPhaseLabel(state.phase), state.nodeOptions, (nodeId) => {
+          this.services.audio.play('click');
+          this.engine.chooseNode(nodeId);
+          this.processAnnouncements();
+          this.syncOverlay();
+        });
+        this.lastPanelKey = panelKey;
+      }
       return;
     }
 
     if (state.status === 'upgradeChoice') {
-      this.services.overlay.showUpgradePanel(
-        state.currentNode?.isFinalPrep ? '最终整备' : `${getPhaseLabel(state.phase)}强化`,
-        state.upgradeChoices,
-        (upgradeId) => {
-          this.engine.chooseUpgrade(upgradeId);
-          this.processAnnouncements();
-          this.syncOverlay();
-        },
-      );
+      const panelKey = `upgrade:${state.phase}:${state.upgradeChoices.map((upgrade) => upgrade.id).join('|')}`;
+      if (panelKey !== this.lastPanelKey) {
+        this.services.overlay.showUpgradePanel(
+          state.currentNode?.isFinalPrep ? '最终整备' : `${getPhaseLabel(state.phase)}强化`,
+          state.upgradeChoices,
+          (upgradeId) => {
+            this.engine.chooseUpgrade(upgradeId);
+            this.processAnnouncements();
+            this.syncOverlay();
+          },
+        );
+        this.lastPanelKey = panelKey;
+      }
       return;
     }
 
     if (state.status === 'eventChoice' && state.currentEvent) {
-      this.services.overlay.showEventPanel(state.currentEvent, (optionId) => {
-        this.engine.chooseEventOption(optionId);
-        this.processAnnouncements();
-        this.syncOverlay();
-      });
+      const panelKey = `event:${state.currentEvent.id}:${state.currentEvent.options.map((option) => option.id).join('|')}`;
+      if (panelKey !== this.lastPanelKey) {
+        this.services.overlay.showEventPanel(state.currentEvent, (optionId) => {
+          this.engine.chooseEventOption(optionId);
+          this.processAnnouncements();
+          this.syncOverlay();
+        });
+        this.lastPanelKey = panelKey;
+      }
+      return;
+    }
+
+    if (this.lastPanelKey) {
+      this.services.overlay.hidePanel();
+      this.lastPanelKey = '';
     }
   }
 

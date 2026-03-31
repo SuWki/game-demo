@@ -73,12 +73,15 @@ export class MetricsTracker {
 
   public beginRunFromMenu(): void {
     this.record('click_start_game');
+    if (this.isReplayAfterFirstRun()) {
+      this.record('restart_after_first_run', { source: 'menu' });
+    }
     this.beginRun(false);
   }
 
   public beginRunFromRestart(): void {
-    if (this.sessionRunIndex === 1) {
-      this.record('restart_after_first_run');
+    if (this.isReplayAfterFirstRun()) {
+      this.record('restart_after_first_run', { source: 'result' });
     }
     this.beginRun(true);
   }
@@ -164,6 +167,10 @@ export class MetricsTracker {
     }
 
     this.persist();
+  }
+
+  private isReplayAfterFirstRun(): boolean {
+    return this.sessionRunIndex === 1 && Boolean(this.session.runs[0]?.finishedAt);
   }
 
   private recordRunTime(name: string, payload?: Record<string, unknown>): void {
