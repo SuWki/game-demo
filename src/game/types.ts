@@ -10,6 +10,8 @@ export type BattleTemplateId =
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
 export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'result';
 export type RunOutcome = 'victory' | 'defeat';
+export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
+export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
 export type AudioCue = 'click' | 'upgrade' | 'hit' | 'crit' | 'pressure' | 'result';
 
 export interface RouteDefinition {
@@ -212,6 +214,13 @@ export interface RunResult {
   outcome: RunOutcome;
   summary: string;
   routeId: RouteId | null;
+  buildStage: RouteBuildStage;
+  buildLabel: string;
+  buildSummary: string;
+  endingKind: RunEndingKind;
+  endingLabel: string;
+  endingReason: string;
+  finalNodeTitle: string;
   runDurationSec: number;
   nodesCleared: number;
   battleWins: number;

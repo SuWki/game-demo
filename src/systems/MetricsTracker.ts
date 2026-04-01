@@ -1,4 +1,4 @@
-import type { BattleTemplateId, NodeType, RouteId, RunOutcome } from '../game/types';
+import type { BattleTemplateId, NodeType, RouteBuildStage, RouteId, RunEndingKind, RunOutcome } from '../game/types';
 
 export const PILOT_METRICS_STORAGE_KEY = 'commercial_pilot_metrics_v1';
 
@@ -15,7 +15,14 @@ interface MetricRunSummary {
   finishedAt?: string;
   outcome?: RunOutcome;
   routeId?: RouteId | null;
+  buildStage?: RouteBuildStage;
+  buildSummary?: string;
+  endingKind?: RunEndingKind;
+  endingReason?: string;
+  finalNodeTitle?: string;
   durationSec?: number;
+  battleWins?: number;
+  nodesCleared?: number;
 }
 
 interface MetricSession {
@@ -48,6 +55,14 @@ export class MetricsTracker {
   private sessionRunIndex = 0;
 
   private currentRunStartedAtMs = 0;
+
+  private hintedRoutesInRun = new Set<RouteId>();
+
+  private committedRouteInRun: RouteId | null = null;
+
+  private maturedRouteInRun: RouteId | null = null;
+
+  private runFinished = false;
 
   public constructor(storage: Storage) {
     this.storage = storage;
@@ -91,6 +106,10 @@ export class MetricsTracker {
   }
 
   public markRouteHint(routeId: RouteId): void {
+    if (this.hintedRoutesInRun.has(routeId)) {
+      return;
+    }
+    this.hintedRoutesInRun.add(routeId);
     this.recordRunTime('route_hint_time', { routeId });
   }
 
@@ -99,11 +118,19 @@ export class MetricsTracker {
   }
 
   public markRouteCommitted(routeId: RouteId): void {
+    if (this.committedRouteInRun === routeId) {
+      return;
+    }
+    this.committedRouteInRun = routeId;
     this.recordRunTime('route_lock_time', { routeId });
     this.record('route_committed', { routeId });
   }
 
   public markRouteMatured(routeId: RouteId): void {
+    if (this.maturedRouteInRun === routeId) {
+      return;
+    }
+    this.maturedRouteInRun = routeId;
     this.recordRunTime('build_mature_time', { routeId });
     this.record('route_matured', { routeId });
   }
@@ -131,20 +158,65 @@ export class MetricsTracker {
     this.record('battle_template_completed', { templateId, outcome });
   }
 
-  public finishRun(outcome: RunOutcome, routeId: RouteId | null, durationSec: number): void {
-    this.recordRunTime('run_duration', { durationSec });
-    if (outcome === 'defeat') {
-      this.recordRunTime('death_time');
+  public finishRun(result: {
+    outcome: RunOutcome;
+    routeId: RouteId | null;
+    durationSec: number;
+    buildStage: RouteBuildStage;
+    buildSummary: string;
+    endingKind: RunEndingKind;
+    endingReason: string;
+    finalNodeTitle: string;
+    battleWins: number;
+    nodesCleared: number;
+  }): void {
+    if (this.runFinished || this.sessionRunIndex <= 0) {
+      return;
     }
 
     const currentRun = this.session.runs[this.session.runs.length - 1];
+    if (!currentRun || currentRun.finishedAt) {
+      return;
+    }
+
+    this.runFinished = true;
+    this.recordRunTime('run_duration', { durationSec: result.durationSec });
+    if (result.endingKind === 'hpDepleted') {
+      this.recordRunTime('death_time');
+    }
     currentRun.finishedAt = new Date().toISOString();
-    currentRun.outcome = outcome;
-    currentRun.routeId = routeId;
-    currentRun.durationSec = durationSec;
+    currentRun.outcome = result.outcome;
+    currentRun.routeId = result.routeId;
+    currentRun.buildStage = result.buildStage;
+    currentRun.buildSummary = result.buildSummary;
+    currentRun.endingKind = result.endingKind;
+    currentRun.endingReason = result.endingReason;
+    currentRun.finalNodeTitle = result.finalNodeTitle;
+    currentRun.durationSec = result.durationSec;
+    currentRun.battleWins = result.battleWins;
+    currentRun.nodesCleared = result.nodesCleared;
+
+    this.record('run_finished', {
+      outcome: result.outcome,
+      routeId: result.routeId,
+      buildStage: result.buildStage,
+      buildSummary: result.buildSummary,
+      endingKind: result.endingKind,
+      endingReason: result.endingReason,
+      finalNodeTitle: result.finalNodeTitle,
+      durationSec: result.durationSec,
+      battleWins: result.battleWins,
+      nodesCleared: result.nodesCleared,
+    });
 
     if (currentRun.runIndex === 1) {
-      this.record('first_run_end', { outcome, routeId, durationSec });
+      this.record('first_run_end', {
+        outcome: result.outcome,
+        routeId: result.routeId,
+        buildStage: result.buildStage,
+        endingKind: result.endingKind,
+        durationSec: result.durationSec,
+      });
     }
 
     this.persist();
@@ -153,6 +225,10 @@ export class MetricsTracker {
   private beginRun(fromRestart: boolean): void {
     this.sessionRunIndex += 1;
     this.currentRunStartedAtMs = performance.now();
+    this.hintedRoutesInRun = new Set<RouteId>();
+    this.committedRouteInRun = null;
+    this.maturedRouteInRun = null;
+    this.runFinished = false;
     this.session.runs.push({
       runIndex: this.sessionRunIndex,
       startedAt: new Date().toISOString(),

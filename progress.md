@@ -15,3 +15,24 @@ Original prompt: 请先读取 `docs/` 目录下的全部项目文档和最近开
 TODO
 - 更新 `doc/docs/DEV_ISSUE_LOG.md`。
 - 只提交本轮相关文件并 push 到 `origin/codex`。
+2026-04-01
+- Re-read `doc/docs` and kept `PROJECT_STATUS.md` plus the latest `DEV_ISSUE_LOG.md` as the priority stage source, with `ROADMAP_0_9.md` only as ordering reference.
+- Tightened metrics accuracy for rebuilt runs:
+- `route_hint_time` is now recorded once per route per run.
+- `death_time` now only fires on HP depletion, not all defeats.
+- added `run_finished` with `buildStage`, `buildSummary`, `endingKind`, `endingReason`, `finalNodeTitle`, `battleWins`, and `nodesCleared`.
+- Enriched run results so the result screen and exported metrics share the same closure summary fields.
+- Updated the non-battle HUD summary so it distinguishes hinted / committed / matured route states instead of always saying only “route hint appeared”.
+- Rewrote `src/ui/OverlayController.ts` cleanly in UTF-8 while preserving the current product wording and adding result-summary detail.
+- `npm run build` passes.
+- Browser smoke check via Playwright on `http://127.0.0.1:4173` confirmed:
+- start page text is clean
+- in-run HUD and choice panels are clean
+- result page shows route/build/ending alignment
+- `commercial_pilot_metrics_v1` now exports `run_finished`
+- replay records `restart_after_first_run` and starts a clean `runIndex: 2`
+- Current recovery estimate after this round:
+- overall `63%~72%`
+- structure `78%~85%`
+- content `48%~58%`
+- presentation `28%~38%`

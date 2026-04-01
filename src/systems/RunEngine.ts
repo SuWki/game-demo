@@ -15,7 +15,9 @@ import type {
   EventDefinition,
   NodeOption,
   PlayerStats,
+  RouteBuildStage,
   RouteId,
+  RunEndingKind,
   RunOutcome,
   RunState,
   Services,
@@ -52,6 +54,30 @@ function createBaseStats(): PlayerStats {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function getBuildStageLabel(buildStage: RouteBuildStage): string {
+  switch (buildStage) {
+    case 'hinted':
+      return '已出倾向';
+    case 'committed':
+      return '开始站稳';
+    case 'matured':
+      return '已经成型';
+    default:
+      return '未站稳';
+  }
+}
+
+function getEndingLabel(endingKind: RunEndingKind): string {
+  switch (endingKind) {
+    case 'hpDepleted':
+      return '耐久归零';
+    case 'timeOut':
+      return '压力失守';
+    default:
+      return '完成试飞';
+  }
 }
 
 export class RunEngine {
@@ -206,7 +232,7 @@ export class RunEngine {
 
     if (this.state.stats.hp <= 0) {
       this.services.metrics.recordBattleCompleted(battle.templateId, 'loss');
-      this.finishRun('defeat', '机体失稳，试飞提前结束。');
+      this.finishRun('defeat', 'hpDepleted');
       return;
     }
 
@@ -217,7 +243,7 @@ export class RunEngine {
 
     if (battle.remainingSec <= 0) {
       this.services.metrics.recordBattleCompleted(battle.templateId, 'loss');
-      this.finishRun('defeat', '你没能顶住这一段的压力。');
+      this.finishRun('defeat', 'timeOut');
     }
   }
 
@@ -232,6 +258,10 @@ export class RunEngine {
     const entries = Object.entries(this.state.routeCounts) as Array<[RouteId, number]>;
     const top = [...entries].sort((left, right) => right[1] - left[1])[0];
     return top && top[1] > 0 ? top[0] : null;
+  }
+
+  private getResultRoute(): RouteId | null {
+    return this.state.maturedRoute ?? this.state.committedRoute ?? this.getDominantRoute();
   }
 
   private enterBattle(node: NodeOption): void {
@@ -293,7 +323,7 @@ export class RunEngine {
   private advanceRound(): void {
     this.state.round += 1;
     if (this.state.round > this.state.totalRounds) {
-      this.finishRun('victory', '你已完成这一轮试飞，整局流程可以顺利收尾。');
+      this.finishRun('victory', 'victory');
       return;
     }
 
@@ -314,9 +344,17 @@ export class RunEngine {
     this.state.battle = null;
   }
 
-  private finishRun(outcome: RunOutcome, summary: string): void {
-    const routeId = this.getDominantRoute();
+  private finishRun(outcome: RunOutcome, endingKind: RunEndingKind): void {
+    const routeId = this.getResultRoute();
+    const buildStage = this.getBuildStage();
+    const buildLabel = getBuildStageLabel(buildStage);
+    const buildSummary = this.getBuildSummary(routeId, buildStage);
+    const endingLabel = getEndingLabel(endingKind);
+    const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
+    const endingReason = this.getEndingReason(endingKind, finalNodeTitle);
+    const summary = this.getResultSummary(outcome, routeId, buildStage);
     const runDurationSec = Number(((performance.now() - this.runStartedAtMs) / 1000).toFixed(2));
+    const nodesCleared = Math.min(this.state.round, this.state.totalRounds);
     this.state.status = 'result';
     this.state.phase = 'ended';
     this.state.nodeOptions = [];
@@ -328,12 +366,94 @@ export class RunEngine {
       outcome,
       summary,
       routeId,
+      buildStage,
+      buildLabel,
+      buildSummary,
+      endingKind,
+      endingLabel,
+      endingReason,
+      finalNodeTitle,
       runDurationSec,
-      nodesCleared: this.state.round,
+      nodesCleared,
       battleWins: this.state.battleWins,
     };
-    this.services.metrics.finishRun(outcome, routeId, runDurationSec);
+    this.services.metrics.finishRun({
+      outcome,
+      routeId,
+      durationSec: runDurationSec,
+      buildStage,
+      buildSummary,
+      endingKind,
+      endingReason,
+      finalNodeTitle,
+      battleWins: this.state.battleWins,
+      nodesCleared,
+    });
     this.enqueueAudio('result');
+  }
+
+  private getBuildStage(): RouteBuildStage {
+    if (this.state.maturedRoute) {
+      return 'matured';
+    }
+    if (this.state.committedRoute) {
+      return 'committed';
+    }
+    if (this.getDominantRoute()) {
+      return 'hinted';
+    }
+    return 'unformed';
+  }
+
+  private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage): string {
+    if (!routeId) {
+      return '本局还没有站稳主路线';
+    }
+
+    const routeName = ROUTE_NAME_MAP[routeId];
+    switch (buildStage) {
+      case 'matured':
+        return `${routeName}路线已经成型`;
+      case 'committed':
+        return `${routeName}路线已经开始站稳`;
+      case 'hinted':
+        return `${routeName}倾向已经出现`;
+      default:
+        return '本局还没有站稳主路线';
+    }
+  }
+
+  private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
+    switch (endingKind) {
+      case 'hpDepleted':
+        return `${finalNodeTitle}阶段中机体耐久归零`;
+      case 'timeOut':
+        return `${finalNodeTitle}阶段的压力没能顶住`;
+      default:
+        return `${finalNodeTitle}已完成收束`;
+    }
+  }
+
+  private getResultSummary(outcome: RunOutcome, routeId: RouteId | null, buildStage: RouteBuildStage): string {
+    if (!routeId) {
+      return outcome === 'victory' ? '这轮试飞已经顺利收束。' : '这局还没站稳路线，就先被打断了。';
+    }
+
+    const routeName = ROUTE_NAME_MAP[routeId];
+    if (outcome === 'victory') {
+      if (buildStage === 'matured') {
+        return `${routeName}路线已经完整撑到了收尾。`;
+      }
+      if (buildStage === 'committed') {
+        return `${routeName}路线已经站稳，并顺利撑到了收尾。`;
+      }
+      return `${routeName}路线把这轮试飞带到了收尾。`;
+    }
+
+    if (buildStage === 'matured' || buildStage === 'committed') {
+      return `${routeName}路线已经起势，但这局还是在收尾前被打断了。`;
+    }
+    return `${routeName}路线刚露出倾向，这局就先被打断了。`;
   }
 
   private rollUpgradeChoices(isFinalPrep: boolean) {
@@ -381,7 +501,10 @@ export class RunEngine {
 
   private advanceRoute(routeId: RouteId): void {
     this.state.routeCounts[routeId] += 1;
-    this.services.metrics.markRouteHint(routeId);
+    const count = this.state.routeCounts[routeId];
+    if (count === 1) {
+      this.services.metrics.markRouteHint(routeId);
+    }
 
     if (!this.firstRouteHintRecorded) {
       this.firstRouteHintRecorded = true;
@@ -389,7 +512,6 @@ export class RunEngine {
       this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.shortHint ?? '');
     }
 
-    const count = this.state.routeCounts[routeId];
     const otherCounts = Object.entries(this.state.routeCounts)
       .filter(([candidateRouteId]) => candidateRouteId !== routeId)
       .map(([, value]) => value);

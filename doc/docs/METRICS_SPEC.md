@@ -51,3 +51,18 @@
 - `window.__pilotMetrics`
 - `window.__exportPilotMetrics()`
 - `localStorage: commercial_pilot_metrics_v1`
+## 重建阶段补充
+- `death_time` 仅在 `hpDepleted` 时触发，不再覆盖所有 defeat
+- 新增 `run_finished`
+- 用于统一记录每一局的收束信息，字段包括：
+- `outcome`
+- `routeId`
+- `buildStage`
+- `buildSummary`
+- `endingKind`
+- `endingReason`
+- `finalNodeTitle`
+- `durationSec`
+- `battleWins`
+- `nodesCleared`
+- `route_hint_time` 现按“每条路线在当前 run 首次出现倾向”记录一次，避免同一路线重复记时

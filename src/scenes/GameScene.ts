@@ -142,8 +142,21 @@ export class GameScene extends Phaser.Scene {
       battleText:
         state.status === 'battle' && state.battle
           ? this.engine.getBattleLabel()
-          : `${this.engine.getDominantRoute() ? `${ROUTE_NAME_MAP[this.engine.getDominantRoute()!]}倾向已出现` : '尚未站稳路线'}`,
+          : this.getRouteStatusText(),
     };
+  }
+
+  private getRouteStatusText(): string {
+    const state = this.engine.getState();
+    if (state.maturedRoute) {
+      return `${ROUTE_NAME_MAP[state.maturedRoute]}路线已经成型`;
+    }
+    if (state.committedRoute) {
+      return `${ROUTE_NAME_MAP[state.committedRoute]}路线开始站稳`;
+    }
+
+    const dominantRoute = this.engine.getDominantRoute();
+    return dominantRoute ? `${ROUTE_NAME_MAP[dominantRoute]}倾向已出现` : '尚未站稳路线';
   }
 
   private renderBattle(): void {

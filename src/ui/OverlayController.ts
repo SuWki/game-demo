@@ -124,7 +124,7 @@ export class OverlayController {
   public showNodePanel(phaseLabel: string, options: NodeOption[], onChoose: (nodeId: string) => void): void {
     this.showPanel(
       `${phaseLabel}节点选择`,
-      '战斗是搏成长，强化是稳修正，事件是拐方向。',
+      '战斗是抢成长，强化是稳修正，事件是拐方向。',
       options.map(
         (node) => `
           <button class="choice-card" data-choice="${node.id}">
@@ -185,7 +185,7 @@ export class OverlayController {
     this.screenLayer.innerHTML = `
       <section class="menu-card result-card">
         <p class="eyebrow">${result.outcome === 'victory' ? '试飞完成' : '试飞中止'}</p>
-        <h1>${result.outcome === 'victory' ? '本局已完成收束' : '还差一点就能收束整局'}</h1>
+        <h1>${result.outcome === 'victory' ? '本局已完成收束' : '这局还差一点就能收稳'}</h1>
         <p class="lead">${result.summary}</p>
         <div class="menu-stats">
           <div>
@@ -193,14 +193,16 @@ export class OverlayController {
             <strong>${result.routeId ? ROUTE_NAME_MAP[result.routeId] : '未站稳'}</strong>
           </div>
           <div>
-            <span>时长</span>
-            <strong>${result.runDurationSec.toFixed(1)}s</strong>
+            <span>成型</span>
+            <strong>${result.buildLabel}</strong>
           </div>
           <div>
-            <span>战斗胜场</span>
-            <strong>${result.battleWins}</strong>
+            <span>结束</span>
+            <strong>${result.endingLabel}</strong>
           </div>
         </div>
+        <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
+        <p class="panel-description">收尾节点：${result.finalNodeTitle} · 战斗胜场 ${result.battleWins} · 推进节点 ${result.nodesCleared} · 时长 ${result.runDurationSec.toFixed(1)}s</p>
         <div class="menu-actions">
           <button class="primary-action" data-action="restart">再来一局</button>
           <button class="secondary-action" data-action="menu">返回开始页</button>
