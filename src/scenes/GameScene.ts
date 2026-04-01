@@ -11,6 +11,15 @@ export class GameScene extends Phaser.Scene {
 
   private graphics!: Phaser.GameObjects.Graphics;
 
+  private moveKeys!: {
+    up: Phaser.Input.Keyboard.Key;
+    down: Phaser.Input.Keyboard.Key;
+    left: Phaser.Input.Keyboard.Key;
+    right: Phaser.Input.Keyboard.Key;
+  };
+
+  private arrowKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
+
   private resultHandled = false;
 
   private lastHudKey = '';
@@ -25,6 +34,13 @@ export class GameScene extends Phaser.Scene {
     this.services = this.game.registry.get('services') as Services;
     this.engine = new RunEngine(this.services);
     this.graphics = this.add.graphics();
+    this.moveKeys = this.input.keyboard!.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.W,
+      down: Phaser.Input.Keyboard.KeyCodes.S,
+      left: Phaser.Input.Keyboard.KeyCodes.A,
+      right: Phaser.Input.Keyboard.KeyCodes.D,
+    }) as GameScene['moveKeys'];
+    this.arrowKeys = this.input.keyboard!.createCursorKeys();
     this.resultHandled = false;
     this.lastHudKey = '';
     this.lastPanelKey = '';
@@ -33,6 +49,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update(_: number, delta: number): void {
+    this.engine.setInputState({
+      up: this.moveKeys.up.isDown || this.arrowKeys.up.isDown,
+      down: this.moveKeys.down.isDown || this.arrowKeys.down.isDown,
+      left: this.moveKeys.left.isDown || this.arrowKeys.left.isDown,
+      right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown,
+    });
     this.engine.tick(delta);
     this.processAnnouncements();
     this.syncOverlay();
@@ -82,8 +104,14 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'upgradeChoice') {
       const panelKey = `upgrade:${state.phase}:${state.upgradeChoices.map((upgrade) => upgrade.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
+        const panelTitle =
+          state.upgradeSource === 'levelUp'
+            ? `等级提升 Lv.${state.level}`
+            : state.currentNode?.isFinalPrep
+              ? '最终整备'
+              : `${getPhaseLabel(state.phase)}强化`;
         this.services.overlay.showUpgradePanel(
-          state.currentNode?.isFinalPrep ? '最终整备' : `${getPhaseLabel(state.phase)}强化`,
+          panelTitle,
           state.upgradeChoices,
           (upgradeId) => {
             this.engine.chooseUpgrade(upgradeId);
@@ -133,6 +161,8 @@ export class GameScene extends Phaser.Scene {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
       hpText: `${Math.ceil(state.stats.hp)} / ${state.stats.maxHp}`,
+      levelText: `Lv.${state.level}`,
+      experienceText: `${Math.floor(state.experience)} / ${state.experienceToNext}`,
       routeProgress: ROUTES.map((route) => ({
         routeId: route.id,
         label: route.name,
@@ -206,6 +236,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderBattleEntities(battle: BattleState, accentColor: number): void {
+    for (const orb of battle.experienceOrbs) {
+      this.graphics.fillStyle(0x8de1ff, 0.9);
+      this.graphics.fillCircle(orb.x, orb.y, 5);
+      this.graphics.lineStyle(1, 0xffffff, 0.22);
+      this.graphics.strokeCircle(orb.x, orb.y, 8);
+    }
+
     for (const pulse of battle.pulses) {
       this.graphics.lineStyle(2, 0x9cff97, pulse.lifeSec * 2.2);
       this.graphics.strokeCircle(pulse.x, pulse.y, pulse.radius);

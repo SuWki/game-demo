@@ -1,10 +1,288 @@
-import type { UpgradeDefinition } from '../game/types';
+import { getUpgradeRarityMultiplier, RARITY_LABEL_MAP } from './balance';
+import { ROUTE_NAME_MAP } from './routes';
+import type { ContentEffect, StatModifiers, UpgradeArchetype, UpgradeDefinition, UpgradeRarity } from '../game/types';
 
-export const UPGRADE_CATALOG: UpgradeDefinition[] = [
+function roundModifier(key: keyof StatModifiers, value: number): number {
+  switch (key) {
+    case 'critChance':
+    case 'fireRate':
+    case 'critMultiplier':
+    case 'dashInterval':
+    case 'dashInvulnerability':
+    case 'regeneration':
+      return Number(value.toFixed(2));
+    default:
+      return Math.round(value);
+  }
+}
+
+function scaleEffects(effects: ContentEffect[], rarity: UpgradeRarity): ContentEffect[] {
+  const multiplier = getUpgradeRarityMultiplier(rarity);
+  return effects.map((effect) => {
+    if (effect.type === 'stats') {
+      const modifiers = Object.entries(effect.modifiers).reduce((result, [key, rawValue]) => {
+        if (typeof rawValue !== 'number') {
+          return result;
+        }
+        const value = roundModifier(key as keyof StatModifiers, rawValue * multiplier);
+        if (value !== 0) {
+          result[key as keyof StatModifiers] = value;
+        }
+        return result;
+      }, {} as StatModifiers);
+      return {
+        type: 'stats',
+        modifiers,
+      };
+    }
+
+    if (effect.type === 'heal') {
+      return {
+        type: 'heal',
+        amount: Math.round(effect.amount * multiplier),
+      };
+    }
+
+    return effect;
+  });
+}
+
+function formatModifierLabel(key: keyof StatModifiers, value: number): string {
+  switch (key) {
+    case 'maxHp':
+      return `生命上限 ${value > 0 ? '+' : ''}${value}`;
+    case 'damage':
+      return `伤害 ${value > 0 ? '+' : ''}${value}`;
+    case 'fireRate':
+      return `射速 ${value > 0 ? '+' : ''}${value}`;
+    case 'projectileSpeed':
+      return `弹速 ${value > 0 ? '+' : ''}${value}`;
+    case 'critChance':
+      return `暴击率 ${value > 0 ? '+' : ''}${Math.round(value * 100)}%`;
+    case 'critMultiplier':
+      return `爆伤 ${value > 0 ? '+' : ''}${value.toFixed(2)}x`;
+    case 'pierce':
+      return `穿透 ${value > 0 ? '+' : ''}${value}`;
+    case 'multishot':
+      return `额外弹道 ${value > 0 ? '+' : ''}${value}`;
+    case 'moveSpeed':
+      return `移速 ${value > 0 ? '+' : ''}${value}`;
+    case 'dashInterval':
+      return `穿梭冷却 ${value > 0 ? '+' : ''}${value.toFixed(2)}s`;
+    case 'dashPulseDamage':
+      return `脉冲伤害 ${value > 0 ? '+' : ''}${value}`;
+    case 'dashInvulnerability':
+      return `无伤窗口 ${value > 0 ? '+' : ''}${value.toFixed(2)}s`;
+    case 'regeneration':
+      return `每秒回复 ${value > 0 ? '+' : ''}${value.toFixed(2)}`;
+    default:
+      return `${key} ${value > 0 ? '+' : ''}${value}`;
+  }
+}
+
+function describeEffects(effects: ContentEffect[], routeId?: UpgradeArchetype['routeId']): string {
+  const segments: string[] = [];
+
+  for (const effect of effects) {
+    if (effect.type === 'stats') {
+      segments.push(
+        ...Object.entries(effect.modifiers).map(([key, value]) => formatModifierLabel(key as keyof StatModifiers, value as number)),
+      );
+      continue;
+    }
+
+    if (effect.type === 'heal') {
+      if (effect.amount > 0) {
+        segments.push(`恢复 ${effect.amount} 点耐久`);
+      } else {
+        segments.push(`承受 ${Math.abs(effect.amount)} 点压力伤害`);
+      }
+      continue;
+    }
+
+    if (effect.routeId !== 'dominant') {
+      segments.push(`${ROUTE_NAME_MAP[effect.routeId]}路线推进 +1`);
+    }
+  }
+
+  if (routeId && !segments.some((segment) => segment.includes('路线推进'))) {
+    segments.push(`${ROUTE_NAME_MAP[routeId]}路线推进 +1`);
+  }
+
+  return segments.join('，');
+}
+
+export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
+  {
+    id: 'generic-firepower',
+    name: '火控强化',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 4,
+      noDominantRouteBonus: 2,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 6,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-cadence',
+    name: '压缩射频',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 4,
+      noDominantRouteBonus: 2,
+      finalPrepBonus: 3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.24,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-ballistics',
+    name: '弹道校正',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 3,
+      minRound: 1,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          projectileSpeed: 34,
+          damage: 2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-optics',
+    name: '精密镜组',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 3,
+      maxRound: 3,
+      noDominantRouteBonus: 3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critChance: 0.05,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-reactor',
+    name: '爆伤蓄能',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 3,
+      minRound: 2,
+      finalPrepBonus: 3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critMultiplier: 0.28,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-frame',
+    name: '强化骨架',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 4,
+      noDominantRouteBonus: 2,
+      finalPrepBonus: 4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 16,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 12,
+      },
+    ],
+  },
+  {
+    id: 'generic-thrusters',
+    name: '矢量喷口',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 3,
+      noDominantRouteBonus: 2,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          moveSpeed: 20,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-overclock',
+    name: '循环稳态',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer'],
+    selection: {
+      baseWeight: 2,
+      minRound: 2,
+      finalPrepBonus: 4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          regeneration: 0.16,
+          fireRate: 0.12,
+        },
+      },
+    ],
+  },
   {
     id: 'crit-aim',
     name: '聚焦瞄准',
-    description: '暴击率提升，前段更容易打出爆点。',
+    category: 'route',
     routeId: 'crit',
     tags: ['starter'],
     selection: {
@@ -17,7 +295,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.12,
+          critChance: 0.09,
           damage: 4,
         },
       },
@@ -30,7 +308,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: 'crit-burst',
     name: '连发校准',
-    description: '射速上升，暴击节奏更密。',
+    category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
     selection: {
@@ -44,36 +322,8 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.55,
-          critChance: 0.08,
-        },
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-    ],
-  },
-  {
-    id: 'crit-finish',
-    name: '终端爆发',
-    description: '暴击倍率提升，终局更容易瞬间清场。',
-    routeId: 'crit',
-    tags: ['finisher'],
-    selection: {
-      baseWeight: 3,
-      minRound: 2,
-      dominantRouteBonus: 5,
-      committedRouteBonus: 4,
-      maturedRouteBonus: 3,
-      finalPrepBonus: 3,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.1,
-          critMultiplier: 0.7,
+          fireRate: 0.28,
+          critChance: 0.06,
         },
       },
       {
@@ -85,7 +335,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: 'crit-heat',
     name: '热区追击',
-    description: '暴击后更容易把下一拍也接成爆发段。',
+    category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
     selection: {
@@ -101,8 +351,36 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
         type: 'stats',
         modifiers: {
           damage: 5,
-          fireRate: 0.3,
-          critMultiplier: 0.35,
+          fireRate: 0.2,
+          critMultiplier: 0.24,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-finish',
+    name: '终端爆发',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['finisher'],
+    selection: {
+      baseWeight: 3,
+      minRound: 2,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 4,
+      maturedRouteBonus: 3,
+      finalPrepBonus: 3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critChance: 0.08,
+          critMultiplier: 0.48,
         },
       },
       {
@@ -114,7 +392,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: 'pierce-core',
     name: '穿甲校正',
-    description: '子弹获得额外穿透层数。',
+    category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
     selection: {
@@ -129,6 +407,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
         modifiers: {
           pierce: 1,
           damage: 3,
+          projectileSpeed: 18,
         },
       },
       {
@@ -140,7 +419,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: 'pierce-fan',
     name: '裂轨分束',
-    description: '增加分束，让火力更适合清线。',
+    category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
     selection: {
@@ -164,37 +443,9 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
     ],
   },
   {
-    id: 'pierce-chain',
-    name: '续链增程',
-    description: '穿透和射速同时抬升，推进更稳。',
-    routeId: 'pierce',
-    tags: ['finisher'],
-    selection: {
-      baseWeight: 3,
-      minRound: 2,
-      dominantRouteBonus: 5,
-      committedRouteBonus: 4,
-      maturedRouteBonus: 3,
-      finalPrepBonus: 2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          fireRate: 0.35,
-        },
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
-      },
-    ],
-  },
-  {
     id: 'pierce-ripple',
     name: '回响切层',
-    description: '贯穿后的余势更足，打穿一层后更容易继续清开下一层。',
+    category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
     selection: {
@@ -221,9 +472,38 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
     ],
   },
   {
+    id: 'pierce-chain',
+    name: '续链增程',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['finisher'],
+    selection: {
+      baseWeight: 3,
+      minRound: 2,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 4,
+      maturedRouteBonus: 3,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierce: 1,
+          fireRate: 0.24,
+          projectileSpeed: 24,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
     id: 'dash-brush',
     name: '擦身推进',
-    description: '定期触发穿梭脉冲，近身也能换取收益。',
+    category: 'route',
     routeId: 'dash',
     tags: ['starter'],
     selection: {
@@ -237,8 +517,8 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
         type: 'stats',
         modifiers: {
           dashPulseDamage: 10,
-          moveSpeed: 12,
-          dashInterval: -0.7,
+          moveSpeed: 18,
+          dashInterval: -0.55,
         },
       },
       {
@@ -250,7 +530,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: 'dash-loop',
     name: '净帧循环',
-    description: '穿梭间隔缩短，机体更容易稳定脱离高压。',
+    category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
     selection: {
@@ -265,37 +545,8 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
         type: 'stats',
         modifiers: {
           dashPulseDamage: 8,
-          dashInterval: -0.9,
-          dashInvulnerability: 0.18,
-        },
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
-    ],
-  },
-  {
-    id: 'dash-anchor',
-    name: '穿梭定标',
-    description: '穿梭时回复少量护体，续航更稳。',
-    routeId: 'dash',
-    tags: ['finisher'],
-    selection: {
-      baseWeight: 3,
-      minRound: 2,
-      dominantRouteBonus: 5,
-      committedRouteBonus: 4,
-      maturedRouteBonus: 3,
-      finalPrepBonus: 3,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          regeneration: 0.35,
-          dashPulseDamage: 6,
-          moveSpeed: 14,
+          dashInterval: -0.68,
+          dashInvulnerability: 0.12,
         },
       },
       {
@@ -307,7 +558,7 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: 'dash-rethread',
     name: '回线续拍',
-    description: '穿梭后更快回到可控节奏，重新拉出下一次反打窗口。',
+    category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
     selection: {
@@ -322,10 +573,10 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.6,
-          dashInvulnerability: 0.12,
-          regeneration: 0.18,
-          moveSpeed: 8,
+          dashInterval: -0.48,
+          dashInvulnerability: 0.08,
+          regeneration: 0.14,
+          moveSpeed: 12,
         },
       },
       {
@@ -335,65 +586,49 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
     ],
   },
   {
-    id: 'generic-armor',
-    name: '应急装甲',
-    description: '抬高上限并立刻恢复部分耐久。',
-    tags: ['stabilizer'],
-    selection: {
-      baseWeight: 4,
-      noDominantRouteBonus: 2,
-      finalPrepBonus: 5,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          maxHp: 18,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 18,
-      },
-    ],
-  },
-  {
-    id: 'generic-control',
-    name: '稳态火控',
-    description: '火力更平滑，基础伤害上升。',
-    tags: ['stabilizer'],
-    selection: {
-      baseWeight: 4,
-      noDominantRouteBonus: 2,
-      finalPrepBonus: 2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 7,
-          fireRate: 0.2,
-        },
-      },
-    ],
-  },
-  {
-    id: 'generic-cooling',
-    name: '冷却压缩',
-    description: '进一步提高射速，稳定推进。',
-    tags: ['stabilizer'],
+    id: 'dash-anchor',
+    name: '穿梭定标',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['finisher'],
     selection: {
       baseWeight: 3,
       minRound: 2,
-      finalPrepBonus: 4,
+      dominantRouteBonus: 5,
+      committedRouteBonus: 4,
+      maturedRouteBonus: 3,
+      finalPrepBonus: 3,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.45,
+          regeneration: 0.22,
+          dashPulseDamage: 8,
+          moveSpeed: 16,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
     ],
   },
 ];
+
+export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
+  const effects = scaleEffects(archetype.effects, rarity);
+  return {
+    id: `${archetype.id}:${rarity}:${Math.random().toString(36).slice(2, 8)}`,
+    sourceId: archetype.id,
+    name: archetype.name,
+    description: describeEffects(effects, archetype.routeId),
+    category: archetype.category,
+    rarity,
+    rarityLabel: RARITY_LABEL_MAP[rarity],
+    routeId: archetype.routeId,
+    repeatable: archetype.repeatable,
+    tags: archetype.tags,
+    effects,
+  };
+}

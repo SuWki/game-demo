@@ -1,23 +1,29 @@
+import { getUpgradeRarityWeights } from './balance';
 import { EVENT_CATALOG } from './events';
 import { ROUTES } from './routes';
-import { UPGRADE_CATALOG } from './upgrades';
+import { buildUpgradeChoice, UPGRADE_ARCHETYPES } from './upgrades';
 import type {
   ContentEffect,
   ContentSelectionProfile,
   EventDefinition,
   EventOption,
+  PhaseId,
   RouteId,
   RouteReference,
   RunState,
+  UpgradeArchetype,
   UpgradeDefinition,
+  UpgradeRarity,
+  UpgradeSource,
 } from '../game/types';
 
 interface ContentContext {
   round: number;
+  level: number;
+  phase: PhaseId;
   dominantRoute: RouteId | null;
   committedRoute: RouteId | null;
   maturedRoute: RouteId | null;
-  isFinalPrep: boolean;
   selectedUpgradeIds: string[];
 }
 
@@ -55,10 +61,24 @@ function pickWeightedUnique<T extends { id: string }>(
   return picks;
 }
 
+function pickWeightedOne<T>(entries: Array<{ item: T; weight: number }>): T {
+  const filtered = entries.filter((entry) => entry.weight > 0);
+  const totalWeight = filtered.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const entry of filtered) {
+    roll -= entry.weight;
+    if (roll <= 0) {
+      return entry.item;
+    }
+  }
+  return filtered[filtered.length - 1].item;
+}
+
 function getSelectionWeight(
   profile: ContentSelectionProfile | undefined,
   routeId: RouteId | undefined,
   context: ContentContext,
+  source: UpgradeSource,
 ): number {
   const rule = profile ?? {};
   if (rule.minRound && context.round < rule.minRound) {
@@ -67,7 +87,7 @@ function getSelectionWeight(
   if (rule.maxRound && context.round > rule.maxRound) {
     return 0;
   }
-  if (rule.excludeFromFinalPrep && context.isFinalPrep) {
+  if (rule.excludeFromFinalPrep && source === 'nodePrep') {
     return 0;
   }
 
@@ -77,7 +97,7 @@ function getSelectionWeight(
     weight += rule.noDominantRouteBonus ?? 0;
   }
 
-  if (context.isFinalPrep) {
+  if (source === 'nodePrep') {
     weight += rule.finalPrepBonus ?? 0;
   }
 
@@ -100,66 +120,86 @@ function getSelectionWeight(
   return Math.max(0, weight);
 }
 
-function buildContentContext(state: Readonly<RunState>, isFinalPrep: boolean): ContentContext {
+function buildContentContext(state: Readonly<RunState>): ContentContext {
   const dominantRoute = (Object.entries(state.routeCounts) as Array<[RouteId, number]>)
     .sort((left, right) => right[1] - left[1])[0];
 
   return {
-    round: Math.max(1, state.round),
+    round: Math.max(1, state.round || 1),
+    level: state.level,
+    phase: state.phase,
     dominantRoute: dominantRoute && dominantRoute[1] > 0 ? dominantRoute[0] : null,
     committedRoute: state.committedRoute,
     maturedRoute: state.maturedRoute,
-    isFinalPrep,
     selectedUpgradeIds: state.selectedUpgrades,
   };
 }
 
-function selectStarterSet(context: ContentContext): UpgradeDefinition[] {
-  return ROUTES.map((route) =>
-    pickWeightedUnique(
-      UPGRADE_CATALOG.filter(
-        (upgrade) =>
-          upgrade.routeId === route.id &&
-          upgrade.tags?.includes('starter') &&
-          !context.selectedUpgradeIds.includes(upgrade.id),
-      ).map((upgrade) => ({
-        item: upgrade,
-        weight: getSelectionWeight(upgrade.selection, upgrade.routeId, context),
-      })),
-      1,
-    )[0],
-  ).filter(Boolean) as UpgradeDefinition[];
+function canOfferUpgrade(archetype: UpgradeArchetype, context: ContentContext): boolean {
+  return archetype.repeatable || !context.selectedUpgradeIds.includes(archetype.id);
 }
 
-export function rollUpgradeChoices(state: Readonly<RunState>, isFinalPrep: boolean): UpgradeDefinition[] {
-  const context = buildContentContext(state, isFinalPrep);
+function pickUpgradeRarity(context: ContentContext, source: UpgradeSource): UpgradeRarity {
+  const phase = source === 'nodePrep' ? 'finalPrep' : context.phase;
+  const weights = getUpgradeRarityWeights(context.round, phase, context.level, source);
+  return pickWeightedOne(
+    (Object.entries(weights) as Array<[UpgradeRarity, number]>).map(([rarity, weight]) => ({
+      item: rarity,
+      weight,
+    })),
+  );
+}
+
+function selectStarterSet(context: ContentContext, source: UpgradeSource): UpgradeDefinition[] {
+  return ROUTES.map((route) => {
+    const starter = pickWeightedUnique(
+      UPGRADE_ARCHETYPES.filter(
+        (archetype) =>
+          archetype.routeId === route.id &&
+          archetype.tags?.includes('starter') &&
+          canOfferUpgrade(archetype, context),
+      ).map((archetype) => ({
+        item: archetype,
+        weight: getSelectionWeight(archetype.selection, archetype.routeId, context, source),
+      })),
+      1,
+    )[0];
+
+    return starter ? buildUpgradeChoice(starter, pickUpgradeRarity(context, source)) : undefined;
+  }).filter(Boolean) as UpgradeDefinition[];
+}
+
+export function rollUpgradeChoices(
+  state: Readonly<RunState>,
+  source: UpgradeSource,
+): UpgradeDefinition[] {
+  const context = buildContentContext(state);
   if (!context.dominantRoute) {
-    return selectStarterSet(context).slice(0, 3);
+    return selectStarterSet(context, source).slice(0, 3);
   }
 
-  const weightedPool = UPGRADE_CATALOG.filter((upgrade) => !context.selectedUpgradeIds.includes(upgrade.id)).map(
-    (upgrade) => ({
-      item: upgrade,
-      weight: getSelectionWeight(upgrade.selection, upgrade.routeId, context),
+  const weightedPool = UPGRADE_ARCHETYPES.filter((archetype) => canOfferUpgrade(archetype, context)).map(
+    (archetype) => ({
+      item: archetype,
+      weight: getSelectionWeight(archetype.selection, archetype.routeId, context, source),
     }),
   );
 
-  const choices = pickWeightedUnique(weightedPool, 3);
-  if (choices.length === 3) {
-    return choices;
+  const picks = pickWeightedUnique(weightedPool, 3);
+  if (picks.length < 3) {
+    const fallback = pickWeightedUnique(
+      UPGRADE_ARCHETYPES.filter(
+        (archetype) => canOfferUpgrade(archetype, context) && !picks.some((picked) => picked.id === archetype.id),
+      ).map((archetype) => ({
+        item: archetype,
+        weight: 1,
+      })),
+      3 - picks.length,
+    );
+    picks.push(...fallback);
   }
 
-  const fallbackPool = UPGRADE_CATALOG.filter((upgrade) => !context.selectedUpgradeIds.includes(upgrade.id)).map(
-    (upgrade) => ({
-      item: upgrade,
-      weight: 1,
-    }),
-  );
-  const fallback = pickWeightedUnique(
-    fallbackPool.filter((entry) => !choices.some((choice) => choice.id === entry.item.id)),
-    3 - choices.length,
-  );
-  return [...choices, ...fallback];
+  return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source)));
 }
 
 function resolveRouteReference(routeRef: RouteReference | undefined, dominantRoute: RouteId | null): RouteId | undefined {
@@ -205,10 +245,10 @@ function resolveEventDefinition(eventDef: EventDefinition, dominantRoute: RouteI
 }
 
 export function rollEventDefinition(state: Readonly<RunState>): EventDefinition {
-  const context = buildContentContext(state, false);
+  const context = buildContentContext(state);
   const weightedEvents = EVENT_CATALOG.map((eventDef) => ({
     item: eventDef,
-    weight: getSelectionWeight(eventDef.selection, undefined, context),
+    weight: getSelectionWeight(eventDef.selection, undefined, context, 'levelUp'),
   }));
   const selected = pickWeightedUnique(weightedEvents, 1)[0] ?? EVENT_CATALOG[0];
   return resolveEventDefinition(selected, context.dominantRoute);

@@ -14,6 +14,9 @@ export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
 export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
 export type AudioCue = 'click' | 'upgrade' | 'hit' | 'crit' | 'pressure' | 'result';
 export type ToastTone = 'neutral' | 'accent' | 'route' | 'danger' | 'success';
+export type UpgradeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type UpgradeSource = 'levelUp' | 'nodePrep';
+export type UpgradeCategory = 'generic' | 'route';
 
 export interface RouteDefinition {
   id: RouteId;
@@ -49,6 +52,7 @@ export interface StatModifiers {
   maxHp?: number;
   damage?: number;
   fireRate?: number;
+  projectileSpeed?: number;
   critChance?: number;
   critMultiplier?: number;
   pierce?: number;
@@ -87,13 +91,28 @@ export type ContentEffect =
       routeId: RouteReference;
     };
 
-export interface UpgradeDefinition {
+export interface UpgradeArchetype {
   id: string;
   name: string;
-  description: string;
+  category: UpgradeCategory;
   routeId?: RouteId;
+  repeatable?: boolean;
   tags?: string[];
   selection?: ContentSelectionProfile;
+  effects: ContentEffect[];
+}
+
+export interface UpgradeDefinition {
+  id: string;
+  sourceId: string;
+  name: string;
+  description: string;
+  category: UpgradeCategory;
+  rarity: UpgradeRarity;
+  rarityLabel: string;
+  routeId?: RouteId;
+  repeatable?: boolean;
+  tags?: string[];
   effects: ContentEffect[];
 }
 
@@ -122,6 +141,7 @@ export interface NodeOption {
   phase: PhaseId;
   isFinalPrep?: boolean;
   difficultyScale?: number;
+  laneIndex?: number;
 }
 
 export interface PlayerStats {
@@ -129,6 +149,7 @@ export interface PlayerStats {
   hp: number;
   damage: number;
   fireRate: number;
+  projectileSpeed: number;
   critChance: number;
   critMultiplier: number;
   pierce: number;
@@ -172,6 +193,22 @@ export interface PulseState {
   lifeSec: number;
 }
 
+export interface ExperienceOrbState {
+  id: number;
+  x: number;
+  y: number;
+  value: number;
+  velocityX: number;
+  velocityY: number;
+}
+
+export interface PlayerInputState {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+}
+
 export interface BattleState {
   templateId: BattleTemplateId;
   label: string;
@@ -195,6 +232,7 @@ export interface BattleState {
   enemies: EnemyState[];
   bullets: BulletState[];
   pulses: PulseState[];
+  experienceOrbs: ExperienceOrbState[];
   playerX: number;
   playerY: number;
   eliteAlive: boolean;
@@ -225,6 +263,7 @@ export interface RunResult {
   runDurationSec: number;
   nodesCleared: number;
   battleWins: number;
+  levelReached: number;
 }
 
 export interface RunState {
@@ -232,6 +271,11 @@ export interface RunState {
   phase: PhaseId;
   round: number;
   totalRounds: number;
+  level: number;
+  experience: number;
+  experienceToNext: number;
+  queuedLevelUps: number;
+  upgradeSource: UpgradeSource | null;
   routeCounts: Record<RouteId, number>;
   committedRoute: RouteId | null;
   maturedRoute: RouteId | null;
@@ -257,6 +301,8 @@ export interface OverlayHudSnapshot {
   phaseLabel: string;
   nodeLabel: string;
   hpText: string;
+  levelText: string;
+  experienceText: string;
   routeProgress: Array<{
     routeId: RouteId;
     label: string;

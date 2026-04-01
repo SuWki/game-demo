@@ -57,3 +57,24 @@ TODO
 - structure `80%~86%`
 - content `48%~58%`
 - presentation `40%~50%`
+2026-04-02
+- Re-read all docs in `doc/docs` and kept `PROJECT_STATUS.md` plus the latest `DEV_ISSUE_LOG.md` as the source-of-truth stage docs.
+- The user expanded the gameplay contract this round: manual movement, XP orb pickup, in-battle level-up choices, rarity tiers, and explicit numeric formulas.
+- Kept the latest-doc boundary that the project should stay in short-run node progression instead of becoming a full multi-floor Slay the Spire map.
+- Added the first formula-driven pass for:
+- WASD / arrow-key movement
+- enemy XP orb drops and magnet pickup
+- in-battle level-up choices
+- rarity-based upgrade rolls
+- generic stat upgrades plus route-special upgrades
+- HUD and panel updates now show level, XP, rarity badges, and clearer route/build reading.
+- Added `doc/docs/NUMERIC_FORMULAS.md` and updated the related docs so the new formulas and lightweight-map tradeoff are written down.
+- `npm run build` passes.
+- Playwright smoke check on `http://127.0.0.1:4173` confirmed:
+- menu text now mentions `WASD`
+- battle reaches in-run level-up panels
+- upgrade cards show rarity and rolled values
+- console reported 0 errors
+TODO
+- Re-check pacing next round: XP gain appears somewhat fast in the first two battles.
+- Consider adding a small non-player-facing debug state hook if future browser verification needs exact movement / XP assertions.

@@ -1,3 +1,4 @@
+import { RARITY_COLOR_MAP } from '../data/balance';
 import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type {
   EventDefinition,
@@ -79,7 +80,7 @@ export class OverlayController {
         </div>
         <p class="eyebrow">短局试玩版</p>
         <h1>节点式自动射击 Demo</h1>
-        <p class="lead">在短局节点推进里读懂节奏，围绕暴击、穿透、穿梭逐步成型。</p>
+        <p class="lead">用 WASD 在短局节点推进里读懂节奏，围绕暴击、穿透、穿梭逐步成型。</p>
         <div class="hero-routes">
           <span class="route-badge route-badge-crit">暴击</span>
           <span class="route-badge route-badge-pierce">穿透</span>
@@ -116,6 +117,14 @@ export class OverlayController {
       <div class="hud-shell">
         <div class="hud-bar">
           <div class="hud-block">
+            <span>等级</span>
+            <strong>${snapshot.levelText}</strong>
+          </div>
+          <div class="hud-block">
+            <span>经验</span>
+            <strong>${snapshot.experienceText}</strong>
+          </div>
+          <div class="hud-block">
             <span>阶段</span>
             <strong>${snapshot.phaseLabel}</strong>
           </div>
@@ -151,10 +160,10 @@ export class OverlayController {
   public showNodePanel(phaseLabel: string, options: NodeOption[], onChoose: (nodeId: string) => void): void {
     this.showPanel(
       `${phaseLabel}节点选择`,
-      '战斗是抢成长，强化是稳修正，事件是拐方向。',
+      '沿着分支选一条路推进。战斗抢经验，强化稳补值，事件拐方向。',
       options.map(
         (node) => `
-          <button class="choice-card" style="--choice-accent: ${NODE_TYPE_ACCENTS[node.type]}" data-choice="${node.id}">
+          <button class="choice-card map-choice" style="--choice-accent: ${NODE_TYPE_ACCENTS[node.type]}" data-choice="${node.id}">
             <span class="choice-type">${NODE_TYPE_LABELS[node.type]}</span>
             <strong>${node.title}</strong>
             <small>${node.description}</small>
@@ -175,6 +184,7 @@ export class OverlayController {
         (upgrade) => `
           <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(upgrade.routeId)}" data-choice="${upgrade.id}">
             <span class="choice-type">${upgrade.routeId ? ROUTE_NAME_MAP[upgrade.routeId] : '通用'}</span>
+            <span class="choice-rarity" style="--rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}">${upgrade.rarityLabel}</span>
             <strong>${upgrade.name}</strong>
             <small>${upgrade.description}</small>
           </button>
@@ -231,6 +241,10 @@ export class OverlayController {
           <div>
             <span>结束</span>
             <strong>${result.endingLabel}</strong>
+          </div>
+          <div>
+            <span>等级</span>
+            <strong>Lv.${result.levelReached}</strong>
           </div>
         </div>
         <div class="result-callout">

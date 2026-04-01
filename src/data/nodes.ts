@@ -200,5 +200,8 @@ export function createOpeningBattleNode(): NodeOption {
 }
 
 export function buildNodeOptions(round: number, focusRoute: RouteId | null): NodeOption[] {
-  return (ROUND_NODE_BLUEPRINTS[round] ?? []).map((blueprint) => buildNode(blueprint, focusRoute));
+  return (ROUND_NODE_BLUEPRINTS[round] ?? []).map((blueprint, index) => ({
+    ...buildNode(blueprint, focusRoute),
+    laneIndex: index,
+  }));
 }

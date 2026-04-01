@@ -199,7 +199,7 @@ h1 {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
   margin-top: 24px;
 }
@@ -253,6 +253,10 @@ h1 {
 
 .result-card .menu-stats > div:nth-child(3)::before {
   background: linear-gradient(180deg, rgba(125, 210, 255, 0.95), rgba(125, 210, 255, 0));
+}
+
+.result-card .menu-stats > div:nth-child(4)::before {
+  background: linear-gradient(180deg, rgba(255, 202, 105, 0.95), rgba(255, 202, 105, 0));
 }
 
 .result-callout {
@@ -318,7 +322,7 @@ button:hover {
 
 .hud-bar {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 12px;
 }
 
@@ -369,6 +373,10 @@ button:hover {
   overflow: hidden;
 }
 
+.map-choice {
+  min-height: 188px;
+}
+
 .choice-card::before {
   content: "";
   position: absolute;
@@ -395,6 +403,24 @@ button:hover {
   display: block;
   margin-top: 10px;
   font-size: 22px;
+}
+
+.choice-rarity {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  margin-top: 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--rarity-accent, #d6dde6) 55%, transparent);
+  color: var(--rarity-accent, #d6dde6);
+  background: color-mix(in srgb, var(--rarity-accent, #d6dde6) 14%, rgba(255, 255, 255, 0.02));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .choice-card small {
