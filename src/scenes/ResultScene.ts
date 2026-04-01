@@ -23,7 +23,7 @@ export class ResultScene extends Phaser.Scene {
         services.audio.play('click');
         const content = window.__exportPilotMetrics();
         navigator.clipboard.writeText(content).catch(() => undefined);
-        services.overlay.pushToast('埋点已导出到剪贴板');
+        services.overlay.pushToast('埋点已导出到剪贴板', 'success');
       },
     });
   }

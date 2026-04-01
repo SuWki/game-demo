@@ -36,3 +36,24 @@ TODO
 - structure `78%~85%`
 - content `48%~58%`
 - presentation `28%~38%`
+2026-04-01
+- Re-read `doc/docs` again for the presentation pass and kept `PROJECT_STATUS.md` plus the latest `DEV_ISSUE_LOG.md` as the stage source of truth.
+- Confirmed from docs that this round should stay in “minimal presentation closeout”, not a UI redesign and not a content-expansion pass.
+- Rebuilt the low-level presentation layer in a minimal, low-risk way:
+- rewrote `OverlayController` cleanly in UTF-8 and added consistent menu / HUD / panel / result styling hooks
+- added toast tones for neutral / accent / route / danger / success
+- upgraded `PilotAudio` from single-beep cues to layered cue profiles with cooldown control
+- refreshed `GameScene` HUD summaries and battle backdrop so route hint / lock / mature states read more clearly
+- cleaned menu / result scene user-facing toast text
+- `npm run build` passes after the presentation changes.
+- Playwright smoke check on `http://127.0.0.1:4173` confirmed:
+- start page text is clean
+- in-run node / upgrade panels are clean
+- route hint -> route committed -> route matured wording is consistent in HUD
+- result page now feels visually closer to the same product and stays text-clean
+- browser console had 0 errors
+- Current recovery estimate after this round:
+- overall `66%~75%`
+- structure `80%~86%`
+- content `48%~58%`
+- presentation `40%~50%`

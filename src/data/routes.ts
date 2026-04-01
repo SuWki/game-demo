@@ -31,3 +31,11 @@ export const ROUTE_NAME_MAP: Record<RouteId, string> = ROUTES.reduce(
   },
   {} as Record<RouteId, string>,
 );
+
+export const ROUTE_COLOR_MAP: Record<RouteId, string> = ROUTES.reduce(
+  (accumulator, route) => {
+    accumulator[route.id] = route.color;
+    return accumulator;
+  },
+  {} as Record<RouteId, string>,
+);

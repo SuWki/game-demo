@@ -1,10 +1,11 @@
-import { ROUTE_NAME_MAP } from '../data/routes';
+import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type {
   EventDefinition,
   NodeOption,
   OverlayHudSnapshot,
   OverlayMetaSummary,
   RunResult,
+  ToastTone,
   UpgradeDefinition,
 } from '../game/types';
 
@@ -19,6 +20,20 @@ const NODE_TYPE_LABELS = {
   upgrade: '强化',
   event: '事件',
 } as const;
+
+const NODE_TYPE_ACCENTS = {
+  battle: '#ff8f70',
+  upgrade: '#68d4ff',
+  event: '#ffd58a',
+} as const;
+
+const TOAST_BADGES: Record<ToastTone, string> = {
+  neutral: '提示',
+  accent: '阶段',
+  route: '路线',
+  danger: '高压',
+  success: '完成',
+};
 
 export class OverlayController {
   private readonly root: HTMLElement;
@@ -56,10 +71,20 @@ export class OverlayController {
     this.hidePanel();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
-      <section class="menu-card">
+      <section class="menu-card hero-card">
+        <div class="surface-mark">
+          <span class="surface-dot"></span>
+          <span class="surface-dot"></span>
+          <span class="surface-dot"></span>
+        </div>
         <p class="eyebrow">短局试玩版</p>
         <h1>节点式自动射击 Demo</h1>
         <p class="lead">在短局节点推进里读懂节奏，围绕暴击、穿透、穿梭逐步成型。</p>
+        <div class="hero-routes">
+          <span class="route-badge route-badge-crit">暴击</span>
+          <span class="route-badge route-badge-pierce">穿透</span>
+          <span class="route-badge route-badge-dash">穿梭</span>
+        </div>
         <div class="menu-stats">
           <div>
             <span>累计试飞</span>
@@ -88,35 +113,37 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
-      <div class="hud-bar">
-        <div class="hud-block">
-          <span>阶段</span>
-          <strong>${snapshot.phaseLabel}</strong>
+      <div class="hud-shell">
+        <div class="hud-bar">
+          <div class="hud-block">
+            <span>阶段</span>
+            <strong>${snapshot.phaseLabel}</strong>
+          </div>
+          <div class="hud-block">
+            <span>节点</span>
+            <strong>${snapshot.nodeLabel}</strong>
+          </div>
+          <div class="hud-block">
+            <span>耐久</span>
+            <strong>${snapshot.hpText}</strong>
+          </div>
+          <div class="hud-block wide hud-focus">
+            <span>战斗读数</span>
+            <strong>${snapshot.battleText}</strong>
+          </div>
         </div>
-        <div class="hud-block">
-          <span>节点</span>
-          <strong>${snapshot.nodeLabel}</strong>
+        <div class="route-strip">
+          ${snapshot.routeProgress
+            .map(
+              (route) => `
+                <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
+                  <span>${route.label}</span>
+                  <strong>${route.value}</strong>
+                </div>
+              `,
+            )
+            .join('')}
         </div>
-        <div class="hud-block">
-          <span>耐久</span>
-          <strong>${snapshot.hpText}</strong>
-        </div>
-        <div class="hud-block wide">
-          <span>战斗读数</span>
-          <strong>${snapshot.battleText}</strong>
-        </div>
-      </div>
-      <div class="route-strip">
-        ${snapshot.routeProgress
-          .map(
-            (route) => `
-              <div class="route-chip ${route.active ? 'active' : ''}">
-                <span>${route.label}</span>
-                <strong>${route.value}</strong>
-              </div>
-            `,
-          )
-          .join('')}
       </div>
     `;
   }
@@ -127,7 +154,7 @@ export class OverlayController {
       '战斗是抢成长，强化是稳修正，事件是拐方向。',
       options.map(
         (node) => `
-          <button class="choice-card" data-choice="${node.id}">
+          <button class="choice-card" style="--choice-accent: ${NODE_TYPE_ACCENTS[node.type]}" data-choice="${node.id}">
             <span class="choice-type">${NODE_TYPE_LABELS[node.type]}</span>
             <strong>${node.title}</strong>
             <small>${node.description}</small>
@@ -146,7 +173,7 @@ export class OverlayController {
       '从三项中选一项，继续把当前方向扶起来。',
       choices.map(
         (upgrade) => `
-          <button class="choice-card" data-choice="${upgrade.id}">
+          <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(upgrade.routeId)}" data-choice="${upgrade.id}">
             <span class="choice-type">${upgrade.routeId ? ROUTE_NAME_MAP[upgrade.routeId] : '通用'}</span>
             <strong>${upgrade.name}</strong>
             <small>${upgrade.description}</small>
@@ -165,7 +192,7 @@ export class OverlayController {
       eventDef.description,
       eventDef.options.map(
         (option) => `
-          <button class="choice-card" data-choice="${option.id}">
+          <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(option.routeId)}" data-choice="${option.id}">
             <span class="choice-type">${this.getOptionTypeLabel(option.routeId)}</span>
             <strong>${option.label}</strong>
             <small>${option.description}</small>
@@ -184,6 +211,11 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
       <section class="menu-card result-card">
+        <div class="surface-mark">
+          <span class="surface-dot"></span>
+          <span class="surface-dot"></span>
+          <span class="surface-dot"></span>
+        </div>
         <p class="eyebrow">${result.outcome === 'victory' ? '试飞完成' : '试飞中止'}</p>
         <h1>${result.outcome === 'victory' ? '本局已完成收束' : '这局还差一点就能收稳'}</h1>
         <p class="lead">${result.summary}</p>
@@ -201,8 +233,10 @@ export class OverlayController {
             <strong>${result.endingLabel}</strong>
           </div>
         </div>
-        <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
-        <p class="panel-description">收尾节点：${result.finalNodeTitle} · 战斗胜场 ${result.battleWins} · 推进节点 ${result.nodesCleared} · 时长 ${result.runDurationSec.toFixed(1)}s</p>
+        <div class="result-callout">
+          <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
+          <p class="panel-description">收尾节点：${result.finalNodeTitle} · 战斗胜场 ${result.battleWins} · 推进节点 ${result.nodesCleared} · 时长 ${result.runDurationSec.toFixed(1)}s</p>
+        </div>
         <div class="menu-actions">
           <button class="primary-action" data-action="restart">再来一局</button>
           <button class="secondary-action" data-action="menu">返回开始页</button>
@@ -215,14 +249,17 @@ export class OverlayController {
     this.bindClick('[data-action="export"]', actions.onExport);
   }
 
-  public pushToast(message: string): void {
+  public pushToast(message: string, tone: ToastTone = 'neutral'): void {
     const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
+    toast.className = `toast tone-${tone}`;
+    toast.innerHTML = `
+      <span class="toast-badge">${TOAST_BADGES[tone]}</span>
+      <span class="toast-text">${message}</span>
+    `;
     this.toastLayer.appendChild(toast);
     window.setTimeout(() => {
       toast.remove();
-    }, 2600);
+    }, 2800);
   }
 
   public hidePanel(): void {
@@ -240,6 +277,11 @@ export class OverlayController {
     this.panelLayer.classList.remove('hidden');
     this.panelLayer.innerHTML = `
       <section class="floating-panel">
+        <div class="surface-mark">
+          <span class="surface-dot"></span>
+          <span class="surface-dot"></span>
+          <span class="surface-dot"></span>
+        </div>
         <p class="eyebrow">${title}</p>
         <p class="panel-description">${description}</p>
         <div class="choice-grid">${items.join('')}</div>
@@ -259,5 +301,12 @@ export class OverlayController {
       return '事件';
     }
     return ROUTE_NAME_MAP[routeId];
+  }
+
+  private getRouteAccent(routeId?: UpgradeDefinition['routeId'] | EventDefinition['options'][number]['routeId']): string {
+    if (!routeId || routeId === 'dominant') {
+      return '#68d4ff';
+    }
+    return ROUTE_COLOR_MAP[routeId];
   }
 }

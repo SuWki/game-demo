@@ -13,6 +13,7 @@ export type RunOutcome = 'victory' | 'defeat';
 export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
 export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
 export type AudioCue = 'click' | 'upgrade' | 'hit' | 'crit' | 'pressure' | 'result';
+export type ToastTone = 'neutral' | 'accent' | 'route' | 'danger' | 'success';
 
 export interface RouteDefinition {
   id: RouteId;
@@ -260,6 +261,7 @@ export interface OverlayHudSnapshot {
     routeId: RouteId;
     label: string;
     value: number;
+    color: string;
     active: boolean;
   }>;
   battleText: string;
