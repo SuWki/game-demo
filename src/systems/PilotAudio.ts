@@ -51,7 +51,7 @@ export class PilotAudio {
     if (!this.context) {
       this.context = new AudioContext();
       this.masterGain = this.context.createGain();
-      this.masterGain.gain.value = 0.42;
+      this.masterGain.gain.value = 0.36;
       this.masterGain.connect(this.context.destination);
     }
 
@@ -85,9 +85,9 @@ export class PilotAudio {
             createVoice(context, masterGain, now, {
               type: 'triangle',
               frequency: 510,
-              peak: 0.045,
-              duration: 0.05,
-              sweepTo: 380,
+              peak: 0.032,
+              duration: 0.045,
+              sweepTo: 410,
             });
             return 0.07;
           },
@@ -99,31 +99,31 @@ export class PilotAudio {
             createVoice(context, masterGain, now, {
               type: 'triangle',
               frequency: 440,
-              peak: 0.035,
+              peak: 0.028,
               duration: 0.12,
-              sweepTo: 660,
+              sweepTo: 700,
             });
             createVoice(context, masterGain, now, {
               type: 'sine',
-              frequency: 660,
-              peak: 0.025,
+              frequency: 690,
+              peak: 0.022,
               duration: 0.1,
               delay: 0.03,
-              sweepTo: 860,
+              sweepTo: 940,
             });
             return 0.16;
           },
         };
       case 'hit':
         return {
-          cooldownMs: 45,
+          cooldownMs: 70,
           play: (context, masterGain, now) => {
             createVoice(context, masterGain, now, {
               type: 'square',
-              frequency: 210,
-              peak: 0.018,
-              duration: 0.035,
-              sweepTo: 170,
+              frequency: 190,
+              peak: 0.011,
+              duration: 0.025,
+              sweepTo: 150,
             });
             return 0.05;
           },
@@ -135,17 +135,17 @@ export class PilotAudio {
             createVoice(context, masterGain, now, {
               type: 'triangle',
               frequency: 760,
-              peak: 0.04,
+              peak: 0.034,
               duration: 0.08,
-              sweepTo: 980,
+              sweepTo: 1020,
             });
             createVoice(context, masterGain, now, {
               type: 'sine',
-              frequency: 980,
-              peak: 0.028,
+              frequency: 1010,
+              peak: 0.024,
               duration: 0.1,
               delay: 0.015,
-              sweepTo: 1220,
+              sweepTo: 1280,
             });
             return 0.12;
           },
@@ -156,18 +156,18 @@ export class PilotAudio {
           play: (context, masterGain, now) => {
             createVoice(context, masterGain, now, {
               type: 'sawtooth',
-              frequency: 170,
-              peak: 0.05,
-              duration: 0.16,
-              sweepTo: 110,
+              frequency: 140,
+              peak: 0.04,
+              duration: 0.18,
+              sweepTo: 96,
             });
             createVoice(context, masterGain, now, {
               type: 'triangle',
-              frequency: 280,
-              peak: 0.02,
-              duration: 0.14,
+              frequency: 230,
+              peak: 0.017,
+              duration: 0.16,
               delay: 0.02,
-              sweepTo: 180,
+              sweepTo: 150,
             });
             return 0.2;
           },
@@ -178,18 +178,18 @@ export class PilotAudio {
           play: (context, masterGain, now) => {
             createVoice(context, masterGain, now, {
               type: 'triangle',
-              frequency: 320,
-              peak: 0.04,
-              duration: 0.18,
-              sweepTo: 430,
+              frequency: 300,
+              peak: 0.034,
+              duration: 0.2,
+              sweepTo: 410,
             });
             createVoice(context, masterGain, now, {
-              type: 'triangle',
+              type: 'sine',
               frequency: 430,
-              peak: 0.038,
-              duration: 0.22,
+              peak: 0.03,
+              duration: 0.24,
               delay: 0.12,
-              sweepTo: 620,
+              sweepTo: 660,
             });
             return 0.32;
           },

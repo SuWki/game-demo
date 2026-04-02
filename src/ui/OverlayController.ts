@@ -78,13 +78,40 @@ export class OverlayController {
           <span class="surface-dot"></span>
           <span class="surface-dot"></span>
         </div>
-        <p class="eyebrow">短局试玩版</p>
-        <h1>节点式自动射击 Demo</h1>
-        <p class="lead">用 WASD 在短局节点推进里读懂节奏，围绕暴击、穿透、穿梭逐步成型。</p>
-        <div class="hero-routes">
-          <span class="route-badge route-badge-crit">暴击</span>
-          <span class="route-badge route-badge-pierce">穿透</span>
-          <span class="route-badge route-badge-dash">穿梭</span>
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <p class="eyebrow">短局试飞版</p>
+            <h1>节点式自动射击 Demo</h1>
+            <p class="lead">用 WASD 走位、收经验、三选一补强，在短局节点推进里把一条路线扶到成型。</p>
+            <div class="hero-routes">
+              <span class="route-badge route-badge-crit">暴击</span>
+              <span class="route-badge route-badge-pierce">穿透</span>
+              <span class="route-badge route-badge-dash">穿梭</span>
+            </div>
+            <div class="menu-pills">
+              <span class="menu-pill">WASD 走位</span>
+              <span class="menu-pill">自动射击</span>
+              <span class="menu-pill">战斗收经验</span>
+              <span class="menu-pill">节点分路推进</span>
+            </div>
+          </div>
+          <div class="hero-aside">
+            <div class="hero-support">
+              <span>操控</span>
+              <strong>靠走位读压力</strong>
+              <small>自动开火，重点在拉扯、贴身和收经验节奏。</small>
+            </div>
+            <div class="hero-support">
+              <span>单局</span>
+              <strong>战斗内成长</strong>
+              <small>击落敌人拿经验，升级三选一，节点继续把方向扶稳。</small>
+            </div>
+            <div class="hero-support">
+              <span>目标</span>
+              <strong>让一路成型</strong>
+              <small>暴击、穿透、穿梭各有闭环，收尾前尽量把一条路线站稳。</small>
+            </div>
+          </div>
         </div>
         <div class="menu-stats">
           <div>
@@ -115,43 +142,51 @@ export class OverlayController {
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
       <div class="hud-shell">
-        <div class="hud-bar">
-          <div class="hud-block">
-            <span>等级</span>
-            <strong>${snapshot.levelText}</strong>
-          </div>
-          <div class="hud-block">
-            <span>经验</span>
-            <strong>${snapshot.experienceText}</strong>
-          </div>
-          <div class="hud-block">
-            <span>阶段</span>
-            <strong>${snapshot.phaseLabel}</strong>
-          </div>
-          <div class="hud-block">
-            <span>节点</span>
-            <strong>${snapshot.nodeLabel}</strong>
-          </div>
-          <div class="hud-block">
-            <span>耐久</span>
-            <strong>${snapshot.hpText}</strong>
-          </div>
-          <div class="hud-block wide hud-focus">
-            <span>战斗读数</span>
-            <strong>${snapshot.battleText}</strong>
-          </div>
+        <div class="hud-kicker">
+          <span class="hud-kicker-label">当前读数</span>
+          <strong>${snapshot.battleText}</strong>
         </div>
-        <div class="route-strip">
-          ${snapshot.routeProgress
-            .map(
-              (route) => `
-                <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
-                  <span>${route.label}</span>
-                  <strong>${route.value}</strong>
-                </div>
-              `,
-            )
-            .join('')}
+        <div class="hud-layout">
+          <div class="hud-bar">
+            <div class="hud-block">
+              <span>等级</span>
+              <strong>${snapshot.levelText}</strong>
+            </div>
+            <div class="hud-block">
+              <span>经验</span>
+              <strong>${snapshot.experienceText}</strong>
+            </div>
+            <div class="hud-block">
+              <span>阶段</span>
+              <strong>${snapshot.phaseLabel}</strong>
+            </div>
+            <div class="hud-block">
+              <span>节点</span>
+              <strong>${snapshot.nodeLabel}</strong>
+            </div>
+            <div class="hud-block">
+              <span>耐久</span>
+              <strong>${snapshot.hpText}</strong>
+            </div>
+          </div>
+          <div class="route-panel">
+            <div class="route-panel-head">
+              <span>路线读数</span>
+              <strong>倾向 / 站稳 / 成型</strong>
+            </div>
+            <div class="route-strip">
+              ${snapshot.routeProgress
+                .map(
+                  (route) => `
+                    <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
+                      <span>${route.label}</span>
+                      <strong>${route.value}</strong>
+                    </div>
+                  `,
+                )
+                .join('')}
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -160,7 +195,7 @@ export class OverlayController {
   public showNodePanel(phaseLabel: string, options: NodeOption[], onChoose: (nodeId: string) => void): void {
     this.showPanel(
       `${phaseLabel}节点选择`,
-      '沿着分支选一条路推进。战斗抢经验，强化稳补值，事件拐方向。',
+      '选一条分支继续推进。战斗抢经验，强化补节奏，事件改走向。',
       options.map(
         (node) => `
           <button class="choice-card map-choice" style="--choice-accent: ${NODE_TYPE_ACCENTS[node.type]}" data-choice="${node.id}">
@@ -179,7 +214,7 @@ export class OverlayController {
   public showUpgradePanel(title: string, choices: UpgradeDefinition[], onChoose: (upgradeId: string) => void): void {
     this.showPanel(
       title,
-      '从三项中选一项，继续把当前方向扶起来。',
+      '三选一补强当前节奏，优先把已经站稳的方向继续推高。',
       choices.map(
         (upgrade) => `
           <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(upgrade.routeId)}" data-choice="${upgrade.id}">
@@ -227,8 +262,14 @@ export class OverlayController {
           <span class="surface-dot"></span>
         </div>
         <p class="eyebrow">${result.outcome === 'victory' ? '试飞完成' : '试飞中止'}</p>
-        <h1>${result.outcome === 'victory' ? '本局已完成收束' : '这局还差一点就能收稳'}</h1>
+        <h1>${result.outcome === 'victory' ? '本局已完成收束' : '这局还差一口气就能收稳'}</h1>
         <p class="lead">${result.summary}</p>
+        <div class="menu-pills result-pills">
+          <span class="menu-pill">收尾节点 ${result.finalNodeTitle}</span>
+          <span class="menu-pill">战斗胜场 ${result.battleWins}</span>
+          <span class="menu-pill">推进节点 ${result.nodesCleared}</span>
+          <span class="menu-pill">时长 ${result.runDurationSec.toFixed(1)}s</span>
+        </div>
         <div class="menu-stats">
           <div>
             <span>路线</span>
@@ -249,7 +290,7 @@ export class OverlayController {
         </div>
         <div class="result-callout">
           <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
-          <p class="panel-description">收尾节点：${result.finalNodeTitle} · 战斗胜场 ${result.battleWins} · 推进节点 ${result.nodesCleared} · 时长 ${result.runDurationSec.toFixed(1)}s</p>
+          <p class="panel-description">本局从 ${result.routeId ? ROUTE_NAME_MAP[result.routeId] : '未站稳'} 起势，最终以 ${result.endingLabel} 收尾。</p>
         </div>
         <div class="menu-actions">
           <button class="primary-action" data-action="restart">再来一局</button>

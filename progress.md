@@ -78,3 +78,27 @@ TODO
 TODO
 - Re-check pacing next round: XP gain appears somewhat fast in the first two battles.
 - Consider adding a small non-player-facing debug state hook if future browser verification needs exact movement / XP assertions.
+2026-04-02
+- Re-read `doc/docs` again and kept the newest `PROJECT_STATUS.md` plus latest `DEV_ISSUE_LOG.md` as the stage source of truth.
+- Noted a phase mismatch: the repo is already past the earlier “presentation pass only” snapshot because formula-driven progression landed in the last round, but this turn stayed presentation-only on top of that state.
+- Presentation closeout work stayed inside the allowed boundary:
+- refined `OverlayController` for a fuller menu shell, stronger HUD hierarchy, cleaner panel helper text, and richer result chips
+- refreshed `style.css` so menu / HUD / panels / result share the same shell and tone more clearly
+- rebalanced `PilotAudio` so `hit` no longer flattens the whole mix and `pressure / result` read as distinct cues
+- softened the battle backdrop and player glow in `GameScene` to reduce debug-placeholder feeling
+- Updated docs for current stage and presentation-state tracking:
+- `doc/docs/PROJECT_STATUS.md`
+- `doc/docs/PRESENTATION_LAYER.md`
+- `doc/docs/LAUNCH_ASSET_CHECKLIST.md`
+- `doc/docs/DEV_ISSUE_LOG.md`
+- Browser QA via Playwright confirmed:
+- start page text is clean and more product-like
+- in-run prompt/HUD/upgrade panel are clean
+- result page shares the same shell and stays text-clean
+- browser console had 0 errors
+- Current recovery estimate after this round:
+- overall `68%~76%`
+- structure `81%~87%`
+- content `48%~58%`
+- presentation `52%~62%`
+- Temporary QA helper: `output/playwright/result-flow-smoke.js` was used to drive a full run to the result screen and should not be committed.

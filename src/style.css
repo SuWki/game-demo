@@ -106,6 +106,10 @@ body {
   overflow: hidden;
 }
 
+.hero-card {
+  width: min(960px, 100%);
+}
+
 .menu-card::before,
 .floating-panel::before {
   content: "";
@@ -159,6 +163,19 @@ h1 {
   max-width: 760px;
 }
 
+.hero-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+  gap: 18px;
+}
+
+.hero-copy,
+.hero-aside {
+  min-width: 0;
+}
+
 .hero-routes {
   position: relative;
   z-index: 1;
@@ -166,6 +183,88 @@ h1 {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 18px;
+}
+
+.menu-pills {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.menu-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.hero-aside {
+  display: grid;
+  gap: 12px;
+}
+
+.hero-support,
+.route-panel,
+.hud-kicker {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+  overflow: hidden;
+}
+
+.hero-support {
+  padding: 16px 18px;
+}
+
+.hero-support::before,
+.route-panel::before,
+.hud-kicker::before,
+.result-pills .menu-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(255, 213, 138, 0.9), rgba(255, 213, 138, 0));
+  opacity: 0.85;
+}
+
+.hero-support span,
+.route-panel-head span,
+.hud-kicker-label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-support strong,
+.route-panel-head strong,
+.hud-kicker strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 8px;
+  font-size: 20px;
+}
+
+.hero-support small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .route-badge {
@@ -269,6 +368,21 @@ h1 {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.result-pills {
+  margin-top: 18px;
+}
+
+.result-pills .menu-pill {
+  position: relative;
+  padding-left: 16px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.result-pills .menu-pill::before {
+  width: 2px;
+}
+
 .result-callout .panel-description:first-child {
   margin-top: 0;
   color: var(--text);
@@ -320,15 +434,37 @@ button:hover {
   gap: 12px;
 }
 
+.hud-kicker {
+  padding: 14px 18px;
+  background:
+    linear-gradient(180deg, rgba(125, 210, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(9, 17, 31, 0.86);
+}
+
+.hud-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  gap: 12px;
+}
+
 .hud-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 12px;
 }
 
-.hud-focus {
-  border-color: var(--line-strong);
-  background: linear-gradient(180deg, rgba(125, 210, 255, 0.08), rgba(255, 255, 255, 0.03));
+.route-panel {
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgba(18, 33, 56, 0.65), rgba(7, 12, 22, 0.88)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.route-panel-head {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 12px;
+  padding-left: 4px;
 }
 
 .route-strip {
@@ -338,6 +474,7 @@ button:hover {
 
 .route-chip {
   min-width: 0;
+  flex: 1 1 0;
 }
 
 .route-chip::before {
@@ -371,6 +508,7 @@ button:hover {
   text-align: left;
   padding: 18px;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .map-choice {
@@ -432,6 +570,10 @@ button:hover {
   line-height: 1.5;
 }
 
+.choice-card:hover {
+  background: linear-gradient(180deg, rgba(20, 35, 61, 0.95), rgba(11, 20, 38, 0.96));
+}
+
 .toast-layer {
   display: flex;
   flex-direction: column;
@@ -441,6 +583,7 @@ button:hover {
 }
 
 .toast {
+  position: relative;
   pointer-events: none;
   display: inline-flex;
   align-items: center;
@@ -454,6 +597,17 @@ button:hover {
   color: var(--text);
   text-align: center;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(12px);
+  animation: toast-in 200ms ease;
+}
+
+.toast::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.02));
+  pointer-events: none;
 }
 
 .toast-badge {
@@ -485,6 +639,7 @@ button:hover {
 
 .toast.tone-route {
   border-color: rgba(156, 255, 151, 0.24);
+  background: linear-gradient(180deg, rgba(14, 27, 19, 0.92), rgba(9, 17, 31, 0.94));
 }
 
 .toast.tone-route .toast-badge {
@@ -493,6 +648,7 @@ button:hover {
 
 .toast.tone-danger {
   border-color: rgba(255, 143, 112, 0.28);
+  background: linear-gradient(180deg, rgba(38, 18, 18, 0.92), rgba(9, 17, 31, 0.95));
 }
 
 .toast.tone-danger .toast-badge {
@@ -501,13 +657,28 @@ button:hover {
 
 .toast.tone-success {
   border-color: rgba(255, 213, 138, 0.26);
+  background: linear-gradient(180deg, rgba(34, 24, 13, 0.92), rgba(9, 17, 31, 0.95));
 }
 
 .toast.tone-success .toast-badge {
   background: rgba(255, 213, 138, 0.95);
 }
 
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 900px) {
+  .hero-layout,
+  .hud-layout,
   .menu-stats,
   .hud-bar,
   .choice-grid {
@@ -521,6 +692,12 @@ button:hover {
   .menu-card,
   .floating-panel {
     padding: 22px;
+  }
+
+  .hero-support strong,
+  .route-panel-head strong,
+  .hud-kicker strong {
+    font-size: 18px;
   }
 
   .toast {

@@ -211,17 +211,25 @@ export class GameScene extends Phaser.Scene {
     this.graphics.fillGradientStyle(0x07101d, 0x07101d, 0x131d31, 0x050911, 1);
     this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
 
-    this.graphics.fillStyle(accentColor, 0.08);
-    this.graphics.fillCircle(this.scale.width * 0.5, this.scale.height * 0.48, 210);
+    this.graphics.fillStyle(accentColor, 0.045);
+    this.graphics.fillEllipse(this.scale.width * 0.5, this.scale.height * 0.52, this.scale.width * 0.66, this.scale.height * 0.42);
+    this.graphics.fillStyle(accentColor, 0.03);
+    this.graphics.fillEllipse(this.scale.width * 0.52, this.scale.height * 0.48, this.scale.width * 0.42, this.scale.height * 0.22);
     this.graphics.fillStyle(0xffffff, 0.02);
     this.graphics.fillCircle(this.scale.width * 0.78, this.scale.height * 0.22, 120);
 
-    this.graphics.lineStyle(1, 0x223047, 0.45);
+    this.graphics.lineStyle(1, 0x223047, 0.28);
     for (let x = 0; x <= this.scale.width; x += 80) {
       this.graphics.lineBetween(x, 0, x, this.scale.height);
     }
     for (let y = 0; y <= this.scale.height; y += 80) {
       this.graphics.lineBetween(0, y, this.scale.width, y);
+    }
+
+    this.graphics.lineStyle(1, accentColor, 0.08);
+    for (let x = 50; x < this.scale.width; x += 140) {
+      this.graphics.lineBetween(x, 54, x + 42, 54);
+      this.graphics.lineBetween(x - 14, this.scale.height - 56, x + 28, this.scale.height - 56);
     }
 
     this.graphics.lineStyle(2, accentColor, 0.16);
@@ -268,11 +276,13 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32 * hpRatio, 4);
     }
 
-    this.graphics.fillStyle(accentColor, battle.invulnerableSec > 0 ? 0.95 : 0.24);
-    this.graphics.fillCircle(battle.playerX, battle.playerY, 22);
-    this.graphics.fillStyle(battle.invulnerableSec > 0 ? 0x9cff97 : 0x61d7ff, 1);
-    this.graphics.fillCircle(battle.playerX, battle.playerY, 12);
-    this.graphics.lineStyle(2, 0xffffff, 0.15);
-    this.graphics.strokeCircle(battle.playerX, battle.playerY, 30);
+    this.graphics.fillStyle(accentColor, battle.invulnerableSec > 0 ? 0.16 : 0.08);
+    this.graphics.fillCircle(battle.playerX, battle.playerY, 56);
+    this.graphics.lineStyle(2, accentColor, battle.invulnerableSec > 0 ? 0.55 : 0.24);
+    this.graphics.strokeCircle(battle.playerX, battle.playerY, 26);
+    this.graphics.lineStyle(1, 0xffffff, battle.invulnerableSec > 0 ? 0.46 : 0.14);
+    this.graphics.strokeCircle(battle.playerX, battle.playerY, 16);
+    this.graphics.fillStyle(battle.invulnerableSec > 0 ? 0x9cff97 : 0xe7f5ff, 1);
+    this.graphics.fillCircle(battle.playerX, battle.playerY, 10);
   }
 }
