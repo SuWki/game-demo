@@ -140,12 +140,12 @@ export const EVENT_CATALOG: EventDefinition[] = [
       minRound: 2,
       phaseBonuses: {
         mid: 1.3,
-        late: 0.9,
+        late: 0.4,
       },
       hintedRouteBonus: 1.2,
       dominantRouteBonus: 3.4,
-      committedRouteBonus: 2,
-      maturedRouteBonus: 0.8,
+      committedRouteBonus: 1.6,
+      maturedRouteBonus: 0.2,
     },
     options: [
       {
@@ -196,12 +196,12 @@ export const EVENT_CATALOG: EventDefinition[] = [
       minRound: 2,
       phaseBonuses: {
         mid: 1,
-        late: 1.2,
+        late: 0.7,
       },
       hintedRouteBonus: 0.8,
       dominantRouteBonus: 3.2,
-      committedRouteBonus: 2,
-      maturedRouteBonus: 1,
+      committedRouteBonus: 1.5,
+      maturedRouteBonus: 0.6,
     },
     options: [
       {
@@ -391,13 +391,125 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'route-handoff',
+    name: '侧频接驳',
+    description: '侧频接口短暂打开。你可以顺着当前读法微调，也可以借这拍直接把读法掰向另一条线。',
+    selection: {
+      baseWeight: 1.7,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.6,
+        late: 0.7,
+      },
+      noDominantRouteBonus: 0.4,
+      hintedRouteBonus: 1,
+      committedRouteBonus: 0.6,
+      maturedRouteBonus: 0.2,
+    },
+    options: [
+      {
+        id: 'route-handoff-crit',
+        label: '接暴击侧频',
+        description: '补一段升温火力，并把读法更明确地拉向暴击。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              critChance: 0.05,
+              fireRate: 0.12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'route-handoff-pierce',
+        label: '接贯穿侧频',
+        description: '补一段贯穿与弹速，并把读法更明确地拉向穿透。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 18,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'route-handoff-dash',
+        label: '接穿梭侧频',
+        description: '补一段换位节奏，并把读法更明确地拉向穿梭。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 14,
+              dashInterval: -0.22,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'cross-branch-signal',
     name: '岔路讯号',
     contentTier: 'rare',
     description: '一段侧频样本插了进来。它不一定比当前方向更强，但足够让这局出现一次真正的转向诱惑。',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 1.2,
+      baseWeight: 1.35,
       minRound: 2,
       phaseBonuses: {
         mid: 1.5,
@@ -406,7 +518,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       },
       hintedRouteBonus: 1.1,
       dominantRouteBonus: 2.2,
-      committedRouteBonus: 1.3,
+      committedRouteBonus: 1.5,
       maturedRouteBonus: 0.4,
     },
     options: [
@@ -422,6 +534,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
               critChance: 0.06,
               fireRate: 0.12,
             },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
           },
           {
             type: 'route',
@@ -446,6 +562,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
             type: 'route',
             routeId: 'pierce',
           },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
         ],
       },
       {
@@ -465,6 +585,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
             type: 'route',
             routeId: 'dash',
           },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
         ],
       },
     ],
@@ -475,10 +599,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
     contentTier: 'rare',
     description: '封存记录只够开一次。你可以把它压成高风险兑现，也可以拆成这局独有的一段缓冲余地。',
     selection: {
-      baseWeight: 1.05,
+      baseWeight: 1.15,
       minRound: 3,
       phaseBonuses: {
-        late: 1.8,
+        late: 2,
         finalPrep: 0.7,
       },
       noDominantRouteBonus: 0.4,
@@ -518,6 +642,65 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'mirror-cache',
+    name: '镜像缓存',
+    contentTier: 'rare',
+    description: '尾段里突然拉出一段镜像样本。你可以把它压成当前路线的收尾，也可以拆成这局独有的一段混搭余量。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.05,
+      minRound: 3,
+      phaseBonuses: {
+        late: 2,
+        finalPrep: 0.7,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 1.9,
+      committedRouteBonus: 1.2,
+      maturedRouteBonus: 0.6,
+    },
+    options: [
+      {
+        id: 'mirror-cache-press',
+        label: '压成当前收尾',
+        description: '补一段尾段火力，并沿当前方向再压一步。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 6,
+              fireRate: 0.18,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'mirror-cache-open',
+        label: '拆成并轨余量',
+        description: '补一段机动、弹速和再生，把尾段混搭窗口留宽一点。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              projectileSpeed: 24,
+              moveSpeed: 16,
+              regeneration: 0.12,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
           },
         ],
       },

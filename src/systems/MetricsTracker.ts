@@ -26,6 +26,16 @@ interface MetricRunSummary {
   firstCommitStage?: PhaseId;
   firstCommitPick?: string;
   branchSwitchCount?: number;
+  rareSeenCount?: number;
+  hybridPickCount?: number;
+  latePayoffSeenCount?: number;
+}
+
+interface ContentMetricMeta {
+  phase?: PhaseId;
+  tags?: string[];
+  isHybridPick?: boolean;
+  isLatePayoff?: boolean;
 }
 
 interface MetricSession {
@@ -70,6 +80,12 @@ export class MetricsTracker {
   private firstCommitPickInRun: string | null = null;
 
   private branchSwitchCountInRun = 0;
+
+  private rareSeenCountInRun = 0;
+
+  private hybridPickCountInRun = 0;
+
+  private latePayoffSeenCountInRun = 0;
 
   private runFinished = false;
 
@@ -160,15 +176,28 @@ export class MetricsTracker {
     this.record('node_selected', { nodeType, title });
   }
 
-  public recordUpgradeSelected(upgradeId: string, routeId?: RouteId, contentTier?: ContentTier): void {
-    this.record('upgrade_selected', { upgradeId, routeId, contentTier });
+  public recordUpgradeSelected(
+    upgradeId: string,
+    routeId?: RouteId,
+    contentTier?: ContentTier,
+    meta?: ContentMetricMeta,
+  ): void {
+    this.record('upgrade_selected', { upgradeId, routeId, contentTier, phase: meta?.phase, tags: meta?.tags });
+    this.trackContentCounters(contentTier, meta);
     if (routeId) {
       this.record(`${routeId}_selected_count`, { increment: 1 });
     }
   }
 
-  public recordEventSelected(eventId: string, optionId: string, routeId?: RouteId, contentTier?: ContentTier): void {
-    this.record('event_selected', { eventId, optionId, routeId, contentTier });
+  public recordEventSelected(
+    eventId: string,
+    optionId: string,
+    routeId?: RouteId,
+    contentTier?: ContentTier,
+    meta?: ContentMetricMeta,
+  ): void {
+    this.record('event_selected', { eventId, optionId, routeId, contentTier, phase: meta?.phase });
+    this.trackContentCounters(contentTier, meta);
   }
 
   public recordBranchSwitch(fromRoute: RouteId, toRoute: RouteId, meta?: { phase: PhaseId; pickId: string }): void {
@@ -182,8 +211,14 @@ export class MetricsTracker {
     });
   }
 
-  public recordBattleEntered(templateId: BattleTemplateId, title: string, contentTier?: ContentTier): void {
-    this.record('battle_template_entered', { templateId, title, contentTier });
+  public recordBattleEntered(
+    templateId: BattleTemplateId,
+    title: string,
+    contentTier?: ContentTier,
+    meta?: ContentMetricMeta,
+  ): void {
+    this.record('battle_template_entered', { templateId, title, contentTier, phase: meta?.phase });
+    this.trackContentCounters(contentTier, meta);
   }
 
   public recordBattleCompleted(templateId: BattleTemplateId, outcome: 'win' | 'loss', contentTier?: ContentTier): void {
@@ -230,6 +265,9 @@ export class MetricsTracker {
     currentRun.firstCommitStage = this.firstCommitStageInRun ?? undefined;
     currentRun.firstCommitPick = this.firstCommitPickInRun ?? undefined;
     currentRun.branchSwitchCount = this.branchSwitchCountInRun;
+    currentRun.rareSeenCount = this.rareSeenCountInRun;
+    currentRun.hybridPickCount = this.hybridPickCountInRun;
+    currentRun.latePayoffSeenCount = this.latePayoffSeenCountInRun;
 
     this.record('run_finished', {
       outcome: result.outcome,
@@ -245,6 +283,9 @@ export class MetricsTracker {
       firstCommitStage: this.firstCommitStageInRun,
       firstCommitPick: this.firstCommitPickInRun,
       branchSwitchCount: this.branchSwitchCountInRun,
+      rareSeenCount: this.rareSeenCountInRun,
+      hybridPickCount: this.hybridPickCountInRun,
+      latePayoffSeenCount: this.latePayoffSeenCountInRun,
     });
 
     if (currentRun.runIndex === 1) {
@@ -269,6 +310,9 @@ export class MetricsTracker {
     this.firstCommitStageInRun = null;
     this.firstCommitPickInRun = null;
     this.branchSwitchCountInRun = 0;
+    this.rareSeenCountInRun = 0;
+    this.hybridPickCountInRun = 0;
+    this.latePayoffSeenCountInRun = 0;
     this.runFinished = false;
     this.session.runs.push({
       runIndex: this.sessionRunIndex,
@@ -306,6 +350,21 @@ export class MetricsTracker {
       payload,
     });
     this.persist();
+  }
+
+  private trackContentCounters(contentTier?: ContentTier, meta?: ContentMetricMeta): void {
+    if (contentTier === 'rare') {
+      this.rareSeenCountInRun += 1;
+    }
+
+    if (meta?.isHybridPick) {
+      this.hybridPickCountInRun += 1;
+    }
+
+    const phase = meta?.phase;
+    if (meta?.isLatePayoff || ((phase === 'late' || phase === 'finalPrep' || phase === 'finalBattle') && contentTier === 'rare')) {
+      this.latePayoffSeenCountInRun += 1;
+    }
   }
 
   private load(): MetricStore {

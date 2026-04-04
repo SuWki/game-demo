@@ -1048,3 +1048,122 @@
   - rare 事件和 rare 模板的真实命中率是否已经足够低频、但足够被记住
   - `branchSwitchCount` 是否随着 hybrid / pivot 内容增加而自然抬升
   - late rare payoff 是否足够爽，但没有重新把 payoff 压回 mid
+
+## [重建 Round 14] 内容池比例边界维护 + hybrid / redirect 补强
+### 本轮目标
+- 不改主流程、不重写 `RunEngine`、不引入新系统
+- 继续守住 `starter -> bridge -> committed -> payoff` 坡度，同时避免普通 `route-specific` 内容重新淹没 rare / hybrid / late payoff
+- 让中段的弹性位更多落在真正能转向的 `hybrid / redirect` 内容上，而不是普通 off-route starter
+- 用一轮自然样本 + 一轮定向样本验证 `branchSwitchCount`、rare 命中和 late payoff 感知
+
+### 文档取舍依据
+- 继续以最新 `PROJECT_STATUS.md` 与本文件作为阶段文档基线
+- 本轮优先级采用用户最新要求：`比例边界维护 > hybrid / redirect 补强 > 实跑样本验证`
+- 因此本轮没有回头补普通内容量，也没有引入新埋点系统，只在现有 data-driven 结构与现有埋点上做轻量强化
+
+### 改动前盘点
+- 静态数量：
+  - `upgrades`：36
+  - `events`：12
+  - `templates`：11
+- 结构比例：
+  - `upgrades` 里仍有 21 条 `route-specific`，`hybrid` 只有 2 条，rare 只有 3 条
+  - `events` 虽然已有 rare 层，但 mid 里仍偏少真正的 redirect 机会
+- 抽样结果：
+  - `mid hinted` / `mid committed` 的 upgrade 三选一里，普通 off-route starter / bridge 仍会挤占弹性位
+  - late 里 rare / late payoff 已经存在，但普通 route-specific 仍可能把它们的感知压薄
+  - 自然跑局里的 `branchSwitchCount` 仍容易保持为 0
+
+### 本轮实际处理内容
+- selector / 比例边界：
+  - 调整 `Content Selector`，让 mid 的弹性位优先给 `hybrid / redirect`
+  - 不再优先把普通 off-route starter 当作“转向空间”
+  - late / final 的 flex 位改为让 generic hybrid 与 late generic payoff 同池竞争，避免 rare late payoff 变成固定第三张
+- 新增 upgrade：
+  - generic:
+    - `generic-crossfeed`
+    - `generic-terminal-weave`
+  - redirect:
+    - `crit-sidechannel`
+    - `pierce-sidechannel`
+    - `dash-sidechannel`
+- 新增 event：
+  - `route-handoff`
+  - `mirror-cache`
+- 节点分发：
+  - 新增 `round-2-event-handoff`
+  - 下调 `round-2-upgrade-lock`
+  - 上调 `round-2-event-shift`
+  - 上调 `round-3-event-blackbox`
+  - 小幅下调 `round-3-event-last-bet`
+- 现有内容调权：
+  - route starter 与普通 bridge 的 `offRouteMultiplier` 普遍下调，减少 mid 被普通 off-route 路线牌挤满
+  - `route-calibration / targeted-telemetry` 的 late 权重下调，避免 late 继续被普通 route-specific event 占住
+  - `cross-branch-signal / blackbox-bargain` 的 late 感知略上提
+- redirect 力度：
+  - `route-handoff` 以及 sidechannel / cross-branch 一类 redirect 内容，路线推进从“只够并列”补到“有机会真正改写 dominant route”
+- 埋点轻量补充：
+  - 在现有 `run_finished` 汇总里新增：
+    - `rareSeenCount`
+    - `hybridPickCount`
+    - `latePayoffSeenCount`
+  - 不新增新事件类型，只复用已有 `battle_template_entered / event_selected / upgrade_selected`
+
+### 本轮验证结果
+- 静态 / 抽样验证：
+  - `upgrades`：`36 -> 41`
+  - `events`：`12 -> 14`
+  - `mid hinted` 的 upgrade 抽样中：
+    - `route-specific` 不再占掉 2/3 的常规位置
+    - `hybrid + redirect` 已提升为接近 `generic neutral` 同级的常见弹性位
+  - `round 2` 节点抽样中：
+    - `round-2-event-shift`
+    - `round-2-event-handoff`
+    - 已明显比此前更常作为 mid 事件窗口出现
+- 浏览器验证：
+  - `npm run build` 通过
+  - Playwright smoke：
+    - 开始页、战斗页截图正常
+    - 控制台无新错误
+  - 自然样本（4 runs）：
+    - rare 命中已出现
+    - `hybridPickCount` 稳定非零
+    - `latePayoffSeenCount` 稳定非零
+    - replay 正常
+    - 但 `branchSwitchCount` 自然样本仍偏低，说明默认吸引力还不够稳
+  - 定向 switch-seeking 样本（3 runs）：
+    - 已实机出现 `crit -> pierce` 的 `branch_switch`
+    - 触发来源为 `event:route-handoff:route-handoff-pierce`
+    - 说明 redirect 内容已经具备“真实改道”能力，不再只是纸面可转
+
+### 本轮更新文档
+- `doc/docs/PROJECT_STATUS.md`
+- `doc/docs/NODES_AND_TEMPLATES.md`
+- `doc/docs/ROUTES_SPEC.md`
+- `doc/docs/METRICS_SPEC.md`
+- `doc/docs/DEV_ISSUE_LOG.md`
+
+### 代码恢复度估计
+- 整体恢复度：`82%~86%`
+- 估计口径：
+  - 仍以“与旧项目最成熟状态相比”的恢复度为主
+  - 同时参考“当前是否已守住比例边界、是否已具备更真实的 redirect 内容与 replay 观测”
+- 结构恢复度：`85%~89%`
+- 内容恢复度：`73%~79%`
+- 表现恢复度：`55%~64%`
+- 本轮提升主要来自：
+  - mid 弹性位不再主要被普通 off-route 内容伪装占满
+  - rare / hybrid / late payoff 的存在感更清楚
+  - redirect 内容已经能在真实运行里触发 dominant route 改写
+
+### 风险点
+- 自然跑局里的 `branchSwitchCount` 仍不算高，说明 redirect 机会虽然已能成立，但默认吸引力还不够稳
+- 若后续继续大补普通 route-specific 内容而不维持这轮的 selector 边界，rare / hybrid / late payoff 很快会再次被稀释
+- `generic-terminal-weave` 一类 late flexible payoff 还需要继续观察命中率，避免变成“写进池里但实感不强”
+
+### 下一步建议
+- 下一轮优先做“redirect 吸引力压实”，不是继续铺普通路线内容
+- 重点看：
+  - `branchSwitchCount` 在自然样本里能否稳定抬升到非零
+  - `route-handoff / sidechannel / cross-branch` 的真实点击率是否足够高
+  - late flexible payoff 与 late route payoff 是否都能被记住，而不是彼此冲掉

@@ -24,6 +24,9 @@
 - first_commit_stage
 - first_commit_pick
 - branch_switch_count
+- rareSeenCount
+- hybridPickCount
+- latePayoffSeenCount
 
 ## 节点与模板数据
 - node_selected
@@ -74,7 +77,14 @@
 - `firstCommitStage`
 - `firstCommitPick`
 - `branchSwitchCount`
+- `rareSeenCount`
+- `hybridPickCount`
+- `latePayoffSeenCount`
 - `route_hint_time` 现按“每条路线在当前 run 首次出现倾向”记录一次，避免同一路线重复记时
 - `route_lock_time` 现会附带触发时的 `phase` 与 `pickId`
 - `branch_switch` 用于记录 dominant route 在同一 run 内发生变化的时点与来源
 - 低频 rare 内容不新增单独埋点事件，继续沿用现有 `battle_template_entered / event_selected / upgrade_selected`，并在 payload 中附带 `contentTier`
+- 轻量补充的 replay 观测继续复用现有事件结构：
+  - `rareSeenCount`：当前 run 内命中的 rare battle / rare event / rare upgrade 次数
+  - `hybridPickCount`：当前 run 内命中的 hybrid / redirect 选择次数
+  - `latePayoffSeenCount`：当前 run 内 late / final 阶段命中的 rare 或 payoff 兑现次数

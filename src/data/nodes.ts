@@ -217,7 +217,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '方向定标',
         description: '更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。',
         selection: {
-          baseWeight: 2.4,
+          baseWeight: 1.8,
           soloMultiplier: 0.86,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 0.9,
@@ -243,10 +243,23 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '偏航窗口',
         description: '可以顺着当前读法微调，也能顺手把转向窗口留住。',
         selection: {
-          baseWeight: 2.4,
+          baseWeight: 2.8,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.8,
+        },
+      },
+      {
+        id: 'round-2-event-handoff',
+        type: 'event',
+        phase: 'mid',
+        title: '侧频接驳',
+        description: '这一拍更像一次重评路线的机会，适合判断要不要借侧频改道。',
+        selection: {
+          baseWeight: 2.1,
+          soloMultiplier: 0.46,
+          repeatTypeMultiplier: 0.62,
+          noFocusBonus: 0.6,
         },
       },
     ],
@@ -361,7 +374,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '尾段押注',
         description: '沿着{focusLabel}再压一次，争取把收尾气质做实。',
         selection: {
-          baseWeight: 2.8,
+          baseWeight: 2.5,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.5,
@@ -374,7 +387,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '黑匣异常',
         description: '低频异常节点，可能让这一局在尾段撞上一段截然不同的记忆点。',
         selection: {
-          baseWeight: 1.05,
+          baseWeight: 1.28,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.3,

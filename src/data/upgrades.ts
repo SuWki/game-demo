@@ -400,6 +400,69 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-crossfeed',
+    name: '交叉回授',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'hybrid', 'redirect'],
+    selection: {
+      baseWeight: 2.7,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.6,
+        late: 1.1,
+      },
+      noDominantRouteBonus: 0.8,
+      finalPrepBonus: 0.8,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.12,
+          projectileSpeed: 20,
+          moveSpeed: 12,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+    ],
+  },
+  {
+    id: 'generic-terminal-weave',
+    name: '终段并轨',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['bridge', 'payoff', 'hybrid', 'rare'],
+    selection: {
+      baseWeight: 0.94,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 2.2,
+        finalBattle: 1.2,
+      },
+      finalPrepBonus: 2.2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          fireRate: 0.16,
+          projectileSpeed: 24,
+          moveSpeed: 14,
+          regeneration: 0.12,
+        },
+      },
+    ],
+  },
+  {
     id: 'crit-aim',
     name: '聚焦瞄准',
     category: 'route',
@@ -415,6 +478,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       noDominantRouteBonus: 8,
       hintedRouteBonus: 1.8,
       dominantRouteBonus: 2.8,
+      offRouteMultiplier: 0.22,
     },
     effects: [
       {
@@ -446,6 +510,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       noDominantRouteBonus: 7.5,
       hintedRouteBonus: 1.8,
       dominantRouteBonus: 2.6,
+      offRouteMultiplier: 0.22,
     },
     effects: [
       {
@@ -478,7 +543,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       hintedRouteBonus: 2.2,
       dominantRouteBonus: 3.8,
       committedRouteBonus: 1.8,
-      offRouteMultiplier: 0.55,
+      offRouteMultiplier: 0.38,
     },
     effects: [
       {
@@ -487,6 +552,49 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           fireRate: 0.16,
           critChance: 0.03,
           projectileSpeed: 16,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-sidechannel',
+    name: '旁路升温',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.9,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.6,
+        late: 0.8,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 0.6,
+      committedRouteBonus: 0.4,
+      offRouteMultiplier: 1.45,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.14,
+          critChance: 0.04,
+          moveSpeed: 10,
         },
       },
       {
@@ -512,6 +620,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       dominantRouteBonus: 4.2,
       committedRouteBonus: 2.2,
       finalPrepBonus: 2,
+      offRouteMultiplier: 0.42,
     },
     effects: [
       {
@@ -643,6 +752,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       noDominantRouteBonus: 8,
       hintedRouteBonus: 1.8,
       dominantRouteBonus: 2.8,
+      offRouteMultiplier: 0.22,
     },
     effects: [
       {
@@ -675,6 +785,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       noDominantRouteBonus: 7.5,
       hintedRouteBonus: 1.8,
       dominantRouteBonus: 2.6,
+      offRouteMultiplier: 0.22,
     },
     effects: [
       {
@@ -708,7 +819,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       hintedRouteBonus: 2.2,
       dominantRouteBonus: 3.8,
       committedRouteBonus: 1.8,
-      offRouteMultiplier: 0.55,
+      offRouteMultiplier: 0.38,
     },
     effects: [
       {
@@ -717,6 +828,49 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           projectileSpeed: 22,
           fireRate: 0.12,
           damage: 2,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-sidechannel',
+    name: '侧轨借线',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.9,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.6,
+        late: 0.8,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 0.6,
+      committedRouteBonus: 0.4,
+      offRouteMultiplier: 1.45,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          projectileSpeed: 20,
+          damage: 2,
+          pierce: 1,
         },
       },
       {
@@ -778,6 +932,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       hintedRouteBonus: 2.1,
       dominantRouteBonus: 4.2,
       committedRouteBonus: 2,
+      offRouteMultiplier: 0.42,
     },
     effects: [
       {
@@ -910,6 +1065,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       noDominantRouteBonus: 8,
       hintedRouteBonus: 1.8,
       dominantRouteBonus: 2.8,
+      offRouteMultiplier: 0.22,
     },
     effects: [
       {
@@ -942,6 +1098,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       noDominantRouteBonus: 7.5,
       hintedRouteBonus: 1.8,
       dominantRouteBonus: 2.6,
+      offRouteMultiplier: 0.22,
     },
     effects: [
       {
@@ -975,7 +1132,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       hintedRouteBonus: 2.2,
       dominantRouteBonus: 3.8,
       committedRouteBonus: 1.8,
-      offRouteMultiplier: 0.55,
+      offRouteMultiplier: 0.38,
     },
     effects: [
       {
@@ -984,6 +1141,49 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           moveSpeed: 14,
           dashInterval: -0.24,
           dashInvulnerability: 0.06,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-sidechannel',
+    name: '错位取样',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.9,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.6,
+        late: 0.8,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 0.6,
+      committedRouteBonus: 0.4,
+      offRouteMultiplier: 1.45,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          moveSpeed: 14,
+          dashInterval: -0.24,
+          dashInvulnerability: 0.04,
         },
       },
       {
@@ -1046,6 +1246,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       dominantRouteBonus: 4.2,
       committedRouteBonus: 2.2,
       finalPrepBonus: 2,
+      offRouteMultiplier: 0.42,
     },
     effects: [
       {

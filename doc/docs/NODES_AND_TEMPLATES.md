@@ -34,9 +34,10 @@
 
 ## 当前节点分发焦点
 - 前段：更强调“路线信号出现但不锁死”，starter 与中性过渡内容优先，避免过早强承诺
-- 中段：更强调“starter 接 bridge，再逐步站稳”，battle / upgrade / event 都应帮助 build 坡度变顺
+- 中段：更强调“starter 接 bridge，再逐步站稳”；当前还需要让 `event-shift / event-handoff` 一类节点真正提供转向窗口，而不是只给普通 route-specific 补强
 - 后段：更强调“committed 后的 payoff 与收尾修正”，把强兑现内容集中到 late / final
 - 后段同时应承接少量低频高辨识度内容：rare 事件、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
+- 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
 ## 战斗模板
 只保留三类：
@@ -64,3 +65,4 @@
 - rare 记忆点优先通过后段 blueprint 低频变体与家族内 rare 模板候选完成
 - rare 模板只作为家族内低频候选，不拆出第四类节点，也不改主流程
 - 不通过新增第四类节点或重做地图结构来解决重复感
+- 不通过把普通 route-specific 节点继续堆高来冒充转向空间；真实 redirect 应由少量 mid 事件节点与低频 rare 节点承担

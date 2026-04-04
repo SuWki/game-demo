@@ -47,6 +47,7 @@ import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
 import type {
   BattleState,
   ContentEffect,
+  ContentTier,
   EventDefinition,
   NodeOption,
   PlayerInputState,
@@ -225,7 +226,17 @@ export class RunEngine {
     if (upgrade.repeatable || !this.state.selectedUpgrades.includes(upgrade.sourceId)) {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
-    this.services.metrics.recordUpgradeSelected(`${upgrade.sourceId}:${upgrade.rarity}`, upgrade.routeId, upgrade.contentTier);
+    this.services.metrics.recordUpgradeSelected(
+      `${upgrade.sourceId}:${upgrade.rarity}`,
+      upgrade.routeId,
+      upgrade.contentTier,
+      {
+        phase: this.state.phase,
+        tags: upgrade.tags,
+        isHybridPick: this.isHybridTagged(upgrade.tags),
+        isLatePayoff: this.isLatePayoffTagged(upgrade.tags, upgrade.contentTier),
+      },
+    );
     if (!this.firstUpgradeRecorded) {
       this.services.metrics.markFirstUpgrade();
       this.firstUpgradeRecorded = true;
@@ -267,11 +278,22 @@ export class RunEngine {
       return;
     }
 
+    const previousDominantRoute = this.getDominantRoute();
     const optionRouteId = option.routeId === 'dominant' ? this.getDominantRoute() ?? undefined : option.routeId;
     this.applyEffects(option.effects ?? [], {
       pickId: `event:${eventDef.id}:${option.id}`,
     });
-    this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId, eventDef.contentTier);
+    const isRedirectPick = Boolean(optionRouteId && previousDominantRoute && optionRouteId !== previousDominantRoute);
+    this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId, eventDef.contentTier, {
+      phase: this.state.phase,
+      isHybridPick:
+        isRedirectPick ||
+        eventDef.id === 'signal-soften' ||
+        eventDef.id === 'cross-branch-signal' ||
+        eventDef.id === 'route-handoff' ||
+        eventDef.id === 'mirror-cache',
+      isLatePayoff: this.isLatePayoffEvent(eventDef),
+    });
     this.enqueueAudio('upgrade');
     this.enqueueTip(`${eventDef.name}：${option.label}`);
     this.advanceRound();
@@ -410,7 +432,10 @@ export class RunEngine {
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.enqueueTip(`${getPhaseLabel(node.phase)}进入：${template.name}`);
     this.enqueueAudio('pressure');
-    this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier);
+    this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier, {
+      phase: node.phase,
+      isLatePayoff: this.isLatePhase(node.phase) && template.contentTier === 'rare',
+    });
   }
 
   private completeBattle(): void {
@@ -574,6 +599,25 @@ export class RunEngine {
       return `${routeName}路线已经起势，但这局还是在收尾前被打断了。`;
     }
     return `${routeName}路线刚露出倾向，这局就先被打断了。`;
+  }
+
+  private isHybridTagged(tags: string[] | undefined): boolean {
+    return Boolean(tags?.some((tag) => tag === 'hybrid' || tag === 'redirect'));
+  }
+
+  private isLatePhase(phase: RunState['phase'] = this.state.phase): boolean {
+    return phase === 'late' || phase === 'finalPrep' || phase === 'finalBattle';
+  }
+
+  private isLatePayoffTagged(tags: string[] | undefined, contentTier?: ContentTier): boolean {
+    if (!this.isLatePhase()) {
+      return false;
+    }
+    return contentTier === 'rare' || Boolean(tags?.some((tag) => tag === 'payoff' || tag === 'finisher'));
+  }
+
+  private isLatePayoffEvent(eventDef: EventDefinition): boolean {
+    return this.isLatePhase() && eventDef.contentTier === 'rare';
   }
 
   private applyModifiers(modifiers: Partial<PlayerStats>): void {
