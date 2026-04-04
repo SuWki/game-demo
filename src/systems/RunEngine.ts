@@ -49,6 +49,7 @@ import type {
   ContentEffect,
   ContentTier,
   EventDefinition,
+  EventOption,
   NodeOption,
   PlayerInputState,
   PlayerStats,
@@ -58,6 +59,7 @@ import type {
   RunOutcome,
   RunState,
   Services,
+  UpgradeDefinition,
   UpgradeSource,
 } from '../game/types';
 
@@ -204,6 +206,7 @@ export class RunEngine {
       this.state.upgradeSource = 'nodePrep';
       this.state.upgradeChoices = this.rollUpgradeChoices('nodePrep');
       this.state.currentEvent = null;
+      this.recordRedirectUpgradeOffers(this.state.upgradeChoices);
       return;
     }
 
@@ -211,6 +214,7 @@ export class RunEngine {
     this.state.currentEvent = this.rollEvent();
     this.state.upgradeSource = null;
     this.state.upgradeChoices = [];
+    this.recordRedirectEventOffers(this.state.currentEvent);
   }
 
   public chooseUpgrade(upgradeId: string): void {
@@ -220,6 +224,7 @@ export class RunEngine {
     }
 
     const source = this.state.upgradeSource;
+    const previousDominantRoute = this.getDominantRoute();
     this.applyEffects(upgrade.effects, {
       pickId: `upgrade:${upgrade.sourceId}`,
     });
@@ -237,6 +242,14 @@ export class RunEngine {
         isLatePayoff: this.isLatePayoffTagged(upgrade.tags, upgrade.contentTier),
       },
     );
+    if (this.isRedirectUpgradePick(upgrade, previousDominantRoute)) {
+      this.services.metrics.recordRedirectPick({
+        phase: this.state.phase,
+        pickId: `upgrade:${upgrade.sourceId}`,
+        fromRoute: previousDominantRoute,
+        toRoute: upgrade.routeId as RouteId,
+      });
+    }
     if (!this.firstUpgradeRecorded) {
       this.services.metrics.markFirstUpgrade();
       this.firstUpgradeRecorded = true;
@@ -291,9 +304,18 @@ export class RunEngine {
         eventDef.id === 'signal-soften' ||
         eventDef.id === 'cross-branch-signal' ||
         eventDef.id === 'route-handoff' ||
+        eventDef.id === 'relay-splice' ||
         eventDef.id === 'mirror-cache',
       isLatePayoff: this.isLatePayoffEvent(eventDef),
     });
+    if (isRedirectPick && optionRouteId) {
+      this.services.metrics.recordRedirectPick({
+        phase: this.state.phase,
+        pickId: `event:${eventDef.id}:${option.id}`,
+        fromRoute: previousDominantRoute,
+        toRoute: optionRouteId,
+      });
+    }
     this.enqueueAudio('upgrade');
     this.enqueueTip(`${eventDef.name}：${option.label}`);
     this.advanceRound();
@@ -605,6 +627,78 @@ export class RunEngine {
     return Boolean(tags?.some((tag) => tag === 'hybrid' || tag === 'redirect'));
   }
 
+  private isRedirectUpgradePick(
+    upgrade: UpgradeDefinition,
+    previousDominantRoute: RouteId | null,
+  ): boolean {
+    return Boolean(
+      previousDominantRoute &&
+        upgrade.routeId &&
+        upgrade.tags?.includes('redirect') &&
+        upgrade.routeId !== previousDominantRoute,
+    );
+  }
+
+  private getRedirectUpgradeOfferIds(choices: UpgradeDefinition[]): string[] {
+    const dominantRoute = this.getDominantRoute();
+    if (!dominantRoute) {
+      return [];
+    }
+
+    return choices
+      .filter(
+        (choice) =>
+          Boolean(choice.routeId) &&
+          choice.tags?.includes('redirect') &&
+          choice.routeId !== dominantRoute,
+      )
+      .map((choice) => choice.sourceId);
+  }
+
+  private getRedirectEventOfferIds(eventDef: EventDefinition | null): string[] {
+    if (!eventDef) {
+      return [];
+    }
+
+    const dominantRoute = this.getDominantRoute();
+    if (!dominantRoute) {
+      return [];
+    }
+
+    return eventDef.options
+      .filter(
+        (option): option is EventOption & { routeId: RouteId } =>
+          Boolean(option.routeId) && option.routeId !== 'dominant' && option.routeId !== dominantRoute,
+      )
+      .map((option) => option.id);
+  }
+
+  private recordRedirectUpgradeOffers(choices: UpgradeDefinition[]): void {
+    const optionIds = this.getRedirectUpgradeOfferIds(choices);
+    if (optionIds.length === 0) {
+      return;
+    }
+
+    this.services.metrics.recordRedirectOffer({
+      phase: this.state.phase,
+      source: 'upgrade',
+      optionIds,
+    });
+  }
+
+  private recordRedirectEventOffers(eventDef: EventDefinition | null): void {
+    const optionIds = this.getRedirectEventOfferIds(eventDef);
+    if (optionIds.length === 0) {
+      return;
+    }
+
+    this.services.metrics.recordRedirectOffer({
+      phase: this.state.phase,
+      source: 'event',
+      optionIds,
+    });
+  }
+
   private isLatePhase(phase: RunState['phase'] = this.state.phase): boolean {
     return phase === 'late' || phase === 'finalPrep' || phase === 'finalBattle';
   }
@@ -639,6 +733,7 @@ export class RunEngine {
 
   private applyEffects(effects: ContentEffect[], meta?: RouteAdvanceMeta): void {
     const previousDominantRoute = this.getDominantRoute();
+    const maturedRouteBefore = this.state.maturedRoute;
     let routeAdvanced = false;
 
     for (const effect of effects) {
@@ -667,7 +762,7 @@ export class RunEngine {
     if (
       nextDominantRoute &&
       nextDominantRoute !== previousDominantRoute &&
-      !this.state.maturedRoute
+      !maturedRouteBefore
     ) {
       this.services.metrics.recordBranchSwitch(previousDominantRoute, nextDominantRoute, {
         phase: this.state.phase,
@@ -1301,6 +1396,7 @@ export class RunEngine {
     this.state.upgradeChoices = this.rollUpgradeChoices('levelUp');
     this.state.currentEvent = null;
     this.state.nodeOptions = [];
+    this.recordRedirectUpgradeOffers(this.state.upgradeChoices);
   }
 
   private enqueueTip(text: string): void {

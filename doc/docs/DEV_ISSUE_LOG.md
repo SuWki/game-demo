@@ -61,6 +61,47 @@
 - 基于 docs 重建项目骨架
 - 优先恢复核心循环、三条流派、三类节点、三类战斗模板、关键提示、最低限度音效和基础埋点导出
 
+## [内容与可玩性 Round 5] redirect 默认吸引力校准
+### 本轮目标
+- 不改主流程、不重写 RunEngine、不引入新系统，只校准 redirect / hybrid 内容在真实跑局里的“默认值得拿”程度。
+- 优先解决“redirect 已经能出现，但同流派惯性内容仍更容易被拿走”的问题。
+- 用多局样本验证 `redirectPickCount` 与 `branchSwitchCount` 是否从长期偏零状态里松动出来。
+
+### 盘点结论
+- 代码与最新阶段文档一致：当前问题不是缺 redirect 入口，而是 redirect 真正被选中的吸引力不稳。
+- 关键失衡点有两个：
+  - mid 升级面板里，同流派 `redirect` sidechannel 仍会从 fallback 池漏出来，和真正的 off-route redirect 抢同一格。
+  - `relay-splice / route-handoff` 这类通用 redirect 事件会同时给出当前路线选项，导致“改道事件”被拿去继续顺原路线。
+- 埋点还有一处口径问题：
+  - 若某次 redirect 同时触发 dominant route 翻转与 matured，原逻辑会漏记 `branch_switch`。
+
+### 本轮修改
+- selector：
+  - 修正 `contentSelectors` 的 fallback 池，不再让同流派 `redirect` 变体混入 dominant route 的兜底分发。
+  - 保留真正 off-route redirect 与 generic hybrid 的 mid redirect window。
+- events / nodes：
+  - 下调 `relay-splice / route-handoff` 的出现权重，把它们降为次级改道入口。
+  - 上调 `crit-reroute-window / pierce-reroute-window / dash-reroute-window` 的 mid 权重。
+  - 让 reroute-window 的 off-route 选项从 `+2 route push` 提高到 `+3 route push`，保证“现在转”更容易真的翻过 dominant route。
+  - 提高 `round-2-event-reroute`，下调 `round-2-event-handoff`，让 round 2 更偏向“hold vs reroute”的明确窗口。
+- metrics：
+  - 修正 `branch_switch` 记录时机，不再漏记“同一拍完成 switch + mature”的真实转向。
+  - 保留上一轮接入的 `redirectOfferSeenCount / redirectPickCount / redirectPickStage`。
+
+### 验证结果
+- `npm run build` 通过。
+- Playwright smoke 通过：开始页与战斗页截图正常，控制台无新报错。
+- 自然 4 局样本：
+  - `branchSwitchNonZeroRuns = 1/4`
+  - `averageBranchSwitchCount = 0.25`
+  - `hybridPickRuns = 4/4`
+  - 多局里 `redirectPickCount` 已不再为 0。
+- targeted switch 验证中，重新观察到非零 `branch_switch` 样本，说明 redirect 不再只停留在“看见但不转”。
+
+### 本轮结论
+- redirect 默认吸引力已从“能出现但难被拿”推进到“自然样本里开始有人拿，也开始出现非零 branch switch”。
+- 但样本规模仍小，且自然转向仍偏向更明确的 late / reroute-window 场景；mid 的高频稳定转向还没有完全站稳。
+
 ## [重建 Round 1] 项目骨架与最小可运行版本恢复
 ### 本轮目标
 - 基于现有 docs 重建 Web 端可运行项目骨架

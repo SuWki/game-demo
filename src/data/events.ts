@@ -391,26 +391,130 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'relay-splice',
+    name: '并线改道',
+    description: '侧频总线短暂并轨。你可以借这次窗口把读法改道到另一条线，同时先拿到一段立刻见效的缓冲。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.05,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.9,
+        late: 0.45,
+      },
+      hintedRouteBonus: 0.65,
+      dominantRouteBonus: 1.25,
+      committedRouteBonus: 0.45,
+      maturedRouteBonus: 0.15,
+    },
+    options: [
+      {
+        id: 'relay-splice-crit',
+        label: '改道暴击旁路',
+        description: '恢复 8 点耐久，补一段升温火力，并把读法改道到暴击。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.12,
+              critChance: 0.03,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'relay-splice-pierce',
+        label: '改道穿透旁路',
+        description: '恢复 8 点耐久，接一段穿透清线，并把读法改道到穿透。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              projectileSpeed: 18,
+              pierce: 1,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'relay-splice-dash',
+        label: '改道穿梭旁路',
+        description: '恢复 8 点耐久，接一段换位节奏，并把读法改道到穿梭。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 12,
+              dashInterval: -0.2,
+              dashPulseDamage: 4,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'route-handoff',
     name: '侧频接驳',
     description: '侧频接口短暂打开。你可以顺着当前读法微调，也可以借这拍直接把读法掰向另一条线。',
     selection: {
-      baseWeight: 1.7,
+      baseWeight: 0.95,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.6,
-        late: 0.7,
+        mid: 0.9,
+        late: 0.35,
       },
-      noDominantRouteBonus: 0.4,
-      hintedRouteBonus: 1,
-      committedRouteBonus: 0.6,
-      maturedRouteBonus: 0.2,
+      noDominantRouteBonus: 0.2,
+      hintedRouteBonus: 0.45,
+      committedRouteBonus: 0.35,
+      maturedRouteBonus: 0.1,
     },
     options: [
       {
         id: 'route-handoff-crit',
-        label: '接暴击侧频',
-        description: '补一段升温火力，并把读法更明确地拉向暴击。',
+        label: '改道暴击侧频',
+        description: '补一段升温火力，并借这拍把读法改道到暴击。',
         routeId: 'crit',
         effects: [
           {
@@ -440,8 +544,8 @@ export const EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'route-handoff-pierce',
-        label: '接贯穿侧频',
-        description: '补一段贯穿与弹速，并把读法更明确地拉向穿透。',
+        label: '改道穿透侧频',
+        description: '补一段穿透与弹速，并借这拍把读法改道到穿透。',
         routeId: 'pierce',
         effects: [
           {
@@ -471,8 +575,8 @@ export const EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'route-handoff-dash',
-        label: '接穿梭侧频',
-        description: '补一段换位节奏，并把读法更明确地拉向穿梭。',
+        label: '改道穿梭侧频',
+        description: '补一段换位节奏，并借这拍把读法改道到穿梭。',
         routeId: 'dash',
         effects: [
           {
@@ -497,6 +601,315 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'route',
             routeId: 'dash',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'crit-reroute-window',
+    name: '暴击转接窗',
+    description: '当前暴击读法已经起势。你可以趁接口还没关死，把这条线切向别的收束。',
+    routeAffinity: 'crit',
+    selection: {
+      baseWeight: 2.25,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 2.25,
+        late: 0.95,
+      },
+      hintedRouteBonus: 1,
+      dominantRouteBonus: 3.05,
+      committedRouteBonus: 1.9,
+      maturedRouteBonus: 0.2,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'crit-reroute-window-pierce',
+        label: '改道穿透清线',
+        description: '恢复 8 点耐久，接入穿透清线，把读法改道到穿透。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              projectileSpeed: 18,
+              pierce: 1,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'crit-reroute-window-dash',
+        label: '改道穿梭反打',
+        description: '恢复 8 点耐久，接入换位节奏，把读法改道到穿梭。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 12,
+              dashInterval: -0.2,
+              dashPulseDamage: 4,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'crit-reroute-window-hold',
+        label: '先稳当前火力',
+        description: '不急着转向，先补一段基础火力和耐久，留着后面再判断。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              fireRate: 0.1,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pierce-reroute-window',
+    name: '穿透转接窗',
+    description: '当前穿透读法已经拉出清线节奏。你可以借这次窗口切向另一条收束方式。',
+    routeAffinity: 'pierce',
+    selection: {
+      baseWeight: 2.25,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 2.25,
+        late: 0.95,
+      },
+      hintedRouteBonus: 1,
+      dominantRouteBonus: 3.05,
+      committedRouteBonus: 1.9,
+      maturedRouteBonus: 0.2,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'pierce-reroute-window-crit',
+        label: '改道暴击收束',
+        description: '恢复 8 点耐久，接一段暴击火力，把读法改道到暴击。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.12,
+              critChance: 0.03,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'pierce-reroute-window-dash',
+        label: '改道穿梭反打',
+        description: '恢复 8 点耐久，接入换位节奏，把读法改道到穿梭。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 12,
+              dashInterval: -0.2,
+              dashPulseDamage: 4,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'pierce-reroute-window-hold',
+        label: '先稳当前清线',
+        description: '不急着转向，先补一段稳定火力和耐久，把窗口留到后面。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              projectileSpeed: 16,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'dash-reroute-window',
+    name: '穿梭转接窗',
+    description: '当前穿梭节奏已经成形。你可以借这次窗口把反打节奏切向别的收束方式。',
+    routeAffinity: 'dash',
+    selection: {
+      baseWeight: 2.25,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 2.25,
+        late: 0.95,
+      },
+      hintedRouteBonus: 1,
+      dominantRouteBonus: 3.05,
+      committedRouteBonus: 1.9,
+      maturedRouteBonus: 0.2,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'dash-reroute-window-crit',
+        label: '改道暴击爆发',
+        description: '恢复 8 点耐久，接一段暴击火力，把读法改道到暴击。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.12,
+              critChance: 0.03,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'dash-reroute-window-pierce',
+        label: '改道穿透清线',
+        description: '恢复 8 点耐久，接入穿透清线，把读法改道到穿透。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              projectileSpeed: 18,
+              pierce: 1,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'dash-reroute-window-hold',
+        label: '先稳当前机动',
+        description: '不急着转向，先补一段移速、再生和耐久，让后续窗口更宽。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 10,
+              regeneration: 0.08,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
           },
         ],
       },

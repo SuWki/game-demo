@@ -29,6 +29,9 @@ interface MetricRunSummary {
   rareSeenCount?: number;
   hybridPickCount?: number;
   latePayoffSeenCount?: number;
+  redirectOfferSeenCount?: number;
+  redirectPickCount?: number;
+  redirectPickStage?: PhaseId;
 }
 
 interface ContentMetricMeta {
@@ -86,6 +89,12 @@ export class MetricsTracker {
   private hybridPickCountInRun = 0;
 
   private latePayoffSeenCountInRun = 0;
+
+  private redirectOfferSeenCountInRun = 0;
+
+  private redirectPickCountInRun = 0;
+
+  private redirectPickStageInRun: PhaseId | null = null;
 
   private runFinished = false;
 
@@ -225,6 +234,39 @@ export class MetricsTracker {
     this.record('battle_template_completed', { templateId, outcome, contentTier });
   }
 
+  public recordRedirectOffer(meta: {
+    phase: PhaseId;
+    source: 'upgrade' | 'event';
+    optionIds: string[];
+  }): void {
+    this.redirectOfferSeenCountInRun += 1;
+    this.record('redirect_offer_seen', {
+      phase: meta.phase,
+      source: meta.source,
+      optionIds: meta.optionIds,
+      redirectOfferSeenCount: this.redirectOfferSeenCountInRun,
+    });
+  }
+
+  public recordRedirectPick(meta: {
+    phase: PhaseId;
+    pickId: string;
+    fromRoute: RouteId | null;
+    toRoute: RouteId;
+  }): void {
+    this.redirectPickCountInRun += 1;
+    if (!this.redirectPickStageInRun) {
+      this.redirectPickStageInRun = meta.phase;
+    }
+    this.record('redirect_pick', {
+      phase: meta.phase,
+      pickId: meta.pickId,
+      fromRoute: meta.fromRoute,
+      toRoute: meta.toRoute,
+      redirectPickCount: this.redirectPickCountInRun,
+    });
+  }
+
   public finishRun(result: {
     outcome: RunOutcome;
     routeId: RouteId | null;
@@ -268,6 +310,9 @@ export class MetricsTracker {
     currentRun.rareSeenCount = this.rareSeenCountInRun;
     currentRun.hybridPickCount = this.hybridPickCountInRun;
     currentRun.latePayoffSeenCount = this.latePayoffSeenCountInRun;
+    currentRun.redirectOfferSeenCount = this.redirectOfferSeenCountInRun;
+    currentRun.redirectPickCount = this.redirectPickCountInRun;
+    currentRun.redirectPickStage = this.redirectPickStageInRun ?? undefined;
 
     this.record('run_finished', {
       outcome: result.outcome,
@@ -286,6 +331,9 @@ export class MetricsTracker {
       rareSeenCount: this.rareSeenCountInRun,
       hybridPickCount: this.hybridPickCountInRun,
       latePayoffSeenCount: this.latePayoffSeenCountInRun,
+      redirectOfferSeenCount: this.redirectOfferSeenCountInRun,
+      redirectPickCount: this.redirectPickCountInRun,
+      redirectPickStage: this.redirectPickStageInRun,
     });
 
     if (currentRun.runIndex === 1) {
@@ -313,6 +361,9 @@ export class MetricsTracker {
     this.rareSeenCountInRun = 0;
     this.hybridPickCountInRun = 0;
     this.latePayoffSeenCountInRun = 0;
+    this.redirectOfferSeenCountInRun = 0;
+    this.redirectPickCountInRun = 0;
+    this.redirectPickStageInRun = null;
     this.runFinished = false;
     this.session.runs.push({
       runIndex: this.sessionRunIndex,

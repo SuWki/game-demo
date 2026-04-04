@@ -195,6 +195,39 @@ function filterPoolByTags(
   );
 }
 
+function scaleWeightedPool<T extends { id: string }>(
+  entries: Array<{ item: T; weight: number }>,
+  multiplier: number,
+  bonus = 0,
+): Array<{ item: T; weight: number }> {
+  return entries.map((entry) => ({
+    item: entry.item,
+    weight: entry.weight * multiplier + bonus,
+  }));
+}
+
+function mergeWeightedPools<T extends { id: string }>(
+  ...pools: Array<Array<{ item: T; weight: number }>>
+): Array<{ item: T; weight: number }> {
+  const merged = new Map<string, { item: T; weight: number }>();
+
+  for (const pool of pools) {
+    for (const entry of pool) {
+      const existing = merged.get(entry.item.id);
+      if (existing) {
+        existing.weight += entry.weight;
+        continue;
+      }
+      merged.set(entry.item.id, {
+        item: entry.item,
+        weight: entry.weight,
+      });
+    }
+  }
+
+  return Array.from(merged.values());
+}
+
 function appendUniquePicks<T extends { id: string }>(
   picks: T[],
   entries: Array<{ item: T; weight: number }>,
@@ -254,10 +287,11 @@ export function rollUpgradeChoices(
   const picks: UpgradeArchetype[] = [];
   const dominantRoute = context.dominantRoute;
   const dominantRoutePool = buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === dominantRoute);
-  const dominantHintPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
-  const dominantBridgePool = filterPoolByTags(dominantRoutePool, ['bridge'], ['payoff', 'finisher']);
+  const dominantNonRedirectPool = dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
+  const dominantHintPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge'], ['payoff', 'finisher', 'redirect']);
+  const dominantBridgePool = filterPoolByTags(dominantRoutePool, ['bridge'], ['payoff', 'finisher', 'redirect']);
   const dominantStarterPool = filterPoolByTags(dominantRoutePool, ['starter']);
-  const dominantCommittedPool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff', 'finisher']);
+  const dominantCommittedPool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff', 'finisher'], ['redirect']);
   const dominantPayoffPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher']);
   const genericPool = buildWeightedUpgradePool(context, source, (archetype) => !archetype.routeId);
   const genericTransitionPool = filterPoolByTags(genericPool, ['bridge', 'stabilizer']);
@@ -272,8 +306,15 @@ export function rollUpgradeChoices(
   const offRoutePivotPool = filterPoolByTags(offRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
   const offRouteRedirectPool = filterPoolByTags(offRoutePool, ['redirect'], ['payoff', 'finisher']);
   const offRouteBridgePool = filterPoolByTags(offRoutePool, ['bridge'], ['starter', 'payoff', 'finisher']);
-  const allWeightedPool = [...dominantRoutePool, ...genericPool, ...offRoutePool];
+  const midRedirectWindowPool = mergeWeightedPools(
+    scaleWeightedPool(offRouteRedirectPool, 2.05, 0.15),
+    scaleWeightedPool(offRouteBridgePool, 1.08),
+    scaleWeightedPool(genericHybridPool, 0.72),
+    scaleWeightedPool(genericTransitionPool, 0.68),
+  );
+  const allWeightedPool = [...dominantNonRedirectPool, ...genericPool, ...offRoutePool];
   const routeMatured = context.maturedRoute === dominantRoute;
+  const allowRedirectWindow = context.phase !== 'opening' || context.round >= 2;
 
   if (!context.committedRoute && context.round <= 2) {
     appendUniquePicks(
@@ -290,17 +331,19 @@ export function rollUpgradeChoices(
     appendUniquePicks(picks, genericTransitionPool.length > 0 ? genericTransitionPool : genericPool, 1);
     appendUniquePicks(
       picks,
-      genericHybridPool.length > 0
-        ? genericHybridPool
-        : offRouteRedirectPool.length > 0
-          ? offRouteRedirectPool
-          : offRouteBridgePool.length > 0
-            ? offRouteBridgePool
-            : offRoutePivotPool.length > 0
-              ? offRoutePivotPool
-              : genericTransitionPool.length > 0
-                ? genericTransitionPool
-                : [...genericPool, ...offRoutePool],
+      allowRedirectWindow && midRedirectWindowPool.length > 0
+        ? midRedirectWindowPool
+        : genericHybridPool.length > 0
+          ? genericHybridPool
+          : offRouteRedirectPool.length > 0
+            ? offRouteRedirectPool
+            : offRouteBridgePool.length > 0
+              ? offRouteBridgePool
+              : offRoutePivotPool.length > 0
+                ? offRoutePivotPool
+                : genericTransitionPool.length > 0
+                  ? genericTransitionPool
+                  : [...genericPool, ...offRoutePool],
       1,
     );
   } else if (source === 'nodePrep' || routeMatured) {
@@ -372,8 +415,8 @@ export function rollUpgradeChoices(
     );
     appendUniquePicks(
       picks,
-      offRouteRedirectPool.length > 0
-        ? offRouteRedirectPool
+      midRedirectWindowPool.length > 0
+        ? midRedirectWindowPool
         : genericHybridPool.length > 0
           ? genericHybridPool
           : offRouteBridgePool.length > 0

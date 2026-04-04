@@ -88,3 +88,15 @@
   - `rareSeenCount`：当前 run 内命中的 rare battle / rare event / rare upgrade 次数
   - `hybridPickCount`：当前 run 内命中的 hybrid / redirect 选择次数
   - `latePayoffSeenCount`：当前 run 内 late / final 阶段命中的 rare 或 payoff 兑现次数
+
+## 2026-04-05 补充
+- redirect 吸引力观测新增三个轻量字段，继续沿用当前 run summary 结构，不新建独立埋点系统：
+  - `redirectOfferSeenCount`：当前 run 内出现过多少次真正的 off-route redirect 报价窗口
+  - `redirectPickCount`：当前 run 内玩家实际拿了多少次 redirect 选项
+  - `redirectPickStage`：当前 run 第一次 redirect pick 发生在哪个阶段
+- 相关事件继续沿用现有事件流：
+  - `redirect_offer_seen`
+  - `redirect_pick`
+- 2026-04-05 起，`branch_switch` 口径修正为：
+  - 如果某次 pick 同时触发 dominant route 翻转与 matured，也必须记录为一次真实 branch switch
+  - 仅当 run 在该次 pick 之前就已经 `matured`，才抑制后续 branch switch 计数

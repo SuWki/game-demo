@@ -404,7 +404,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     name: '交叉回授',
     category: 'generic',
     repeatable: true,
-    tags: ['stabilizer', 'bridge', 'hybrid', 'redirect'],
+    tags: ['stabilizer', 'bridge', 'hybrid'],
     selection: {
       baseWeight: 2.7,
       minRound: 2,
@@ -429,6 +429,67 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'heal',
         amount: 6,
+      },
+    ],
+  },
+  {
+    id: 'generic-reroute-buffer',
+    name: '改道缓冲',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'hybrid'],
+    selection: {
+      baseWeight: 2.7,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.5,
+        late: 0.8,
+      },
+      noDominantRouteBonus: 1.1,
+      finalPrepBonus: 0.8,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 6,
+          regeneration: 0.08,
+          moveSpeed: 12,
+          projectileSpeed: 16,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 10,
+      },
+    ],
+  },
+  {
+    id: 'generic-relay-throttle',
+    name: '并线节流',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'hybrid'],
+    selection: {
+      baseWeight: 2.6,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.4,
+        late: 0.9,
+      },
+      finalPrepBonus: 0.9,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          fireRate: 0.14,
+          projectileSpeed: 16,
+          moveSpeed: 8,
+        },
       },
     ],
   },
@@ -575,27 +636,35 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
     selection: {
-      baseWeight: 1.9,
+      baseWeight: 2.25,
       minRound: 2,
       maxRound: 4,
       phaseBonuses: {
-        mid: 1.6,
-        late: 0.8,
+        mid: 2.1,
+        late: 1,
       },
-      hintedRouteBonus: 0.2,
-      dominantRouteBonus: 0.6,
-      committedRouteBonus: 0.4,
-      offRouteMultiplier: 1.45,
+      hintedRouteBonus: 0.05,
+      dominantRouteBonus: 0.15,
+      committedRouteBonus: 0.1,
+      offRouteMultiplier: 2.05,
       excludeFromFinalPrep: true,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
+          damage: 2,
           fireRate: 0.14,
           critChance: 0.04,
-          moveSpeed: 10,
         },
+      },
+      {
+        type: 'heal',
+        amount: 8,
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
       },
       {
         type: 'route',
@@ -851,27 +920,35 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
     selection: {
-      baseWeight: 1.9,
+      baseWeight: 2.25,
       minRound: 2,
       maxRound: 4,
       phaseBonuses: {
-        mid: 1.6,
-        late: 0.8,
+        mid: 2.1,
+        late: 1,
       },
-      hintedRouteBonus: 0.2,
-      dominantRouteBonus: 0.6,
-      committedRouteBonus: 0.4,
-      offRouteMultiplier: 1.45,
+      hintedRouteBonus: 0.05,
+      dominantRouteBonus: 0.15,
+      committedRouteBonus: 0.1,
+      offRouteMultiplier: 2.05,
       excludeFromFinalPrep: true,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          projectileSpeed: 20,
+          projectileSpeed: 24,
           damage: 2,
           pierce: 1,
         },
+      },
+      {
+        type: 'heal',
+        amount: 8,
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
       },
       {
         type: 'route',
@@ -1164,17 +1241,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
     selection: {
-      baseWeight: 1.9,
+      baseWeight: 2.25,
       minRound: 2,
       maxRound: 4,
       phaseBonuses: {
-        mid: 1.6,
-        late: 0.8,
+        mid: 2.1,
+        late: 1,
       },
-      hintedRouteBonus: 0.2,
-      dominantRouteBonus: 0.6,
-      committedRouteBonus: 0.4,
-      offRouteMultiplier: 1.45,
+      hintedRouteBonus: 0.05,
+      dominantRouteBonus: 0.15,
+      committedRouteBonus: 0.1,
+      offRouteMultiplier: 2.05,
       excludeFromFinalPrep: true,
     },
     effects: [
@@ -1182,9 +1259,18 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           moveSpeed: 14,
-          dashInterval: -0.24,
-          dashInvulnerability: 0.04,
+          dashInterval: -0.28,
+          dashInvulnerability: 0.05,
+          dashPulseDamage: 4,
         },
+      },
+      {
+        type: 'heal',
+        amount: 8,
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
       {
         type: 'route',

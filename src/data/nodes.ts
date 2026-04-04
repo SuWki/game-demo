@@ -217,7 +217,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '方向定标',
         description: '更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。',
         selection: {
-          baseWeight: 1.8,
+          baseWeight: 1.5,
           soloMultiplier: 0.86,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 0.9,
@@ -256,10 +256,23 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '侧频接驳',
         description: '这一拍更像一次重评路线的机会，适合判断要不要借侧频改道。',
         selection: {
-          baseWeight: 2.1,
+          baseWeight: 1.95,
           soloMultiplier: 0.46,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.6,
+        },
+      },
+      {
+        id: 'round-2-event-reroute',
+        type: 'event',
+        phase: 'mid',
+        title: '改道评估',
+        description: '这一拍更像一次主动换线的预演，适合判断现在转过去值不值。',
+        selection: {
+          baseWeight: 2.55,
+          soloMultiplier: 0.48,
+          repeatTypeMultiplier: 0.62,
+          noFocusBonus: 0.5,
         },
       },
     ],

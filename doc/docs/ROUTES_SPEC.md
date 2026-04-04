@@ -75,3 +75,16 @@
 - 当前中段内容应先把“贴身蓄能”与“稳态净帧”两种 bridge 读法拉开，late 再把两类 payoff 区分开，而不是只堆通用生存数值
 - 当前中后段也允许通过少量 hybrid / pivot 内容保留转向诱惑，但不能让它压过穿梭路线本身的走位闭环
 - 当前也允许通过低频 `redirect` 穿梭侧频把 build 从别路拉向换位反打，但它必须主要出现在 mid，并且不能把穿梭重新做成单纯的数值逃生线
+
+## 2026-04-05 redirect / hybrid 口径补充
+- `crit-sidechannel / pierce-sidechannel / dash-sidechannel` 的最新口径是：它们属于“真 redirect upgrade”，主要职责是作为 off-route 改道窗口，而不是继续充当当前主路线的普通 bridge 填充物。
+- mid 阶段更推荐的 redirect 事件形态是：
+  - `reroute-window`：`hold` + 2 个 off-route 选项
+  - 目标是让玩家明确评估“现在转是否值得”，而不是在 redirect 事件里继续顺手点当前路线
+- `relay-splice / route-handoff` 仍保留，但现在是次级入口：
+  - 用于保留少量不可预测性
+  - 不再作为 mid redirect 的主要承接方式
+- redirect 承接的最新取舍原则：
+  - upgrade redirect：强调“现在拿不亏”
+  - reroute-window：强调“现在转得过去”
+  - late payoff：继续留在 late / final，不前移到 mid 伪造转向价值

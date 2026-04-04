@@ -18,7 +18,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：内容池比例边界维护 + hybrid / redirect 补强 + 稀有 / late payoff 感知稳定 + 实跑样本验证
+- 当前执行焦点：redirect 默认吸引力校准 + hybrid 承接强化 + 稀有 / late payoff 比例边界维护 + 实跑样本验证
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -34,10 +34,23 @@
 
 ## 当前最大风险
 - 当前 rare / hybrid / late payoff 的边界已经比前几轮清楚，但若后续继续只补普通 route-specific 内容，replay 动机仍会再次被常规分发稀释
-- `branchSwitchCount` 的定向样本已经能触发，但自然跑局里的非零样本仍偏少，说明“可转向机会”已经存在，但默认吸引力还不够稳
+- `redirectOfferSeenCount` 已经能够在真实跑局里稳定非零，说明“可转向机会”已经能被发出来；但 `redirectPickCount / branchSwitchCount` 在自然样本里仍偏低，说明默认吸引力与玩家惯性对冲后还不够稳
 - mid 阶段虽然已不再主要被普通 payoff 污染，但普通 route-specific bridge 如果继续增量失控，仍可能重新把后段兑现感往前挤
 - 稀有内容如果后续只是继续加数量而不守住低频，late 记忆点会重新退化成普通池换皮
 - 中文乱码与内部设计话术重新泄露到玩家可见文本
+
+## 2026-04-05 更新
+- 最新阶段口径保持不变：项目仍处于“内容与可玩性阶段”，本轮不做骨架重建、不做新系统扩展。
+- 本轮执行焦点改为：`redirect 默认吸引力校准 > hybrid 承接强化 > 多局样本验证`。
+- 当前确认的最新进展：
+  - mid 阶段真正的 off-route redirect 升级窗口已不再被同流派 `redirect` 变体挤占。
+  - `relay-splice / route-handoff` 下调为次级改道入口，带 `hold` 选项的 reroute-window 事件被前置为更主要的主动转向窗口。
+  - 自然跑局样本里 `redirectPickCount` 已不再长期为 0，`branchSwitchCount` 也重新出现了非零样本。
+  - 新增的 redirect 观测字段 `redirectOfferSeenCount / redirectPickCount / redirectPickStage` 已接入并通过导出链路保留。
+- 当前最大风险更新为：
+  - 自然样本里的主动转向仍然偏少，虽然已不再是纯 0，但主要还集中在 mid-late / late 的明确窗口，mid 的稳定转向样本仍不足。
+  - `relay-splice` 这类通用改道事件仍可能在部分跑局里被顺手拿来“顺当前路线”，说明 redirect 吸引力问题已从“看不到”转成“看到后是否真愿意翻主路线”。
+  - `branchSwitchCount` 已修正为不会漏记“同一拍完成 switch + mature”的情况，但样本规模仍小，后续还需要继续观察真实分布。
 
 ## 当前边界
 ### 不再作为主线的内容

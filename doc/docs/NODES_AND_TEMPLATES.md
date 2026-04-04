@@ -66,3 +66,13 @@
 - rare 模板只作为家族内低频候选，不拆出第四类节点，也不改主流程
 - 不通过新增第四类节点或重做地图结构来解决重复感
 - 不通过把普通 route-specific 节点继续堆高来冒充转向空间；真实 redirect 应由少量 mid 事件节点与低频 rare 节点承担
+
+## 2026-04-05 round 2 节点口径补充
+- round 2 的 redirect 责任进一步细化为：
+  - `round-2-event-reroute`：主要承担“hold vs reroute”的主动转向窗口
+  - `round-2-event-handoff`：保留为次级波动窗口，不再主导 redirect 体验
+  - `round-2-upgrade-lock`：继续保持低权重，避免普通 route-specific 强导向重新挤占 mid
+- 最新分发原则是：
+  - mid 先让玩家看到更清楚的 reroute 评估窗口
+  - late 再把 rare / payoff 记忆点集中兑现
+  - 不通过把通用 relay/handoff 大量堆进 mid 来伪造 branch switching
