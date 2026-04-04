@@ -33,9 +33,9 @@
 - event 是拐方向
 
 ## 当前节点分发焦点
-- 前段：更强调“路线信号出现”，允许多张 starter 与试配型事件更早出现
-- 中段：更强调“方向开始站稳”，battle / upgrade / event 都应有更明显的 build 指向
-- 后段：更强调“收尾修正与押注”，减少只给单选导致节奏过平的情况
+- 前段：更强调“路线信号出现但不锁死”，starter 与中性过渡内容优先，避免过早强承诺
+- 中段：更强调“starter 接 bridge，再逐步站稳”，battle / upgrade / event 都应帮助 build 坡度变顺
+- 后段：更强调“committed 后的 payoff 与收尾修正”，把强兑现内容集中到 late / final
 
 ## 战斗模板
 只保留三类：

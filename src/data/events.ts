@@ -52,13 +52,13 @@ export const EVENT_CATALOG: EventDefinition[] = [
     name: '高压试飞',
     description: '试飞记录给出一次偏向路线的机会，但机体会承受额外负荷。',
     selection: {
-      baseWeight: 3.2,
+      baseWeight: 2.5,
       maxRound: 2,
       phaseBonuses: {
-        opening: 1.5,
-        mid: 0.8,
+        opening: 1.1,
+        mid: 0.3,
       },
-      noDominantRouteBonus: 1.4,
+      noDominantRouteBonus: 1,
     },
     options: [
       {
@@ -136,15 +136,16 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '系统建议你顺着已有倾向继续深入，或者先补一个保底。',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 2.4,
+      baseWeight: 2.3,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.1,
-        late: 1.5,
+        mid: 1.3,
+        late: 0.9,
       },
-      dominantRouteBonus: 4.6,
-      committedRouteBonus: 2.4,
-      maturedRouteBonus: 1.2,
+      hintedRouteBonus: 1.2,
+      dominantRouteBonus: 3.4,
+      committedRouteBonus: 2,
+      maturedRouteBonus: 0.8,
     },
     options: [
       {
@@ -191,15 +192,16 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '系统抓到一段更贴近当前路线的战斗遥测。要顺势压深，还是先换成更稳的整理？',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 2.6,
+      baseWeight: 2.2,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.2,
-        late: 1.6,
+        mid: 1,
+        late: 1.2,
       },
-      dominantRouteBonus: 4.8,
-      committedRouteBonus: 2.6,
-      maturedRouteBonus: 1.3,
+      hintedRouteBonus: 0.8,
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2,
+      maturedRouteBonus: 1,
     },
     options: [
       {
@@ -288,21 +290,123 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'signal-soften',
+    name: '缓冲信号',
+    description: '读数已经开始偏向一条路了，但系统提醒你先把坡度铺平也许更稳。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 2.4,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.4,
+        late: 0.7,
+      },
+      hintedRouteBonus: 1.6,
+      dominantRouteBonus: 2.4,
+      committedRouteBonus: 1.4,
+      maturedRouteBonus: 0.4,
+    },
+    options: [
+      {
+        id: 'signal-soften-lean',
+        label: '顺着读法微调',
+        description: '沿当前方向补一段手感，但先不急着把承诺压死。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.14,
+              moveSpeed: 12,
+            },
+          },
+        ],
+      },
+      {
+        id: 'signal-soften-open',
+        label: '保留转向余地',
+        description: '补一段续航和机动，把后面的分支留宽一点。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              regeneration: 0.1,
+              moveSpeed: 10,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'coolant-detour',
+    name: '冷却绕行',
+    description: '机体需要一小段缓冲。你可以把它换成节奏空间，也可以换成更稳的容错。',
+    selection: {
+      baseWeight: 2.8,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.8,
+      },
+      noDominantRouteBonus: 1,
+    },
+    options: [
+      {
+        id: 'coolant-detour-tempo',
+        label: '换节奏窗口',
+        description: '射速和弹速上升，帮助把中段衔接得更顺。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.18,
+              projectileSpeed: 18,
+            },
+          },
+        ],
+      },
+      {
+        id: 'coolant-detour-guard',
+        label: '换稳定容错',
+        description: '恢复 12 点耐久，并补一点上限和再生。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 6,
+              regeneration: 0.08,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 12,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'crit-heat-bank',
     name: '热区记录',
     description: '一段暴击热区记录被锁定。你要把连发窗口继续拉长，还是把单次爆点压得更狠？',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 0.9,
-      minRound: 2,
+      minRound: 3,
       phaseBonuses: {
-        mid: 1.2,
         late: 1.8,
+        finalPrep: 0.8,
       },
+      hintedRouteBonus: 0.3,
       dominantRouteBonus: 3.8,
       committedRouteBonus: 2.8,
       maturedRouteBonus: 1.4,
-      offRouteMultiplier: 0.08,
+      offRouteMultiplier: 0.05,
     },
     options: [
       {
@@ -352,15 +456,16 @@ export const EVENT_CATALOG: EventDefinition[] = [
     routeAffinity: 'pierce',
     selection: {
       baseWeight: 0.9,
-      minRound: 2,
+      minRound: 3,
       phaseBonuses: {
-        mid: 1.2,
         late: 1.8,
+        finalPrep: 0.8,
       },
+      hintedRouteBonus: 0.3,
       dominantRouteBonus: 3.8,
       committedRouteBonus: 2.8,
       maturedRouteBonus: 1.4,
-      offRouteMultiplier: 0.08,
+      offRouteMultiplier: 0.05,
     },
     options: [
       {
@@ -410,15 +515,16 @@ export const EVENT_CATALOG: EventDefinition[] = [
     routeAffinity: 'dash',
     selection: {
       baseWeight: 0.9,
-      minRound: 2,
+      minRound: 3,
       phaseBonuses: {
-        mid: 1.2,
         late: 1.8,
+        finalPrep: 0.8,
       },
+      hintedRouteBonus: 0.3,
       dominantRouteBonus: 3.8,
       committedRouteBonus: 2.8,
       maturedRouteBonus: 1.4,
-      offRouteMultiplier: 0.08,
+      offRouteMultiplier: 0.05,
     },
     options: [
       {

@@ -21,6 +21,9 @@
 - build_mature_time
 - death_time
 - run_duration
+- first_commit_stage
+- first_commit_pick
+- branch_switch_count
 
 ## 节点与模板数据
 - node_selected
@@ -28,6 +31,7 @@
 - battle_template_completed
 - event_selected
 - upgrade_selected
+- branch_switch
 
 ## 流派数据
 - route_committed
@@ -65,4 +69,9 @@
 - `durationSec`
 - `battleWins`
 - `nodesCleared`
+- `firstCommitStage`
+- `firstCommitPick`
+- `branchSwitchCount`
 - `route_hint_time` 现按“每条路线在当前 run 首次出现倾向”记录一次，避免同一路线重复记时
+- `route_lock_time` 现会附带触发时的 `phase` 与 `pickId`
+- `branch_switch` 用于记录 dominant route 在同一 run 内发生变化的时点与来源

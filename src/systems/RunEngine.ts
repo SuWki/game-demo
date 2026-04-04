@@ -66,8 +66,14 @@ interface EngineAnnouncement {
   cue?: 'click' | 'upgrade' | 'hit' | 'crit' | 'pressure' | 'result';
 }
 
+interface RouteAdvanceMeta {
+  pickId: string;
+}
+
 const CENTER_X = ARENA_WIDTH / 2;
 const CENTER_Y = ARENA_HEIGHT / 2;
+const ROUTE_COMMIT_THRESHOLD = 3;
+const ROUTE_MATURE_THRESHOLD = 5;
 
 function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
@@ -213,7 +219,9 @@ export class RunEngine {
     }
 
     const source = this.state.upgradeSource;
-    this.applyEffects(upgrade.effects);
+    this.applyEffects(upgrade.effects, {
+      pickId: `upgrade:${upgrade.sourceId}`,
+    });
     if (upgrade.repeatable || !this.state.selectedUpgrades.includes(upgrade.sourceId)) {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
@@ -260,7 +268,9 @@ export class RunEngine {
     }
 
     const optionRouteId = option.routeId === 'dominant' ? this.getDominantRoute() ?? undefined : option.routeId;
-    this.applyEffects(option.effects ?? []);
+    this.applyEffects(option.effects ?? [], {
+      pickId: `event:${eventDef.id}:${option.id}`,
+    });
     this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId);
     this.enqueueAudio('upgrade');
     this.enqueueTip(`${eventDef.name}：${option.label}`);
@@ -583,7 +593,10 @@ export class RunEngine {
     this.state.stats.regeneration += modifiers.regeneration ?? 0;
   }
 
-  private applyEffects(effects: ContentEffect[]): void {
+  private applyEffects(effects: ContentEffect[], meta?: RouteAdvanceMeta): void {
+    const previousDominantRoute = this.getDominantRoute();
+    let routeAdvanced = false;
+
     for (const effect of effects) {
       if (effect.type === 'stats') {
         this.applyModifiers(effect.modifiers);
@@ -597,12 +610,29 @@ export class RunEngine {
 
       const routeId = effect.routeId === 'dominant' ? this.getDominantRoute() : effect.routeId;
       if (routeId) {
-        this.advanceRoute(routeId);
+        this.advanceRoute(routeId, meta);
+        routeAdvanced = true;
       }
+    }
+
+    if (!routeAdvanced || !previousDominantRoute) {
+      return;
+    }
+
+    const nextDominantRoute = this.getDominantRoute();
+    if (
+      nextDominantRoute &&
+      nextDominantRoute !== previousDominantRoute &&
+      !this.state.maturedRoute
+    ) {
+      this.services.metrics.recordBranchSwitch(previousDominantRoute, nextDominantRoute, {
+        phase: this.state.phase,
+        pickId: meta?.pickId ?? 'route-effect',
+      });
     }
   }
 
-  private advanceRoute(routeId: RouteId): void {
+  private advanceRoute(routeId: RouteId, meta?: RouteAdvanceMeta): void {
     this.state.routeCounts[routeId] += 1;
     const count = this.state.routeCounts[routeId];
     if (count === 1) {
@@ -619,13 +649,24 @@ export class RunEngine {
       .filter(([candidateRouteId]) => candidateRouteId !== routeId)
       .map(([, value]) => value);
 
-    if (!this.state.committedRoute && count >= 2 && otherCounts.every((value) => count > value)) {
+    if (
+      !this.state.committedRoute &&
+      count >= ROUTE_COMMIT_THRESHOLD &&
+      otherCounts.every((value) => count >= value + 1)
+    ) {
       this.state.committedRoute = routeId;
-      this.services.metrics.markRouteCommitted(routeId);
+      this.services.metrics.markRouteCommitted(routeId, {
+        phase: this.state.phase,
+        pickId: meta?.pickId ?? `route:${routeId}`,
+      });
       this.enqueueTip(`${ROUTE_NAME_MAP[routeId]}路线开始站稳`);
     }
 
-    if (!this.state.maturedRoute && count >= 3) {
+    if (
+      !this.state.maturedRoute &&
+      count >= ROUTE_MATURE_THRESHOLD &&
+      otherCounts.every((value) => count >= value + 1)
+    ) {
       this.state.maturedRoute = routeId;
       this.services.metrics.markRouteMatured(routeId);
       this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.matureHint ?? '');

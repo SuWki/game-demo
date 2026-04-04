@@ -92,6 +92,7 @@ export interface ContentSelectionProfile {
   maxRound?: number;
   phaseBonuses?: Partial<Record<PhaseId, number>>;
   noDominantRouteBonus?: number;
+  hintedRouteBonus?: number;
   dominantRouteBonus?: number;
   committedRouteBonus?: number;
   maturedRouteBonus?: number;

@@ -23,15 +23,16 @@
 已经阶段性收口。
 目标状态：
 - 前段可以出现明显流派倾向
-- 但不应在 battle1 level-up2 普遍锁死方向
+- 但不应在 opening 内普遍锁死方向
 - 玩家会觉得“可能在往这条线走”，但不是“已经没悬念了”
+- 当前目标是：starter 给方向、bridge 拉坡度、committed 主要落在 mid、payoff 主要留到 late / final
 
 ### 成型点
 已经明显松开。
 当前分布：
-- 暴击流：battle1 后半到 battle2 开段
-- 穿透流：主要落在 battle2
-- 穿梭流：battle2 为主，但分布更散，可落到 battle1/2/3 甚至 battle4
+- 暴击流：主要在 mid 站稳，late 才开始集中兑现 payoff
+- 穿透流：主要在 mid 站稳，late / final 更明显拉开清线与续链收益
+- 穿梭流：主要在 mid 站稳，late / final 才更稳定进入蓄能反打窗口
 
 ### 模板切换点
 已无明显固定骨架，只剩轻度家族吸附。

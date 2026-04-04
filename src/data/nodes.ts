@@ -117,10 +117,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '试飞事件',
         description: '中风险拐方向，可能更快形成路线。',
         selection: {
-          baseWeight: 2.2,
+          baseWeight: 1.8,
           soloMultiplier: 0.25,
           repeatTypeMultiplier: 0.55,
-          noFocusBonus: 0.8,
+          noFocusBonus: 0.5,
         },
       },
       {
@@ -128,12 +128,12 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'event',
         phase: 'opening',
         title: '路线试配',
-        description: '用一次试配把下一拍路线信号拉大。',
+        description: '用一次试配把下一拍路线信号摸清，但不急着立刻锁死。',
         selection: {
-          baseWeight: 2.6,
+          baseWeight: 2.1,
           soloMultiplier: 0.36,
           repeatTypeMultiplier: 0.58,
-          noFocusBonus: 1.4,
+          noFocusBonus: 0.9,
         },
       },
     ],
@@ -189,12 +189,25 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '中段强化',
-        description: '稳住当前方向，把火力读数做实。',
+        description: '稳住当前方向，先把 starter 接成更顺的 bridge。',
         selection: {
-          baseWeight: 3.5,
+          baseWeight: 3.8,
           soloMultiplier: 0.92,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.4,
+        },
+      },
+      {
+        id: 'round-2-upgrade-bridge',
+        type: 'upgrade',
+        phase: 'mid',
+        title: '过渡整备',
+        description: '补一段过渡读数，让方向更清楚，但还留得住转向余地。',
+        selection: {
+          baseWeight: 3.4,
+          soloMultiplier: 0.9,
+          repeatTypeMultiplier: 0.78,
+          lowHpBonus: 1.3,
         },
       },
       {
@@ -202,12 +215,12 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '方向定标',
-        description: '更偏路线锁定的一次整备，适合把中段差异拉开。',
+        description: '更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。',
         selection: {
-          baseWeight: 3.1,
+          baseWeight: 2.4,
           soloMultiplier: 0.86,
           repeatTypeMultiplier: 0.78,
-          lowHpBonus: 1.1,
+          lowHpBonus: 0.9,
         },
       },
       {
@@ -215,12 +228,12 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'event',
         phase: 'mid',
         title: '中段事件',
-        description: '高波动拐点，可能直接加快成型。',
+        description: '高波动拐点，会放大方向差异，但不一定立刻定型。',
         selection: {
-          baseWeight: 3.1,
+          baseWeight: 2.6,
           soloMultiplier: 0.45,
           repeatTypeMultiplier: 0.62,
-          noFocusBonus: 1.2,
+          noFocusBonus: 1,
         },
       },
       {
@@ -228,12 +241,12 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'event',
         phase: 'mid',
         title: '偏航窗口',
-        description: '可以直接押当前方向，也可能顺手把波动一起拉大。',
+        description: '可以顺着当前读法微调，也能顺手把转向窗口留住。',
         selection: {
-          baseWeight: 2.8,
+          baseWeight: 2.4,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
-          noFocusBonus: 1,
+          noFocusBonus: 0.8,
         },
       },
     ],
@@ -241,9 +254,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   3: {
     phase: 'late',
     countWeights: [
-      { count: 1, weight: 24 },
-      { count: 2, weight: 50 },
-      { count: 3, weight: 26 },
+      { count: 1, weight: 20 },
+      { count: 2, weight: 52 },
+      { count: 3, weight: 28 },
     ],
     blueprints: [
       {

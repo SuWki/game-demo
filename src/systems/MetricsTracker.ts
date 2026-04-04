@@ -1,4 +1,4 @@
-import type { BattleTemplateId, NodeType, RouteBuildStage, RouteId, RunEndingKind, RunOutcome } from '../game/types';
+import type { BattleTemplateId, NodeType, PhaseId, RouteBuildStage, RouteId, RunEndingKind, RunOutcome } from '../game/types';
 
 export const PILOT_METRICS_STORAGE_KEY = 'commercial_pilot_metrics_v1';
 
@@ -23,6 +23,9 @@ interface MetricRunSummary {
   durationSec?: number;
   battleWins?: number;
   nodesCleared?: number;
+  firstCommitStage?: PhaseId;
+  firstCommitPick?: string;
+  branchSwitchCount?: number;
 }
 
 interface MetricSession {
@@ -61,6 +64,12 @@ export class MetricsTracker {
   private committedRouteInRun: RouteId | null = null;
 
   private maturedRouteInRun: RouteId | null = null;
+
+  private firstCommitStageInRun: PhaseId | null = null;
+
+  private firstCommitPickInRun: string | null = null;
+
+  private branchSwitchCountInRun = 0;
 
   private runFinished = false;
 
@@ -117,13 +126,25 @@ export class MetricsTracker {
     this.recordRunTime('first_route_hint_time', { routeId });
   }
 
-  public markRouteCommitted(routeId: RouteId): void {
+  public markRouteCommitted(routeId: RouteId, meta?: { phase: PhaseId; pickId: string }): void {
     if (this.committedRouteInRun === routeId) {
       return;
     }
     this.committedRouteInRun = routeId;
-    this.recordRunTime('route_lock_time', { routeId });
-    this.record('route_committed', { routeId });
+    if (!this.firstCommitStageInRun && meta) {
+      this.firstCommitStageInRun = meta.phase;
+      this.firstCommitPickInRun = meta.pickId;
+    }
+    this.recordRunTime('route_lock_time', {
+      routeId,
+      phase: meta?.phase,
+      pickId: meta?.pickId,
+    });
+    this.record('route_committed', {
+      routeId,
+      phase: meta?.phase,
+      pickId: meta?.pickId,
+    });
   }
 
   public markRouteMatured(routeId: RouteId): void {
@@ -148,6 +169,17 @@ export class MetricsTracker {
 
   public recordEventSelected(eventId: string, optionId: string, routeId?: RouteId): void {
     this.record('event_selected', { eventId, optionId, routeId });
+  }
+
+  public recordBranchSwitch(fromRoute: RouteId, toRoute: RouteId, meta?: { phase: PhaseId; pickId: string }): void {
+    this.branchSwitchCountInRun += 1;
+    this.record('branch_switch', {
+      fromRoute,
+      toRoute,
+      phase: meta?.phase,
+      pickId: meta?.pickId,
+      branchSwitchCount: this.branchSwitchCountInRun,
+    });
   }
 
   public recordBattleEntered(templateId: BattleTemplateId, title: string): void {
@@ -195,6 +227,9 @@ export class MetricsTracker {
     currentRun.durationSec = result.durationSec;
     currentRun.battleWins = result.battleWins;
     currentRun.nodesCleared = result.nodesCleared;
+    currentRun.firstCommitStage = this.firstCommitStageInRun ?? undefined;
+    currentRun.firstCommitPick = this.firstCommitPickInRun ?? undefined;
+    currentRun.branchSwitchCount = this.branchSwitchCountInRun;
 
     this.record('run_finished', {
       outcome: result.outcome,
@@ -207,6 +242,9 @@ export class MetricsTracker {
       durationSec: result.durationSec,
       battleWins: result.battleWins,
       nodesCleared: result.nodesCleared,
+      firstCommitStage: this.firstCommitStageInRun,
+      firstCommitPick: this.firstCommitPickInRun,
+      branchSwitchCount: this.branchSwitchCountInRun,
     });
 
     if (currentRun.runIndex === 1) {
@@ -228,6 +266,9 @@ export class MetricsTracker {
     this.hintedRoutesInRun = new Set<RouteId>();
     this.committedRouteInRun = null;
     this.maturedRouteInRun = null;
+    this.firstCommitStageInRun = null;
+    this.firstCommitPickInRun = null;
+    this.branchSwitchCountInRun = 0;
     this.runFinished = false;
     this.session.runs.push({
       runIndex: this.sessionRunIndex,

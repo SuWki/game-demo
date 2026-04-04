@@ -800,3 +800,130 @@
   - starter 到 committed 的平均用时是否过快
   - route-specific event 的命中是否已经足够但没有过度锁死
   - 后段 node 2~3 选增加后，是否真的提升 replay 感而不是只增加阅读成本
+
+## [重建 Round 12] 构筑承诺节奏控制
+### 本轮目标
+- 不改主流程、不重写 `RunEngine`、不引入新系统
+- 把上一轮增强后的“方向更清楚，但可能过早 committed”问题重新收平
+- 在现有数据驱动结构内把 `starter -> bridge -> committed -> payoff` 的坡度重新拉开
+- 低成本补充“首个强承诺时点”和“是否发生转向”的观测字段
+
+### 文档取舍依据
+- 继续以最新 `PROJECT_STATUS.md` 与本文件作为阶段基线
+- 但本轮优先级采用用户最新指令：当前主问题不是内容量不够，而是构筑锁定速度可能过快
+- 因此本轮没有回到“继续补大批内容”或“做新系统”，而是把 selector / route progression / metrics 一起调成更平滑的承诺坡度
+- 更早的 `REBUILD_PLAN.md`、上一轮“内容扩容优先”记录只保留为背景，不作为本轮主口径
+
+### 改动前盘点
+- 升级 selector：
+  - 只要出现 dominant route，就会立刻吃到较高 `dominantRouteBonus`
+  - opening hinted 状态下的三选一平均仍会出现约 `1.69` 张路线牌，而且几乎全是 starter
+- 路线推进阈值：
+  - 旧逻辑是 `count >= 2` 就 committed、`count >= 3` 就 matured
+  - 这会和上一轮更强的 starter 分发叠加，导致部分 build 在 opening 内就有较高概率提前锁定
+- 事件 selector：
+  - mid hinted 状态下，`route-calibration / targeted-telemetry / route-specific event` 很容易扎堆上浮
+  - bridge 还没铺平时，payoff 信号已经开始提前出现
+- 节点文本与权重：
+  - round 2 的部分 upgrade / event blueprint 仍偏“直接锁定”的表达，不利于维持转向弹性
+
+### 本轮实际处理内容
+- 选择器口径：
+  - 给 `ContentSelectionProfile` 新增轻量 `hintedRouteBonus`
+  - 将“已出现 dominant route 但尚未 committed”的权重，与“已经 committed / matured”的权重拆开处理
+  - hinted 阶段的升级面板现在改为更稳定的：
+    - `1` 张当前路线提示位
+    - `1` 张中性 / 过渡位
+    - `1` 张侧向 / 转向位
+  - committed 阶段仍会偏向当前路线，但保留一个通用 / 弹性位，直到 late / final 才把 payoff 集中上浮
+- 升级池调整：
+  - 通用 bridge 新增：
+    - `generic-vector-buffer`
+    - `generic-pressure-bypass`
+  - 三路线 soft bridge 新增：
+    - `crit-afterglow`
+    - `pierce-vector`
+    - `dash-slipstream`
+  - 这些新增内容都用于在 mid 把路线“扶稳”而不是直接押成 payoff
+  - 现有 `bridge + payoff` 牌和 `finisher` 统一后移到 `round >= 3`
+  - starter 的 dominant 加权改弱，避免一出方向就继续强喂 starter
+- 事件池调整：
+  - 新增过渡事件：
+    - `signal-soften`
+    - `coolant-detour`
+  - `signal-soften` 提供“顺着当前读法微调，但不加 route progress”的半中性承接
+  - `coolant-detour` 提供纯中性节奏 / 容错缓冲
+  - `route-calibration`、`targeted-telemetry` 的 hinted 权重下降，避免 hinted 阶段过快压成 committed
+  - 三个 route-specific payoff event 统一后移到 `round >= 3`
+- 节点分发调整：
+  - round 1 event blueprint 权重下降，减少 opening 过度靠事件拉大路线偏置
+  - round 2 新增 `round-2-upgrade-bridge`
+  - round 2 既有 `upgrade-lock / event / event-shift` 权重与文案改成“扶稳方向”而不是“直接锁死”
+  - round 3 再次降低单选概率，把更多 2~3 选留给后段 payoff 与收尾修正
+- 路线推进与埋点：
+  - committed 阈值从 `2` 提高到 `3`
+  - matured 阈值从 `3` 提高到 `5`
+  - 新增：
+    - `firstCommitStage`
+    - `firstCommitPick`
+    - `branchSwitchCount`
+  - `route_lock_time` 现在会附带 `phase / pickId`
+  - 新增 `branch_switch` 事件，用于记录 dominant route 发生变化的时点与来源
+
+### 本轮验证结果
+- 静态 / 抽样验证：
+  - 升级总量从 `26 -> 31`
+    - generic `8 -> 10`
+    - 每条路线 `6 -> 7`
+  - opening hinted 状态下：
+    - 当前路线位稳定收敛为约 `1` 张 / 次
+    - 其余两位更常落在“中性过渡 + 侧向转向”
+  - mid hinted 状态下：
+    - bridge 已成为主承接内容
+    - route payoff 基本退出中段抽样主流
+  - late committed 状态下：
+    - route-specific payoff event 开始集中上浮
+- 浏览器回归：
+  - `npm run build` 通过
+  - Playwright 实测确认：
+    - start -> node / battle / upgrade / event -> result -> replay 全链路可用
+    - `crit` 实机 aggressive 选法下，`firstCommitStage` 已从 opening 推迟到 `late`
+    - `pierce` aggressive 选法下，`firstCommitStage` 落在 `mid`
+    - `dash` aggressive 选法下，`firstCommitStage` 从 opening 推迟到 `mid`
+    - 三路线 late / final 仍能稳定看到 payoff 与成型提示
+    - replay 继续正常写入 `restart_after_first_run / second_run_start`
+  - 定向脚本验证：
+    - dominant route 发生变化时，`branch_switch` 会真实写入，并同步累计到 `branchSwitchCount`
+
+### 本轮更新文档
+- `doc/docs/PROJECT_STATUS.md`
+- `doc/docs/CORE_LOOP.md`
+- `doc/docs/NODES_AND_TEMPLATES.md`
+- `doc/docs/ROUTES_SPEC.md`
+- `doc/docs/METRICS_SPEC.md`
+- `doc/docs/DEV_ISSUE_LOG.md`
+
+### 代码恢复度估计
+- 整体恢复度：`75%~82%`
+- 估计口径：
+  - 仍以“与旧项目最成熟状态相比”的恢复度为主
+  - 同时参考“当前是否已能更稳定地控制 build 坡度、观察承诺时点，并继续做内容迭代”
+- 结构恢复度：`83%~89%`
+- 内容恢复度：`64%~71%`
+- 表现恢复度：`54%~63%`
+- 本轮提升主要来自：
+  - 路线节奏不再只靠主观感受判断
+  - starter / bridge / payoff 的分发更清楚
+  - 埋点能更具体地观察“什么时候开始锁、是否发生转向”
+
+### 风险点
+- 当前 aggressive 选法下三路线都能在中后段站稳，但 `branchSwitchCount` 的真实样本仍偏少，需要继续观察玩家是否真的会利用转向窗口
+- payoff 已后移，若后续继续补 route-specific 内容时不维持这条坡度，仍可能把 committed 再次提前
+- 当前验证主要依赖抽样脚本与 Playwright 实机，尚未形成长期自动化分布回归基线
+
+### 下一步建议
+- 下一轮优先做“commit pacing 观察后的低频压实”，而不是回头做新系统或继续大补量
+- 重点看：
+  - mid committed 的平均时点是否已经稳定
+  - 三路线转向窗口是否真实被使用
+  - late payoff 是否足够爽，但没有重新提前回渗到 mid

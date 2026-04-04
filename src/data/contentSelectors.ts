@@ -107,7 +107,8 @@ function getSelectionWeight(
 
   if (routeId && context.dominantRoute) {
     if (routeId === context.dominantRoute) {
-      weight += rule.dominantRouteBonus ?? 0;
+      const routeCommitted = context.committedRoute === routeId || context.maturedRoute === routeId;
+      weight += routeCommitted ? (rule.dominantRouteBonus ?? 0) : (rule.hintedRouteBonus ?? 0);
     } else {
       weight *= rule.offRouteMultiplier ?? 1;
     }
@@ -152,6 +153,22 @@ function buildWeightedUpgradePool(
     item: archetype,
     weight: getSelectionWeight(archetype.selection, archetype.routeId, context, source),
   }));
+}
+
+function hasAnyTag(tags: string[] | undefined, expected: string[]): boolean {
+  return expected.some((tag) => tags?.includes(tag));
+}
+
+function filterPoolByTags(
+  entries: Array<{ item: UpgradeArchetype; weight: number }>,
+  expected: string[],
+  excluded: string[] = [],
+): Array<{ item: UpgradeArchetype; weight: number }> {
+  return entries.filter(
+    (entry) =>
+      hasAnyTag(entry.item.tags, expected) &&
+      (excluded.length === 0 || !hasAnyTag(entry.item.tags, excluded)),
+  );
 }
 
 function appendUniquePicks<T extends { id: string }>(
@@ -213,31 +230,73 @@ export function rollUpgradeChoices(
   const picks: UpgradeArchetype[] = [];
   const dominantRoute = context.dominantRoute;
   const dominantRoutePool = buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === dominantRoute);
-  const dominantBridgePool = dominantRoutePool.filter((entry) =>
-    entry.item.tags?.some((tag) => tag === 'bridge' || tag === 'payoff' || tag === 'finisher'),
-  );
-  const dominantStarterPool = dominantRoutePool.filter((entry) => entry.item.tags?.includes('starter'));
+  const dominantHintPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
+  const dominantStarterPool = filterPoolByTags(dominantRoutePool, ['starter']);
+  const dominantCommittedPool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff', 'finisher']);
+  const dominantPayoffPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher']);
   const genericPool = buildWeightedUpgradePool(context, source, (archetype) => !archetype.routeId);
+  const genericTransitionPool = filterPoolByTags(genericPool, ['bridge', 'stabilizer']);
   const offRoutePool = buildWeightedUpgradePool(
     context,
     source,
     (archetype) => Boolean(archetype.routeId) && archetype.routeId !== dominantRoute,
   );
+  const offRoutePivotPool = filterPoolByTags(offRoutePool, ['starter', 'bridge']);
   const allWeightedPool = [...dominantRoutePool, ...genericPool, ...offRoutePool];
-  const routeLocked = context.committedRoute === dominantRoute || context.maturedRoute === dominantRoute;
+  const routeMatured = context.maturedRoute === dominantRoute;
 
   if (!context.committedRoute && context.round <= 2) {
-    appendUniquePicks(picks, dominantStarterPool.length > 0 ? dominantStarterPool : dominantRoutePool, 1);
-    appendUniquePicks(picks, genericPool, 1);
-    appendUniquePicks(picks, [...dominantRoutePool, ...genericPool, ...offRoutePool], 1);
-  } else if (routeLocked || source === 'nodePrep') {
-    appendUniquePicks(picks, dominantBridgePool.length > 0 ? dominantBridgePool : dominantRoutePool, 1);
-    appendUniquePicks(picks, dominantRoutePool, 1);
-    appendUniquePicks(picks, genericPool.length > 0 ? genericPool : offRoutePool, 1);
+    appendUniquePicks(
+      picks,
+      dominantHintPool.length > 0 ? dominantHintPool : dominantStarterPool.length > 0 ? dominantStarterPool : dominantRoutePool,
+      1,
+    );
+    appendUniquePicks(picks, genericTransitionPool.length > 0 ? genericTransitionPool : genericPool, 1);
+    appendUniquePicks(
+      picks,
+      offRoutePivotPool.length > 0
+        ? offRoutePivotPool
+        : genericTransitionPool.length > 0
+          ? genericTransitionPool
+          : [...genericPool, ...offRoutePool],
+      1,
+    );
+  } else if (source === 'nodePrep' || routeMatured) {
+    appendUniquePicks(
+      picks,
+      dominantPayoffPool.length > 0
+        ? dominantPayoffPool
+        : dominantCommittedPool.length > 0
+          ? dominantCommittedPool
+          : dominantRoutePool,
+      1,
+    );
+    appendUniquePicks(
+      picks,
+      dominantCommittedPool.length > 0 ? dominantCommittedPool : dominantRoutePool,
+      1,
+    );
+    appendUniquePicks(
+      picks,
+      genericTransitionPool.length > 0 ? genericTransitionPool : genericPool.length > 0 ? genericPool : offRoutePivotPool,
+      1,
+    );
   } else {
-    appendUniquePicks(picks, dominantRoutePool, 1);
-    appendUniquePicks(picks, genericPool, 1);
-    appendUniquePicks(picks, [...dominantRoutePool, ...genericPool, ...offRoutePool], 1);
+    appendUniquePicks(
+      picks,
+      dominantCommittedPool.length > 0 ? dominantCommittedPool : dominantHintPool.length > 0 ? dominantHintPool : dominantRoutePool,
+      1,
+    );
+    appendUniquePicks(picks, genericTransitionPool.length > 0 ? genericTransitionPool : genericPool, 1);
+    appendUniquePicks(
+      picks,
+      offRoutePivotPool.length > 0
+        ? offRoutePivotPool
+        : genericPool.length > 0
+          ? genericPool
+          : [...dominantHintPool, ...dominantRoutePool],
+      1,
+    );
   }
 
   if (picks.length < 3) {
