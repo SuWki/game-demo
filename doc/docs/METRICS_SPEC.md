@@ -32,6 +32,8 @@
 - event_selected
 - upgrade_selected
 - branch_switch
+- `battle_template_entered / battle_template_completed / event_selected / upgrade_selected`
+- 当命中的内容属于低频 rare 层时，payload 现会附带 `contentTier: rare`
 
 ## 流派数据
 - route_committed
@@ -75,3 +77,4 @@
 - `route_hint_time` 现按“每条路线在当前 run 首次出现倾向”记录一次，避免同一路线重复记时
 - `route_lock_time` 现会附带触发时的 `phase` 与 `pickId`
 - `branch_switch` 用于记录 dominant route 在同一 run 内发生变化的时点与来源
+- 低频 rare 内容不新增单独埋点事件，继续沿用现有 `battle_template_entered / event_selected / upgrade_selected`，并在 payload 中附带 `contentTier`

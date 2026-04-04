@@ -225,7 +225,7 @@ export class RunEngine {
     if (upgrade.repeatable || !this.state.selectedUpgrades.includes(upgrade.sourceId)) {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
-    this.services.metrics.recordUpgradeSelected(`${upgrade.sourceId}:${upgrade.rarity}`, upgrade.routeId);
+    this.services.metrics.recordUpgradeSelected(`${upgrade.sourceId}:${upgrade.rarity}`, upgrade.routeId, upgrade.contentTier);
     if (!this.firstUpgradeRecorded) {
       this.services.metrics.markFirstUpgrade();
       this.firstUpgradeRecorded = true;
@@ -271,7 +271,7 @@ export class RunEngine {
     this.applyEffects(option.effects ?? [], {
       pickId: `event:${eventDef.id}:${option.id}`,
     });
-    this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId);
+    this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId, eventDef.contentTier);
     this.enqueueAudio('upgrade');
     this.enqueueTip(`${eventDef.name}：${option.label}`);
     this.advanceRound();
@@ -303,7 +303,7 @@ export class RunEngine {
     }
 
     if (this.state.stats.hp <= 0) {
-      this.services.metrics.recordBattleCompleted(battle.templateId, 'loss');
+      this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
       this.finishRun('defeat', 'hpDepleted');
       return;
     }
@@ -314,7 +314,7 @@ export class RunEngine {
     }
 
     if (battle.remainingSec <= 0) {
-      this.services.metrics.recordBattleCompleted(battle.templateId, 'loss');
+      this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
       this.finishRun('defeat', 'timeOut');
     }
   }
@@ -410,7 +410,7 @@ export class RunEngine {
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.enqueueTip(`${getPhaseLabel(node.phase)}进入：${template.name}`);
     this.enqueueAudio('pressure');
-    this.services.metrics.recordBattleEntered(template.id, node.title);
+    this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier);
   }
 
   private completeBattle(): void {
@@ -420,7 +420,7 @@ export class RunEngine {
     }
 
     this.state.battleWins += 1;
-    this.services.metrics.recordBattleCompleted(battle.templateId, 'win');
+    this.services.metrics.recordBattleCompleted(battle.templateId, 'win', BATTLE_TEMPLATES[battle.templateId].contentTier);
     const completionExp = getBattleCompletionExperience(
       BATTLE_TEMPLATES[battle.templateId],
       this.getCurrentBattleIndex(),

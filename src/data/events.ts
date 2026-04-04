@@ -391,8 +391,142 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'cross-branch-signal',
+    name: '岔路讯号',
+    contentTier: 'rare',
+    description: '一段侧频样本插了进来。它不一定比当前方向更强，但足够让这局出现一次真正的转向诱惑。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.2,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.5,
+        late: 1.7,
+        finalPrep: 0.6,
+      },
+      hintedRouteBonus: 1.1,
+      dominantRouteBonus: 2.2,
+      committedRouteBonus: 1.3,
+      maturedRouteBonus: 0.4,
+    },
+    options: [
+      {
+        id: 'cross-branch-signal-crit',
+        label: '接入暴击样本',
+        description: '补一段升温火力，顺手把读法切向暴击。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              critChance: 0.06,
+              fireRate: 0.12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'cross-branch-signal-pierce',
+        label: '接入贯穿样本',
+        description: '补一段穿透与弹速，把读法切向贯穿清线。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 20,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'cross-branch-signal-dash',
+        label: '接入穿梭样本',
+        description: '补一段换位与规避，把读法切向穿梭反打。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 14,
+              dashInterval: -0.3,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'blackbox-bargain',
+    name: '黑匣押注',
+    contentTier: 'rare',
+    description: '封存记录只够开一次。你可以把它压成高风险兑现，也可以拆成这局独有的一段缓冲余地。',
+    selection: {
+      baseWeight: 1.05,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.8,
+        finalPrep: 0.7,
+      },
+      noDominantRouteBonus: 0.4,
+    },
+    options: [
+      {
+        id: 'blackbox-bargain-redline',
+        label: '压成红线输出',
+        description: '伤害与射速大幅抬升，但机体会立刻承压。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 8,
+              fireRate: 0.24,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -10,
+          },
+        ],
+      },
+      {
+        id: 'blackbox-bargain-slack',
+        label: '拆成喘息余地',
+        description: '换一段续航、机动和弹道缓冲，把尾段窗口留宽一点。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              projectileSpeed: 24,
+              moveSpeed: 14,
+              regeneration: 0.14,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'crit-heat-bank',
     name: '热区记录',
+    contentTier: 'rare',
     description: '一段暴击热区记录被锁定。你要把连发窗口继续拉长，还是把单次爆点压得更狠？',
     routeAffinity: 'crit',
     selection: {
@@ -452,6 +586,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'pierce-routing-map',
     name: '裂轨图谱',
+    contentTier: 'rare',
     description: '你截获了一张贯穿波形图。要继续拉长链条，还是把清线扇面直接铺开？',
     routeAffinity: 'pierce',
     selection: {
@@ -511,6 +646,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'dash-weave-memory',
     name: '穿梭记忆',
+    contentTier: 'rare',
     description: '机体留下了一段高压换位回放。要把擦身蓄能做厚，还是把反打窗口拉长？',
     routeAffinity: 'dash',
     selection: {

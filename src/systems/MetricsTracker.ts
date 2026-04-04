@@ -1,4 +1,4 @@
-import type { BattleTemplateId, NodeType, PhaseId, RouteBuildStage, RouteId, RunEndingKind, RunOutcome } from '../game/types';
+import type { BattleTemplateId, ContentTier, NodeType, PhaseId, RouteBuildStage, RouteId, RunEndingKind, RunOutcome } from '../game/types';
 
 export const PILOT_METRICS_STORAGE_KEY = 'commercial_pilot_metrics_v1';
 
@@ -160,15 +160,15 @@ export class MetricsTracker {
     this.record('node_selected', { nodeType, title });
   }
 
-  public recordUpgradeSelected(upgradeId: string, routeId?: RouteId): void {
-    this.record('upgrade_selected', { upgradeId, routeId });
+  public recordUpgradeSelected(upgradeId: string, routeId?: RouteId, contentTier?: ContentTier): void {
+    this.record('upgrade_selected', { upgradeId, routeId, contentTier });
     if (routeId) {
       this.record(`${routeId}_selected_count`, { increment: 1 });
     }
   }
 
-  public recordEventSelected(eventId: string, optionId: string, routeId?: RouteId): void {
-    this.record('event_selected', { eventId, optionId, routeId });
+  public recordEventSelected(eventId: string, optionId: string, routeId?: RouteId, contentTier?: ContentTier): void {
+    this.record('event_selected', { eventId, optionId, routeId, contentTier });
   }
 
   public recordBranchSwitch(fromRoute: RouteId, toRoute: RouteId, meta?: { phase: PhaseId; pickId: string }): void {
@@ -182,12 +182,12 @@ export class MetricsTracker {
     });
   }
 
-  public recordBattleEntered(templateId: BattleTemplateId, title: string): void {
-    this.record('battle_template_entered', { templateId, title });
+  public recordBattleEntered(templateId: BattleTemplateId, title: string, contentTier?: ContentTier): void {
+    this.record('battle_template_entered', { templateId, title, contentTier });
   }
 
-  public recordBattleCompleted(templateId: BattleTemplateId, outcome: 'win' | 'loss'): void {
-    this.record('battle_template_completed', { templateId, outcome });
+  public recordBattleCompleted(templateId: BattleTemplateId, outcome: 'win' | 'loss', contentTier?: ContentTier): void {
+    this.record('battle_template_completed', { templateId, outcome, contentTier });
   }
 
   public finishRun(result: {

@@ -339,6 +339,67 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-sideband-cache',
+    name: '侧频缓存',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'hybrid'],
+    selection: {
+      baseWeight: 2.6,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.4,
+        late: 1,
+        finalPrep: 0.8,
+      },
+      noDominantRouteBonus: 1.4,
+      finalPrepBonus: 1.4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.14,
+          projectileSpeed: 24,
+          moveSpeed: 12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-open-loop',
+    name: '开环余量',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'hybrid'],
+    selection: {
+      baseWeight: 2.4,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.3,
+        late: 1,
+        finalPrep: 1,
+      },
+      finalPrepBonus: 1.6,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 8,
+          regeneration: 0.1,
+          moveSpeed: 10,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 8,
+      },
+    ],
+  },
+  {
     id: 'crit-aim',
     name: '聚焦瞄准',
     category: 'route',
@@ -665,6 +726,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'crit-superheat',
+    name: '灼区归档',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    tags: ['payoff', 'finisher', 'rare'],
+    selection: {
+      baseWeight: 1.05,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.4,
+        finalPrep: 2,
+        finalBattle: 2.2,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 3.8,
+      committedRouteBonus: 3.6,
+      maturedRouteBonus: 2.4,
+      finalPrepBonus: 2.4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 5,
+          fireRate: 0.16,
+          critChance: 0.05,
+          critMultiplier: 0.34,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
     id: 'pierce-fan',
     name: '裂轨分束',
     category: 'route',
@@ -895,6 +993,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'pierce-prism',
+    name: '棱镜破轨',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    tags: ['payoff', 'finisher', 'rare'],
+    selection: {
+      baseWeight: 1.05,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.4,
+        finalPrep: 2,
+        finalBattle: 2.2,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 3.8,
+      committedRouteBonus: 3.6,
+      maturedRouteBonus: 2.4,
+      finalPrepBonus: 2.4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          multishot: 1,
+          pierce: 1,
+          projectileSpeed: 24,
+          damage: 3,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
     id: 'dash-loop',
     name: '净帧循环',
     category: 'route',
@@ -1029,6 +1164,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       },
     ],
   },
+  {
+    id: 'dash-zero-window',
+    name: '瞬返空档',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    tags: ['payoff', 'finisher', 'rare'],
+    selection: {
+      baseWeight: 1.05,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.4,
+        finalPrep: 2,
+        finalBattle: 2.2,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 3.8,
+      committedRouteBonus: 3.6,
+      maturedRouteBonus: 2.4,
+      finalPrepBonus: 2.4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.36,
+          dashInvulnerability: 0.12,
+          dashPulseDamage: 10,
+          regeneration: 0.14,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
 ];
 
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
@@ -1040,6 +1212,7 @@ export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeR
     name: archetype.name,
     description: describeEffects(effects, archetype.routeId),
     category: archetype.category,
+    contentTier: archetype.contentTier,
     rarity,
     rarityLabel: RARITY_LABEL_MAP[rarity],
     routeId: archetype.routeId,

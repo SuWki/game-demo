@@ -36,6 +36,7 @@
 - 前段：更强调“路线信号出现但不锁死”，starter 与中性过渡内容优先，避免过早强承诺
 - 中段：更强调“starter 接 bridge，再逐步站稳”，battle / upgrade / event 都应帮助 build 坡度变顺
 - 后段：更强调“committed 后的 payoff 与收尾修正”，把强兑现内容集中到 late / final
+- 后段同时应承接少量低频高辨识度内容：rare 事件、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 
 ## 战斗模板
 只保留三类：
@@ -60,4 +61,6 @@
 当前处理原则是：
 - 保持 battle / elite / survival 三大家族不变
 - 优先通过 blueprint 变体、候选数量和家族内权重去拉开体验
+- rare 记忆点优先通过后段 blueprint 低频变体与家族内 rare 模板候选完成
+- rare 模板只作为家族内低频候选，不拆出第四类节点，也不改主流程
 - 不通过新增第四类节点或重做地图结构来解决重复感

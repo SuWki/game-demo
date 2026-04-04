@@ -927,3 +927,124 @@
   - mid committed 的平均时点是否已经稳定
   - 三路线转向窗口是否真实被使用
   - late payoff 是否足够爽，但没有重新提前回渗到 mid
+
+## [重建 Round 13] 稀有内容 / replay 驱动强化
+### 本轮目标
+- 不改主流程、不重写 `RunEngine`、不引入新系统
+- 在上一轮承诺节奏控制的基础上，补出一层真正可感知的 rare / replay 内容
+- 继续压住 payoff 回渗到 mid 的风险，同时给中后段补更多 hybrid / pivot 动机
+- 在已有埋点结构内最小化补充 rare 命中观测，不新建埋点系统
+
+### 文档取舍依据
+- 继续以最新 `PROJECT_STATUS.md` 与本文件作为阶段文档基线
+- 但本轮优先级采用用户最新要求：当前主问题已从“承诺节奏控制”切到“replay 动机强化 + 稀有内容设计 + payoff 防回渗”
+- 因此本轮没有回头做骨架重建，也没有继续大补普通内容，而是把重心放到 rare 层、late 兑现层和转向吸引力
+- 更早的 `REBUILD_PLAN.md` / `ROADMAP_0_9.md` 继续只保留为背景顺序参考
+
+### 改动前盘点
+- `upgrades`：31 张
+  - 通用 10
+  - 每条路线 7
+  - 已经有 starter / bridge / payoff 坡度，但内容池本身没有显式 rare 层
+- `events`：10 个
+  - 已有 3 个 route-specific late 事件，但抽样显示它们与 `route-calibration / targeted-telemetry` 的 late 命中频率仍然接近，不够像真正 rare
+- `nodes / templates`
+  - late / final 已有一定变体，但缺少足够低频的高辨识度模板候选
+  - replay 动机仍主要来自路线本身，而不是“这局撞上了不同的 late 记忆点”
+- selector 风险
+  - `mid hinted` 抽样里 starter 仍偏容易继续占住路线位
+  - off-route 弹性位虽然保住了转向空间，但如果不继续约束，容易把 `bridge + payoff` 一起带回中段抽样
+
+### 本轮实际处理内容
+- 轻量 rare 元数据
+  - 给 `UpgradeArchetype / UpgradeDefinition / EventDefinition / BattleTemplateDefinition` 增加了兼容型 `contentTier`
+  - rare 仍然走现有 data-driven selector，不新建系统
+- selector 调整
+  - `getSelectionWeight` 现在会根据 `contentTier: rare` 叠加阶段倍率
+  - rare 在 `opening` 基本压低，在 `mid` 低频出现，在 `late / finalPrep / finalBattle` 才逐步放开
+  - `mid hinted` 的路线位改为优先 bridge，再由 generic / pivot 承接，减少 starter 再次刷屏
+  - off-route pivot 位现在排除了 `payoff / finisher`，避免侧向位把 payoff 重新带回中段
+  - `late committed` 调整为“两张本路 + 一张弹性位”，避免后段路线感被侧向位冲散
+- 新增 hybrid / bridge 内容
+  - 通用强化：
+    - `generic-sideband-cache`
+    - `generic-open-loop`
+  - 定位：中段与中后段的混搭 / 转向缓冲，不直接推进单一路线 payoff
+- 新增 rare / replay 内容
+  - rare 强化：
+    - `crit-superheat`
+    - `pierce-prism`
+    - `dash-zero-window`
+  - rare 事件：
+    - `cross-branch-signal`
+    - `blackbox-bargain`
+  - 既有 late route-specific 事件：
+    - `crit-heat-bank`
+    - `pierce-routing-map`
+    - `dash-weave-memory`
+    - 统一纳入 rare 层，继续保留 late 偏置
+  - rare 模板变体：
+    - `survival-crossfire`
+    - `elite-vice`
+  - late 节点变体：
+    - `round-3-battle-crossfire`
+    - `round-3-event-blackbox`
+
+### 本轮验证结果
+- 静态 / 抽样验证
+  - `upgrades`：`31 -> 36`
+    - rare payoff 新增 3
+    - hybrid / bridge 通用强化新增 2
+  - `events`：`10 -> 12`
+    - rare 事件层现在包含 5 项（含 2 个新 rare 事件与 3 个 late route-specific rare 事件）
+  - `battle templates`：`9 -> 11`
+    - rare 模板 `survival-crossfire / elite-vice` 已接入 late / final 候选池
+  - 抽样结果：
+    - `mid hinted` 的路线位已从 starter 为主改成 bridge 为主
+    - late route-specific rare 事件命中率已明显低于 `route-calibration / targeted-telemetry`
+    - round 3 rare battle 模板 `survival-crossfire` 可出现但保持低频
+    - final battle rare 模板 `elite-vice` 可出现但保持低频
+- 浏览器回归
+  - `npm run build` 通过
+  - Playwright 实测确认：
+    - start -> node / battle / upgrade / event -> result -> replay 全链路可用
+    - crit / pierce 跑局中已实机命中 rare payoff 强化
+    - replay 继续正常写入 `restart_after_first_run / second_run_start`
+    - `branch_switch` 与 `branchSwitchCount` 已通过定向实机验证，`crit -> pierce` 转向可正常记录
+    - 控制台无新错误
+- 埋点补充
+  - 不新增独立 rare 事件类型
+  - 继续沿用现有 `battle_template_entered / battle_template_completed / event_selected / upgrade_selected`
+  - 当命中 rare 内容时，在 payload 中附带 `contentTier: rare`
+
+### 本轮更新文档
+- `doc/docs/PROJECT_STATUS.md`
+- `doc/docs/NODES_AND_TEMPLATES.md`
+- `doc/docs/ROUTES_SPEC.md`
+- `doc/docs/METRICS_SPEC.md`
+- `doc/docs/DEV_ISSUE_LOG.md`
+
+### 代码恢复度估计
+- 整体恢复度：`79%~84%`
+- 估计口径：
+  - 仍以“与旧项目最成熟状态相比”的恢复度为主
+  - 同时参考“当前是否已具备更明确的 replay 钩子、late rare 记忆点和不易回渗的 payoff 边界”
+- 结构恢复度：`84%~89%`
+- 内容恢复度：`69%~76%`
+- 表现恢复度：`55%~64%`
+- 本轮提升主要来自：
+  - rare / replay 层终于从“只有升级品质稀有度”推进到“内容本身存在低频记忆点”
+  - late payoff 与 late rare 变体的边界更清楚
+  - hybrid / pivot 内容开始真正服务转向样本，而不只是保留理论空间
+
+### 风险点
+- `branchSwitchCount` 已验证可用，但自然跑局里的真实转向样本仍不算高，后续还需要继续观察玩家是否真的愿意为了 rare / hybrid 内容改变路线
+- rare 层已经接入，但若下轮继续大补普通 route-specific 内容而不维持 rare / late / hybrid 的比例，replay 动机仍会被常规内容重新淹没
+- rare 模板已经可出现，但当前 battle 家族仍然有限，后续需要继续观察这些 rare 记忆点是否足够强，还是只变成了“多一个名字”
+
+### 下一步建议
+- 下一轮优先做“rare / replay 命中后的低频压实”，不是回头做新系统或普通内容泛补
+- 重点看：
+  - rare 事件和 rare 模板的真实命中率是否已经足够低频、但足够被记住
+  - `branchSwitchCount` 是否随着 hybrid / pivot 内容增加而自然抬升
+  - late rare payoff 是否足够爽，但没有重新把 payoff 压回 mid

@@ -1,14 +1,17 @@
 export type RouteId = 'crit' | 'pierce' | 'dash';
 export type RouteReference = RouteId | 'dominant';
 export type NodeType = 'battle' | 'upgrade' | 'event';
+export type ContentTier = 'standard' | 'rare';
 export type BattleTemplateId =
   | 'elimination'
   | 'elimination-pincer'
   | 'elimination-sweep'
   | 'elite'
+  | 'elite-vice'
   | 'elite-lockdown'
   | 'elite-screen'
   | 'survival'
+  | 'survival-crossfire'
   | 'survival-rush'
   | 'survival-gauntlet';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
@@ -37,6 +40,7 @@ export interface BattleTemplateDefinition {
   id: BattleTemplateId;
   name: string;
   description: string;
+  contentTier?: ContentTier;
   durationSec: number;
   spawnIntervalSec: number;
   enemyHp: number;
@@ -119,6 +123,7 @@ export interface UpgradeArchetype {
   id: string;
   name: string;
   category: UpgradeCategory;
+  contentTier?: ContentTier;
   routeId?: RouteId;
   repeatable?: boolean;
   tags?: string[];
@@ -132,6 +137,7 @@ export interface UpgradeDefinition {
   name: string;
   description: string;
   category: UpgradeCategory;
+  contentTier?: ContentTier;
   rarity: UpgradeRarity;
   rarityLabel: string;
   routeId?: RouteId;
@@ -161,6 +167,7 @@ export interface EventDefinition {
   id: string;
   name: string;
   description: string;
+  contentTier?: ContentTier;
   routeAffinity?: RouteReference;
   selection?: ContentSelectionProfile;
   options: EventOption[];

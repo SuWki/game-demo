@@ -267,6 +267,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '后段高压段，测试你的收尾能力。',
         templateCandidates: [
           { templateId: 'survival', weight: 1.8 },
+          { templateId: 'survival-crossfire', weight: 0.45 },
           { templateId: 'survival-rush', weight: 1.2 },
           { templateId: 'survival-gauntlet', weight: 1.1 },
         ],
@@ -295,6 +296,25 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 1.1,
           repeatTypeMultiplier: 0.8,
           battleCatchupBonus: 1.2,
+        },
+      },
+      {
+        id: 'round-3-battle-crossfire',
+        type: 'battle',
+        phase: 'late',
+        title: '交火夹层',
+        description: '低频高压模板，会把尾段走位压得更像一次独立记忆点。',
+        templateCandidates: [
+          { templateId: 'survival-crossfire', weight: 1.9 },
+          { templateId: 'survival-gauntlet', weight: 0.8 },
+          { templateId: 'survival-rush', weight: 0.6 },
+        ],
+        difficultyScale: 1.29,
+        selection: {
+          baseWeight: 1.1,
+          soloMultiplier: 0.82,
+          repeatTypeMultiplier: 0.78,
+          battleCatchupBonus: 0.9,
         },
       },
       {
@@ -347,6 +367,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           noFocusBonus: 0.5,
         },
       },
+      {
+        id: 'round-3-event-blackbox',
+        type: 'event',
+        phase: 'late',
+        title: '黑匣异常',
+        description: '低频异常节点，可能让这一局在尾段撞上一段截然不同的记忆点。',
+        selection: {
+          baseWeight: 1.05,
+          soloMultiplier: 0.26,
+          repeatTypeMultiplier: 0.58,
+          noFocusBonus: 0.3,
+        },
+      },
     ],
   },
   4: {
@@ -378,6 +411,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '用一场更高压的精英压制完成整局收束。',
         templateCandidates: [
           { templateId: 'elite', weight: 1.1 },
+          { templateId: 'elite-vice', weight: 0.42 },
           { templateId: 'elite-lockdown', weight: 1.3 },
           { templateId: 'elite-screen', weight: 1.2 },
         ],

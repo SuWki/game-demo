@@ -4,6 +4,7 @@ import { ROUTES } from './routes';
 import { buildUpgradeChoice, UPGRADE_ARCHETYPES } from './upgrades';
 import type {
   ContentEffect,
+  ContentTier,
   ContentSelectionProfile,
   EventDefinition,
   EventOption,
@@ -77,6 +78,7 @@ function pickWeightedOne<T>(entries: Array<{ item: T; weight: number }>): T {
 function getSelectionWeight(
   profile: ContentSelectionProfile | undefined,
   routeId: RouteId | undefined,
+  contentTier: ContentTier | undefined,
   context: ContentContext,
   source: UpgradeSource,
 ): number {
@@ -122,6 +124,28 @@ function getSelectionWeight(
     weight += rule.maturedRouteBonus ?? 0;
   }
 
+  if (contentTier === 'rare') {
+    const rarePhaseMultiplier: Record<PhaseId, number> = {
+      opening: 0.02,
+      mid: 0.38,
+      late: 0.48,
+      finalPrep: 0.92,
+      finalBattle: 1.08,
+      ended: 0,
+    };
+
+    let rareMultiplier = rarePhaseMultiplier[context.phase];
+    if (source === 'nodePrep') {
+      rareMultiplier += 0.16;
+    }
+    if (!context.dominantRoute) {
+      rareMultiplier *= 0.7;
+    } else if (!context.committedRoute && !context.maturedRoute) {
+      rareMultiplier *= 0.84;
+    }
+    weight *= rareMultiplier;
+  }
+
   return Math.max(0, weight);
 }
 
@@ -151,7 +175,7 @@ function buildWeightedUpgradePool(
 ): Array<{ item: UpgradeArchetype; weight: number }> {
   return UPGRADE_ARCHETYPES.filter((archetype) => canOfferUpgrade(archetype, context) && predicate(archetype)).map((archetype) => ({
     item: archetype,
-    weight: getSelectionWeight(archetype.selection, archetype.routeId, context, source),
+    weight: getSelectionWeight(archetype.selection, archetype.routeId, archetype.contentTier, context, source),
   }));
 }
 
@@ -209,7 +233,7 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
           canOfferUpgrade(archetype, context),
       ).map((archetype) => ({
         item: archetype,
-        weight: getSelectionWeight(archetype.selection, archetype.routeId, context, source),
+        weight: getSelectionWeight(archetype.selection, archetype.routeId, archetype.contentTier, context, source),
       })),
       1,
     )[0];
@@ -231,6 +255,7 @@ export function rollUpgradeChoices(
   const dominantRoute = context.dominantRoute;
   const dominantRoutePool = buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === dominantRoute);
   const dominantHintPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
+  const dominantBridgePool = filterPoolByTags(dominantRoutePool, ['bridge'], ['payoff', 'finisher']);
   const dominantStarterPool = filterPoolByTags(dominantRoutePool, ['starter']);
   const dominantCommittedPool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff', 'finisher']);
   const dominantPayoffPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher']);
@@ -241,14 +266,20 @@ export function rollUpgradeChoices(
     source,
     (archetype) => Boolean(archetype.routeId) && archetype.routeId !== dominantRoute,
   );
-  const offRoutePivotPool = filterPoolByTags(offRoutePool, ['starter', 'bridge']);
+  const offRoutePivotPool = filterPoolByTags(offRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
   const allWeightedPool = [...dominantRoutePool, ...genericPool, ...offRoutePool];
   const routeMatured = context.maturedRoute === dominantRoute;
 
   if (!context.committedRoute && context.round <= 2) {
     appendUniquePicks(
       picks,
-      dominantHintPool.length > 0 ? dominantHintPool : dominantStarterPool.length > 0 ? dominantStarterPool : dominantRoutePool,
+      context.round >= 2 && dominantBridgePool.length > 0
+        ? dominantBridgePool
+        : dominantHintPool.length > 0
+          ? dominantHintPool
+          : dominantStarterPool.length > 0
+            ? dominantStarterPool
+            : dominantRoutePool,
       1,
     );
     appendUniquePicks(picks, genericTransitionPool.length > 0 ? genericTransitionPool : genericPool, 1);
@@ -279,6 +310,30 @@ export function rollUpgradeChoices(
     appendUniquePicks(
       picks,
       genericTransitionPool.length > 0 ? genericTransitionPool : genericPool.length > 0 ? genericPool : offRoutePivotPool,
+      1,
+    );
+  } else if (context.committedRoute && context.round >= 3) {
+    appendUniquePicks(
+      picks,
+      dominantPayoffPool.length > 0
+        ? dominantPayoffPool
+        : dominantCommittedPool.length > 0
+          ? dominantCommittedPool
+          : dominantRoutePool,
+      1,
+    );
+    appendUniquePicks(
+      picks,
+      dominantCommittedPool.length > 0 ? dominantCommittedPool : dominantRoutePool,
+      1,
+    );
+    appendUniquePicks(
+      picks,
+      genericTransitionPool.length > 0
+        ? genericTransitionPool
+        : genericPool.length > 0
+          ? genericPool
+          : offRoutePivotPool,
       1,
     );
   } else {
@@ -373,6 +428,7 @@ export function rollEventDefinition(state: Readonly<RunState>): EventDefinition 
     weight: getSelectionWeight(
       eventDef.selection,
       eventDef.routeAffinity === 'dominant' ? dominantRoute ?? undefined : getEventRouteAffinity(eventDef),
+      eventDef.contentTier,
       context,
       'levelUp',
     ),
