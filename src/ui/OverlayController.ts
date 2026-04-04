@@ -70,6 +70,7 @@ export class OverlayController {
   public showMenu(summary: OverlayMetaSummary, onStart: () => void, onExport: () => void): void {
     this.hideHud();
     this.hidePanel();
+    this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
       <section class="menu-card hero-card">
@@ -253,6 +254,7 @@ export class OverlayController {
   public showResult(result: RunResult, actions: ResultActions): void {
     this.hideHud();
     this.hidePanel();
+    this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
       <section class="menu-card result-card">
@@ -325,6 +327,10 @@ export class OverlayController {
   public hideHud(): void {
     this.hudLayer.classList.add('hidden');
     this.hudLayer.innerHTML = '';
+  }
+
+  public clearToasts(): void {
+    this.toastLayer.innerHTML = '';
   }
 
   private showPanel(title: string, description: string, items: string[]): void {

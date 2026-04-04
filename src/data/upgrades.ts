@@ -1,4 +1,4 @@
-import { getUpgradeRarityMultiplier, RARITY_LABEL_MAP } from './balance';
+import { estimateUpgradeValue, getUpgradeRarityMultiplier, RARITY_LABEL_MAP } from './balance';
 import { ROUTE_NAME_MAP } from './routes';
 import type { ContentEffect, StatModifiers, UpgradeArchetype, UpgradeDefinition, UpgradeRarity } from '../game/types';
 
@@ -128,7 +128,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 6,
+          damage: 4,
         },
       },
     ],
@@ -148,7 +148,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.24,
+          fireRate: 0.3,
         },
       },
     ],
@@ -189,7 +189,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.05,
+          critChance: 0.07,
         },
       },
     ],
@@ -209,7 +209,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critMultiplier: 0.28,
+          critMultiplier: 0.42,
         },
       },
     ],
@@ -288,6 +288,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 6,
       maxRound: 2,
+      phaseBonuses: {
+        opening: 1.5,
+        mid: 0.4,
+      },
       noDominantRouteBonus: 8,
       dominantRouteBonus: 5,
     },
@@ -295,8 +299,38 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.09,
-          damage: 4,
+          critChance: 0.07,
+          damage: 2,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-primer',
+    name: '升温预热',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['starter'],
+    selection: {
+      baseWeight: 5.4,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 1.6,
+        mid: 0.5,
+      },
+      noDominantRouteBonus: 7.5,
+      dominantRouteBonus: 4.8,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.24,
+          critChance: 0.05,
         },
       },
       {
@@ -314,6 +348,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 4,
       minRound: 2,
+      phaseBonuses: {
+        mid: 1.4,
+        late: 0.6,
+      },
       dominantRouteBonus: 6,
       committedRouteBonus: 3,
       finalPrepBonus: 2,
@@ -322,8 +360,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.28,
-          critChance: 0.06,
+          fireRate: 0.32,
+          critChance: 0.05,
         },
       },
       {
@@ -341,6 +379,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 3,
       minRound: 2,
+      phaseBonuses: {
+        mid: 0.8,
+        late: 1.5,
+      },
       dominantRouteBonus: 5,
       committedRouteBonus: 4,
       maturedRouteBonus: 2,
@@ -350,9 +392,42 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 5,
-          fireRate: 0.2,
-          critMultiplier: 0.24,
+          damage: 3,
+          fireRate: 0.18,
+          critMultiplier: 0.22,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-cascade',
+    name: '爆链灼流',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.2,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.9,
+        late: 1.3,
+      },
+      dominantRouteBonus: 5.4,
+      committedRouteBonus: 4.2,
+      maturedRouteBonus: 2.2,
+      finalPrepBonus: 2.2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          fireRate: 0.14,
+          critMultiplier: 0.28,
         },
       },
       {
@@ -370,6 +445,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 3,
       minRound: 2,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 1.2,
+      },
       dominantRouteBonus: 5,
       committedRouteBonus: 4,
       maturedRouteBonus: 3,
@@ -379,8 +458,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.08,
-          critMultiplier: 0.48,
+          critChance: 0.07,
+          critMultiplier: 0.42,
         },
       },
       {
@@ -398,6 +477,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 6,
       maxRound: 2,
+      phaseBonuses: {
+        opening: 1.5,
+        mid: 0.4,
+      },
       noDominantRouteBonus: 8,
       dominantRouteBonus: 5,
     },
@@ -406,8 +489,39 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          damage: 3,
-          projectileSpeed: 18,
+          damage: 2,
+          projectileSpeed: 26,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-rail',
+    name: '贯穿轨校',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['starter'],
+    selection: {
+      baseWeight: 5.4,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 1.5,
+        mid: 0.5,
+      },
+      noDominantRouteBonus: 7.5,
+      dominantRouteBonus: 4.8,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierce: 1,
+          projectileSpeed: 22,
+          fireRate: 0.1,
         },
       },
       {
@@ -425,6 +539,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 4,
       minRound: 2,
+      phaseBonuses: {
+        mid: 1.3,
+        late: 0.6,
+      },
       dominantRouteBonus: 6,
       committedRouteBonus: 2,
     },
@@ -433,7 +551,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           multishot: 1,
-          damage: 2,
+          damage: 1,
         },
       },
       {
@@ -451,6 +569,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 3,
       minRound: 2,
+      phaseBonuses: {
+        mid: 0.8,
+        late: 1.4,
+      },
       dominantRouteBonus: 5,
       committedRouteBonus: 4,
       maturedRouteBonus: 2,
@@ -460,9 +582,42 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 4,
+          damage: 2,
           multishot: 1,
           pierce: 1,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-bloom',
+    name: '扇裂扩面',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.2,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1,
+        late: 1.2,
+      },
+      dominantRouteBonus: 5.4,
+      committedRouteBonus: 4.2,
+      maturedRouteBonus: 2.2,
+      finalPrepBonus: 1.8,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          multishot: 1,
+          damage: 2,
+          fireRate: 0.16,
         },
       },
       {
@@ -480,6 +635,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 3,
       minRound: 2,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 1,
+      },
       dominantRouteBonus: 5,
       committedRouteBonus: 4,
       maturedRouteBonus: 3,
@@ -490,8 +649,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          fireRate: 0.24,
-          projectileSpeed: 24,
+          fireRate: 0.18,
+          projectileSpeed: 30,
         },
       },
       {
@@ -509,6 +668,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 6,
       maxRound: 2,
+      phaseBonuses: {
+        opening: 1.5,
+        mid: 0.4,
+      },
       noDominantRouteBonus: 8,
       dominantRouteBonus: 5,
     },
@@ -528,6 +691,37 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'dash-feint',
+    name: '侧滑取样',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['starter'],
+    selection: {
+      baseWeight: 5.4,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 1.5,
+        mid: 0.5,
+      },
+      noDominantRouteBonus: 7.5,
+      dominantRouteBonus: 4.8,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          moveSpeed: 16,
+          dashInvulnerability: 0.08,
+          dashInterval: -0.34,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
     id: 'dash-loop',
     name: '净帧循环',
     category: 'route',
@@ -536,6 +730,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 4,
       minRound: 2,
+      phaseBonuses: {
+        mid: 1.4,
+        late: 0.6,
+      },
       dominantRouteBonus: 6,
       committedRouteBonus: 3,
       finalPrepBonus: 2,
@@ -564,6 +762,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 3,
       minRound: 2,
+      phaseBonuses: {
+        mid: 0.8,
+        late: 1.4,
+      },
       dominantRouteBonus: 5,
       committedRouteBonus: 4,
       maturedRouteBonus: 2,
@@ -586,6 +788,39 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'dash-reentry',
+    name: '回环汲能',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.2,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.9,
+        late: 1.3,
+      },
+      dominantRouteBonus: 5.4,
+      committedRouteBonus: 4.2,
+      maturedRouteBonus: 2.2,
+      finalPrepBonus: 2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashPulseDamage: 7,
+          regeneration: 0.12,
+          dashInterval: -0.28,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
     id: 'dash-anchor',
     name: '穿梭定标',
     category: 'route',
@@ -594,6 +829,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     selection: {
       baseWeight: 3,
       minRound: 2,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 1.2,
+      },
       dominantRouteBonus: 5,
       committedRouteBonus: 4,
       maturedRouteBonus: 3,
@@ -618,6 +857,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
 
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
   const effects = scaleEffects(archetype.effects, rarity);
+  const valueBreakdown = estimateUpgradeValue(effects);
   return {
     id: `${archetype.id}:${rarity}:${Math.random().toString(36).slice(2, 8)}`,
     sourceId: archetype.id,
@@ -630,5 +870,7 @@ export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeR
     repeatable: archetype.repeatable,
     tags: archetype.tags,
     effects,
+    valueScore: valueBreakdown.total,
+    valueBreakdown,
   };
 }

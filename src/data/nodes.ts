@@ -1,8 +1,17 @@
-import type { NodeOption, PhaseId, RouteId } from '../game/types';
+import type { NodeOption, NodeType, PhaseId, RouteId } from '../game/types';
+
+interface NodeSelectionProfile {
+  baseWeight: number;
+  soloMultiplier?: number;
+  repeatTypeMultiplier?: number;
+  noFocusBonus?: number;
+  battleCatchupBonus?: number;
+  lowHpBonus?: number;
+}
 
 interface NodeBlueprint {
   id: string;
-  type: NodeOption['type'];
+  type: NodeType;
   phase: PhaseId;
   title: string;
   description: string;
@@ -13,127 +22,377 @@ interface NodeBlueprint {
   }>;
   difficultyScale?: number;
   isFinalPrep?: boolean;
+  selection: NodeSelectionProfile;
 }
 
-const ROUND_NODE_BLUEPRINTS: Record<number, NodeBlueprint[]> = {
-  1: [
-    {
-      id: 'round-1-battle',
-      type: 'battle',
-      phase: 'opening',
-      title: '歼灭推进',
-      description: '继续搏成长，提前拉高推进速度。',
-      templateId: 'elimination',
-      difficultyScale: 1.08,
-    },
-    {
-      id: 'round-1-upgrade',
-      type: 'upgrade',
-      phase: 'opening',
-      title: '稳定整备',
-      description: '低风险补强，适合把第一条倾向扶起来。',
-    },
-    {
-      id: 'round-1-event',
-      type: 'event',
-      phase: 'opening',
-      title: '试飞事件',
-      description: '中风险拐方向，可能更快形成路线。',
-    },
-  ],
-  2: [
-    {
-      id: 'round-2-battle',
-      type: 'battle',
-      phase: 'mid',
-      title: '精英压制',
-      description: '中段压力点，适合检验当前路线是否站稳。',
-      templateId: 'elite',
-      difficultyScale: 1.15,
-    },
-    {
-      id: 'round-2-upgrade',
-      type: 'upgrade',
-      phase: 'mid',
-      title: '中段强化',
-      description: '稳住当前方向，把火力读数做实。',
-    },
-    {
-      id: 'round-2-event',
-      type: 'event',
-      phase: 'mid',
-      title: '中段事件',
-      description: '高波动拐点，可能直接加快成型。',
-    },
-  ],
-  3: [
-    {
-      id: 'round-3-battle',
-      type: 'battle',
-      phase: 'late',
-      title: '生存压制',
-      description: '后段高压段，测试你的收尾能力。',
-      templateCandidates: [
-        {
-          templateId: 'survival',
-          weight: 2,
+interface NodeOfferContext {
+  focusRoute: RouteId | null;
+  lastNodeType: NodeType | null;
+  battleWins: number;
+  hpRatio: number;
+}
+
+interface RoundNodeOffer {
+  phase: PhaseId;
+  countWeights: Array<{
+    count: 1 | 2 | 3;
+    weight: number;
+  }>;
+  blueprints: NodeBlueprint[];
+}
+
+const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
+  1: {
+    phase: 'opening',
+    countWeights: [
+      { count: 1, weight: 8 },
+      { count: 2, weight: 50 },
+      { count: 3, weight: 42 },
+    ],
+    blueprints: [
+      {
+        id: 'round-1-battle',
+        type: 'battle',
+        phase: 'opening',
+        title: '歼灭推进',
+        description: '继续搏成长，提前拉高推进速度。',
+        templateCandidates: [
+          { templateId: 'elimination', weight: 2.6 },
+          { templateId: 'elimination-pincer', weight: 1.4 },
+          { templateId: 'elimination-sweep', weight: 1 },
+        ],
+        difficultyScale: 1.08,
+        selection: {
+          baseWeight: 5,
+          repeatTypeMultiplier: 0.72,
+          battleCatchupBonus: 1.4,
         },
-        {
-          templateId: 'survival-rush',
-          weight: 1,
+      },
+      {
+        id: 'round-1-battle-flank',
+        type: 'battle',
+        phase: 'opening',
+        title: '侧压试飞',
+        description: '更早要求换侧，但经验节奏仍偏前期开路。',
+        templateCandidates: [
+          { templateId: 'elimination-pincer', weight: 1.8 },
+          { templateId: 'elimination', weight: 1.3 },
+          { templateId: 'elimination-sweep', weight: 1.1 },
+        ],
+        difficultyScale: 1.06,
+        selection: {
+          baseWeight: 3.4,
+          repeatTypeMultiplier: 0.72,
+          battleCatchupBonus: 1.2,
         },
-      ],
-      difficultyScale: 1.24,
-    },
-    {
-      id: 'round-3-upgrade',
-      type: 'upgrade',
-      phase: 'late',
-      title: '后段修正',
-      description: '补掉短板，避免后段突然失速。',
-    },
-    {
-      id: 'round-3-event',
-      type: 'event',
-      phase: 'late',
-      title: '后段事件',
-      description: '沿着{focusLabel}冒险加码，可能直接站稳路线。',
-    },
-  ],
-  4: [
-    {
-      id: 'final-prep',
-      type: 'upgrade',
-      phase: 'finalPrep',
-      title: '最终整备',
-      description: '最后一次整备，准备进入最终战。',
-      isFinalPrep: true,
-    },
-  ],
-  5: [
-    {
-      id: 'final-battle',
-      type: 'battle',
-      phase: 'finalBattle',
-      title: '最终战',
-      description: '用一场更高压的精英压制完成整局收束。',
-      templateCandidates: [
-        {
-          templateId: 'elite',
-          weight: 1,
+      },
+      {
+        id: 'round-1-upgrade',
+        type: 'upgrade',
+        phase: 'opening',
+        title: '稳定整备',
+        description: '低风险补强，适合把第一条倾向扶起来。',
+        selection: {
+          baseWeight: 4,
+          repeatTypeMultiplier: 0.8,
+          lowHpBonus: 1.2,
         },
-        {
-          templateId: 'elite-lockdown',
-          weight: 2,
+      },
+      {
+        id: 'round-1-upgrade-fireline',
+        type: 'upgrade',
+        phase: 'opening',
+        title: '火线整备',
+        description: '直接补火控，把前两拍读数尽快拉清。',
+        selection: {
+          baseWeight: 3.2,
+          repeatTypeMultiplier: 0.78,
+          lowHpBonus: 0.8,
         },
-      ],
-      difficultyScale: 1.38,
-    },
-  ],
+      },
+      {
+        id: 'round-1-event',
+        type: 'event',
+        phase: 'opening',
+        title: '试飞事件',
+        description: '中风险拐方向，可能更快形成路线。',
+        selection: {
+          baseWeight: 2.2,
+          soloMultiplier: 0.25,
+          repeatTypeMultiplier: 0.55,
+          noFocusBonus: 0.8,
+        },
+      },
+      {
+        id: 'round-1-event-probe',
+        type: 'event',
+        phase: 'opening',
+        title: '路线试配',
+        description: '用一次试配把下一拍路线信号拉大。',
+        selection: {
+          baseWeight: 2.6,
+          soloMultiplier: 0.36,
+          repeatTypeMultiplier: 0.58,
+          noFocusBonus: 1.4,
+        },
+      },
+    ],
+  },
+  2: {
+    phase: 'mid',
+    countWeights: [
+      { count: 1, weight: 12 },
+      { count: 2, weight: 46 },
+      { count: 3, weight: 42 },
+    ],
+    blueprints: [
+      {
+        id: 'round-2-battle',
+        type: 'battle',
+        phase: 'mid',
+        title: '精英压制',
+        description: '中段压力点，适合检验当前路线是否站稳。',
+        templateCandidates: [
+          { templateId: 'elite', weight: 2.1 },
+          { templateId: 'elite-lockdown', weight: 1.3 },
+          { templateId: 'elite-screen', weight: 1.2 },
+        ],
+        difficultyScale: 1.15,
+        selection: {
+          baseWeight: 5.1,
+          soloMultiplier: 1.12,
+          repeatTypeMultiplier: 0.76,
+          battleCatchupBonus: 1.8,
+        },
+      },
+      {
+        id: 'round-2-battle-screen',
+        type: 'battle',
+        phase: 'mid',
+        title: '封锁突破',
+        description: '护卫拉扯更明显的中段压力点，更看换位与拆线能力。',
+        templateCandidates: [
+          { templateId: 'elite-screen', weight: 1.8 },
+          { templateId: 'elite', weight: 1.3 },
+          { templateId: 'elite-lockdown', weight: 1.1 },
+        ],
+        difficultyScale: 1.18,
+        selection: {
+          baseWeight: 3.5,
+          soloMultiplier: 1.08,
+          repeatTypeMultiplier: 0.76,
+          battleCatchupBonus: 1.6,
+        },
+      },
+      {
+        id: 'round-2-upgrade',
+        type: 'upgrade',
+        phase: 'mid',
+        title: '中段强化',
+        description: '稳住当前方向，把火力读数做实。',
+        selection: {
+          baseWeight: 3.5,
+          soloMultiplier: 0.92,
+          repeatTypeMultiplier: 0.78,
+          lowHpBonus: 1.4,
+        },
+      },
+      {
+        id: 'round-2-upgrade-lock',
+        type: 'upgrade',
+        phase: 'mid',
+        title: '方向定标',
+        description: '更偏路线锁定的一次整备，适合把中段差异拉开。',
+        selection: {
+          baseWeight: 3.1,
+          soloMultiplier: 0.86,
+          repeatTypeMultiplier: 0.78,
+          lowHpBonus: 1.1,
+        },
+      },
+      {
+        id: 'round-2-event',
+        type: 'event',
+        phase: 'mid',
+        title: '中段事件',
+        description: '高波动拐点，可能直接加快成型。',
+        selection: {
+          baseWeight: 3.1,
+          soloMultiplier: 0.45,
+          repeatTypeMultiplier: 0.62,
+          noFocusBonus: 1.2,
+        },
+      },
+      {
+        id: 'round-2-event-shift',
+        type: 'event',
+        phase: 'mid',
+        title: '偏航窗口',
+        description: '可以直接押当前方向，也可能顺手把波动一起拉大。',
+        selection: {
+          baseWeight: 2.8,
+          soloMultiplier: 0.42,
+          repeatTypeMultiplier: 0.62,
+          noFocusBonus: 1,
+        },
+      },
+    ],
+  },
+  3: {
+    phase: 'late',
+    countWeights: [
+      { count: 1, weight: 24 },
+      { count: 2, weight: 50 },
+      { count: 3, weight: 26 },
+    ],
+    blueprints: [
+      {
+        id: 'round-3-battle',
+        type: 'battle',
+        phase: 'late',
+        title: '生存压制',
+        description: '后段高压段，测试你的收尾能力。',
+        templateCandidates: [
+          { templateId: 'survival', weight: 1.8 },
+          { templateId: 'survival-rush', weight: 1.2 },
+          { templateId: 'survival-gauntlet', weight: 1.1 },
+        ],
+        difficultyScale: 1.24,
+        selection: {
+          baseWeight: 5.3,
+          soloMultiplier: 1.18,
+          repeatTypeMultiplier: 0.8,
+          battleCatchupBonus: 1.3,
+        },
+      },
+      {
+        id: 'round-3-battle-gauntlet',
+        type: 'battle',
+        phase: 'late',
+        title: '夹道求生',
+        description: '夹道式高压更容易暴露后段 build 的换位短板。',
+        templateCandidates: [
+          { templateId: 'survival-gauntlet', weight: 1.8 },
+          { templateId: 'survival-rush', weight: 1.3 },
+          { templateId: 'survival', weight: 1.1 },
+        ],
+        difficultyScale: 1.27,
+        selection: {
+          baseWeight: 3.8,
+          soloMultiplier: 1.1,
+          repeatTypeMultiplier: 0.8,
+          battleCatchupBonus: 1.2,
+        },
+      },
+      {
+        id: 'round-3-upgrade',
+        type: 'upgrade',
+        phase: 'late',
+        title: '后段修正',
+        description: '补掉短板，避免后段突然失速。',
+        selection: {
+          baseWeight: 3.4,
+          repeatTypeMultiplier: 0.82,
+          lowHpBonus: 1.6,
+        },
+      },
+      {
+        id: 'round-3-upgrade-anchor',
+        type: 'upgrade',
+        phase: 'late',
+        title: '尾段稳压',
+        description: '给一次更偏收尾的修正窗口，适合把最后短板补平。',
+        selection: {
+          baseWeight: 3.2,
+          repeatTypeMultiplier: 0.82,
+          lowHpBonus: 1.8,
+        },
+      },
+      {
+        id: 'round-3-event',
+        type: 'event',
+        phase: 'late',
+        title: '后段事件',
+        description: '沿着{focusLabel}冒险加码，可能直接站稳路线。',
+        selection: {
+          baseWeight: 2.6,
+          soloMultiplier: 0.3,
+          repeatTypeMultiplier: 0.6,
+          noFocusBonus: 0.7,
+        },
+      },
+      {
+        id: 'round-3-event-last-bet',
+        type: 'event',
+        phase: 'late',
+        title: '尾段押注',
+        description: '沿着{focusLabel}再压一次，争取把收尾气质做实。',
+        selection: {
+          baseWeight: 2.8,
+          soloMultiplier: 0.42,
+          repeatTypeMultiplier: 0.62,
+          noFocusBonus: 0.5,
+        },
+      },
+    ],
+  },
+  4: {
+    phase: 'finalPrep',
+    countWeights: [{ count: 1, weight: 1 }],
+    blueprints: [
+      {
+        id: 'final-prep',
+        type: 'upgrade',
+        phase: 'finalPrep',
+        title: '最终整备',
+        description: '最后一次整备，准备进入最终战。',
+        isFinalPrep: true,
+        selection: {
+          baseWeight: 1,
+        },
+      },
+    ],
+  },
+  5: {
+    phase: 'finalBattle',
+    countWeights: [{ count: 1, weight: 1 }],
+    blueprints: [
+      {
+        id: 'final-battle',
+        type: 'battle',
+        phase: 'finalBattle',
+        title: '最终战',
+        description: '用一场更高压的精英压制完成整局收束。',
+        templateCandidates: [
+          { templateId: 'elite', weight: 1.1 },
+          { templateId: 'elite-lockdown', weight: 1.3 },
+          { templateId: 'elite-screen', weight: 1.2 },
+        ],
+        difficultyScale: 1.38,
+        selection: {
+          baseWeight: 1,
+        },
+      },
+    ],
+  },
 };
 
 function resolveDescription(template: string, focusRoute: RouteId | null): string {
   return template.replace('{focusLabel}', focusRoute ? '当前方向' : '任一方向');
+}
+
+function pickWeightedCount(countWeights: RoundNodeOffer['countWeights']): 1 | 2 | 3 {
+  const totalWeight = countWeights.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const entry of countWeights) {
+    roll -= entry.weight;
+    if (roll <= 0) {
+      return entry.count;
+    }
+  }
+
+  return countWeights[countWeights.length - 1].count;
 }
 
 function pickTemplateId(
@@ -157,12 +416,66 @@ function pickTemplateId(
   return templateCandidates[templateCandidates.length - 1].templateId;
 }
 
+function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext, choiceCount: number, round: number): number {
+  const { selection } = blueprint;
+  let weight = selection.baseWeight;
+
+  if (choiceCount === 1) {
+    weight *= selection.soloMultiplier ?? 1;
+  }
+
+  if (offerContext.lastNodeType === blueprint.type) {
+    weight *= selection.repeatTypeMultiplier ?? 1;
+  }
+
+  if (!offerContext.focusRoute) {
+    weight += selection.noFocusBonus ?? 0;
+  }
+
+  if (blueprint.type === 'battle' && offerContext.battleWins < round) {
+    weight += selection.battleCatchupBonus ?? 0;
+  }
+
+  if (blueprint.type === 'upgrade' && offerContext.hpRatio <= 0.62) {
+    weight += selection.lowHpBonus ?? 0;
+  }
+
+  return Math.max(0.1, weight);
+}
+
 function buildNode(blueprint: NodeBlueprint, focusRoute: RouteId | null): NodeOption {
   return {
     ...blueprint,
     description: resolveDescription(blueprint.description, focusRoute),
     templateId: pickTemplateId(blueprint.templateId, blueprint.templateCandidates),
   };
+}
+
+function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferContext, choiceCount: number, round: number): NodeBlueprint[] {
+  const pool = offer.blueprints.map((blueprint) => ({
+    blueprint,
+    weight: getNodeWeight(blueprint, context, choiceCount, round),
+  }));
+  const picks: NodeBlueprint[] = [];
+
+  while (pool.length > 0 && picks.length < choiceCount) {
+    const totalWeight = pool.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = Math.random() * totalWeight;
+    let selectedIndex = 0;
+
+    for (let index = 0; index < pool.length; index += 1) {
+      roll -= pool[index].weight;
+      if (roll <= 0) {
+        selectedIndex = index;
+        break;
+      }
+    }
+
+    picks.push(pool[selectedIndex].blueprint);
+    pool.splice(selectedIndex, 1);
+  }
+
+  return picks;
 }
 
 export function getPhaseLabel(phase: PhaseId): string {
@@ -192,15 +505,42 @@ export function createOpeningBattleNode(): NodeOption {
       phase: 'opening',
       title: '起始歼灭',
       description: '用一场基础歼灭战把节奏立起来。',
-      templateId: 'elimination',
+      templateCandidates: [
+        { templateId: 'elimination', weight: 2.8 },
+        { templateId: 'elimination-pincer', weight: 1.1 },
+        { templateId: 'elimination-sweep', weight: 0.8 },
+      ],
       difficultyScale: 1,
+      selection: {
+        baseWeight: 1,
+      },
     },
     null,
   );
 }
 
-export function buildNodeOptions(round: number, focusRoute: RouteId | null): NodeOption[] {
-  return (ROUND_NODE_BLUEPRINTS[round] ?? []).map((blueprint, index) => ({
+export function buildNodeOptions(
+  round: number,
+  focusRoute: RouteId | null,
+  context: Omit<NodeOfferContext, 'focusRoute'>,
+): NodeOption[] {
+  const offer = ROUND_NODE_OFFERS[round];
+  if (!offer) {
+    return [];
+  }
+
+  const choiceCount = pickWeightedCount(offer.countWeights);
+  const picked = pickWeightedUniqueBlueprints(
+    offer,
+    {
+      ...context,
+      focusRoute,
+    },
+    choiceCount,
+    round,
+  );
+
+  return picked.map((blueprint, index) => ({
     ...buildNode(blueprint, focusRoute),
     laneIndex: index,
   }));

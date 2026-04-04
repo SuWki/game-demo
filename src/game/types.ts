@@ -3,10 +3,14 @@ export type RouteReference = RouteId | 'dominant';
 export type NodeType = 'battle' | 'upgrade' | 'event';
 export type BattleTemplateId =
   | 'elimination'
+  | 'elimination-pincer'
+  | 'elimination-sweep'
   | 'elite'
   | 'elite-lockdown'
+  | 'elite-screen'
   | 'survival'
-  | 'survival-rush';
+  | 'survival-rush'
+  | 'survival-gauntlet';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
 export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'result';
 export type RunOutcome = 'victory' | 'defeat';
@@ -17,6 +21,9 @@ export type ToastTone = 'neutral' | 'accent' | 'route' | 'danger' | 'success';
 export type UpgradeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type UpgradeSource = 'levelUp' | 'nodePrep';
 export type UpgradeCategory = 'generic' | 'route';
+export type SpawnPatternId = 'surround' | 'pincers' | 'lanes';
+export type EliteBehaviorId = 'frontline' | 'screened' | 'kiting' | 'summoner';
+export type EnemyRole = 'regular' | 'escort' | 'elite';
 
 export interface RouteDefinition {
   id: RouteId;
@@ -34,17 +41,32 @@ export interface BattleTemplateDefinition {
   spawnIntervalSec: number;
   enemyHp: number;
   enemySpeed: number;
+  enemyDamage: number;
+  regularEnemyCap: number;
+  pressureMultiplier: number;
   accent: number;
   winCondition: {
     type: 'kills' | 'elite' | 'survive';
     target?: number;
   };
+  spawnRule?: {
+    pattern: SpawnPatternId;
+    burstCount?: number;
+    laneBias?: 'horizontal' | 'vertical';
+  };
   eliteRule?: {
     spawnAtSec: number;
     hpMultiplier: number;
     speedMultiplier: number;
+    damageMultiplier: number;
     radius: number;
     regularEnemyCap: number;
+    behavior?: EliteBehaviorId;
+    preferredDistance?: number;
+    strafeStrength?: number;
+    escortBatch?: number;
+    escortRespawnSec?: number;
+    escortMax?: number;
   };
 }
 
@@ -68,6 +90,7 @@ export interface ContentSelectionProfile {
   baseWeight?: number;
   minRound?: number;
   maxRound?: number;
+  phaseBonuses?: Partial<Record<PhaseId, number>>;
   noDominantRouteBonus?: number;
   dominantRouteBonus?: number;
   committedRouteBonus?: number;
@@ -114,6 +137,15 @@ export interface UpgradeDefinition {
   repeatable?: boolean;
   tags?: string[];
   effects: ContentEffect[];
+  valueScore: number;
+  valueBreakdown: {
+    directDps: number;
+    utility: number;
+    survival: number;
+    mobility: number;
+    routeSynergy: number;
+    total: number;
+  };
 }
 
 export interface EventOption {
@@ -128,6 +160,7 @@ export interface EventDefinition {
   id: string;
   name: string;
   description: string;
+  routeAffinity?: RouteReference;
   selection?: ContentSelectionProfile;
   options: EventOption[];
 }
@@ -170,6 +203,8 @@ export interface EnemyState {
   speed: number;
   radius: number;
   elite: boolean;
+  role: EnemyRole;
+  contactDamage: number;
   grazeCooldownSec: number;
 }
 
@@ -226,6 +261,8 @@ export interface BattleState {
   nextBulletId: number;
   nextPulseId: number;
   enemySpawnTimerSec: number;
+  eliteSupportCooldownSec: number;
+  spawnCursor: number;
   fireCooldownSec: number;
   dashCooldownSec: number;
   invulnerableSec: number;

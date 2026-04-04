@@ -5,7 +5,34 @@ import {
   clamp,
   createBaseStats,
   getBattleCompletionExperience,
+  getCritOverdriveDurationGain,
+  getCritSplashRatio,
+  getDashCooldownAfterPulse,
+  getDashDamageMultiplier,
+  getDashDriveDuration,
+  getDashGrazeInnerRadius,
+  getDashGrazeOuterRadius,
+  getDashPulseDamage,
+  getDashPulseHeal,
+  getDashPulseRadius,
+  getEffectiveCritChance,
+  getEffectiveFireRate,
+  getEnemyContactDamage,
+  getEnemyExperienceValue,
+  getEnemyHealth,
+  getEnemyMoveSpeed,
+  getEnemySpawnInterval,
   getExperienceToNextLevel,
+  getMagnetRadius,
+  getPhaseTier,
+  getPickupRadius,
+  getPierceCooldownRefund,
+  getPierceEchoCount,
+  getPierceEchoDamageRatio,
+  getPlayerMoveSpeed,
+  getProjectileSpeed,
+  getRegularEnemyCap,
+  getSpawnBurstCount,
 } from '../data/balance';
 import {
   BATTLE_TEMPLATES,
@@ -351,6 +378,8 @@ export class RunEngine {
       nextBulletId: 0,
       nextPulseId: 0,
       enemySpawnTimerSec: 0.2,
+      eliteSupportCooldownSec: 0,
+      spawnCursor: 0,
       fireCooldownSec: 0.1,
       dashCooldownSec: this.state.stats.dashInterval,
       invulnerableSec: 0,
@@ -406,12 +435,12 @@ export class RunEngine {
     }
 
     const focusRoute = this.getDominantRoute();
-    const nextNodes = buildNodeOptions(this.state.round, focusRoute);
-    if (nextNodes.length === 1) {
-      this.state.nodeOptions = nextNodes;
-      this.chooseNode(nextNodes[0].id);
-      return;
-    }
+    const lastTraversedNode = this.state.traversedNodes[this.state.traversedNodes.length - 1] ?? null;
+    const nextNodes = buildNodeOptions(this.state.round, focusRoute, {
+      lastNodeType: lastTraversedNode?.type ?? this.state.currentNode?.type ?? null,
+      battleWins: this.state.battleWins,
+      hpRatio: this.state.stats.hp / Math.max(1, this.state.stats.maxHp),
+    });
 
     this.state.phase = nextNodes[0]?.phase ?? this.state.phase;
     this.state.status = 'nodeChoice';
@@ -680,6 +709,7 @@ export class RunEngine {
   private spawnEnemies(battle: BattleState, dt: number): void {
     const template = BATTLE_TEMPLATES[battle.templateId];
     battle.enemySpawnTimerSec -= dt;
+    battle.eliteSupportCooldownSec = Math.max(0, battle.eliteSupportCooldownSec - dt);
     if (shouldSpawnElite(battle)) {
       const eliteRule = template.eliteRule;
       if (!eliteRule) {
@@ -697,10 +727,26 @@ export class RunEngine {
         speed: this.getRegularEnemySpeed(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.speedMultiplier),
         radius: eliteRule.radius,
         elite: true,
+        role: 'elite',
+        contactDamage: this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.damageMultiplier),
         grazeCooldownSec: 0,
       });
+      battle.eliteSupportCooldownSec = eliteRule.escortRespawnSec ?? 0;
+      if ((eliteRule.escortBatch ?? 0) > 0) {
+        this.spawnEliteSupportEnemies(battle, eliteRule.escortBatch ?? 0);
+      }
       this.enqueueTip('精英进入战场');
       this.enqueueAudio('pressure');
+    }
+
+    if (battle.eliteAlive && template.eliteRule && (template.eliteRule.escortBatch ?? 0) > 0) {
+      const escortMax = template.eliteRule.escortMax ?? template.eliteRule.escortBatch ?? 0;
+      const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite).length;
+      if (currentEscorts < escortMax && battle.eliteSupportCooldownSec <= 0) {
+        const batchSize = Math.min(template.eliteRule.escortBatch ?? 0, escortMax - currentEscorts);
+        this.spawnEliteSupportEnemies(battle, batchSize);
+        battle.eliteSupportCooldownSec = template.eliteRule.escortRespawnSec ?? 5;
+      }
     }
 
     while (battle.enemySpawnTimerSec <= 0) {
@@ -709,33 +755,146 @@ export class RunEngine {
       if (regularEnemyCap !== null && battle.enemies.filter((enemy) => !enemy.elite).length >= regularEnemyCap) {
         break;
       }
+      const burstCount = this.getSpawnBurstCount(template);
+      for (let burstIndex = 0; burstIndex < burstCount; burstIndex += 1) {
+        const activeRegulars = battle.enemies.filter((enemy) => !enemy.elite).length;
+        if (regularEnemyCap !== null && activeRegulars >= regularEnemyCap) {
+          break;
+        }
 
-      const edge = Math.floor(Math.random() * 4);
-      const position = { x: 0, y: 0 };
-      if (edge === 0) {
-        position.x = Math.random() * ARENA_WIDTH;
-        position.y = -20;
-      } else if (edge === 1) {
-        position.x = ARENA_WIDTH + 20;
-        position.y = Math.random() * ARENA_HEIGHT;
-      } else if (edge === 2) {
-        position.x = Math.random() * ARENA_WIDTH;
-        position.y = ARENA_HEIGHT + 20;
-      } else {
-        position.x = -20;
-        position.y = Math.random() * ARENA_HEIGHT;
+        const position = this.getSpawnPosition(battle, template, burstIndex);
+        const hp = this.getRegularEnemyHp(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale);
+        battle.enemies.push({
+          id: battle.nextEnemyId++,
+          x: position.x,
+          y: position.y,
+          hp,
+          maxHp: hp,
+          speed: this.getRegularEnemySpeed(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale),
+          radius: 10 + Math.random() * 4,
+          elite: false,
+          role: 'regular',
+          contactDamage: this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale),
+          grazeCooldownSec: 0,
+        });
+      }
+    }
+  }
+
+  private getContactDamage(
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    round: number,
+    phase: RunState['phase'],
+    difficultyScale: number,
+    damageMultiplier = 1,
+  ): number {
+    return getEnemyContactDamage(template, round, phase, difficultyScale, damageMultiplier);
+  }
+
+  private getSpawnBurstCount(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): number {
+    return getSpawnBurstCount(template);
+  }
+
+  private getSpawnPosition(
+    battle: BattleState,
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    burstIndex: number,
+  ): { x: number; y: number } {
+    const pattern = template.spawnRule?.pattern ?? 'surround';
+    const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
+    const cursor = battle.spawnCursor++;
+    const margin = 36;
+
+    if (pattern === 'pincers') {
+      const fromLeft = (cursor + burstIndex) % 2 === 0;
+      const y = margin + (((cursor * 73) + burstIndex * 41) % Math.max(1, ARENA_HEIGHT - margin * 2));
+      return {
+        x: fromLeft ? -28 : ARENA_WIDTH + 28,
+        y,
+      };
+    }
+
+    if (pattern === 'lanes') {
+      const laneCount = 3;
+      const lane = (cursor + burstIndex) % laneCount;
+      const sideIndex = Math.floor((cursor + burstIndex) / laneCount) % 2;
+      const jitter = (((cursor * 19) % 5) - 2) * 10;
+
+      if (laneBias === 'vertical') {
+        return {
+          x: clamp(((lane + 1) / (laneCount + 1)) * ARENA_WIDTH + jitter, margin, ARENA_WIDTH - margin),
+          y: sideIndex === 0 ? -28 : ARENA_HEIGHT + 28,
+        };
       }
 
-      const hp = this.getRegularEnemyHp(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale);
+      return {
+        x: sideIndex === 0 ? -28 : ARENA_WIDTH + 28,
+        y: clamp(((lane + 1) / (laneCount + 1)) * ARENA_HEIGHT + jitter, margin, ARENA_HEIGHT - margin),
+      };
+    }
+
+    const side = (cursor + burstIndex) % 4;
+    const t = (((cursor * 53) + burstIndex * 17) % 100) / 100;
+    if (side === 0) {
+      return {
+        x: margin + t * (ARENA_WIDTH - margin * 2),
+        y: -28,
+      };
+    }
+    if (side === 1) {
+      return {
+        x: ARENA_WIDTH + 28,
+        y: margin + t * (ARENA_HEIGHT - margin * 2),
+      };
+    }
+    if (side === 2) {
+      return {
+        x: margin + t * (ARENA_WIDTH - margin * 2),
+        y: ARENA_HEIGHT + 28,
+      };
+    }
+    return {
+      x: -28,
+      y: margin + t * (ARENA_HEIGHT - margin * 2),
+    };
+  }
+
+  private spawnEliteSupportEnemies(battle: BattleState, count: number): void {
+    if (count <= 0) {
+      return;
+    }
+
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const eliteEnemy = battle.enemies.find((enemy) => enemy.elite);
+    const battleIndex = this.getCurrentBattleIndex();
+    const escortHp = Math.round(this.getRegularEnemyHp(template, battleIndex, this.state.phase, battle.difficultyScale) * 0.82);
+    const escortSpeed = Math.round(this.getRegularEnemySpeed(template, battleIndex, this.state.phase, battle.difficultyScale, 1.06));
+    const escortDamage = Math.max(6, Math.round(this.getContactDamage(template, battleIndex, this.state.phase, battle.difficultyScale, 0.92)));
+    const screenAngle = eliteEnemy
+      ? Math.atan2(eliteEnemy.y - battle.playerY, eliteEnemy.x - battle.playerX)
+      : -Math.PI / 2;
+
+    for (let index = 0; index < count; index += 1) {
+      const spread = count === 1 ? 0 : ((index / Math.max(1, count - 1)) - 0.5) * 0.95;
+      const distance = 42 + index * 8;
+      const anchorX = eliteEnemy?.x ?? CENTER_X;
+      const anchorY = eliteEnemy?.y ?? -30;
+      const offsetX = Math.cos(screenAngle) * distance;
+      const offsetY = Math.sin(screenAngle) * distance;
+      const strafeX = -Math.sin(screenAngle) * spread * 44;
+      const strafeY = Math.cos(screenAngle) * spread * 44;
+
       battle.enemies.push({
         id: battle.nextEnemyId++,
-        x: position.x,
-        y: position.y,
-        hp,
-        maxHp: hp,
-        speed: this.getRegularEnemySpeed(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale),
-        radius: 10 + Math.random() * 4,
+        x: anchorX - offsetX + strafeX,
+        y: anchorY - offsetY + strafeY,
+        hp: escortHp,
+        maxHp: escortHp,
+        speed: escortSpeed,
+        radius: 11 + (index % 2),
         elite: false,
+        role: 'escort',
+        contactDamage: escortDamage,
         grazeCooldownSec: 0,
       });
     }
@@ -838,6 +997,7 @@ export class RunEngine {
 
   private updateEnemies(battle: BattleState, dt: number): void {
     const survivors = [];
+    const template = BATTLE_TEMPLATES[battle.templateId];
     for (const enemy of battle.enemies) {
       enemy.grazeCooldownSec = Math.max(0, enemy.grazeCooldownSec - dt);
       if (enemy.hp <= 0) {
@@ -849,9 +1009,13 @@ export class RunEngine {
         continue;
       }
 
-      const angle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
-      enemy.x += Math.cos(angle) * enemy.speed * dt;
-      enemy.y += Math.sin(angle) * enemy.speed * dt;
+      if (enemy.elite && template.eliteRule) {
+        this.updateEliteEnemy(enemy, battle, template, dt);
+      } else {
+        const angle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
+        enemy.x += Math.cos(angle) * enemy.speed * dt;
+        enemy.y += Math.sin(angle) * enemy.speed * dt;
+      }
 
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
       const dashStage = this.getRouteBuildStage('dash');
@@ -872,7 +1036,7 @@ export class RunEngine {
 
       if (distance <= enemy.radius + PLAYER_COLLISION_RADIUS) {
         if (battle.invulnerableSec <= 0) {
-          let damage = enemy.elite ? 18 : 8;
+          let damage = enemy.contactDamage;
           damage *= this.getDashDamageMultiplier(dashStage, battle.dashDriveSec);
           this.state.stats.hp = clamp(this.state.stats.hp - damage, 0, this.state.stats.maxHp);
           battle.invulnerableSec = 0.35;
@@ -884,6 +1048,102 @@ export class RunEngine {
       survivors.push(enemy);
     }
     battle.enemies = survivors;
+  }
+
+  private updateEliteEnemy(
+    enemy: BattleState['enemies'][number],
+    battle: BattleState,
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    dt: number,
+  ): void {
+    const eliteRule = template.eliteRule;
+    if (!eliteRule) {
+      return;
+    }
+
+    const preferredDistance = eliteRule.preferredDistance ?? 170;
+    const strafeStrength = eliteRule.strafeStrength ?? 0.2;
+    const dx = battle.playerX - enemy.x;
+    const dy = battle.playerY - enemy.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    const strafeX = -dirY;
+    const strafeY = dirX;
+    const strafeDirection = Math.sin(battle.elapsedSec * 1.35 + enemy.id * 0.7);
+    let moveX = 0;
+    let moveY = 0;
+
+    const applyKitingBaseline = (): void => {
+      if (distance < preferredDistance * 0.88) {
+        moveX -= dirX * 1.18;
+        moveY -= dirY * 1.18;
+      } else if (distance > preferredDistance * 1.14) {
+        moveX += dirX * 0.74;
+        moveY += dirY * 0.74;
+      }
+      moveX += strafeX * strafeDirection * strafeStrength;
+      moveY += strafeY * strafeDirection * strafeStrength;
+    };
+
+    switch (eliteRule.behavior ?? 'frontline') {
+      case 'kiting':
+        applyKitingBaseline();
+        break;
+      case 'screened':
+      case 'summoner': {
+        const escorts = battle.enemies.filter((candidate) => !candidate.elite);
+        if (escorts.length > 0) {
+          const escortCenter = escorts.reduce(
+            (acc, escort) => ({
+              x: acc.x + escort.x,
+              y: acc.y + escort.y,
+            }),
+            { x: 0, y: 0 },
+          );
+          escortCenter.x /= escorts.length;
+          escortCenter.y /= escorts.length;
+          const screenDx = escortCenter.x - battle.playerX;
+          const screenDy = escortCenter.y - battle.playerY;
+          const screenDistance = Math.max(1, Math.hypot(screenDx, screenDy));
+          const behindDistance = eliteRule.behavior === 'summoner' ? 56 : 42;
+          const targetX = escortCenter.x + (screenDx / screenDistance) * behindDistance;
+          const targetY = escortCenter.y + (screenDy / screenDistance) * behindDistance;
+          const targetDx = targetX - enemy.x;
+          const targetDy = targetY - enemy.y;
+          const targetDistance = Math.max(1, Math.hypot(targetDx, targetDy));
+
+          moveX += (targetDx / targetDistance) * 0.92;
+          moveY += (targetDy / targetDistance) * 0.92;
+          moveX += strafeX * strafeDirection * (strafeStrength + 0.04);
+          moveY += strafeY * strafeDirection * (strafeStrength + 0.04);
+
+          if (distance < preferredDistance * 0.72) {
+            moveX -= dirX * 0.55;
+            moveY -= dirY * 0.55;
+          }
+        } else {
+          applyKitingBaseline();
+        }
+        break;
+      }
+      case 'frontline':
+      default:
+        if (distance > preferredDistance * 0.76) {
+          moveX += dirX;
+          moveY += dirY;
+        } else {
+          moveX += dirX * 0.28;
+          moveY += dirY * 0.28;
+        }
+        moveX += strafeX * strafeDirection * Math.max(0.08, strafeStrength * 0.6);
+        moveY += strafeY * strafeDirection * Math.max(0.08, strafeStrength * 0.6);
+        break;
+    }
+
+    const moveMagnitude = Math.max(1, Math.hypot(moveX, moveY));
+    enemy.x = clamp(enemy.x + (moveX / moveMagnitude) * enemy.speed * dt, -48, ARENA_WIDTH + 48);
+    enemy.y = clamp(enemy.y + (moveY / moveMagnitude) * enemy.speed * dt, -48, ARENA_HEIGHT + 48);
   }
 
   private updatePulses(battle: BattleState, dt: number): void {
@@ -1076,7 +1336,7 @@ export class RunEngine {
     difficultyScale: number,
     eliteMultiplier = 1,
   ): number {
-    return Math.round(template.enemyHp * (1 + (round - 1) * 0.2 + this.getPhaseTier(phase) * 0.12) * difficultyScale * eliteMultiplier);
+    return getEnemyHealth(template, round, phase, difficultyScale, eliteMultiplier);
   }
 
   private getRegularEnemySpeed(
@@ -1086,172 +1346,105 @@ export class RunEngine {
     difficultyScale: number,
     speedMultiplier = 1,
   ): number {
-    return Math.round(template.enemySpeed * (1 + (round - 1) * 0.06 + this.getPhaseTier(phase) * 0.03) * difficultyScale * speedMultiplier);
+    return getEnemyMoveSpeed(template, round, phase, difficultyScale, speedMultiplier);
   }
 
   private getEnemySpawnInterval(
     template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
     elapsedSec: number,
   ): number {
-    const depthFactor = 1 + (this.getCurrentBattleIndex() - 1) * 0.08 + this.getPhaseTier(this.state.phase) * 0.05;
-    const pressureFactor = 1 + Math.min(elapsedSec, 30) * 0.015;
-    const interval = template.spawnIntervalSec / (depthFactor * pressureFactor);
-    return clamp(interval, template.spawnIntervalSec * 0.38, template.spawnIntervalSec);
+    return getEnemySpawnInterval(template, this.getCurrentBattleIndex(), this.state.phase, elapsedSec);
   }
 
   private getRegularEnemyCap(battle: BattleState): number | null {
-    return BATTLE_TEMPLATES[battle.templateId].eliteRule?.regularEnemyCap ?? null;
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const eliteCapMultiplier =
+      template.eliteRule && battle.eliteAlive ? (template.eliteRule.regularEnemyCap ?? template.regularEnemyCap) / template.regularEnemyCap : 1;
+    return getRegularEnemyCap(template, this.getCurrentBattleIndex(), this.state.phase, eliteCapMultiplier);
   }
 
   private getEnemyExperienceValue(battle: BattleState, isElite: boolean): number {
     const template = BATTLE_TEMPLATES[battle.templateId];
-    const baseValue = 4 + this.getCurrentBattleIndex() * 2 + this.getPhaseTier(this.state.phase) * 2 + template.enemyHp * 0.08;
-    return Math.round(isElite ? baseValue * 4.5 : baseValue);
+    return getEnemyExperienceValue(template, this.getCurrentBattleIndex(), this.state.phase, isElite);
   }
 
   private getPhaseTier(phase: RunState['phase']): number {
-    switch (phase) {
-      case 'opening':
-        return 0;
-      case 'mid':
-        return 1;
-      case 'late':
-        return 2;
-      case 'finalPrep':
-        return 3;
-      case 'finalBattle':
-        return 4;
-      case 'ended':
-      default:
-        return 0;
-    }
+    return getPhaseTier(phase);
   }
 
   private getPlayerMoveSpeed(): number {
-    return this.state.stats.moveSpeed;
+    return getPlayerMoveSpeed(this.state.stats);
   }
 
   private getProjectileSpeed(): number {
-    return this.state.stats.projectileSpeed;
+    return getProjectileSpeed(this.state.stats);
   }
 
   private getPickupRadius(): number {
-    return 28 + this.state.stats.moveSpeed * 0.04;
+    return getPickupRadius(this.state.stats);
   }
 
   private getMagnetRadius(): number {
-    return 120 + this.state.stats.moveSpeed * 0.12;
+    return getMagnetRadius(this.state.stats);
   }
 
   private getDashGrazeOuterRadius(buildStage: RouteBuildStage): number {
-    return 64 + this.state.stats.moveSpeed * 0.03 + (buildStage === 'matured' ? 14 : buildStage === 'committed' ? 8 : 0);
+    return getDashGrazeOuterRadius(this.state.stats, buildStage);
   }
 
   private getDashGrazeInnerRadius(): number {
-    return PLAYER_COLLISION_RADIUS + 10;
+    return getDashGrazeInnerRadius();
   }
 
   private getDashPulseRadius(dashCharge: number, buildStage: RouteBuildStage): number {
-    const stageBonus = buildStage === 'matured' ? 10 : buildStage === 'committed' ? 6 : 4;
-    return 78 + this.state.stats.moveSpeed * 0.04 + dashCharge * stageBonus;
+    return getDashPulseRadius(this.state.stats, dashCharge, buildStage);
   }
 
   private getDashPulseDamage(dashCharge: number, buildStage: RouteBuildStage): number {
-    const stageBonus = buildStage === 'matured' ? 8 : buildStage === 'committed' ? 4 : 2;
-    return this.state.stats.dashPulseDamage + dashCharge * stageBonus;
+    return getDashPulseDamage(this.state.stats, dashCharge, buildStage);
   }
 
   private getDashPulseHeal(dashCharge: number, buildStage: RouteBuildStage): number {
-    if (buildStage === 'unformed') {
-      return 0;
-    }
-    const baseHeal = buildStage === 'matured' ? 2.2 : 1.1;
-    return dashCharge * baseHeal;
+    return getDashPulseHeal(dashCharge, buildStage);
   }
 
   private getDashDriveDuration(dashCharge: number): number {
-    return (this.state.routeCounts.dash > 0 ? 0.9 : 0.45) + dashCharge * 0.18;
+    return getDashDriveDuration(dashCharge, this.state.routeCounts.dash);
   }
 
   private getDashCooldownAfterPulse(buildStage: RouteBuildStage): number {
-    return Math.max(1.5, this.state.stats.dashInterval - (buildStage === 'matured' ? 0.35 : buildStage === 'committed' ? 0.2 : 0));
+    return getDashCooldownAfterPulse(this.state.stats, buildStage);
   }
 
   private getDashDamageMultiplier(buildStage: RouteBuildStage, dashDriveSec: number): number {
-    if (dashDriveSec <= 0) {
-      return 1;
-    }
-    if (buildStage === 'matured') {
-      return 0.55;
-    }
-    if (buildStage === 'committed') {
-      return 0.72;
-    }
-    return 0.85;
+    return getDashDamageMultiplier(buildStage, dashDriveSec);
   }
 
   private getEffectiveFireRate(battle: BattleState): number {
-    let fireRate = this.state.stats.fireRate;
-    if (battle.critOverdriveSec > 0) {
-      fireRate += 0.4 + this.state.routeCounts.crit * 0.12;
-    }
-    if (battle.dashDriveSec > 0) {
-      fireRate += 0.35 + this.state.routeCounts.dash * 0.1;
-    }
-    return fireRate;
+    return getEffectiveFireRate(this.state.stats, battle, this.state.routeCounts.crit, this.state.routeCounts.dash);
   }
 
   private getEffectiveCritChance(battle: BattleState): number {
-    let critChance = this.state.stats.critChance;
-    const buildStage = this.getRouteBuildStage('crit');
-    if (battle.critOverdriveSec > 0) {
-      critChance += 0.08;
-      if (buildStage === 'committed') {
-        critChance += 0.08;
-      }
-      if (buildStage === 'matured') {
-        critChance += 0.08;
-      }
-    }
-    return clamp(critChance, 0, 0.95);
+    return getEffectiveCritChance(this.state.stats, this.getRouteBuildStage('crit'), battle.critOverdriveSec);
   }
 
   private getCritOverdriveDurationGain(): number {
-    const buildStage = this.getRouteBuildStage('crit');
-    if (buildStage === 'matured') {
-      return 0.7;
-    }
-    if (buildStage === 'committed') {
-      return 0.55;
-    }
-    return 0.45;
+    return getCritOverdriveDurationGain(this.getRouteBuildStage('crit'));
   }
 
   private getCritSplashRatio(battle: BattleState): number {
-    if (this.getRouteBuildStage('crit') !== 'matured' || battle.critOverdriveSec <= 0) {
-      return 0;
-    }
-    return 0.45;
+    return getCritSplashRatio(this.getRouteBuildStage('crit'), battle.critOverdriveSec);
   }
 
   private getPierceEchoCount(): number {
-    let count = 1;
-    if (this.state.stats.multishot > 1) {
-      count += 1;
-    }
-    if (this.getRouteBuildStage('pierce') === 'matured') {
-      count += 1;
-    }
-    return count;
+    return getPierceEchoCount(this.state.stats.multishot, this.getRouteBuildStage('pierce'));
   }
 
   private getPierceEchoDamageRatio(): number {
-    const buildStage = this.getRouteBuildStage('pierce');
-    return buildStage === 'committed' || buildStage === 'matured' ? 0.72 : 0.58;
+    return getPierceEchoDamageRatio(this.getRouteBuildStage('pierce'));
   }
 
   private getPierceCooldownRefund(): number {
-    const buildStage = this.getRouteBuildStage('pierce');
-    return buildStage === 'committed' || buildStage === 'matured' ? 0.06 : 0;
+    return getPierceCooldownRefund(this.getRouteBuildStage('pierce'));
   }
 }

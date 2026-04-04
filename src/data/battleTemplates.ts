@@ -9,10 +9,60 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnIntervalSec: 0.85,
     enemyHp: 18,
     enemySpeed: 58,
+    enemyDamage: 7,
+    regularEnemyCap: 9,
+    pressureMultiplier: 1,
     accent: 0x5790ff,
     winCondition: {
       type: 'kills',
       target: 22,
+    },
+    spawnRule: {
+      pattern: 'surround',
+      burstCount: 1,
+    },
+  },
+  'elimination-pincer': {
+    id: 'elimination-pincer',
+    name: '夹击歼灭',
+    description: '敌人更偏向左右夹击，要求你更快换侧。',
+    durationSec: 25,
+    spawnIntervalSec: 0.78,
+    enemyHp: 17,
+    enemySpeed: 66,
+    enemyDamage: 7,
+    regularEnemyCap: 10,
+    pressureMultiplier: 1.08,
+    accent: 0x5f9cff,
+    winCondition: {
+      type: 'kills',
+      target: 24,
+    },
+    spawnRule: {
+      pattern: 'pincers',
+      burstCount: 1,
+    },
+  },
+  'elimination-sweep': {
+    id: 'elimination-sweep',
+    name: '扫线歼灭',
+    description: '敌潮更偏向上下扫线，单个敌人更厚但推进更整齐。',
+    durationSec: 27,
+    spawnIntervalSec: 0.92,
+    enemyHp: 24,
+    enemySpeed: 54,
+    enemyDamage: 8,
+    regularEnemyCap: 8,
+    pressureMultiplier: 1.12,
+    accent: 0x6696ff,
+    winCondition: {
+      type: 'kills',
+      target: 18,
+    },
+    spawnRule: {
+      pattern: 'lanes',
+      burstCount: 2,
+      laneBias: 'horizontal',
     },
   },
   elite: {
@@ -23,17 +73,28 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnIntervalSec: 1.25,
     enemyHp: 20,
     enemySpeed: 52,
+    enemyDamage: 8,
+    regularEnemyCap: 8,
+    pressureMultiplier: 1.16,
     accent: 0xffba4a,
     winCondition: {
       type: 'elite',
       target: 1,
     },
+    spawnRule: {
+      pattern: 'surround',
+      burstCount: 1,
+    },
     eliteRule: {
       spawnAtSec: 4,
       hpMultiplier: 10,
       speedMultiplier: 0.85,
+      damageMultiplier: 2.2,
       radius: 22,
       regularEnemyCap: 10,
+      behavior: 'frontline',
+      preferredDistance: 160,
+      strafeStrength: 0.18,
     },
   },
   'elite-lockdown': {
@@ -44,17 +105,67 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnIntervalSec: 1.05,
     enemyHp: 21,
     enemySpeed: 58,
+    enemyDamage: 8,
+    regularEnemyCap: 9,
+    pressureMultiplier: 1.28,
     accent: 0xff9b3d,
     winCondition: {
       type: 'elite',
       target: 1,
     },
+    spawnRule: {
+      pattern: 'pincers',
+      burstCount: 1,
+    },
     eliteRule: {
       spawnAtSec: 2.8,
       hpMultiplier: 9.5,
       speedMultiplier: 0.92,
+      damageMultiplier: 2.3,
       radius: 22,
       regularEnemyCap: 12,
+      behavior: 'kiting',
+      preferredDistance: 190,
+      strafeStrength: 0.34,
+      escortBatch: 2,
+      escortRespawnSec: 6.2,
+      escortMax: 6,
+    },
+  },
+  'elite-screen': {
+    id: 'elite-screen',
+    name: '掩护压制',
+    description: '精英会借护卫线拖时间，逼你先拆掩护再摸到本体。',
+    durationSec: 33,
+    spawnIntervalSec: 1.18,
+    enemyHp: 20,
+    enemySpeed: 54,
+    enemyDamage: 8,
+    regularEnemyCap: 8,
+    pressureMultiplier: 1.24,
+    accent: 0xffc35a,
+    winCondition: {
+      type: 'elite',
+      target: 1,
+    },
+    spawnRule: {
+      pattern: 'lanes',
+      burstCount: 1,
+      laneBias: 'vertical',
+    },
+    eliteRule: {
+      spawnAtSec: 3.4,
+      hpMultiplier: 9.2,
+      speedMultiplier: 0.88,
+      damageMultiplier: 2.05,
+      radius: 22,
+      regularEnemyCap: 11,
+      behavior: 'screened',
+      preferredDistance: 210,
+      strafeStrength: 0.24,
+      escortBatch: 3,
+      escortRespawnSec: 5.2,
+      escortMax: 7,
     },
   },
   survival: {
@@ -65,9 +176,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnIntervalSec: 0.5,
     enemyHp: 22,
     enemySpeed: 68,
+    enemyDamage: 9,
+    regularEnemyCap: 12,
+    pressureMultiplier: 1.22,
     accent: 0xff5f7a,
     winCondition: {
       type: 'survive',
+    },
+    spawnRule: {
+      pattern: 'surround',
+      burstCount: 1,
     },
   },
   'survival-rush': {
@@ -78,9 +196,37 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnIntervalSec: 0.38,
     enemyHp: 23,
     enemySpeed: 74,
+    enemyDamage: 10,
+    regularEnemyCap: 14,
+    pressureMultiplier: 1.34,
     accent: 0xff4d68,
     winCondition: {
       type: 'survive',
+    },
+    spawnRule: {
+      pattern: 'pincers',
+      burstCount: 1,
+    },
+  },
+  'survival-gauntlet': {
+    id: 'survival-gauntlet',
+    name: '夹道求生',
+    description: '敌人沿着窄通道扫进来，逼你在前后压迫里找空档换位。',
+    durationSec: 26,
+    spawnIntervalSec: 0.48,
+    enemyHp: 26,
+    enemySpeed: 64,
+    enemyDamage: 10,
+    regularEnemyCap: 13,
+    pressureMultiplier: 1.3,
+    accent: 0xff6f82,
+    winCondition: {
+      type: 'survive',
+    },
+    spawnRule: {
+      pattern: 'lanes',
+      burstCount: 2,
+      laneBias: 'horizontal',
     },
   },
 };
@@ -123,8 +269,4 @@ export function shouldSpawnElite(battle: BattleState): boolean {
     return false;
   }
   return !battle.eliteSpawned && battle.elapsedSec >= template.eliteRule.spawnAtSec;
-}
-
-export function getRegularEnemyCap(templateId: BattleTemplateId): number | null {
-  return BATTLE_TEMPLATES[templateId].eliteRule?.regularEnemyCap ?? null;
 }

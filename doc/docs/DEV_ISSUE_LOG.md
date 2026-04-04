@@ -658,3 +658,145 @@
 ### 下一步建议
 - 下一轮优先接“精细数值 / 平衡压实”，而不是继续大量补内容
 - 原因是当前主流程、内容底座、最小表现层和公式化成长都已经站住，更值得先把升级频率、路线强度和模板压力校准
+
+## [重建 Round 11] 内容扩容与分发优化
+### 本轮目标
+- 不改主流程、不重写 `RunEngine`、不引入新系统
+- 在现有数据驱动结构内补一轮 `nodes / events / upgrades` 内容密度
+- 细化 Content Selector 的阶段 / 流派 / build 倾向分发
+- 让三流派在前中期更早出现“这局正在往哪走”的可感知差异，并顺手增强 replay 动机
+
+### 文档取舍依据
+- 继续以最新 `PROJECT_STATUS.md` 与本文件作为阶段文档基准
+- 但本轮执行优先级采用用户本轮新增要求：当前项目不是回到骨架重建，也不是继续扩新系统，而是进入内容与可玩性阶段
+- 因此本轮没有按更早的“优先做平衡压实”单线推进，而是在同一边界下把重心前移到内容密度、分发与流派分化
+- 更早的 `REBUILD_PLAN.md` 与 `ROADMAP_0_9.md` 仅继续作为背景顺序参考，不作为本轮实现目标
+
+### 改动前盘点
+- `upgrades`：20 张
+  - 通用 8
+  - 每条流派各 4
+  - 问题不是完全不够，而是前期 starter 几乎固定，路线一旦出现倾向后，中段承接仍偏少
+- `events`：5 个
+  - 全部缺少阶段窗口区分
+  - 路线相关事件虽然存在，但事件 selector 实际上没有把路线倾向真正传进权重计算
+- `nodes`：
+  - 模板家族已经扩成 `3 x 3`
+  - 但每个 round 的 node blueprint 仍偏少，标题与 offer 结构重复率高
+  - 后段单选概率偏高，容易让短局后半段读起来过平
+- 结论：
+  - 当前最缺的是“内容密度 + 分发质量”
+  - 不是新系统，也不是回头重写引擎
+
+### 本轮内容扩容
+- 升级新增 6 张，每条流派新增 2 张：
+  - 暴击：
+    - `crit-primer`
+    - `crit-cascade`
+  - 穿透：
+    - `pierce-rail`
+    - `pierce-bloom`
+  - 穿梭：
+    - `dash-feint`
+    - `dash-reentry`
+- 这些新增内容的定位：
+  - 暴击：更早区分“升温预热”与“爆链收尾”
+  - 穿透：更早区分“续链贯穿”与“扇裂铺面”
+  - 穿梭：更早区分“贴身换收益”与“稳态净帧 / 回线汲能”
+- 事件新增 3 个，全都服务路线节奏或构筑倾向：
+  - `crit-heat-bank`
+  - `pierce-routing-map`
+  - `dash-weave-memory`
+- 节点内容新增一轮 blueprint 变体，用来降低同阶段标题和推进节奏重复：
+  - 前段：
+    - `round-1-battle-flank`
+    - `round-1-upgrade-fireline`
+    - `round-1-event-probe`
+  - 中段：
+    - `round-2-battle-screen`
+    - `round-2-upgrade-lock`
+    - `round-2-event-shift`
+  - 后段：
+    - `round-3-battle-gauntlet`
+    - `round-3-upgrade-anchor`
+    - `round-3-event-last-bet`
+
+### Selector / 分发规则调整
+- 为内容选择配置增加 `phaseBonuses`
+  - 让 starter / bridge / finisher / route event 能更明确地落在前 / 中 / 后期
+- 为事件定义增加轻量 `routeAffinity`
+  - 让事件 selector 能真正使用 `dominant / crit / pierce / dash` 路线倾向进行分发
+  - 修正了之前“事件权重看起来写了路线偏向，但实际没有生效”的问题
+- 升级 selector 从“纯三张混抽”改为“轻量结构化发牌”：
+  - 未出现 dominant route 时：
+    - 继续优先给三路线 starter，但 starter 现在有更多变体，不再固定成同 3 张
+  - 已出现 dominant route 但尚未锁定时：
+    - 至少给 1 张当前路线牌
+    - 再给 1 张通用支撑
+    - 最后留 1 个弹性位
+  - 已 committed / matured，或进入 `nodePrep` 时：
+    - 更高概率给 2 张当前路线牌 + 1 张支撑位
+- 节点 offer 也做了两处调整：
+  - 扩充每个 round 的 blueprint 数量
+  - 降低后段单选概率，提高 2~3 选的出现率，减少后段推进发平
+- 最终战候选重新对齐为精英家族内部共存抽取，不再混入生存家族模板
+
+### 本轮验证结果
+- 静态 / 抽样验证：
+  - 当前 `upgrades` 数量提升到 26
+    - 通用 8
+    - 每条流派各 6
+    - starter 提升到 6
+    - payoff 提升到 6
+  - 当前 `events` 数量提升到 8
+    - `routeAffinity` 分布：
+      - none: 3
+      - dominant: 2
+      - crit / pierce / dash: 各 1
+  - 抽样脚本确认：
+    - 无 dominant route 的开局 level-up 已不再固定成同 3 张 starter
+    - 中段 `crit / pierce / dash` committed 状态下，更容易命中本路线的 bridge / payoff
+    - route-specific events 已会在对应 dominant route 下明显增重，off-route 命中接近被压到边缘
+    - round 3 的单选比例明显下降，后段 2~3 选更常见
+- 浏览器回归：
+  - `npm run build` 通过
+  - Playwright 实测确认：
+    - 开始页文本正常
+    - 新 starter / bridge / payoff 升级卡在局内面板正常出现
+    - 新节点标题与说明正常出现
+    - 完整跑通：开始 -> 战斗 / 升级 / 节点 -> 结果 -> replay
+    - `run_finished`、`restart_after_first_run`、`second_run_start` 继续正常写入
+    - 控制台无新错误
+  - 顺手修了一处小的玩家可见问题：
+    - 结果页 / 开始页切场时主动清空上一阶段 toast，避免收尾界面被旧提示遮挡
+
+### 本轮更新文档
+- `doc/docs/DEV_ISSUE_LOG.md`
+- `doc/docs/PROJECT_STATUS.md`
+- `doc/docs/NODES_AND_TEMPLATES.md`
+- `doc/docs/ROUTES_SPEC.md`
+
+### 代码恢复度估计
+- 整体恢复度：`72%~79%`
+- 估计口径：
+  - 仍以“与旧项目最成熟状态相比”的恢复度为主
+  - 同时参考“当前是否已具备更稳定的内容扩写、路线分化与 replay 驱动力”
+- 结构恢复度：`82%~88%`
+- 内容恢复度：`60%~68%`
+- 表现恢复度：`54%~63%`
+- 本轮提升主要来自：
+  - 内容量更实
+  - 内容分发不再只是纸面权重
+  - 三流派在前中期的 build 信号更明确
+
+### 风险点
+- 当前 replay 动机已经有提升，但仍主要来自路线信号和内容差异，稀有事件 / 高记忆点结算仍偏少
+- route-specific events 现在已能被 selector 正确命中，但仍需要下轮继续观察三路线真实胜率和早期锁定速度
+- 内容量虽然上来了，但若后续不继续维护分发口径，仍可能被通用牌重新稀释
+
+### 下一步建议
+- 下一轮优先做“分发后的低频平衡压实”，不是回头扩新系统
+- 重点观察：
+  - starter 到 committed 的平均用时是否过快
+  - route-specific event 的命中是否已经足够但没有过度锁死
+  - 后段 node 2~3 选增加后，是否真的提升 replay 感而不是只增加阅读成本
