@@ -20,6 +20,7 @@ interface MetricRunSummary {
   endingKind?: RunEndingKind;
   endingReason?: string;
   finalNodeTitle?: string;
+  finalNodeType?: NodeType | null;
   durationSec?: number;
   battleWins?: number;
   nodesCleared?: number;
@@ -39,6 +40,7 @@ interface ContentMetricMeta {
   tags?: string[];
   isHybridPick?: boolean;
   isLatePayoff?: boolean;
+  nodeType?: NodeType;
 }
 
 interface MetricSession {
@@ -226,7 +228,7 @@ export class MetricsTracker {
     contentTier?: ContentTier,
     meta?: ContentMetricMeta,
   ): void {
-    this.record('battle_template_entered', { templateId, title, contentTier, phase: meta?.phase });
+    this.record('battle_template_entered', { templateId, title, contentTier, phase: meta?.phase, nodeType: meta?.nodeType });
     this.trackContentCounters(contentTier, meta);
   }
 
@@ -276,6 +278,7 @@ export class MetricsTracker {
     endingKind: RunEndingKind;
     endingReason: string;
     finalNodeTitle: string;
+    finalNodeType: NodeType | null;
     battleWins: number;
     nodesCleared: number;
   }): void {
@@ -301,6 +304,7 @@ export class MetricsTracker {
     currentRun.endingKind = result.endingKind;
     currentRun.endingReason = result.endingReason;
     currentRun.finalNodeTitle = result.finalNodeTitle;
+    currentRun.finalNodeType = result.finalNodeType;
     currentRun.durationSec = result.durationSec;
     currentRun.battleWins = result.battleWins;
     currentRun.nodesCleared = result.nodesCleared;
@@ -322,6 +326,7 @@ export class MetricsTracker {
       endingKind: result.endingKind,
       endingReason: result.endingReason,
       finalNodeTitle: result.finalNodeTitle,
+      finalNodeType: result.finalNodeType,
       durationSec: result.durationSec,
       battleWins: result.battleWins,
       nodesCleared: result.nodesCleared,

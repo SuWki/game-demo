@@ -100,3 +100,11 @@
 - 2026-04-05 起，`branch_switch` 口径修正为：
   - 如果某次 pick 同时触发 dominant route 翻转与 matured，也必须记录为一次真实 branch switch
   - 仅当 run 在该次 pick 之前就已经 `matured`，才抑制后续 branch switch 计数
+## 2026-04-05 Semantics Alignment Addendum
+- `node_selected.payload.nodeType` 现在可能为：
+  - `battle`
+  - `upgrade`
+  - `anomaly`
+  - `boss`
+- `battle_template_entered.payload.nodeType` 会记录该战斗来自普通 `battle` 还是最终 `boss` 节点。
+- `run_finished.payload.finalNodeType` 会记录本局最终收束/失败时所在节点语义，避免只剩 `finalNodeTitle` 而丢失结构语义。

@@ -100,3 +100,21 @@
 - 本轮策略：
   - 不直接扩 `NodeType`
   - 先把偏离点固定写进审计和 issue log，避免后续继续按旧口径漂移
+## 2026-04-05 Node / Encounter Semantics Addendum
+### 节点语义
+- `NodeType` 当前以 `battle | upgrade | anomaly | boss` 为准。
+- `anomaly` 节点继续从现有 `events` 数据池抽取内容，但节点卡、节点记录和指标事件均按 `anomaly` 处理。
+- 最终节点固定为 `boss`，不再沿用 `battle / finalBattle event-like` 的旧口径。
+
+### 模板语义
+- `battle` 模板家族仍覆盖普通关 / 精英关 / 生存关。
+- `boss` 目前复用 elite-family 模板作为压力承接，但会由节点类型、HUD 标签、结果摘要和埋点共同标记为 Boss。
+
+### 基础敌人语义
+- 基础敌人 archetype 现为：
+  - `standard`
+  - `brute`
+  - `skirmisher`
+  - `ranged`
+- `regular / escort / elite` 明确是战斗角色层，不再承担基础敌种分类职责。
+- `battleTemplates` 已新增 `regularArchetypes` / `escortArchetypes` 权重，用于驱动不同模板的敌种混合。

@@ -1358,3 +1358,61 @@
   - 先定义 `boss / anomaly` 的数据层口径，再决定是否扩 `NodeType`
   - 先补四类基础小怪的数据语义，再决定是否补远程弹道
   - 先把生存关最后 `10s` 的显式压强曲线写入公式文档，再决定是否改 battle pressure 实现
+## [内容与可玩性阶段 / Round 17] 结构语义最小落地
+### 来源口径
+- 本轮按 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 作为最高优先级口径。
+- 当旧文档或代码仍停留在 `battle / upgrade / event`、`regular / escort / elite` 时，以新基线要求的 `boss / battle / upgrade / anomaly` 与四类基础敌人语义为准。
+
+### 审计结论
+- 已符合：
+  - `WASD + 自动攻击`
+  - 击杀掉经验 -> 拾取 -> 升级三选一
+  - 品质五档与数值公式
+  - `battle` 家族覆盖普通 / 精英 / 生存
+- 近似符合：
+  - 最终战原本是 final battle 模板近似
+  - anomaly 原本由 event / rare event 近似
+  - 精英已具备拉扯和护卫掩护的近似行为
+- 明显偏离且本轮已修正：
+  - `NodeType` 现已落为 `battle / upgrade / anomaly / boss`
+  - 最终节点现在是显式 `boss`
+  - 基础敌人已拆为 `standard / brute / skirmisher / ranged`
+  - `battle_template_entered` / `run_finished` 已能记录 `nodeType / finalNodeType`
+
+### 本轮修改
+- 节点语义：
+  - `nodes.ts` 将原事件节点改为 `anomaly`
+  - 最终节点改为 `boss`
+  - Boss 节点标题和描述在数据构建时显式覆盖为 Boss 口径
+- 运行层：
+  - `RunEngine` 现支持 `boss` 走战斗流、`anomaly` 走事件流
+  - Battle state 增加 `encounterType`
+  - 最终结果新增 `finalNodeType`
+- 敌人语义：
+  - 新增 `enemyArchetypes.ts`
+  - `battleTemplates` 增加 `regularArchetypes / escortArchetypes`
+  - 基础敌人现在按 archetype 混编出场
+  - `ranged` 怪拥有最小保距移动与敌方弹道
+  - 渲染层为 `brute / skirmisher / ranged` 提供了最小可见差异
+- 埋点：
+  - `battle_template_entered.payload.nodeType`
+  - `run_finished.payload.finalNodeType`
+
+### 仍保留的近似实现
+- Boss 关仍复用 elite-family 模板承压，没有独立 Boss 机制树。
+- anomaly 节点仍复用现有 event 数据与事件面板，不是独立 anomaly 结算系统。
+- 生存关最后 10 秒显式增压尚未拆成独立规则段。
+
+### 验证
+- `npm run build` 通过。
+- 浏览器实跑已验证：
+  - 开始 -> 节点推进 -> 强化 / 异常 -> 最终 Boss -> 结算 -> replay 全链路可跑通。
+  - 节点面板已出现 `异常` 与 `Boss` 标签。
+  - `battle_template_entered` 和 `run_finished` 已导出 `nodeType / finalNodeType`。
+  - 战斗截图已能看到大体型敌人与方形远程敌人的最小可见差异。
+- 现阶段主要剩余风险：
+  - 四类基础敌人的“行为辨识度”已经入场，但还未像完整版本那样被更强的 AI 与专属表现进一步拉开。
+
+### 恢复度估计
+- 整体恢复度：`88%~90%`
+- 本轮提升主要来自“结构语义止漂移”，不是内容量增加。

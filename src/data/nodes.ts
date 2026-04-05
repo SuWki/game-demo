@@ -112,7 +112,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-1-event',
-        type: 'event',
+        type: 'anomaly',
         phase: 'opening',
         title: '试飞事件',
         description: '中风险拐方向，可能更快形成路线。',
@@ -125,7 +125,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-1-event-probe',
-        type: 'event',
+        type: 'anomaly',
         phase: 'opening',
         title: '路线试配',
         description: '用一次试配把下一拍路线信号摸清，但不急着立刻锁死。',
@@ -225,7 +225,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-2-event',
-        type: 'event',
+        type: 'anomaly',
         phase: 'mid',
         title: '中段事件',
         description: '高波动拐点，会放大方向差异，但不一定立刻定型。',
@@ -238,7 +238,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-2-event-shift',
-        type: 'event',
+        type: 'anomaly',
         phase: 'mid',
         title: '偏航窗口',
         description: '可以顺着当前读法微调，也能顺手把转向窗口留住。',
@@ -251,7 +251,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-2-event-handoff',
-        type: 'event',
+        type: 'anomaly',
         phase: 'mid',
         title: '侧频接驳',
         description: '这一拍更像一次重评路线的机会，适合判断要不要借侧频改道。',
@@ -264,7 +264,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-2-event-reroute',
-        type: 'event',
+        type: 'anomaly',
         phase: 'mid',
         title: '改道评估',
         description: '这一拍更像一次主动换线的预演，适合判断现在转过去值不值。',
@@ -369,7 +369,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-3-event',
-        type: 'event',
+        type: 'anomaly',
         phase: 'late',
         title: '后段事件',
         description: '沿着{focusLabel}冒险加码，可能直接站稳路线。',
@@ -382,7 +382,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-3-event-last-bet',
-        type: 'event',
+        type: 'anomaly',
         phase: 'late',
         title: '尾段押注',
         description: '沿着{focusLabel}再压一次，争取把收尾气质做实。',
@@ -395,7 +395,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
       },
       {
         id: 'round-3-event-blackbox',
-        type: 'event',
+        type: 'anomaly',
         phase: 'late',
         title: '黑匣异常',
         description: '低频异常节点，可能让这一局在尾段撞上一段截然不同的记忆点。',
@@ -431,7 +431,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
     blueprints: [
       {
         id: 'final-battle',
-        type: 'battle',
+        type: 'boss',
         phase: 'finalBattle',
         title: '最终战',
         description: '用一场更高压的精英压制完成整局收束。',
@@ -517,9 +517,21 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
 }
 
 function buildNode(blueprint: NodeBlueprint, focusRoute: RouteId | null): NodeOption {
+  const resolvedTitle =
+    blueprint.type === 'boss'
+      ? '\u6700\u7ec8 Boss'
+      : blueprint.type === 'anomaly' && blueprint.id === 'round-3-event-blackbox'
+        ? '\u9ed1\u5333\u5f02\u5e38'
+        : blueprint.title;
+  const resolvedDescription =
+    blueprint.type === 'boss'
+      ? '\u7528\u4e00\u573a\u660e\u786e\u7684 Boss \u6536\u675f\u5173\u5b8c\u6210\u6574\u5c40\u6536\u675f\u3002'
+      : resolveDescription(blueprint.description, focusRoute);
+
   return {
     ...blueprint,
-    description: resolveDescription(blueprint.description, focusRoute),
+    title: resolvedTitle,
+    description: resolvedDescription,
     templateId: pickTemplateId(blueprint.templateId, blueprint.templateCandidates),
   };
 }

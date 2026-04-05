@@ -1,7 +1,8 @@
 export type RouteId = 'crit' | 'pierce' | 'dash';
 export type RouteReference = RouteId | 'dominant';
-export type NodeType = 'battle' | 'upgrade' | 'event';
+export type NodeType = 'battle' | 'upgrade' | 'anomaly' | 'boss';
 export type ContentTier = 'standard' | 'rare';
+export type BattleEncounterType = 'battle' | 'boss';
 export type BattleTemplateId =
   | 'elimination'
   | 'elimination-pincer'
@@ -27,6 +28,23 @@ export type UpgradeCategory = 'generic' | 'route';
 export type SpawnPatternId = 'surround' | 'pincers' | 'lanes';
 export type EliteBehaviorId = 'frontline' | 'screened' | 'kiting' | 'summoner';
 export type EnemyRole = 'regular' | 'escort' | 'elite';
+export type EnemyArchetypeId = 'standard' | 'brute' | 'skirmisher' | 'ranged';
+
+export interface EnemyArchetypeDefinition {
+  id: EnemyArchetypeId;
+  name: string;
+  hpMultiplier: number;
+  speedMultiplier: number;
+  radiusMultiplier: number;
+  contactDamageMultiplier: number;
+  experienceMultiplier: number;
+  preferredDistance?: number;
+  strafeStrength?: number;
+  shotIntervalSec?: number;
+  projectileSpeed?: number;
+  projectileDamageMultiplier?: number;
+  projectileRadius?: number;
+}
 
 export interface RouteDefinition {
   id: RouteId;
@@ -58,6 +76,8 @@ export interface BattleTemplateDefinition {
     burstCount?: number;
     laneBias?: 'horizontal' | 'vertical';
   };
+  regularArchetypes?: Partial<Record<EnemyArchetypeId, number>>;
+  escortArchetypes?: Partial<Record<EnemyArchetypeId, number>>;
   eliteRule?: {
     spawnAtSec: number;
     hpMultiplier: number;
@@ -212,8 +232,10 @@ export interface EnemyState {
   radius: number;
   elite: boolean;
   role: EnemyRole;
+  archetype: EnemyArchetypeId;
   contactDamage: number;
   grazeCooldownSec: number;
+  rangedCooldownSec: number;
 }
 
 export interface BulletState {
@@ -245,6 +267,17 @@ export interface ExperienceOrbState {
   velocityY: number;
 }
 
+export interface EnemyProjectileState {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  damage: number;
+  lifeSec: number;
+  radius: number;
+}
+
 export interface PlayerInputState {
   up: boolean;
   down: boolean;
@@ -253,6 +286,7 @@ export interface PlayerInputState {
 }
 
 export interface BattleState {
+  encounterType: BattleEncounterType;
   templateId: BattleTemplateId;
   label: string;
   description: string;
@@ -268,6 +302,7 @@ export interface BattleState {
   nextEnemyId: number;
   nextBulletId: number;
   nextPulseId: number;
+  nextEnemyProjectileId: number;
   enemySpawnTimerSec: number;
   eliteSupportCooldownSec: number;
   spawnCursor: number;
@@ -278,6 +313,7 @@ export interface BattleState {
   bullets: BulletState[];
   pulses: PulseState[];
   experienceOrbs: ExperienceOrbState[];
+  enemyProjectiles: EnemyProjectileState[];
   playerX: number;
   playerY: number;
   eliteAlive: boolean;
@@ -305,6 +341,7 @@ export interface RunResult {
   endingLabel: string;
   endingReason: string;
   finalNodeTitle: string;
+  finalNodeType: NodeType | null;
   runDurationSec: number;
   nodesCleared: number;
   battleWins: number;

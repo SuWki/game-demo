@@ -21,6 +21,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pattern: 'surround',
       burstCount: 1,
     },
+    regularArchetypes: {
+      standard: 3,
+      brute: 1,
+      skirmisher: 1.1,
+      ranged: 0.35,
+    },
   },
   'elimination-pincer': {
     id: 'elimination-pincer',
@@ -41,6 +47,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnRule: {
       pattern: 'pincers',
       burstCount: 1,
+    },
+    regularArchetypes: {
+      standard: 2,
+      brute: 0.7,
+      skirmisher: 2.3,
+      ranged: 0.45,
     },
   },
   'elimination-sweep': {
@@ -64,6 +76,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 2,
       laneBias: 'horizontal',
     },
+    regularArchetypes: {
+      standard: 1.9,
+      brute: 1.9,
+      skirmisher: 0.8,
+      ranged: 0.55,
+    },
   },
   elite: {
     id: 'elite',
@@ -84,6 +102,18 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnRule: {
       pattern: 'surround',
       burstCount: 1,
+    },
+    regularArchetypes: {
+      standard: 2.3,
+      brute: 1.5,
+      skirmisher: 0.9,
+      ranged: 0.55,
+    },
+    escortArchetypes: {
+      standard: 1.9,
+      brute: 0.8,
+      skirmisher: 1.1,
+      ranged: 0.3,
     },
     eliteRule: {
       spawnAtSec: 4,
@@ -117,6 +147,18 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnRule: {
       pattern: 'pincers',
       burstCount: 1,
+    },
+    regularArchetypes: {
+      standard: 1.7,
+      brute: 1.2,
+      skirmisher: 1,
+      ranged: 1.2,
+    },
+    escortArchetypes: {
+      standard: 1,
+      brute: 0.6,
+      skirmisher: 1,
+      ranged: 1.6,
     },
     eliteRule: {
       spawnAtSec: 3,
@@ -152,6 +194,18 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnRule: {
       pattern: 'pincers',
       burstCount: 1,
+    },
+    regularArchetypes: {
+      standard: 1.9,
+      brute: 1.1,
+      skirmisher: 1.5,
+      ranged: 0.8,
+    },
+    escortArchetypes: {
+      standard: 1.2,
+      brute: 0.6,
+      skirmisher: 1.3,
+      ranged: 0.9,
     },
     eliteRule: {
       spawnAtSec: 2.8,
@@ -189,6 +243,18 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
       laneBias: 'vertical',
     },
+    regularArchetypes: {
+      standard: 1.5,
+      brute: 1,
+      skirmisher: 1.2,
+      ranged: 1.3,
+    },
+    escortArchetypes: {
+      standard: 0.9,
+      brute: 0.6,
+      skirmisher: 1.2,
+      ranged: 1.8,
+    },
     eliteRule: {
       spawnAtSec: 3.4,
       hpMultiplier: 9.2,
@@ -223,6 +289,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pattern: 'surround',
       burstCount: 1,
     },
+    regularArchetypes: {
+      standard: 2.4,
+      brute: 1.2,
+      skirmisher: 1.6,
+      ranged: 0.7,
+    },
   },
   'survival-crossfire': {
     id: 'survival-crossfire',
@@ -245,6 +317,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 2,
       laneBias: 'vertical',
     },
+    regularArchetypes: {
+      standard: 1.5,
+      brute: 1,
+      skirmisher: 1.4,
+      ranged: 2.1,
+    },
   },
   'survival-rush': {
     id: 'survival-rush',
@@ -264,6 +342,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     spawnRule: {
       pattern: 'pincers',
       burstCount: 1,
+    },
+    regularArchetypes: {
+      standard: 1.8,
+      brute: 0.9,
+      skirmisher: 2.4,
+      ranged: 0.6,
     },
   },
   'survival-gauntlet': {
@@ -285,6 +369,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pattern: 'lanes',
       burstCount: 2,
       laneBias: 'horizontal',
+    },
+    regularArchetypes: {
+      standard: 1.7,
+      brute: 1.6,
+      skirmisher: 1.1,
+      ranged: 1,
     },
   },
 };

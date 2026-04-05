@@ -28,6 +28,20 @@ const NODE_TYPE_ACCENTS = {
   event: '#ffd58a',
 } as const;
 
+const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
+  battle: '\u6218\u6597',
+  upgrade: '\u5f3a\u5316',
+  anomaly: '\u5f02\u5e38',
+  boss: 'Boss',
+};
+
+const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
+  battle: '#ff8f70',
+  upgrade: '#68d4ff',
+  anomaly: '#c98eff',
+  boss: '#ff6d6d',
+};
+
 const TOAST_BADGES: Record<ToastTone, string> = {
   neutral: '提示',
   accent: '阶段',
@@ -199,8 +213,8 @@ export class OverlayController {
       '选一条分支继续推进。战斗抢经验，强化补节奏，事件改走向。',
       options.map(
         (node) => `
-          <button class="choice-card map-choice" style="--choice-accent: ${NODE_TYPE_ACCENTS[node.type]}" data-choice="${node.id}">
-            <span class="choice-type">${NODE_TYPE_LABELS[node.type]}</span>
+          <button class="choice-card map-choice" style="--choice-accent: ${NODE_TYPE_ACCENT_MAP[node.type]}" data-choice="${node.id}">
+            <span class="choice-type">${NODE_TYPE_LABEL_MAP[node.type]}</span>
             <strong>${node.title}</strong>
             <small>${node.description}</small>
           </button>

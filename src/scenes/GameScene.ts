@@ -263,16 +263,51 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillCircle(bullet.x, bullet.y, 3);
     }
 
+    for (const projectile of battle.enemyProjectiles) {
+      this.graphics.fillStyle(0xffc86a, 0.92);
+      this.graphics.fillCircle(projectile.x, projectile.y, projectile.radius);
+      this.graphics.lineStyle(1, 0xfff1c7, 0.3);
+      this.graphics.strokeCircle(projectile.x, projectile.y, projectile.radius + 2);
+    }
+
     for (const enemy of battle.enemies) {
-      this.graphics.fillStyle(enemy.elite ? 0xffb347 : 0xff6578, 0.96);
-      this.graphics.fillCircle(enemy.x, enemy.y, enemy.radius);
-      this.graphics.lineStyle(2, enemy.elite ? 0xffe2a8 : 0xff9eb0, 0.26);
-      this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 4);
+      const enemyFill = this.getEnemyFillColor(enemy);
+      const enemyStroke = this.getEnemyStrokeColor(enemy);
+      this.graphics.fillStyle(enemyFill, enemy.elite ? 0.98 : 0.95);
+
+      if (enemy.elite) {
+        this.graphics.fillCircle(enemy.x, enemy.y, enemy.radius);
+        this.graphics.lineStyle(2, enemyStroke, 0.32);
+        this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 5);
+      } else if (enemy.archetype === 'ranged') {
+        this.graphics.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+        this.graphics.lineStyle(2, enemyStroke, 0.32);
+        this.graphics.strokeRect(enemy.x - enemy.radius - 2, enemy.y - enemy.radius - 2, enemy.radius * 2 + 4, enemy.radius * 2 + 4);
+      } else {
+        this.graphics.fillCircle(enemy.x, enemy.y, enemy.radius);
+        this.graphics.lineStyle(2, enemyStroke, 0.26);
+        this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 4);
+      }
+
+      if (!enemy.elite && enemy.archetype === 'skirmisher') {
+        this.graphics.lineStyle(2, enemyStroke, 0.36);
+        this.graphics.lineBetween(enemy.x - enemy.radius - 3, enemy.y, enemy.x + enemy.radius + 3, enemy.y);
+      }
+
+      if (!enemy.elite && enemy.archetype === 'brute') {
+        this.graphics.lineStyle(3, enemyStroke, 0.24);
+        this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 7);
+      }
+
+      if (!enemy.elite && enemy.archetype === 'ranged') {
+        this.graphics.lineStyle(2, enemyStroke, 0.36);
+        this.graphics.lineBetween(enemy.x, enemy.y - enemy.radius - 4, enemy.x, enemy.y + enemy.radius + 4);
+      }
 
       const hpRatio = enemy.hp / enemy.maxHp;
       this.graphics.fillStyle(0x1b2434, 0.84);
       this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32, 4);
-      this.graphics.fillStyle(enemy.elite ? 0xffdd7d : 0xff8aa1, 1);
+      this.graphics.fillStyle(enemy.elite ? 0xffdd7d : enemyStroke, 1);
       this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32 * hpRatio, 4);
     }
 
@@ -284,5 +319,41 @@ export class GameScene extends Phaser.Scene {
     this.graphics.strokeCircle(battle.playerX, battle.playerY, 16);
     this.graphics.fillStyle(battle.invulnerableSec > 0 ? 0x9cff97 : 0xe7f5ff, 1);
     this.graphics.fillCircle(battle.playerX, battle.playerY, 10);
+  }
+
+  private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {
+    if (enemy.elite) {
+      return 0xffb347;
+    }
+
+    switch (enemy.archetype) {
+      case 'brute':
+        return 0xff7b63;
+      case 'skirmisher':
+        return 0xff4f86;
+      case 'ranged':
+        return 0xc98eff;
+      case 'standard':
+      default:
+        return 0xff6578;
+    }
+  }
+
+  private getEnemyStrokeColor(enemy: BattleState['enemies'][number]): number {
+    if (enemy.elite) {
+      return 0xffe2a8;
+    }
+
+    switch (enemy.archetype) {
+      case 'brute':
+        return 0xffcfb8;
+      case 'skirmisher':
+        return 0xffb4d1;
+      case 'ranged':
+        return 0xe2ccff;
+      case 'standard':
+      default:
+        return 0xff9eb0;
+    }
   }
 }

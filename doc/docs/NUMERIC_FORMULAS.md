@@ -194,3 +194,26 @@
 - 敌人类型仍偏少，模板差异主要由参数与节奏承担
 - 生存关当前只有持续压力增长公式，尚未补齐“最后 `10s` 显式增压”的独立规则
 - 当前是“公式化第一版”，不是最终商业化平衡版
+## 2026-04-05 Enemy Archetype Layer
+基础敌人当前在模板/阶段基础数值之上，再叠加 archetype 乘区：
+
+- `hp = round(baseHp * archetype.hpMultiplier)`
+- `speed = round(baseSpeed * archetype.speedMultiplier)`
+- `contactDamage = round(baseDamage * archetype.contactDamageMultiplier)`
+- `radius = round(baseRadius * archetype.radiusMultiplier)`
+- `xp = round(baseXp * archetype.experienceMultiplier)`
+
+当前四类基础敌人乘区语义：
+
+- `standard`：基准追压，不额外偏移。
+- `brute`：高血量、大体型、低移速。
+- `skirmisher`：低血量、高移速，并附带横向拉扯。
+- `ranged`：中低接触伤害、保距移动、周期性发射敌方弹道。
+
+远程怪当前的最小弹道规则：
+
+- `projectileDamage = round(contactDamage * projectileDamageMultiplier)`
+- `projectileSpeed = archetype.projectileSpeed`
+- `projectileLifeSec = 3.2`
+- `preferredDistance = archetype.preferredDistance`
+- 当玩家距离低于保距阈值时后撤，高于阈值时补位，间隔 `shotIntervalSec` 发射一次投射物。

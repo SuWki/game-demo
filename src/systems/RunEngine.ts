@@ -36,21 +36,23 @@ import {
 } from '../data/balance';
 import {
   BATTLE_TEMPLATES,
-  getBattleProgressText,
   getBattleTargetKills,
   isBattleVictory,
   shouldSpawnElite,
 } from '../data/battleTemplates';
 import { rollEventDefinition, rollUpgradeChoices } from '../data/contentSelectors';
+import { ENEMY_ARCHETYPES, getEnemyArchetype, pickEnemyArchetype } from '../data/enemyArchetypes';
 import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
 import type {
   BattleState,
   ContentEffect,
   ContentTier,
+  EnemyArchetypeId,
   EventDefinition,
   EventOption,
   NodeOption,
+  NodeType,
   PlayerInputState,
   PlayerStats,
   RouteBuildStage,
@@ -196,7 +198,7 @@ export class RunEngine {
     this.state.phase = node.phase;
     this.enqueueTip(`${getPhaseLabel(node.phase)}：${node.title}`);
 
-    if (node.type === 'battle') {
+    if (node.type === 'battle' || node.type === 'boss') {
       this.enterBattle(node);
       return;
     }
@@ -210,11 +212,13 @@ export class RunEngine {
       return;
     }
 
-    this.state.status = 'eventChoice';
-    this.state.currentEvent = this.rollEvent();
-    this.state.upgradeSource = null;
-    this.state.upgradeChoices = [];
-    this.recordRedirectEventOffers(this.state.currentEvent);
+    if (node.type === 'anomaly') {
+      this.state.status = 'eventChoice';
+      this.state.currentEvent = this.rollEvent();
+      this.state.upgradeSource = null;
+      this.state.upgradeChoices = [];
+      this.recordRedirectEventOffers(this.state.currentEvent);
+    }
   }
 
   public chooseUpgrade(upgradeId: string): void {
@@ -339,6 +343,7 @@ export class RunEngine {
     this.updateShooting(battle, dt);
     this.updateBullets(battle, dt);
     this.updateEnemies(battle, dt);
+    this.updateEnemyProjectiles(battle, dt);
     this.updatePulses(battle, dt);
     this.updateExperienceOrbs(battle, dt);
 
@@ -364,10 +369,22 @@ export class RunEngine {
   }
 
   public getBattleLabel(): string {
-    if (!this.state.battle) {
+    const battle = this.state.battle;
+    if (!battle) {
       return '';
     }
-    return getBattleProgressText(this.state.battle);
+
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const label = battle.label || template.name;
+    switch (template.winCondition.type) {
+      case 'survive':
+        return `${label} ${Math.ceil(battle.remainingSec)}s`;
+      case 'elite':
+        return `${label} ${battle.eliteAlive ? '\u51fb\u7834\u7cbe\u82f1' : '\u51c6\u5907\u4ea4\u706b'}`;
+      case 'kills':
+      default:
+        return `${label} ${battle.kills}/${template.winCondition.target ?? battle.targetKills}`;
+    }
   }
 
   public getDominantRoute(): RouteId | null {
@@ -408,6 +425,8 @@ export class RunEngine {
   private enterBattle(node: NodeOption): void {
     const template = BATTLE_TEMPLATES[node.templateId ?? 'elimination'];
     const battleIndex = this.getCurrentBattleIndex();
+    const encounterType = node.type === 'boss' ? 'boss' : 'battle';
+    const battleLabel = encounterType === 'boss' ? `Boss \u00b7 ${template.name}` : template.name;
 
     this.state.status = 'battle';
     this.state.phase = node.phase;
@@ -416,9 +435,10 @@ export class RunEngine {
     this.state.upgradeChoices = [];
     this.state.upgradeSource = null;
     this.state.battle = {
+      encounterType,
       templateId: template.id,
-      label: template.name,
-      description: template.description,
+      label: battleLabel,
+      description: encounterType === 'boss' ? node.description : template.description,
       durationSec: template.durationSec,
       remainingSec: template.durationSec,
       targetKills: getBattleTargetKills(template.id),
@@ -431,6 +451,7 @@ export class RunEngine {
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
+      nextEnemyProjectileId: 0,
       enemySpawnTimerSec: 0.2,
       eliteSupportCooldownSec: 0,
       spawnCursor: 0,
@@ -441,6 +462,7 @@ export class RunEngine {
       bullets: [],
       pulses: [],
       experienceOrbs: [],
+      enemyProjectiles: [],
       playerX: CENTER_X,
       playerY: CENTER_Y,
       eliteAlive: false,
@@ -457,6 +479,7 @@ export class RunEngine {
     this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier, {
       phase: node.phase,
       isLatePayoff: this.isLatePhase(node.phase) && template.contentTier === 'rare',
+      nodeType: node.type,
     });
   }
 
@@ -516,6 +539,7 @@ export class RunEngine {
     const buildSummary = this.getBuildSummary(routeId, buildStage);
     const endingLabel = getEndingLabel(endingKind);
     const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
+    const finalNodeType = this.state.currentNode?.type ?? null;
     const endingReason = this.getEndingReason(endingKind, finalNodeTitle);
     const summary = this.getResultSummary(outcome, routeId, buildStage);
     const runDurationSec = Number(((performance.now() - this.runStartedAtMs) / 1000).toFixed(2));
@@ -539,6 +563,7 @@ export class RunEngine {
       endingLabel,
       endingReason,
       finalNodeTitle,
+      finalNodeType,
       runDurationSec,
       nodesCleared,
       battleWins: this.state.battleWins,
@@ -553,6 +578,7 @@ export class RunEngine {
       endingKind,
       endingReason,
       finalNodeTitle,
+      finalNodeType,
       battleWins: this.state.battleWins,
       nodesCleared,
     });
@@ -908,8 +934,10 @@ export class RunEngine {
         radius: eliteRule.radius,
         elite: true,
         role: 'elite',
+        archetype: 'brute',
         contactDamage: this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.damageMultiplier),
         grazeCooldownSec: 0,
+        rangedCooldownSec: 0,
       });
       battle.eliteSupportCooldownSec = eliteRule.escortRespawnSec ?? 0;
       if ((eliteRule.escortBatch ?? 0) > 0) {
@@ -943,20 +971,7 @@ export class RunEngine {
         }
 
         const position = this.getSpawnPosition(battle, template, burstIndex);
-        const hp = this.getRegularEnemyHp(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale);
-        battle.enemies.push({
-          id: battle.nextEnemyId++,
-          x: position.x,
-          y: position.y,
-          hp,
-          maxHp: hp,
-          speed: this.getRegularEnemySpeed(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale),
-          radius: 10 + Math.random() * 4,
-          elite: false,
-          role: 'regular',
-          contactDamage: this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale),
-          grazeCooldownSec: 0,
-        });
+        battle.enemies.push(this.createArchetypedEnemy(battle, template, 'regular', position.x, position.y));
       }
     }
   }
@@ -1039,6 +1054,55 @@ export class RunEngine {
     };
   }
 
+  private createArchetypedEnemy(
+    battle: BattleState,
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    role: 'regular' | 'escort',
+    x: number,
+    y: number,
+    overrides?: {
+      hp?: number;
+      speed?: number;
+      damage?: number;
+      radius?: number;
+      archetype?: EnemyArchetypeId;
+    },
+  ): BattleState['enemies'][number] {
+    const baseHp =
+      overrides?.hp ??
+      this.getRegularEnemyHp(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale);
+    const baseSpeed =
+      overrides?.speed ??
+      this.getRegularEnemySpeed(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale);
+    const baseDamage =
+      overrides?.damage ??
+      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale);
+    const archetype =
+      overrides?.archetype ??
+      pickEnemyArchetype(role === 'escort' ? template.escortArchetypes : template.regularArchetypes, role);
+    const archetypeDef = getEnemyArchetype(archetype);
+    const hp = Math.max(1, Math.round(baseHp * archetypeDef.hpMultiplier));
+    const speed = Math.max(24, Math.round(baseSpeed * archetypeDef.speedMultiplier));
+    const contactDamage = Math.max(1, Math.round(baseDamage * archetypeDef.contactDamageMultiplier));
+    const radius = Math.max(8, Math.round((overrides?.radius ?? 12) * archetypeDef.radiusMultiplier));
+
+    return {
+      id: battle.nextEnemyId++,
+      x,
+      y,
+      hp,
+      maxHp: hp,
+      speed,
+      radius,
+      elite: false,
+      role,
+      archetype,
+      contactDamage,
+      grazeCooldownSec: 0,
+      rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.55 + Math.random() * archetypeDef.shotIntervalSec : 0,
+    };
+  }
+
   private spawnEliteSupportEnemies(battle: BattleState, count: number): void {
     if (count <= 0) {
       return;
@@ -1064,19 +1128,21 @@ export class RunEngine {
       const strafeX = -Math.sin(screenAngle) * spread * 44;
       const strafeY = Math.cos(screenAngle) * spread * 44;
 
-      battle.enemies.push({
-        id: battle.nextEnemyId++,
-        x: anchorX - offsetX + strafeX,
-        y: anchorY - offsetY + strafeY,
-        hp: escortHp,
-        maxHp: escortHp,
-        speed: escortSpeed,
-        radius: 11 + (index % 2),
-        elite: false,
-        role: 'escort',
-        contactDamage: escortDamage,
-        grazeCooldownSec: 0,
-      });
+      battle.enemies.push(
+        this.createArchetypedEnemy(
+          battle,
+          template,
+          'escort',
+          anchorX - offsetX + strafeX,
+          anchorY - offsetY + strafeY,
+          {
+            hp: escortHp,
+            speed: escortSpeed,
+            damage: escortDamage,
+            radius: 11 + (index % 2),
+          },
+        ),
+      );
     }
   }
 
@@ -1192,9 +1258,7 @@ export class RunEngine {
       if (enemy.elite && template.eliteRule) {
         this.updateEliteEnemy(enemy, battle, template, dt);
       } else {
-        const angle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
-        enemy.x += Math.cos(angle) * enemy.speed * dt;
-        enemy.y += Math.sin(angle) * enemy.speed * dt;
+        this.updateArchetypeEnemy(enemy, battle, dt);
       }
 
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
@@ -1228,6 +1292,132 @@ export class RunEngine {
       survivors.push(enemy);
     }
     battle.enemies = survivors;
+  }
+
+  private updateArchetypeEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    switch (enemy.archetype) {
+      case 'skirmisher':
+        this.updateSkirmisherEnemy(enemy, battle, dt);
+        return;
+      case 'ranged':
+        this.updateRangedEnemy(enemy, battle, dt);
+        return;
+      case 'brute':
+      case 'standard':
+      default:
+        this.updateChasingEnemy(enemy, battle, dt);
+        return;
+    }
+  }
+
+  private updateChasingEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    const angle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
+    enemy.x += Math.cos(angle) * enemy.speed * dt;
+    enemy.y += Math.sin(angle) * enemy.speed * dt;
+  }
+
+  private updateSkirmisherEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    const dx = battle.playerX - enemy.x;
+    const dy = battle.playerY - enemy.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    const strafeX = -dirY;
+    const strafeY = dirX;
+    const strafeStrength = getEnemyArchetype(enemy.archetype).strafeStrength ?? 0.3;
+    const strafeDirection = Math.sin(battle.elapsedSec * 2.25 + enemy.id * 0.6);
+    const chaseWeight = distance > 120 ? 0.94 : 0.7;
+    const moveX = dirX * chaseWeight + strafeX * strafeDirection * strafeStrength;
+    const moveY = dirY * chaseWeight + strafeY * strafeDirection * strafeStrength;
+    const magnitude = Math.max(1, Math.hypot(moveX, moveY));
+
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * dt, -36, ARENA_WIDTH + 36);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * dt, -36, ARENA_HEIGHT + 36);
+  }
+
+  private updateRangedEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    const archetype = getEnemyArchetype(enemy.archetype);
+    const preferredDistance = archetype.preferredDistance ?? 205;
+    const strafeStrength = archetype.strafeStrength ?? 0.22;
+    const dx = battle.playerX - enemy.x;
+    const dy = battle.playerY - enemy.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    const strafeX = -dirY;
+    const strafeY = dirX;
+    const strafeDirection = Math.sin(battle.elapsedSec * 1.6 + enemy.id * 0.41);
+    let moveX = strafeX * strafeDirection * strafeStrength;
+    let moveY = strafeY * strafeDirection * strafeStrength;
+
+    if (distance < preferredDistance * 0.82) {
+      moveX -= dirX * 1.12;
+      moveY -= dirY * 1.12;
+    } else if (distance > preferredDistance * 1.18) {
+      moveX += dirX * 0.74;
+      moveY += dirY * 0.74;
+    } else {
+      moveX += dirX * 0.12;
+      moveY += dirY * 0.12;
+    }
+
+    const magnitude = Math.max(1, Math.hypot(moveX, moveY));
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * dt, -42, ARENA_WIDTH + 42);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * dt, -42, ARENA_HEIGHT + 42);
+
+    enemy.rangedCooldownSec = Math.max(0, enemy.rangedCooldownSec - dt);
+    if (enemy.rangedCooldownSec > 0 || distance > preferredDistance * 1.45) {
+      return;
+    }
+
+    const projectileSpeed = archetype.projectileSpeed ?? 220;
+    const projectileDamageMultiplier = archetype.projectileDamageMultiplier ?? 0.76;
+    const shotAngle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
+    battle.enemyProjectiles.push({
+      id: battle.nextEnemyProjectileId++,
+      x: enemy.x,
+      y: enemy.y,
+      vx: Math.cos(shotAngle) * projectileSpeed,
+      vy: Math.sin(shotAngle) * projectileSpeed,
+      damage: Math.max(1, Math.round(enemy.contactDamage * projectileDamageMultiplier)),
+      lifeSec: 3.2,
+      radius: archetype.projectileRadius ?? 5,
+    });
+    enemy.rangedCooldownSec = archetype.shotIntervalSec ?? 2.35;
+  }
+
+  private updateEnemyProjectiles(battle: BattleState, dt: number): void {
+    const survivors = [];
+
+    for (const projectile of battle.enemyProjectiles) {
+      projectile.x += projectile.vx * dt;
+      projectile.y += projectile.vy * dt;
+      projectile.lifeSec -= dt;
+
+      if (
+        projectile.lifeSec <= 0 ||
+        projectile.x < -48 ||
+        projectile.x > ARENA_WIDTH + 48 ||
+        projectile.y < -48 ||
+        projectile.y > ARENA_HEIGHT + 48
+      ) {
+        continue;
+      }
+
+      const distance = Math.hypot(projectile.x - battle.playerX, projectile.y - battle.playerY);
+      if (distance <= projectile.radius + PLAYER_COLLISION_RADIUS) {
+        if (battle.invulnerableSec <= 0) {
+          this.state.stats.hp = clamp(this.state.stats.hp - projectile.damage, 0, this.state.stats.maxHp);
+          battle.invulnerableSec = 0.32;
+          this.enqueueAudio('pressure');
+        }
+        continue;
+      }
+
+      survivors.push(projectile);
+    }
+
+    battle.enemyProjectiles = survivors;
   }
 
   private updateEliteEnemy(
@@ -1487,7 +1677,7 @@ export class RunEngine {
       }
     }
 
-    const orbValue = this.getEnemyExperienceValue(battle, enemy.elite);
+    const orbValue = Math.round(this.getEnemyExperienceValue(battle, enemy.elite) * ENEMY_ARCHETYPES[enemy.archetype].experienceMultiplier);
     battle.experienceOrbs.push({
       id: enemy.id,
       x: enemy.x,
