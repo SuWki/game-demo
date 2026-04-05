@@ -311,3 +311,40 @@ route window 当前的约束是：
 - `eliteRule.hpMultiplier`
 
 共同构成当前的 Boss / elite 压力修正口径。
+
+## 2026-04-06 Boss 阶段切换稳定化补充
+本轮补的是“阶段切换抗 burst”，不是继续堆血。
+
+### 阶段推进约束
+- 当前阶段推进改为逐段检查：
+  - `nextPressurePhase = currentPressurePhase + 1`
+  - 每次更新最多只允许推进到下一段，不再同一轮连跳多个 phase
+- 当前阶段若带最小驻留时间：
+  - `phaseAdvanceAllowed = pressurePhaseElapsedSec >= minResidenceSec`
+  - 未满足时，即使后续阈值也已满足，也继续停留在当前阶段
+
+### 阶段触发后的短时承接
+- 若 phase 定义了过渡 guard：
+  - `phaseGuardSec = max(currentGuardSec, entryGuardSec)`
+  - `phaseGuardedDamage = rawDamage * entryGuardDamageMultiplier`，当 `guardSec > 0`
+- guard 结束后，elite / boss 会回到模板基础 guard 倍率，不额外保留新的常驻减伤。
+
+### 阶段触发后的即时压力兑现
+- 若 phase 定义了 `entryEscortBurst`：
+  - `phaseEscortBurst = min(entryEscortBurst, escortMax - currentEscortCount)`
+  - 切段当下立即补入这批护卫，而不是只等待下一次 respawn 节奏自然到达
+- 这条规则的用途是让“转段”更快落到玩家可见战场，而不是只在后台等待参数慢慢生效。
+
+### 轻量读数强化
+- `pressureTransitionSec = 1.15`
+- 在 `pressureTransitionSec > 0` 的窗口内：
+  - HUD 子读数使用 `转段 {label}` 口径
+  - 主核显示短时脉冲圈
+
+### 当前取舍
+- 这轮没有继续上调 Boss 基础血量来硬拖时长。
+- 这轮的公式组合是：
+  - `minResidenceSec` 保证阶段存在感
+  - `entryGuardSec / entryGuardDamageMultiplier` 提供短时抗 burst 承接
+  - `entryEscortBurst` 提供切段即时压力兑现
+- 目标是让 Boss 的阶段体验成立，而不是把最终关做成纯海绵或重锁血。

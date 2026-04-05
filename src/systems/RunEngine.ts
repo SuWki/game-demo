@@ -342,6 +342,8 @@ export class RunEngine {
     battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - dt);
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - dt);
     battle.invulnerableSec = Math.max(0, battle.invulnerableSec - dt);
+    battle.pressurePhaseElapsedSec += dt;
+    battle.pressureTransitionSec = Math.max(0, battle.pressureTransitionSec - dt);
 
     this.updatePressurePhase(battle);
     this.updatePlayerMovement(battle, dt);
@@ -462,7 +464,9 @@ export class RunEngine {
       kills: 0,
       elapsedSec: 0,
       pressurePhaseIndex: -1,
+      pressurePhaseElapsedSec: 0,
       pressurePhaseLabel: template.eliteRule ? (encounterType === 'boss' ? '接敌' : '交火') : undefined,
+      pressureTransitionSec: 0,
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
@@ -524,26 +528,37 @@ export class RunEngine {
       return;
     }
 
-    let nextIndex = battle.pressurePhaseIndex;
-    for (let index = battle.pressurePhaseIndex + 1; index < phases.length; index += 1) {
-      const phase = phases[index];
-      const hpTriggered =
-        phase.triggerHpRatio !== undefined && eliteEnemy.hp / Math.max(1, eliteEnemy.maxHp) <= phase.triggerHpRatio;
-      const timeTriggered =
-        phase.triggerRemainingSec !== undefined && battle.remainingSec <= phase.triggerRemainingSec;
-      if (!hpTriggered && !timeTriggered) {
-        break;
-      }
-
-      nextIndex = index;
+    const currentPhase = this.getActivePressurePhase(battle);
+    if (currentPhase && battle.pressurePhaseElapsedSec < (currentPhase.minResidenceSec ?? 0)) {
+      return;
     }
 
-    if (nextIndex === battle.pressurePhaseIndex || nextIndex < 0) {
+    const nextIndex = battle.pressurePhaseIndex + 1;
+    if (nextIndex < 0 || nextIndex >= phases.length) {
+      return;
+    }
+
+    const nextPhase = phases[nextIndex];
+    const hpTriggered =
+      nextPhase.triggerHpRatio !== undefined && eliteEnemy.hp / Math.max(1, eliteEnemy.maxHp) <= nextPhase.triggerHpRatio;
+    const timeTriggered =
+      nextPhase.triggerRemainingSec !== undefined && battle.remainingSec <= nextPhase.triggerRemainingSec;
+    if (!hpTriggered && !timeTriggered) {
       return;
     }
 
     battle.pressurePhaseIndex = nextIndex;
-    battle.pressurePhaseLabel = phases[nextIndex].label;
+    battle.pressurePhaseLabel = nextPhase.label;
+    battle.pressurePhaseElapsedSec = 0;
+    battle.pressureTransitionSec = Math.max(battle.pressureTransitionSec, 1.15);
+
+    if ((nextPhase.entryGuardSec ?? 0) > 0) {
+      eliteEnemy.guardSec = Math.max(eliteEnemy.guardSec, nextPhase.entryGuardSec ?? 0);
+      eliteEnemy.guardDamageMultiplier = Math.min(
+        eliteEnemy.guardDamageMultiplier,
+        nextPhase.entryGuardDamageMultiplier ?? eliteEnemy.guardDamageMultiplier,
+      );
+    }
 
     if ((template.eliteRule?.escortBatch ?? 0) > 0) {
       battle.eliteSupportCooldownSec = Math.min(
@@ -552,6 +567,8 @@ export class RunEngine {
       );
     }
 
+    this.spawnPhaseEscortBurst(battle, nextPhase.entryEscortBurst ?? 0);
+    this.enqueueTip(`${battle.encounterType === 'boss' ? 'Boss 转段' : '精英转段'}：${nextPhase.label}`);
     this.enqueueAudio('pressure');
   }
 
@@ -1009,6 +1026,7 @@ export class RunEngine {
         archetype: 'brute',
         contactDamage: this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.damageMultiplier),
         guardSec: eliteRule.guardSec ?? 0,
+        guardDamageMultiplier: eliteRule.guardDamageMultiplier ?? 1,
         grazeCooldownSec: 0,
         rangedCooldownSec: 0,
       });
@@ -1074,6 +1092,26 @@ export class RunEngine {
     const baseRespawn = template.eliteRule?.escortRespawnSec ?? 5;
     const multiplier = this.getActivePressurePhase(battle)?.escortRespawnMultiplier ?? 1;
     return Math.max(0.75, baseRespawn * multiplier);
+  }
+
+  private spawnPhaseEscortBurst(battle: BattleState, requestedCount: number): void {
+    if (requestedCount <= 0 || !battle.eliteAlive) {
+      return;
+    }
+
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    if (!template.eliteRule || (template.eliteRule.escortBatch ?? 0) <= 0) {
+      return;
+    }
+
+    const escortMax = this.getEliteEscortMax(template, battle);
+    const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite).length;
+    const allowedCount = Math.min(requestedCount, Math.max(0, escortMax - currentEscorts));
+    if (allowedCount <= 0) {
+      return;
+    }
+
+    this.spawnEliteSupportEnemies(battle, allowedCount);
   }
 
   private getContactDamage(
@@ -1199,6 +1237,7 @@ export class RunEngine {
       archetype,
       contactDamage,
       guardSec: 0,
+      guardDamageMultiplier: 1,
       grazeCooldownSec: 0,
       rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.45 + Math.random() * this.getRangedShotIntervalSec(archetypeDef, battle) : 0,
     };
@@ -1307,7 +1346,7 @@ export class RunEngine {
         const critical = Math.random() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
         if (enemy.elite && enemy.guardSec > 0) {
-          damage *= template.eliteRule?.guardDamageMultiplier ?? 1;
+          damage *= enemy.guardDamageMultiplier;
         }
         enemy.hp -= damage;
         this.enqueueAudio(critical ? 'crit' : 'hit');
@@ -1351,6 +1390,9 @@ export class RunEngine {
     const template = BATTLE_TEMPLATES[battle.templateId];
     for (const enemy of battle.enemies) {
       enemy.guardSec = Math.max(0, enemy.guardSec - dt);
+      if (enemy.elite && enemy.guardSec <= 0) {
+        enemy.guardDamageMultiplier = template.eliteRule?.guardDamageMultiplier ?? 1;
+      }
       enemy.grazeCooldownSec = Math.max(0, enemy.grazeCooldownSec - dt);
       if (enemy.hp <= 0) {
         battle.kills += 1;

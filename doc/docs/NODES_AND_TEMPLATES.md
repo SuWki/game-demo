@@ -213,3 +213,28 @@
   - upgrade：直接说明“选择 1 项强化，立即生效”
   - anomaly：直接说明“异常窗口已打开，选择一项处理方案”
   为准，避免再次把内部设计性语气暴露给玩家。
+
+## 2026-04-06 Boss Phase Stabilization Addendum
+### Boss 阶段切换
+- 当前 `boss-hunt / boss-lockdown / boss-bastion` 的 `pressurePhases` 不再只是阈值触发后立即换参数。
+- Boss phase 现在允许挂接以下轻量承接字段：
+  - `minResidenceSec`
+  - `entryGuardSec`
+  - `entryGuardDamageMultiplier`
+  - `entryEscortBurst`
+- 当前实现口径是：
+  - 每次压力检查最多只推进到“下一段”，不再允许同一轮直接连跳多个 Boss phase。
+  - 若当前阶段尚未达到 `minResidenceSec`，则下一段即使阈值也满足，也会继续停留在当前阶段一小段可感知时间。
+
+### 阶段承接
+- phase 切换后会立即兑现一小段过渡承接：
+  - 短时 guard，防止刚转段就被 burst 再次压平
+  - 一次即时护卫补入，让新阶段的场面变化更快落到屏幕上
+- 这层承接只服务 Boss phase 稳定化，不是锁血，也不是独立 Boss 子系统。
+
+### 阶段读数
+- HUD 子读数在 phase 切换瞬间会使用 `转段` 前缀，而不是继续只显示静态 `阶段` 标签。
+- 战场上会为主核补一个短时脉冲圈提示，帮助玩家感知“Boss 已进入下一压力段”。
+- 当前仍保留的边界：
+  - 没有重新加回大面积 toast / 横幅。
+  - 没有把 elite 的轻量 phase 体验抬成和 Boss 同层级的独立机制。

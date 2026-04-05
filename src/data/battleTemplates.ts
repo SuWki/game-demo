@@ -409,6 +409,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           label: '逼近',
           triggerHpRatio: 0.74,
           triggerRemainingSec: 24,
+          minResidenceSec: 4.2,
+          entryGuardSec: 1.2,
+          entryGuardDamageMultiplier: 0.28,
+          entryEscortBurst: 1,
           spawnIntervalMultiplier: 0.92,
           regularEnemyCapBonus: 1,
           escortRespawnMultiplier: 0.92,
@@ -420,6 +424,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           label: '收束',
           triggerHpRatio: 0.38,
           triggerRemainingSec: 12,
+          minResidenceSec: 4.6,
+          entryGuardSec: 1.4,
+          entryGuardDamageMultiplier: 0.24,
+          entryEscortBurst: 2,
           spawnIntervalMultiplier: 0.84,
           regularEnemyCapBonus: 2,
           escortBatchBonus: 1,
@@ -485,6 +493,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           label: '封位',
           triggerHpRatio: 0.76,
           triggerRemainingSec: 24,
+          minResidenceSec: 4.4,
+          entryGuardSec: 1.3,
+          entryGuardDamageMultiplier: 0.28,
+          entryEscortBurst: 1,
           spawnIntervalMultiplier: 0.94,
           regularEnemyCapBonus: 1,
           escortBatchBonus: 1,
@@ -497,6 +509,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           label: '锁场',
           triggerHpRatio: 0.4,
           triggerRemainingSec: 11,
+          minResidenceSec: 4.8,
+          entryGuardSec: 1.5,
+          entryGuardDamageMultiplier: 0.24,
+          entryEscortBurst: 2,
           spawnIntervalMultiplier: 0.86,
           regularEnemyCapBonus: 2,
           escortBatchBonus: 1,
@@ -563,6 +579,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           label: '交火',
           triggerHpRatio: 0.72,
           triggerRemainingSec: 25,
+          minResidenceSec: 4.4,
+          entryGuardSec: 1.2,
+          entryGuardDamageMultiplier: 0.28,
+          entryEscortBurst: 1,
           escortBatchBonus: 1,
           escortMaxBonus: 2,
           escortRespawnMultiplier: 0.82,
@@ -574,6 +594,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           label: '火线收束',
           triggerHpRatio: 0.35,
           triggerRemainingSec: 10,
+          minResidenceSec: 4.8,
+          entryGuardSec: 1.4,
+          entryGuardDamageMultiplier: 0.24,
+          entryEscortBurst: 2,
           spawnIntervalMultiplier: 0.9,
           regularEnemyCapBonus: 1,
           escortBatchBonus: 1,
@@ -744,14 +768,18 @@ export function getBattleEncounterLabel(
   }
 }
 
-export function getBattleEnemyReadout(templateId: BattleTemplateId, pressurePhaseLabel?: string): string {
+export function getBattleEnemyReadout(
+  templateId: BattleTemplateId,
+  pressurePhaseLabel?: string,
+  emphasizeTransition = false,
+): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
   const escort = getTopArchetypeLabels(template.escortArchetypes, 2);
   const parts: string[] = [];
 
   if (pressurePhaseLabel) {
-    parts.push(`阶段 ${pressurePhaseLabel}`);
+    parts.push(`${emphasizeTransition ? '转段' : '阶段'} ${pressurePhaseLabel}`);
   }
 
   parts.push(`敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`);

@@ -63,6 +63,10 @@ export interface BattlePressurePhaseDefinition {
   label: string;
   triggerHpRatio?: number;
   triggerRemainingSec?: number;
+  minResidenceSec?: number;
+  entryGuardSec?: number;
+  entryGuardDamageMultiplier?: number;
+  entryEscortBurst?: number;
   spawnIntervalMultiplier?: number;
   regularEnemyCapBonus?: number;
   escortBatchBonus?: number;
@@ -261,6 +265,7 @@ export interface EnemyState {
   archetype: EnemyArchetypeId;
   contactDamage: number;
   guardSec: number;
+  guardDamageMultiplier: number;
   grazeCooldownSec: number;
   rangedCooldownSec: number;
 }
@@ -327,7 +332,9 @@ export interface BattleState {
   kills: number;
   elapsedSec: number;
   pressurePhaseIndex: number;
+  pressurePhaseElapsedSec: number;
   pressurePhaseLabel?: string;
+  pressureTransitionSec: number;
   nextEnemyId: number;
   nextBulletId: number;
   nextPulseId: number;

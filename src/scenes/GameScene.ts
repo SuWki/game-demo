@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getBattleEncounterLabel, getBattleEnemyReadout } from '../data/battleTemplates';
+import { BATTLE_TEMPLATES, getBattleEncounterLabel, getBattleEnemyReadout } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type { BattleState, OverlayHudSnapshot, Services, ToastTone } from '../game/types';
@@ -188,7 +188,11 @@ export class GameScene extends Phaser.Scene {
       battleText,
       battleSubtext:
         state.status === 'battle' && state.battle
-          ? getBattleEnemyReadout(state.battle.templateId, state.battle.pressurePhaseLabel)
+          ? getBattleEnemyReadout(
+              state.battle.templateId,
+              state.battle.pressurePhaseLabel,
+              state.battle.pressureTransitionSec > 0,
+            )
           : undefined,
     };
   }
@@ -309,6 +313,12 @@ export class GameScene extends Phaser.Scene {
         this.graphics.fillCircle(enemy.x, enemy.y, enemy.radius);
         this.graphics.lineStyle(2, enemyStroke, 0.32);
         this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 5);
+        if (battle.pressureTransitionSec > 0) {
+          const pulseAlpha = Math.min(0.44, 0.14 + battle.pressureTransitionSec * 0.2);
+          const pulseRadius = enemy.radius + 12 + (1.15 - battle.pressureTransitionSec) * 7;
+          this.graphics.lineStyle(4, BATTLE_TEMPLATES[battle.templateId].accent, pulseAlpha);
+          this.graphics.strokeCircle(enemy.x, enemy.y, pulseRadius);
+        }
         if (enemy.guardSec > 0) {
           const guardAlpha = Math.min(0.45, 0.16 + enemy.guardSec * 0.04);
           this.graphics.lineStyle(3, 0xfff2b0, guardAlpha);

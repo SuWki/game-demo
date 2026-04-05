@@ -3,6 +3,74 @@
 ## [重建阶段] 文档恢复版说明
 原始开发日志文件已丢失。本文件为基于历史文档和对话记录重建的简化版开发日志，用于恢复项目上下文和后续继续开发。
 
+## [0.9v 读数 / 压力校准] Boss 抗 burst 切段强化
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标是 `Boss 抗 burst 阶段切换强化 + 最终关阶段读数稳定`，不是重写系统，不是回到恢复期，也不是泛补普通内容。
+
+### 盘点结论
+- 当前 Boss 的阶段切换入口已经存在，触发条件来自：
+  - `HP 阈值`
+  - `剩余时间阈值`
+  - 护卫刷新节奏
+  - 模板层压力修正
+- 当前会被 burst 压平的根因有两个：
+  - `updatePressurePhase(...)` 原先允许同一轮检查里连续跨过多个阈值，导致高 burst 时可能直接跳过中间阶段。
+  - 切段后主要只有后台参数切换，玩家不一定能在屏幕上立刻感觉到“已经进入下一压力段”。
+- 当前最容易失真的一段是：
+  - Boss 中段刚切入后的承接窗口；如果玩家爆发继续上升，容易出现“看到阶段标签变了，但阶段本身几乎没存在感”。
+- 本轮确定的最小切入点是：
+  - `最小驻留 / 防连跳`
+  - `切段后的短时承接`
+  - `不遮挡画面的轻量读数强化`
+
+### 本轮实现
+- `src/game/types.ts`
+  - `BattlePressurePhaseDefinition` 新增：
+    - `minResidenceSec`
+    - `entryGuardSec`
+    - `entryGuardDamageMultiplier`
+    - `entryEscortBurst`
+  - `BattleState` 新增：
+    - `pressurePhaseElapsedSec`
+    - `pressureTransitionSec`
+  - `EnemyState` 新增：
+    - `guardDamageMultiplier`
+- `src/data/battleTemplates.ts`
+  - 为 `boss-hunt / boss-lockdown / boss-bastion` 的 phase 补入最小驻留、切段过渡 guard 与即时护卫兑现参数。
+  - `getBattleEnemyReadout(...)` 现在支持在切段窗口使用 `转段` 口径。
+- `src/systems/RunEngine.ts`
+  - `updatePressurePhase(...)` 改为逐段推进：单次更新最多只进入下一段，不再允许同一轮连跳多个 Boss phase。
+  - 当前阶段未满足 `minResidenceSec` 时，不推进到下一段。
+  - phase 切换时会：
+    - 重置阶段驻留计时
+    - 打开短时 `pressureTransitionSec`
+    - 补一小段过渡 guard
+    - 按 phase 参数立即补一批护卫
+  - elite / boss 的 guard 倍率从模板层改为运行态可覆盖，便于 phase 切换时做短时承接而不引入新系统。
+- `src/scenes/GameScene.ts`
+  - Boss/elite 主核在切段窗口会显示轻量脉冲圈。
+  - HUD 子读数在切段窗口会显式使用 `转段` 前缀。
+
+### 验证
+- `npm run build` 通过。
+- 本地 `tsx` 抽样确认：
+  - 在直接把 Boss 压到多阈值以下的高 burst 场景下，`boss-hunt / boss-lockdown / boss-bastion` 都只会先进入第一段，不会同轮直接跳到最终段。
+  - 待当前 phase 的 `minResidenceSec` 满足后，才会进入下一段。
+  - phase 切换时，`guardSec / guardDamageMultiplier / escortCount` 都会按新承接规则变化。
+- engine 级全链路抽样确认：
+  - `开始 -> 节点推进 -> anomaly -> boss -> 结算` 可跑通
+  - 结果口径仍为 `finalNodeType = boss`
+  - 新开一局后首战仍从 `battle` 正常进入，相当于 replay 重新起局链路未被破坏
+- 浏览器烟测确认：
+  - 开始页与战斗页截图正常
+  - HUD 未重新变重
+  - 无新的 console error
+
+### 剩余风险
+- Boss 阶段切换现在更不容易被 burst 直接压成一条线，但当前仍是模板层的软承接，不是完整 Boss 行为分段。
+- 如果后续玩家 burst 继续上涨，最终关可能还需要更强的“阶段内行为差异”，而不是继续只加 phase 承接参数。
+
 ## [0.9v 早期开发] Boss 阶段压力机制 + anomaly 内容质量
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
