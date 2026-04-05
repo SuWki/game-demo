@@ -1,5 +1,7 @@
 # 项目当前状态
 
+> 若与 [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md) 冲突，后续设计校准与偏离审计以该文件和最新 `DEV_ISSUE_LOG.md` 为准。
+
 ## 项目定位
 这是一个 Web 端的极简自动战斗 Roguelite / 自动射击 demo。
 
@@ -51,6 +53,34 @@
   - 自然样本里的主动转向仍然偏少，虽然已不再是纯 0，但主要还集中在 mid-late / late 的明确窗口，mid 的稳定转向样本仍不足。
   - `relay-splice` 这类通用改道事件仍可能在部分跑局里被顺手拿来“顺当前路线”，说明 redirect 吸引力问题已从“看不到”转成“看到后是否真愿意翻主路线”。
   - `branchSwitchCount` 已修正为不会漏记“同一拍完成 switch + mature”的情况，但样本规模仍小，后续还需要继续观察真实分布。
+- 同日新增用户设计基线文档 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`，后续需要重点审计：
+  - 关卡类型是否应从当前 `battle / upgrade / event` 继续对齐到 `boss / battle / upgrade / anomaly`
+  - 最终战是否仍只是 battle 模板近似
+  - 强化唯一性、特殊强化最低品质、四类基础小怪是否已被当前实现偏离
+
+## 2026-04-05 设计对齐审计补充
+- 本轮已按 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 对当前实现做了一次 design alignment audit。
+- 审计后确认的已符合项：
+  - 玩家操作仍是 `WASD` 主移动 + 自动攻击；方向键目前只是附加兼容输入。
+  - 击杀掉经验 -> 拾取 / 吸附 -> 升级三选一链路已成立。
+  - 品质五档、品质权重与升级价值公式已存在。
+  - `battle` 家族已覆盖普通 / 精英 / 生存三类模板。
+- 审计后确认的近似项：
+  - 地图推进是轻量 STS2 风格分支，但仍基于当前 `battle / upgrade / event` 节点口径。
+  - 最终战会稳定收尾于 final battle，但仍是高压 `battle template` 近似，不是独立 Boss 关语义。
+  - 异常关目前更接近低频 event / rare event，而不是玩家可感知的独立 `anomaly` 关。
+  - 精英行为已有 `frontline / screened / kiting / summoner`，但只是接近“反向移动 + 护卫挡前”的读数。
+- 审计后确认的明显偏离项：
+  - `NodeType` 仍未扩到 `boss / battle / upgrade / anomaly`。
+  - 基础敌人仍以 `regular / escort / elite` 组织，尚未形成四类明确基础小怪口径。
+  - 当前没有真正独立的远程敌种与弹道体系。
+- 本轮已直接修正的低风险问题：
+  - 升级选择器与运行态现已按 `sourceId` 执行单局唯一，不再因 `repeatable` 元数据重复发放已拿过的强化。
+  - 三流派 route 强化现已显式设定最低品质为绿，不再从白品池滚出。
+- 仍刻意留到下一轮的结构问题：
+  - `NodeType` 对齐、Boss 关独立语义、`anomaly` 玩家可感知化。
+  - 四类基础小怪与远程怪数据层落地。
+  - 生存关最后 `10s` 的显式增压规则。
 
 ## 当前边界
 ### 不再作为主线的内容

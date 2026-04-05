@@ -165,7 +165,7 @@ function buildContentContext(state: Readonly<RunState>): ContentContext {
 }
 
 function canOfferUpgrade(archetype: UpgradeArchetype, context: ContentContext): boolean {
-  return archetype.repeatable || !context.selectedUpgradeIds.includes(archetype.id);
+  return !context.selectedUpgradeIds.includes(archetype.id);
 }
 
 function buildWeightedUpgradePool(
@@ -245,15 +245,25 @@ function appendUniquePicks<T extends { id: string }>(
   picks.push(...next);
 }
 
-function pickUpgradeRarity(context: ContentContext, source: UpgradeSource): UpgradeRarity {
+function pickUpgradeRarity(
+  context: ContentContext,
+  source: UpgradeSource,
+  archetype: UpgradeArchetype,
+): UpgradeRarity {
   const phase = source === 'nodePrep' ? 'finalPrep' : context.phase;
   const weights = getUpgradeRarityWeights(context.round, phase, context.level, source);
-  return pickWeightedOne(
+  const rolledRarity = pickWeightedOne(
     (Object.entries(weights) as Array<[UpgradeRarity, number]>).map(([rarity, weight]) => ({
       item: rarity,
       weight,
     })),
   );
+
+  if (archetype.category === 'route' && rolledRarity === 'common') {
+    return 'uncommon';
+  }
+
+  return rolledRarity;
 }
 
 function selectStarterSet(context: ContentContext, source: UpgradeSource): UpgradeDefinition[] {
@@ -271,7 +281,7 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
       1,
     )[0];
 
-    return starter ? buildUpgradeChoice(starter, pickUpgradeRarity(context, source)) : undefined;
+    return starter ? buildUpgradeChoice(starter, pickUpgradeRarity(context, source, starter)) : undefined;
   }).filter(Boolean) as UpgradeDefinition[];
 }
 
@@ -447,7 +457,7 @@ export function rollUpgradeChoices(
     picks.push(...fallback);
   }
 
-  return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source)));
+  return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
 }
 
 function getEventRouteAffinity(eventDef: EventDefinition): RouteId | undefined {

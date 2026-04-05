@@ -1,5 +1,7 @@
 # 数值与成长公式说明
 
+> 若涉及强化唯一性、特殊强化最低品质、生存关最后 `10s` 压力增长或基础敌人族群公式，请同时参考 [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md) 并补齐对应约束。
+
 ## 当前口径说明
 本文件是当前重建版的数值源头文档，用来约束：
 - 角色基础属性
@@ -127,6 +129,17 @@
 - `rolledValue = baseValue * rarityMultiplier`
 - 再按属性类型做整数或两位小数取整
 
+### 2026-04-05 审计后新增约束
+- `routeSpecialEligible(rarity) = rarity >= uncommon`
+- 当前实现口径：
+  - 任何 `category = route` 的强化在最终发牌时，若品质掷骰落到 `common`，会被上抬到 `uncommon`
+  - 这条约束用于保证三流派特殊强化从绿开始出现
+- `upgradeOfferAllowed(sourceId) = sourceId not in pickedUpgradeIds`
+- 当前实现口径：
+  - 三选一候选生成时会直接排除本局已经拿过的 `sourceId`
+  - 运行态结算时也只会把同一个 `sourceId` 记录一次
+  - 旧的 `repeatable` 元数据目前仅作为历史兼容字段保留，不再驱动重复发放
+
 ## 五、节点与升级取舍
 ### battle
 - 主要提供：敌人掉经验、战斗完成经验、风险换成长
@@ -179,4 +192,5 @@
 - 具体内容量仍偏少，数值主要服务于当前短局验证
 - 权重公式已经可持续扩展，但不是旧版本成熟平衡值
 - 敌人类型仍偏少，模板差异主要由参数与节奏承担
+- 生存关当前只有持续压力增长公式，尚未补齐“最后 `10s` 显式增压”的独立规则
 - 当前是“公式化第一版”，不是最终商业化平衡版

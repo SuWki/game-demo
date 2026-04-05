@@ -1,10 +1,23 @@
 # 节点与战斗模板说明
 
+> 本文记录的是当前实现口径；若与 [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md) 冲突，后续设计对齐应以该设计基线为准，并明确记录近似实现差距。
+
 ## 节点模型
 当前节点只有三类：
 1. battle
 2. upgrade
 3. event
+
+### 与 2026-04-05 设计基线的对齐状态
+- 已符合：
+  - 轻量地图推进与 `1 ~ 3` 候选节点的短局结构仍成立。
+  - `battle` 家族已经覆盖普通 / 精英 / 生存三类模板。
+- 近似符合：
+  - 最终战已固定放在整局尾声，但当前仍是 `finalBattle -> battle template` 近似，不是独立 Boss 关。
+  - 低频 rare 事件当前可承担一部分“异常感”，但还不是玩家明确识别的 `anomaly` 节点。
+- 明显偏离：
+  - 当前 `NodeType` 仍是 `battle / upgrade / event`，尚未对齐目标 `boss / battle / upgrade / anomaly`。
+  - 这轮不直接扩节点类型，只记录差距并保留当前实现口径。
 
 ### 当前地图表达
 - 仍然不是复杂大地图
@@ -76,3 +89,14 @@
   - mid 先让玩家看到更清楚的 reroute 评估窗口
   - late 再把 rare / payoff 记忆点集中兑现
   - 不通过把通用 relay/handoff 大量堆进 mid 来伪造 branch switching
+
+## 2026-04-05 设计对齐审计补充
+- 最终战：
+  - 当前是“高压 final battle 模板收尾”
+  - 目标是“玩家可感知的独立 Boss 关”
+- anomaly：
+  - 当前是“低频 event / rare event 近似”
+  - 目标是“独立且可感知的异常关”
+- 本轮策略：
+  - 不直接扩 `NodeType`
+  - 先把偏离点固定写进审计和 issue log，避免后续继续按旧口径漂移

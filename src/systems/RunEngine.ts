@@ -228,7 +228,7 @@ export class RunEngine {
     this.applyEffects(upgrade.effects, {
       pickId: `upgrade:${upgrade.sourceId}`,
     });
-    if (upgrade.repeatable || !this.state.selectedUpgrades.includes(upgrade.sourceId)) {
+    if (!this.state.selectedUpgrades.includes(upgrade.sourceId)) {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
     this.services.metrics.recordUpgradeSelected(
