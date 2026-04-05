@@ -58,6 +58,23 @@ export interface RouteDefinition {
   color: string;
 }
 
+export interface BattlePressurePhaseDefinition {
+  id: string;
+  label: string;
+  triggerHpRatio?: number;
+  triggerRemainingSec?: number;
+  spawnIntervalMultiplier?: number;
+  regularEnemyCapBonus?: number;
+  escortBatchBonus?: number;
+  escortMaxBonus?: number;
+  escortRespawnMultiplier?: number;
+  eliteSpeedMultiplier?: number;
+  preferredDistanceDelta?: number;
+  strafeStrengthBonus?: number;
+  rangedShotIntervalMultiplier?: number;
+  rangedProjectileSpeedMultiplier?: number;
+}
+
 export interface BattleTemplateDefinition {
   id: BattleTemplateId;
   name: string;
@@ -98,6 +115,7 @@ export interface BattleTemplateDefinition {
     escortBatch?: number;
     escortRespawnSec?: number;
     escortMax?: number;
+    pressurePhases?: BattlePressurePhaseDefinition[];
   };
 }
 
@@ -308,6 +326,8 @@ export interface BattleState {
   difficultyScale: number;
   kills: number;
   elapsedSec: number;
+  pressurePhaseIndex: number;
+  pressurePhaseLabel?: string;
   nextEnemyId: number;
   nextBulletId: number;
   nextPulseId: number;

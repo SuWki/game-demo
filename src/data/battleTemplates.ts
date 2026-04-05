@@ -151,6 +151,18 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 1,
       escortRespawnSec: 7.4,
       escortMax: 2,
+      pressurePhases: [
+        {
+          id: 'collapse',
+          label: '压进',
+          triggerHpRatio: 0.58,
+          triggerRemainingSec: 14,
+          spawnIntervalMultiplier: 0.9,
+          regularEnemyCapBonus: 1,
+          eliteSpeedMultiplier: 1.08,
+          preferredDistanceDelta: -18,
+        },
+      ],
     },
   },
   'elite-vice': {
@@ -201,6 +213,20 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 2,
       escortRespawnSec: 3.8,
       escortMax: 9,
+      pressurePhases: [
+        {
+          id: 'pinch',
+          label: '围压',
+          triggerHpRatio: 0.64,
+          triggerRemainingSec: 16,
+          spawnIntervalMultiplier: 0.88,
+          regularEnemyCapBonus: 1,
+          escortBatchBonus: 1,
+          escortMaxBonus: 2,
+          escortRespawnMultiplier: 0.74,
+          rangedShotIntervalMultiplier: 0.82,
+        },
+      ],
     },
   },
   'elite-lockdown': {
@@ -250,6 +276,20 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 2,
       escortRespawnSec: 5.2,
       escortMax: 7,
+      pressurePhases: [
+        {
+          id: 'seal-in',
+          label: '收口',
+          triggerHpRatio: 0.6,
+          triggerRemainingSec: 15,
+          spawnIntervalMultiplier: 0.9,
+          regularEnemyCapBonus: 1,
+          escortBatchBonus: 1,
+          escortMaxBonus: 2,
+          escortRespawnMultiplier: 0.78,
+          eliteSpeedMultiplier: 1.06,
+        },
+      ],
     },
   },
   'elite-screen': {
@@ -300,6 +340,19 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 3,
       escortRespawnSec: 4.8,
       escortMax: 8,
+      pressurePhases: [
+        {
+          id: 'crossfire',
+          label: '封火',
+          triggerHpRatio: 0.62,
+          triggerRemainingSec: 15,
+          escortBatchBonus: 1,
+          escortMaxBonus: 1,
+          escortRespawnMultiplier: 0.8,
+          rangedShotIntervalMultiplier: 0.86,
+          rangedProjectileSpeedMultiplier: 1.08,
+        },
+      ],
     },
   },
   'boss-hunt': {
@@ -350,6 +403,32 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 2,
       escortRespawnSec: 4.6,
       escortMax: 5,
+      pressurePhases: [
+        {
+          id: 'close-in',
+          label: '逼近',
+          triggerHpRatio: 0.74,
+          triggerRemainingSec: 24,
+          spawnIntervalMultiplier: 0.92,
+          regularEnemyCapBonus: 1,
+          escortRespawnMultiplier: 0.92,
+          eliteSpeedMultiplier: 1.1,
+          preferredDistanceDelta: -28,
+        },
+        {
+          id: 'kill-window',
+          label: '收束',
+          triggerHpRatio: 0.38,
+          triggerRemainingSec: 12,
+          spawnIntervalMultiplier: 0.84,
+          regularEnemyCapBonus: 2,
+          escortBatchBonus: 1,
+          escortMaxBonus: 2,
+          escortRespawnMultiplier: 0.78,
+          eliteSpeedMultiplier: 1.2,
+          preferredDistanceDelta: -54,
+        },
+      ],
     },
   },
   'boss-lockdown': {
@@ -400,6 +479,33 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 3,
       escortRespawnSec: 4.2,
       escortMax: 8,
+      pressurePhases: [
+        {
+          id: 'pin-down',
+          label: '封位',
+          triggerHpRatio: 0.76,
+          triggerRemainingSec: 24,
+          spawnIntervalMultiplier: 0.94,
+          regularEnemyCapBonus: 1,
+          escortBatchBonus: 1,
+          escortMaxBonus: 2,
+          escortRespawnMultiplier: 0.78,
+          rangedShotIntervalMultiplier: 0.9,
+        },
+        {
+          id: 'lockfield',
+          label: '锁场',
+          triggerHpRatio: 0.4,
+          triggerRemainingSec: 11,
+          spawnIntervalMultiplier: 0.86,
+          regularEnemyCapBonus: 2,
+          escortBatchBonus: 1,
+          escortMaxBonus: 3,
+          escortRespawnMultiplier: 0.66,
+          eliteSpeedMultiplier: 1.08,
+          rangedShotIntervalMultiplier: 0.8,
+        },
+      ],
     },
   },
   'boss-bastion': {
@@ -451,6 +557,32 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       escortBatch: 3,
       escortRespawnSec: 4.2,
       escortMax: 9,
+      pressurePhases: [
+        {
+          id: 'crossfire',
+          label: '交火',
+          triggerHpRatio: 0.72,
+          triggerRemainingSec: 25,
+          escortBatchBonus: 1,
+          escortMaxBonus: 2,
+          escortRespawnMultiplier: 0.82,
+          rangedShotIntervalMultiplier: 0.78,
+          rangedProjectileSpeedMultiplier: 1.1,
+        },
+        {
+          id: 'fireline',
+          label: '火线收束',
+          triggerHpRatio: 0.35,
+          triggerRemainingSec: 10,
+          spawnIntervalMultiplier: 0.9,
+          regularEnemyCapBonus: 1,
+          escortBatchBonus: 1,
+          escortMaxBonus: 3,
+          escortRespawnMultiplier: 0.68,
+          rangedShotIntervalMultiplier: 0.64,
+          rangedProjectileSpeedMultiplier: 1.18,
+        },
+      ],
     },
   },
   survival: {
@@ -612,14 +744,18 @@ export function getBattleEncounterLabel(
   }
 }
 
-export function getBattleEnemyReadout(templateId: BattleTemplateId): string {
+export function getBattleEnemyReadout(templateId: BattleTemplateId, pressurePhaseLabel?: string): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
   const escort = getTopArchetypeLabels(template.escortArchetypes, 2);
-  const parts = [
-    `敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`,
-    `节奏 ${getSpawnPatternReadout(template)}`,
-  ];
+  const parts: string[] = [];
+
+  if (pressurePhaseLabel) {
+    parts.push(`阶段 ${pressurePhaseLabel}`);
+  }
+
+  parts.push(`敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`);
+  parts.push(`节奏 ${getSpawnPatternReadout(template)}`);
 
   if (escort.length > 0) {
     parts.push(`护卫 ${escort.join(' / ')}`);

@@ -3,6 +3,52 @@
 ## [重建阶段] 文档恢复版说明
 原始开发日志文件已丢失。本文件为基于历史文档和对话记录重建的简化版开发日志，用于恢复项目上下文和后续继续开发。
 
+## [0.9v 早期开发] Boss 阶段压力机制 + anomaly 内容质量
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目已不在恢复期；本轮目标是 `Boss 阶段性压力补强 + anomaly 内容质量打磨`，不是重写系统，不是泛补普通内容。
+
+### 盘点结论
+- Boss / elite 当前已有抗 burst 与护卫压力，但主压力来源仍偏模板参数、护卫和通用刷怪节奏。
+- 最终 Boss 虽然已经具备独立 carrier，但若没有显式阶段切换，后续仍容易退回“更厚的 elite”。
+- anomaly 虽然已经是独立池，但 `relay-splice / route-handoff` 这类条目仍偏普通 route push，容易稀释 anomaly 自身识别感。
+- 本轮最需要补的是：阶段压力入口、Boss HUD 读数、以及更像 anomaly 的低频代价型条目。
+
+### 本轮实现
+- `src/game/types.ts`
+  - 新增轻量 `BattlePressurePhaseDefinition`
+  - `BattleState` 新增 `pressurePhaseIndex / pressurePhaseLabel`
+- `src/data/battleTemplates.ts`
+  - 为 `elite / elite-vice / elite-lockdown / elite-screen` 补入轻量 `pressurePhases`
+  - 为 `boss-hunt / boss-lockdown / boss-bastion` 补入两段式压力切换
+  - `getBattleEnemyReadout(...)` 现在会带出当前阶段标签
+- `src/systems/RunEngine.ts`
+  - 新增 `updatePressurePhase(...)`，按 `HP 阈值 / 剩余时间阈值` 推进压力阶段
+  - 当前阶段会影响刷怪间隔、场上数量、护卫批次 / 上限 / 刷新节奏、远程射速与主核移动压力
+  - anomaly 混搭统计补充覆盖 `null-lens`
+- `src/data/events.ts`
+  - 下调 `relay-splice / route-handoff` 权重，避免 anomaly 再被普通 route push 主导
+  - 新增更像 anomaly 的 `phase-debt / null-lens`
+  - 上调 `phase-splitter / carrier-breach / boss-shadow-scan` 的存在感
+- `src/scenes/GameScene.ts`
+  - HUD 子读数现在会显示当前 `pressurePhaseLabel`
+
+### 验证
+- `npm run build` 通过。
+- 本地 `tsx` 抽样确认：
+  - `boss-lockdown` 会从 `接敌 -> 封位 -> 锁场`
+  - `boss-bastion` 会从 `接敌 -> 交火 -> 火线收束`
+  - `elite-screen` 会从 `交火 -> 封火`
+  - anomaly 抽样中已能命中 `phase-debt / null-lens / phase-splitter / boss-shadow-scan`
+- 浏览器烟测确认：
+  - 菜单、结果页、replay 重开链路仍正常
+  - HUD 会带出战斗子读数，replay 重开后会回到新的首战 HUD
+- 当前未补新埋点字段；现有 `battle_template_entered / event_selected / run_finished` 已足够覆盖本轮检查点。
+
+### 剩余风险
+- Boss 阶段压力已经不再只靠“更厚 + 护卫”，但自然玩家 burst 再继续上涨后，是否还需要更强的收尾节奏差异，仍要继续观察。
+- anomaly 内容质量已经提升，但浏览器自动化自然跑局仍偏容易死在中段；后续仍应结合真实玩家样本看 anomaly 记忆点是否足够稳。
+
 ## [测试版阶段] 已确认结论
 - 商业化测试版封版检查已完成
 - `route_committed / route_matured` 已在自然长局中稳定触发

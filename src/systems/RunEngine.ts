@@ -45,6 +45,7 @@ import { ENEMY_ARCHETYPES, getEnemyArchetype, pickEnemyArchetype } from '../data
 import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
 import type {
+  BattlePressurePhaseDefinition,
   BattleState,
   ContentEffect,
   ContentTier,
@@ -311,6 +312,7 @@ export class RunEngine {
         eventDef.id === 'cross-branch-signal' ||
         eventDef.id === 'route-handoff' ||
         eventDef.id === 'relay-splice' ||
+        eventDef.id === 'null-lens' ||
         eventDef.id === 'mirror-cache' ||
         eventDef.id === 'carrier-breach',
       isLatePayoff: this.isLatePayoffEvent(eventDef),
@@ -341,6 +343,7 @@ export class RunEngine {
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - dt);
     battle.invulnerableSec = Math.max(0, battle.invulnerableSec - dt);
 
+    this.updatePressurePhase(battle);
     this.updatePlayerMovement(battle, dt);
     this.spawnEnemies(battle, dt);
     this.updateShooting(battle, dt);
@@ -458,6 +461,8 @@ export class RunEngine {
       difficultyScale: node.difficultyScale ?? 1,
       kills: 0,
       elapsedSec: 0,
+      pressurePhaseIndex: -1,
+      pressurePhaseLabel: template.eliteRule ? (encounterType === 'boss' ? '接敌' : '交火') : undefined,
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
@@ -496,6 +501,58 @@ export class RunEngine {
       encounterType,
       nodeType: node.type,
     });
+  }
+
+  private getActivePressurePhase(battle: BattleState): BattlePressurePhaseDefinition | null {
+    const phases = BATTLE_TEMPLATES[battle.templateId].eliteRule?.pressurePhases ?? [];
+    if (battle.pressurePhaseIndex < 0 || battle.pressurePhaseIndex >= phases.length) {
+      return null;
+    }
+
+    return phases[battle.pressurePhaseIndex] ?? null;
+  }
+
+  private updatePressurePhase(battle: BattleState): void {
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const phases = template.eliteRule?.pressurePhases;
+    if (!battle.eliteAlive || !phases || phases.length === 0) {
+      return;
+    }
+
+    const eliteEnemy = battle.enemies.find((enemy) => enemy.elite);
+    if (!eliteEnemy) {
+      return;
+    }
+
+    let nextIndex = battle.pressurePhaseIndex;
+    for (let index = battle.pressurePhaseIndex + 1; index < phases.length; index += 1) {
+      const phase = phases[index];
+      const hpTriggered =
+        phase.triggerHpRatio !== undefined && eliteEnemy.hp / Math.max(1, eliteEnemy.maxHp) <= phase.triggerHpRatio;
+      const timeTriggered =
+        phase.triggerRemainingSec !== undefined && battle.remainingSec <= phase.triggerRemainingSec;
+      if (!hpTriggered && !timeTriggered) {
+        break;
+      }
+
+      nextIndex = index;
+    }
+
+    if (nextIndex === battle.pressurePhaseIndex || nextIndex < 0) {
+      return;
+    }
+
+    battle.pressurePhaseIndex = nextIndex;
+    battle.pressurePhaseLabel = phases[nextIndex].label;
+
+    if ((template.eliteRule?.escortBatch ?? 0) > 0) {
+      battle.eliteSupportCooldownSec = Math.min(
+        battle.eliteSupportCooldownSec,
+        Math.max(0.75, this.getEliteEscortRespawnSec(template, battle) * 0.55),
+      );
+    }
+
+    this.enqueueAudio('pressure');
   }
 
   private completeBattle(): void {
@@ -955,26 +1012,27 @@ export class RunEngine {
         grazeCooldownSec: 0,
         rangedCooldownSec: 0,
       });
-      battle.eliteSupportCooldownSec = eliteRule.escortRespawnSec ?? 0;
-      if ((eliteRule.escortBatch ?? 0) > 0) {
-        this.spawnEliteSupportEnemies(battle, eliteRule.escortBatch ?? 0);
+      battle.eliteSupportCooldownSec = this.getEliteEscortRespawnSec(template, battle);
+      const openingEscortBatch = this.getEliteEscortBatch(template, battle);
+      if (openingEscortBatch > 0) {
+        this.spawnEliteSupportEnemies(battle, openingEscortBatch);
       }
       this.enqueueTip(battle.encounterType === 'boss' ? 'Boss 进入战场' : '精英进入战场');
       this.enqueueAudio('pressure');
     }
 
     if (battle.eliteAlive && template.eliteRule && (template.eliteRule.escortBatch ?? 0) > 0) {
-      const escortMax = template.eliteRule.escortMax ?? template.eliteRule.escortBatch ?? 0;
+      const escortMax = this.getEliteEscortMax(template, battle);
       const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite).length;
       if (currentEscorts < escortMax && battle.eliteSupportCooldownSec <= 0) {
-        const batchSize = Math.min(template.eliteRule.escortBatch ?? 0, escortMax - currentEscorts);
+        const batchSize = Math.min(this.getEliteEscortBatch(template, battle), escortMax - currentEscorts);
         this.spawnEliteSupportEnemies(battle, batchSize);
-        battle.eliteSupportCooldownSec = template.eliteRule.escortRespawnSec ?? 5;
+        battle.eliteSupportCooldownSec = this.getEliteEscortRespawnSec(template, battle);
       }
     }
 
     while (battle.enemySpawnTimerSec <= 0) {
-      battle.enemySpawnTimerSec += this.getEnemySpawnInterval(template, battle.elapsedSec);
+      battle.enemySpawnTimerSec += this.getEnemySpawnInterval(battle, template, battle.elapsedSec);
       const regularEnemyCap = this.getRegularEnemyCap(battle);
       if (regularEnemyCap !== null && battle.enemies.filter((enemy) => !enemy.elite).length >= regularEnemyCap) {
         break;
@@ -990,6 +1048,32 @@ export class RunEngine {
         battle.enemies.push(this.createArchetypedEnemy(battle, template, 'regular', position.x, position.y));
       }
     }
+  }
+
+  private getEliteEscortBatch(
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    battle: BattleState,
+  ): number {
+    const baseBatch = template.eliteRule?.escortBatch ?? 0;
+    return Math.max(0, baseBatch + (this.getActivePressurePhase(battle)?.escortBatchBonus ?? 0));
+  }
+
+  private getEliteEscortMax(
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    battle: BattleState,
+  ): number {
+    const eliteRule = template.eliteRule;
+    const baseMax = eliteRule?.escortMax ?? eliteRule?.escortBatch ?? 0;
+    return Math.max(0, baseMax + (this.getActivePressurePhase(battle)?.escortMaxBonus ?? 0));
+  }
+
+  private getEliteEscortRespawnSec(
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    battle: BattleState,
+  ): number {
+    const baseRespawn = template.eliteRule?.escortRespawnSec ?? 5;
+    const multiplier = this.getActivePressurePhase(battle)?.escortRespawnMultiplier ?? 1;
+    return Math.max(0.75, baseRespawn * multiplier);
   }
 
   private getContactDamage(
@@ -1116,7 +1200,7 @@ export class RunEngine {
       contactDamage,
       guardSec: 0,
       grazeCooldownSec: 0,
-      rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.55 + Math.random() * archetypeDef.shotIntervalSec : 0,
+      rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.45 + Math.random() * this.getRangedShotIntervalSec(archetypeDef, battle) : 0,
     };
   }
 
@@ -1359,6 +1443,7 @@ export class RunEngine {
 
   private updateRangedEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
     const archetype = getEnemyArchetype(enemy.archetype);
+    const pressurePhase = this.getActivePressurePhase(battle);
     const preferredDistance = archetype.preferredDistance ?? 205;
     const strafeStrength = archetype.strafeStrength ?? 0.22;
     const dx = battle.playerX - enemy.x;
@@ -1392,7 +1477,8 @@ export class RunEngine {
       return;
     }
 
-    const projectileSpeed = archetype.projectileSpeed ?? 220;
+    const projectileSpeed =
+      (archetype.projectileSpeed ?? 220) * (pressurePhase?.rangedProjectileSpeedMultiplier ?? 1);
     const projectileDamageMultiplier = archetype.projectileDamageMultiplier ?? 0.76;
     const shotAngle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
     battle.enemyProjectiles.push({
@@ -1405,7 +1491,15 @@ export class RunEngine {
       lifeSec: 3.2,
       radius: archetype.projectileRadius ?? 5,
     });
-    enemy.rangedCooldownSec = archetype.shotIntervalSec ?? 2.35;
+    enemy.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle);
+  }
+
+  private getRangedShotIntervalSec(
+    archetype: ReturnType<typeof getEnemyArchetype>,
+    battle: BattleState,
+  ): number {
+    const multiplier = this.getActivePressurePhase(battle)?.rangedShotIntervalMultiplier ?? 1;
+    return Math.max(0.65, (archetype.shotIntervalSec ?? 2.35) * multiplier);
   }
 
   private updateEnemyProjectiles(battle: BattleState, dt: number): void {
@@ -1453,8 +1547,11 @@ export class RunEngine {
       return;
     }
 
-    const preferredDistance = eliteRule.preferredDistance ?? 170;
-    const strafeStrength = eliteRule.strafeStrength ?? 0.2;
+    const pressurePhase = this.getActivePressurePhase(battle);
+    const preferredDistance =
+      (eliteRule.preferredDistance ?? 170) + (pressurePhase?.preferredDistanceDelta ?? 0);
+    const strafeStrength = (eliteRule.strafeStrength ?? 0.2) + (pressurePhase?.strafeStrengthBonus ?? 0);
+    const movementSpeed = enemy.speed * (pressurePhase?.eliteSpeedMultiplier ?? 1);
     const dx = battle.playerX - enemy.x;
     const dy = battle.playerY - enemy.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -1534,8 +1631,8 @@ export class RunEngine {
     }
 
     const moveMagnitude = Math.max(1, Math.hypot(moveX, moveY));
-    enemy.x = clamp(enemy.x + (moveX / moveMagnitude) * enemy.speed * dt, -48, ARENA_WIDTH + 48);
-    enemy.y = clamp(enemy.y + (moveY / moveMagnitude) * enemy.speed * dt, -48, ARENA_HEIGHT + 48);
+    enemy.x = clamp(enemy.x + (moveX / moveMagnitude) * movementSpeed * dt, -48, ARENA_WIDTH + 48);
+    enemy.y = clamp(enemy.y + (moveY / moveMagnitude) * movementSpeed * dt, -48, ARENA_HEIGHT + 48);
   }
 
   private updatePulses(battle: BattleState, dt: number): void {
@@ -1743,17 +1840,26 @@ export class RunEngine {
   }
 
   private getEnemySpawnInterval(
+    battle: BattleState,
     template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
     elapsedSec: number,
   ): number {
-    return getEnemySpawnInterval(template, this.getCurrentBattleIndex(), this.state.phase, elapsedSec);
+    const pressureMultiplier = this.getActivePressurePhase(battle)?.spawnIntervalMultiplier ?? 1;
+    return Math.max(
+      0.18,
+      getEnemySpawnInterval(template, this.getCurrentBattleIndex(), this.state.phase, elapsedSec) * pressureMultiplier,
+    );
   }
 
   private getRegularEnemyCap(battle: BattleState): number | null {
     const template = BATTLE_TEMPLATES[battle.templateId];
     const eliteCapMultiplier =
       template.eliteRule && battle.eliteAlive ? (template.eliteRule.regularEnemyCap ?? template.regularEnemyCap) / template.regularEnemyCap : 1;
-    return getRegularEnemyCap(template, this.getCurrentBattleIndex(), this.state.phase, eliteCapMultiplier);
+    return Math.max(
+      1,
+      getRegularEnemyCap(template, this.getCurrentBattleIndex(), this.state.phase, eliteCapMultiplier) +
+        (this.getActivePressurePhase(battle)?.regularEnemyCapBonus ?? 0),
+    );
   }
 
   private getEnemyExperienceValue(battle: BattleState, isElite: boolean): number {

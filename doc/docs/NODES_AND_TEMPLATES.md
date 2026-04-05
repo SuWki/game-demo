@@ -3,21 +3,32 @@
 > 本文记录的是当前实现口径；若与 [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md) 冲突，后续设计对齐应以该设计基线为准，并明确记录近似实现差距。
 
 ## 节点模型
-当前节点只有三类：
-1. battle
-2. upgrade
-3. event
+当前节点分为四类：
+1. boss
+2. battle
+3. upgrade
+4. anomaly
+
+### 2026-04-05 0.9v 承载与压力更新
+- `boss` 已是独立节点语义，末尾固定从 Boss 模板池中收尾，不再回退成普通 elite-family 近似。
+- `anomaly` 已是独立节点语义，并且只会从 anomaly 内容池抽取，不再与普通 event 池混用。
+- 现有 anomaly 仍复用 event 结算流；现有 boss 仍复用 battle 主流程，但两者的 node / content / metrics 归属已切开。
+- `elite / boss` 模板现在可挂接 `pressurePhases`，用来表达阶段性压力切换：
+  - 触发条件可以来自 `HP 阈值` 或 `剩余时间阈值`
+  - 当前主要作用在：刷怪节奏、场上数量、护卫刷新、远程火线和主核走位压力
+  - HUD 子读数会显示当前压力阶段，避免只能靠体感猜 Boss 是否已经转段
 
 ### 与 2026-04-05 设计基线的对齐状态
 - 已符合：
   - 轻量地图推进与 `1 ~ 3` 候选节点的短局结构仍成立。
   - `battle` 家族已经覆盖普通 / 精英 / 生存三类模板。
+  - 最终战已明确通过 `boss` 节点进入，不再沿旧 `battle / event` 命名继续漂移。
+  - anomaly 已明确作为独立节点和独立内容池存在。
 - 近似符合：
-  - 最终战已固定放在整局尾声，但当前仍是 `finalBattle -> battle template` 近似，不是独立 Boss 关。
-  - 低频 rare 事件当前可承担一部分“异常感”，但还不是玩家明确识别的 `anomaly` 节点。
+  - boss 仍复用现有 battle 结算与战斗主循环，没有单独的 Boss 系统层。
+  - anomaly 仍复用现有 event 处理流，没有单独的 anomaly 系统层。
 - 明显偏离：
-  - 当前 `NodeType` 仍是 `battle / upgrade / event`，尚未对齐目标 `boss / battle / upgrade / anomaly`。
-  - 这轮不直接扩节点类型，只记录差距并保留当前实现口径。
+  - 暂无新的节点语义偏离，但 elite / boss 的阶段压力表达仍是“轻量模板层”，还不是完整的 Boss 分段机制。
 
 ### 当前地图表达
 - 仍然不是复杂大地图
@@ -35,21 +46,23 @@
 - 当前不是唯一升级来源
 - 作用是给一次更稳、品质更高的整备三选一
 
-### event
-定位：中风险 / 高波动 / 构筑转折
+### anomaly
+定位：中高波动 / 低频异常 / 风险换扭转
+- 主要承担：异常窗口、代价换收益、扭曲混搭、Boss 前的特殊准备
+- 不再承担普通 event 的泛化补给职责
 
 ## 节点选择原则
 不是做复杂大地图，而是做短局节点推进。
 目标是让玩家能感受到：
 - battle 是搏成长
 - upgrade 是稳修正
-- event 是拐方向
+- anomaly 是异常扭转与记忆点
 
 ## 当前节点分发焦点
 - 前段：更强调“路线信号出现但不锁死”，starter 与中性过渡内容优先，避免过早强承诺
-- 中段：更强调“starter 接 bridge，再逐步站稳”；当前还需要让 `event-shift / event-handoff` 一类节点真正提供转向窗口，而不是只给普通 route-specific 补强
+- 中段：更强调“starter 接 bridge，再逐步站稳”；当前 anomaly 需要提供真实可读的异常窗口，而不是继续退回普通 route push
 - 后段：更强调“committed 后的 payoff 与收尾修正”，把强兑现内容集中到 late / final
-- 后段同时应承接少量低频高辨识度内容：rare 事件、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
+- 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
 ## 战斗模板
@@ -65,10 +78,16 @@
 ### 精英压制
 - 中段更有个性的压力点
 - 更容易形成记忆点
+- 现已支持轻量 `pressurePhases`，让 elite 不再主要只靠“高血 + 护卫”成立
 
 ### 生存压制
 - 后段高潮候选模板
 - 强调撑住与节奏切换
+
+### Boss 载体
+- `boss-hunt / boss-lockdown / boss-bastion` 已是独立 Boss 模板池
+- 当前可以通过 `pressurePhases` 提供至少两段不同的收尾压力
+- 仍然复用现有 battle 主流程，不额外扩出 Boss 系统
 
 ## 模板切换点结论
 当前不存在“明显固定骨架”，但仍有“轻度家族吸附”。

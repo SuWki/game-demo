@@ -331,16 +331,16 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '侧频总线短暂并轨。你可以借这次窗口把读法改道到另一条线，同时先拿到一段立刻见效的缓冲。',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 1.05,
+      baseWeight: 0.78,
       minRound: 2,
       phaseBonuses: {
-        mid: 0.9,
-        late: 0.45,
+        mid: 0.55,
+        late: 0.2,
       },
-      hintedRouteBonus: 0.65,
-      dominantRouteBonus: 1.25,
-      committedRouteBonus: 0.45,
-      maturedRouteBonus: 0.15,
+      hintedRouteBonus: 0.45,
+      dominantRouteBonus: 0.95,
+      committedRouteBonus: 0.3,
+      maturedRouteBonus: 0.05,
     },
     options: getAnomalyRoutePoolOptions('relaySplice', ['crit', 'pierce', 'dash']),
   },
@@ -350,16 +350,16 @@ export const EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     description: '侧频接口短暂打开。你可以顺着当前读法微调，也可以借这拍直接把读法掰向另一条线。',
     selection: {
-      baseWeight: 0.95,
+      baseWeight: 0.68,
       minRound: 2,
       phaseBonuses: {
-        mid: 0.9,
-        late: 0.35,
+        mid: 0.5,
+        late: 0.18,
       },
-      noDominantRouteBonus: 0.2,
-      hintedRouteBonus: 0.45,
-      committedRouteBonus: 0.35,
-      maturedRouteBonus: 0.1,
+      noDominantRouteBonus: 0.1,
+      hintedRouteBonus: 0.3,
+      committedRouteBonus: 0.25,
+      maturedRouteBonus: 0.05,
     },
     options: getAnomalyRoutePoolOptions('routeHandoff', ['crit', 'pierce', 'dash']),
   },
@@ -805,16 +805,70 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'phase-debt',
+    name: '相位欠账',
+    contentKind: 'anomaly',
+    description: '异常账层把后半段压力提前透支到了现在。你可以立刻套现一段爆发，也可以把这次回震压成更厚的容错。',
+    selection: {
+      baseWeight: 1.3,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.25,
+        late: 0.85,
+      },
+      noDominantRouteBonus: 0.3,
+    },
+    options: [
+      {
+        id: 'phase-debt-overclock',
+        label: '先透支火线',
+        description: '立刻换来一段更凶的火力，但机体会先吃下一次提前回震。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 5,
+              fireRate: 0.18,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -12,
+          },
+        ],
+      },
+      {
+        id: 'phase-debt-buffer',
+        label: '先吞下回震',
+        description: '把这次失真压成更厚的耐久和再生，代价是弹道会短暂变钝。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 8,
+              regeneration: 0.14,
+              projectileSpeed: -18,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'phase-splitter',
     name: '相位裂缝',
     contentKind: 'anomaly',
     description: '异常裂缝把互不兼容的读法短暂并排拉到面前。这不是普通补给，而是一拍真正的并轨试错。',
     selection: {
-      baseWeight: 1.65,
+      baseWeight: 1.85,
       minRound: 2,
       phaseBonuses: {
         mid: 1.7,
-        late: 0.7,
+        late: 0.95,
       },
       noDominantRouteBonus: 0.4,
     },
@@ -867,18 +921,74 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'null-lens',
+    name: '空镜偏折',
+    contentKind: 'anomaly',
+    contentTier: 'rare',
+    description: '一段不属于当前局面的偏折样本被照了出来。你可以把它折成一次危险混搭，也可以把它压成更稳的尾段余量。',
+    selection: {
+      baseWeight: 0.92,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.7,
+        finalPrep: 0.75,
+      },
+      noDominantRouteBonus: 0.2,
+    },
+    options: [
+      {
+        id: 'null-lens-weave',
+        label: '折成危险混搭',
+        description: '立刻接上两种不安分的读法，收益更高，也要先吞一次波形回震。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              critChance: 0.02,
+              pierce: 1,
+              moveSpeed: 12,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -8,
+          },
+        ],
+      },
+      {
+        id: 'null-lens-brace',
+        label: '压成稳态余量',
+        description: '不抢当下爆发，改拿更厚的耐久、回收和弹道余量，给尾段留出读数。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 10,
+              regeneration: 0.14,
+              projectileSpeed: 18,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'carrier-breach',
     name: '载体失真',
     contentKind: 'anomaly',
     contentTier: 'rare',
     description: '异常载体开始失真。你可以把这段波形压成一次高收益冲刺，也可以拆成一段更宽的并轨余量。',
     selection: {
-      baseWeight: 0.88,
+      baseWeight: 1.02,
       minRound: 2,
       phaseBonuses: {
-        mid: 0.9,
-        late: 1.5,
-        finalPrep: 0.6,
+        mid: 1,
+        late: 1.8,
+        finalPrep: 0.75,
       },
       hintedRouteBonus: 0.4,
       dominantRouteBonus: 1.2,
@@ -932,11 +1042,11 @@ export const EVENT_CATALOG: EventDefinition[] = [
     contentTier: 'rare',
     description: 'Boss 载体边界泄出了一段压力样本。你还没真正撞上最终关，但已经能先决定要拿哪种收束准备。',
     selection: {
-      baseWeight: 0.95,
+      baseWeight: 1.05,
       minRound: 3,
       phaseBonuses: {
-        late: 1.9,
-        finalPrep: 1.2,
+        late: 2.1,
+        finalPrep: 1.35,
       },
       noDominantRouteBonus: 0.25,
     },

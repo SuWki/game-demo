@@ -186,7 +186,10 @@ export class GameScene extends Phaser.Scene {
         active: this.engine.getDominantRoute() === route.id,
       })),
       battleText,
-      battleSubtext: state.status === 'battle' && state.battle ? getBattleEnemyReadout(state.battle.templateId) : undefined,
+      battleSubtext:
+        state.status === 'battle' && state.battle
+          ? getBattleEnemyReadout(state.battle.templateId, state.battle.pressurePhaseLabel)
+          : undefined,
     };
   }
 

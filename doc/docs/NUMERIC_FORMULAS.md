@@ -13,10 +13,10 @@
 如果后续文档与本文件冲突，以本文件和最新 `DEV_ISSUE_LOG.md` 为准。
 
 ## 结构取舍
-- 仍然保留当前阶段文档要求的三类节点：`battle / upgrade / event`
+- 当前节点口径已经切到：`boss / battle / upgrade / anomaly`
 - 不改成完整多层大地图系统
 - 地图表达只做轻量分支路线选择
-- 精英仍然作为 battle 模板的一部分，而不是新增第四种节点
+- boss / anomaly 虽然有独立语义，但当前仍分别复用 battle / event 主流程，不额外扩新系统
 
 ## 一、角色基础属性
 ### 初始值
@@ -143,6 +143,33 @@
 ## 五、节点与升级取舍
 ### battle
 - 主要提供：敌人掉经验、战斗完成经验、风险换成长
+
+## 2026-04-05 Boss / Elite 阶段压力补充
+本轮新增的 `pressurePhases` 只服务 elite / boss 模板，不改主流程。
+
+### 触发规则
+- 当前阶段切换满足以下任一条件即可触发：
+- `hpRatio <= triggerHpRatio`
+- `remainingSec <= triggerRemainingSec`
+- 阶段一旦切换，只向后推进，不回退。
+
+### 阶段压力修正
+- `spawnIntervalPhase = max(0.18, baseSpawnInterval * pressurePhase.spawnIntervalMultiplier)`
+- `regularEnemyCapPhase = baseRegularEnemyCap + pressurePhase.regularEnemyCapBonus`
+- `escortBatchPhase = baseEscortBatch + pressurePhase.escortBatchBonus`
+- `escortMaxPhase = baseEscortMax + pressurePhase.escortMaxBonus`
+- `escortRespawnPhase = max(0.75, baseEscortRespawnSec * pressurePhase.escortRespawnMultiplier)`
+- `eliteMoveSpeedPhase = eliteBaseSpeed * pressurePhase.eliteSpeedMultiplier`
+- `preferredDistancePhase = basePreferredDistance + pressurePhase.preferredDistanceDelta`
+- `rangedShotIntervalPhase = max(0.65, baseRangedShotInterval * pressurePhase.rangedShotIntervalMultiplier)`
+- `rangedProjectileSpeedPhase = baseRangedProjectileSpeed * pressurePhase.rangedProjectileSpeedMultiplier`
+
+### 当前作用边界
+- 这套阶段修正只改变已有模板里的压力节奏，不引入新的 Boss 系统层。
+- 当前主要用于：
+  - Boss 中后段护卫 / 刷怪 / 远程火线收紧
+  - elite 中后段的轻量压进与封火
+  - HUD 阶段读数同步
 
 ### upgrade
 - 仍然保留为节点类型
