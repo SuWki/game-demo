@@ -286,11 +286,76 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
   }).filter(Boolean) as UpgradeDefinition[];
 }
 
+function buildLevelUpRouteWindowPool(
+  context: ContentContext,
+): Array<{ item: UpgradeArchetype; weight: number }> {
+  if (!context.dominantRoute) {
+    return scaleWeightedPool(
+      buildWeightedUpgradePool(
+        context,
+        'levelUp',
+        (archetype) => Boolean(archetype.routeId) && Boolean(archetype.tags?.includes('starter')),
+      ),
+      0.52,
+    );
+  }
+
+  const dominantRoutePool = buildWeightedUpgradePool(
+    context,
+    'levelUp',
+    (archetype) => archetype.routeId === context.dominantRoute,
+  );
+  const dominantLevelUpPool = filterPoolByTags(
+    dominantRoutePool,
+    context.committedRoute || context.maturedRoute ? ['starter', 'bridge', 'payoff'] : ['starter', 'bridge'],
+    ['finisher', 'redirect'],
+  );
+  const fallbackPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge', 'payoff'], ['finisher', 'redirect']);
+  const resolvedPool =
+    dominantLevelUpPool.length > 0
+      ? dominantLevelUpPool
+      : fallbackPool.length > 0
+        ? fallbackPool
+        : dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
+
+  return scaleWeightedPool(resolvedPool, context.committedRoute || context.maturedRoute ? 0.72 : 0.58);
+}
+
+function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
+  const picks: UpgradeArchetype[] = [];
+  const genericPool = buildWeightedUpgradePool(context, 'levelUp', (archetype) => !archetype.routeId);
+  const genericCorePool = filterPoolByTags(genericPool, ['stabilizer', 'bridge'], ['payoff', 'rare']);
+  const genericPrimaryPool = genericCorePool.length > 0 ? genericCorePool : genericPool;
+  const genericSecondaryPool = mergeWeightedPools(
+    scaleWeightedPool(genericPrimaryPool, 1.18, 0.08),
+    scaleWeightedPool(genericPool, 1.05),
+  );
+  const routeWindowPool = buildLevelUpRouteWindowPool(context);
+  const flexPool = mergeWeightedPools(
+    scaleWeightedPool(genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1.22, 0.1),
+    scaleWeightedPool(routeWindowPool, 0.62),
+  );
+
+  appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
+  appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
+  appendUniquePicks(picks, flexPool.length > 0 ? flexPool : genericPool, 1);
+
+  if (picks.length < 3) {
+    appendUniquePicks(picks, genericPool, 3 - picks.length);
+  }
+
+  return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, 'levelUp', archetype)));
+}
+
 export function rollUpgradeChoices(
   state: Readonly<RunState>,
   source: UpgradeSource,
 ): UpgradeDefinition[] {
   const context = buildContentContext(state);
+  if (source === 'levelUp') {
+    return rollLevelUpChoices(context);
+  }
+
   if (!context.dominantRoute) {
     return selectStarterSet(context, source).slice(0, 3);
   }

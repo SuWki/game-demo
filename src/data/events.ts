@@ -1,3 +1,4 @@
+import { getAnomalyRoutePoolOptions } from './anomalyRoutePools';
 import type { EventContentKind, EventDefinition } from '../game/types';
 
 export const EVENT_CATALOG: EventDefinition[] = [
@@ -51,7 +52,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
     id: 'risky-protocol',
     name: '高压试飞',
     contentKind: 'anomaly',
-    description: '试飞记录给出一次偏向路线的机会，但机体会承受额外负荷。',
+    description: '承受额外负荷，换取一次异常路线强化。',
     selection: {
       baseWeight: 2.5,
       maxRound: 2,
@@ -61,75 +62,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       },
       noDominantRouteBonus: 1,
     },
-    options: [
-      {
-        id: 'risky-protocol-crit',
-        label: '追求爆发',
-        description: '向暴击方向推进，并承受 8 点压力伤害。',
-        routeId: 'crit',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              critChance: 0.08,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'heal',
-            amount: -8,
-          },
-        ],
-      },
-      {
-        id: 'risky-protocol-pierce',
-        label: '追求贯穿',
-        description: '向穿透方向推进，并承受 8 点压力伤害。',
-        routeId: 'pierce',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              pierce: 1,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'heal',
-            amount: -8,
-          },
-        ],
-      },
-      {
-        id: 'risky-protocol-dash',
-        label: '追求穿梭',
-        description: '向穿梭方向推进，并承受 8 点压力伤害。',
-        routeId: 'dash',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              dashPulseDamage: 6,
-              dashInterval: -0.4,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'heal',
-            amount: -8,
-          },
-        ],
-      },
-    ],
+    options: getAnomalyRoutePoolOptions('riskyProtocol', ['crit', 'pierce', 'dash']),
   },
   {
     id: 'route-calibration',
@@ -409,92 +342,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       committedRouteBonus: 0.45,
       maturedRouteBonus: 0.15,
     },
-    options: [
-      {
-        id: 'relay-splice-crit',
-        label: '改道暴击旁路',
-        description: '恢复 8 点耐久，补一段升温火力，并把读法改道到暴击。',
-        routeId: 'crit',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 3,
-              fireRate: 0.12,
-              critChance: 0.03,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
-      {
-        id: 'relay-splice-pierce',
-        label: '改道穿透旁路',
-        description: '恢复 8 点耐久，接一段穿透清线，并把读法改道到穿透。',
-        routeId: 'pierce',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              projectileSpeed: 18,
-              pierce: 1,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-        ],
-      },
-      {
-        id: 'relay-splice-dash',
-        label: '改道穿梭旁路',
-        description: '恢复 8 点耐久，接一段换位节奏，并把读法改道到穿梭。',
-        routeId: 'dash',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: 12,
-              dashInterval: -0.2,
-              dashPulseDamage: 4,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
-    ],
+    options: getAnomalyRoutePoolOptions('relaySplice', ['crit', 'pierce', 'dash']),
   },
   {
     id: 'route-handoff',
@@ -513,101 +361,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       committedRouteBonus: 0.35,
       maturedRouteBonus: 0.1,
     },
-    options: [
-      {
-        id: 'route-handoff-crit',
-        label: '改道暴击侧频',
-        description: '补一段升温火力，并借这拍把读法改道到暴击。',
-        routeId: 'crit',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              critChance: 0.05,
-              fireRate: 0.12,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
-      {
-        id: 'route-handoff-pierce',
-        label: '改道穿透侧频',
-        description: '补一段穿透与弹速，并借这拍把读法改道到穿透。',
-        routeId: 'pierce',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              pierce: 1,
-              projectileSpeed: 18,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-        ],
-      },
-      {
-        id: 'route-handoff-dash',
-        label: '改道穿梭侧频',
-        description: '补一段换位节奏，并借这拍把读法改道到穿梭。',
-        routeId: 'dash',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: 14,
-              dashInterval: -0.22,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
-    ],
+    options: getAnomalyRoutePoolOptions('routeHandoff', ['crit', 'pierce', 'dash']),
   },
   {
     id: 'crit-reroute-window',
@@ -629,70 +383,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       offRouteMultiplier: 0.05,
     },
     options: [
-      {
-        id: 'crit-reroute-window-pierce',
-        label: '改道穿透清线',
-        description: '恢复 8 点耐久，接入穿透清线，把读法改道到穿透。',
-        routeId: 'pierce',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              projectileSpeed: 18,
-              pierce: 1,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-        ],
-      },
-      {
-        id: 'crit-reroute-window-dash',
-        label: '改道穿梭反打',
-        description: '恢复 8 点耐久，接入换位节奏，把读法改道到穿梭。',
-        routeId: 'dash',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: 12,
-              dashInterval: -0.2,
-              dashPulseDamage: 4,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
+      ...getAnomalyRoutePoolOptions('critRerouteWindow', ['pierce', 'dash']),
       {
         id: 'crit-reroute-window-hold',
         label: '先稳当前火力',
@@ -733,70 +424,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       offRouteMultiplier: 0.05,
     },
     options: [
-      {
-        id: 'pierce-reroute-window-crit',
-        label: '改道暴击收束',
-        description: '恢复 8 点耐久，接一段暴击火力，把读法改道到暴击。',
-        routeId: 'crit',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 3,
-              fireRate: 0.12,
-              critChance: 0.03,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
-      {
-        id: 'pierce-reroute-window-dash',
-        label: '改道穿梭反打',
-        description: '恢复 8 点耐久，接入换位节奏，把读法改道到穿梭。',
-        routeId: 'dash',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: 12,
-              dashInterval: -0.2,
-              dashPulseDamage: 4,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
+      ...getAnomalyRoutePoolOptions('pierceRerouteWindow', ['crit', 'dash']),
       {
         id: 'pierce-reroute-window-hold',
         label: '先稳当前清线',
@@ -837,70 +465,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       offRouteMultiplier: 0.05,
     },
     options: [
-      {
-        id: 'dash-reroute-window-crit',
-        label: '改道暴击爆发',
-        description: '恢复 8 点耐久，接一段暴击火力，把读法改道到暴击。',
-        routeId: 'crit',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 3,
-              fireRate: 0.12,
-              critChance: 0.03,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
-      {
-        id: 'dash-reroute-window-pierce',
-        label: '改道穿透清线',
-        description: '恢复 8 点耐久，接入穿透清线，把读法改道到穿透。',
-        routeId: 'pierce',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              projectileSpeed: 18,
-              pierce: 1,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 8,
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-        ],
-      },
+      ...getAnomalyRoutePoolOptions('dashRerouteWindow', ['crit', 'pierce']),
       {
         id: 'dash-reroute-window-hold',
         label: '先稳当前机动',
@@ -941,77 +506,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       committedRouteBonus: 1.5,
       maturedRouteBonus: 0.4,
     },
-    options: [
-      {
-        id: 'cross-branch-signal-crit',
-        label: '接入暴击样本',
-        description: '补一段升温火力，顺手把读法切向暴击。',
-        routeId: 'crit',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              critChance: 0.06,
-              fireRate: 0.12,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
-      {
-        id: 'cross-branch-signal-pierce',
-        label: '接入贯穿样本',
-        description: '补一段穿透与弹速，把读法切向贯穿清线。',
-        routeId: 'pierce',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              pierce: 1,
-              projectileSpeed: 20,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-          {
-            type: 'route',
-            routeId: 'pierce',
-          },
-        ],
-      },
-      {
-        id: 'cross-branch-signal-dash',
-        label: '接入穿梭样本',
-        description: '补一段换位与规避，把读法切向穿梭反打。',
-        routeId: 'dash',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: 14,
-              dashInterval: -0.3,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
-    ],
+    options: getAnomalyRoutePoolOptions('crossBranchSignal', ['crit', 'pierce', 'dash']),
   },
   {
     id: 'blackbox-bargain',

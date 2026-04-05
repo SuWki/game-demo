@@ -85,7 +85,7 @@ body {
 .panel-layer {
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 16px;
 }
 
 .menu-card,
@@ -435,66 +435,102 @@ button:hover {
 }
 
 .hud-layer {
-  padding: 18px;
+  padding: 10px 12px;
 }
 
 .hud-shell {
+  display: flex;
+  justify-content: center;
+}
+
+.hud-rail {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+  width: min(920px, 100%);
 }
 
 .hud-kicker {
-  padding: 14px 18px;
+  padding: 8px 12px;
+  border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(125, 210, 255, 0.12), rgba(255, 255, 255, 0.03)),
-    rgba(9, 17, 31, 0.86);
+    linear-gradient(180deg, rgba(125, 210, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(9, 17, 31, 0.84);
 }
 
-.hud-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-  gap: 12px;
+.hud-kicker-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.hud-kicker strong {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.hud-kicker small {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .hud-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.route-panel {
-  padding: 14px;
-  background:
-    linear-gradient(180deg, rgba(18, 33, 56, 0.65), rgba(7, 12, 22, 0.88)),
-    rgba(255, 255, 255, 0.03);
+.hud-block,
+.route-chip {
+  padding: 8px 10px;
+  border-radius: 12px;
 }
 
-.route-panel-head {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 12px;
-  padding-left: 4px;
+.hud-block::before,
+.route-chip::before {
+  width: 2px;
 }
 
-.route-strip {
+.hud-block span,
+.route-chip span,
+.choice-type,
+.menu-stats span {
+  font-size: 11px;
+}
+
+.hud-block strong,
+.route-chip strong {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.hud-block small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.hud-block-wide {
+  grid-column: span 1;
+}
+
+.hud-route-strip {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .route-chip {
-  min-width: 0;
-  flex: 1 1 0;
-}
-
-.route-chip::before {
-  width: 4px;
-  background: linear-gradient(180deg, var(--route-accent, rgba(125, 210, 255, 0.9)), rgba(255, 255, 255, 0));
+  min-width: 84px;
+  flex: 0 0 auto;
 }
 
 .route-chip.active {
-  border-color: rgba(159, 226, 255, 0.4);
-  background: linear-gradient(180deg, rgba(127, 206, 255, 0.14), rgba(255, 255, 255, 0.03));
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+  border-color: rgba(159, 226, 255, 0.34);
+  background: linear-gradient(180deg, rgba(127, 206, 255, 0.1), rgba(255, 255, 255, 0.025));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
 }
 
 .choice-grid {
@@ -502,26 +538,26 @@ button:hover {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .choice-card {
   position: relative;
   width: 100%;
-  min-height: 176px;
+  min-height: 144px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 16px;
   background: linear-gradient(180deg, rgba(16, 27, 48, 0.92), rgba(10, 18, 34, 0.94));
   color: var(--text);
   text-align: left;
-  padding: 18px;
+  padding: 14px;
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .map-choice {
-  min-height: 188px;
+  min-height: 132px;
 }
 
 .choice-card::before {
@@ -548,8 +584,8 @@ button:hover {
   position: relative;
   z-index: 1;
   display: block;
-  margin-top: 10px;
-  font-size: 22px;
+  margin-top: 8px;
+  font-size: 18px;
 }
 
 .choice-rarity {
@@ -574,9 +610,9 @@ button:hover {
   position: relative;
   z-index: 1;
   display: block;
-  margin-top: 12px;
+  margin-top: 8px;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.42;
 }
 
 .choice-card:hover {
@@ -588,7 +624,7 @@ button:hover {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding-top: 18px;
+  padding-top: 10px;
 }
 
 .toast {
@@ -687,14 +723,13 @@ button:hover {
 
 @media (max-width: 900px) {
   .hero-layout,
-  .hud-layout,
   .menu-stats,
   .hud-bar,
   .choice-grid {
     grid-template-columns: 1fr;
   }
 
-  .route-strip {
+  .hud-route-strip {
     flex-direction: column;
   }
 

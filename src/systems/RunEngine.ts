@@ -951,6 +951,7 @@ export class RunEngine {
         role: 'elite',
         archetype: 'brute',
         contactDamage: this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.damageMultiplier),
+        guardSec: eliteRule.guardSec ?? 0,
         grazeCooldownSec: 0,
         rangedCooldownSec: 0,
       });
@@ -958,7 +959,7 @@ export class RunEngine {
       if ((eliteRule.escortBatch ?? 0) > 0) {
         this.spawnEliteSupportEnemies(battle, eliteRule.escortBatch ?? 0);
       }
-      this.enqueueTip('精英进入战场');
+      this.enqueueTip(battle.encounterType === 'boss' ? 'Boss 进入战场' : '精英进入战场');
       this.enqueueAudio('pressure');
     }
 
@@ -1113,6 +1114,7 @@ export class RunEngine {
       role,
       archetype,
       contactDamage,
+      guardSec: 0,
       grazeCooldownSec: 0,
       rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.55 + Math.random() * archetypeDef.shotIntervalSec : 0,
     };
@@ -1201,6 +1203,7 @@ export class RunEngine {
   }
 
   private updateBullets(battle: BattleState, dt: number): void {
+    const template = BATTLE_TEMPLATES[battle.templateId];
     const nextBullets = [];
     for (const bullet of battle.bullets) {
       bullet.x += bullet.vx * dt;
@@ -1218,7 +1221,10 @@ export class RunEngine {
         }
 
         const critical = Math.random() < this.getEffectiveCritChance(battle);
-        const damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
+        let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
+        if (enemy.elite && enemy.guardSec > 0) {
+          damage *= template.eliteRule?.guardDamageMultiplier ?? 1;
+        }
         enemy.hp -= damage;
         this.enqueueAudio(critical ? 'crit' : 'hit');
         if (critical) {
@@ -1260,6 +1266,7 @@ export class RunEngine {
     const survivors = [];
     const template = BATTLE_TEMPLATES[battle.templateId];
     for (const enemy of battle.enemies) {
+      enemy.guardSec = Math.max(0, enemy.guardSec - dt);
       enemy.grazeCooldownSec = Math.max(0, enemy.grazeCooldownSec - dt);
       if (enemy.hp <= 0) {
         battle.kills += 1;

@@ -88,6 +88,8 @@ export interface BattleTemplateDefinition {
     hpMultiplier: number;
     speedMultiplier: number;
     damageMultiplier: number;
+    guardSec?: number;
+    guardDamageMultiplier?: number;
     radius: number;
     regularEnemyCap: number;
     behavior?: EliteBehaviorId;
@@ -240,6 +242,7 @@ export interface EnemyState {
   role: EnemyRole;
   archetype: EnemyArchetypeId;
   contactDamage: number;
+  guardSec: number;
   grazeCooldownSec: number;
   rangedCooldownSec: number;
 }

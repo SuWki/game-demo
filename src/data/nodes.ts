@@ -91,7 +91,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '稳定整备',
-        description: '低风险补强，适合把第一条倾向扶起来。',
+        description: '获得一次稳定强化。',
         selection: {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
@@ -103,7 +103,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '火线整备',
-        description: '直接补火控，把前两拍读数尽快拉清。',
+        description: '获得一次偏进攻的强化。',
         selection: {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.78,
@@ -115,7 +115,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '试飞事件',
-        description: '中风险拐方向，可能更快形成路线。',
+        description: '进入一次异常试飞。',
         selection: {
           baseWeight: 1.8,
           soloMultiplier: 0.25,
@@ -127,8 +127,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event-probe',
         type: 'anomaly',
         phase: 'opening',
-        title: '路线试配',
-        description: '用一次试配把下一拍路线信号摸清，但不急着立刻锁死。',
+        title: '试飞校准',
+        description: '进入一次试飞校准，获取额外路线机会。',
         selection: {
           baseWeight: 2.1,
           soloMultiplier: 0.36,
@@ -189,7 +189,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '中段强化',
-        description: '稳住当前方向，先把 starter 接成更顺的 bridge。',
+        description: '获得一次中段强化。',
         selection: {
           baseWeight: 3.8,
           soloMultiplier: 0.92,
@@ -202,7 +202,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '过渡整备',
-        description: '补一段过渡读数，让方向更清楚，但还留得住转向余地。',
+        description: '补一段过渡强化，稳住当前战力。',
         selection: {
           baseWeight: 3.4,
           soloMultiplier: 0.9,
@@ -215,7 +215,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '方向定标',
-        description: '更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。',
+        description: '获得一次偏路线的中段强化。',
         selection: {
           baseWeight: 1.5,
           soloMultiplier: 0.86,

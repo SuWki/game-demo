@@ -1610,3 +1610,74 @@
 ### 当前最大风险
 - 四类基础敌人已经进入模板读数与最小可见层，但“行为辨识度”仍主要依赖轻量移动规则与视觉标记。
 - 如果后续 0.9v 常规开发继续大量补 battle 内容，却不持续维护 archetype ownership 与 HUD/结果页口径，Boss 与四类敌人的读数仍可能再次被稀释回“旧 battle / elite 近似”。
+
+## [0.9v 常规开发 / Round 21] 升级池修正、异常独立池与战斗读数补强
+### 来源口径
+- 本轮继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为最高优先级口径。
+- 当前阶段保持为 `0.9v 常规开发`，不回退到恢复骨架，也不转向泛补普通内容。
+
+### 改动前盘点结论
+- 普通升级三选一仍沿用了更偏路线承诺的 selector 思路，实跑里可能出现 `3 / 3` 都是路线强化的面板，读数会被流派 buff 抢走。
+- anomaly 虽然已有独立载体，但路线选项仍内联在 `events.ts` 中，后续继续扩写时容易再次混回普通升级/普通事件口径。
+- 顶部 HUD 与战斗中 toast 视觉重量偏大，容易遮挡战斗区；玩家可见面板也仍有机会通过原始描述字段露出内部设计语气。
+- Boss / elite 过于容易被 burst 秒杀，主要是模板压力与抗爆发承接不足，而不是单纯缺内容。
+
+### 本轮实际修改
+- 普通升级池：
+  - `levelUp` 现在使用独立发牌逻辑，不再复用 `nodePrep` 的路线倾斜发牌。
+  - 结构固定为 `2 个通用槽 + 1 个弹性槽`，因此普通升级三选一里最多只会出现 `1` 个路线强化。
+  - 通用槽优先从 `generic stabilizer / bridge` 主池发牌；路线槽只走 lower-weight route window，流派 buff 出现率明确低于一般属性强化。
+- anomaly 独立池：
+  - 新增 `src/data/anomalyRoutePools.ts`，把 anomaly 专属路线选项从 `events.ts` 中拆出。
+  - `risky-protocol / relay-splice / route-handoff / *-reroute-window / cross-branch-signal` 现在统一从 anomaly route pool 取路线项。
+  - 普通升级池不再接触 anomaly route 项，anomaly 路线内容的 ownership 继续留在 anomaly lane。
+- 玩家可见文本：
+  - 节点面板、副标题、事件面板说明、异常面板说明、升级说明改为面向玩家的功能性文案。
+  - 节点卡与异常选项不再直出原始 blueprint / event 描述，改用基于内容效果生成的简洁说明。
+  - 补清了几条仍留在数据层的旧设计语气描述，避免之后从别的入口重新泄露。
+- HUD / 战斗提示：
+  - 顶部 HUD 压成更轻的 top rail，保留 `战况 / 等级经验 / HP / 阶段节点 / 路线读数`。
+  - 战斗中、升级中、事件中、节点选择中不再弹出普通 toast；进入战斗时会主动清掉旧 toast。
+  - 升级面板、节点面板、异常面板卡片尺寸与间距同步缩小，减少遮挡。
+- 战斗读色：
+  - 经验球改为绿色表现。
+  - 敌方投射物改为红色表现，并补了更清楚的拖尾。
+- Boss / elite 强度：
+  - 模板参数上调了 `enemyHp / enemyDamage / pressureMultiplier / regularEnemyCap / eliteRule.hpMultiplier` 等关键压力参数。
+  - 同时补入最小抗 burst 机制：`guardSec + guardDamageMultiplier`。
+  - 精英 / Boss 入场后的短时间内会削减所受子弹伤害，避免继续被瞬秒，但仍复用现有 battle 胜利条件与主流程。
+
+### 数据结构变更
+- `BattleTemplateDefinition.eliteRule` 新增：
+  - `guardSec?: number`
+  - `guardDamageMultiplier?: number`
+- `EnemyState` 新增：
+  - `guardSec: number`
+- 新增 anomaly 路线内容承载文件：
+  - `src/data/anomalyRoutePools.ts`
+- 本轮没有新增 metrics 字段，继续复用现有导出口径。
+
+### 验证
+- `npm run build` 通过。
+- selector 抽样验证通过：
+  - 普通 `levelUp` 的 `maxRoute = 1`
+  - 代表性状态下 `avgRoute` 约为 `0.10 ~ 0.24`
+  - `avgGeneric` 约为 `2.76 ~ 2.90`
+- anomaly route pool 抽样验证通过：
+  - anomaly 路线选项来自独立 anomaly pool
+  - 抽样命中 `18` 个 route option id
+- 浏览器与截图验证通过：
+  - HUD 明显缩小，不再大面积遮挡战斗区
+  - 升级面板已观测到 `2 通用 + 1 路线` 的典型发牌
+  - anomaly 面板改为玩家向说明，不再直出设计语气
+  - 经验球已为绿色，敌方子弹已为红色
+- 战斗提示验证通过：
+  - sampled combat 中 `maxToast = 0`，战斗态不再堆提示横幅
+- 压力快照验证通过：
+  - `elite` guarded burst effective hp 约 `1062`
+  - `boss-hunt / boss-lockdown / boss-bastion` guarded burst effective hp 约 `3447 ~ 3950`
+  - 本轮采用的是“公式 / 模板参数调整 + 最小机制”组合，而不是单纯堆血
+
+### 当前风险
+- 普通升级池现在更干净，但 route 窗口也明显更克制；后续要继续观察自然跑局里路线信号是否仍然足够清楚。
+- Boss / elite 的 guard 只是轻量抗 burst 承接，不是完整阶段机制；如果后续继续推高玩家 burst，上层压力表达还需要再补一层更明确的阶段读数。

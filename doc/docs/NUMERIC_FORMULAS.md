@@ -217,3 +217,70 @@
 - `projectileLifeSec = 3.2`
 - `preferredDistance = archetype.preferredDistance`
 - 当玩家距离低于保距阈值时后撤，高于阈值时补位，间隔 `shotIntervalSec` 发射一次投射物。
+
+## 2026-04-05 普通升级发牌补充
+普通升级三选一当前与节点整备三选一分开处理：
+
+- `levelUpDeal = genericSlotA + genericSlotB + flexSlot`
+- `routeOfferCount(levelUp) <= 1`
+
+其中：
+
+- `genericSlotA`：
+  - 优先从 `generic stabilizer / bridge` 主池抽取
+- `genericSlotB`：
+  - 优先从放大的通用副池抽取
+- `flexSlot`：
+  - `flexWeight = genericSecondaryPool * 1.22 + routeWindowPool * 0.62`
+
+route window 当前的约束是：
+
+- 无 dominant route 时：
+  - `routeWindowWeightScale = 0.52`
+  - 仅允许路线 starter 低频露出
+- 已有 dominant 但未 committed / matured 时：
+  - `routeWindowWeightScale = 0.58`
+  - 允许 `starter / bridge`
+- 已 committed 或 matured 时：
+  - `routeWindowWeightScale = 0.72`
+  - 允许 `starter / bridge / payoff`
+  - 仍排除 `redirect / finisher`
+
+这条规则的目标是：
+
+- 普通升级里保留路线信号
+- 但不再允许路线 buff 占满整组牌
+- 让一般属性强化继续成为普通升级池主干
+
+## 2026-04-05 Elite / Boss 抗 burst 补充
+本轮对 elite / boss 的强度修正采用“模板参数 + 最小机制”组合，而不是单纯堆血。
+
+新增最小抗 burst 规则：
+
+- `guardedDamage = rawDamage * guardDamageMultiplier`，当 `guardSec > 0`
+- `guardSec = max(0, guardSec - dt)`
+
+含义：
+
+- elite / boss 入场后的短时间内会进入 guard 窗口
+- guard 窗口内玩家子弹伤害按模板的 `guardDamageMultiplier` 缩放
+- guard 结束后恢复正常受伤
+
+当前 guard 主要由 battle template 的 `eliteRule` 提供：
+
+- elite 系模板大致范围：
+  - `guardSec ≈ 4.6 ~ 5.2`
+  - `guardDamageMultiplier ≈ 0.42 ~ 0.48`
+- boss 系模板大致范围：
+  - `guardSec ≈ 6.2 ~ 6.8`
+  - `guardDamageMultiplier ≈ 0.32 ~ 0.34`
+
+这条规则与本轮同步上调的：
+
+- `enemyHp`
+- `enemyDamage`
+- `pressureMultiplier`
+- `regularEnemyCap`
+- `eliteRule.hpMultiplier`
+
+共同构成当前的 Boss / elite 压力修正口径。

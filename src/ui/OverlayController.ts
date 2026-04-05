@@ -1,5 +1,7 @@
+import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { RARITY_COLOR_MAP } from '../data/balance';
 import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
+import { describeContentEffects } from '../data/upgrades';
 import type {
   EventDefinition,
   NodeOption,
@@ -157,51 +159,38 @@ export class OverlayController {
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
       <div class="hud-shell">
-        <div class="hud-kicker">
-          <span class="hud-kicker-label">当前读数</span>
-          <strong>${snapshot.battleText}</strong>
-          ${snapshot.battleSubtext ? `<small>${snapshot.battleSubtext}</small>` : ''}
-        </div>
-        <div class="hud-layout">
+        <div class="hud-rail">
+          <div class="hud-kicker">
+            <span class="hud-kicker-label">战况</span>
+            <strong>${snapshot.battleText}</strong>
+            ${snapshot.battleSubtext ? `<small>${snapshot.battleSubtext}</small>` : ''}
+          </div>
           <div class="hud-bar">
-            <div class="hud-block">
-              <span>等级</span>
+            <div class="hud-block hud-block-stack">
+              <span>等级 / 经验</span>
               <strong>${snapshot.levelText}</strong>
-            </div>
-            <div class="hud-block">
-              <span>经验</span>
-              <strong>${snapshot.experienceText}</strong>
-            </div>
-            <div class="hud-block">
-              <span>阶段</span>
-              <strong>${snapshot.phaseLabel}</strong>
-            </div>
-            <div class="hud-block">
-              <span>节点</span>
-              <strong>${snapshot.nodeLabel}</strong>
+              <small>${snapshot.experienceText}</small>
             </div>
             <div class="hud-block">
               <span>耐久</span>
               <strong>${snapshot.hpText}</strong>
             </div>
+            <div class="hud-block hud-block-wide">
+              <span>阶段 / 节点</span>
+              <strong>${snapshot.phaseLabel} · ${snapshot.nodeLabel}</strong>
+            </div>
           </div>
-          <div class="route-panel">
-            <div class="route-panel-head">
-              <span>路线读数</span>
-              <strong>倾向 / 站稳 / 成型</strong>
-            </div>
-            <div class="route-strip">
-              ${snapshot.routeProgress
-                .map(
-                  (route) => `
-                    <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
-                      <span>${route.label}</span>
-                      <strong>${route.value}</strong>
-                    </div>
-                  `,
-                )
-                .join('')}
-            </div>
+          <div class="route-strip hud-route-strip">
+            ${snapshot.routeProgress
+              .map(
+                (route) => `
+                  <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
+                    <span>${route.label}</span>
+                    <strong>${route.value}</strong>
+                  </div>
+                `,
+              )
+              .join('')}
           </div>
         </div>
       </div>
@@ -211,13 +200,13 @@ export class OverlayController {
   public showNodePanel(phaseLabel: string, options: NodeOption[], onChoose: (nodeId: string) => void): void {
     this.showPanel(
       `${phaseLabel}节点选择`,
-      '选一条分支继续推进。战斗抢经验，强化补节奏，事件改走向。',
+      '选择下一站。',
       options.map(
         (node) => `
           <button class="choice-card map-choice" style="--choice-accent: ${NODE_TYPE_ACCENT_MAP[node.type]}" data-choice="${node.id}">
             <span class="choice-type">${NODE_TYPE_LABEL_MAP[node.type]}</span>
             <strong>${node.title}</strong>
-            <small>${node.description}</small>
+            <small>${this.getNodeCardDescription(node)}</small>
           </button>
         `,
       ),
@@ -230,7 +219,7 @@ export class OverlayController {
   public showUpgradePanel(title: string, choices: UpgradeDefinition[], onChoose: (upgradeId: string) => void): void {
     this.showPanel(
       title,
-      '三选一补强当前节奏，优先把已经站稳的方向继续推高。',
+      '选择 1 项强化，立即生效。',
       choices.map(
         (upgrade) => `
           <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(upgrade.routeId)}" data-choice="${upgrade.id}">
@@ -251,13 +240,13 @@ export class OverlayController {
     const contentLabel = eventDef.contentKind === 'anomaly' ? '异常' : '事件';
     this.showPanel(
       `${contentLabel} · ${eventDef.name}`,
-      eventDef.description,
+      this.getEventPanelDescription(eventDef),
       eventDef.options.map(
         (option) => `
           <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(option.routeId)}" data-choice="${option.id}">
             <span class="choice-type">${this.getOptionTypeLabel(option.routeId, eventDef.contentKind)}</span>
             <strong>${option.label}</strong>
-            <small>${option.description}</small>
+            <small>${this.getEventOptionDescription(option)}</small>
           </button>
         `,
       ),
@@ -381,6 +370,34 @@ export class OverlayController {
       return contentKind === 'anomaly' ? '异常' : '事件';
     }
     return ROUTE_NAME_MAP[routeId];
+  }
+
+  private getNodeCardDescription(node: NodeOption): string {
+    switch (node.type) {
+      case 'battle':
+        return `${getBattleEncounterLabel(node.templateId ?? 'elimination')} · 获取经验并推进。`;
+      case 'upgrade':
+        return node.isFinalPrep ? '最后一次整备。' : '获得一次强化三选一。';
+      case 'anomaly':
+        return '进入异常窗口，选择额外收益或代价。';
+      case 'boss':
+        return '进入最终 Boss 关。';
+      default:
+        return node.description;
+    }
+  }
+
+  private getEventPanelDescription(eventDef: EventDefinition): string {
+    return eventDef.contentKind === 'anomaly'
+      ? '异常窗口已打开，选择一项处理方案。'
+      : '选择一项处理方案。';
+  }
+
+  private getEventOptionDescription(option: EventDefinition['options'][number]): string {
+    if (option.effects && option.effects.length > 0) {
+      return describeContentEffects(option.effects, option.routeId === 'dominant' ? undefined : option.routeId);
+    }
+    return option.description;
   }
 
   private getRouteAccent(routeId?: UpgradeDefinition['routeId'] | EventDefinition['options'][number]['routeId']): string {

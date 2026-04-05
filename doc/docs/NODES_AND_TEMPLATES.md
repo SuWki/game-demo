@@ -164,3 +164,33 @@
 ### 仍保留的近似实现
 - `ranged` 已有保距移动、敌方弹道与可见瞄线，但还不是完整远程 AI 体系。
 - 当前模板读数来自现有权重和行为字段推导，还不是独立的 encounter director。
+
+## 2026-04-05 Upgrade / Anomaly Ownership Addendum
+### 普通升级三选一
+- 普通 `levelUp` 不再复用节点整备的 route-leaning 发牌逻辑，而是走独立的普通升级池：
+  - `2` 个通用槽
+  - `1` 个弹性槽
+- 这意味着普通升级三选一里：
+  - 最多只允许出现 `1` 个路线强化
+  - 通用属性强化重新成为主干
+  - route buff 只作为较低频的提示/承接窗口，而不是占满整组卡面
+
+### anomaly route pool
+- anomaly 中的路线项现已从 `events.ts` 内联定义中拆出，改为独立 anomaly route pool 承载。
+- 当前走独立池的 anomaly 路线内容包括：
+  - `risky-protocol`
+  - `relay-splice`
+  - `route-handoff`
+  - `crit-reroute-window`
+  - `pierce-reroute-window`
+  - `dash-reroute-window`
+  - `cross-branch-signal`
+- 后续继续补 anomaly 路线内容时，应优先扩 anomaly route pool / anomaly event lane，而不是往普通升级池或普通事件池回灌。
+
+### 玩家可见文案口径
+- 节点卡、升级面板、异常面板当前优先显示玩家向摘要，而不是直接显示 blueprint / event 原始描述。
+- 原始描述字段仍保留给数据层与编辑使用，但当前 UI 口径应以：
+  - battle：关卡类型 + 简洁收益说明
+  - upgrade：直接说明“选择 1 项强化，立即生效”
+  - anomaly：直接说明“异常窗口已打开，选择一项处理方案”
+  为准，避免再次把内部设计性语气暴露给玩家。

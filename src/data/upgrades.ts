@@ -80,7 +80,7 @@ function formatModifierLabel(key: keyof StatModifiers, value: number): string {
   }
 }
 
-function describeEffects(effects: ContentEffect[], routeId?: UpgradeArchetype['routeId']): string {
+export function describeContentEffects(effects: ContentEffect[], routeId?: UpgradeArchetype['routeId']): string {
   const segments: string[] = [];
 
   for (const effect of effects) {
@@ -1497,7 +1497,7 @@ export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeR
     id: `${archetype.id}:${rarity}:${Math.random().toString(36).slice(2, 8)}`,
     sourceId: archetype.id,
     name: archetype.name,
-    description: describeEffects(effects, archetype.routeId),
+    description: describeContentEffects(effects, archetype.routeId),
     category: archetype.category,
     contentTier: archetype.contentTier,
     rarity,

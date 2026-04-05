@@ -5,6 +5,12 @@ import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type { BattleState, OverlayHudSnapshot, Services, ToastTone } from '../game/types';
 import { RunEngine } from '../systems/RunEngine';
 
+const XP_ORB_FILL = 0x67f08b;
+const XP_ORB_STROKE = 0xcfffd7;
+const ENEMY_PROJECTILE_FILL = 0xff5b63;
+const ENEMY_PROJECTILE_TRAIL = 0xff8e95;
+const ENEMY_PROJECTILE_STROKE = 0xffd0d4;
+
 export class GameScene extends Phaser.Scene {
   private services!: Services;
 
@@ -81,6 +87,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'battle') {
+      this.services.overlay.clearToasts();
       if (this.lastPanelKey) {
         this.services.overlay.hidePanel();
         this.lastPanelKey = '';
@@ -147,7 +154,10 @@ export class GameScene extends Phaser.Scene {
   private processAnnouncements(): void {
     for (const item of this.engine.drainAnnouncements()) {
       if (item.kind === 'tip' && item.text) {
-        this.services.overlay.pushToast(item.text, this.getToastTone(item.text));
+        const tone = this.getToastTone(item.text);
+        if (this.shouldDisplayToast(tone)) {
+          this.services.overlay.pushToast(item.text, tone);
+        }
       }
 
       if (item.kind === 'audio' && item.cue) {
@@ -209,6 +219,15 @@ export class GameScene extends Phaser.Scene {
     return 'neutral';
   }
 
+  private shouldDisplayToast(tone: ToastTone): boolean {
+    const status = this.engine.getState().status;
+    if (status === 'battle' || status === 'upgradeChoice' || status === 'eventChoice' || status === 'nodeChoice') {
+      return false;
+    }
+
+    return tone === 'danger' || tone === 'success';
+  }
+
   private renderBattle(): void {
     const dominantRoute = this.engine.getDominantRoute();
     const accentColor = dominantRoute ? parseInt(ROUTE_COLOR_MAP[dominantRoute].slice(1), 16) : 0x61d7ff;
@@ -251,9 +270,9 @@ export class GameScene extends Phaser.Scene {
 
   private renderBattleEntities(battle: BattleState, accentColor: number): void {
     for (const orb of battle.experienceOrbs) {
-      this.graphics.fillStyle(0x8de1ff, 0.9);
+      this.graphics.fillStyle(XP_ORB_FILL, 0.92);
       this.graphics.fillCircle(orb.x, orb.y, 5);
-      this.graphics.lineStyle(1, 0xffffff, 0.22);
+      this.graphics.lineStyle(1, XP_ORB_STROKE, 0.3);
       this.graphics.strokeCircle(orb.x, orb.y, 8);
     }
 
@@ -270,11 +289,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const projectile of battle.enemyProjectiles) {
-      this.graphics.lineStyle(2, 0xffdfa0, 0.18);
+      this.graphics.lineStyle(2, ENEMY_PROJECTILE_TRAIL, 0.22);
       this.graphics.lineBetween(projectile.x - projectile.vx * 0.045, projectile.y - projectile.vy * 0.045, projectile.x, projectile.y);
-      this.graphics.fillStyle(0xffc86a, 0.92);
+      this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.96);
       this.graphics.fillCircle(projectile.x, projectile.y, projectile.radius);
-      this.graphics.lineStyle(1, 0xfff1c7, 0.3);
+      this.graphics.lineStyle(1, ENEMY_PROJECTILE_STROKE, 0.34);
       this.graphics.strokeCircle(projectile.x, projectile.y, projectile.radius + 2);
     }
 
@@ -287,6 +306,11 @@ export class GameScene extends Phaser.Scene {
         this.graphics.fillCircle(enemy.x, enemy.y, enemy.radius);
         this.graphics.lineStyle(2, enemyStroke, 0.32);
         this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 5);
+        if (enemy.guardSec > 0) {
+          const guardAlpha = Math.min(0.45, 0.16 + enemy.guardSec * 0.04);
+          this.graphics.lineStyle(3, 0xfff2b0, guardAlpha);
+          this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 10);
+        }
       } else if (enemy.archetype === 'ranged') {
         this.graphics.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
         this.graphics.lineStyle(2, enemyStroke, 0.32);
