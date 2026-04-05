@@ -1,4 +1,15 @@
-import type { BattleTemplateId, ContentTier, NodeType, PhaseId, RouteBuildStage, RouteId, RunEndingKind, RunOutcome } from '../game/types';
+import type {
+  BattleEncounterType,
+  BattleTemplateId,
+  ContentTier,
+  EventContentKind,
+  NodeType,
+  PhaseId,
+  RouteBuildStage,
+  RouteId,
+  RunEndingKind,
+  RunOutcome,
+} from '../game/types';
 
 export const PILOT_METRICS_STORAGE_KEY = 'commercial_pilot_metrics_v1';
 
@@ -41,6 +52,8 @@ interface ContentMetricMeta {
   isHybridPick?: boolean;
   isLatePayoff?: boolean;
   nodeType?: NodeType;
+  encounterType?: BattleEncounterType;
+  contentKind?: EventContentKind;
 }
 
 interface MetricSession {
@@ -207,7 +220,14 @@ export class MetricsTracker {
     contentTier?: ContentTier,
     meta?: ContentMetricMeta,
   ): void {
-    this.record('event_selected', { eventId, optionId, routeId, contentTier, phase: meta?.phase });
+    this.record('event_selected', {
+      eventId,
+      optionId,
+      routeId,
+      contentTier,
+      phase: meta?.phase,
+      contentKind: meta?.contentKind ?? 'event',
+    });
     this.trackContentCounters(contentTier, meta);
   }
 
@@ -228,7 +248,14 @@ export class MetricsTracker {
     contentTier?: ContentTier,
     meta?: ContentMetricMeta,
   ): void {
-    this.record('battle_template_entered', { templateId, title, contentTier, phase: meta?.phase, nodeType: meta?.nodeType });
+    this.record('battle_template_entered', {
+      templateId,
+      title,
+      contentTier,
+      phase: meta?.phase,
+      nodeType: meta?.nodeType,
+      encounterType: meta?.encounterType ?? 'battle',
+    });
     this.trackContentCounters(contentTier, meta);
   }
 

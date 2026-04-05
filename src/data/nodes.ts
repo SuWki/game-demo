@@ -430,16 +430,15 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
     countWeights: [{ count: 1, weight: 1 }],
     blueprints: [
       {
-        id: 'final-battle',
+        id: 'final-boss',
         type: 'boss',
         phase: 'finalBattle',
         title: '最终战',
         description: '用一场更高压的精英压制完成整局收束。',
         templateCandidates: [
-          { templateId: 'elite', weight: 1.1 },
-          { templateId: 'elite-vice', weight: 0.42 },
-          { templateId: 'elite-lockdown', weight: 1.3 },
-          { templateId: 'elite-screen', weight: 1.2 },
+          { templateId: 'boss-hunt', weight: 1.2 },
+          { templateId: 'boss-lockdown', weight: 1.1 },
+          { templateId: 'boss-bastion', weight: 1.05 },
         ],
         difficultyScale: 1.38,
         selection: {

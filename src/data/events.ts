@@ -50,6 +50,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'risky-protocol',
     name: '高压试飞',
+    contentKind: 'anomaly',
     description: '试飞记录给出一次偏向路线的机会，但机体会承受额外负荷。',
     selection: {
       baseWeight: 2.5,
@@ -393,6 +394,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'relay-splice',
     name: '并线改道',
+    contentKind: 'anomaly',
     description: '侧频总线短暂并轨。你可以借这次窗口把读法改道到另一条线，同时先拿到一段立刻见效的缓冲。',
     routeAffinity: 'dominant',
     selection: {
@@ -497,6 +499,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'route-handoff',
     name: '侧频接驳',
+    contentKind: 'anomaly',
     description: '侧频接口短暂打开。你可以顺着当前读法微调，也可以借这拍直接把读法掰向另一条线。',
     selection: {
       baseWeight: 0.95,
@@ -609,6 +612,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'crit-reroute-window',
     name: '暴击转接窗',
+    contentKind: 'anomaly',
     description: '当前暴击读法已经起势。你可以趁接口还没关死，把这条线切向别的收束。',
     routeAffinity: 'crit',
     selection: {
@@ -712,6 +716,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'pierce-reroute-window',
     name: '穿透转接窗',
+    contentKind: 'anomaly',
     description: '当前穿透读法已经拉出清线节奏。你可以借这次窗口切向另一条收束方式。',
     routeAffinity: 'pierce',
     selection: {
@@ -815,6 +820,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'dash-reroute-window',
     name: '穿梭转接窗',
+    contentKind: 'anomaly',
     description: '当前穿梭节奏已经成形。你可以借这次窗口把反打节奏切向别的收束方式。',
     routeAffinity: 'dash',
     selection: {
@@ -918,6 +924,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'cross-branch-signal',
     name: '岔路讯号',
+    contentKind: 'anomaly',
     contentTier: 'rare',
     description: '一段侧频样本插了进来。它不一定比当前方向更强，但足够让这局出现一次真正的转向诱惑。',
     routeAffinity: 'dominant',
@@ -1009,6 +1016,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'blackbox-bargain',
     name: '黑匣押注',
+    contentKind: 'anomaly',
     contentTier: 'rare',
     description: '封存记录只够开一次。你可以把它压成高风险兑现，也可以拆成这局独有的一段缓冲余地。',
     selection: {
@@ -1063,6 +1071,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'mirror-cache',
     name: '镜像缓存',
+    contentKind: 'anomaly',
     contentTier: 'rare',
     description: '尾段里突然拉出一段镜像样本。你可以把它压成当前路线的收尾，也可以拆成这局独有的一段混搭余量。',
     routeAffinity: 'dominant',

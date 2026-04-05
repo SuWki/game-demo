@@ -103,12 +103,13 @@
 ## 2026-04-05 Node / Encounter Semantics Addendum
 ### 节点语义
 - `NodeType` 当前以 `battle | upgrade | anomaly | boss` 为准。
-- `anomaly` 节点继续从现有 `events` 数据池抽取内容，但节点卡、节点记录和指标事件均按 `anomaly` 处理。
+- `anomaly` 节点现在会从带 `contentKind: anomaly` 的内容池抽取内容；节点卡、面板标题、节点记录和指标事件均按 `anomaly` 处理。
 - 最终节点固定为 `boss`，不再沿用 `battle / finalBattle event-like` 的旧口径。
 
 ### 模板语义
 - `battle` 模板家族仍覆盖普通关 / 精英关 / 生存关。
-- `boss` 目前复用 elite-family 模板作为压力承接，但会由节点类型、HUD 标签、结果摘要和埋点共同标记为 Boss。
+- `boss` 现在有独立的 `boss-hunt / boss-lockdown / boss-bastion` 模板承载入口；最终节点只会从 Boss 模板池抽取。
+- `boss` 仍复用现有 elite 风格胜利条件与大部分战斗机制，因此这是“承载边界落地”，不是完整 Boss 系统。
 
 ### 基础敌人语义
 - 基础敌人 archetype 现为：

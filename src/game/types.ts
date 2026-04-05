@@ -3,6 +3,7 @@ export type RouteReference = RouteId | 'dominant';
 export type NodeType = 'battle' | 'upgrade' | 'anomaly' | 'boss';
 export type ContentTier = 'standard' | 'rare';
 export type BattleEncounterType = 'battle' | 'boss';
+export type EventContentKind = 'event' | 'anomaly';
 export type BattleTemplateId =
   | 'elimination'
   | 'elimination-pincer'
@@ -11,6 +12,9 @@ export type BattleTemplateId =
   | 'elite-vice'
   | 'elite-lockdown'
   | 'elite-screen'
+  | 'boss-hunt'
+  | 'boss-lockdown'
+  | 'boss-bastion'
   | 'survival'
   | 'survival-crossfire'
   | 'survival-rush'
@@ -58,6 +62,7 @@ export interface BattleTemplateDefinition {
   id: BattleTemplateId;
   name: string;
   description: string;
+  encounterType?: BattleEncounterType;
   contentTier?: ContentTier;
   durationSec: number;
   spawnIntervalSec: number;
@@ -187,6 +192,7 @@ export interface EventDefinition {
   id: string;
   name: string;
   description: string;
+  contentKind?: EventContentKind;
   contentTier?: ContentTier;
   routeAffinity?: RouteReference;
   selection?: ContentSelectionProfile;

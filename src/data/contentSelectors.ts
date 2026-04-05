@@ -4,6 +4,7 @@ import { ROUTES } from './routes';
 import { buildUpgradeChoice, UPGRADE_ARCHETYPES } from './upgrades';
 import type {
   ContentEffect,
+  EventContentKind,
   ContentTier,
   ContentSelectionProfile,
   EventDefinition,
@@ -506,10 +507,19 @@ function resolveEventDefinition(eventDef: EventDefinition, dominantRoute: RouteI
   };
 }
 
-export function rollEventDefinition(state: Readonly<RunState>): EventDefinition {
+function getEventCatalog(contentKind: EventContentKind): EventDefinition[] {
+  const catalog = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === contentKind);
+  return catalog.length > 0 ? catalog : EVENT_CATALOG;
+}
+
+export function rollEventDefinition(
+  state: Readonly<RunState>,
+  contentKind: EventContentKind = 'event',
+): EventDefinition {
   const context = buildContentContext(state);
   const dominantRoute = context.dominantRoute;
-  const weightedEvents = EVENT_CATALOG.map((eventDef) => ({
+  const catalog = getEventCatalog(contentKind);
+  const weightedEvents = catalog.map((eventDef) => ({
     item: eventDef,
     weight: getSelectionWeight(
       eventDef.selection,
@@ -519,6 +529,6 @@ export function rollEventDefinition(state: Readonly<RunState>): EventDefinition 
       'levelUp',
     ),
   }));
-  const selected = pickWeightedUnique(weightedEvents, 1)[0] ?? EVENT_CATALOG[0];
+  const selected = pickWeightedUnique(weightedEvents, 1)[0] ?? catalog[0] ?? EVENT_CATALOG[0];
   return resolveEventDefinition(selected, dominantRoute);
 }

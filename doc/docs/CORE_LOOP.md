@@ -49,5 +49,5 @@
 ## 2026-04-05 语义对齐补记
 - 当前主循环口径更新为：
   - `开始 -> 节点推进 -> battle / upgrade / anomaly -> final prep -> boss -> 结算 -> replay`
-- `anomaly` 节点当前沿用现有 event 数据与选项面板承接，但在节点/UI/埋点语义上已经不再记为 `event`。
-- `boss` 节点当前以“显式 Boss 节点 + Boss 文案 + Boss 埋点口径 + elite-family 模板承压”的方式落地，先止住最终关继续被普通 battle 语义吞没。
+- `anomaly` 节点当前会走独立的 anomaly 内容选择路径：只从 `contentKind: anomaly` 的内容池抽取，并在节点/UI/埋点语义上保持 `anomaly`；但面板与效果结算仍保守复用 event 流。
+- `boss` 节点当前以“显式 Boss 节点 + Boss 模板池 + Boss 文案 + Boss 埋点口径”的方式落地；最终关不再直接复用普通 elite-family 模板 ID，但仍保留现有 battle 机制承压。

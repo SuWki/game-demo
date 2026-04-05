@@ -109,8 +109,10 @@
 - 当前主循环仍处于“内容与可玩性阶段”，但节点与敌人语义已经开始按最新设计基线收口。
 - 节点语义现已显式落到 `battle / upgrade / anomaly / boss`。
 - 最终收尾节点现为显式 `boss`；结果页、节点记录与埋点导出会同步记录 `boss` 口径。
-- `anomaly` 已是显式节点类型，但底层仍复用现有 `events` 数据池与事件面板，这是本轮保守实现，不是独立 anomaly 子系统。
+- `boss` 现已拥有独立的 Boss 模板承载入口；最终节点只会从 `boss-hunt / boss-lockdown / boss-bastion` 模板池抽取，不再直接落回 elite-family 模板 ID。
+- `anomaly` 已是显式节点类型；当前异常节点只会从带 `contentKind: anomaly` 的内容池抽取，并在面板标题与埋点里继续保持 `anomaly` 口径。
 - 基础敌人数据层现已拆为 `standard / brute / skirmisher / ranged` 四类；`regular / escort / elite` 保留为战斗角色语义。
 - 仍保留的近似实现：
-  - Boss 仍复用 elite-family battle template 承压，没有独立 Boss 机制树。
+  - Boss 仍复用现有 elite 风格胜利条件与大部分战斗机制，没有独立 Boss 机制树。
+  - anomaly 仍复用现有事件面板与效果结算流，不是独立 anomaly 子系统。
   - 生存关“最后 10 秒显式增压”还没有拆成单独公式段，只保留原有平滑压力增长。

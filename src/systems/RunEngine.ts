@@ -214,7 +214,7 @@ export class RunEngine {
 
     if (node.type === 'anomaly') {
       this.state.status = 'eventChoice';
-      this.state.currentEvent = this.rollEvent();
+      this.state.currentEvent = this.rollAnomaly();
       this.state.upgradeSource = null;
       this.state.upgradeChoices = [];
       this.recordRedirectEventOffers(this.state.currentEvent);
@@ -303,6 +303,7 @@ export class RunEngine {
     const isRedirectPick = Boolean(optionRouteId && previousDominantRoute && optionRouteId !== previousDominantRoute);
     this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId, eventDef.contentTier, {
       phase: this.state.phase,
+      contentKind: eventDef.contentKind ?? 'event',
       isHybridPick:
         isRedirectPick ||
         eventDef.id === 'signal-soften' ||
@@ -422,10 +423,14 @@ export class RunEngine {
     return rollEventDefinition(this.state);
   }
 
+  private rollAnomaly(): EventDefinition {
+    return rollEventDefinition(this.state, 'anomaly');
+  }
+
   private enterBattle(node: NodeOption): void {
     const template = BATTLE_TEMPLATES[node.templateId ?? 'elimination'];
     const battleIndex = this.getCurrentBattleIndex();
-    const encounterType = node.type === 'boss' ? 'boss' : 'battle';
+    const encounterType = template.encounterType ?? (node.type === 'boss' ? 'boss' : 'battle');
     const battleLabel = encounterType === 'boss' ? `Boss \u00b7 ${template.name}` : template.name;
 
     this.state.status = 'battle';
@@ -479,6 +484,7 @@ export class RunEngine {
     this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier, {
       phase: node.phase,
       isLatePayoff: this.isLatePhase(node.phase) && template.contentTier === 'rare',
+      encounterType,
       nodeType: node.type,
     });
   }

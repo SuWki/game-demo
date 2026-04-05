@@ -1416,3 +1416,65 @@
 ### 恢复度估计
 - 整体恢复度：`88%~90%`
 - 本轮提升主要来自“结构语义止漂移”，不是内容量增加。
+
+## [恢复尾段 / Round 18] boss / anomaly 承载边界最小落地
+### 来源口径
+- 本轮按 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 作为最高优先级口径。
+- 目标不是继续补普通内容，而是把 `boss / anomaly` 从“节点命名已对齐”推进到“数据层承载边界已落地”。
+
+### 改动前审计结论
+- `boss` 已落地到：
+  - `NodeType`
+  - 最终节点标题 / 结果页 / `run_finished.finalNodeType`
+  - `battle_template_entered.payload.nodeType`
+- `boss` 仍近似复用：
+  - 最终节点仍直接抽 `elite / elite-lockdown / elite-screen` 一类模板 ID
+  - 结构上还没有真正独立出 Boss 模板承载入口
+- `anomaly` 已落地到：
+  - `NodeType`
+  - 节点卡与 UI 标签
+  - 节点记录与埋点口径
+- `anomaly` 仍近似复用：
+  - 运行时仍直接走普通 `rollEvent()` 路径
+  - 内容定义层没有显式的 anomaly 内容池语义
+
+### 本轮实际落地
+- boss 承载边界：
+  - `BattleTemplateId` 新增：
+    - `boss-hunt`
+    - `boss-lockdown`
+    - `boss-bastion`
+  - `battleTemplates` 为以上模板新增显式 `encounterType: 'boss'`
+  - 最终节点 blueprint 改为只从 Boss 模板池抽取，不再直接使用普通 elite-family 模板 ID
+  - `RunEngine` 进入战斗时会优先读取模板级 `encounterType`，Boss HUD 标签与埋点继续保持一致
+- anomaly 承载边界：
+  - `EventDefinition` 新增轻量元数据 `contentKind?: 'event' | 'anomaly'`
+  - redirect / reroute / rare 黑匣一类异常内容改为显式 `contentKind: 'anomaly'`
+  - `rollEventDefinition(state, contentKind)` 现在支持按内容语义分流
+  - anomaly 节点改为只从 anomaly 内容池抽取，而不是继续无差别复用整个 `EVENT_CATALOG`
+  - 事件面板标题改为 `异常 · ...`，把玩家可见语义也一并对齐
+- 埋点补充：
+  - `battle_template_entered.payload.encounterType`
+  - `event_selected.payload.contentKind`
+  - 继续保留已有 `nodeType / finalNodeType`
+
+### 本轮仍保留的近似实现
+- Boss 仍复用现有 elite 风格胜利条件与大部分战斗机制，本轮只切开模板承载边界，没有继续做独立 Boss 系统。
+- anomaly 仍复用现有事件面板与效果结算流，本轮只切开内容池与选择路径，没有继续做独立 anomaly 子系统。
+- 生存关最后 `10s` 的显式增压规则仍未拆成独立公式段。
+
+### 验证
+- `npm run build` 通过。
+- 浏览器实跑验证：
+  - 异常面板已显示 `异常 · 高压试飞`
+  - 多局保守样本中，`event_selected.payload.contentKind = anomaly` 已实际出现
+  - Boss 实跑样本中，`battle_template_entered` 已记录：
+    - `templateId = boss-hunt`
+    - `nodeType = boss`
+    - `encounterType = boss`
+  - `run_finished.payload.finalNodeType = boss` 已在胜利样本中导出
+  - 结果页重开后，`replay` 已再次确认可进入下一局
+
+### 本轮结论
+- `boss / anomaly` 已从“文档语义 + 节点语义”推进到“最小承载边界已实现”。
+- 当前项目已基本完成恢复尾段的结构收口；后续若进入 0.9v 开发，可以沿 Boss 模板池和 anomaly 内容池继续补内容，而不必再回到旧 `elite/event` 口径上扩写。

@@ -107,4 +107,6 @@
   - `anomaly`
   - `boss`
 - `battle_template_entered.payload.nodeType` 会记录该战斗来自普通 `battle` 还是最终 `boss` 节点。
+- `battle_template_entered.payload.encounterType` 会继续记录模板承载语义是普通 `battle` 还是 `boss`，避免最终关重新退化成普通 elite 模板口径。
+- `event_selected.payload.contentKind` 会记录本次事件内容来自普通 `event` 还是 `anomaly` 内容池。
 - `run_finished.payload.finalNodeType` 会记录本局最终收束/失败时所在节点语义，避免只剩 `finalNodeTitle` 而丢失结构语义。

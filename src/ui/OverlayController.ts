@@ -247,13 +247,14 @@ export class OverlayController {
   }
 
   public showEventPanel(eventDef: EventDefinition, onChoose: (optionId: string) => void): void {
+    const contentLabel = eventDef.contentKind === 'anomaly' ? '异常' : '事件';
     this.showPanel(
-      eventDef.name,
+      `${contentLabel} · ${eventDef.name}`,
       eventDef.description,
       eventDef.options.map(
         (option) => `
           <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(option.routeId)}" data-choice="${option.id}">
-            <span class="choice-type">${this.getOptionTypeLabel(option.routeId)}</span>
+            <span class="choice-type">${this.getOptionTypeLabel(option.routeId, eventDef.contentKind)}</span>
             <strong>${option.label}</strong>
             <small>${option.description}</small>
           </button>
@@ -371,9 +372,12 @@ export class OverlayController {
     }
   }
 
-  private getOptionTypeLabel(routeId: EventDefinition['options'][number]['routeId']): string {
+  private getOptionTypeLabel(
+    routeId: EventDefinition['options'][number]['routeId'],
+    contentKind: EventDefinition['contentKind'],
+  ): string {
     if (!routeId || routeId === 'dominant') {
-      return '事件';
+      return contentKind === 'anomaly' ? '异常' : '事件';
     }
     return ROUTE_NAME_MAP[routeId];
   }
