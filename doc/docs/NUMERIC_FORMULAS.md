@@ -348,3 +348,35 @@ route window 当前的约束是：
   - `entryGuardSec / entryGuardDamageMultiplier` 提供短时抗 burst 承接
   - `entryEscortBurst` 提供切段即时压力兑现
 - 目标是让 Boss 的阶段体验成立，而不是把最终关做成纯海绵或重锁血。
+
+## 2026-04-06 Boss 阶段行为解析补充
+本轮新增的是“行为身份解析”，不是新的血量乘区。
+
+### 行为解析规则
+- `activeEliteBehavior = pressurePhase.behaviorOverride ?? eliteRule.behavior ?? 'frontline'`
+- 当前规则只影响主核的移动 / 站位 / 护卫借位方式，不额外改写：
+  - `eliteHp`
+  - `eliteDamage`
+  - `spawnInterval`
+- 也就是说，本轮不是继续堆数值，而是把已有 `pressurePhases` 的行为身份落到运行层。
+
+### 当前 Boss 模板签名
+- `boss-hunt`
+  - `接敌 -> frontline`
+  - `逼近 -> screened`
+  - `收束 -> frontline`
+- `boss-lockdown`
+  - `接敌 -> kiting`
+  - `封位 -> screened`
+  - `锁场 -> frontline`
+- `boss-bastion`
+  - `接敌 -> screened`
+  - `交火 -> summoner`
+  - `火线收束 -> kiting`
+
+### 口径说明
+- 这条规则的目标是让 phase 差异不再只是后台参数切换。
+- 当前仍属于轻量扩展：
+  - 复用旧的 `frontline / screened / kiting / summoner`
+  - 不引入 Boss 专属 AI 系统
+  - 不改变主流程与 battle 结算

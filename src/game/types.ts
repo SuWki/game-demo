@@ -61,6 +61,7 @@ export interface RouteDefinition {
 export interface BattlePressurePhaseDefinition {
   id: string;
   label: string;
+  behaviorOverride?: EliteBehaviorId;
   triggerHpRatio?: number;
   triggerRemainingSec?: number;
   minResidenceSec?: number;

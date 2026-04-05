@@ -407,6 +407,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         {
           id: 'close-in',
           label: '逼近',
+          behaviorOverride: 'screened',
           triggerHpRatio: 0.74,
           triggerRemainingSec: 24,
           minResidenceSec: 4.2,
@@ -422,6 +423,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         {
           id: 'kill-window',
           label: '收束',
+          behaviorOverride: 'frontline',
           triggerHpRatio: 0.38,
           triggerRemainingSec: 12,
           minResidenceSec: 4.6,
@@ -491,6 +493,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         {
           id: 'pin-down',
           label: '封位',
+          behaviorOverride: 'screened',
           triggerHpRatio: 0.76,
           triggerRemainingSec: 24,
           minResidenceSec: 4.4,
@@ -507,6 +510,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         {
           id: 'lockfield',
           label: '锁场',
+          behaviorOverride: 'frontline',
           triggerHpRatio: 0.4,
           triggerRemainingSec: 11,
           minResidenceSec: 4.8,
@@ -577,6 +581,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         {
           id: 'crossfire',
           label: '交火',
+          behaviorOverride: 'summoner',
           triggerHpRatio: 0.72,
           triggerRemainingSec: 25,
           minResidenceSec: 4.4,
@@ -592,6 +597,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         {
           id: 'fireline',
           label: '火线收束',
+          behaviorOverride: 'kiting',
           triggerHpRatio: 0.35,
           triggerRemainingSec: 10,
           minResidenceSec: 4.8,
@@ -768,18 +774,34 @@ export function getBattleEncounterLabel(
   }
 }
 
+export function getBattleActiveEliteBehavior(
+  templateId: BattleTemplateId,
+  pressurePhaseIndex = -1,
+): EliteBehaviorId | null {
+  const template = BATTLE_TEMPLATES[templateId];
+  const pressurePhase =
+    pressurePhaseIndex >= 0 ? template.eliteRule?.pressurePhases?.[pressurePhaseIndex] : undefined;
+  return pressurePhase?.behaviorOverride ?? template.eliteRule?.behavior ?? null;
+}
+
 export function getBattleEnemyReadout(
   templateId: BattleTemplateId,
   pressurePhaseLabel?: string,
   emphasizeTransition = false,
+  pressurePhaseIndex = -1,
 ): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
   const escort = getTopArchetypeLabels(template.escortArchetypes, 2);
+  const activeBehavior = getBattleActiveEliteBehavior(templateId, pressurePhaseIndex);
   const parts: string[] = [];
 
   if (pressurePhaseLabel) {
     parts.push(`${emphasizeTransition ? '转段' : '阶段'} ${pressurePhaseLabel}`);
+  }
+
+  if (activeBehavior) {
+    parts.push(`主核 ${ELITE_BEHAVIOR_READOUT_MAP[activeBehavior]}`);
   }
 
   parts.push(`敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`);
@@ -787,10 +809,6 @@ export function getBattleEnemyReadout(
 
   if (escort.length > 0) {
     parts.push(`护卫 ${escort.join(' / ')}`);
-  }
-
-  if (template.eliteRule?.behavior) {
-    parts.push(`主核 ${ELITE_BEHAVIOR_READOUT_MAP[template.eliteRule.behavior]}`);
   }
 
   return parts.join(' · ');

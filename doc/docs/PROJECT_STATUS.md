@@ -41,6 +41,19 @@
 - 稀有内容如果后续只是继续加数量而不守住低频，late 记忆点会重新退化成普通池换皮
 - 中文乱码与内部设计话术重新泄露到玩家可见文本
 
+## 2026-04-06 0.9v Boss phase 行为身份更新
+- 当前阶段判断保持不变：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。
+- 本轮不是再补“有没有 phase”，而是补“phase 是否已经有行为身份”。
+- 当前 Boss 的阶段行为口径现已更新为：
+  - `boss-hunt`：`接敌(frontline) -> 逼近(screened) -> 收束(frontline)`
+  - `boss-lockdown`：`接敌(kiting) -> 封位(screened) -> 锁场(frontline)`
+  - `boss-bastion`：`接敌(screened) -> 交火(summoner) -> 火线收束(kiting)`
+- 当前实现里，`updateEliteEnemy(...)` 已不再固定读取模板基准行为；Boss 主核会按当前 phase 的行为身份真正切换移动方式。
+- HUD 战况子读数也会同步显示当前主核行为口径，因此 phase 差异不再只停留在后台参数层。
+- 当前阶段的主要剩余风险更新为：
+  - Boss 的阶段行为差异虽然已经落到运行层，但仍复用旧的 `frontline / screened / kiting / summoner` 行为谱系。
+  - 如果后续玩家 burst 或机动继续上涨，最终关仍可能需要更明确的 phase 专属压力兑现，而不只是继续沿旧行为谱系微调。
+
 ## 2026-04-05 0.9v 读数 / 压力校准更新
 - 当前阶段判断更新为：项目已进入 `0.9v` 早期常规开发中的“读数 / 压力校准阶段”。
 - 本轮源头口径明确为：`DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md`。

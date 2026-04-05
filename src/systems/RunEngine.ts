@@ -36,6 +36,7 @@ import {
 } from '../data/balance';
 import {
   BATTLE_TEMPLATES,
+  getBattleActiveEliteBehavior,
   getBattleTargetKills,
   isBattleVictory,
   shouldSpawnElite,
@@ -52,6 +53,7 @@ import type {
   EnemyArchetypeId,
   EventDefinition,
   EventOption,
+  EliteBehaviorId,
   NodeOption,
   NodeType,
   PlayerInputState,
@@ -514,6 +516,13 @@ export class RunEngine {
     }
 
     return phases[battle.pressurePhaseIndex] ?? null;
+  }
+
+  private getActiveEliteBehavior(
+    battle: BattleState,
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+  ): EliteBehaviorId {
+    return getBattleActiveEliteBehavior(battle.templateId, battle.pressurePhaseIndex) ?? template.eliteRule?.behavior ?? 'frontline';
   }
 
   private updatePressurePhase(battle: BattleState): void {
@@ -1590,6 +1599,7 @@ export class RunEngine {
     }
 
     const pressurePhase = this.getActivePressurePhase(battle);
+    const activeBehavior = this.getActiveEliteBehavior(battle, template);
     const preferredDistance =
       (eliteRule.preferredDistance ?? 170) + (pressurePhase?.preferredDistanceDelta ?? 0);
     const strafeStrength = (eliteRule.strafeStrength ?? 0.2) + (pressurePhase?.strafeStrengthBonus ?? 0);
@@ -1617,7 +1627,7 @@ export class RunEngine {
       moveY += strafeY * strafeDirection * strafeStrength;
     };
 
-    switch (eliteRule.behavior ?? 'frontline') {
+    switch (activeBehavior) {
       case 'kiting':
         applyKitingBaseline();
         break;
@@ -1637,7 +1647,7 @@ export class RunEngine {
           const screenDx = escortCenter.x - battle.playerX;
           const screenDy = escortCenter.y - battle.playerY;
           const screenDistance = Math.max(1, Math.hypot(screenDx, screenDy));
-          const behindDistance = eliteRule.behavior === 'summoner' ? 56 : 42;
+          const behindDistance = activeBehavior === 'summoner' ? 56 : 42;
           const targetX = escortCenter.x + (screenDx / screenDistance) * behindDistance;
           const targetY = escortCenter.y + (screenDy / screenDistance) * behindDistance;
           const targetDx = targetX - enemy.x;

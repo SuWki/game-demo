@@ -3,6 +3,90 @@
 ## [重建阶段] 文档恢复版说明
 原始开发日志文件已丢失。本文件为基于历史文档和对话记录重建的简化版开发日志，用于恢复项目上下文和后续继续开发。
 
+## [0.9v 读数 / 压力校准] Boss 阶段内行为差异强化
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标是 `Boss 阶段内行为差异强化 + 最终关身份稳定`，不是重写系统，不是回到恢复期，也不是泛补普通内容。
+
+### 盘点结论
+- 当前 Boss 的阶段切换、最小驻留和切段承接已经存在，问题已不再是“有没有 phase”。
+- 当前真正的剩余缺口是：
+  - `updateEliteEnemy(...)` 仍然固定读取模板基准 `eliteRule.behavior`
+  - phase 之间虽然已有护卫、刷怪、速度、远程节奏差异，但主核行为本身没有跟着切段
+  - 因而玩家更容易把不同 phase 读成“同一个 Boss 的不同数值档”
+- 当前最容易继续失真的 phase 是：
+  - `boss-lockdown` 的 `封位 -> 锁场`
+  - `boss-bastion` 的 `交火 -> 火线收束`
+  - `boss-hunt` 的 `逼近 -> 收束`
+- 本轮最小切入点确定为：
+  - `pressurePhases.behaviorOverride`
+  - 运行时主核行为按当前 phase 解析
+  - HUD 子读数同步显示当前主核行为身份
+
+### 本轮实现
+- `src/game/types.ts`
+  - `BattlePressurePhaseDefinition` 新增：
+    - `behaviorOverride?: EliteBehaviorId`
+- `src/data/battleTemplates.ts`
+  - Boss phase 现在可以显式声明行为身份，而不是只做软参数加压：
+    - `boss-hunt`：`接敌(frontline) -> 逼近(screened) -> 收束(frontline)`
+    - `boss-lockdown`：`接敌(kiting) -> 封位(screened) -> 锁场(frontline)`
+    - `boss-bastion`：`接敌(screened) -> 交火(summoner) -> 火线收束(kiting)`
+  - 新增 `getBattleActiveEliteBehavior(...)`，把当前 phase 的行为解析集中到模板层。
+  - `getBattleEnemyReadout(...)` 现已改为读取当前 active behavior，而不是永远显示模板初始行为。
+- `src/systems/RunEngine.ts`
+  - `updateEliteEnemy(...)` 现已按当前 phase 的 active behavior 驱动主核移动，而不是固定沿用模板基准行为。
+  - 这意味着 phase 之间的差异不再只来自：
+    - 护卫节奏
+    - 刷怪量
+    - 速度
+    - 远程射速
+  - 还会来自主核本体的行为身份切换。
+- `src/scenes/GameScene.ts`
+  - HUD 子读数现会带上当前 phase 对应的主核行为口径，帮助玩家从战况条直接读出“这段 Boss 现在是遮线、反拉还是顶压”。
+
+### 验证
+- `npm run build` 通过。
+- 本地 `tsx` 抽样确认：
+  - `boss-hunt` 会解析为：
+    - `接敌 -> frontline`
+    - `逼近 -> screened`
+    - `收束 -> frontline`
+  - `boss-lockdown` 会解析为：
+    - `接敌 -> kiting`
+    - `封位 -> screened`
+    - `锁场 -> frontline`
+  - `boss-bastion` 会解析为：
+    - `接敌 -> screened`
+    - `交火 -> summoner`
+    - `火线收束 -> kiting`
+- engine 级全链路抽样确认：
+  - `开始 -> 节点推进 -> anomaly -> boss -> 结算` 可跑通
+  - 抽样样本中 `boss-bastion` 实际经历了：
+    - `接敌(screened)`
+    - `交火(summoner)`
+    - `火线收束(kiting)`
+  - 结果口径仍为 `finalNodeType = boss`
+- 浏览器烟测确认：
+  - 复用现有 `output/playwright/battle-layer-0.9v/full-flow.mjs` 全链路跑通
+  - `anomalyPanelSeen = true`
+  - `bossNodeSeen = true`
+  - `bossBattleSeen = true`
+  - `battleHudSeen = true`
+  - `replayStarted = true`
+  - 浏览器 `console error = 0`
+  - 指标继续命中：
+    - `battle_template_entered.payload.encounterType = boss`
+    - `event_selected.payload.contentKind = anomaly`
+    - `run_finished.payload.finalNodeType = boss`
+
+### 剩余风险
+- Boss phase 的行为身份现在已经落到运行层，但仍复用旧的 `frontline / screened / kiting / summoner` 行为谱系，不是 Boss 专属行为系统。
+- 如果后续玩家 burst 与机动继续上涨，最终关下一步更可能需要的是：
+  - 更明确的阶段内行为签名
+  - 或少量 phase 专属压力兑现
+  而不是继续只靠旧行为谱系 + 模板软承接。
+
 ## [0.9v 读数 / 压力校准] Boss 抗 burst 切段强化
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

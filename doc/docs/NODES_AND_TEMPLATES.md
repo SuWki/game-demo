@@ -238,3 +238,38 @@
 - 当前仍保留的边界：
   - 没有重新加回大面积 toast / 横幅。
   - 没有把 elite 的轻量 phase 体验抬成和 Boss 同层级的独立机制。
+
+## 2026-04-06 Boss Phase Behavior Identity Addendum
+### phase 行为覆写
+- `pressurePhases` 现在除了压力节奏参数外，还允许挂接：
+  - `behaviorOverride`
+- 当前运行口径是：
+  - `activeEliteBehavior = pressurePhase.behaviorOverride ?? eliteRule.behavior`
+- 这意味着 phase 不再只改变：
+  - 护卫数量
+  - 刷怪节奏
+  - 远程射速
+  - 主核速度 / 距离参数
+- 也会改变主核本体的行为身份。
+
+### 当前 Boss phase 身份
+- `boss-hunt`
+  - `接敌`：`frontline`
+  - `逼近`：`screened`
+  - `收束`：`frontline`
+- `boss-lockdown`
+  - `接敌`：`kiting`
+  - `封位`：`screened`
+  - `锁场`：`frontline`
+- `boss-bastion`
+  - `接敌`：`screened`
+  - `交火`：`summoner`
+  - `火线收束`：`kiting`
+
+### 读数同步
+- battle HUD 子读数现在会显示当前 phase 下的主核行为，而不是只显示模板初始行为。
+- 这让玩家在不增加新 UI 遮挡的前提下，也能从 `阶段 / 主核 / 敌群 / 节奏 / 护卫` 读数里确认 Boss 已经进入另一种打法阶段。
+
+### 当前边界
+- 这轮没有引入新的 Boss 行为系统；只是把现有 `frontline / screened / kiting / summoner` 行为谱系正式接到 phase 层。
+- elite 仍保留自己的轻量 phase 压力，不与 Boss 的阶段行为身份混成同一承载层级。

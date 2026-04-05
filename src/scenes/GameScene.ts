@@ -192,6 +192,7 @@ export class GameScene extends Phaser.Scene {
               state.battle.templateId,
               state.battle.pressurePhaseLabel,
               state.battle.pressureTransitionSec > 0,
+              state.battle.pressurePhaseIndex,
             )
           : undefined,
     };
