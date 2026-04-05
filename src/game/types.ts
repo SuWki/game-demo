@@ -399,6 +399,7 @@ export interface OverlayHudSnapshot {
     active: boolean;
   }>;
   battleText: string;
+  battleSubtext?: string;
 }
 
 export interface Services {

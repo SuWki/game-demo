@@ -258,6 +258,15 @@ h1 {
   font-size: 20px;
 }
 
+.hud-kicker small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .hero-support small {
   position: relative;
   z-index: 1;

@@ -130,3 +130,23 @@
 - 仍保留的复用边界：
   - Boss 仍复用 battle 结算与大部分现有承压规则，本轮没有继续扩 Boss 专属系统。
   - anomaly 仍复用 event 面板与 effect 结算，本轮重点是把内容站位与内容入口立住。
+
+## 2026-04-05 0.9v 战斗层读数补记
+- 本轮不再处理“是否已有四类基础敌人 / 是否已有 boss-anomaly 载体”这类恢复期问题；这些语义已在代码中成立，当前重点转为 0.9v 战斗读数强化。
+- 当前战斗层的最新判断是：
+  - `regular / escort / elite` 继续保留为战斗职责层语义。
+  - `standard / brute / skirmisher / ranged` 才是基础敌人 archetype 语义。
+  - `boss / anomaly` 载体继续保留独立 node / template / content lane，但底层仍复用既有 battle / event 结算。
+- battle 模板本轮进一步拉开 archetype ownership：
+  - `elimination / elimination-pincer` 更强调 `standard + skirmisher` 的前段快压与侧压。
+  - `elimination-sweep / survival-gauntlet` 更强调 `brute` 的厚体推进。
+  - `elite-screen / survival-crossfire / boss-bastion` 更强调 `ranged` 火线与护卫遮线。
+  - `elite-lockdown / boss-lockdown` 更强调 `skirmisher + escort` 的封位与反拉压迫。
+- HUD 现会直接显示：
+  - encounter 口径，例如 `普通战 / 精英战 / 生存战 / Boss载体`
+  - 模板读数摘要，例如 `敌群 / 节奏 / 护卫 / 主核行为`
+- 结果页收尾节点现会显式显示 `节点类型 + 节点标题`，例如 `Boss · 锁域主核`，避免 0.9v 常规开发时再次被旧 `elite` 语义稀释。
+- 本轮仍刻意不做的深改：
+  - 不新增独立 Boss AI 树。
+  - 不新增 anomaly 子系统。
+  - 不重写战斗主流程或 RunEngine。

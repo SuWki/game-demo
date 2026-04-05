@@ -1535,3 +1535,78 @@
 ### 本轮结论
 - `boss / anomaly` 不再只是“结构边界已切开”，而是已经开始承接第一批真正站在新载体上的 0.9v 内容。
 - 之后继续做 0.9v 内容扩写时，应优先沿这些新载体继续补内容，而不是重新回到旧 `elite / event` 语义。
+
+## [0.9v 早期 / Round 20] 战斗层 0.9 化起步 + Boss/anomaly 边界固化
+### 来源口径
+- 本轮继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为最高优先级口径。
+- 当用户提示里的“可能仍未落地”与当前代码不一致时，以实际代码审计结果为准：
+  - `boss / anomaly` 载体已经存在。
+  - 四类基础敌人 archetype 也已经存在。
+- 因此本轮切入点不是重复补语义骨架，而是补 0.9v 战斗读数与边界稳定性。
+
+### 改动前盘点结论
+- 已符合：
+  - `NodeType` 已是 `battle / upgrade / anomaly / boss`。
+  - `standard / brute / skirmisher / ranged` 已进入数据层与运行层。
+  - `regular / escort / elite` 已是职责层语义，不再承担基础敌种分类。
+  - `boss / anomaly` 已有独立 node / template / content lane 与既有埋点口径。
+- 仍偏弱的点：
+  - battle HUD 仍主要显示模板名，玩家需要靠经验自己读出“这关到底是什么敌群压力”。
+  - 模板之间虽然已经接入不同 archetype 权重，但 ownership 还不够强，容易再次被理解成“参数不同的同类战斗”。
+  - 结果页虽已能记录 `finalNodeType`，但视觉上还没有把 `Boss · 节点名` 明确压实到收尾标签里。
+  - 远程怪虽然已存在，但缺少更直接的屏幕提示来帮助玩家快速读出其威胁。
+- 本轮切入点确定为：
+  - 用现有模板字段直接生成战斗读数，不引入新系统。
+  - 进一步拉开模板对四类敌人的归属感。
+  - 在 HUD / 结果页 / 实跑验证中继续稳住 `boss / anomaly` 新边界。
+
+### 本轮实际修改
+- battle template：
+  - 进一步调整 `regularArchetypes / escortArchetypes` 权重，让不同模板更像自己的模板，而不是轻微参数偏移。
+  - 重点强化了：
+    - `elimination-pincer` 的 `skirmisher` 侧压感
+    - `elimination-sweep / survival-gauntlet` 的 `brute` 推进感
+    - `elite-screen / survival-crossfire / boss-bastion` 的 `ranged` 火线与遮线感
+    - `elite-lockdown / boss-lockdown` 的 `skirmisher + escort` 封位感
+    - `boss-hunt` 的 `brute + frontline` 正面顶压感
+- 模板读数：
+  - 在 `battleTemplates` 中新增轻量 helper，从现有 `regularArchetypes / escortArchetypes / spawnRule / eliteRule.behavior` 直接推导：
+    - `普通战 / 精英战 / 生存战 / Boss载体`
+    - `敌群 / 节奏 / 护卫 / 主核` 摘要
+  - 这层表达没有引入新系统，只是把已有模板语义真正显示出来。
+- HUD / 结果页：
+  - 局内 HUD 顶部现在会显示 `encounter label + battle label`。
+  - 局内 HUD 同时会显示模板读数摘要，帮助玩家直接读出当前敌群组合。
+  - 结果页收尾 pill 现在会显示 `节点类型 + 节点标题`，例如 `Boss · 锁域主核`。
+- 战斗可见差异：
+  - 敌方弹道新增拖尾。
+  - `ranged` 敌人新增外圈和即将开火时的瞄线提示。
+  - `brute` 与 `skirmisher` 的屏幕标记进一步加强，帮助快速识别厚体与高速单位。
+
+### 本轮未做的深改
+- 没有重写 RunEngine。
+- 没有把 Boss 扩成独立机制树。
+- 没有把 anomaly 扩成独立事件子系统。
+- 没有重做整套敌人 AI。
+- 原因：
+  - 当前主问题是读数不足，不是底层载体缺失。
+  - 这轮最合理的是把现有数据真正“读出来”，而不是再次扩大系统面。
+
+### 验证
+- `npm run build` 通过。
+- 浏览器实跑通过，且无新增 console error：
+  - 菜单 -> battle -> anomaly -> final prep -> boss -> result -> replay 全链路通过。
+  - anomaly 面板已实测出现。
+  - Boss 节点已实测出现 `锁域主核`。
+  - Boss 战 HUD 已出现 `Boss载体` 前缀和模板读数摘要。
+  - 结果页已显示 `收尾节点 Boss · 锁域主核`。
+  - 导出指标继续保留：
+    - `battle_template_entered.payload.encounterType = boss`
+    - `battle_template_entered.payload.nodeType = boss`
+    - `event_selected.payload.contentKind = anomaly`
+    - `run_finished.payload.finalNodeType = boss`
+- 本轮没有新增 metrics 字段；继续复用现有结构即可完成边界验证。
+
+### 当前最大风险
+- 四类基础敌人已经进入模板读数与最小可见层，但“行为辨识度”仍主要依赖轻量移动规则与视觉标记。
+- 如果后续 0.9v 常规开发继续大量补 battle 内容，却不持续维护 archetype ownership 与 HUD/结果页口径，Boss 与四类敌人的读数仍可能再次被稀释回“旧 battle / elite 近似”。

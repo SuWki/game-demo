@@ -135,3 +135,32 @@
   - 事件内容：`相位裂缝`、`载体失真`、`Boss 阴影扫描`
 - selector 侧现已使用显式 anomaly catalog，后续补异常内容时应继续加到 anomaly lane，而不是重新混回普通 `event` 池。
 - anomaly 仍复用 event 面板和 effect 结算；本轮重点是把节点与内容池的站位做对。
+
+## 2026-04-05 0.9v 战斗层模板补充
+### 模板读数
+- battle HUD 现在不只显示模板名，还会基于现有模板数据直接给出读数摘要：
+  - `敌群`：由 `regularArchetypes` 的高权重 archetype 推导
+  - `节奏`：由 `spawnRule.pattern / laneBias` 推导
+  - `护卫`：由 `escortArchetypes` 推导
+  - `主核`：由 `eliteRule.behavior` 推导
+- 这层读数是从现有模板字段直接推导出来的轻量表达，不是新系统。
+
+### archetype ownership
+- 当前模板家族的主要归属更新为：
+  - `elimination`：前段普通怪为主，少量高速怪补侧压。
+  - `elimination-pincer`：更偏 `skirmisher`，强调包夹与换位。
+  - `elimination-sweep / survival-gauntlet`：更偏 `brute`，强调厚体推进与线性挤压。
+  - `elite-screen / survival-crossfire / boss-bastion`：更偏 `ranged`，强调火线与遮线。
+  - `elite-lockdown / boss-lockdown`：更偏 `skirmisher + escort`，强调封位、反拉与护卫压场。
+  - `boss-hunt`：更偏 `brute + frontline`，强调正面顶压。
+
+### 角色语义
+- `regular / escort / elite` 继续作为战斗角色层：
+  - `regular`：普通刷出的基础敌群
+  - `escort`：围绕精英/Boss 的护卫层
+  - `elite`：模板主核承压单位
+- 这意味着后续继续扩敌人内容时，应优先沿 archetype 扩写，而不是重新把 `regular / escort / elite` 当作基础敌种分类。
+
+### 仍保留的近似实现
+- `ranged` 已有保距移动、敌方弹道与可见瞄线，但还不是完整远程 AI 体系。
+- 当前模板读数来自现有权重和行为字段推导，还不是独立的 encounter director。

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getBattleEncounterLabel, getBattleEnemyReadout } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type { BattleState, OverlayHudSnapshot, Services, ToastTone } from '../game/types';
@@ -157,6 +158,10 @@ export class GameScene extends Phaser.Scene {
 
   private createHudSnapshot(): OverlayHudSnapshot {
     const state = this.engine.getState();
+    const battleText =
+      state.status === 'battle' && state.battle
+        ? `${getBattleEncounterLabel(state.battle.templateId, state.battle.encounterType)} · ${this.engine.getBattleLabel()}`
+        : this.getRouteStatusText();
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
@@ -170,7 +175,8 @@ export class GameScene extends Phaser.Scene {
         color: route.color,
         active: this.engine.getDominantRoute() === route.id,
       })),
-      battleText: state.status === 'battle' && state.battle ? this.engine.getBattleLabel() : this.getRouteStatusText(),
+      battleText,
+      battleSubtext: state.status === 'battle' && state.battle ? getBattleEnemyReadout(state.battle.templateId) : undefined,
     };
   }
 
@@ -264,6 +270,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const projectile of battle.enemyProjectiles) {
+      this.graphics.lineStyle(2, 0xffdfa0, 0.18);
+      this.graphics.lineBetween(projectile.x - projectile.vx * 0.045, projectile.y - projectile.vy * 0.045, projectile.x, projectile.y);
       this.graphics.fillStyle(0xffc86a, 0.92);
       this.graphics.fillCircle(projectile.x, projectile.y, projectile.radius);
       this.graphics.lineStyle(1, 0xfff1c7, 0.3);
@@ -292,16 +300,25 @@ export class GameScene extends Phaser.Scene {
       if (!enemy.elite && enemy.archetype === 'skirmisher') {
         this.graphics.lineStyle(2, enemyStroke, 0.36);
         this.graphics.lineBetween(enemy.x - enemy.radius - 3, enemy.y, enemy.x + enemy.radius + 3, enemy.y);
+        this.graphics.lineBetween(enemy.x - enemy.radius + 1, enemy.y - enemy.radius + 2, enemy.x + enemy.radius - 1, enemy.y + enemy.radius - 2);
       }
 
       if (!enemy.elite && enemy.archetype === 'brute') {
         this.graphics.lineStyle(3, enemyStroke, 0.24);
         this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 7);
+        this.graphics.fillStyle(enemyStroke, 0.12);
+        this.graphics.fillCircle(enemy.x, enemy.y, Math.max(4, enemy.radius - 4));
       }
 
       if (!enemy.elite && enemy.archetype === 'ranged') {
         this.graphics.lineStyle(2, enemyStroke, 0.36);
         this.graphics.lineBetween(enemy.x, enemy.y - enemy.radius - 4, enemy.x, enemy.y + enemy.radius + 4);
+        this.graphics.lineStyle(1, enemyStroke, enemy.rangedCooldownSec <= 0.65 ? 0.24 : 0.12);
+        this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 10);
+        if (enemy.rangedCooldownSec <= 0.65) {
+          this.graphics.lineStyle(1, enemyStroke, 0.18);
+          this.graphics.lineBetween(enemy.x, enemy.y, battle.playerX, battle.playerY);
+        }
       }
 
       const hpRatio = enemy.hp / enemy.maxHp;

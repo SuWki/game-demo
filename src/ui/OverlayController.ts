@@ -160,6 +160,7 @@ export class OverlayController {
         <div class="hud-kicker">
           <span class="hud-kicker-label">当前读数</span>
           <strong>${snapshot.battleText}</strong>
+          ${snapshot.battleSubtext ? `<small>${snapshot.battleSubtext}</small>` : ''}
         </div>
         <div class="hud-layout">
           <div class="hud-bar">
@@ -282,7 +283,7 @@ export class OverlayController {
         <h1>${result.outcome === 'victory' ? '本局已完成收束' : '这局还差一口气就能收稳'}</h1>
         <p class="lead">${result.summary}</p>
         <div class="menu-pills result-pills">
-          <span class="menu-pill">收尾节点 ${result.finalNodeTitle}</span>
+          <span class="menu-pill">收尾节点 ${result.finalNodeType ? `${NODE_TYPE_LABEL_MAP[result.finalNodeType]} · ` : ''}${result.finalNodeTitle}</span>
           <span class="menu-pill">战斗胜场 ${result.battleWins}</span>
           <span class="menu-pill">推进节点 ${result.nodesCleared}</span>
           <span class="menu-pill">时长 ${result.runDurationSec.toFixed(1)}s</span>

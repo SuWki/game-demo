@@ -1,4 +1,25 @@
-import type { BattleState, BattleTemplateDefinition, BattleTemplateId } from '../game/types';
+import type {
+  BattleEncounterType,
+  BattleState,
+  BattleTemplateDefinition,
+  BattleTemplateId,
+  EnemyArchetypeId,
+  EliteBehaviorId,
+} from '../game/types';
+
+const ENEMY_ARCHETYPE_LABEL_MAP: Record<EnemyArchetypeId, string> = {
+  standard: '普通怪',
+  brute: '厚血怪',
+  skirmisher: '高速怪',
+  ranged: '远程怪',
+};
+
+const ELITE_BEHAVIOR_READOUT_MAP: Record<EliteBehaviorId, string> = {
+  frontline: '正面顶压',
+  screened: '护卫遮线',
+  kiting: '反拉压迫',
+  summoner: '召援拖场',
+};
 
 export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition> = {
   elimination: {
@@ -23,9 +44,9 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     regularArchetypes: {
       standard: 3,
-      brute: 1,
+      brute: 1.1,
       skirmisher: 1.1,
-      ranged: 0.35,
+      ranged: 0.25,
     },
   },
   'elimination-pincer': {
@@ -49,10 +70,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 2,
-      brute: 0.7,
-      skirmisher: 2.3,
-      ranged: 0.45,
+      standard: 1.7,
+      brute: 0.6,
+      skirmisher: 2.8,
+      ranged: 0.4,
     },
   },
   'elimination-sweep': {
@@ -77,10 +98,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       laneBias: 'horizontal',
     },
     regularArchetypes: {
-      standard: 1.9,
-      brute: 1.9,
-      skirmisher: 0.8,
-      ranged: 0.55,
+      standard: 1.4,
+      brute: 2.4,
+      skirmisher: 0.7,
+      ranged: 0.4,
     },
   },
   elite: {
@@ -104,16 +125,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 2.3,
-      brute: 1.5,
-      skirmisher: 0.9,
-      ranged: 0.55,
+      standard: 2.1,
+      brute: 1.7,
+      skirmisher: 0.8,
+      ranged: 0.45,
     },
     escortArchetypes: {
-      standard: 1.9,
+      standard: 1.6,
       brute: 0.8,
-      skirmisher: 1.1,
-      ranged: 0.3,
+      skirmisher: 1.2,
+      ranged: 0.45,
     },
     eliteRule: {
       spawnAtSec: 4,
@@ -152,13 +173,13 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       standard: 1.7,
       brute: 1.2,
       skirmisher: 1,
-      ranged: 1.2,
+      ranged: 1.35,
     },
     escortArchetypes: {
-      standard: 1,
+      standard: 0.9,
       brute: 0.6,
-      skirmisher: 1,
-      ranged: 1.6,
+      skirmisher: 1.1,
+      ranged: 1.9,
     },
     eliteRule: {
       spawnAtSec: 3,
@@ -196,16 +217,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 1.9,
+      standard: 1.6,
       brute: 1.1,
-      skirmisher: 1.5,
-      ranged: 0.8,
+      skirmisher: 1.8,
+      ranged: 0.95,
     },
     escortArchetypes: {
-      standard: 1.2,
+      standard: 1,
       brute: 0.6,
-      skirmisher: 1.3,
-      ranged: 0.9,
+      skirmisher: 1.55,
+      ranged: 1.2,
     },
     eliteRule: {
       spawnAtSec: 2.8,
@@ -244,16 +265,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       laneBias: 'vertical',
     },
     regularArchetypes: {
-      standard: 1.5,
+      standard: 1.2,
       brute: 1,
       skirmisher: 1.2,
-      ranged: 1.3,
+      ranged: 1.6,
     },
     escortArchetypes: {
-      standard: 0.9,
+      standard: 0.8,
       brute: 0.6,
-      skirmisher: 1.2,
-      ranged: 1.8,
+      skirmisher: 1.1,
+      ranged: 2.3,
     },
     eliteRule: {
       spawnAtSec: 3.4,
@@ -292,16 +313,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 1.6,
-      brute: 1.3,
+      standard: 1.3,
+      brute: 1.6,
       skirmisher: 1,
-      ranged: 0.7,
+      ranged: 0.55,
     },
     escortArchetypes: {
-      standard: 1.3,
-      brute: 0.9,
+      standard: 1.2,
+      brute: 1,
       skirmisher: 0.8,
-      ranged: 0.6,
+      ranged: 0.45,
     },
     eliteRule: {
       spawnAtSec: 1.6,
@@ -337,16 +358,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 1.4,
+      standard: 1.2,
       brute: 1,
-      skirmisher: 1.5,
-      ranged: 0.9,
+      skirmisher: 1.8,
+      ranged: 1.05,
     },
     escortArchetypes: {
-      standard: 1,
+      standard: 0.9,
       brute: 0.6,
-      skirmisher: 1.4,
-      ranged: 1.2,
+      skirmisher: 1.6,
+      ranged: 1.35,
     },
     eliteRule: {
       spawnAtSec: 1.4,
@@ -386,16 +407,16 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       laneBias: 'vertical',
     },
     regularArchetypes: {
-      standard: 1.2,
+      standard: 1,
       brute: 1.1,
       skirmisher: 1,
-      ranged: 1.5,
+      ranged: 1.95,
     },
     escortArchetypes: {
-      standard: 0.8,
+      standard: 0.7,
       brute: 0.6,
       skirmisher: 1.1,
-      ranged: 1.9,
+      ranged: 2.6,
     },
     eliteRule: {
       spawnAtSec: 1.8,
@@ -432,10 +453,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 2.4,
+      standard: 2.1,
       brute: 1.2,
-      skirmisher: 1.6,
-      ranged: 0.7,
+      skirmisher: 1.8,
+      ranged: 0.75,
     },
   },
   'survival-crossfire': {
@@ -460,10 +481,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       laneBias: 'vertical',
     },
     regularArchetypes: {
-      standard: 1.5,
+      standard: 1.2,
       brute: 1,
-      skirmisher: 1.4,
-      ranged: 2.1,
+      skirmisher: 1.2,
+      ranged: 2.7,
     },
   },
   'survival-rush': {
@@ -486,9 +507,9 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       burstCount: 1,
     },
     regularArchetypes: {
-      standard: 1.8,
+      standard: 1.5,
       brute: 0.9,
-      skirmisher: 2.4,
+      skirmisher: 2.9,
       ranged: 0.6,
     },
   },
@@ -513,13 +534,83 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       laneBias: 'horizontal',
     },
     regularArchetypes: {
-      standard: 1.7,
-      brute: 1.6,
+      standard: 1.4,
+      brute: 1.95,
       skirmisher: 1.1,
-      ranged: 1,
+      ranged: 0.85,
     },
   },
 };
+
+function getTopArchetypeLabels(
+  weights: Partial<Record<EnemyArchetypeId, number>> | undefined,
+  count: number,
+): string[] {
+  return Object.entries(weights ?? {})
+    .filter((entry): entry is [EnemyArchetypeId, number] => Boolean(entry[1] && entry[1] > 0))
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, count)
+    .map(([archetypeId]) => ENEMY_ARCHETYPE_LABEL_MAP[archetypeId]);
+}
+
+function getSpawnPatternReadout(template: BattleTemplateDefinition): string {
+  const spawnRule = template.spawnRule;
+  if (!spawnRule) {
+    return '环压逼近';
+  }
+
+  if (spawnRule.pattern === 'pincers') {
+    return '侧压包夹';
+  }
+
+  if (spawnRule.pattern === 'lanes') {
+    return spawnRule.laneBias === 'horizontal' ? '横线推进' : '纵向火线';
+  }
+
+  return '环压逼近';
+}
+
+export function getBattleEncounterLabel(
+  templateId: BattleTemplateId,
+  encounterType?: BattleEncounterType,
+): string {
+  const template = BATTLE_TEMPLATES[templateId];
+  const resolvedEncounterType = encounterType ?? template.encounterType ?? 'battle';
+
+  if (resolvedEncounterType === 'boss') {
+    return 'Boss载体';
+  }
+
+  switch (template.winCondition.type) {
+    case 'elite':
+      return '精英战';
+    case 'survive':
+      return '生存战';
+    case 'kills':
+    default:
+      return '普通战';
+  }
+}
+
+export function getBattleEnemyReadout(templateId: BattleTemplateId): string {
+  const template = BATTLE_TEMPLATES[templateId];
+  const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
+  const escort = getTopArchetypeLabels(template.escortArchetypes, 2);
+  const parts = [
+    `敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`,
+    `节奏 ${getSpawnPatternReadout(template)}`,
+  ];
+
+  if (escort.length > 0) {
+    parts.push(`护卫 ${escort.join(' / ')}`);
+  }
+
+  if (template.eliteRule?.behavior) {
+    parts.push(`主核 ${ELITE_BEHAVIOR_READOUT_MAP[template.eliteRule.behavior]}`);
+  }
+
+  return parts.join(' · ');
+}
 
 export function getBattleTargetKills(templateId: BattleTemplateId): number {
   const template = BATTLE_TEMPLATES[templateId];
