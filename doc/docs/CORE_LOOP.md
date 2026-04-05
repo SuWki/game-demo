@@ -51,3 +51,14 @@
   - `开始 -> 节点推进 -> battle / upgrade / anomaly -> final prep -> boss -> 结算 -> replay`
 - `anomaly` 节点当前会走独立的 anomaly 内容选择路径：只从 `contentKind: anomaly` 的内容池抽取，并在节点/UI/埋点语义上保持 `anomaly`；但面板与效果结算仍保守复用 event 流。
 - `boss` 节点当前以“显式 Boss 节点 + Boss 模板池 + Boss 文案 + Boss 埋点口径”的方式落地；最终关不再直接复用普通 elite-family 模板 ID，但仍保留现有 battle 机制承压。
+
+## 2026-04-05 0.9v 内容承载补记
+- `anomaly` 现在不只是“节点类型切开”，还已经有第一批沿 anomaly 载体扩写的专属内容：
+  - `相位裂缝`
+  - `载体失真`
+  - `Boss 阴影扫描`
+- `boss` 现在不只是“最终关叫 Boss”，最终节点会直接落成具体 Boss 载体：
+  - `追猎主核`
+  - `锁域主核`
+  - `屏卫主核`
+- 当前主循环仍复用既有 battle / event 结算流，但后续 0.9v 内容应优先沿这些新载体继续扩写，而不是再回到旧 `elite / event` 口径补内容。

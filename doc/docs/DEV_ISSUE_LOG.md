@@ -1478,3 +1478,60 @@
 ### 本轮结论
 - `boss / anomaly` 已从“文档语义 + 节点语义”推进到“最小承载边界已实现”。
 - 当前项目已基本完成恢复尾段的结构收口；后续若进入 0.9v 开发，可以沿 Boss 模板池和 anomaly 内容池继续补内容，而不必再回到旧 `elite/event` 口径上扩写。
+
+## [0.9v 第一轮 / Round 19] boss / anomaly 首批专属内容扩写
+### 来源口径
+- 本轮以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为最高优先级口径。
+- 当前阶段已从“恢复旧结构”切到 `0.9v 内容与可玩性开发`；本轮目标不是泛补普通内容，而是沿 `boss / anomaly` 新载体补第一批专属内容并稳住边界。
+
+### 改动前盘点结论
+- `boss` 语义已经在节点、模板池、埋点里切开，但实际内容入口还偏薄：
+  - 最终节点仍会被统一显示成泛 `最终 Boss`
+  - 容易让具体 Boss 模板重新退回成“只是更强的 elite 变体”
+- `anomaly` 语义已经在节点、selector、UI、埋点里切开，但专属内容感还不够稳：
+  - 异常节点蓝图标题仍偏泛
+  - anomaly 仍容易被理解成“event 里的特殊分支”
+- 因此本轮切入点确定为：
+  - 先让 Boss 以具体 Boss 节点内容进入流程
+  - 再给 anomaly 补第一批只沿 anomaly lane 扩写的节点 / 事件内容
+
+### 本轮实际修改
+- Boss 专属内容：
+  - 最终节点从单一 `final-boss` 泛蓝图，改为三条具体 Boss 蓝图：
+    - `追猎主核`
+    - `锁域主核`
+    - `屏卫主核`
+  - Boss HUD 标签、进入提示、结果页收尾节点现在都会沿具体 Boss 名称显示，不再被统一抹平成一个泛 Boss 标题。
+- anomaly 专属内容：
+  - 新增 anomaly 专属事件：
+    - `相位裂缝`
+    - `载体失真`
+    - `Boss 阴影扫描`
+  - 新增 anomaly 节点蓝图：
+    - mid：`相位裂缝`
+    - late：`Boss 阴影`
+  - anomaly selector 侧补了显式 anomaly catalog，后续异常内容继续沿 anomaly lane 扩写，不再依赖合并事件池上的临时过滤。
+- 轻量流程 / 埋点跟进：
+  - `RunEngine` 的 Boss 战标签改为优先显示具体 Boss 节点名。
+  - `battle.label`、进入提示、战斗完成提示继续沿具体 Boss 节点名工作。
+  - anomaly 新事件 `phase-splitter / carrier-breach` 也接入了现有 hybrid 统计判定。
+
+### 仍刻意保留的复用
+- Boss 仍复用 battle 结算和大部分既有承压规则。
+- anomaly 仍复用 event 面板和 effect 结算。
+- 本轮重点是“内容站位正确”，不是扩写新的 Boss / anomaly 子系统。
+
+### 验证
+- `npm run build` 通过。
+- 浏览器实跑通过：
+  - 已实测出现 anomaly 专属事件 `相位裂缝` 与 `Boss 阴影扫描`
+  - 已实测出现具体 Boss 节点 `锁域主核`
+  - 已实测跑通 `开始 -> anomaly -> boss -> 结算 -> replay`
+  - `battle_template_entered.payload.encounterType = boss`
+  - `run_finished.payload.finalNodeType = boss`
+  - `event_selected.payload.contentKind = anomaly`
+- 无新增浏览器 console error。
+
+### 本轮结论
+- `boss / anomaly` 不再只是“结构边界已切开”，而是已经开始承接第一批真正站在新载体上的 0.9v 内容。
+- 之后继续做 0.9v 内容扩写时，应优先沿这些新载体继续补内容，而不是重新回到旧 `elite / event` 语义。

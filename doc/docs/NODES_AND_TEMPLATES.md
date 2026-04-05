@@ -119,3 +119,19 @@
   - `ranged`
 - `regular / escort / elite` 明确是战斗角色层，不再承担基础敌种分类职责。
 - `battleTemplates` 已新增 `regularArchetypes` / `escortArchetypes` 权重，用于驱动不同模板的敌种混合。
+
+## 2026-04-05 0.9v Boss / Anomaly 内容承载补充
+### Boss 节点与模板
+- 最终 Boss 不再只显示一个泛 `最终 Boss` 节点；当前会直接以具体 Boss 蓝图落地：
+  - `追猎主核 -> boss-hunt`
+  - `锁域主核 -> boss-lockdown`
+  - `屏卫主核 -> boss-bastion`
+- 这让 Boss 内容的入口从“Boss 模板池存在”推进到“节点标题 / 节点描述 / HUD / 结果口径都能承接具体 Boss 内容”。
+- Boss 仍复用现有 battle 机制与 win condition；本轮做的是内容承载补强，不是 Boss 系统扩建。
+
+### anomaly 节点与内容
+- anomaly 现在已有第一批明确站在 anomaly 载体上的内容：
+  - 节点蓝图：`相位裂缝`、`Boss 阴影`
+  - 事件内容：`相位裂缝`、`载体失真`、`Boss 阴影扫描`
+- selector 侧现已使用显式 anomaly catalog，后续补异常内容时应继续加到 anomaly lane，而不是重新混回普通 `event` 池。
+- anomaly 仍复用 event 面板和 effect 结算；本轮重点是把节点与内容池的站位做对。

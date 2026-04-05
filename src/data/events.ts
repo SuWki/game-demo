@@ -1,4 +1,4 @@
-import type { EventDefinition } from '../game/types';
+import type { EventContentKind, EventDefinition } from '../game/types';
 
 export const EVENT_CATALOG: EventDefinition[] = [
   {
@@ -1309,4 +1309,191 @@ export const EVENT_CATALOG: EventDefinition[] = [
       },
     ],
   },
+  {
+    id: 'phase-splitter',
+    name: '相位裂缝',
+    contentKind: 'anomaly',
+    description: '异常裂缝把互不兼容的读法短暂并排拉到面前。这不是普通补给，而是一拍真正的并轨试错。',
+    selection: {
+      baseWeight: 1.65,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.7,
+        late: 0.7,
+      },
+      noDominantRouteBonus: 0.4,
+    },
+    options: [
+      {
+        id: 'phase-splitter-crit-pierce',
+        label: '接入灼线样本',
+        description: '补一段暴击升温和穿透清线的混搭样本，先拿到手感，再决定后续要不要顺着走。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              critChance: 0.03,
+              projectileSpeed: 18,
+            },
+          },
+        ],
+      },
+      {
+        id: 'phase-splitter-pierce-dash',
+        label: '接入扇面位移',
+        description: '把穿透扇面和位移窗口短接在一起，换更顺的中段走位。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              moveSpeed: 12,
+              dashInterval: -0.18,
+            },
+          },
+        ],
+      },
+      {
+        id: 'phase-splitter-dash-crit',
+        label: '接入反打热区',
+        description: '用换位反打去接一段暴击升温，把主动出手的窗口撑开。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 10,
+              fireRate: 0.12,
+              critChance: 0.02,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'carrier-breach',
+    name: '载体失真',
+    contentKind: 'anomaly',
+    contentTier: 'rare',
+    description: '异常载体开始失真。你可以把这段波形压成一次高收益冲刺，也可以拆成一段更宽的并轨余量。',
+    selection: {
+      baseWeight: 0.88,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.9,
+        late: 1.5,
+        finalPrep: 0.6,
+      },
+      hintedRouteBonus: 0.4,
+      dominantRouteBonus: 1.2,
+      committedRouteBonus: 0.7,
+    },
+    options: [
+      {
+        id: 'carrier-breach-redline',
+        label: '压成红线冲刺',
+        description: '立刻换来一段更凶的输出，但机体会先吃下一次失真回震。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 7,
+              fireRate: 0.18,
+              critChance: 0.03,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -10,
+          },
+        ],
+      },
+      {
+        id: 'carrier-breach-open',
+        label: '拆成并轨余量',
+        description: '不赌当下爆发，改拿更宽的移动、弹道和恢复余量，把后续异常窗口留活。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 16,
+              projectileSpeed: 20,
+              regeneration: 0.14,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'boss-shadow-scan',
+    name: 'Boss 阴影扫描',
+    contentKind: 'anomaly',
+    contentTier: 'rare',
+    description: 'Boss 载体边界泄出了一段压力样本。你还没真正撞上最终关，但已经能先决定要拿哪种收束准备。',
+    selection: {
+      baseWeight: 0.95,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.9,
+        finalPrep: 1.2,
+      },
+      noDominantRouteBonus: 0.25,
+    },
+    options: [
+      {
+        id: 'boss-shadow-scan-brace',
+        label: '预装正面承压',
+        description: '补一段正面顶压的厚度，准备在 Boss 压脸时仍能持续输出。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 10,
+              damage: 3,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 18,
+          },
+        ],
+      },
+      {
+        id: 'boss-shadow-scan-window',
+        label: '预留侧向窗口',
+        description: '把移动、弹速和回复提前补好，为最终 Boss 的封位和拖线留更宽的走位。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 18,
+              projectileSpeed: 22,
+              regeneration: 0.12,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+        ],
+      },
+    ],
+  },
 ];
+
+export const STANDARD_EVENT_CATALOG = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'event');
+
+export const ANOMALY_EVENT_CATALOG = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'anomaly');
+
+export function getEventCatalogByKind(contentKind: EventContentKind): EventDefinition[] {
+  if (contentKind === 'anomaly') {
+    return ANOMALY_EVENT_CATALOG.length > 0 ? ANOMALY_EVENT_CATALOG : EVENT_CATALOG;
+  }
+  return STANDARD_EVENT_CATALOG.length > 0 ? STANDARD_EVENT_CATALOG : EVENT_CATALOG;
+}

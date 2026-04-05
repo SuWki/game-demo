@@ -1,5 +1,5 @@
 import { getUpgradeRarityWeights } from './balance';
-import { EVENT_CATALOG } from './events';
+import { EVENT_CATALOG, getEventCatalogByKind } from './events';
 import { ROUTES } from './routes';
 import { buildUpgradeChoice, UPGRADE_ARCHETYPES } from './upgrades';
 import type {
@@ -507,18 +507,13 @@ function resolveEventDefinition(eventDef: EventDefinition, dominantRoute: RouteI
   };
 }
 
-function getEventCatalog(contentKind: EventContentKind): EventDefinition[] {
-  const catalog = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === contentKind);
-  return catalog.length > 0 ? catalog : EVENT_CATALOG;
-}
-
 export function rollEventDefinition(
   state: Readonly<RunState>,
   contentKind: EventContentKind = 'event',
 ): EventDefinition {
   const context = buildContentContext(state);
   const dominantRoute = context.dominantRoute;
-  const catalog = getEventCatalog(contentKind);
+  const catalog = getEventCatalogByKind(contentKind);
   const weightedEvents = catalog.map((eventDef) => ({
     item: eventDef,
     weight: getSelectionWeight(

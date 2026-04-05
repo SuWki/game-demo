@@ -307,10 +307,12 @@ export class RunEngine {
       isHybridPick:
         isRedirectPick ||
         eventDef.id === 'signal-soften' ||
+        eventDef.id === 'phase-splitter' ||
         eventDef.id === 'cross-branch-signal' ||
         eventDef.id === 'route-handoff' ||
         eventDef.id === 'relay-splice' ||
-        eventDef.id === 'mirror-cache',
+        eventDef.id === 'mirror-cache' ||
+        eventDef.id === 'carrier-breach',
       isLatePayoff: this.isLatePayoffEvent(eventDef),
     });
     if (isRedirectPick && optionRouteId) {
@@ -431,7 +433,7 @@ export class RunEngine {
     const template = BATTLE_TEMPLATES[node.templateId ?? 'elimination'];
     const battleIndex = this.getCurrentBattleIndex();
     const encounterType = template.encounterType ?? (node.type === 'boss' ? 'boss' : 'battle');
-    const battleLabel = encounterType === 'boss' ? `Boss \u00b7 ${template.name}` : template.name;
+    const battleLabel = encounterType === 'boss' ? `Boss \u00b7 ${node.title}` : template.name;
 
     this.state.status = 'battle';
     this.state.phase = node.phase;
@@ -443,7 +445,10 @@ export class RunEngine {
       encounterType,
       templateId: template.id,
       label: battleLabel,
-      description: encounterType === 'boss' ? node.description : template.description,
+      description:
+        encounterType === 'boss'
+          ? `${node.description} ${template.description}`
+          : template.description,
       durationSec: template.durationSec,
       remainingSec: template.durationSec,
       targetKills: getBattleTargetKills(template.id),
@@ -479,7 +484,11 @@ export class RunEngine {
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
-    this.enqueueTip(`${getPhaseLabel(node.phase)}进入：${template.name}`);
+    this.enqueueTip(
+      encounterType === 'boss'
+        ? `Boss 警报：${node.title}`
+        : `${getPhaseLabel(node.phase)}进入：${template.name}`,
+    );
     this.enqueueAudio('pressure');
     this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier, {
       phase: node.phase,
@@ -502,7 +511,7 @@ export class RunEngine {
       this.getCurrentBattleIndex(),
       this.state.phase,
     );
-    this.enqueueTip(`${BATTLE_TEMPLATES[battle.templateId].name}完成`);
+    this.enqueueTip(`${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`);
     this.gainExperience(completionExp);
 
     if (this.state.queuedLevelUps > 0 && this.state.status === 'upgradeChoice') {

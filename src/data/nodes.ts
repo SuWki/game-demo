@@ -275,6 +275,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           noFocusBonus: 0.5,
         },
       },
+      {
+        id: 'round-2-anomaly-fracture',
+        type: 'anomaly',
+        phase: 'mid',
+        title: '相位裂缝',
+        description: '这不再是普通补给事件，而是一次真正闯进中段节奏的异常试错窗口。',
+        selection: {
+          baseWeight: 1.9,
+          soloMultiplier: 0.4,
+          repeatTypeMultiplier: 0.62,
+          noFocusBonus: 0.35,
+        },
+      },
     ],
   },
   3: {
@@ -406,6 +419,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           noFocusBonus: 0.3,
         },
       },
+      {
+        id: 'round-3-anomaly-shadow',
+        type: 'anomaly',
+        phase: 'late',
+        title: 'Boss 阴影',
+        description: '异常提前泄出了最终 Boss 的压力样本，晚段撞上它更像一次收束前的预演。',
+        selection: {
+          baseWeight: 1.4,
+          soloMultiplier: 0.3,
+          repeatTypeMultiplier: 0.58,
+          noFocusBonus: 0.15,
+        },
+      },
     ],
   },
   4: {
@@ -430,17 +456,37 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
     countWeights: [{ count: 1, weight: 1 }],
     blueprints: [
       {
-        id: 'final-boss',
+        id: 'final-boss-hunt',
         type: 'boss',
         phase: 'finalBattle',
-        title: '最终战',
-        description: '用一场更高压的精英压制完成整局收束。',
-        templateCandidates: [
-          { templateId: 'boss-hunt', weight: 1.2 },
-          { templateId: 'boss-lockdown', weight: 1.1 },
-          { templateId: 'boss-bastion', weight: 1.05 },
-        ],
+        title: '追猎主核',
+        description: '最终 Boss 会直接压脸收束整局，考你在正面高压里继续把火力站住。',
+        templateId: 'boss-hunt',
         difficultyScale: 1.38,
+        selection: {
+          baseWeight: 1,
+        },
+      },
+      {
+        id: 'final-boss-lockdown',
+        type: 'boss',
+        phase: 'finalBattle',
+        title: '锁域主核',
+        description: '最终 Boss 会用更早的护卫和封位把场地压紧，逼你在窄窗口里整理走位。',
+        templateId: 'boss-lockdown',
+        difficultyScale: 1.39,
+        selection: {
+          baseWeight: 1,
+        },
+      },
+      {
+        id: 'final-boss-bastion',
+        type: 'boss',
+        phase: 'finalBattle',
+        title: '屏卫主核',
+        description: '最终 Boss 会借屏卫与远程火线拖长对局，逼你先拆屏再找收束窗口。',
+        templateId: 'boss-bastion',
+        difficultyScale: 1.4,
         selection: {
           baseWeight: 1,
         },
@@ -517,15 +563,10 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
 
 function buildNode(blueprint: NodeBlueprint, focusRoute: RouteId | null): NodeOption {
   const resolvedTitle =
-    blueprint.type === 'boss'
-      ? '\u6700\u7ec8 Boss'
-      : blueprint.type === 'anomaly' && blueprint.id === 'round-3-event-blackbox'
-        ? '\u9ed1\u5333\u5f02\u5e38'
-        : blueprint.title;
-  const resolvedDescription =
-    blueprint.type === 'boss'
-      ? '\u7528\u4e00\u573a\u660e\u786e\u7684 Boss \u6536\u675f\u5173\u5b8c\u6210\u6574\u5c40\u6536\u675f\u3002'
-      : resolveDescription(blueprint.description, focusRoute);
+    blueprint.type === 'anomaly' && blueprint.id === 'round-3-event-blackbox'
+      ? '\u9ed1\u5333\u5f02\u5e38'
+      : blueprint.title;
+  const resolvedDescription = resolveDescription(blueprint.description, focusRoute);
 
   return {
     ...blueprint,

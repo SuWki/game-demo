@@ -110,3 +110,9 @@
 - `battle_template_entered.payload.encounterType` 会继续记录模板承载语义是普通 `battle` 还是 `boss`，避免最终关重新退化成普通 elite 模板口径。
 - `event_selected.payload.contentKind` 会记录本次事件内容来自普通 `event` 还是 `anomaly` 内容池。
 - `run_finished.payload.finalNodeType` 会记录本局最终收束/失败时所在节点语义，避免只剩 `finalNodeTitle` 而丢失结构语义。
+
+## 2026-04-05 0.9v Boss / Anomaly 内容解释补充
+- 当前没有新增埋点字段，但已有字段的解释边界更明确了：
+  - `battle_template_entered.payload.title` 现在会直接落成具体 Boss 节点名，例如 `锁域主核`、`屏卫主核`，不再只剩泛 final-boss 标题。
+  - `event_selected.payload.contentKind = anomaly` 现在不仅表示“异常 lane 被命中”，也可能对应 anomaly 专属事件批次，例如 `相位裂缝`、`载体失真`、`Boss 阴影扫描`。
+- 这轮仍复用现有 battle / event / run_finished 事件结构，没有新建 Boss 或 anomaly 专属埋点系统。
