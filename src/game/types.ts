@@ -33,6 +33,7 @@ export type SpawnPatternId = 'surround' | 'pincers' | 'lanes';
 export type EliteBehaviorId = 'frontline' | 'screened' | 'kiting' | 'summoner';
 export type EnemyRole = 'regular' | 'escort' | 'elite';
 export type EnemyArchetypeId = 'standard' | 'brute' | 'skirmisher' | 'ranged';
+export type PressurePatternModeId = 'laneCrush' | 'sideClamp' | 'crossfireWave';
 
 export interface EnemyArchetypeDefinition {
   id: EnemyArchetypeId;
@@ -67,6 +68,14 @@ export interface BattlePressurePhaseDefinition {
   signaturePulseIntervalSec?: number;
   signatureEscortBurst?: number;
   signatureVolleyCount?: number;
+  patternLabel?: string;
+  patternMode?: PressurePatternModeId;
+  patternPulseIntervalSec?: number;
+  patternEscortBurst?: number;
+  patternEscortArchetype?: EnemyArchetypeId;
+  patternVolleyCount?: number;
+  patternVolleySpreadRad?: number;
+  patternVolleyShotsPerShooter?: number;
   triggerHpRatio?: number;
   triggerRemainingSec?: number;
   minResidenceSec?: number;
@@ -344,6 +353,10 @@ export interface BattleState {
   pressureSignatureLabel?: string;
   pressureSignatureSec: number;
   pressureSignaturePulseSec: number;
+  pressurePatternLabel?: string;
+  pressurePatternMode?: PressurePatternModeId;
+  pressurePatternPulseSec: number;
+  pressurePatternFlashSec: number;
   nextEnemyId: number;
   nextBulletId: number;
   nextPulseId: number;

@@ -296,6 +296,36 @@ export class MetricsTracker {
     });
   }
 
+  public recordBossPhasePatternSeen(
+    templateId: BattleTemplateId,
+    phaseId: string,
+    phaseLabel: string,
+    patternLabel: string,
+  ): void {
+    this.record('boss_phase_pattern_seen', {
+      templateId,
+      phaseId,
+      phaseLabel,
+      patternLabel,
+    });
+  }
+
+  public recordBossPhasePatternDuration(
+    templateId: BattleTemplateId,
+    phaseId: string,
+    phaseLabel: string,
+    patternLabel: string,
+    durationSec: number,
+  ): void {
+    this.record('boss_phase_pattern_duration', {
+      templateId,
+      phaseId,
+      phaseLabel,
+      patternLabel,
+      durationSec: Number(durationSec.toFixed(2)),
+    });
+  }
+
   public recordRedirectOffer(meta: {
     phase: PhaseId;
     source: 'upgrade' | 'event';

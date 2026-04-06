@@ -194,6 +194,7 @@ export class GameScene extends Phaser.Scene {
               state.battle.pressureTransitionSec > 0,
               state.battle.pressurePhaseIndex,
               state.battle.pressureSignatureLabel,
+              state.battle.pressurePatternLabel,
             )
           : undefined,
     };
@@ -278,6 +279,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderBattleEntities(battle: BattleState, accentColor: number): void {
+    this.renderPressurePatternOverlay(battle, accentColor);
+
     for (const orb of battle.experienceOrbs) {
       this.graphics.fillStyle(XP_ORB_FILL, 0.92);
       this.graphics.fillCircle(orb.x, orb.y, 5);
@@ -326,6 +329,11 @@ export class GameScene extends Phaser.Scene {
           const signatureRadius = enemy.radius + 15 + Math.sin(battle.elapsedSec * 7.5) * 2;
           this.graphics.lineStyle(3, BATTLE_TEMPLATES[battle.templateId].accent, signatureAlpha);
           this.graphics.strokeCircle(enemy.x, enemy.y, signatureRadius);
+        }
+        if (battle.pressurePatternFlashSec > 0) {
+          const patternAlpha = Math.min(0.26, 0.08 + battle.pressurePatternFlashSec * 0.28);
+          this.graphics.lineStyle(2, BATTLE_TEMPLATES[battle.templateId].accent, patternAlpha);
+          this.graphics.strokeCircle(enemy.x, enemy.y, enemy.radius + 20 + battle.pressurePatternFlashSec * 12);
         }
         if (enemy.guardSec > 0) {
           const guardAlpha = Math.min(0.45, 0.16 + enemy.guardSec * 0.04);
@@ -381,6 +389,43 @@ export class GameScene extends Phaser.Scene {
     this.graphics.strokeCircle(battle.playerX, battle.playerY, 16);
     this.graphics.fillStyle(battle.invulnerableSec > 0 ? 0x9cff97 : 0xe7f5ff, 1);
     this.graphics.fillCircle(battle.playerX, battle.playerY, 10);
+  }
+
+  private renderPressurePatternOverlay(battle: BattleState, accentColor: number): void {
+    if (!battle.pressurePatternMode || !battle.pressurePatternLabel) {
+      return;
+    }
+
+    const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
+
+    switch (battle.pressurePatternMode) {
+      case 'sideClamp':
+        this.graphics.fillStyle(accentColor, flashAlpha);
+        this.graphics.fillRect(28, 92, 30, this.scale.height - 184);
+        this.graphics.fillRect(this.scale.width - 58, 92, 30, this.scale.height - 184);
+        this.graphics.lineStyle(2, accentColor, flashAlpha * 1.4);
+        this.graphics.lineBetween(58, 120, 58, this.scale.height - 120);
+        this.graphics.lineBetween(this.scale.width - 58, 120, this.scale.width - 58, this.scale.height - 120);
+        return;
+      case 'laneCrush':
+        this.graphics.fillStyle(accentColor, flashAlpha);
+        this.graphics.fillRect(84, 28, this.scale.width - 168, 28);
+        this.graphics.fillRect(84, this.scale.height - 56, this.scale.width - 168, 28);
+        this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
+        this.graphics.lineBetween(112, 56, this.scale.width - 112, 56);
+        this.graphics.lineBetween(112, this.scale.height - 56, this.scale.width - 112, this.scale.height - 56);
+        return;
+      case 'crossfireWave':
+        this.graphics.lineStyle(2, accentColor, flashAlpha * 1.5);
+        this.graphics.lineBetween(82, 112, this.scale.width - 82, this.scale.height - 112);
+        this.graphics.lineBetween(82, this.scale.height - 112, this.scale.width - 82, 112);
+        this.graphics.lineStyle(1, accentColor, flashAlpha * 1.1);
+        this.graphics.lineBetween(132, 112, this.scale.width - 132, this.scale.height - 112);
+        this.graphics.lineBetween(132, this.scale.height - 112, this.scale.width - 132, 112);
+        return;
+      default:
+        return;
+    }
   }
 
   private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {

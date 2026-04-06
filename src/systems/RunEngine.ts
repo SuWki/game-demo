@@ -51,6 +51,7 @@ import type {
   ContentEffect,
   ContentTier,
   EnemyArchetypeId,
+  PressurePatternModeId,
   EventDefinition,
   EventOption,
   EliteBehaviorId,
@@ -349,6 +350,7 @@ export class RunEngine {
 
     this.updatePressurePhase(battle);
     this.updatePressureSignature(battle, dt);
+    this.updatePressurePattern(battle, dt);
     this.updatePlayerMovement(battle, dt);
     this.spawnEnemies(battle, dt);
     this.updateShooting(battle, dt);
@@ -475,6 +477,10 @@ export class RunEngine {
       pressureSignatureLabel: undefined,
       pressureSignatureSec: 0,
       pressureSignaturePulseSec: 0,
+      pressurePatternLabel: undefined,
+      pressurePatternMode: undefined,
+      pressurePatternPulseSec: 0,
+      pressurePatternFlashSec: 0,
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
@@ -549,6 +555,30 @@ export class RunEngine {
     }
   }
 
+  private clearPressurePattern(battle: BattleState): void {
+    battle.pressurePatternLabel = undefined;
+    battle.pressurePatternMode = undefined;
+    battle.pressurePatternPulseSec = 0;
+    battle.pressurePatternFlashSec = 0;
+  }
+
+  private activatePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
+    const pulseIntervalSec = phase.patternPulseIntervalSec ?? 0;
+    if (pulseIntervalSec <= 0 || !phase.patternLabel || !phase.patternMode) {
+      this.clearPressurePattern(battle);
+      return;
+    }
+
+    battle.pressurePatternLabel = phase.patternLabel;
+    battle.pressurePatternMode = phase.patternMode;
+    battle.pressurePatternPulseSec = Math.min(0.65, Math.max(0.2, pulseIntervalSec * 0.45));
+    battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.24);
+
+    if (battle.encounterType === 'boss') {
+      this.services.metrics.recordBossPhasePatternSeen(battle.templateId, phase.id, phase.label, phase.patternLabel);
+    }
+  }
+
   private updatePressureSignature(battle: BattleState, dt: number): void {
     if (battle.pressureSignatureSec <= 0) {
       battle.pressureSignatureLabel = undefined;
@@ -588,6 +618,72 @@ export class RunEngine {
     battle.pressureSignaturePulseSec = pulseIntervalSec;
   }
 
+  private updatePressurePattern(battle: BattleState, dt: number): void {
+    battle.pressurePatternFlashSec = Math.max(0, battle.pressurePatternFlashSec - dt);
+    const phase = this.getActivePressurePhase(battle);
+    if (!phase || !phase.patternLabel || !phase.patternMode || (phase.patternPulseIntervalSec ?? 0) <= 0) {
+      this.clearPressurePattern(battle);
+      return;
+    }
+
+    if (battle.pressurePatternLabel !== phase.patternLabel || battle.pressurePatternMode !== phase.patternMode) {
+      this.activatePressurePattern(battle, phase);
+    }
+
+    battle.pressurePatternPulseSec = Math.max(0, battle.pressurePatternPulseSec - dt);
+    if (battle.pressurePatternPulseSec > 0) {
+      return;
+    }
+
+    this.executePressurePattern(battle, phase);
+    battle.pressurePatternPulseSec = phase.patternPulseIntervalSec ?? 0;
+    battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.48);
+  }
+
+  private executePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
+    switch (phase.patternMode) {
+      case 'laneCrush':
+      case 'sideClamp':
+        this.spawnPatternEscortWave(
+          battle,
+          phase.patternEscortBurst ?? 0,
+          phase.patternMode,
+          phase.patternEscortArchetype,
+        );
+        return;
+      case 'crossfireWave':
+        this.firePressureVolley(battle, phase.patternVolleyCount ?? 0, {
+          spreadRad: phase.patternVolleySpreadRad ?? 0.2,
+          shotsPerShooter: phase.patternVolleyShotsPerShooter ?? 2,
+        });
+        return;
+      default:
+        return;
+    }
+  }
+
+  private recordBossPhaseMetrics(
+    battle: BattleState,
+    phase: BattlePressurePhaseDefinition,
+    durationSec: number,
+  ): void {
+    this.services.metrics.recordBossPhaseDuration(
+      battle.templateId,
+      phase.id,
+      phase.label,
+      durationSec,
+    );
+    if (phase.patternLabel) {
+      this.services.metrics.recordBossPhasePatternDuration(
+        battle.templateId,
+        phase.id,
+        phase.label,
+        phase.patternLabel,
+        durationSec,
+      );
+    }
+  }
+
   private finalizeBossPressureMetrics(battle: BattleState): void {
     if (battle.encounterType !== 'boss') {
       return;
@@ -598,12 +694,7 @@ export class RunEngine {
       return;
     }
 
-    this.services.metrics.recordBossPhaseDuration(
-      battle.templateId,
-      activePhase.id,
-      activePhase.label,
-      battle.pressurePhaseElapsedSec,
-    );
+    this.recordBossPhaseMetrics(battle, activePhase, battle.pressurePhaseElapsedSec);
   }
 
   private updatePressurePhase(battle: BattleState): void {
@@ -638,12 +729,7 @@ export class RunEngine {
     }
 
     if (battle.encounterType === 'boss' && currentPhase) {
-      this.services.metrics.recordBossPhaseDuration(
-        battle.templateId,
-        currentPhase.id,
-        currentPhase.label,
-        battle.pressurePhaseElapsedSec,
-      );
+      this.recordBossPhaseMetrics(battle, currentPhase, battle.pressurePhaseElapsedSec);
     }
 
     battle.pressurePhaseIndex = nextIndex;
@@ -668,6 +754,7 @@ export class RunEngine {
 
     this.spawnPhaseEscortBurst(battle, nextPhase.entryEscortBurst ?? 0);
     this.activatePressureSignature(battle, nextPhase);
+    this.activatePressurePattern(battle, nextPhase);
     if (battle.encounterType === 'boss') {
       this.services.metrics.recordBossPhaseEntered(battle.templateId, nextPhase.id, nextPhase.label);
     }
@@ -1218,6 +1305,81 @@ export class RunEngine {
     this.spawnEliteSupportEnemies(battle, allowedCount);
   }
 
+  private spawnPatternEscortWave(
+    battle: BattleState,
+    requestedCount: number,
+    mode: PressurePatternModeId,
+    archetypeOverride?: EnemyArchetypeId,
+  ): void {
+    if (requestedCount <= 0 || !battle.eliteAlive) {
+      return;
+    }
+
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    if (!template.eliteRule || (template.eliteRule.escortBatch ?? 0) <= 0) {
+      return;
+    }
+
+    const escortMax = this.getEliteEscortMax(template, battle);
+    const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort').length;
+    const allowedCount = Math.min(requestedCount, Math.max(0, escortMax - currentEscorts));
+    if (allowedCount <= 0) {
+      return;
+    }
+
+    const battleIndex = this.getCurrentBattleIndex();
+    const escortHp = Math.round(this.getRegularEnemyHp(template, battleIndex, this.state.phase, battle.difficultyScale) * 0.78);
+    const escortSpeed = Math.round(this.getRegularEnemySpeed(template, battleIndex, this.state.phase, battle.difficultyScale, 1.1));
+    const escortDamage = Math.max(6, Math.round(this.getContactDamage(template, battleIndex, this.state.phase, battle.difficultyScale, 0.88)));
+
+    for (let index = 0; index < allowedCount; index += 1) {
+      const position = this.getPatternEscortSpawnPosition(battle, mode, index);
+      battle.enemies.push(
+        this.createArchetypedEnemy(
+          battle,
+          template,
+          'escort',
+          position.x,
+          position.y,
+          {
+            hp: escortHp,
+            speed: escortSpeed,
+            damage: escortDamage,
+            radius: 12 + (index % 2),
+            archetype: archetypeOverride,
+          },
+        ),
+      );
+    }
+  }
+
+  private getPatternEscortSpawnPosition(
+    battle: BattleState,
+    mode: PressurePatternModeId,
+    index: number,
+  ): { x: number; y: number } {
+    const margin = 44;
+    const cursor = battle.spawnCursor++;
+    const sideOffset = 46 + Math.floor(index / 2) * 34;
+    const jitter = ((cursor % 3) - 1) * 12;
+
+    if (mode === 'laneCrush') {
+      const fromTop = index % 2 === 0;
+      const x = clamp(battle.playerX + (index % 4 < 2 ? -sideOffset : sideOffset) + jitter, margin, ARENA_WIDTH - margin);
+      return {
+        x,
+        y: fromTop ? -28 : ARENA_HEIGHT + 28,
+      };
+    }
+
+    const fromLeft = index % 2 === 0;
+    const y = clamp(battle.playerY + (index % 4 < 2 ? -sideOffset : sideOffset) + jitter, margin, ARENA_HEIGHT - margin);
+    return {
+      x: fromLeft ? -28 : ARENA_WIDTH + 28,
+      y,
+    };
+  }
+
   private getContactDamage(
     template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
     round: number,
@@ -1652,8 +1814,9 @@ export class RunEngine {
     projectileSpeed: number,
     damage: number,
     radius: number,
+    angleOverride?: number,
   ): void {
-    const shotAngle = Math.atan2(battle.playerY - y, battle.playerX - x);
+    const shotAngle = angleOverride ?? Math.atan2(battle.playerY - y, battle.playerX - x);
     battle.enemyProjectiles.push({
       id: battle.nextEnemyProjectileId++,
       x,
@@ -1666,7 +1829,14 @@ export class RunEngine {
     });
   }
 
-  private firePressureVolley(battle: BattleState, requestedShooterCount: number): void {
+  private firePressureVolley(
+    battle: BattleState,
+    requestedShooterCount: number,
+    options?: {
+      spreadRad?: number;
+      shotsPerShooter?: number;
+    },
+  ): void {
     if (requestedShooterCount <= 0 || !battle.eliteAlive) {
       return;
     }
@@ -1681,6 +1851,9 @@ export class RunEngine {
       });
     const shooters = eliteEnemy ? [eliteEnemy, ...rangedEnemies] : rangedEnemies;
 
+    const spreadRad = options?.spreadRad ?? 0;
+    const shotsPerShooter = Math.max(1, options?.shotsPerShooter ?? 1);
+
     for (const shooter of shooters.slice(0, requestedShooterCount)) {
       const archetype = getEnemyArchetype(shooter.archetype);
       const pressurePhase = this.getActivePressurePhase(battle);
@@ -1688,14 +1861,20 @@ export class RunEngine {
         (shooter.elite ? 244 : archetype.projectileSpeed ?? 220) * (pressurePhase?.rangedProjectileSpeedMultiplier ?? 1);
       const projectileDamageMultiplier = shooter.elite ? 0.88 : archetype.projectileDamageMultiplier ?? 0.76;
       const projectileRadius = shooter.elite ? Math.max(6, shooter.radius * 0.26) : archetype.projectileRadius ?? 5;
-      this.spawnEnemyProjectile(
-        battle,
-        shooter.x,
-        shooter.y,
-        projectileSpeed,
-        Math.max(1, Math.round(shooter.contactDamage * projectileDamageMultiplier)),
-        projectileRadius,
-      );
+      const baseAngle = Math.atan2(battle.playerY - shooter.y, battle.playerX - shooter.x);
+      const centerIndex = (shotsPerShooter - 1) / 2;
+      for (let shotIndex = 0; shotIndex < shotsPerShooter; shotIndex += 1) {
+        const angleOffset = shotsPerShooter === 1 ? 0 : (shotIndex - centerIndex) * spreadRad;
+        this.spawnEnemyProjectile(
+          battle,
+          shooter.x,
+          shooter.y,
+          projectileSpeed,
+          Math.max(1, Math.round(shooter.contactDamage * projectileDamageMultiplier)),
+          projectileRadius,
+          baseAngle + angleOffset,
+        );
+      }
       if (!shooter.elite) {
         shooter.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle);
       }

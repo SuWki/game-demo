@@ -415,3 +415,43 @@ route window 当前的约束是：
 - 本轮的重点是：
   - `phase identity + signature window`
   - 而不是 `phase identity + 更多血量`
+
+## 2026-04-06 Boss Phase Pattern Pulse 补充
+本轮新增的是 `phase pattern pulse`，不是新的常驻数值乘区。
+
+### 激活规则
+- 若当前 `pressurePhase` 声明了：
+  - `patternLabel`
+  - `patternMode`
+  - `patternPulseIntervalSec > 0`
+- 则 battle 会进入该 phase 的持续 pattern 模式：
+  - `pressurePatternLabel = patternLabel`
+  - `pressurePatternMode = patternMode`
+  - `pressurePatternPulseSec = min(0.65, patternPulseIntervalSec * 0.45)`
+
+### 脉冲规则
+- 每帧更新：
+  - `pressurePatternPulseSec = max(0, pressurePatternPulseSec - dt)`
+- 当 `pressurePatternPulseSec <= 0` 时，兑现一次该 phase 的 pattern：
+  - `laneCrush` / `sideClamp`
+    - 按 `patternEscortBurst` 从 arena 边缘补入一批定向 escort 波
+  - `crossfireWave`
+    - 按 `patternVolleyCount` 选择 shooter
+    - 每个 shooter 以 `patternVolleyShotsPerShooter` 和 `patternVolleySpreadRad` 发出固定间隔齐射
+- 每次兑现后：
+  - `pressurePatternPulseSec = patternPulseIntervalSec`
+
+### 空间压迫口径
+- `laneCrush`
+  - 通过上/下沿来波，让玩家更容易被压进纵向换位
+- `sideClamp`
+  - 通过左/右侧来波，让玩家更容易被压进横向夹封
+- `crossfireWave`
+  - 通过固定周期交叉齐射，让玩家读到“压迫波 -> 短喘息 -> 下一波”
+
+### 当前取舍
+- 这轮没有补新的 Boss AI 树。
+- 这轮没有加独立安全区系统或场地机关。
+- 当前做的是：
+  - 用现有护卫刷新 / 敌方投射物 / 行为谱系
+  - 兑现更稳定的 `phase 内空间压迫 / 节奏模式`

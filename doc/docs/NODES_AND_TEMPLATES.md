@@ -308,3 +308,37 @@
 ### 当前边界
 - 这轮做的是 `Boss phase signature`，不是完整 Boss pattern 系统。
 - `final battle` 继续由 Boss 模板池承载；elite 仍只保留轻量 phase 压力，不共享 Boss signature carrier。
+
+## 2026-04-06 Boss Phase Pattern Addendum
+### phase pattern carrier
+- `pressurePhases` 现在额外允许挂接持续型 pattern 字段：
+  - `patternLabel`
+  - `patternMode`
+  - `patternPulseIntervalSec`
+  - `patternEscortBurst`
+  - `patternEscortArchetype`
+  - `patternVolleyCount`
+  - `patternVolleySpreadRad`
+  - `patternVolleyShotsPerShooter`
+- 这层 carrier 的含义是：
+  - phase 进入后，不只是有一个短时 signature
+  - phase 本体还能持续兑现某种稳定的空间压迫或节奏模式
+
+### 当前 Boss pattern 映射
+- `boss-hunt / close-in`
+  - `patternLabel = 纵压驱进`
+  - `patternMode = laneCrush`
+  - 主要兑现：上/下沿的厚体压进波
+- `boss-lockdown / pin-down`
+  - `patternLabel = 侧翼夹封`
+  - `patternMode = sideClamp`
+  - 主要兑现：左/右侧的高速护卫夹封波
+- `boss-bastion / crossfire`
+  - `patternLabel = 交叉火线`
+  - `patternMode = crossfireWave`
+  - 主要兑现：固定周期的交叉齐射
+
+### 当前取舍
+- `signature` 继续负责“phase 切了”的短时确认。
+- `pattern` 负责“这一阶段持续怎么压你”。
+- 这轮仍没有给 elite 增加同层级的 pattern 载体，避免 final battle 再次掉回 elite-family 同层语义。

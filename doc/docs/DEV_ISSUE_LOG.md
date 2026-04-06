@@ -1956,3 +1956,104 @@
   - 现有行为谱系
   之上，不是独立 Boss pattern 系统。
 - 如果后续玩家 burst 与机动继续上涨，下一轮更可能需要补“phase 内空间压迫 / 节奏模式”的更强签名，而不是继续沿旧行为谱系微调参数。
+
+## [0.9v 读数 / 压力校准] Boss phase 内空间压迫 / 节奏模式强化
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标是 `Boss phase 内空间压迫 / 节奏模式强化`，不是重写系统，也不是继续堆血。
+
+### 盘点结论
+- 当前 Boss phase 的主要压力来源分别是：
+  - `boss-hunt`
+    - `接敌`：frontline 顶压 + brute 主群 + guard
+    - `逼近`：screened + preferredDistance 收紧 + 护卫脉冲
+    - `收束`：frontline + 更快刷怪 + 更高 escort cap
+  - `boss-lockdown`
+    - `接敌`：kiting + skirmisher/ranged 牵制
+    - `封位`：screened + escort 批次提升 + ranged 射速收紧
+    - `锁场`：frontline + 更快 spawn + 更高远程压迫
+  - `boss-bastion`
+    - `接敌`：screened + ranged/escort 火线
+    - `交火`：summoner + escort 增量 + ranged 射速提升
+    - `火线收束`：kiting + 更高 projectile speed + 更快射击
+- 当前最薄弱的点是：
+  - phase 身份已经存在，但 phase 内持续模式还不够稳。
+  - `boss-hunt / 逼近`、`boss-lockdown / 封位`、`boss-bastion / 交火` 之前仍主要靠：
+    - 护卫刷新
+    - 敌方弹道
+    - 旧行为谱系变体
+    - 参数加压
+    叠出来，而不是一个玩家能稳定读出的压迫模式。
+- 本轮确定的切入点是：
+  - 保留已有 `signature window` 做切段确认
+  - 再给 `pressurePhases` 增加持续型 `pattern pulse`
+  - 用边缘来波 / 交叉齐射把 phase 内模式做实
+
+### 本轮实现
+- `src/game/types.ts`
+  - `BattlePressurePhaseDefinition` 新增：
+    - `patternLabel`
+    - `patternMode`
+    - `patternPulseIntervalSec`
+    - `patternEscortBurst`
+    - `patternEscortArchetype`
+    - `patternVolleyCount`
+    - `patternVolleySpreadRad`
+    - `patternVolleyShotsPerShooter`
+  - `BattleState` 新增：
+    - `pressurePatternLabel`
+    - `pressurePatternMode`
+    - `pressurePatternPulseSec`
+    - `pressurePatternFlashSec`
+- `src/data/battleTemplates.ts`
+  - 为三套 Boss 补入持续型 pattern：
+    - `boss-hunt / close-in -> 纵压驱进(laneCrush)`
+    - `boss-lockdown / pin-down -> 侧翼夹封(sideClamp)`
+    - `boss-bastion / crossfire -> 交叉火线(crossfireWave)`
+  - HUD 子读数会额外显示 `模式 {patternLabel}`。
+- `src/systems/RunEngine.ts`
+  - 新增 `activatePressurePattern(...) / updatePressurePattern(...) / executePressurePattern(...)`。
+  - `laneCrush / sideClamp` 会从 arena 边缘补入定向 escort 波。
+  - `crossfireWave` 会按固定周期触发 spread volley。
+  - `signature` 继续负责 phase enter 的短时确认；`pattern` 负责 phase 内持续模式。
+- `src/scenes/GameScene.ts`
+  - 新增轻量 pattern overlay：
+    - `sideClamp`：侧边压迫条
+    - `laneCrush`：上下压迫条
+    - `crossfireWave`：交叉火线提示
+  - Boss 主核在 pattern pulse 时会出现额外外圈闪动，帮助确认节奏波到来。
+- `src/systems/MetricsTracker.ts`
+  - 新增：
+    - `recordBossPhasePatternSeen(...)`
+    - `recordBossPhasePatternDuration(...)`
+
+### 验证
+- `npm run build` 通过。
+- 本地 `tsx` pattern 抽样确认：
+  - `boss-hunt / 逼近 / 纵压驱进`
+    - `escortGain = 2`
+    - `pulseCount = 3`
+  - `boss-lockdown / 封位 / 侧翼夹封`
+    - `escortGain = 4`
+    - `pulseCount = 2`
+  - `boss-bastion / 交火 / 交叉火线`
+    - `projectileGain = 10`
+    - `pulseCount = 3`
+- 浏览器全链路验证通过：
+  - `开始 -> 节点推进 -> anomaly -> boss -> 结算 -> replay` 可跑通
+  - `anomalyPanelSeen = true`
+  - `bossNodeSeen = true`
+  - `bossBattleSeen = true`
+  - `battleHudSeen = true`
+  - `replayStarted = true`
+  - `consoleErrors = []`
+  - 导出 summary 中已能看到：
+    - `boss_phase_pattern_duration`
+    - `run_finished.payload.finalNodeType = boss`
+
+### 当前风险
+- Boss phase 内模式已经比上轮稳定，但当前仍主要复用：
+  - 护卫刷新
+  - 敌方投射物
+  - 既有行为谱系
+- 如果后续玩家 burst 与机动继续上涨，下一步更可能需要补的是更明确的场地安全区/危险区雕刻，而不是继续加血或加护卫数量。

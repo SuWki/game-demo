@@ -412,6 +412,11 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           signatureDurationSec: 2.8,
           signaturePulseIntervalSec: 1.35,
           signatureEscortBurst: 1,
+          patternLabel: '纵压驱进',
+          patternMode: 'laneCrush',
+          patternPulseIntervalSec: 1.65,
+          patternEscortBurst: 2,
+          patternEscortArchetype: 'brute',
           triggerHpRatio: 0.74,
           triggerRemainingSec: 24,
           minResidenceSec: 4.2,
@@ -502,6 +507,11 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           signatureDurationSec: 3.2,
           signaturePulseIntervalSec: 1.25,
           signatureEscortBurst: 1,
+          patternLabel: '侧翼夹封',
+          patternMode: 'sideClamp',
+          patternPulseIntervalSec: 1.45,
+          patternEscortBurst: 2,
+          patternEscortArchetype: 'skirmisher',
           triggerHpRatio: 0.76,
           triggerRemainingSec: 24,
           minResidenceSec: 4.4,
@@ -594,6 +604,12 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           signatureDurationSec: 3.4,
           signaturePulseIntervalSec: 1.15,
           signatureVolleyCount: 3,
+          patternLabel: '交叉火线',
+          patternMode: 'crossfireWave',
+          patternPulseIntervalSec: 1.4,
+          patternVolleyCount: 2,
+          patternVolleySpreadRad: 0.22,
+          patternVolleyShotsPerShooter: 2,
           triggerHpRatio: 0.72,
           triggerRemainingSec: 25,
           minResidenceSec: 4.4,
@@ -802,6 +818,7 @@ export function getBattleEnemyReadout(
   emphasizeTransition = false,
   pressurePhaseIndex = -1,
   pressureSignatureLabel?: string,
+  pressurePatternLabel?: string,
 ): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
@@ -815,6 +832,10 @@ export function getBattleEnemyReadout(
 
   if (pressureSignatureLabel) {
     parts.push(`压迫 ${pressureSignatureLabel}`);
+  }
+
+  if (pressurePatternLabel) {
+    parts.push(`模式 ${pressurePatternLabel}`);
   }
 
   if (activeBehavior) {

@@ -155,3 +155,34 @@
   - `window.__pilotMetrics`
   - `window.__exportPilotMetrics()`
   - `localStorage: commercial_pilot_metrics_v1`
+
+## 2026-04-06 Boss Phase Pattern Observability Addendum
+- 本轮继续沿用现有 metrics tracker，补了两个低成本 pattern 观测事件：
+  - `boss_phase_pattern_seen`
+  - `boss_phase_pattern_duration`
+
+### 事件说明
+- `boss_phase_pattern_seen`
+  - 触发时机：Boss 进入一个声明了 `patternLabel` 的 `pressurePhase`
+  - payload：
+    - `templateId`
+    - `phaseId`
+    - `phaseLabel`
+    - `patternLabel`
+- `boss_phase_pattern_duration`
+  - 触发时机：
+    - Boss 从当前 pattern phase 切到下一段时
+    - 或 Boss 战在当前 pattern phase 内结束时
+  - payload：
+    - `templateId`
+    - `phaseId`
+    - `phaseLabel`
+    - `patternLabel`
+    - `durationSec`
+
+### 为什么没有补 `boss_space_pressure_window`
+- 当前每个 pattern pulse 都可能是低频重复事件；如果直接逐 pulse 落事件，导出噪音会明显上升。
+- 本轮先保守保留：
+  - `pattern seen`
+  - `pattern duration`
+  这两层等价观测，用来判断 phase 模式是否真正存在。
