@@ -398,7 +398,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
-    if (this.renderPressureSafeWindowOverlay(battle, accentColor, flashAlpha)) {
+    const renderedSafeWindow = this.renderPressureSafeWindowOverlay(battle, accentColor, flashAlpha);
+    if (renderedSafeWindow && battle.pressureSafeWindowAxis !== 'pocket') {
       return;
     }
 
@@ -451,6 +452,63 @@ export class GameScene extends Phaser.Scene {
     const dangerAlpha = Math.min(0.16, 0.05 + battle.pressureSafeWindowSec * 0.06 + flashAlpha * 0.95);
     const safeTint = 0x82ffca;
     const dangerTint = 0xff6d62;
+
+    if (battle.pressureSafeWindowAxis === 'pocket') {
+      if (battle.pressureSafeWindowSecondarySpan <= 0) {
+        return false;
+      }
+
+      const safeStartX = Phaser.Math.Clamp(
+        battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5,
+        leftInset,
+        this.scale.width - rightInset,
+      );
+      const safeEndX = Phaser.Math.Clamp(
+        battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5,
+        leftInset,
+        this.scale.width - rightInset,
+      );
+      const safeStartY = Phaser.Math.Clamp(
+        battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5,
+        topInset,
+        this.scale.height - bottomInset,
+      );
+      const safeEndY = Phaser.Math.Clamp(
+        battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5,
+        topInset,
+        this.scale.height - bottomInset,
+      );
+      const safeWidth = Math.max(28, safeEndX - safeStartX);
+      const safeHeight = Math.max(24, safeEndY - safeStartY);
+
+      if (safeStartY > topInset) {
+        this.graphics.fillStyle(dangerTint, dangerAlpha);
+        this.graphics.fillRect(leftInset, topInset, contentWidth, safeStartY - topInset);
+      }
+      if (safeEndY < this.scale.height - bottomInset) {
+        this.graphics.fillStyle(dangerTint, dangerAlpha);
+        this.graphics.fillRect(leftInset, safeEndY, contentWidth, this.scale.height - bottomInset - safeEndY);
+      }
+      if (safeStartX > leftInset) {
+        this.graphics.fillStyle(dangerTint, dangerAlpha * 0.92);
+        this.graphics.fillRect(leftInset, safeStartY, safeStartX - leftInset, safeHeight);
+      }
+      if (safeEndX < this.scale.width - rightInset) {
+        this.graphics.fillStyle(dangerTint, dangerAlpha * 0.92);
+        this.graphics.fillRect(safeEndX, safeStartY, this.scale.width - rightInset - safeEndX, safeHeight);
+      }
+
+      this.graphics.fillStyle(safeTint, safeWindowAlpha * 0.58);
+      this.graphics.fillRect(safeStartX, safeStartY, safeWidth, safeHeight);
+      this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.36);
+      this.graphics.strokeRect(safeStartX, safeStartY, safeWidth, safeHeight);
+      this.graphics.lineStyle(2, accentColor, flashAlpha * 1.3);
+      this.graphics.lineBetween(safeStartX, safeStartY, safeStartX, safeEndY);
+      this.graphics.lineBetween(safeEndX, safeStartY, safeEndX, safeEndY);
+      this.graphics.lineBetween(safeStartX, safeStartY, safeEndX, safeStartY);
+      this.graphics.lineBetween(safeStartX, safeEndY, safeEndX, safeEndY);
+      return true;
+    }
 
     if (battle.pressureSafeWindowAxis === 'vertical') {
       const safeStart = Phaser.Math.Clamp(

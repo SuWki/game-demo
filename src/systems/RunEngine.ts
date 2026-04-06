@@ -486,6 +486,8 @@ export class RunEngine {
       pressureSafeWindowAxis: undefined,
       pressureSafeWindowCenter: CENTER_X,
       pressureSafeWindowSpan: 0,
+      pressureSafeWindowSecondaryCenter: CENTER_Y,
+      pressureSafeWindowSecondarySpan: 0,
       pressureSafeWindowSec: 0,
       nextEnemyId: 0,
       nextBulletId: 0,
@@ -565,6 +567,8 @@ export class RunEngine {
     battle.pressureSafeWindowAxis = undefined;
     battle.pressureSafeWindowCenter = CENTER_X;
     battle.pressureSafeWindowSpan = 0;
+    battle.pressureSafeWindowSecondaryCenter = CENTER_Y;
+    battle.pressureSafeWindowSecondarySpan = 0;
     battle.pressureSafeWindowSec = 0;
   }
 
@@ -685,7 +689,8 @@ export class RunEngine {
         );
         return;
       case 'crossfireWave':
-        this.clearPressureSafeWindow(battle);
+        this.openPressureSafeWindow(battle, phase, 'pocket');
+        this.spawnPressurePocketShots(battle, phase);
         this.firePressureVolley(battle, phase.patternVolleyCount ?? 0, {
           spreadRad: phase.patternVolleySpreadRad ?? 0.2,
           shotsPerShooter: phase.patternVolleyShotsPerShooter ?? 2,
@@ -701,6 +706,42 @@ export class RunEngine {
     phase: BattlePressurePhaseDefinition,
     axis: PressureSafeWindowAxis,
   ): void {
+    if (axis === 'pocket') {
+      const safeWindowSpan = clamp(phase.patternSafeWindowSize ?? 184, 152, ARENA_WIDTH * 0.36);
+      const safeWindowSecondarySpan = clamp(
+        phase.patternSafeWindowSecondarySize ?? safeWindowSpan * 0.68,
+        108,
+        ARENA_HEIGHT * 0.34,
+      );
+      const safeWindowCenter = this.choosePressureSafePocketCenter(
+        battle,
+        safeWindowSpan,
+        safeWindowSecondarySpan,
+      );
+      const safeWindowSec = clamp(phase.patternSafeWindowLingerSec ?? 1.08, 0.78, 1.6);
+
+      battle.pressureSafeWindowAxis = axis;
+      battle.pressureSafeWindowCenter = safeWindowCenter.x;
+      battle.pressureSafeWindowSpan = safeWindowSpan;
+      battle.pressureSafeWindowSecondaryCenter = safeWindowCenter.y;
+      battle.pressureSafeWindowSecondarySpan = safeWindowSecondarySpan;
+      battle.pressureSafeWindowSec = safeWindowSec;
+
+      if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
+        this.services.metrics.recordBossSafeWindowSeen(
+          battle.templateId,
+          phase.id,
+          phase.label,
+          phase.patternLabel ?? phase.label,
+          axis,
+          safeWindowSpan,
+          safeWindowSec,
+          safeWindowSecondarySpan,
+        );
+      }
+      return;
+    }
+
     const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
     const minimumSpan = axis === 'vertical' ? 164 : 132;
     const maximumSpan = dimension * 0.46;
@@ -719,6 +760,8 @@ export class RunEngine {
     battle.pressureSafeWindowAxis = axis;
     battle.pressureSafeWindowCenter = safeWindowCenter;
     battle.pressureSafeWindowSpan = safeWindowSpan;
+    battle.pressureSafeWindowSecondaryCenter = axis === 'vertical' ? CENTER_Y : CENTER_X;
+    battle.pressureSafeWindowSecondarySpan = 0;
     battle.pressureSafeWindowSec = safeWindowSec;
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
@@ -749,20 +792,37 @@ export class RunEngine {
     return clamp(blendedCenter, margin + span * 0.5, dimension - margin - span * 0.5);
   }
 
-  private spawnPressureWallShots(
+  private choosePressureSafePocketCenter(
     battle: BattleState,
-    phase: BattlePressurePhaseDefinition,
-    axis: PressureSafeWindowAxis,
-  ): void {
-    if (battle.pressureSafeWindowSpan <= 0) {
-      return;
-    }
+    spanX: number,
+    spanY: number,
+  ): { x: number; y: number } {
+    const pocketAnchors = [
+      { x: 0.34, y: 0.36 },
+      { x: 0.66, y: 0.36 },
+      { x: 0.64, y: 0.66 },
+      { x: 0.36, y: 0.66 },
+      { x: 0.5, y: 0.5 },
+    ];
+    const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1) % pocketAnchors.length;
+    const anchor = pocketAnchors[pulseIndex];
+    const anchorX = ARENA_WIDTH * anchor.x;
+    const anchorY = ARENA_HEIGHT * anchor.y;
+    const blendedX = anchorX * 0.78 + battle.playerX * 0.22;
+    const blendedY = anchorY * 0.78 + battle.playerY * 0.22;
+    return {
+      x: clamp(blendedX, 108 + spanX * 0.5, ARENA_WIDTH - 108 - spanX * 0.5),
+      y: clamp(blendedY, 92 + spanY * 0.5, ARENA_HEIGHT - 92 - spanY * 0.5),
+    };
+  }
 
-    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
-    const margin = axis === 'vertical' ? 72 : 58;
-    const shotSlots = Math.max(4, phase.patternWallShotCount ?? (axis === 'vertical' ? 7 : 6));
-    const safeStart = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
-    const safeEnd = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
+  private collectPressureSlotPositions(
+    dimension: number,
+    margin: number,
+    shotSlots: number,
+    safeStart: number,
+    safeEnd: number,
+  ): number[] {
     const slotPositions: number[] = [];
 
     for (let index = 0; index < shotSlots; index += 1) {
@@ -781,20 +841,47 @@ export class RunEngine {
       );
     }
 
+    return slotPositions;
+  }
+
+  private getPressureProjectileStats(
+    battle: BattleState,
+    damageMultiplier: number,
+  ): { projectileSpeed: number; projectileDamage: number } {
     const currentPhase = this.getActivePressurePhase(battle);
-    const projectileSpeed = 252 * (currentPhase?.rangedProjectileSpeedMultiplier ?? 1);
-    const projectileDamage = Math.max(
-      6,
-      Math.round(
-        this.getContactDamage(
-          BATTLE_TEMPLATES[battle.templateId],
-          this.getCurrentBattleIndex(),
-          this.state.phase,
-          battle.difficultyScale,
-          0.7,
+    return {
+      projectileSpeed: 252 * (currentPhase?.rangedProjectileSpeedMultiplier ?? 1),
+      projectileDamage: Math.max(
+        6,
+        Math.round(
+          this.getContactDamage(
+            BATTLE_TEMPLATES[battle.templateId],
+            this.getCurrentBattleIndex(),
+            this.state.phase,
+            battle.difficultyScale,
+            damageMultiplier,
+          ),
         ),
       ),
-    );
+    };
+  }
+
+  private spawnPressureWallShots(
+    battle: BattleState,
+    phase: BattlePressurePhaseDefinition,
+    axis: PressureSafeWindowAxis,
+  ): void {
+    if (battle.pressureSafeWindowSpan <= 0) {
+      return;
+    }
+
+    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const margin = axis === 'vertical' ? 72 : 58;
+    const shotSlots = Math.max(4, phase.patternWallShotCount ?? (axis === 'vertical' ? 7 : 6));
+    const safeStart = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
+    const safeEnd = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
+    const slotPositions = this.collectPressureSlotPositions(dimension, margin, shotSlots, safeStart, safeEnd);
+    const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, 0.7);
 
     for (const position of slotPositions) {
       if (axis === 'vertical') {
@@ -805,6 +892,32 @@ export class RunEngine {
 
       this.spawnEnemyProjectile(battle, -22, position, projectileSpeed, projectileDamage, 6, 0);
       this.spawnEnemyProjectile(battle, ARENA_WIDTH + 22, position, projectileSpeed, projectileDamage, 6, Math.PI);
+    }
+  }
+
+  private spawnPressurePocketShots(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
+    if (battle.pressureSafeWindowAxis !== 'pocket' || battle.pressureSafeWindowSpan <= 0) {
+      return;
+    }
+
+    const safeStartX = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
+    const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
+    const safeStartY = battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5;
+    const safeEndY = battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5;
+    const horizontalSlotCount = Math.max(4, phase.patternWallShotCount ?? 5);
+    const verticalSlotCount = Math.max(4, (phase.patternWallShotCount ?? 5) - 1);
+    const xSlots = this.collectPressureSlotPositions(ARENA_WIDTH, 84, horizontalSlotCount, safeStartX, safeEndX);
+    const ySlots = this.collectPressureSlotPositions(ARENA_HEIGHT, 68, verticalSlotCount, safeStartY, safeEndY);
+    const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, 0.68);
+
+    for (const x of xSlots) {
+      this.spawnEnemyProjectile(battle, x, -24, projectileSpeed, projectileDamage, 6, Math.PI / 2);
+      this.spawnEnemyProjectile(battle, x, ARENA_HEIGHT + 24, projectileSpeed, projectileDamage, 6, -Math.PI / 2);
+    }
+
+    for (const y of ySlots) {
+      this.spawnEnemyProjectile(battle, -24, y, projectileSpeed, projectileDamage, 6, 0);
+      this.spawnEnemyProjectile(battle, ARENA_WIDTH + 24, y, projectileSpeed, projectileDamage, 6, Math.PI);
     }
   }
 

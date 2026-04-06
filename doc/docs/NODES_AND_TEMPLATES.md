@@ -382,3 +382,26 @@
   - escort wave
   - pattern pulse
 - 这意味着 Boss 的空间结构已经比上轮明确，但还不是完整场地机制树。
+## 2026-04-06 Boss 远程空间口袋补充
+- `boss-bastion / crossfire / 交叉火线` 现在不再只是“固定齐射 + 护卫刷新”的远程 phase。
+- 当前远程 phase 的 carrier 继续复用：
+  - `pressurePhases`
+  - `pattern pulse`
+  - `safe-window`
+- 但 `crossfire` 现在新增了 `pocket` 语义：
+  - `patternSafeWindowSize = 184`
+  - `patternSafeWindowSecondarySize = 126`
+  - `patternSafeWindowLingerSec = 1.16`
+  - `patternWallShotCount = 5`
+- 这意味着 `boss-bastion` 的远程段现在会：
+  - 生成一个短时安全袋
+  - 用上下左右四向火线把口袋外压成危险区
+  - 保留低量齐射确认“远程火线”身份
+- 当前三种 Boss phase 的空间口径因此变成：
+  - `boss-hunt / close-in`：纵向安全走廊
+  - `boss-lockdown / pin-down`：横向安全走廊
+  - `boss-bastion / crossfire`：矩形安全口袋
+- ownership 边界保持不变：
+  - 这仍是 Boss template 内的轻量 carrier 扩展
+  - 没有把 elite-family 一并升级到同层远程 pocket 语义
+  - `final battle` 仍通过 Boss template pool 收尾，不回退成普通 elite-family 模板近似

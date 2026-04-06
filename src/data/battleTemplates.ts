@@ -613,10 +613,14 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           signatureVolleyCount: 3,
           patternLabel: '交叉火线',
           patternMode: 'crossfireWave',
-          patternPulseIntervalSec: 1.4,
-          patternVolleyCount: 2,
-          patternVolleySpreadRad: 0.22,
+          patternPulseIntervalSec: 1.52,
+          patternVolleyCount: 1,
+          patternVolleySpreadRad: 0.18,
           patternVolleyShotsPerShooter: 2,
+          patternSafeWindowSize: 184,
+          patternSafeWindowSecondarySize: 126,
+          patternSafeWindowLingerSec: 1.16,
+          patternWallShotCount: 5,
           triggerHpRatio: 0.72,
           triggerRemainingSec: 25,
           minResidenceSec: 4.4,
@@ -848,6 +852,10 @@ export function getBattleEnemyReadout(
 
   if (pressureSafeWindowAxis) {
     parts.push(`安全窗 ${pressureSafeWindowAxis === 'vertical' ? '纵向' : '横向'}`);
+  }
+
+  if (pressureSafeWindowAxis === 'pocket') {
+    parts[parts.length - 1] = '安全袋';
   }
 
   if (activeBehavior) {

@@ -1,4 +1,86 @@
 # DEV ISSUE LOG
+## [0.9v 读数 / 压力校准] 远程 phase 空间口袋强化 + 真实玩家样本验证
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标是给远程 Boss phase 补稳定空间口袋，并补真实玩家式样本验证，不回退到恢复期，也不转去纯内容堆量。
+
+### 盘点结论
+- 当前真正薄弱的远程 phase 是 `boss-bastion / crossfire`。
+- 它此前的主要压力来源仍是：
+  - 齐射节奏
+  - 护卫刷新
+  - 远程敌人与敌方投射物
+  - 旧 `screened / summoner / kiting` 行为谱系的延伸
+- 玩家已经能感觉到“交叉火线”有压力，但还不够稳定读出：
+  - 哪里是危险区
+  - 哪里是短时安全口袋
+  - 什么时候该横切或转场
+- 高机动 / 高 burst 构筑下，`crossfire` 最容易退回“风筝火线”而不是“读场地口袋”。
+
+### 本轮实现
+- `src/game/types.ts`
+  - `PressureSafeWindowAxis` 扩到 `vertical / horizontal / pocket`
+  - `BattlePressurePhaseDefinition` 新增 `patternSafeWindowSecondarySize`
+  - `BattleState` 新增：
+    - `pressureSafeWindowSecondaryCenter`
+    - `pressureSafeWindowSecondarySpan`
+- `src/data/battleTemplates.ts`
+  - `boss-bastion / crossfire` 现在不再只是纯齐射 phase，补入：
+    - `patternSafeWindowSize = 184`
+    - `patternSafeWindowSecondarySize = 126`
+    - `patternSafeWindowLingerSec = 1.16`
+    - `patternWallShotCount = 5`
+    - `patternPulseIntervalSec = 1.52`
+    - `patternVolleyCount = 1`
+  - battle readout 现在会在远程口袋激活时读成 `安全袋`，不再误读成纵向/横向安全窗。
+- `src/systems/RunEngine.ts`
+  - `crossfireWave` 现在改为：
+    - 打开一个短时、会迁移的 `pocket` 安全区
+    - 从上下左右四侧发射排布火线，压口袋外区域
+    - 保留低量齐射，维持远程 phase 身份
+  - 新增 / 扩展：
+    - `choosePressureSafePocketCenter(...)`
+    - `collectPressureSlotPositions(...)`
+    - `getPressureProjectileStats(...)`
+    - `spawnPressurePocketShots(...)`
+  - 口袋中心改成“锚点主导 + 少量跟随玩家”，避免高机动下直接贴脸跑。
+- `src/scenes/GameScene.ts`
+  - 远程 pocket 激活时，场地会显示矩形安全袋与四周危险区遮罩。
+  - `crossfireWave` 在 pocket 存在时仍保留轻量交叉线条，保证玩家能继续读出“远程火线 phase”，而不是误看成近战走廊。
+- `src/systems/MetricsTracker.ts`
+  - 继续复用已有：
+    - `boss_phase_pattern_seen`
+    - `boss_phase_pattern_duration`
+  - `boss_safe_window_seen` 现在允许：
+    - `axis = pocket`
+    - `secondarySpan`
+  - 本轮没有新增 `boss_remote_phase_seen / boss_safe_pocket_seen / boss_phase_escape_window_used` 新事件族，避免把远程 pattern 观测拆成高噪音埋点；已有 pattern + safe-window 事件已足够等价表达。
+
+### 验证
+- `npm run build` 通过。
+- `npx tsx output/qa/boss-space-windows.mts` 通过，并确认：
+  - `boss-bastion / 交叉火线`
+    - `safeWindowAxis = pocket`
+    - `firstSpan = 184`
+    - `secondarySpan = 126`
+    - `safeWindowCount = 2`
+- 额外补了一轮脚本化“真实玩家式”样本验证，覆盖：
+  - `normal`
+  - `highBurst`
+  - `highMobility`
+  结论是三组样本都能稳定看到远程 pocket，且 pocket 会从左中区域迁移到右中区域，不再只是原地吃节奏火线。
+- 浏览器全链路验证继续通过：
+  - `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `anomaly -> boss -> result -> replay` 仍可跑通
+  - `consoleErrors = []`
+  - 最新截图确认 HUD 没有重新膨胀，结果页口径保持干净
+
+### 剩余风险
+- `boss-bastion / crossfire` 现在已经有远程空间口袋，但 pocket 迁移节奏仍是轻量 carrier，不是完整 Boss 远程场地系统。
+- 如果后续玩家 burst 与机动继续上涨，下一步更可能需要的是：
+  - 增加 pocket 路径与转场模式的变化
+  - 继续用真实玩家样本校验“口袋是否仍需要决策”
+  而不是继续堆血或继续只堆投射物。
 
 ## [重建阶段] 文档恢复版说明
 原始开发日志文件已丢失。本文件为基于历史文档和对话记录重建的简化版开发日志，用于恢复项目上下文和后续继续开发。

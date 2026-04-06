@@ -214,3 +214,32 @@
 - 本轮只额外补 `boss_safe_window_seen`，用于确认：
   - 某个 phase 是否真的进入了“安全窗 / 危险区雕刻”层
   - 而不是仍停留在纯护卫波或纯火线 pattern。
+## 2026-04-06 远程 phase 观测补充
+- 本轮没有新增独立的 `boss_remote_phase_seen / boss_safe_pocket_seen / boss_phase_escape_window_used` 事件族。
+- 取舍原因：
+  - 当前已有 `boss_phase_pattern_seen / boss_phase_pattern_duration`
+  - 当前已有 `boss_safe_window_seen`
+  - 这三层已经足够低成本地判断“远程 phase 是否出现”“空间口袋是否出现”“模式持续了多久”
+  - 如果继续拆新事件族，容易把远程 pulse 观测做成高噪音埋点
+
+### `boss_safe_window_seen`
+- `payload.axis` 当前允许：
+  - `vertical`
+  - `horizontal`
+  - `pocket`
+- 当 `axis = pocket` 时，payload 允许附带：
+  - `secondarySpan`
+- 这意味着：
+  - `boss-hunt / close-in` 与 `boss-lockdown / pin-down` 继续记录走廊型安全窗
+  - `boss-bastion / crossfire` 现在会以 `axis = pocket` 记录远程空间口袋
+
+### 等价观测口径
+- `boss_phase_pattern_seen`
+  - 等价回答“远程 Boss phase 是否真正进入了 pattern”
+- `boss_phase_pattern_duration`
+  - 等价回答“该远程 pattern 持续了多久”
+- `boss_safe_window_seen(axis = pocket)`
+  - 等价回答“远程空间口袋是否真的被打开”
+- `boss_phase_escape_window_used`
+  - 本轮继续不进正式埋点
+  - 若需要判断玩家是否真的用了 pocket，优先继续采用 QA 样本脚本观察，而不是先把 action 级埋点塞进正式导出

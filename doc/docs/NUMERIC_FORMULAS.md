@@ -497,3 +497,35 @@ route window 当前的约束是：
   - `patternWallShotCount`
   - 现有 escort / projectile 系统
 - 目标是让玩家读到“哪里危险、哪里短暂可站”，而不是把最终关变成更厚的 elite 或更乱的弹幕场。
+## 2026-04-06 远程空间口袋公式补充
+### `crossfire` pocket 尺寸
+- `pocketWidth = clamp(patternSafeWindowSize ?? 184, 152, ARENA_WIDTH * 0.36)`
+- `pocketHeight = clamp(patternSafeWindowSecondarySize ?? pocketWidth * 0.68, 108, ARENA_HEIGHT * 0.34)`
+- `pocketLingerSec = clamp(patternSafeWindowLingerSec ?? 1.08, 0.78, 1.6)`
+
+### `crossfire` pocket 中心
+- 当前远程 pocket 采用锚点主导的轻量迁移：
+  - anchor 序列：
+    - `(0.34, 0.36)`
+    - `(0.66, 0.36)`
+    - `(0.64, 0.66)`
+    - `(0.36, 0.66)`
+    - `(0.50, 0.50)`
+- `pocketCenterX = clamp(anchorX * 0.78 + playerX * 0.22, 108 + pocketWidth * 0.5, ARENA_WIDTH - 108 - pocketWidth * 0.5)`
+- `pocketCenterY = clamp(anchorY * 0.78 + playerY * 0.22, 92 + pocketHeight * 0.5, ARENA_HEIGHT - 92 - pocketHeight * 0.5)`
+- 取舍目标：
+  - 口袋不直接贴着玩家跑
+  - 但也不脱离当前战场太远，普通 build 仍能争取转场
+
+### `crossfire` pocket 火线排布
+- `slotPositions(dimension, margin, shotSlots, safeStart, safeEnd)` 仍沿用现有安全窗外槽位分布逻辑
+- `crossfire` 当前在 pocket 外同时生成：
+  - 上/下边缘纵向火线
+  - 左/右边缘横向火线
+- 压力弹道伤害继续复用现有 pressure projectile 公式：
+  - `pressureProjectileSpeed = 252 * rangedProjectileSpeedMultiplier`
+  - `pressureProjectileDamage = round(enemyContactDamage * damageMultiplier)`
+- 本轮 `crossfire` 采用：
+  - `damageMultiplier = 0.68`
+  - `patternVolleyCount = 1`
+  用来避免远程 pocket 刚落地就被额外火线噪音淹没

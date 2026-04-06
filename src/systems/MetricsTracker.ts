@@ -335,6 +335,7 @@ export class MetricsTracker {
     axis: PressureSafeWindowAxis,
     span: number,
     durationSec: number,
+    secondarySpan?: number,
   ): void {
     this.record('boss_safe_window_seen', {
       templateId,
@@ -343,6 +344,7 @@ export class MetricsTracker {
       patternLabel,
       axis,
       span: Math.round(span),
+      secondarySpan: secondarySpan !== undefined ? Math.round(secondarySpan) : undefined,
       durationSec: Number(durationSec.toFixed(2)),
     });
   }

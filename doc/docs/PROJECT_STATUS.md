@@ -259,3 +259,15 @@
     - 继续验证真实玩家样本下的空间读数是否稳定
     - 或为 `crossfire` 一类远程 phase 补更明确的空间口袋
     而不是继续加血或加怪。
+## 2026-04-06 远程 phase 状态补充
+- 当前阶段判断保持不变：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。
+- 本轮确认的最新进展：
+  - `boss-bastion / crossfire` 已从“节奏火线”推进到“远程空间口袋”。
+  - 远程 phase 现在可以在场地内形成短时安全袋与四周危险区，而不再只靠齐射和护卫节奏成立。
+  - 远程 pocket 继续复用现有 `pressurePhases / pattern pulse / safe-window` carrier，没有引入新的 Boss 系统层。
+- 当前更适合继续做：
+  - 远程 pocket 的真实玩家样本验证
+  - pocket 转场模式与路径多样性维护
+  - battle readability 与 Boss / elite / final battle ownership 边界维护
+- 当前最大风险更新为：
+  - `crossfire` 已经有稳定空间口袋，但 pocket 迁移仍属于轻量模板级实现；如果后续高 burst / 高机动进一步上升，仍要继续观察“玩家是否还需要真实转场决策”，而不是继续加血或堆投射物。
