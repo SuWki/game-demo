@@ -243,3 +243,37 @@
 - `boss_phase_escape_window_used`
   - 本轮继续不进正式埋点
   - 若需要判断玩家是否真的用了 pocket，优先继续采用 QA 样本脚本观察，而不是先把 action 级埋点塞进正式导出
+## 2026-04-06 远程 pocket shift 观测补充
+- 本轮仍然没有新增独立的：
+  - `boss_pocket_shift_seen`
+  - `boss_pocket_shift_type`
+  - `boss_pocket_reposition_used`
+- 取舍原因不变：
+  - 当前正式导出已经有 `boss_phase_pattern_seen / boss_phase_pattern_duration`
+  - 当前正式导出已经有 `boss_safe_window_seen`
+  - 对于本轮“pocket 是否不再只剩一种迁移味道”的问题，更低噪音的做法是扩字段，而不是新增事件族
+
+### `boss_safe_window_seen` 新增轻量字段
+- 当 `axis = pocket` 时，payload 现在除 `secondarySpan` 外，还允许：
+  - `shiftType`
+- 当前 `shiftType` 可能为：
+  - `sweep`
+  - `centerReset`
+  - `edgeBounce`
+- 记录策略：
+  - 不是每次 pulse 都记
+  - 而是每个 phase 第一次见到某个 `shiftType` 时才记录一次
+- 这意味着它可以低成本回答：
+  - 该 phase 是否只剩单一 pocket 迁移
+  - 是否至少出现过第二种 pocket 转场模式
+
+### 等价观测口径
+- `boss_phase_pattern_seen`
+  - 回答“该远程 phase 是否真的进入了 pattern”
+- `boss_phase_pattern_duration`
+  - 回答“该远程 pattern 持续了多久”
+- `boss_safe_window_seen(axis = pocket, shiftType = ...)`
+  - 回答“远程 pocket 是否真的出现了不同 shift mode”
+- `boss_pocket_reposition_used`
+  - 本轮仍不进正式埋点
+  - 如果要判断玩家是否真的完成了 pocket 转场，优先继续依赖 QA 样本与 targeted probe，而不是先把 action 级观测塞进正式导出

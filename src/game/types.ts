@@ -35,6 +35,7 @@ export type EnemyRole = 'regular' | 'escort' | 'elite';
 export type EnemyArchetypeId = 'standard' | 'brute' | 'skirmisher' | 'ranged';
 export type PressurePatternModeId = 'laneCrush' | 'sideClamp' | 'crossfireWave';
 export type PressureSafeWindowAxis = 'vertical' | 'horizontal' | 'pocket';
+export type PressurePocketShiftModeId = 'sweep' | 'centerReset' | 'edgeBounce';
 
 export interface EnemyArchetypeDefinition {
   id: EnemyArchetypeId;
@@ -80,6 +81,7 @@ export interface BattlePressurePhaseDefinition {
   patternSafeWindowSize?: number;
   patternSafeWindowSecondarySize?: number;
   patternSafeWindowLingerSec?: number;
+  patternPocketShiftModes?: PressurePocketShiftModeId[];
   patternWallShotCount?: number;
   triggerHpRatio?: number;
   triggerRemainingSec?: number;
@@ -364,11 +366,13 @@ export interface BattleState {
   pressurePatternFlashSec: number;
   pressurePatternPulseCount: number;
   pressureSafeWindowAxis?: PressureSafeWindowAxis;
+  pressureSafeWindowShiftType?: PressurePocketShiftModeId;
   pressureSafeWindowCenter: number;
   pressureSafeWindowSpan: number;
   pressureSafeWindowSecondaryCenter: number;
   pressureSafeWindowSecondarySpan: number;
   pressureSafeWindowSec: number;
+  pressurePocketShiftSeen: PressurePocketShiftModeId[];
   nextEnemyId: number;
   nextBulletId: number;
   nextPulseId: number;

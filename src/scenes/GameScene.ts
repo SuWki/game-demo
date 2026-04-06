@@ -196,6 +196,7 @@ export class GameScene extends Phaser.Scene {
               state.battle.pressureSignatureLabel,
               state.battle.pressurePatternLabel,
               state.battle.pressureSafeWindowSec > 0 ? state.battle.pressureSafeWindowAxis : undefined,
+              state.battle.pressureSafeWindowSec > 0 ? state.battle.pressureSafeWindowShiftType : undefined,
             )
           : undefined,
     };
@@ -427,6 +428,18 @@ export class GameScene extends Phaser.Scene {
         this.graphics.lineStyle(1, accentColor, flashAlpha * 1.1);
         this.graphics.lineBetween(132, 112, this.scale.width - 132, this.scale.height - 112);
         this.graphics.lineBetween(132, this.scale.height - 112, this.scale.width - 132, 112);
+        if (battle.pressureSafeWindowShiftType === 'centerReset') {
+          this.graphics.lineStyle(2, accentColor, flashAlpha * 1.3);
+          this.graphics.strokeCircle(this.scale.width * 0.5, this.scale.height * 0.5, 66);
+          this.graphics.strokeCircle(this.scale.width * 0.5, this.scale.height * 0.5, 102);
+        }
+        if (battle.pressureSafeWindowShiftType === 'edgeBounce') {
+          this.graphics.lineStyle(2, accentColor, flashAlpha * 1.25);
+          this.graphics.lineBetween(72, 138, 120, 138);
+          this.graphics.lineBetween(72, this.scale.height - 138, 120, this.scale.height - 138);
+          this.graphics.lineBetween(this.scale.width - 72, 138, this.scale.width - 120, 138);
+          this.graphics.lineBetween(this.scale.width - 72, this.scale.height - 138, this.scale.width - 120, this.scale.height - 138);
+        }
         return;
       default:
         return;

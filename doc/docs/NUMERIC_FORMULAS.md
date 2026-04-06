@@ -529,3 +529,49 @@ route window 当前的约束是：
   - `damageMultiplier = 0.68`
   - `patternVolleyCount = 1`
   用来避免远程 pocket 刚落地就被额外火线噪音淹没
+## 2026-04-06 远程 pocket 转场丰富度公式补充
+### `patternPocketShiftModes`
+- 当前 pocket 转场不再固定为一套锚点序列。
+- phase 现在可声明：
+  - `patternPocketShiftModes = [modeA, modeB, ...]`
+- 当前支持的 `mode`：
+  - `sweep`
+  - `centerReset`
+  - `edgeBounce`
+- 运行时选择规则：
+  - `shiftType = patternPocketShiftModes[(pressurePatternPulseCount - 1) % patternPocketShiftModes.length]`
+  - `shiftCycleIndex = floor((pressurePatternPulseCount - 1) / patternPocketShiftModes.length)`
+
+### 不同 shift mode 的轻量差异
+- `sweep`
+  - 锚点更偏左右中区 / 斜向换区
+  - `playerBlend = 0.22`
+  - `widthScale = 1.00`
+  - `heightScale = 1.00`
+  - `lingerScale = 1.00`
+- `centerReset`
+  - 更频繁回到中心短驻
+  - `playerBlend = 0.18`
+  - `widthScale = 1.08`
+  - `heightScale = 1.06`
+  - `lingerScale = 1.08`
+- `edgeBounce`
+  - 更偏边缘转场 / 压边迁位
+  - `playerBlend = 0.14`
+  - `widthScale = 0.92`
+  - `heightScale = 0.94`
+  - `lingerScale = 0.90`
+
+### pocket 尺寸与 linger 的最终值
+- `finalPocketWidth = clamp(basePocketWidth * widthScale, 144, ARENA_WIDTH * 0.38)`
+- `finalPocketHeight = clamp(basePocketHeight * heightScale, 104, ARENA_HEIGHT * 0.36)`
+- `finalPocketLingerSec = clamp(basePocketLingerSec * lingerScale, 0.72, 1.72)`
+
+### 当前 `boss-bastion` 的 pocket shift 配置
+- `crossfire / 交叉火线`
+  - `patternPocketShiftModes = [sweep, centerReset]`
+- `fireline / 压边迁火`
+  - `patternPocketShiftModes = [edgeBounce, centerReset]`
+- 取舍目标：
+  - 让玩家读到“这一段是横切换区”与“这一段是压边迁火”的区别
+  - 同时保留 `centerReset` 作为短时确认窗口，避免 pocket 永远只在边区或侧区漂移

@@ -1,4 +1,88 @@
 # DEV ISSUE LOG
+## [0.9v 读数 / 压力校准] 远程 phase pocket 转场模式丰富化
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标不是继续补血量或补怪量，而是让远程 phase 的 pocket 转场不只剩单一锚点迁移。
+
+### 盘点结论
+- 当前最单一的 pocket 迁移逻辑仍在 `boss-bastion / crossfire`。
+- 上轮 pocket 虽然已经成立，但本质上还是：
+  - 固定锚点序列
+  - 少量玩家位置混合
+  - 一种主要的“中区横移 / 斜移”味道
+- 这种做法已经足够让玩家看到安全袋，但高机动 build 更容易把它读成“记住一套转场节拍后继续风筝”。
+- 更稳妥的最小切入点不是加新系统，而是：
+  - 在现有 `pattern pulse + pocket` 上补 `shift mode`
+  - 让 `boss-bastion` 的不同远程 phase 使用不同 pocket 转场风格
+  - 并把 pocket 的短标签同步进 HUD 与低成本观测
+
+### 本轮实现
+- `src/game/types.ts`
+  - 新增 `PressurePocketShiftModeId = sweep / centerReset / edgeBounce`
+  - `BattlePressurePhaseDefinition` 新增 `patternPocketShiftModes`
+  - `BattleState` 新增：
+    - `pressureSafeWindowShiftType`
+    - `pressurePocketShiftSeen`
+- `src/data/battleTemplates.ts`
+  - `boss-bastion / crossfire / 交火`
+    - pocket 转场改为 `sweep + centerReset`
+  - `boss-bastion / fireline / 火线收束`
+    - 不再只是旧参数收束段
+    - 现在也接入 `crossfireWave` pocket carrier
+    - pocket 转场改为 `edgeBounce + centerReset`
+    - 并使用更短 linger、更小 pocket 与更快 pulse，形成“压边迁火”味道
+  - battle readout 现在会把 pocket 读成：
+    - `安全袋 横切`
+    - `安全袋 回心`
+    - `安全袋 压边`
+- `src/systems/RunEngine.ts`
+  - pocket 打开时会先解析当前 `shiftType`
+  - 不同 `shiftType` 会轻量影响：
+    - 锚点集合
+    - 玩家混合权重
+    - pocket 尺寸
+    - linger 时长
+  - `crossfire` 现在不再只走单一锚点循环；`fireline` 也不再复用同一套 pocket 迁移节拍
+  - `boss_safe_window_seen(axis = pocket)` 现在会按 phase 记录第一次见到的 `shiftType`
+- `src/scenes/GameScene.ts`
+  - HUD 子读数现在可直接读出当前 pocket 的短标签
+  - `crossfireWave` overlay 会根据 `shiftType` 做轻量差异：
+    - `centerReset`：更强调中心确认
+    - `edgeBounce`：更强调边缘压迫
+    - `sweep`：继续保持火线横切读数
+- `src/systems/MetricsTracker.ts`
+  - 没有新增 `boss_pocket_shift_seen / boss_pocket_shift_type / boss_pocket_reposition_used` 事件族
+  - 继续复用 `boss_safe_window_seen`
+  - 并补了可选 `shiftType`
+
+### 验证
+- `npm run build` 通过。
+- `npx tsx output/qa/boss-space-windows.mts` 继续通过，确认：
+  - `boss-hunt / close-in` 仍是纵向安全窗
+  - `boss-lockdown / pin-down` 仍是横向安全窗
+  - 说明本轮没有把既有 corridor phase 做坏
+- 新增本地 QA 脚本 `output/qa/boss-pocket-shifts.mts` 做 pocket 转场抽样，覆盖：
+  - `normal`
+  - `highBurst`
+  - `highMobility`
+  - 三组样本都能确认 `boss-bastion / crossfire` 的 pocket 稳定存在
+  - `crossfire` 已能看到 `sweep / centerReset`
+  - 额外 targeted 样本确认 `fireline` 已能看到 `edgeBounce`
+  - 高机动样本中 `fireline` 已能实际进入 `edgeBounce + centerReset` 的压边迁火段
+- 浏览器全链路验证继续通过：
+  - `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `anomaly -> boss -> result -> replay` 可跑通
+  - `consoleErrors = []`
+  - HUD 与结果页截图继续保持干净
+  - 这次浏览器样本命中的是 `boss-hunt`，所以 pocket shift 的主验证仍以运行时 QA 抽样为主
+
+### 剩余风险
+- `boss-bastion` 现在已经不只是一种 pocket 转场，但 `fireline` 的 `centerReset` 在自然样本里仍偏后段，当前更多由 targeted phase probe 证明其成立。
+- 如果后续高 burst / 高机动继续上涨，下一步更可能需要的是：
+  - 继续丰富 pocket 路径与 phase 间转场窗口
+  - 持续观察自然样本里 `fireline` 是否足够常见、是否真的迫使玩家提前转场
+  而不是继续加血或堆投射物。
+
 ## [0.9v 读数 / 压力校准] 远程 phase 空间口袋强化 + 真实玩家样本验证
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

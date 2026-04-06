@@ -405,3 +405,24 @@
   - 这仍是 Boss template 内的轻量 carrier 扩展
   - 没有把 elite-family 一并升级到同层远程 pocket 语义
   - `final battle` 仍通过 Boss template pool 收尾，不回退成普通 elite-family 模板近似
+## 2026-04-06 Boss 远程 pocket 转场补充
+- `boss-bastion` 当前已有两个远程 pocket phase：
+  - `crossfire / 交叉火线`
+  - `fireline / 压边迁火`
+- 两者继续共用：
+  - `pattern pulse`
+  - `crossfireWave`
+  - `safe-window(pocket)`
+- 但当前 pocket 转场不再只有一套锚点序列：
+  - `crossfire`：`sweep + centerReset`
+  - `fireline`：`edgeBounce + centerReset`
+- 这意味着：
+  - `crossfire` 更偏横切换区，再穿插短时回心窗口
+  - `fireline` 更偏边缘转场和压边迁位，再穿插短时回心
+- 当前 pocket shift 仍是轻量模板字段，不是新的 Boss 系统：
+  - `patternPocketShiftModes`
+  - phase 内 pocket 尺寸 / linger / 玩家混合权重的轻量差异
+- ownership 边界保持不变：
+  - 这层 pocket shift richness 只落在 Boss template 内
+  - elite 与普通 ranged 仍不进入同层 pocket 转场语义
+  - final battle 继续依赖 Boss template pool，而不是退回 old elite-family

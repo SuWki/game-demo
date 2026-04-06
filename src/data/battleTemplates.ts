@@ -5,6 +5,7 @@ import type {
   BattleTemplateId,
   EnemyArchetypeId,
   EliteBehaviorId,
+  PressurePocketShiftModeId,
   PressureSafeWindowAxis,
 } from '../game/types';
 
@@ -20,6 +21,12 @@ const ELITE_BEHAVIOR_READOUT_MAP: Record<EliteBehaviorId, string> = {
   screened: '护卫遮线',
   kiting: '反拉压迫',
   summoner: '召援拖场',
+};
+
+const POCKET_SHIFT_READOUT_MAP: Record<PressurePocketShiftModeId, string> = {
+  sweep: '妯垏',
+  centerReset: '鍥炲績',
+  edgeBounce: '鍘嬭竟',
 };
 
 export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition> = {
@@ -620,6 +627,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           patternSafeWindowSize: 184,
           patternSafeWindowSecondarySize: 126,
           patternSafeWindowLingerSec: 1.16,
+          patternPocketShiftModes: ['sweep', 'centerReset'],
           patternWallShotCount: 5,
           triggerHpRatio: 0.72,
           triggerRemainingSec: 25,
@@ -637,6 +645,17 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           id: 'fireline',
           label: '火线收束',
           behaviorOverride: 'kiting',
+          patternLabel: '压边迁火',
+          patternMode: 'crossfireWave',
+          patternPulseIntervalSec: 1.18,
+          patternVolleyCount: 1,
+          patternVolleySpreadRad: 0.14,
+          patternVolleyShotsPerShooter: 2,
+          patternSafeWindowSize: 168,
+          patternSafeWindowSecondarySize: 112,
+          patternSafeWindowLingerSec: 0.98,
+          patternPocketShiftModes: ['edgeBounce', 'centerReset'],
+          patternWallShotCount: 6,
           triggerHpRatio: 0.35,
           triggerRemainingSec: 10,
           minResidenceSec: 4.8,
@@ -831,6 +850,7 @@ export function getBattleEnemyReadout(
   pressureSignatureLabel?: string,
   pressurePatternLabel?: string,
   pressureSafeWindowAxis?: PressureSafeWindowAxis,
+  pressureSafeWindowShiftType?: PressurePocketShiftModeId,
 ): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
@@ -855,7 +875,7 @@ export function getBattleEnemyReadout(
   }
 
   if (pressureSafeWindowAxis === 'pocket') {
-    parts[parts.length - 1] = '安全袋';
+    parts[parts.length - 1] = `安全袋${pressureSafeWindowShiftType ? ` ${POCKET_SHIFT_READOUT_MAP[pressureSafeWindowShiftType]}` : ''}`;
   }
 
   if (activeBehavior) {

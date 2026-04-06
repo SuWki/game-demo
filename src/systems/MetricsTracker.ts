@@ -5,6 +5,7 @@ import type {
   EventContentKind,
   NodeType,
   PhaseId,
+  PressurePocketShiftModeId,
   PressureSafeWindowAxis,
   RouteBuildStage,
   RouteId,
@@ -336,6 +337,7 @@ export class MetricsTracker {
     span: number,
     durationSec: number,
     secondarySpan?: number,
+    shiftType?: PressurePocketShiftModeId,
   ): void {
     this.record('boss_safe_window_seen', {
       templateId,
@@ -345,6 +347,7 @@ export class MetricsTracker {
       axis,
       span: Math.round(span),
       secondarySpan: secondarySpan !== undefined ? Math.round(secondarySpan) : undefined,
+      shiftType,
       durationSec: Number(durationSec.toFixed(2)),
     });
   }

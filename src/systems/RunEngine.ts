@@ -51,6 +51,7 @@ import type {
   ContentEffect,
   ContentTier,
   EnemyArchetypeId,
+  PressurePocketShiftModeId,
   PressurePatternModeId,
   PressureSafeWindowAxis,
   EventDefinition,
@@ -484,11 +485,13 @@ export class RunEngine {
       pressurePatternFlashSec: 0,
       pressurePatternPulseCount: 0,
       pressureSafeWindowAxis: undefined,
+      pressureSafeWindowShiftType: undefined,
       pressureSafeWindowCenter: CENTER_X,
       pressureSafeWindowSpan: 0,
       pressureSafeWindowSecondaryCenter: CENTER_Y,
       pressureSafeWindowSecondarySpan: 0,
       pressureSafeWindowSec: 0,
+      pressurePocketShiftSeen: [],
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
@@ -565,6 +568,7 @@ export class RunEngine {
 
   private clearPressureSafeWindow(battle: BattleState): void {
     battle.pressureSafeWindowAxis = undefined;
+    battle.pressureSafeWindowShiftType = undefined;
     battle.pressureSafeWindowCenter = CENTER_X;
     battle.pressureSafeWindowSpan = 0;
     battle.pressureSafeWindowSecondaryCenter = CENTER_Y;
@@ -578,6 +582,7 @@ export class RunEngine {
     battle.pressurePatternPulseSec = 0;
     battle.pressurePatternFlashSec = 0;
     battle.pressurePatternPulseCount = 0;
+    battle.pressurePocketShiftSeen = [];
     this.clearPressureSafeWindow(battle);
   }
 
@@ -707,27 +712,32 @@ export class RunEngine {
     axis: PressureSafeWindowAxis,
   ): void {
     if (axis === 'pocket') {
-      const safeWindowSpan = clamp(phase.patternSafeWindowSize ?? 184, 152, ARENA_WIDTH * 0.36);
-      const safeWindowSecondarySpan = clamp(
-        phase.patternSafeWindowSecondarySize ?? safeWindowSpan * 0.68,
+      const shiftType = this.getPressurePocketShiftType(battle, phase);
+      const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
+      const baseSafeWindowSpan = clamp(phase.patternSafeWindowSize ?? 184, 152, ARENA_WIDTH * 0.36);
+      const baseSafeWindowSecondarySpan = clamp(
+        phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.68,
         108,
         ARENA_HEIGHT * 0.34,
       );
-      const safeWindowCenter = this.choosePressureSafePocketCenter(
-        battle,
-        safeWindowSpan,
-        safeWindowSecondarySpan,
+      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 144, ARENA_WIDTH * 0.38);
+      const safeWindowSecondarySpan = clamp(
+        baseSafeWindowSecondarySpan * shiftProfile.heightScale,
+        104,
+        ARENA_HEIGHT * 0.36,
       );
-      const safeWindowSec = clamp(phase.patternSafeWindowLingerSec ?? 1.08, 0.78, 1.6);
+      const safeWindowCenter = this.choosePressureSafePocketCenter(battle, safeWindowSpan, safeWindowSecondarySpan, shiftType);
+      const safeWindowSec = clamp((phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale, 0.72, 1.72);
 
       battle.pressureSafeWindowAxis = axis;
+      battle.pressureSafeWindowShiftType = shiftType;
       battle.pressureSafeWindowCenter = safeWindowCenter.x;
       battle.pressureSafeWindowSpan = safeWindowSpan;
       battle.pressureSafeWindowSecondaryCenter = safeWindowCenter.y;
       battle.pressureSafeWindowSecondarySpan = safeWindowSecondarySpan;
       battle.pressureSafeWindowSec = safeWindowSec;
 
-      if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
+      if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
         this.services.metrics.recordBossSafeWindowSeen(
           battle.templateId,
           phase.id,
@@ -737,7 +747,9 @@ export class RunEngine {
           safeWindowSpan,
           safeWindowSec,
           safeWindowSecondarySpan,
+          shiftType,
         );
+        battle.pressurePocketShiftSeen.push(shiftType);
       }
       return;
     }
@@ -758,6 +770,7 @@ export class RunEngine {
     );
 
     battle.pressureSafeWindowAxis = axis;
+    battle.pressureSafeWindowShiftType = undefined;
     battle.pressureSafeWindowCenter = safeWindowCenter;
     battle.pressureSafeWindowSpan = safeWindowSpan;
     battle.pressureSafeWindowSecondaryCenter = axis === 'vertical' ? CENTER_Y : CENTER_X;
@@ -796,24 +809,87 @@ export class RunEngine {
     battle: BattleState,
     spanX: number,
     spanY: number,
+    shiftType: PressurePocketShiftModeId,
   ): { x: number; y: number } {
-    const pocketAnchors = [
-      { x: 0.34, y: 0.36 },
-      { x: 0.66, y: 0.36 },
-      { x: 0.64, y: 0.66 },
-      { x: 0.36, y: 0.66 },
-      { x: 0.5, y: 0.5 },
-    ];
-    const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1) % pocketAnchors.length;
-    const anchor = pocketAnchors[pulseIndex];
+    const shiftModes = this.getActivePressurePhase(battle)?.patternPocketShiftModes;
+    const shiftModeCount = Math.max(1, shiftModes?.length ?? 0);
+    const shiftCycleIndex = Math.floor(Math.max(0, battle.pressurePatternPulseCount - 1) / shiftModeCount);
+    const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
+    const anchor = shiftProfile.anchors[shiftCycleIndex % shiftProfile.anchors.length];
     const anchorX = ARENA_WIDTH * anchor.x;
     const anchorY = ARENA_HEIGHT * anchor.y;
-    const blendedX = anchorX * 0.78 + battle.playerX * 0.22;
-    const blendedY = anchorY * 0.78 + battle.playerY * 0.22;
+    const playerBlend = shiftProfile.playerBlend;
+    const blendedX = anchorX * (1 - playerBlend) + battle.playerX * playerBlend;
+    const blendedY = anchorY * (1 - playerBlend) + battle.playerY * playerBlend;
     return {
       x: clamp(blendedX, 108 + spanX * 0.5, ARENA_WIDTH - 108 - spanX * 0.5),
       y: clamp(blendedY, 92 + spanY * 0.5, ARENA_HEIGHT - 92 - spanY * 0.5),
     };
+  }
+
+  private getPressurePocketShiftType(
+    battle: BattleState,
+    phase: BattlePressurePhaseDefinition,
+  ): PressurePocketShiftModeId {
+    const shiftModes: PressurePocketShiftModeId[] =
+      phase.patternPocketShiftModes?.length ? phase.patternPocketShiftModes : ['sweep'];
+    const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1);
+    return shiftModes[pulseIndex % shiftModes.length] ?? 'sweep';
+  }
+
+  private getPressurePocketShiftProfile(shiftType: PressurePocketShiftModeId): {
+    anchors: Array<{ x: number; y: number }>;
+    playerBlend: number;
+    widthScale: number;
+    heightScale: number;
+    lingerScale: number;
+  } {
+    switch (shiftType) {
+      case 'centerReset':
+        return {
+          anchors: [
+            { x: 0.5, y: 0.5 },
+            { x: 0.34, y: 0.36 },
+            { x: 0.5, y: 0.5 },
+            { x: 0.66, y: 0.64 },
+            { x: 0.5, y: 0.5 },
+          ],
+          playerBlend: 0.18,
+          widthScale: 1.08,
+          heightScale: 1.06,
+          lingerScale: 1.08,
+        };
+      case 'edgeBounce':
+        return {
+          anchors: [
+            { x: 0.24, y: 0.3 },
+            { x: 0.76, y: 0.3 },
+            { x: 0.8, y: 0.7 },
+            { x: 0.2, y: 0.7 },
+            { x: 0.2, y: 0.5 },
+            { x: 0.8, y: 0.5 },
+          ],
+          playerBlend: 0.14,
+          widthScale: 0.92,
+          heightScale: 0.94,
+          lingerScale: 0.9,
+        };
+      case 'sweep':
+      default:
+        return {
+          anchors: [
+            { x: 0.34, y: 0.36 },
+            { x: 0.66, y: 0.36 },
+            { x: 0.64, y: 0.66 },
+            { x: 0.36, y: 0.66 },
+            { x: 0.5, y: 0.5 },
+          ],
+          playerBlend: 0.22,
+          widthScale: 1,
+          heightScale: 1,
+          lingerScale: 1,
+        };
+    }
   }
 
   private collectPressureSlotPositions(
@@ -900,15 +976,22 @@ export class RunEngine {
       return;
     }
 
+    const shiftType = battle.pressureSafeWindowShiftType ?? 'sweep';
     const safeStartX = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
     const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
     const safeStartY = battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5;
     const safeEndY = battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5;
-    const horizontalSlotCount = Math.max(4, phase.patternWallShotCount ?? 5);
-    const verticalSlotCount = Math.max(4, (phase.patternWallShotCount ?? 5) - 1);
-    const xSlots = this.collectPressureSlotPositions(ARENA_WIDTH, 84, horizontalSlotCount, safeStartX, safeEndX);
-    const ySlots = this.collectPressureSlotPositions(ARENA_HEIGHT, 68, verticalSlotCount, safeStartY, safeEndY);
-    const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, 0.68);
+    const horizontalSlotCount = Math.max(4, (phase.patternWallShotCount ?? 5) + (shiftType === 'edgeBounce' ? 1 : 0));
+    const verticalSlotCount = Math.max(
+      4,
+      (phase.patternWallShotCount ?? 5) - 1 + (shiftType === 'centerReset' ? -1 : 0),
+    );
+    const xMargin = shiftType === 'edgeBounce' ? 72 : 84;
+    const yMargin = shiftType === 'centerReset' ? 76 : 68;
+    const xSlots = this.collectPressureSlotPositions(ARENA_WIDTH, xMargin, horizontalSlotCount, safeStartX, safeEndX);
+    const ySlots = this.collectPressureSlotPositions(ARENA_HEIGHT, yMargin, verticalSlotCount, safeStartY, safeEndY);
+    const damageMultiplier = shiftType === 'centerReset' ? 0.64 : shiftType === 'edgeBounce' ? 0.7 : 0.68;
+    const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, damageMultiplier);
 
     for (const x of xSlots) {
       this.spawnEnemyProjectile(battle, x, -24, projectileSpeed, projectileDamage, 6, Math.PI / 2);

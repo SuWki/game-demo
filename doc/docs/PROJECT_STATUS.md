@@ -271,3 +271,15 @@
   - battle readability 与 Boss / elite / final battle ownership 边界维护
 - 当前最大风险更新为：
   - `crossfire` 已经有稳定空间口袋，但 pocket 迁移仍属于轻量模板级实现；如果后续高 burst / 高机动进一步上升，仍要继续观察“玩家是否还需要真实转场决策”，而不是继续加血或堆投射物。
+## 2026-04-06 远程 pocket 转场补充
+- 当前阶段判断继续保持不变：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。
+- 本轮确认的最新进展：
+  - `boss-bastion / crossfire` 已经不再只有单一 pocket 迁移味道，现已能在 `横切 / 回心` 之间切换。
+  - `boss-bastion / fireline` 也已接入更短窗的 pocket carrier，当前会以 `压边迁火` 的方式承接后段。
+  - 远程 Boss 的 pocket 迁移现在已经开始具备 phase 差异，而不只是同一套锚点循环。
+- 当前更适合继续做：
+  - 继续观察自然样本里 `fireline` 的 pocket 进入率
+  - 补 pocket 转场路径与预判窗口的多样性
+  - 持续维护 Boss / elite / final battle ownership 边界
+- 当前最大风险更新为：
+  - `crossfire / fireline` 已经拉开第一层 pocket shift 差异，但自然 run 中 `fireline` 仍偏后段；若后续高 burst / 高机动再上升，还要继续看“玩家是否真的需要转场决策”，而不是只在 targeted probe 中成立。
