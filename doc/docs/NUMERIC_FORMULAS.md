@@ -575,3 +575,16 @@ route window 当前的约束是：
 - 取舍目标：
   - 让玩家读到“这一段是横切换区”与“这一段是压边迁火”的区别
   - 同时保留 `centerReset` 作为短时确认窗口，避免 pocket 永远只在边区或侧区漂移
+
+## 2026-04-07 远程 pocket 自然成立性校准补充
+### `fireline / 压边迁火` 当前自然样本校准值
+- `patternPulseIntervalSec = 1.08`
+- `triggerHpRatio = 0.48`
+- `triggerRemainingSec = 15`
+- `minResidenceSec = 4.2`
+
+### 取舍含义
+- 这轮不是新增新的 pocket 类型，也不是提高 Boss 基础血量。
+- 当前做法是在既有 `crossfire -> fireline` 结构上，把 `fireline` 轻量前置并收紧节奏：
+  - 让高 burst / 高机动自然 build 更容易至少遇到一次真实转场判断
+  - 同时保留 `crossfire` 作为远程前段主味道，避免后段过早顶掉前段身份

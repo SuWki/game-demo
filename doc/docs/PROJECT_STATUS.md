@@ -41,6 +41,25 @@
 - 稀有内容如果后续只是继续加数量而不守住低频，late 记忆点会重新退化成普通池换皮
 - 中文乱码与内部设计话术重新泄露到玩家可见文本
 
+## 2026-04-07 0.9v 远程 pocket 自然成立性校准
+- 当前阶段判断继续保持不变：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。
+- 当前焦点已从“pocket 是否存在”进一步推进到“自然 build 样本里，pocket 转场决策是否足够常见”。
+- 当前最新进展：
+  - `boss-bastion / fireline` 已不再只依赖 targeted probe 证明成立
+  - 在自然 build + 指定 `boss-bastion` 收尾样本里：
+    - `highBurst` 已能看到 `fireline`
+    - `highMobility` 已能看到 `fireline`
+    - 两者都已出现 `edgeBounce + centerReset`，并出现真实转场决策窗口
+  - `crossfire` 继续稳定承担远程前段主味道，没有被本轮校准抹平
+- 当前更适合继续做：
+  - 普通 build 下的 `fireline` 覆盖率校准
+  - `crossfire -> fireline` 的轻量承接优化
+  - battle readability 与 Boss / elite / final battle ownership 边界维护
+- 当前最大风险更新为：
+  - `fireline` 的自然成立性已经比上轮更稳，但普通 build 下仍偏少
+  - 如果后续高 burst / 高机动继续上涨，而普通样本覆盖率又补不上，最终关远程后段仍可能再次被读回“交火段成立、收束段偏薄”
+  - 因此下一步更需要的是普通样本覆盖率与自然承接校准，而不是继续堆血、堆怪或引入新系统
+
 ## 2026-04-06 0.9v Boss phase 行为身份更新
 - 当前阶段判断保持不变：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。
 - 本轮不是再补“有没有 phase”，而是补“phase 是否已经有行为身份”。

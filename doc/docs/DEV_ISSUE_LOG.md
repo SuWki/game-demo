@@ -1,4 +1,82 @@
 # DEV ISSUE LOG
+## [0.9v 读数 / 压力校准] 远程 phase pocket 转场自然成立性校准
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标不是继续加新 pocket 类型，也不是继续堆血，而是让 `boss-bastion / fireline` 的 pocket 转场在自然样本里更常见、更容易形成真实“留还是转”的判断。
+
+### 盘点结论
+- 上轮 targeted phase probe 已能证明：
+  - `crossfire` 能稳定出现 `sweep / centerReset`
+  - `fireline` 能稳定出现 `edgeBounce / centerReset`
+- 但旧的 `output/qa/boss-pocket-natural-runs.mts` 并不可信：
+  - 它是冷启动单 Boss 沙盒，而不是完整自然推进
+  - 更关键的是它没有处理 battle 内 `levelUp` 面板，导致 run 经常停在 `upgradeChoice`，样本被误读成 `outcome: ongoing`
+- 修正脚本后，当前真正的问题被确认是：
+  - `crossfire` 在自然 build 里已经稳定可见
+  - `fireline` 虽然不再只存在于 targeted probe，但仍偏后段、偏少见
+  - 普通 build 尤其容易在看到 `crossfire` 后就结束于击杀或败退，`fireline` 的自然存在感仍不足
+- 本轮更稳妥的最小切入点仍然不是新系统，而是继续沿现有 `pressurePhases + pattern pulse + pocket` 做轻量前置：
+  - 让 `fireline` 稍早触发
+  - 保持 `crossfire -> fireline` 的阶段层次，不把后段直接前置成同味道 phase
+
+### 本轮实现
+- `src/data/battleTemplates.ts`
+  - `boss-bastion / fireline / 火线收束`
+    - `patternPulseIntervalSec: 1.18 -> 1.08`
+    - `triggerHpRatio: 0.35 -> 0.48`
+    - `triggerRemainingSec: 10 -> 15`
+    - `minResidenceSec: 4.8 -> 4.2`
+  - 取舍目标：
+    - 不是新增 pocket 类型
+    - 也不是靠堆血硬拖到后段
+    - 而是让 `fireline` 在自然样本里更容易留下最小存在感，同时保留 `crossfire` 作为前一段远程主味道
+- `output/qa/boss-pocket-natural-runs.mts`
+  - 改写为完整自然推进样本：
+    - 会处理 `battle / nodeChoice / upgradeChoice / eventChoice / result`
+    - 不再被 level-up 面板卡成 `ongoing`
+  - 样本步长从 `100ms` 降到 `50ms`，减少远程 pocket 与躲线读数被粗步长踩坏
+  - 为了避免最终 Boss 池的 `1/3` 随机性把 `boss-bastion` 样本稀释掉，当前自然样本采用：
+    - 自然 build 推进到 final prep
+    - final battle 锁定为 `boss-bastion`
+  - 这是“自然 build + 指定最终关载体”的 QA 口径，不是旧的 targeted phase probe
+
+### 验证
+- `npm run build` 通过。
+- `npx tsx output/qa/boss-space-windows.mts` 继续通过，确认：
+  - `boss-hunt / close-in` 纵向安全窗未被本轮校准破坏
+  - `boss-lockdown / pin-down` 横向安全窗未被本轮校准破坏
+  - `boss-bastion / crossfire` 仍能稳定给出 `pocket + shiftType`
+- `npx tsx output/qa/boss-pocket-natural-runs.mts` 结果更新为：
+  - `highBurst`
+    - `bossBastionRuns = 9`
+    - `crossfireSeenRuns = 9`
+    - `firelineSeenRuns = 2`
+    - `firelineDecisionRuns = 1`
+    - 已出现 `edgeBounce + centerReset`，且样本内出现了 `11` 次 fireline 转场决策窗口
+  - `highMobility`
+    - `bossBastionRuns = 5`
+    - `crossfireSeenRuns = 5`
+    - `firelineSeenRuns = 1`
+    - `firelineDecisionRuns = 1`
+    - 已出现 `edgeBounce + centerReset`，且样本内出现了 `13` 次 fireline 转场决策窗口
+  - `normal`
+    - `bossBastionRuns = 8`
+    - `crossfireSeenRuns = 4`
+    - `firelineSeenRuns = 0`
+    - 说明普通 build 下 `fireline` 仍然偏少，但当前问题已从“只靠 targeted probe 才存在”推进到“自然 build 的覆盖率仍需继续抬”
+- 浏览器全链路验证继续通过：
+  - `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `anomaly -> boss -> result -> replay` 可跑通
+  - `consoleErrors = []`
+  - 最新截图确认 HUD 与结果页仍然干净，没有因为自然化校准重新膨胀 UI
+
+### 剩余风险
+- `fireline` 现在已经不再只存在于 targeted probe；高 burst / 高机动自然 build 下都能出现真实 pocket 转场决策。
+- 但普通 build 的 `fireline` 自然进入率仍然偏低，这意味着当前最大风险已收敛为：
+  - 最终关远程后段在普通 build 下仍可能偏向“交火段成立、收束段稀薄”
+  - 下一步更适合继续做普通样本覆盖率校准或 `crossfire -> fireline` 的轻量承接优化
+  - 而不是继续加血、加怪或扩成新 Boss 系统
+
 ## [0.9v 读数 / 压力校准] 远程 phase pocket 转场模式丰富化
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
