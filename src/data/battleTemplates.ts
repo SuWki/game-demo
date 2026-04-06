@@ -408,6 +408,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           id: 'close-in',
           label: '逼近',
           behaviorOverride: 'screened',
+          signatureLabel: '逼近压线',
+          signatureDurationSec: 2.8,
+          signaturePulseIntervalSec: 1.35,
+          signatureEscortBurst: 1,
           triggerHpRatio: 0.74,
           triggerRemainingSec: 24,
           minResidenceSec: 4.2,
@@ -494,6 +498,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           id: 'pin-down',
           label: '封位',
           behaviorOverride: 'screened',
+          signatureLabel: '护卫封位',
+          signatureDurationSec: 3.2,
+          signaturePulseIntervalSec: 1.25,
+          signatureEscortBurst: 1,
           triggerHpRatio: 0.76,
           triggerRemainingSec: 24,
           minResidenceSec: 4.4,
@@ -582,6 +590,10 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           id: 'crossfire',
           label: '交火',
           behaviorOverride: 'summoner',
+          signatureLabel: '火线齐射',
+          signatureDurationSec: 3.4,
+          signaturePulseIntervalSec: 1.15,
+          signatureVolleyCount: 3,
           triggerHpRatio: 0.72,
           triggerRemainingSec: 25,
           minResidenceSec: 4.4,
@@ -789,6 +801,7 @@ export function getBattleEnemyReadout(
   pressurePhaseLabel?: string,
   emphasizeTransition = false,
   pressurePhaseIndex = -1,
+  pressureSignatureLabel?: string,
 ): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
@@ -798,6 +811,10 @@ export function getBattleEnemyReadout(
 
   if (pressurePhaseLabel) {
     parts.push(`${emphasizeTransition ? '转段' : '阶段'} ${pressurePhaseLabel}`);
+  }
+
+  if (pressureSignatureLabel) {
+    parts.push(`压迫 ${pressureSignatureLabel}`);
   }
 
   if (activeBehavior) {

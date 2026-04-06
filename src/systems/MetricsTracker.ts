@@ -263,6 +263,39 @@ export class MetricsTracker {
     this.record('battle_template_completed', { templateId, outcome, contentTier });
   }
 
+  public recordBossPhaseEntered(templateId: BattleTemplateId, phaseId: string, phaseLabel: string): void {
+    this.record('boss_phase_entered', {
+      templateId,
+      phaseId,
+      phaseLabel,
+    });
+  }
+
+  public recordBossPhaseDuration(templateId: BattleTemplateId, phaseId: string, phaseLabel: string, durationSec: number): void {
+    this.record('boss_phase_duration', {
+      templateId,
+      phaseId,
+      phaseLabel,
+      durationSec: Number(durationSec.toFixed(2)),
+    });
+  }
+
+  public recordBossSignatureSeen(
+    templateId: BattleTemplateId,
+    phaseId: string,
+    phaseLabel: string,
+    signatureLabel: string,
+    durationSec: number,
+  ): void {
+    this.record('boss_signature_seen', {
+      templateId,
+      phaseId,
+      phaseLabel,
+      signatureLabel,
+      durationSec: Number(durationSec.toFixed(2)),
+    });
+  }
+
   public recordRedirectOffer(meta: {
     phase: PhaseId;
     source: 'upgrade' | 'event';

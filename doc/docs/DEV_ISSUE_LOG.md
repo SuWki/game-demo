@@ -1879,3 +1879,80 @@
 ### 当前风险
 - 普通升级池现在更干净，但 route 窗口也明显更克制；后续要继续观察自然跑局里路线信号是否仍然足够清楚。
 - Boss / elite 的 guard 只是轻量抗 burst 承接，不是完整阶段机制；如果后续继续推高玩家 burst，上层压力表达还需要再补一层更明确的阶段读数。
+
+## [0.9v 读数 / 压力校准] Boss phase 专属压力签名落地
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标是 `Boss phase 专属压力签名落地 + final battle 身份进一步稳定`，不是重写系统，也不是继续靠堆血修 Boss。
+
+### 盘点结论
+- 当前 Boss 的 `pressurePhases` 已经存在，`behaviorOverride` 也已经落到了运行层，因此“有没有 phase”“phase 是否有行为身份”都不再是主问题。
+- 剩余的真实缺口是：
+  - phase 之间虽然已有行为身份，但仍主要建立在旧 `frontline / screened / kiting / summoner` 行为谱系的变体上。
+  - 玩家能感觉到在转段，但还不容易用一句话说出“这一段到底在干什么”。
+  - 如果后续 burst 与机动继续上涨，`boss-lockdown / 封位`、`boss-bastion / 交火`、`boss-hunt / 逼近` 这几段最容易再次失真回“更厚的 elite”。
+- 本轮确定的最小切入点是：
+  - 给 `pressurePhases` 增加一层轻量 signature carrier
+  - 复用现有护卫刷新与敌方投射物系统兑现短时 signature
+  - 同步补最小 HUD / metrics 观测，验证 signature 是否真的成立
+
+### 本轮实现
+- `src/game/types.ts`
+  - `BattlePressurePhaseDefinition` 新增：
+    - `signatureLabel`
+    - `signatureDurationSec`
+    - `signaturePulseIntervalSec`
+    - `signatureEscortBurst`
+    - `signatureVolleyCount`
+  - `BattleState` 新增：
+    - `pressureSignatureLabel`
+    - `pressureSignatureSec`
+    - `pressureSignaturePulseSec`
+- `src/data/battleTemplates.ts`
+  - 为 Boss phase 补入第一批专属 pressure signature：
+    - `boss-hunt / close-in -> 逼近压线`
+    - `boss-lockdown / pin-down -> 护卫封位`
+    - `boss-bastion / crossfire -> 火线齐射`
+  - `getBattleEnemyReadout(...)` 现在会在 signature 激活时补上 `压迫 {signatureLabel}`。
+- `src/systems/RunEngine.ts`
+  - 新增 `activatePressureSignature(...) / updatePressureSignature(...) / firePressureVolley(...)`。
+  - phase 进入后会开启短时 signature window，并按 `signaturePulseIntervalSec` 脉冲兑现：
+    - 护卫 burst
+    - 或齐射 volley
+  - 远程怪与齐射当前共用现有敌方投射物生成逻辑，没有引入新的弹幕系统。
+- `src/systems/MetricsTracker.ts`
+  - 新增：
+    - `recordBossPhaseEntered(...)`
+    - `recordBossPhaseDuration(...)`
+    - `recordBossSignatureSeen(...)`
+- `src/scenes/GameScene.ts`
+  - Boss signature 激活时，主核会出现一层轻量外圈。
+  - HUD 子读数会同步显示当前 signature，帮助玩家在不增加大 UI 遮挡的前提下确认 phase 已进入专属压力段。
+
+### 验证
+- `npm run build` 通过。
+- 本地抽样脚本验证通过：
+  - `boss-hunt` 已命中 `逼近压线`
+  - `boss-lockdown` 已命中 `护卫封位`
+  - `boss-bastion` 已命中 `火线齐射`
+  - 三个 Boss 都已实际记录：
+    - `boss_phase_entered`
+    - `boss_phase_duration`
+    - `boss_signature_seen`
+- 浏览器全链路验证通过：
+  - `开始 -> 节点推进 -> anomaly -> boss -> 结算 -> replay` 可跑通
+  - `bossNodeSeen = true`
+  - `bossBattleSeen = true`
+  - `battleHudSeen = true`
+  - `replayStarted = true`
+  - `consoleErrors = []`
+  - 导出指标继续保留：
+    - `run_finished.payload.finalNodeType = boss`
+
+### 当前风险
+- Boss phase 的 signature 已经成立，但当前仍建立在：
+  - 现有护卫刷新
+  - 现有敌方投射物
+  - 现有行为谱系
+  之上，不是独立 Boss pattern 系统。
+- 如果后续玩家 burst 与机动继续上涨，下一轮更可能需要补“phase 内空间压迫 / 节奏模式”的更强签名，而不是继续沿旧行为谱系微调参数。

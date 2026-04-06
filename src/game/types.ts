@@ -62,6 +62,11 @@ export interface BattlePressurePhaseDefinition {
   id: string;
   label: string;
   behaviorOverride?: EliteBehaviorId;
+  signatureLabel?: string;
+  signatureDurationSec?: number;
+  signaturePulseIntervalSec?: number;
+  signatureEscortBurst?: number;
+  signatureVolleyCount?: number;
   triggerHpRatio?: number;
   triggerRemainingSec?: number;
   minResidenceSec?: number;
@@ -336,6 +341,9 @@ export interface BattleState {
   pressurePhaseElapsedSec: number;
   pressurePhaseLabel?: string;
   pressureTransitionSec: number;
+  pressureSignatureLabel?: string;
+  pressureSignatureSec: number;
+  pressureSignaturePulseSec: number;
   nextEnemyId: number;
   nextBulletId: number;
   nextPulseId: number;

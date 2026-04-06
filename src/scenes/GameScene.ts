@@ -193,6 +193,7 @@ export class GameScene extends Phaser.Scene {
               state.battle.pressurePhaseLabel,
               state.battle.pressureTransitionSec > 0,
               state.battle.pressurePhaseIndex,
+              state.battle.pressureSignatureLabel,
             )
           : undefined,
     };
@@ -319,6 +320,12 @@ export class GameScene extends Phaser.Scene {
           const pulseRadius = enemy.radius + 12 + (1.15 - battle.pressureTransitionSec) * 7;
           this.graphics.lineStyle(4, BATTLE_TEMPLATES[battle.templateId].accent, pulseAlpha);
           this.graphics.strokeCircle(enemy.x, enemy.y, pulseRadius);
+        }
+        if (battle.pressureSignatureSec > 0) {
+          const signatureAlpha = Math.min(0.28, 0.12 + battle.pressureSignatureSec * 0.04);
+          const signatureRadius = enemy.radius + 15 + Math.sin(battle.elapsedSec * 7.5) * 2;
+          this.graphics.lineStyle(3, BATTLE_TEMPLATES[battle.templateId].accent, signatureAlpha);
+          this.graphics.strokeCircle(enemy.x, enemy.y, signatureRadius);
         }
         if (enemy.guardSec > 0) {
           const guardAlpha = Math.min(0.45, 0.16 + enemy.guardSec * 0.04);

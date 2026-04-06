@@ -380,3 +380,38 @@ route window 当前的约束是：
   - 复用旧的 `frontline / screened / kiting / summoner`
   - 不引入 Boss 专属 AI 系统
   - 不改变主流程与 battle 结算
+
+## 2026-04-06 Boss Phase Signature Pressure 补充
+本轮新增的是 `phase signature window`，不是新的血量乘区。
+
+### 激活规则
+- 当 Boss 进入带 signature 的 phase 时：
+  - `pressureSignatureLabel = signatureLabel`
+  - `pressureSignatureSec = signatureDurationSec`
+  - `pressureSignaturePulseSec = 0`
+- 若该 phase 没有声明 signature，则：
+  - `pressureSignatureLabel = undefined`
+  - `pressureSignatureSec = 0`
+
+### 倒计时规则
+- 每帧更新：
+  - `pressureSignatureSec = max(0, pressureSignatureSec - dt)`
+  - `pressureSignaturePulseSec = max(0, pressureSignaturePulseSec - dt)`
+- 当 `pressureSignatureSec <= 0` 时，本次 signature window 结束，HUD 也不再继续显示该 signature。
+
+### 脉冲兑现规则
+- `signaturePulseReady = pressureSignatureSec > 0 && pressureSignaturePulseSec <= 0`
+- 若 `signatureEscortBurst > 0`：
+  - `signatureEscortSpawn = min(signatureEscortBurst, escortCap - currentEscortCount)`
+- 若 `signatureVolleyCount > 0`：
+  - `signatureVolleyShooters = elite + nearestRanged.slice(0, signatureVolleyCount - 1)`
+  - 每个 shooter 继续沿用现有敌方投射物公式，不新建独立弹幕系统
+- 每次兑现后：
+  - `pressureSignaturePulseSec = signaturePulseIntervalSec`
+
+### 当前取舍
+- 这条规则的作用是让某个 phase 在短时间内有更稳定的“压力味道”。
+- 它不会额外提高 Boss 常驻血量，也不会引入强锁血。
+- 本轮的重点是：
+  - `phase identity + signature window`
+  - 而不是 `phase identity + 更多血量`

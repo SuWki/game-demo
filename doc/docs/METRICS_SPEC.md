@@ -116,3 +116,42 @@
   - `battle_template_entered.payload.title` 现在会直接落成具体 Boss 节点名，例如 `锁域主核`、`屏卫主核`，不再只剩泛 final-boss 标题。
   - `event_selected.payload.contentKind = anomaly` 现在不仅表示“异常 lane 被命中”，也可能对应 anomaly 专属事件批次，例如 `相位裂缝`、`载体失真`、`Boss 阴影扫描`。
 - 这轮仍复用现有 battle / event / run_finished 事件结构，没有新建 Boss 或 anomaly 专属埋点系统。
+
+## 2026-04-06 Boss Phase Signature Observability Addendum
+- 本轮在现有 metrics tracker 上补了三个轻量观测事件，不新建独立埋点系统：
+  - `boss_phase_entered`
+  - `boss_phase_duration`
+  - `boss_signature_seen`
+
+### 事件说明
+- `boss_phase_entered`
+  - 触发时机：Boss 进入一个新的 `pressurePhase`
+  - payload：
+    - `templateId`
+    - `phaseId`
+    - `phaseLabel`
+- `boss_phase_duration`
+  - 触发时机：
+    - Boss 从当前 phase 切到下一段时
+    - 或 Boss 战在当前 phase 结束时
+  - payload：
+    - `templateId`
+    - `phaseId`
+    - `phaseLabel`
+    - `durationSec`
+- `boss_signature_seen`
+  - 触发时机：带 signature 的 Boss phase 被激活时
+  - payload：
+    - `templateId`
+    - `phaseId`
+    - `phaseLabel`
+    - `signatureLabel`
+    - `durationSec`
+
+### 口径说明
+- `boss_signature_seen.durationSec` 当前记录的是“本次 signature window 的配置时长 / 激活时长”，不是事后回算的真实屏幕停留时长。
+- 这组观测只会在 `encounterType = boss` 时发出，elite 轻量 phase 不共享这组事件。
+- 导出链路继续沿用：
+  - `window.__pilotMetrics`
+  - `window.__exportPilotMetrics()`
+  - `localStorage: commercial_pilot_metrics_v1`

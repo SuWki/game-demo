@@ -348,6 +348,7 @@ export class RunEngine {
     battle.pressureTransitionSec = Math.max(0, battle.pressureTransitionSec - dt);
 
     this.updatePressurePhase(battle);
+    this.updatePressureSignature(battle, dt);
     this.updatePlayerMovement(battle, dt);
     this.spawnEnemies(battle, dt);
     this.updateShooting(battle, dt);
@@ -362,6 +363,7 @@ export class RunEngine {
     }
 
     if (this.state.stats.hp <= 0) {
+      this.finalizeBossPressureMetrics(battle);
       this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
       this.finishRun('defeat', 'hpDepleted');
       return;
@@ -373,6 +375,7 @@ export class RunEngine {
     }
 
     if (battle.remainingSec <= 0) {
+      this.finalizeBossPressureMetrics(battle);
       this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
       this.finishRun('defeat', 'timeOut');
     }
@@ -469,6 +472,9 @@ export class RunEngine {
       pressurePhaseElapsedSec: 0,
       pressurePhaseLabel: template.eliteRule ? (encounterType === 'boss' ? '接敌' : '交火') : undefined,
       pressureTransitionSec: 0,
+      pressureSignatureLabel: undefined,
+      pressureSignatureSec: 0,
+      pressureSignaturePulseSec: 0,
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
@@ -525,6 +531,81 @@ export class RunEngine {
     return getBattleActiveEliteBehavior(battle.templateId, battle.pressurePhaseIndex) ?? template.eliteRule?.behavior ?? 'frontline';
   }
 
+  private activatePressureSignature(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
+    const durationSec = phase.signatureDurationSec ?? 0;
+    if (durationSec <= 0 || !phase.signatureLabel) {
+      battle.pressureSignatureLabel = undefined;
+      battle.pressureSignatureSec = 0;
+      battle.pressureSignaturePulseSec = 0;
+      return;
+    }
+
+    battle.pressureSignatureLabel = phase.signatureLabel;
+    battle.pressureSignatureSec = durationSec;
+    battle.pressureSignaturePulseSec = 0;
+
+    if (battle.encounterType === 'boss') {
+      this.services.metrics.recordBossSignatureSeen(battle.templateId, phase.id, phase.label, phase.signatureLabel, durationSec);
+    }
+  }
+
+  private updatePressureSignature(battle: BattleState, dt: number): void {
+    if (battle.pressureSignatureSec <= 0) {
+      battle.pressureSignatureLabel = undefined;
+      battle.pressureSignaturePulseSec = 0;
+      return;
+    }
+
+    const phase = this.getActivePressurePhase(battle);
+    if (!phase) {
+      battle.pressureSignatureLabel = undefined;
+      battle.pressureSignatureSec = 0;
+      battle.pressureSignaturePulseSec = 0;
+      return;
+    }
+
+    battle.pressureSignatureSec = Math.max(0, battle.pressureSignatureSec - dt);
+    battle.pressureSignaturePulseSec = Math.max(0, battle.pressureSignaturePulseSec - dt);
+    if (battle.pressureSignatureSec <= 0) {
+      battle.pressureSignatureLabel = undefined;
+      battle.pressureSignaturePulseSec = 0;
+      return;
+    }
+
+    const pulseIntervalSec = phase.signaturePulseIntervalSec ?? 0;
+    const shouldPulse = pulseIntervalSec > 0 && battle.pressureSignaturePulseSec <= 0;
+    if (!shouldPulse) {
+      return;
+    }
+
+    if ((phase.signatureEscortBurst ?? 0) > 0) {
+      this.spawnPhaseEscortBurst(battle, phase.signatureEscortBurst ?? 0);
+    }
+    if ((phase.signatureVolleyCount ?? 0) > 0) {
+      this.firePressureVolley(battle, phase.signatureVolleyCount ?? 0);
+    }
+
+    battle.pressureSignaturePulseSec = pulseIntervalSec;
+  }
+
+  private finalizeBossPressureMetrics(battle: BattleState): void {
+    if (battle.encounterType !== 'boss') {
+      return;
+    }
+
+    const activePhase = this.getActivePressurePhase(battle);
+    if (!activePhase || battle.pressurePhaseElapsedSec <= 0) {
+      return;
+    }
+
+    this.services.metrics.recordBossPhaseDuration(
+      battle.templateId,
+      activePhase.id,
+      activePhase.label,
+      battle.pressurePhaseElapsedSec,
+    );
+  }
+
   private updatePressurePhase(battle: BattleState): void {
     const template = BATTLE_TEMPLATES[battle.templateId];
     const phases = template.eliteRule?.pressurePhases;
@@ -556,6 +637,15 @@ export class RunEngine {
       return;
     }
 
+    if (battle.encounterType === 'boss' && currentPhase) {
+      this.services.metrics.recordBossPhaseDuration(
+        battle.templateId,
+        currentPhase.id,
+        currentPhase.label,
+        battle.pressurePhaseElapsedSec,
+      );
+    }
+
     battle.pressurePhaseIndex = nextIndex;
     battle.pressurePhaseLabel = nextPhase.label;
     battle.pressurePhaseElapsedSec = 0;
@@ -577,6 +667,10 @@ export class RunEngine {
     }
 
     this.spawnPhaseEscortBurst(battle, nextPhase.entryEscortBurst ?? 0);
+    this.activatePressureSignature(battle, nextPhase);
+    if (battle.encounterType === 'boss') {
+      this.services.metrics.recordBossPhaseEntered(battle.templateId, nextPhase.id, nextPhase.label);
+    }
     this.enqueueTip(`${battle.encounterType === 'boss' ? 'Boss 转段' : '精英转段'}：${nextPhase.label}`);
     this.enqueueAudio('pressure');
   }
@@ -588,6 +682,7 @@ export class RunEngine {
     }
 
     this.state.battleWins += 1;
+    this.finalizeBossPressureMetrics(battle);
     this.services.metrics.recordBattleCompleted(battle.templateId, 'win', BATTLE_TEMPLATES[battle.templateId].contentTier);
     const completionExp = getBattleCompletionExperience(
       BATTLE_TEMPLATES[battle.templateId],
@@ -1531,17 +1626,14 @@ export class RunEngine {
     const projectileSpeed =
       (archetype.projectileSpeed ?? 220) * (pressurePhase?.rangedProjectileSpeedMultiplier ?? 1);
     const projectileDamageMultiplier = archetype.projectileDamageMultiplier ?? 0.76;
-    const shotAngle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
-    battle.enemyProjectiles.push({
-      id: battle.nextEnemyProjectileId++,
-      x: enemy.x,
-      y: enemy.y,
-      vx: Math.cos(shotAngle) * projectileSpeed,
-      vy: Math.sin(shotAngle) * projectileSpeed,
-      damage: Math.max(1, Math.round(enemy.contactDamage * projectileDamageMultiplier)),
-      lifeSec: 3.2,
-      radius: archetype.projectileRadius ?? 5,
-    });
+    this.spawnEnemyProjectile(
+      battle,
+      enemy.x,
+      enemy.y,
+      projectileSpeed,
+      Math.max(1, Math.round(enemy.contactDamage * projectileDamageMultiplier)),
+      archetype.projectileRadius ?? 5,
+    );
     enemy.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle);
   }
 
@@ -1551,6 +1643,63 @@ export class RunEngine {
   ): number {
     const multiplier = this.getActivePressurePhase(battle)?.rangedShotIntervalMultiplier ?? 1;
     return Math.max(0.65, (archetype.shotIntervalSec ?? 2.35) * multiplier);
+  }
+
+  private spawnEnemyProjectile(
+    battle: BattleState,
+    x: number,
+    y: number,
+    projectileSpeed: number,
+    damage: number,
+    radius: number,
+  ): void {
+    const shotAngle = Math.atan2(battle.playerY - y, battle.playerX - x);
+    battle.enemyProjectiles.push({
+      id: battle.nextEnemyProjectileId++,
+      x,
+      y,
+      vx: Math.cos(shotAngle) * projectileSpeed,
+      vy: Math.sin(shotAngle) * projectileSpeed,
+      damage,
+      lifeSec: 3.2,
+      radius,
+    });
+  }
+
+  private firePressureVolley(battle: BattleState, requestedShooterCount: number): void {
+    if (requestedShooterCount <= 0 || !battle.eliteAlive) {
+      return;
+    }
+
+    const eliteEnemy = battle.enemies.find((enemy) => enemy.elite) ?? null;
+    const rangedEnemies = battle.enemies
+      .filter((enemy) => !enemy.elite && enemy.archetype === 'ranged')
+      .sort((left, right) => {
+        const leftDistance = Math.hypot(left.x - battle.playerX, left.y - battle.playerY);
+        const rightDistance = Math.hypot(right.x - battle.playerX, right.y - battle.playerY);
+        return leftDistance - rightDistance;
+      });
+    const shooters = eliteEnemy ? [eliteEnemy, ...rangedEnemies] : rangedEnemies;
+
+    for (const shooter of shooters.slice(0, requestedShooterCount)) {
+      const archetype = getEnemyArchetype(shooter.archetype);
+      const pressurePhase = this.getActivePressurePhase(battle);
+      const projectileSpeed =
+        (shooter.elite ? 244 : archetype.projectileSpeed ?? 220) * (pressurePhase?.rangedProjectileSpeedMultiplier ?? 1);
+      const projectileDamageMultiplier = shooter.elite ? 0.88 : archetype.projectileDamageMultiplier ?? 0.76;
+      const projectileRadius = shooter.elite ? Math.max(6, shooter.radius * 0.26) : archetype.projectileRadius ?? 5;
+      this.spawnEnemyProjectile(
+        battle,
+        shooter.x,
+        shooter.y,
+        projectileSpeed,
+        Math.max(1, Math.round(shooter.contactDamage * projectileDamageMultiplier)),
+        projectileRadius,
+      );
+      if (!shooter.elite) {
+        shooter.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle);
+      }
+    }
   }
 
   private updateEnemyProjectiles(battle: BattleState, dt: number): void {

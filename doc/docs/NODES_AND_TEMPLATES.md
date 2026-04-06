@@ -273,3 +273,38 @@
 ### 当前边界
 - 这轮没有引入新的 Boss 行为系统；只是把现有 `frontline / screened / kiting / summoner` 行为谱系正式接到 phase 层。
 - elite 仍保留自己的轻量 phase 压力，不与 Boss 的阶段行为身份混成同一承载层级。
+
+## 2026-04-06 Boss Phase Signature Addendum
+### phase signature carrier
+- `pressurePhases` 现在除了 `behaviorOverride` 与切段承接字段外，还允许挂接：
+  - `signatureLabel`
+  - `signatureDurationSec`
+  - `signaturePulseIntervalSec`
+  - `signatureEscortBurst`
+  - `signatureVolleyCount`
+- 这层 carrier 的含义是：
+  - phase 进入后的一小段专属压力窗口
+  - 用可重复、可学习的短时脉冲确认“这段 phase 在干什么”
+  - 不引入新的 Boss 子系统，只复用现有护卫刷新与敌方弹道能力
+
+### 当前 Boss signature 映射
+- `boss-hunt`
+  - `逼近`：`逼近压线`
+  - 主要兑现：短时额外护卫脉冲，强化贴线逼近感
+- `boss-lockdown`
+  - `封位`：`护卫封位`
+  - 主要兑现：更密的护卫封位脉冲，强化走位压缩感
+- `boss-bastion`
+  - `交火`：`火线齐射`
+  - 主要兑现：短窗齐射，强化远程火线与交火段辨识度
+
+### 当前读数口径
+- 当 signature window 激活时，battle HUD 子读数会补上 `压迫 {signatureLabel}`。
+- 战场表现只增加轻量确认：
+  - Boss 主核额外外圈
+  - 原有 phase / 行为 / 敌群读数继续保留
+- 本轮没有重新加回大横幅，也没有把 elite 抬到同级 signature 机制。
+
+### 当前边界
+- 这轮做的是 `Boss phase signature`，不是完整 Boss pattern 系统。
+- `final battle` 继续由 Boss 模板池承载；elite 仍只保留轻量 phase 压力，不共享 Boss signature carrier。
