@@ -3,6 +3,120 @@
 ## [重建阶段] 文档恢复版说明
 原始开发日志文件已丢失。本文件为基于历史文档和对话记录重建的简化版开发日志，用于恢复项目上下文和后续继续开发。
 
+## [0.9v 读数 / 压力校准] Boss phase 内场地空间雕刻 + 安全区 / 危险区模式稳定
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目仍处于 `0.9v` 的“读数 / 压力校准阶段”；本轮目标是 `Boss phase 内场地空间雕刻 + 安全区 / 危险区模式稳定`，不是重写系统，不是回到恢复期，也不是继续靠堆血加压。
+
+### 盘点结论
+- 当前 Boss 的 `phase / signature / pattern` 三层都已经存在，问题已不再是“有没有阶段入口”。
+- 当前真正的剩余缺口是：
+  - `boss-hunt / close-in` 与 `boss-lockdown / pin-down` 虽然已有持续 pattern，但危险区 / 安全窗结构仍不够稳。
+  - phase 内空间读数主要还靠：
+    - 护卫刷新
+    - 敌方投射物
+    - 旧行为谱系
+    - 轻量 overlay 条纹
+  - 高机动 build 下，玩家更容易把这些 phase 读成“边走边打就能磨过去”，而不是“场地被雕刻成了某种形状”。
+- 本轮最小切入点确定为：
+  - 保留 `signature window` 做切段确认
+  - 保留 `pattern pulse` 做持续模式
+  - 再为 `laneCrush / sideClamp` 补 `safe window + wall shots`，把空间结构真正落到场面里
+
+### 本轮实现
+- `src/game/types.ts`
+  - 继续沿上一轮已开的口子，正式接上：
+    - `patternSafeWindowSize`
+    - `patternSafeWindowLingerSec`
+    - `patternWallShotCount`
+    - `pressurePatternPulseCount`
+    - `pressureSafeWindowAxis`
+    - `pressureSafeWindowCenter`
+    - `pressureSafeWindowSpan`
+    - `pressureSafeWindowSec`
+- `src/systems/RunEngine.ts`
+  - Boss battle 初始化时现在会带上 safe-window 运行态。
+  - 新增：
+    - `clearPressureSafeWindow(...)`
+    - `openPressureSafeWindow(...)`
+    - `choosePressureSafeWindowCenter(...)`
+    - `spawnPressureWallShots(...)`
+  - `laneCrush`
+    - 打开纵向安全走廊
+    - 在走廊外由上/下沿发射壁射
+    - 继续补厚体 escort 波
+  - `sideClamp`
+    - 打开横向安全走廊
+    - 在走廊外由左/右沿发射壁射
+    - 继续补高速 escort 波
+  - `crossfireWave`
+    - 继续保持交叉齐射节奏型 phase
+    - 本轮不强行补成安全窗结构
+- `src/data/battleTemplates.ts`
+  - `boss-hunt / close-in` 现补入：
+    - `patternSafeWindowSize = 224`
+    - `patternSafeWindowLingerSec = 1.28`
+    - `patternWallShotCount = 7`
+  - `boss-lockdown / pin-down` 现补入：
+    - `patternSafeWindowSize = 162`
+    - `patternSafeWindowLingerSec = 1.22`
+    - `patternWallShotCount = 6`
+  - HUD 读数现在会在安全窗激活时补上 `安全窗 纵向/横向`
+- `src/scenes/GameScene.ts`
+  - `renderPressurePatternOverlay(...)` 不再只画抽象压迫条。
+  - 当安全窗激活时：
+    - 危险区会被低透明遮罩压出来
+    - 安全窗会被轻量高亮与边界线标出
+  - 仍不增加大弹框或额外 HUD 遮挡。
+- `src/systems/MetricsTracker.ts`
+  - 新增低成本观测：
+    - `boss_safe_window_seen`
+  - 继续复用：
+    - `boss_phase_pattern_seen`
+    - `boss_phase_pattern_duration`
+    作为 `boss_space_pattern_seen / boss_pressure_mode_duration` 的等价观测，不重复造字段名。
+
+### 验证
+- `npm run build` 通过。
+- `npx tsx output/qa/boss-space-windows.mts` 验证通过：
+  - `boss-hunt / 纵压驱进`
+    - `safeWindowAxis = vertical`
+    - `safeWindowCount = 2`
+    - `firstSpan = 224`
+    - 高机动样本下 `averageOffset = 125.07`
+  - `boss-lockdown / 侧翼夹封`
+    - `safeWindowAxis = horizontal`
+    - `safeWindowCount = 2`
+    - `firstSpan = 162`
+    - 高机动样本下 `averageOffset = 145.28`
+  - `boss-bastion / 交叉火线`
+    - 仍无安全窗
+    - 继续保持节奏型 pattern，不与前两类混味道
+- 上述抽样同时覆盖：
+  - `normal`
+  - `highBurst`
+  - `highMobility`
+  三组样本；高 burst 下 phase 仍能进入安全窗层，高机动下安全窗不会直接贴着玩家跑。
+- 浏览器全链路验证通过：
+  - `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `anomalyPanelSeen = true`
+  - `bossNodeSeen = true`
+  - `bossBattleSeen = true`
+  - `battleHudSeen = true`
+  - `replayStarted = true`
+  - `consoleErrors = []`
+  - `run_finished.payload.finalNodeType = boss`
+  - 结果页继续显示 `Boss · 屏卫主核`
+
+### 剩余风险
+- 安全窗 / 危险区雕刻目前只落在：
+  - `boss-hunt / close-in`
+  - `boss-lockdown / pin-down`
+- `boss-bastion / crossfire` 仍主要靠火线节奏成立；如果后续高机动 / 高 burst 继续上涨，下一步更可能需要的是：
+  - 为远程型 phase 补更明确的空间口袋或收缩节奏
+  - 或继续结合真实玩家样本验证当前安全窗是否已足够可学
+  而不是继续堆血或堆怪。
+
 ## [0.9v 读数 / 压力校准] Boss 阶段内行为差异强化
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

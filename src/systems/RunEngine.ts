@@ -52,6 +52,7 @@ import type {
   ContentTier,
   EnemyArchetypeId,
   PressurePatternModeId,
+  PressureSafeWindowAxis,
   EventDefinition,
   EventOption,
   EliteBehaviorId,
@@ -481,6 +482,11 @@ export class RunEngine {
       pressurePatternMode: undefined,
       pressurePatternPulseSec: 0,
       pressurePatternFlashSec: 0,
+      pressurePatternPulseCount: 0,
+      pressureSafeWindowAxis: undefined,
+      pressureSafeWindowCenter: CENTER_X,
+      pressureSafeWindowSpan: 0,
+      pressureSafeWindowSec: 0,
       nextEnemyId: 0,
       nextBulletId: 0,
       nextPulseId: 0,
@@ -555,11 +561,20 @@ export class RunEngine {
     }
   }
 
+  private clearPressureSafeWindow(battle: BattleState): void {
+    battle.pressureSafeWindowAxis = undefined;
+    battle.pressureSafeWindowCenter = CENTER_X;
+    battle.pressureSafeWindowSpan = 0;
+    battle.pressureSafeWindowSec = 0;
+  }
+
   private clearPressurePattern(battle: BattleState): void {
     battle.pressurePatternLabel = undefined;
     battle.pressurePatternMode = undefined;
     battle.pressurePatternPulseSec = 0;
     battle.pressurePatternFlashSec = 0;
+    battle.pressurePatternPulseCount = 0;
+    this.clearPressureSafeWindow(battle);
   }
 
   private activatePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
@@ -573,6 +588,8 @@ export class RunEngine {
     battle.pressurePatternMode = phase.patternMode;
     battle.pressurePatternPulseSec = Math.min(0.65, Math.max(0.2, pulseIntervalSec * 0.45));
     battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.24);
+    battle.pressurePatternPulseCount = 0;
+    this.clearPressureSafeWindow(battle);
 
     if (battle.encounterType === 'boss') {
       this.services.metrics.recordBossPhasePatternSeen(battle.templateId, phase.id, phase.label, phase.patternLabel);
@@ -620,6 +637,10 @@ export class RunEngine {
 
   private updatePressurePattern(battle: BattleState, dt: number): void {
     battle.pressurePatternFlashSec = Math.max(0, battle.pressurePatternFlashSec - dt);
+    battle.pressureSafeWindowSec = Math.max(0, battle.pressureSafeWindowSec - dt);
+    if (battle.pressureSafeWindowSec <= 0) {
+      this.clearPressureSafeWindow(battle);
+    }
     const phase = this.getActivePressurePhase(battle);
     if (!phase || !phase.patternLabel || !phase.patternMode || (phase.patternPulseIntervalSec ?? 0) <= 0) {
       this.clearPressurePattern(battle);
@@ -641,9 +662,21 @@ export class RunEngine {
   }
 
   private executePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
+    battle.pressurePatternPulseCount += 1;
     switch (phase.patternMode) {
       case 'laneCrush':
+        this.openPressureSafeWindow(battle, phase, 'vertical');
+        this.spawnPressureWallShots(battle, phase, 'vertical');
+        this.spawnPatternEscortWave(
+          battle,
+          phase.patternEscortBurst ?? 0,
+          phase.patternMode,
+          phase.patternEscortArchetype,
+        );
+        return;
       case 'sideClamp':
+        this.openPressureSafeWindow(battle, phase, 'horizontal');
+        this.spawnPressureWallShots(battle, phase, 'horizontal');
         this.spawnPatternEscortWave(
           battle,
           phase.patternEscortBurst ?? 0,
@@ -652,6 +685,7 @@ export class RunEngine {
         );
         return;
       case 'crossfireWave':
+        this.clearPressureSafeWindow(battle);
         this.firePressureVolley(battle, phase.patternVolleyCount ?? 0, {
           spreadRad: phase.patternVolleySpreadRad ?? 0.2,
           shotsPerShooter: phase.patternVolleyShotsPerShooter ?? 2,
@@ -659,6 +693,118 @@ export class RunEngine {
         return;
       default:
         return;
+    }
+  }
+
+  private openPressureSafeWindow(
+    battle: BattleState,
+    phase: BattlePressurePhaseDefinition,
+    axis: PressureSafeWindowAxis,
+  ): void {
+    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const minimumSpan = axis === 'vertical' ? 164 : 132;
+    const maximumSpan = dimension * 0.46;
+    const safeWindowSpan = clamp(
+      phase.patternSafeWindowSize ?? (axis === 'vertical' ? 212 : 156),
+      minimumSpan,
+      maximumSpan,
+    );
+    const safeWindowCenter = this.choosePressureSafeWindowCenter(battle, axis, safeWindowSpan);
+    const safeWindowSec = clamp(
+      phase.patternSafeWindowLingerSec ?? (axis === 'vertical' ? 1.28 : 1.18),
+      0.82,
+      1.9,
+    );
+
+    battle.pressureSafeWindowAxis = axis;
+    battle.pressureSafeWindowCenter = safeWindowCenter;
+    battle.pressureSafeWindowSpan = safeWindowSpan;
+    battle.pressureSafeWindowSec = safeWindowSec;
+
+    if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
+      this.services.metrics.recordBossSafeWindowSeen(
+        battle.templateId,
+        phase.id,
+        phase.label,
+        phase.patternLabel ?? phase.label,
+        axis,
+        safeWindowSpan,
+        safeWindowSec,
+      );
+    }
+  }
+
+  private choosePressureSafeWindowCenter(
+    battle: BattleState,
+    axis: PressureSafeWindowAxis,
+    span: number,
+  ): number {
+    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const playerCoord = axis === 'vertical' ? battle.playerX : battle.playerY;
+    const laneRatios = axis === 'vertical' ? [0.32, 0.68, 0.5, 0.36, 0.64] : [0.3, 0.7, 0.5, 0.38, 0.62];
+    const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1) % laneRatios.length;
+    const anchoredLane = dimension * laneRatios[pulseIndex];
+    const blendedCenter = anchoredLane * 0.72 + playerCoord * 0.28;
+    const margin = axis === 'vertical' ? 92 : 74;
+    return clamp(blendedCenter, margin + span * 0.5, dimension - margin - span * 0.5);
+  }
+
+  private spawnPressureWallShots(
+    battle: BattleState,
+    phase: BattlePressurePhaseDefinition,
+    axis: PressureSafeWindowAxis,
+  ): void {
+    if (battle.pressureSafeWindowSpan <= 0) {
+      return;
+    }
+
+    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const margin = axis === 'vertical' ? 72 : 58;
+    const shotSlots = Math.max(4, phase.patternWallShotCount ?? (axis === 'vertical' ? 7 : 6));
+    const safeStart = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
+    const safeEnd = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
+    const slotPositions: number[] = [];
+
+    for (let index = 0; index < shotSlots; index += 1) {
+      const ratio = shotSlots === 1 ? 0.5 : index / (shotSlots - 1);
+      const position = margin + ratio * (dimension - margin * 2);
+      if (position > safeStart - 18 && position < safeEnd + 18) {
+        continue;
+      }
+      slotPositions.push(position);
+    }
+
+    if (slotPositions.length === 0) {
+      slotPositions.push(
+        clamp(safeStart - 36, margin, dimension - margin),
+        clamp(safeEnd + 36, margin, dimension - margin),
+      );
+    }
+
+    const currentPhase = this.getActivePressurePhase(battle);
+    const projectileSpeed = 252 * (currentPhase?.rangedProjectileSpeedMultiplier ?? 1);
+    const projectileDamage = Math.max(
+      6,
+      Math.round(
+        this.getContactDamage(
+          BATTLE_TEMPLATES[battle.templateId],
+          this.getCurrentBattleIndex(),
+          this.state.phase,
+          battle.difficultyScale,
+          0.7,
+        ),
+      ),
+    );
+
+    for (const position of slotPositions) {
+      if (axis === 'vertical') {
+        this.spawnEnemyProjectile(battle, position, -22, projectileSpeed, projectileDamage, 6, Math.PI / 2);
+        this.spawnEnemyProjectile(battle, position, ARENA_HEIGHT + 22, projectileSpeed, projectileDamage, 6, -Math.PI / 2);
+        continue;
+      }
+
+      this.spawnEnemyProjectile(battle, -22, position, projectileSpeed, projectileDamage, 6, 0);
+      this.spawnEnemyProjectile(battle, ARENA_WIDTH + 22, position, projectileSpeed, projectileDamage, 6, Math.PI);
     }
   }
 

@@ -5,6 +5,7 @@ import type {
   BattleTemplateId,
   EnemyArchetypeId,
   EliteBehaviorId,
+  PressureSafeWindowAxis,
 } from '../game/types';
 
 const ENEMY_ARCHETYPE_LABEL_MAP: Record<EnemyArchetypeId, string> = {
@@ -417,6 +418,9 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           patternPulseIntervalSec: 1.65,
           patternEscortBurst: 2,
           patternEscortArchetype: 'brute',
+          patternSafeWindowSize: 224,
+          patternSafeWindowLingerSec: 1.28,
+          patternWallShotCount: 7,
           triggerHpRatio: 0.74,
           triggerRemainingSec: 24,
           minResidenceSec: 4.2,
@@ -512,6 +516,9 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
           patternPulseIntervalSec: 1.45,
           patternEscortBurst: 2,
           patternEscortArchetype: 'skirmisher',
+          patternSafeWindowSize: 162,
+          patternSafeWindowLingerSec: 1.22,
+          patternWallShotCount: 6,
           triggerHpRatio: 0.76,
           triggerRemainingSec: 24,
           minResidenceSec: 4.4,
@@ -819,6 +826,7 @@ export function getBattleEnemyReadout(
   pressurePhaseIndex = -1,
   pressureSignatureLabel?: string,
   pressurePatternLabel?: string,
+  pressureSafeWindowAxis?: PressureSafeWindowAxis,
 ): string {
   const template = BATTLE_TEMPLATES[templateId];
   const frontline = getTopArchetypeLabels(template.regularArchetypes, 2);
@@ -836,6 +844,10 @@ export function getBattleEnemyReadout(
 
   if (pressurePatternLabel) {
     parts.push(`模式 ${pressurePatternLabel}`);
+  }
+
+  if (pressureSafeWindowAxis) {
+    parts.push(`安全窗 ${pressureSafeWindowAxis === 'vertical' ? '纵向' : '横向'}`);
   }
 
   if (activeBehavior) {

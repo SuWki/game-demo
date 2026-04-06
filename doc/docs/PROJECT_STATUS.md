@@ -236,3 +236,26 @@
 - 当前阶段的主要剩余风险更新为：
   - phase 内模式已经落地，但仍建立在现有护卫刷新、敌方投射物与旧行为谱系之上，不是独立 Boss pattern 系统。
   - 如果后续玩家 burst 与机动继续上涨，下一轮更可能需要补的是更强的空间占位 / 安全区雕刻，而不是继续增加血量。
+
+## 2026-04-06 0.9v Boss phase 场地空间雕刻更新
+- 当前阶段判断继续保持为：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。
+- 本轮不再补“有没有 pattern”，而是补“phase 内危险区 / 安全窗是否已经真正成立”。
+- 当前 Boss phase 的最新推进为：
+  - `boss-hunt / close-in / 纵压驱进`
+    - 现在会打开一条纵向安全走廊
+    - 走廊外由上/下沿壁射与厚体 escort 波共同压缩
+  - `boss-lockdown / pin-down / 侧翼夹封`
+    - 现在会打开一条横向安全走廊
+    - 走廊外由左/右侧壁射与高速 escort 波共同封边
+  - `boss-bastion / crossfire / 交叉火线`
+    - 继续保留为节奏压制型 phase，不额外扩成安全窗系统
+- 当前实现里，Boss phase 现在已经分成三层：
+  - `signature window`：确认切段
+  - `pattern pulse`：维持 phase 内模式
+  - `safe / danger carving`：把 laneCrush / sideClamp 进一步落成玩家可读的空间结构
+- 当前阶段的主要剩余风险更新为：
+  - 安全窗雕刻目前只落在 `boss-hunt / boss-lockdown` 两个 phase 上，`boss-bastion` 仍主要依赖节奏火线成立。
+  - 如果后续高 burst / 高机动构筑继续上涨，下一步更可能需要的是：
+    - 继续验证真实玩家样本下的空间读数是否稳定
+    - 或为 `crossfire` 一类远程 phase 补更明确的空间口袋
+    而不是继续加血或加怪。

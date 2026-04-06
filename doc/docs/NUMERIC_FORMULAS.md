@@ -455,3 +455,45 @@ route window 当前的约束是：
 - 当前做的是：
   - 用现有护卫刷新 / 敌方投射物 / 行为谱系
   - 兑现更稳定的 `phase 内空间压迫 / 节奏模式`
+
+## 2026-04-06 Boss Phase Space Carving 补充
+本轮新增的是 `safe window / danger zone carving`，不是新的场地系统。
+
+### 安全窗尺寸
+- 若 phase 定义了安全窗字段：
+  - `safeWindowSpan = clamp(patternSafeWindowSize, minimumSpan, maximumSpan)`
+- 当前实现口径：
+  - 纵向安全窗：`minimumSpan = 164`
+  - 横向安全窗：`minimumSpan = 132`
+  - `maximumSpan = arenaDimension * 0.46`
+
+### 安全窗中心
+- `safeWindowCenter = clamp(laneAnchor * 0.72 + playerCoord * 0.28, margin + span / 2, dimension - margin - span / 2)`
+- 含义：
+  - 安全窗不会完全贴着玩家移动
+  - 也不会固定死在同一个位置
+  - 当前是“离散 lane 锚点 + 轻度跟随玩家”的折中方案
+
+### 安全窗持续
+- `safeWindowSec = clamp(patternSafeWindowLingerSec, 0.82, 1.9)`
+- 含义：
+  - 给玩家一小段可读、可反应的入窗时间
+  - 不把场地压迫做成不可反应的瞬时陷阱
+
+### 壁射危险区
+- `wallShotDamage = round(contactDamage * 0.7)`
+- `wallShotSpeed = 252 * rangedProjectileSpeedMultiplier`
+- `wallShotRadius = 6`
+- 纵向安全窗：
+  - 上/下沿在安全窗外的列位发射纵向壁射
+- 横向安全窗：
+  - 左/右沿在安全窗外的行位发射横向壁射
+
+### 当前取舍
+- 这轮没有靠提高 Boss 基础血量来换取“空间感”。
+- 这轮采用的是：
+  - `patternSafeWindowSize`
+  - `patternSafeWindowLingerSec`
+  - `patternWallShotCount`
+  - 现有 escort / projectile 系统
+- 目标是让玩家读到“哪里危险、哪里短暂可站”，而不是把最终关变成更厚的 elite 或更乱的弹幕场。

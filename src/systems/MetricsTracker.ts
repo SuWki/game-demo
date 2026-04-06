@@ -5,6 +5,7 @@ import type {
   EventContentKind,
   NodeType,
   PhaseId,
+  PressureSafeWindowAxis,
   RouteBuildStage,
   RouteId,
   RunEndingKind,
@@ -322,6 +323,26 @@ export class MetricsTracker {
       phaseId,
       phaseLabel,
       patternLabel,
+      durationSec: Number(durationSec.toFixed(2)),
+    });
+  }
+
+  public recordBossSafeWindowSeen(
+    templateId: BattleTemplateId,
+    phaseId: string,
+    phaseLabel: string,
+    patternLabel: string,
+    axis: PressureSafeWindowAxis,
+    span: number,
+    durationSec: number,
+  ): void {
+    this.record('boss_safe_window_seen', {
+      templateId,
+      phaseId,
+      phaseLabel,
+      patternLabel,
+      axis,
+      span: Math.round(span),
       durationSec: Number(durationSec.toFixed(2)),
     });
   }

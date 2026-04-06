@@ -195,6 +195,7 @@ export class GameScene extends Phaser.Scene {
               state.battle.pressurePhaseIndex,
               state.battle.pressureSignatureLabel,
               state.battle.pressurePatternLabel,
+              state.battle.pressureSafeWindowSec > 0 ? state.battle.pressureSafeWindowAxis : undefined,
             )
           : undefined,
     };
@@ -397,6 +398,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
+    if (this.renderPressureSafeWindowOverlay(battle, accentColor, flashAlpha)) {
+      return;
+    }
 
     switch (battle.pressurePatternMode) {
       case 'sideClamp':
@@ -426,6 +430,89 @@ export class GameScene extends Phaser.Scene {
       default:
         return;
     }
+  }
+
+  private renderPressureSafeWindowOverlay(battle: BattleState, accentColor: number, flashAlpha: number): boolean {
+    if (
+      !battle.pressureSafeWindowAxis ||
+      battle.pressureSafeWindowSec <= 0 ||
+      battle.pressureSafeWindowSpan <= 0
+    ) {
+      return false;
+    }
+
+    const topInset = 88;
+    const bottomInset = 82;
+    const leftInset = 22;
+    const rightInset = 22;
+    const contentWidth = this.scale.width - leftInset - rightInset;
+    const contentHeight = this.scale.height - topInset - bottomInset;
+    const safeWindowAlpha = Math.min(0.18, 0.05 + battle.pressureSafeWindowSec * 0.08 + flashAlpha * 0.7);
+    const dangerAlpha = Math.min(0.16, 0.05 + battle.pressureSafeWindowSec * 0.06 + flashAlpha * 0.95);
+    const safeTint = 0x82ffca;
+    const dangerTint = 0xff6d62;
+
+    if (battle.pressureSafeWindowAxis === 'vertical') {
+      const safeStart = Phaser.Math.Clamp(
+        battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5,
+        leftInset,
+        this.scale.width - rightInset,
+      );
+      const safeEnd = Phaser.Math.Clamp(
+        battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5,
+        leftInset,
+        this.scale.width - rightInset,
+      );
+      const safeWidth = Math.max(18, safeEnd - safeStart);
+
+      if (safeStart > leftInset) {
+        this.graphics.fillStyle(dangerTint, dangerAlpha);
+        this.graphics.fillRect(leftInset, topInset, safeStart - leftInset, contentHeight);
+      }
+      if (safeEnd < this.scale.width - rightInset) {
+        this.graphics.fillStyle(dangerTint, dangerAlpha);
+        this.graphics.fillRect(safeEnd, topInset, this.scale.width - rightInset - safeEnd, contentHeight);
+      }
+
+      this.graphics.fillStyle(safeTint, safeWindowAlpha * 0.55);
+      this.graphics.fillRect(safeStart, topInset - 4, safeWidth, contentHeight + 8);
+      this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
+      this.graphics.strokeRect(safeStart, topInset - 4, safeWidth, contentHeight + 8);
+      this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
+      this.graphics.lineBetween(safeStart, topInset - 8, safeStart, this.scale.height - bottomInset + 8);
+      this.graphics.lineBetween(safeEnd, topInset - 8, safeEnd, this.scale.height - bottomInset + 8);
+      return true;
+    }
+
+    const safeStart = Phaser.Math.Clamp(
+      battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5,
+      topInset,
+      this.scale.height - bottomInset,
+    );
+    const safeEnd = Phaser.Math.Clamp(
+      battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5,
+      topInset,
+      this.scale.height - bottomInset,
+    );
+    const safeHeight = Math.max(18, safeEnd - safeStart);
+
+    if (safeStart > topInset) {
+      this.graphics.fillStyle(dangerTint, dangerAlpha);
+      this.graphics.fillRect(leftInset, topInset, contentWidth, safeStart - topInset);
+    }
+    if (safeEnd < this.scale.height - bottomInset) {
+      this.graphics.fillStyle(dangerTint, dangerAlpha);
+      this.graphics.fillRect(leftInset, safeEnd, contentWidth, this.scale.height - bottomInset - safeEnd);
+    }
+
+    this.graphics.fillStyle(safeTint, safeWindowAlpha * 0.55);
+    this.graphics.fillRect(leftInset - 4, safeStart, contentWidth + 8, safeHeight);
+    this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
+    this.graphics.strokeRect(leftInset - 4, safeStart, contentWidth + 8, safeHeight);
+    this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
+    this.graphics.lineBetween(leftInset - 8, safeStart, this.scale.width - rightInset + 8, safeStart);
+    this.graphics.lineBetween(leftInset - 8, safeEnd, this.scale.width - rightInset + 8, safeEnd);
+    return true;
   }
 
   private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {

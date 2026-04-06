@@ -342,3 +342,43 @@
 - `signature` 继续负责“phase 切了”的短时确认。
 - `pattern` 负责“这一阶段持续怎么压你”。
 - 这轮仍没有给 elite 增加同层级的 pattern 载体，避免 final battle 再次掉回 elite-family 同层语义。
+
+## 2026-04-06 Boss Phase Space Carving Addendum
+### phase 内空间雕刻 carrier
+- `pressurePhases` 现在还允许挂接轻量场地雕刻字段：
+  - `patternSafeWindowSize`
+  - `patternSafeWindowLingerSec`
+  - `patternWallShotCount`
+- 这层 carrier 的含义是：
+  - 不是新建场地机关系统
+  - 而是在现有 `pattern pulse + escort wave + enemy projectile` 上，把某个 phase 做成更可读的危险区 / 安全窗结构
+
+### 当前 Boss 空间雕刻映射
+- `boss-hunt / close-in / 纵压驱进`
+  - 打开一条纵向安全走廊
+  - 上/下沿壁射在走廊外形成纵压危险区
+  - 厚体 escort 波继续沿纵向把玩家往安全窗内压
+- `boss-lockdown / pin-down / 侧翼夹封`
+  - 打开一条横向安全走廊
+  - 左/右侧壁射在走廊外形成横向封边危险区
+  - 高速 escort 波继续在安全窗两端补压
+- `boss-bastion / crossfire / 交叉火线`
+  - 继续保留为节奏型火线 phase
+  - 本轮没有强行补成安全窗结构，避免把远程 phase 也做成同一味道
+
+### 当前读数口径
+- battle HUD 子读数在安全窗激活时会补上：
+  - `安全窗 纵向`
+  - 或 `安全窗 横向`
+- 战场 overlay 不再只画抽象压迫条，而是会：
+  - 淡显安全窗区域
+  - 在安全窗外给出低透明危险区遮罩
+  - 用边界线提示当前走廊边缘
+
+### 当前边界
+- 这轮仍然没有引入独立 hazard / arena system。
+- 当前空间雕刻仍复用：
+  - enemy projectile
+  - escort wave
+  - pattern pulse
+- 这意味着 Boss 的空间结构已经比上轮明确，但还不是完整场地机制树。

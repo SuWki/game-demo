@@ -186,3 +186,31 @@
   - `pattern seen`
   - `pattern duration`
   这两层等价观测，用来判断 phase 模式是否真正存在。
+
+## 2026-04-06 Boss Safe Window Observability Addendum
+- 本轮继续沿用现有 metrics tracker，只补了一条低成本安全窗观测：
+  - `boss_safe_window_seen`
+
+### 事件说明
+- `boss_safe_window_seen`
+  - 触发时机：Boss phase 第一次打开安全窗时
+  - payload：
+    - `templateId`
+    - `phaseId`
+    - `phaseLabel`
+    - `patternLabel`
+    - `axis`
+    - `span`
+    - `durationSec`
+
+### 当前取舍
+- 没有新增：
+  - `boss_space_pattern_seen`
+  - `boss_pressure_mode_duration`
+- 原因是当前已有：
+  - `boss_phase_pattern_seen`
+  - `boss_phase_pattern_duration`
+  已足够等价表达“空间模式已出现 / 持续了多久”。
+- 本轮只额外补 `boss_safe_window_seen`，用于确认：
+  - 某个 phase 是否真的进入了“安全窗 / 危险区雕刻”层
+  - 而不是仍停留在纯护卫波或纯火线 pattern。
