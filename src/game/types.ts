@@ -4,6 +4,7 @@ export type NodeType = 'battle' | 'upgrade' | 'anomaly' | 'boss';
 export type ContentTier = 'standard' | 'rare';
 export type BattleEncounterType = 'battle' | 'boss';
 export type EventContentKind = 'event' | 'anomaly';
+export type AnomalyClassId = 'routeWindow' | 'distortion' | 'hybrid' | 'bossEcho';
 export type BattleTemplateId =
   | 'elimination'
   | 'elimination-pincer'
@@ -251,6 +252,7 @@ export interface EventDefinition {
   name: string;
   description: string;
   contentKind?: EventContentKind;
+  anomalyClass?: AnomalyClassId;
   contentTier?: ContentTier;
   routeAffinity?: RouteReference;
   selection?: ContentSelectionProfile;

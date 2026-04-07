@@ -3,6 +3,7 @@ import { EVENT_CATALOG, getEventCatalogByKind } from './events';
 import { ROUTES } from './routes';
 import { buildUpgradeChoice, UPGRADE_ARCHETYPES } from './upgrades';
 import type {
+  AnomalyClassId,
   ContentEffect,
   EventContentKind,
   ContentTier,
@@ -148,6 +149,48 @@ function getSelectionWeight(
   }
 
   return Math.max(0, weight);
+}
+
+function getAnomalyClassMultiplier(anomalyClass: AnomalyClassId | undefined, context: ContentContext): number {
+  switch (anomalyClass) {
+    case 'distortion':
+      return {
+        opening: 0.7,
+        mid: 1.14,
+        late: 1.26,
+        finalPrep: 1.08,
+        finalBattle: 0,
+        ended: 0,
+      }[context.phase];
+    case 'hybrid':
+      return {
+        opening: 0.62,
+        mid: 1.18,
+        late: 1.18,
+        finalPrep: 0.9,
+        finalBattle: 0,
+        ended: 0,
+      }[context.phase];
+    case 'bossEcho':
+      return {
+        opening: 0,
+        mid: 0.24,
+        late: 1.28,
+        finalPrep: 1.42,
+        finalBattle: 0,
+        ended: 0,
+      }[context.phase];
+    case 'routeWindow':
+    default:
+      return {
+        opening: 1.08,
+        mid: 0.92,
+        late: 0.72,
+        finalPrep: 0.58,
+        finalBattle: 0,
+        ended: 0,
+      }[context.phase];
+  }
 }
 
 function buildContentContext(state: Readonly<RunState>): ContentContext {
@@ -581,13 +624,15 @@ export function rollEventDefinition(
   const catalog = getEventCatalogByKind(contentKind);
   const weightedEvents = catalog.map((eventDef) => ({
     item: eventDef,
-    weight: getSelectionWeight(
-      eventDef.selection,
-      eventDef.routeAffinity === 'dominant' ? dominantRoute ?? undefined : getEventRouteAffinity(eventDef),
-      eventDef.contentTier,
-      context,
-      'levelUp',
-    ),
+    weight:
+      getSelectionWeight(
+        eventDef.selection,
+        eventDef.routeAffinity === 'dominant' ? dominantRoute ?? undefined : getEventRouteAffinity(eventDef),
+        eventDef.contentTier,
+        context,
+        'levelUp',
+      ) *
+      (contentKind === 'anomaly' ? getAnomalyClassMultiplier(eventDef.anomalyClass, context) : 1),
   }));
   const selected = pickWeightedUnique(weightedEvents, 1)[0] ?? catalog[0] ?? EVENT_CATALOG[0];
   return resolveEventDefinition(selected, dominantRoute);

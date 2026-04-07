@@ -375,13 +375,13 @@ export class OverlayController {
   private getNodeCardDescription(node: NodeOption): string {
     switch (node.type) {
       case 'battle':
-        return `${getBattleEncounterLabel(node.templateId ?? 'elimination')} · 获取经验并推进。`;
+        return `${getBattleEncounterLabel(node.templateId ?? 'elimination')} · ${node.description}`;
       case 'upgrade':
-        return node.isFinalPrep ? '最后一次整备。' : '获得一次强化三选一。';
+        return node.isFinalPrep ? '最后一次整备。' : node.description;
       case 'anomaly':
-        return '进入异常窗口，选择额外收益或代价。';
+        return node.description;
       case 'boss':
-        return '进入最终 Boss 关。';
+        return node.description;
       default:
         return node.description;
     }
@@ -406,9 +406,22 @@ export class OverlayController {
   }
 
   private getEventPanelDescription(eventDef: EventDefinition): string {
-    return eventDef.contentKind === 'anomaly'
-      ? '异常窗口已打开，选择一项处理方案。'
-      : '选择一项处理方案。';
+    if (eventDef.contentKind !== 'anomaly') {
+      return '选择一项处理方案。';
+    }
+
+    switch (eventDef.anomalyClass) {
+      case 'routeWindow':
+        return '异常改道窗口已打开，选一条更偏航的处理方案。';
+      case 'distortion':
+        return '异常扭曲已压到面前，选一段代价或收益。';
+      case 'hybrid':
+        return '异常并轨样本已出现，选一段混搭处理方案。';
+      case 'bossEcho':
+        return 'Boss 阴影样本已外泄，先决定一段收尾准备。';
+      default:
+        return '异常窗口已打开，选择一项处理方案。';
+    }
   }
 
   private getEventOptionDescription(option: EventDefinition['options'][number]): string {

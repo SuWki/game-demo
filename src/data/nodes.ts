@@ -55,7 +55,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '歼灭推进',
-        description: '继续搏成长，提前拉高推进速度。',
+        description: '基础清线战，优先把经验和推进节奏立起来。',
         templateCandidates: [
           { templateId: 'elimination', weight: 2.6 },
           { templateId: 'elimination-pincer', weight: 1.4 },
@@ -73,7 +73,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '侧压试飞',
-        description: '更早要求换侧，但经验节奏仍偏前期开路。',
+        description: '更早要求换侧的前段战，用来读清机动和侧压。',
         templateCandidates: [
           { templateId: 'elimination-pincer', weight: 1.8 },
           { templateId: 'elimination', weight: 1.3 },
@@ -84,6 +84,24 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.72,
           battleCatchupBonus: 1.2,
+        },
+      },
+      {
+        id: 'round-1-battle-breach',
+        type: 'battle',
+        phase: 'opening',
+        title: '厚线突围',
+        description: '厚体敌群沿线推进，更考清线节奏和正面站位。',
+        templateCandidates: [
+          { templateId: 'elimination-sweep', weight: 2 },
+          { templateId: 'elimination', weight: 1 },
+          { templateId: 'elimination-pincer', weight: 0.8 },
+        ],
+        difficultyScale: 1.08,
+        selection: {
+          baseWeight: 2.8,
+          repeatTypeMultiplier: 0.72,
+          battleCatchupBonus: 1.15,
         },
       },
       {
@@ -114,8 +132,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event',
         type: 'anomaly',
         phase: 'opening',
-        title: '试飞事件',
-        description: '进入一次异常试飞。',
+        title: '试飞异常',
+        description: '前段的异常口子偏轻，但已经开始偏离普通补给节奏。',
         selection: {
           baseWeight: 1.8,
           soloMultiplier: 0.25,
@@ -128,7 +146,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '试飞校准',
-        description: '进入一次试飞校准，获取额外路线机会。',
+        description: '偏航样本开始渗进前段，适合早点看到异常路线的味道。',
         selection: {
           baseWeight: 2.1,
           soloMultiplier: 0.36,
@@ -151,7 +169,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '精英压制',
-        description: '中段压力点，适合检验当前路线是否站稳。',
+        description: '偏主核正压的中段检定，适合看当前 build 能不能正面站稳。',
         templateCandidates: [
           { templateId: 'elite', weight: 2.1 },
           { templateId: 'elite-lockdown', weight: 1.3 },
@@ -170,11 +188,12 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '封锁突破',
-        description: '护卫拉扯更明显的中段压力点，更看换位与拆线能力。',
+        description: '护卫遮线更重的中段战，重点在拆护卫和换位。',
         templateCandidates: [
           { templateId: 'elite-screen', weight: 1.8 },
           { templateId: 'elite', weight: 1.3 },
           { templateId: 'elite-lockdown', weight: 1.1 },
+          { templateId: 'elite-vice', weight: 0.55 },
         ],
         difficultyScale: 1.18,
         selection: {
@@ -182,6 +201,25 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 1.08,
           repeatTypeMultiplier: 0.76,
           battleCatchupBonus: 1.6,
+        },
+      },
+      {
+        id: 'round-2-battle-vice',
+        type: 'battle',
+        phase: 'mid',
+        title: '拖场绞锁',
+        description: '低频的绞锁压制，会把中段打成一场拆护卫与反压并存的硬仗。',
+        templateCandidates: [
+          { templateId: 'elite-vice', weight: 2.2 },
+          { templateId: 'elite-screen', weight: 0.9 },
+          { templateId: 'elite-lockdown', weight: 0.8 },
+        ],
+        difficultyScale: 1.2,
+        selection: {
+          baseWeight: 1.4,
+          soloMultiplier: 0.82,
+          repeatTypeMultiplier: 0.74,
+          battleCatchupBonus: 1.05,
         },
       },
       {
@@ -227,8 +265,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event',
         type: 'anomaly',
         phase: 'mid',
-        title: '中段事件',
-        description: '高波动拐点，会放大方向差异，但不一定立刻定型。',
+        title: '中段异常',
+        description: '中段开始出现真正的扭曲窗口，重点不再只是补给，而是改写记忆点。',
         selection: {
           baseWeight: 2.9,
           soloMultiplier: 0.45,
@@ -240,8 +278,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-shift',
         type: 'anomaly',
         phase: 'mid',
-        title: '偏航窗口',
-        description: '可以顺着当前读法微调，也能顺手把转向窗口留住。',
+        title: '偏航裂口',
+        description: '短时失真口子已经撑开，能顺着当前读法微调，也能把后面分支搅乱。',
         selection: {
           baseWeight: 3.1,
           soloMultiplier: 0.42,
@@ -253,8 +291,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-handoff',
         type: 'anomaly',
         phase: 'mid',
-        title: '侧频接驳',
-        description: '这一拍更像一次重评路线的机会，适合判断要不要借侧频改道。',
+        title: '侧频噪点',
+        description: '异常侧频短暂沾到路线边缘，更像一次扭曲改道，而不是平稳接驳。',
         selection: {
           baseWeight: 2.15,
           soloMultiplier: 0.46,
@@ -266,8 +304,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-reroute',
         type: 'anomaly',
         phase: 'mid',
-        title: '改道评估',
-        description: '这一拍更像一次主动换线的预演，适合判断现在转过去值不值。',
+        title: '改道失真',
+        description: '中段主动转向窗口，重点是判断现在改道值不值。',
         selection: {
           baseWeight: 2.8,
           soloMultiplier: 0.48,
@@ -280,7 +318,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '相位裂缝',
-        description: '这不再是普通补给事件，而是一次真正闯进中段节奏的异常试错窗口。',
+        description: '真正闯进中段节奏的异常试错口，不只是普通补给换名。',
         selection: {
           baseWeight: 2.15,
           soloMultiplier: 0.4,
@@ -303,7 +341,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '生存压制',
-        description: '后段高压段，测试你的收尾能力。',
+        description: '基础后段求生段，重点看你能否在持续压力里把手感收住。',
         templateCandidates: [
           { templateId: 'survival', weight: 1.8 },
           { templateId: 'survival-crossfire', weight: 0.45 },
@@ -323,7 +361,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '夹道求生',
-        description: '夹道式高压更容易暴露后段 build 的换位短板。',
+        description: '厚体压线更重的后段战，通道感更强，空档更短。',
         templateCandidates: [
           { templateId: 'survival-gauntlet', weight: 1.8 },
           { templateId: 'survival-rush', weight: 1.3 },
@@ -338,11 +376,30 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-3-battle-rush',
+        type: 'battle',
+        phase: 'late',
+        title: '尾段突压',
+        description: '高速敌潮更容易把你从站位里挤出去，考后段求生与回线能力。',
+        templateCandidates: [
+          { templateId: 'survival-rush', weight: 2 },
+          { templateId: 'survival', weight: 1 },
+          { templateId: 'survival-gauntlet', weight: 0.9 },
+        ],
+        difficultyScale: 1.28,
+        selection: {
+          baseWeight: 3.2,
+          soloMultiplier: 1.08,
+          repeatTypeMultiplier: 0.8,
+          battleCatchupBonus: 1.15,
+        },
+      },
+      {
         id: 'round-3-battle-crossfire',
         type: 'battle',
         phase: 'late',
         title: '交火夹层',
-        description: '低频高压模板，会把尾段走位压得更像一次独立记忆点。',
+        description: '低频交火后段，会把你逼进更明确的换边决策。',
         templateCandidates: [
           { templateId: 'survival-crossfire', weight: 1.9 },
           { templateId: 'survival-gauntlet', weight: 0.8 },
@@ -384,8 +441,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-event',
         type: 'anomaly',
         phase: 'late',
-        title: '后段事件',
-        description: '沿着{focusLabel}冒险加码，可能直接站稳路线。',
+        title: '后段异常',
+        description: '后段异常更强调押注和代价，不再只是顺手补一段路线。',
         selection: {
           baseWeight: 2.9,
           soloMultiplier: 0.3,
@@ -398,7 +455,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '尾段押注',
-        description: '沿着{focusLabel}再压一次，争取把收尾气质做实。',
+        description: '沿着{focusLabel}再压一次，但这一拍更像失稳押注，不只是普通加码。',
         selection: {
           baseWeight: 2.8,
           soloMultiplier: 0.42,
@@ -411,7 +468,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '黑匣异常',
-        description: '低频异常节点，可能让这一局在尾段撞上一段截然不同的记忆点。',
+        description: '低频黑匣样本会让这局在尾段撞上一段截然不同的记忆点。',
         selection: {
           baseWeight: 1.5,
           soloMultiplier: 0.26,
@@ -424,7 +481,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: 'Boss 阴影',
-        description: '异常提前泄出了最终 Boss 的压力样本，晚段撞上它更像一次收束前的预演。',
+        description: 'Boss 压力样本提前外泄，这一拍更像收束前的预演，而不是普通事件。',
         selection: {
           baseWeight: 1.6,
           soloMultiplier: 0.3,
@@ -562,15 +619,11 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
 }
 
 function buildNode(blueprint: NodeBlueprint, focusRoute: RouteId | null): NodeOption {
-  const resolvedTitle =
-    blueprint.type === 'anomaly' && blueprint.id === 'round-3-event-blackbox'
-      ? '\u9ed1\u5333\u5f02\u5e38'
-      : blueprint.title;
   const resolvedDescription = resolveDescription(blueprint.description, focusRoute);
 
   return {
     ...blueprint,
-    title: resolvedTitle,
+    title: blueprint.title,
     description: resolvedDescription,
     templateId: pickTemplateId(blueprint.templateId, blueprint.templateCandidates),
   };

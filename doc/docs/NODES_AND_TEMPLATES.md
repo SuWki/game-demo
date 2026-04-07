@@ -65,6 +65,59 @@
 - 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
+## 2026-04-07 anomaly 深度与 template layering 补充
+### anomaly 识别口径
+- anomaly event 现在新增轻量 `anomalyClass`：
+  - `routeWindow`
+  - `distortion`
+  - `hybrid`
+  - `bossEcho`
+- 当前使用原则是：
+  - `routeWindow` 继续承担异常改道和 reroute 支持入口
+  - `distortion / hybrid / bossEcho` 负责把 anomaly 做成更像异常的低频记忆点
+- selector 侧当前会按 `anomalyClass + phase` 做轻量分发倾斜：
+  - opening 仍允许少量 `routeWindow`
+  - mid / late 更优先 `distortion / hybrid`
+  - late / finalPrep 更容易出现 `bossEcho`
+- 本轮新增 anomaly 内容：
+  - `断层竞价`
+  - `幽栅并轨`
+  - `终端税`
+- 本轮被降为支持层的 anomaly：
+  - `risky-protocol`
+  - `relay-splice`
+  - `route-handoff`
+  - `crit / pierce / dash-reroute-window`
+  - `cross-branch-signal`
+
+### battle 节点承载
+- opening 新增 `厚线突围`
+  - 主要承载 `elimination-sweep`
+  - 用来把“厚线推进 / 清线突围”从普通歼灭里分出来
+- mid 新增 `拖场绞锁`
+  - 主要承载 `elite-vice`
+  - 用来把“低频拖场 / 持续补援”的精英战味道拉出来
+- late 新增 `尾段突压`
+  - 主要承载 `survival-rush`
+  - 用来把“后段高速求生”从普通 survival 里分出来
+- 节点卡当前会直接显示 blueprint 的玩家向描述，不再把不同 battle / anomaly 都读成同一种占位说明
+
+### template family 当前职责
+- opening / elimination family
+  - `elimination`：清线推进
+  - `elimination-pincer`：侧压换位
+  - `elimination-sweep`：厚线突围
+- mid / elite family
+  - `elite`：正面拆主核
+  - `elite-lockdown`：侧压封位
+  - `elite-screen`：护卫遮线
+  - `elite-vice`：低频拖场绞锁
+- late / survival family
+  - `survival`：基础后段求生
+  - `survival-rush`：尾段突压
+  - `survival-gauntlet`：厚体压线
+  - `survival-crossfire`：低频交火记忆点
+
 ## 战斗模板
 只保留三类：
 1. 歼灭

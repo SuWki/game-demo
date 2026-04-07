@@ -1,4 +1,104 @@
 # DEV ISSUE LOG
+## [0.9v 内容扩写与结构分层] anomaly 深度扩写 + battle template 家族分层
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 本轮不再把整轮开发投入到 Boss 远程 pocket 微调；`boss-bastion / fireline` 只保留为普通 build 回归监控项。
+- 当前阶段判断更新为：项目已从 `0.9v` 的“读数 / 压力校准阶段”切入“内容扩写与结构分层阶段”。
+
+### 盘点结论
+- anomaly lane 已经独立，但池子里仍混着一批偏“路线改道工具”的 anomaly；它们能承担 route window，却不够像低频扭曲记忆点。
+- battle template 家族已经存在，但前段 / 中段 / 后段里仍有几组更像“同家族参数档位”而不是稳定职责分层。
+- `elite-vice` 这类低频模板此前实际上没有稳定节点入口，`elimination-sweep` 与 `survival-rush` 的阶段职责也不够显眼。
+- `boss-bastion / fireline` 的普通 build 覆盖率仍偏低，但本轮只要求不回退，不继续把它当主线深挖。
+
+### 本轮实现
+- `src/game/types.ts`
+  - `EventDefinition` 新增轻量 `anomalyClass`：
+    - `routeWindow`
+    - `distortion`
+    - `hybrid`
+    - `bossEcho`
+- `src/data/contentSelectors.ts`
+  - anomaly 选择现在会按 `anomalyClass + phase` 做轻量乘区：
+    - `routeWindow` 保留为支持型异常入口，但不再主导 late / finalPrep 的 anomaly 味道
+    - `distortion / hybrid / bossEcho` 在 mid / late / finalPrep 更容易成为 anomaly 主池记忆点
+- `src/data/events.ts`
+  - 新增更像 anomaly 的内容：
+    - `断层竞价`
+    - `幽栅并轨`
+    - `终端税`
+  - 明确给现有 anomaly 标注 `anomalyClass`
+  - 下调一批过于工具化的 anomaly 入口权重：
+    - `risky-protocol`
+    - `relay-splice`
+    - `route-handoff`
+    - `crit / pierce / dash-reroute-window`
+    - `cross-branch-signal`
+  - 上调一批更偏扭曲 / 混搭 / Boss 阴影的 anomaly：
+    - `phase-debt`
+    - `phase-splitter`
+    - `null-lens`
+    - `carrier-breach`
+    - `blackbox-bargain`
+    - `mirror-cache`
+    - `boss-shadow-scan`
+- `src/data/nodes.ts`
+  - 新增 battle blueprints：
+    - opening：`厚线突围`
+    - mid：`拖场绞锁`
+    - late：`尾段突压`
+  - 强化 anomaly 节点标题与描述，让节点本身更像异常承载，而不是普通 event 面板入口。
+  - 修正 `round-3-event-blackbox` 的旧字形特殊处理，玩家可见标题恢复为 `黑匣异常`。
+- `src/data/battleTemplates.ts`
+  - 继续只用现有 `template / rule / selector / blueprint` 数据结构强化 family 差异。
+  - 前段普通战：
+    - `elimination` 更明确承担清线推进
+    - `elimination-pincer` 更明确承担侧压换位
+    - `elimination-sweep` 更明确承担厚线突围
+  - 中段精英战：
+    - `elite` 更偏正面拆主核
+    - `elite-screen` 更偏护卫遮线
+    - `elite-lockdown` 更偏侧压封位
+    - `elite-vice` 更偏低频拖场绞锁
+  - 后段生存战：
+    - `survival` 更偏基础求生
+    - `survival-rush` 更偏尾段突压
+    - `survival-gauntlet` 更偏厚体压线
+    - `survival-crossfire` 继续承担低频交火记忆点
+  - 顺手修正了远程 pocket HUD 中 `横切 / 回心 / 压边` 的中文读数。
+- `src/ui/OverlayController.ts`
+  - 节点卡不再把 battle / anomaly 都读成统一占位描述，而是直接显示 blueprint 的玩家向描述。
+  - anomaly 面板现在会按 `anomalyClass` 显示不同说明：
+    - 改道窗口
+    - 扭曲处理
+    - 并轨样本
+    - Boss 阴影准备
+
+### 验证
+- `npm run build` 通过。
+- anomaly 抽样验证通过：
+  - `mid-crit-hinted` 样本里，前排 anomaly 已变成 `phase-splitter / ghost-mesh / faultline-auction` 这类扭曲 / 混搭内容；`routeWindow` 仍存在，但不再独占 anomaly 主味道。
+  - `late-pierce-committed` 样本里，`distortion + hybrid + bossEcho` 总量已明显高于单纯 route-window。
+- 节点 / 模板抽样验证通过：
+  - opening 可稳定抽到 `厚线突围`
+  - mid 可稳定抽到 `拖场绞锁`，且 `elite-vice` 已真正进入节点候选
+  - late 可稳定抽到 `尾段突压`，`survival-rush / survival-gauntlet / survival-crossfire` 分工更清楚
+- Boss 远程后段回归监控：
+  - `npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`：`crossfireSeenRuns = 3`、`firelineSeenRuns = 0`
+  - `highBurst`：`firelineSeenRuns = 1`
+  - `highMobility`：`firelineSeenRuns = 1`
+  - 说明本轮没有把 Boss 远程后段直接做坏，但普通 build 下的 `fireline` 覆盖率仍是监控项。
+- 浏览器全链路验证通过：
+  - `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `start -> battle / anomaly -> final prep -> boss -> result -> replay` 全链路可跑通
+  - 新节点文案、异常说明和结果页截图已复检，无明显超框、无乱码、无新 console error
+
+### 当前剩余风险
+- `boss-bastion / fireline` 在普通 build 下仍偏少见，依然是整局里最大的单点回归监控项。
+- anomaly 的 route-window 入口本轮被降成支持层，但后续若继续大量补路线工具内容，仍可能再次稀释 anomaly 识别感。
+- battle template 分层已经拉开第一轮，但后续如果只继续补模板数值、不继续维护 blueprint 与 UI 读数，仍可能重新被读回“同模板不同档位”。
+
 ## [0.9v 流程完整度推进] 整局链路收口与基础音效首轮覆盖
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
