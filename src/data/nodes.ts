@@ -5,6 +5,7 @@ interface NodeSelectionProfile {
   soloMultiplier?: number;
   repeatTypeMultiplier?: number;
   noFocusBonus?: number;
+  routeBonuses?: Partial<Record<RouteId, number>>;
   battleCatchupBonus?: number;
   lowHpBonus?: number;
 }
@@ -73,7 +74,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '侧压试飞',
-        description: '更早要求换侧的前段战，用来读清机动和侧压。',
+        description: '更早要求换侧的前段战，用来读清机动与短爆发窗口。',
         templateCandidates: [
           { templateId: 'elimination-pincer', weight: 1.8 },
           { templateId: 'elimination', weight: 1.3 },
@@ -83,6 +84,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.72,
+          routeBonuses: {
+            crit: 0.35,
+            dash: 1.15,
+          },
           battleCatchupBonus: 1.2,
         },
       },
@@ -101,6 +106,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         selection: {
           baseWeight: 2.8,
           repeatTypeMultiplier: 0.72,
+          routeBonuses: {
+            pierce: 1.25,
+          },
           battleCatchupBonus: 1.15,
         },
       },
@@ -180,6 +188,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 5.1,
           soloMultiplier: 1.12,
           repeatTypeMultiplier: 0.76,
+          routeBonuses: {
+            crit: 0.9,
+          },
           battleCatchupBonus: 1.8,
         },
       },
@@ -200,6 +211,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 3.5,
           soloMultiplier: 1.08,
           repeatTypeMultiplier: 0.76,
+          routeBonuses: {
+            pierce: 0.45,
+            dash: 0.65,
+          },
           battleCatchupBonus: 1.6,
         },
       },
@@ -219,6 +234,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 1.4,
           soloMultiplier: 0.82,
           repeatTypeMultiplier: 0.74,
+          routeBonuses: {
+            pierce: 1,
+          },
           battleCatchupBonus: 1.05,
         },
       },
@@ -372,6 +390,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 3.8,
           soloMultiplier: 1.1,
           repeatTypeMultiplier: 0.8,
+          routeBonuses: {
+            pierce: 1.05,
+          },
           battleCatchupBonus: 1.2,
         },
       },
@@ -391,6 +412,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 3.2,
           soloMultiplier: 1.08,
           repeatTypeMultiplier: 0.8,
+          routeBonuses: {
+            crit: 0.35,
+            dash: 1.1,
+          },
           battleCatchupBonus: 1.15,
         },
       },
@@ -410,6 +435,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 1.1,
           soloMultiplier: 0.82,
           repeatTypeMultiplier: 0.78,
+          routeBonuses: {
+            dash: 0.75,
+          },
           battleCatchupBonus: 0.9,
         },
       },
@@ -517,11 +545,14 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '追猎主核',
-        description: '最终 Boss 会直接压脸收束整局，考你在正面高压里继续把火力站住。',
+        description: '最终 Boss 会直接压脸收束整局，更考验你把前面积起来的爆发顶穿到收尾。',
         templateId: 'boss-hunt',
         difficultyScale: 1.38,
         selection: {
           baseWeight: 1,
+          routeBonuses: {
+            crit: 1.15,
+          },
         },
       },
       {
@@ -529,11 +560,14 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '锁域主核',
-        description: '最终 Boss 会用更早的护卫和封位把场地压紧，逼你在窄窗口里整理走位。',
+        description: '最终 Boss 会用更早的护卫和封位把场地压紧，更考验换位、回线和反打节奏。',
         templateId: 'boss-lockdown',
         difficultyScale: 1.39,
         selection: {
           baseWeight: 1,
+          routeBonuses: {
+            dash: 1.15,
+          },
         },
       },
       {
@@ -541,11 +575,14 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '屏卫主核',
-        description: '最终 Boss 会借屏卫与远程火线拖长对局，逼你先拆屏再找收束窗口。',
+        description: '最终 Boss 会借屏卫与远程火线拖长对局，更适合用贯穿清线后再找收束窗口。',
         templateId: 'boss-bastion',
         difficultyScale: 1.4,
         selection: {
           baseWeight: 1,
+          routeBonuses: {
+            pierce: 1.15,
+          },
         },
       },
     ],
@@ -605,6 +642,10 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
 
   if (!offerContext.focusRoute) {
     weight += selection.noFocusBonus ?? 0;
+  }
+
+  if (offerContext.focusRoute) {
+    weight += selection.routeBonuses?.[offerContext.focusRoute] ?? 0;
   }
 
   if (blueprint.type === 'battle' && offerContext.battleWins < round) {

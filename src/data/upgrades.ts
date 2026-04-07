@@ -706,6 +706,42 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'crit-redline',
+    name: '热区压缩',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 2.9,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.1,
+        late: 1.3,
+        finalPrep: 0.6,
+      },
+      hintedRouteBonus: 1.2,
+      dominantRouteBonus: 4.4,
+      committedRouteBonus: 3.2,
+      maturedRouteBonus: 1.4,
+      finalPrepBonus: 1.4,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          critChance: 0.04,
+          critMultiplier: 0.18,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
     id: 'crit-heat',
     name: '热区追击',
     category: 'route',
@@ -1017,6 +1053,42 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           multishot: 1,
           damage: 1,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-echo',
+    name: '贯层回响',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 2.9,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.1,
+        late: 1.3,
+        finalPrep: 0.6,
+      },
+      hintedRouteBonus: 1.2,
+      dominantRouteBonus: 4.4,
+      committedRouteBonus: 3.2,
+      maturedRouteBonus: 1.4,
+      finalPrepBonus: 1.4,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          multishot: 1,
+          projectileSpeed: 18,
+          fireRate: 0.12,
         },
       },
       {
@@ -1341,6 +1413,42 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashPulseDamage: 8,
           dashInterval: -0.68,
           dashInvulnerability: 0.12,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-counterline',
+    name: '回切反打',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 2.9,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.1,
+        late: 1.3,
+        finalPrep: 0.6,
+      },
+      hintedRouteBonus: 1.2,
+      dominantRouteBonus: 4.4,
+      committedRouteBonus: 3.2,
+      maturedRouteBonus: 1.4,
+      finalPrepBonus: 1.4,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashPulseDamage: 6,
+          fireRate: 0.14,
+          moveSpeed: 10,
         },
       },
       {

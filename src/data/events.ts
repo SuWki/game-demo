@@ -635,6 +635,8 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'crit-heat-bank',
     name: '热区记录',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
     contentTier: 'rare',
     description: '一段暴击热区记录被锁定。你要把连发窗口继续拉长，还是把单次爆点压得更狠？',
     routeAffinity: 'crit',
@@ -663,6 +665,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
             modifiers: {
               fireRate: 0.24,
               critChance: 0.05,
+              projectileSpeed: 14,
             },
           },
           {
@@ -681,6 +684,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
             type: 'stats',
             modifiers: {
               damage: 4,
+              critChance: 0.03,
               critMultiplier: 0.32,
             },
           },
@@ -695,6 +699,8 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'pierce-routing-map',
     name: '裂轨图谱',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
     contentTier: 'rare',
     description: '你截获了一张贯穿波形图。要继续拉长链条，还是把清线扇面直接铺开？',
     routeAffinity: 'pierce',
@@ -722,6 +728,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
             type: 'stats',
             modifiers: {
               pierce: 1,
+              fireRate: 0.1,
               projectileSpeed: 26,
             },
           },
@@ -742,6 +749,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
             modifiers: {
               multishot: 1,
               damage: 2,
+              projectileSpeed: 16,
             },
           },
           {
@@ -755,6 +763,8 @@ export const EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'dash-weave-memory',
     name: '穿梭记忆',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
     contentTier: 'rare',
     description: '机体留下了一段高压换位回放。要把擦身蓄能做厚，还是把反打窗口拉长？',
     routeAffinity: 'dash',
@@ -783,6 +793,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
             modifiers: {
               moveSpeed: 14,
               dashInterval: -0.42,
+              dashInvulnerability: 0.04,
               dashPulseDamage: 6,
             },
           },
@@ -801,6 +812,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'stats',
             modifiers: {
+              fireRate: 0.12,
               dashInvulnerability: 0.1,
               regeneration: 0.12,
             },

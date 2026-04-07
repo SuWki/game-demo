@@ -1,4 +1,86 @@
 # DEV ISSUE LOG
+## [0.9v 内容扩写与结构分层] 三流派 0.9 收口 + 普通 build 回归监控
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前主线已不再是 Boss pocket 深挖；本轮改为围绕 `暴击 / 穿透 / 穿梭` 三条路线做 `0.9v` 收口。
+- `boss-bastion / fireline` 继续只作为普通 build 回归监控项，本轮不把它重新拉回主线专项。
+
+### 盘点结论
+- 暴击流前段信号已经成立，但中后段仍偏“暴击相关数值继续变高”，还不够像 `升温 -> 连发维持 -> 爆点收尾` 的完整路线。
+- 穿透流底层其实已经有 `echo / cooldown refund`，但内容层不少 payoff 仍停留在弹速、multishot、基础伤害的普通火力语言里，`清线 / 续链 / 回响 / 扇裂` 身份还不够满。
+- 穿梭流底层机制最独特，但内容层此前更偏机动和容错，和 `规避蓄能 -> 回线反打 -> Boss 收尾` 的联系还不够紧。
+- anomaly 与三流派的互动仍有一块“看起来像路线奖励分发”的残余：`热区记录 / 裂轨图谱 / 穿梭记忆` 原本还挂在普通 `event` 口径下，没有真正站到 anomaly lane。
+- battle / boss 载体已经分层，但路线与 carrier 的关系此前主要靠玩家自己读；数据层还缺一层“轻量 route-fit 倾向”。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 为三流派各补一张更偏中后段承接的 route payoff：
+    - `热区压缩`
+    - `贯层回响`
+    - `回切反打`
+  - 取舍目标不是继续泛补卡池，而是让：
+    - 暴击更像中段压热区、后段兑现爆点
+    - 穿透更像中段起回响、后段铺扇裂
+    - 穿梭更像中段开始把换位转成反打收益
+- `src/data/events.ts`
+  - 将三条路线原本偏普通事件化的 rare payoff 内容正式并回 anomaly lane：
+    - `热区记录 -> anomaly / distortion`
+    - `裂轨图谱 -> anomaly / hybrid`
+    - `穿梭记忆 -> anomaly / distortion`
+  - 同步补强这些 route anomaly 的选项味道：
+    - `热区记录` 现在更明确分成“续热点火”与“压缩爆点”
+    - `裂轨图谱` 现在更明确分成“续链打穿”与“扇裂铺面”
+    - `穿梭记忆` 现在更明确分成“擦身蓄能”与“稳帧反打”
+- `src/data/nodes.ts`
+  - `NodeSelectionProfile` 新增轻量 `routeBonuses`，不改节点系统，只在现有 blueprint 权重上补一层 route-fit 倾向。
+  - opening / mid / late 的 battle blueprints 现在会按路线给轻量权重倾斜：
+    - `侧压试飞 / 尾段突压` 更偏暴击、穿梭
+    - `厚线突围 / 拖场绞锁 / 夹道求生` 更偏穿透
+    - `封锁突破 / 交火夹层` 更偏穿梭与部分穿透
+  - final boss blueprints 现在也有轻量 route-fit 倾向，但仍不是硬锁：
+    - `追猎主核` 更偏暴击收尾
+    - `锁域主核` 更偏穿梭收尾
+    - `屏卫主核` 更偏穿透收尾
+  - Boss 节点描述同步改成更玩家向的 route-fit 读数，帮助最终关与路线关系更清楚。
+
+### 数据结构变更
+- `src/data/nodes.ts`
+  - 本地 `NodeSelectionProfile` 新增 `routeBonuses?: Partial<Record<RouteId, number>>`
+- 未新增新系统、未扩 `RunEngine` 主结构、未新增新的埋点类型。
+
+### 验证
+- `npm run build` 通过。
+- 路线静态抽样验证通过：
+  - opening / mid / late battle carrier 已出现轻量 route-fit 倾向：
+    - `crit` 更常撞上 `侧压试飞 / 精英压制 / 尾段突压`
+    - `pierce` 更常撞上 `厚线突围 / 拖场绞锁 / 夹道求生`
+    - `dash` 更常撞上 `侧压试飞 / 封锁突破 / 交火夹层 / 尾段突压`
+  - final boss 抽样已拉开轻量偏置：
+    - `crit -> 追猎主核 629 / 1200`
+    - `pierce -> 屏卫主核 616 / 1200`
+    - `dash -> 锁域主核 653 / 1200`
+  - 新增的 route payoff upgrade 已进入 route-leaning upgrade 窗口：
+    - `mid nodePrep` 抽样中，`热区压缩 / 贯层回响 / 回切反打` 均能稳定进入对应路线的中段强化候选
+  - late anomaly 抽样中，`热区记录 / 裂轨图谱 / 穿梭记忆` 已按各自路线出现在 anomaly lane，而不再只停留在普通 event 池
+- Boss 远程后段回归监控：
+  - `npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`：`crossfireSeenRuns = 3`、`firelineSeenRuns = 0`
+  - `highBurst`：`firelineSeenRuns = 1`
+  - `highMobility`：`firelineSeenRuns = 3`
+  - 说明本轮没有把 `boss-bastion / fireline` 明显做坏；普通 build 覆盖率仍是既有风险点
+- 浏览器全链路验证通过：
+  - `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `start -> battle / upgrade / anomaly -> final prep -> boss -> result -> replay` 全链路可跑通
+  - 最新 `boss-battle.png / result.png / panel-17.png` 已复检：
+    - Boss HUD、结果页、最终整备新卡文本均无乱码
+    - 新 Boss 节点描述无明显超框
+    - console errors 仍为 `[]`
+
+### 当前剩余风险
+- 普通 build 下 `boss-bastion / fireline` 的自然覆盖率仍偏低，依旧是当前最大的单点回归监控项。
+- 三流派现在已经更像三条不同 build 线，但 route-fit 仍是“轻量倾向”，不是强锁定；后续如果内容继续扩写而不维护这个倾向层，仍可能重新被读回“同一套 build 换不同数值”。
+- route payoff anomaly 已并回 anomaly lane，但后续若再补大量普通 route 奖励事件，不继续守住 anomaly 边界，仍可能再次稀释异常识别感。
+
 ## [0.9v 内容扩写与结构分层] anomaly 深度扩写 + battle template 家族分层
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

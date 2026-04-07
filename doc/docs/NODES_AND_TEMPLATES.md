@@ -65,6 +65,42 @@
 - 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
+## 2026-04-07 三流派 carrier 收口补充
+### route-fit 倾向
+- 本轮没有新建 route-specific node 系统，而是在现有 blueprint 权重上补了一层轻量 `routeBonuses`。
+- 当前原则是：
+  - 只做“更可能遇到”，不做“只会遇到”
+  - 让 battle / boss carrier 更像路线承载，不把内容锁死成单一路线
+
+### 当前 battle carrier 倾向
+- `crit`
+  - opening 更容易撞上 `侧压试飞`
+  - mid 更容易撞上 `精英压制`
+  - late 更容易撞上 `尾段突压`
+  - 目标读数：前段点火，中段稳火，后段压爆点
+- `pierce`
+  - opening 更容易撞上 `厚线突围`
+  - mid 更容易撞上 `拖场绞锁`
+  - late 更容易撞上 `夹道求生`
+  - 目标读数：前段清线，中段续链，后段贯穿收束
+- `dash`
+  - opening 更容易撞上 `侧压试飞`
+  - mid 更容易撞上 `封锁突破`
+  - late 更容易撞上 `交火夹层 / 尾段突压`
+  - 目标读数：前段换位，中段回线，后段反打求生
+
+### 当前 final boss 收尾倾向
+- `追猎主核`
+  - 更偏暴击收尾
+  - 强调正面压脸与爆发兑现
+- `锁域主核`
+  - 更偏穿梭收尾
+  - 强调换位、回线与反打节奏
+- `屏卫主核`
+  - 更偏穿透收尾
+  - 强调清屏、拆线与再找收束窗口
+- 以上仍是轻量偏置，不是 route hard-lock；目的是拉清 ownership，而不是让最终关变成固定配对
+
 ## 2026-04-07 anomaly 深度与 template layering 补充
 ### anomaly 识别口径
 - anomaly event 现在新增轻量 `anomalyClass`：
@@ -83,6 +119,11 @@
   - `断层竞价`
   - `幽栅并轨`
   - `终端税`
+- 本轮补回 anomaly lane 的 route payoff：
+  - `热区记录`
+  - `裂轨图谱`
+  - `穿梭记忆`
+- 这些内容此前更像 route-specific rare event；当前已经回到 anomaly 口径，用来承担三流派自己的异常兑现，而不是普通奖励分发
 - 本轮被降为支持层的 anomaly：
   - `risky-protocol`
   - `relay-splice`

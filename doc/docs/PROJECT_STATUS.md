@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：0.9v 内容扩写与结构分层推进 + Boss 远程后段回归监控
+- 当前执行焦点：0.9v 三流派收口 + 内容扩写与结构分层推进 + Boss 远程后段回归监控
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -39,6 +39,33 @@
 - 整局完整感虽然已经开始收口，但如果后续只继续补局部内容，不持续维护 `start -> node -> anomaly -> final prep -> boss -> result -> replay` 的承接，仍会重新退回“局部强、整局薄”
 - 基础音效已完成首轮覆盖，但当前仍是轻量 cue 层；如果后续继续叠加而不控频，容易重新变吵
 - 中文乱码与内部设计话术重新泄露到玩家可见文本
+
+## 2026-04-07 0.9v 三流派收口更新
+- 当前阶段判断保持不变：项目仍处于 `0.9v` 的“内容扩写与结构分层阶段”。
+- 本轮主线已从 anomaly / template 单点扩写切到：
+  - 暴击 / 穿透 / 穿梭三流派的 `0.9` 收口
+  - 路线与 anomaly / battle template / boss 收尾关系澄清
+  - `boss-bastion / fireline` 普通 build 覆盖率继续回归监控
+- 当前最新进展：
+  - 三流派各自补入了一张更像中后段承接的 route payoff：
+    - `热区压缩`
+    - `贯层回响`
+    - `回切反打`
+  - `热区记录 / 裂轨图谱 / 穿梭记忆` 已从普通 `event` 口径并回 anomaly lane，不再只是 route 奖励分发。
+  - opening / mid / late 的 battle carrier 与 final boss 收尾入口，现在已开始按主路线做轻量 route-fit 倾向：
+    - `crit` 更偏 `追猎主核`
+    - `pierce` 更偏 `屏卫主核`
+    - `dash` 更偏 `锁域主核`
+  - 这层倾向当前仍是“轻量偏置”，不是硬锁单一路线。
+- 当前更适合继续做：
+  - 三流派在自然 run 中的 payoff 兑现样本验证
+  - anomaly 与路线关系的第二轮深挖
+  - template family 在路线 closeout 后的自然 run 读数复检
+  - `boss-bastion / fireline` 普通 build 覆盖率继续观察
+- 当前最大风险更新为：
+  - 普通 build 下 `boss-bastion / fireline` 仍偏少见
+  - route-fit 现在已经存在，但后续如果继续补大量泛用内容，不守住 route carrier 倾向，三流派仍可能重新掉回“能玩但不够像三条路”
+  - route payoff anomaly 已回到 anomaly lane，但异常池后续若再次被普通路线奖励内容挤占，anomaly 识别感仍可能被稀释
 
 ## 2026-04-07 0.9v 内容扩写与结构分层更新
 - 当前阶段判断更新为：项目已从 `0.9v` 的“读数 / 压力校准阶段”切到“内容扩写与结构分层阶段”。
