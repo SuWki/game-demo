@@ -370,6 +370,8 @@ h1 {
 .result-callout {
   position: relative;
   z-index: 1;
+  display: grid;
+  gap: 12px;
   margin-top: 18px;
   padding: 16px 18px;
   border-radius: 18px;
@@ -395,6 +397,65 @@ h1 {
 .result-callout .panel-description:first-child {
   margin-top: 0;
   color: var(--text);
+}
+
+.result-callout .panel-description {
+  margin: 0;
+}
+
+.result-route-block {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.result-route-label {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.result-trace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-trace-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.result-trace-item em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.result-trace-item strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.result-trace-arrow,
+.result-trace-empty,
+.result-replay-prompt {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.result-replay-prompt {
+  color: #c7e8ff;
 }
 
 .menu-actions {
@@ -531,6 +592,15 @@ button:hover {
   border-color: rgba(159, 226, 255, 0.34);
   background: linear-gradient(180deg, rgba(127, 206, 255, 0.1), rgba(255, 255, 255, 0.025));
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+}
+
+.route-chip-muted {
+  border-style: dashed;
+  opacity: 0.82;
+}
+
+.route-chip-muted::before {
+  background: linear-gradient(180deg, rgba(173, 223, 255, 0.42), rgba(173, 223, 255, 0));
 }
 
 .choice-grid {

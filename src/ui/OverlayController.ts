@@ -181,16 +181,25 @@ export class OverlayController {
             </div>
           </div>
           <div class="route-strip hud-route-strip">
-            ${snapshot.routeProgress
-              .map(
-                (route) => `
-                  <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
-                    <span>${route.label}</span>
-                    <strong>${route.value}</strong>
-                  </div>
-                `,
-              )
-              .join('')}
+            ${
+              snapshot.routeProgress.length > 0
+                ? snapshot.routeProgress
+                    .map(
+                      (route) => `
+                        <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
+                          <span>${route.label}</span>
+                          <strong>${route.value}</strong>
+                        </div>
+                      `,
+                    )
+                    .join('')
+                : `
+                    <div class="route-chip route-chip-muted">
+                      <span>路线</span>
+                      <strong>未站稳</strong>
+                    </div>
+                  `
+            }
           </div>
         </div>
       </div>
@@ -261,6 +270,7 @@ export class OverlayController {
     this.hidePanel();
     this.clearToasts();
     this.screenLayer.classList.remove('hidden');
+    const routeLabel = this.getRouteDisplayLabel(result.routeId);
     this.screenLayer.innerHTML = `
       <section class="menu-card result-card">
         <div class="surface-mark">
@@ -280,7 +290,7 @@ export class OverlayController {
         <div class="menu-stats">
           <div>
             <span>路线</span>
-            <strong>${result.routeId ? ROUTE_NAME_MAP[result.routeId] : '未站稳'}</strong>
+            <strong>${routeLabel}</strong>
           </div>
           <div>
             <span>成型</span>
@@ -297,7 +307,12 @@ export class OverlayController {
         </div>
         <div class="result-callout">
           <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
-          <p class="panel-description">本局从 ${result.routeId ? ROUTE_NAME_MAP[result.routeId] : '未站稳'} 起势，最终以 ${result.endingLabel} 收尾。</p>
+          <p class="panel-description">本局从 ${routeLabel} 起势，最终以 ${result.endingLabel} 收尾。</p>
+          <div class="result-route-block">
+            <span class="result-route-label">本局路线</span>
+            ${this.renderResultRouteTrace(result.routeTrace)}
+          </div>
+          <p class="result-replay-prompt">${result.replayPrompt}</p>
         </div>
         <div class="menu-actions">
           <button class="primary-action" data-action="restart">再来一局</button>
@@ -436,5 +451,31 @@ export class OverlayController {
       return '#68d4ff';
     }
     return ROUTE_COLOR_MAP[routeId];
+  }
+
+  private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
+    return routeId ? ROUTE_NAME_MAP[routeId] : '未站稳';
+  }
+
+  private renderResultRouteTrace(routeTrace: RunResult['routeTrace']): string {
+    if (routeTrace.length === 0) {
+      return '<p class="result-trace-empty">这一局结束得很快，路线还没来得及完整展开。</p>';
+    }
+
+    return `
+      <div class="result-trace">
+        ${routeTrace
+          .map(
+            (node, index) => `
+              <span class="result-trace-item">
+                <em>${NODE_TYPE_LABEL_MAP[node.type]}</em>
+                <strong>${node.title}</strong>
+              </span>
+              ${index < routeTrace.length - 1 ? '<span class="result-trace-arrow">→</span>' : ''}
+            `,
+          )
+          .join('')}
+      </div>
+    `;
   }
 }

@@ -434,6 +434,8 @@ export interface RunResult {
   nodesCleared: number;
   battleWins: number;
   levelReached: number;
+  routeTrace: NodeRecord[];
+  replayPrompt: string;
 }
 
 export interface RunState {

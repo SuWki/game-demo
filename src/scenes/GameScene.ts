@@ -185,7 +185,7 @@ export class GameScene extends Phaser.Scene {
         value: state.routeCounts[route.id],
         color: route.color,
         active: this.engine.getDominantRoute() === route.id,
-      })),
+      })).filter((route) => route.value > 0 || route.active),
       battleText,
       battleSubtext:
         state.status === 'battle' && state.battle

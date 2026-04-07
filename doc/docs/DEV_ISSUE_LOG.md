@@ -1,4 +1,79 @@
 # DEV ISSUE LOG
+## [0.9v 验收前修边] 全流程闭环 / 文案-HUD / 结果页收束感修边
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前阶段保持在 `0.9v 验收前修边阶段`；本轮不重开内容扩写，不改主流程，不引入新系统，也不把开发重新拉回 Boss 专项深挖。
+
+### 盘点结论
+- 当前 `start -> node -> battle / upgrade / anomaly -> boss -> result -> replay` 已经能稳定跑通，剩余缺口主要是“验收感不够收束”，不是结构缺失。
+- 运行时截图里的玩家可见文本仍然干净，没有出现新的乱码或内部设计术语泄露；源码终端里的乱码主要属于读取编码假象，不是运行时界面污染。
+- HUD 当前已不再重压战斗区，但路线读数在前段仍有“全 0 chip 占位”的轻噪音；结果页对“本局路线怎么走完”“为什么值得 replay”表达还偏薄。
+- 关键音效事件已经基本覆盖，本轮更适合做接线一致性复检，而不是再扩音频层。
+- `boss-bastion / fireline` 仍然是当前最大的单点回归监控项，但本轮验证里没有出现明显回退迹象。
+
+### 本轮实现
+- `src/game/types.ts`
+  - `RunResult` 补入：
+    - `routeTrace`
+    - `replayPrompt`
+- `src/systems/RunEngine.ts`
+  - 结算时补生成本局节点路径摘要，供结果页直接表达“这一局怎么走到了收尾”。
+  - 按路线成立度与结束方式补一条轻量 replay 提示，强化“再来一局”的完成感与动机。
+- `src/ui/OverlayController.ts`
+  - 结果页新增“本局路线” trace 区块，不再只给收尾节点和统计数字。
+  - 结果页新增 replay prompt，让失败局和完成局都更像一个完整闭环，而不是只剩按钮。
+  - HUD 的路线条现在只显示已出现的 route progress；如果尚未站稳，则改成单枚 `未站稳` chip，减少前段视觉噪音。
+- `src/style.css`
+  - 为结果页路径 trace / replay prompt 补充轻量样式。
+  - 为 HUD 新增 `route-chip-muted`，把早局路线信息压回更轻的占位表达。
+- 本轮没有新增音效系统或新 cue，只复检现有 `start / confirm / anomaly / boss / victory / defeat / result` 接线，确保修边后仍然统一。
+
+### 数据结构变更
+- `RunResult.routeTrace: NodeRecord[]`
+- `RunResult.replayPrompt: string`
+
+### 验证
+- `npm run build`
+  - 通过。
+- `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `start -> battle / upgrade / anomaly -> boss -> result -> replay` 全链路可跑通。
+  - 新结果页截图已复检：
+    - 本局路线 trace 已显示。
+    - replay prompt 已显示。
+    - 无明显超框、无新的文字污染。
+  - 新 HUD 截图已复检：
+    - 前段不再显示三枚 `0` 路线 chip。
+    - Boss 战 HUD 未被本轮修边重新压重。
+  - `consoleErrors = []`
+- `npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 8`
+    - `crossfireSeenRuns = 4`
+    - `firelineSeenRuns = 1`
+    - `firelineDecisionRuns = 1`
+  - `highBurst`
+    - `crossfireSeenRuns = 4`
+    - `firelineSeenRuns = 1`
+  - `highMobility`
+    - `crossfireSeenRuns = 5`
+    - `firelineSeenRuns = 3`
+  - 说明本轮闭环 / HUD / 结果页修边没有把 `boss-bastion / fireline` 做坏。
+
+### 观测口径
+- 本轮没有新增埋点字段。
+- 原因：
+  - 当前结果页与 replay 完成感修边不需要新埋点系统。
+  - `boss-bastion / fireline` 的回归观察继续复用：
+    - `boss_phase_entered`
+    - `boss_phase_duration`
+    - `boss_signature_seen`
+    - `boss_phase_pattern_seen`
+    - `boss_safe_window_seen`
+    - 以及本地自然样本脚本 `output/qa/boss-pocket-natural-runs.mts`
+
+### 当前剩余风险
+- `boss-bastion / fireline` 在普通 build 下依旧不是高频样本；当前仍然是 `1 / 8` 级别的可见度，继续是封版前的最大残余监控点。
+- 结果页与 HUD 已更接近验收态，但项目还没到“直接宣告冻结”的程度；更合适的下一步是正式进入一轮 `0.9v 封版检查`，做最终一致性与残余风险复检。
 ## [0.9v 验收前修边] 普通 build 回归校准 + `boss-bastion / fireline` 自然覆盖率修正
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

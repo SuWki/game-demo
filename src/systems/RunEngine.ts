@@ -57,6 +57,7 @@ import type {
   EventDefinition,
   EventOption,
   EliteBehaviorId,
+  NodeRecord,
   NodeOption,
   NodeType,
   AudioCue,
@@ -1166,6 +1167,8 @@ export class RunEngine {
     const finalNodeType = this.state.currentNode?.type ?? null;
     const endingReason = this.getEndingReason(endingKind, finalNodeTitle);
     const summary = this.getResultSummary(outcome, routeId, buildStage);
+    const routeTrace = this.buildRouteTrace();
+    const replayPrompt = this.getReplayPrompt(outcome, routeId, buildStage, endingKind);
     const runDurationSec = Number(((performance.now() - this.runStartedAtMs) / 1000).toFixed(2));
     const nodesCleared = Math.min(this.state.round, this.state.totalRounds);
     this.state.status = 'result';
@@ -1192,6 +1195,8 @@ export class RunEngine {
       nodesCleared,
       battleWins: this.state.battleWins,
       levelReached: this.state.level,
+      routeTrace,
+      replayPrompt,
     };
     this.services.metrics.finishRun({
       outcome,
@@ -1240,6 +1245,23 @@ export class RunEngine {
     }
   }
 
+  private buildRouteTrace(): NodeRecord[] {
+    const routeTrace = [...this.state.traversedNodes];
+
+    if (this.state.currentNode) {
+      const lastNode = routeTrace[routeTrace.length - 1];
+      if (!lastNode || lastNode.id !== this.state.currentNode.id) {
+        routeTrace.push({
+          id: this.state.currentNode.id,
+          type: this.state.currentNode.type,
+          title: this.state.currentNode.title,
+        });
+      }
+    }
+
+    return routeTrace.slice(-6);
+  }
+
   private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
     switch (endingKind) {
       case 'hpDepleted':
@@ -1249,6 +1271,33 @@ export class RunEngine {
       default:
         return `${finalNodeTitle}已完成收束`;
     }
+  }
+
+  private getReplayPrompt(
+    outcome: RunOutcome,
+    routeId: RouteId | null,
+    buildStage: RouteBuildStage,
+    endingKind: RunEndingKind,
+  ): string {
+    if (!routeId) {
+      return '再来一局优先把前段节奏立住，主路线会更容易自然站稳。';
+    }
+
+    const routeName = ROUTE_NAME_MAP[routeId];
+    if (outcome === 'victory') {
+      if (buildStage === 'matured') {
+        return `${routeName}路线这一局已经跑通，再开一局可以试着换一条路，或把收尾打得更稳。`;
+      }
+      return `${routeName}路线已经站住了，再来一局可以继续把它压到完整成型。`;
+    }
+
+    if (endingKind === 'timeOut') {
+      return `${routeName}路线已经起势，再来一局重点补最后一段输出和转场决策。`;
+    }
+    if (buildStage === 'matured' || buildStage === 'committed') {
+      return `${routeName}路线已经起势，再来一局重点把最后一段耐久和收束补齐。`;
+    }
+    return `${routeName}倾向已经出现，再来一局把前中段节奏接稳，会更容易看到完整收尾。`;
   }
 
   private getResultSummary(outcome: RunOutcome, routeId: RouteId | null, buildStage: RouteBuildStage): string {
