@@ -1,4 +1,91 @@
 # DEV ISSUE LOG
+## [0.9v 验收前修边] 普通 build 回归校准 + `boss-bastion / fireline` 自然覆盖率修正
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 本轮不再继续做大范围内容扩写，也不重开 Boss 系统专项；主线切到普通 build 回归校准与最终关远程后段覆盖率修正。
+- 当前阶段判断更新为：项目已更适合进入 `0.9v 验收前修边阶段`，但 `boss-bastion / fireline` 仍是最大的单点回归监控项。
+
+### 盘点结论
+- 当前 `boss-bastion / fireline` 的问题已经不是“phase 不存在”，而是普通 build 的 boss 战更容易在 `接敌 / 交火` 内分出胜负：
+  - 一部分 run 会在 `crossfire` 前就超时或败退。
+  - 另一部分 run 能进入 `crossfire`，但会在 `crossfire -> fireline` 的承接窗口里提前击杀或提前失败。
+- 第一轮只前移 `triggerRemainingSec` 的试调没有抬起普通 build，反而对高机动样本有回退风险；因此本轮最终切入点改为：
+  - `crossfire` 更早通过 HP 承接成立。
+  - 缩短 `crossfire` 的最短驻留。
+  - 让 `fireline` 主要通过 HP 承接而不是更激进的时间前置进入。
+  - 用现有 signature carrier 给 `fireline` 补一层轻量进段确认。
+
+### 本轮实现
+- `src/data/battleTemplates.ts`
+  - `boss-bastion / crossfire`
+    - `triggerHpRatio: 0.72 -> 0.78`
+    - `minResidenceSec: 4.4 -> 3.4`
+    - `triggerRemainingSec` 保持 `25`，没有继续粗暴前置到更早时间点。
+  - `boss-bastion / fireline`
+    - 新增轻量进段确认：
+      - `signatureLabel = 压边迁火`
+      - `signatureDurationSec = 2.8`
+      - `signaturePulseIntervalSec = 1.02`
+      - `signatureVolleyCount = 2`
+    - 调整承接与可读性：
+      - `triggerHpRatio: 0.48 -> 0.62`
+      - `patternSafeWindowLingerSec: 0.98 -> 1.02`
+      - `triggerRemainingSec` 维持 `15`
+      - `entryGuardSec / entryGuardDamageMultiplier` 维持既有值，避免重新做成强锁血味道
+- 取舍说明：
+  - 没有加 Boss 基础血量，没有加怪量，也没有补新的 pressure system。
+  - 没有继续把 `fireline` 粗暴前提到更早的纯时间后段，而是让短战局 normal sample 也能通过 HP 承接读到后段。
+
+### 数据结构变更
+- 无新增数据结构。
+- 继续复用既有 `pressurePhases + signature + pattern + safe-window(pocket)` carrier，只在 `boss-bastion` 的 phase 配置上做兼容数值微调。
+
+### 验证
+- `npm run build` 通过。
+- `npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 8`
+    - `crossfireSeenRuns = 4`，较上一轮 `3` 提升
+    - `firelineSeenRuns = 1`，较上一轮 `0` 提升
+    - `firelineDecisionRuns = 1`
+  - `highBurst`
+    - `crossfireSeenRuns = 4`
+    - `firelineSeenRuns = 1`
+    - 无明显回退
+  - `highMobility`
+    - `crossfireSeenRuns = 5`
+    - `firelineSeenRuns = 3`
+    - 维持上一轮可见度与转场决策读数
+- `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `start -> battle / upgrade / anomaly -> final prep -> boss -> result -> replay` 全链路可跑通
+  - `anomalyPanelSeen = true`
+  - `bossNodeSeen = true`
+  - `bossBattleSeen = true`
+  - `replayStarted = true`
+  - `consoleErrors = []`
+  - 最新 `boss-battle.png` 与 `result.png` 已复检：无明显超框、无新乱码、HUD/readability 未被这轮回归校准破坏
+
+### 观测口径
+- 本轮没有新增 `boss_fireline_seen_natural / boss_fireline_phase_enter / boss_fireline_completion_window`。
+- 原因是当前已有观测已能覆盖等价判断：
+  - `boss_phase_entered`
+  - `boss_phase_duration`
+  - `boss_signature_seen`
+  - `boss_phase_pattern_seen`
+  - `boss_safe_window_seen`
+  - 以及本地自然样本脚本 `output/qa/boss-pocket-natural-runs.mts`
+- 继续新增一组 fireline 专名埋点，只会重复已有信号，不符合本轮“最小校准、不引入新系统”的边界。
+
+### 当前剩余风险
+- 普通 build 下 `boss-bastion / fireline` 已从 `0 -> 1`，但自然覆盖率仍偏低，依旧是当前最大的单点风险。
+- 当前最主要的残余问题已收敛为：
+  - 普通样本里 `fireline` 已经能更自然出现，但仍然偏少。
+  - 某些 run 仍会停在 `接敌 / 交火` 段结束，最终关远程后段还需要继续监控。
+- 下一步更适合继续做：
+  - 普通 build 的自然样本复检与回归监控
+  - 最终关 readability / result closure 的验收前修边
+  而不是重新回到大规模内容扩写。
+
 ## [0.9v 内容扩写与结构分层] 三流派 0.9 收口 + 普通 build 回归监控
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

@@ -520,3 +520,29 @@
   - 这层 pocket shift richness 只落在 Boss template 内
   - elite 与普通 ranged 仍不进入同层 pocket 转场语义
   - final battle 继续依赖 Boss template pool，而不是退回 old elite-family
+
+## 2026-04-08 Boss Bastion Fireline Calibration Addendum
+### 普通样本承接结论
+- 当前 `boss-bastion` 的普通样本问题已经不再是“有没有远程后段”，而是很多短战局会在 `接敌 / 交火` 内直接分出胜负。
+- 因此本轮没有继续把 `fireline` 粗暴做成更早的纯时间后段，而是改成：
+  - 让 `crossfire` 更容易通过 HP 承接出现
+  - 缩短 `crossfire` 的最短驻留
+  - 让 `fireline` 更容易通过 HP 承接接上
+  - 再用现有 `signature` carrier 给 `fireline` 补一层进段确认
+
+### 当前 `boss-bastion` 远程段口径
+- `crossfire / 交叉火线`
+  - 仍承担远程前段主味道
+  - 当前更偏“更早被普通样本读到”，而不是继续只靠时间轴后推
+- `fireline / 压边迁火`
+  - 仍承担远程收束段
+  - 当前更偏“短战局里也能被普通样本自然读到一次”，而不是只在高 burst / 高机动里成立
+  - 现已拥有自己的轻量 signature entry，不再只有 pocket/pattern 在做后段确认
+
+### ownership 边界
+- 这轮仍然只改 `boss-bastion` 的 phase carrier，没有把同层语义下放给 elite-family。
+- `fireline` 依然是 final battle 内的 Boss 远程后段，不是普通 `screened / kiting` elite 的厚体版。
+- 当前 Boss / elite / final battle 的边界保持不变：
+  - Boss 负责阶段承接与最终收束
+  - elite 继续只保留轻量模板级压力
+  - final battle 继续通过 Boss template pool 收尾

@@ -588,3 +588,30 @@ route window 当前的约束是：
 - 当前做法是在既有 `crossfire -> fireline` 结构上，把 `fireline` 轻量前置并收紧节奏：
   - 让高 burst / 高机动自然 build 更容易至少遇到一次真实转场判断
   - 同时保留 `crossfire` 作为远程前段主味道，避免后段过早顶掉前段身份
+
+## 2026-04-08 普通 build fireline 回归校准补充
+### 当前承接参数
+- `boss-bastion / crossfire`
+  - `triggerHpRatio = 0.78`
+  - `triggerRemainingSec = 25`
+  - `minResidenceSec = 3.4`
+- `boss-bastion / fireline`
+  - `signatureLabel = 压边迁火`
+  - `signatureDurationSec = 2.8`
+  - `signaturePulseIntervalSec = 1.02`
+  - `signatureVolleyCount = 2`
+  - `patternSafeWindowLingerSec = 1.02`
+  - `triggerHpRatio = 0.62`
+  - `triggerRemainingSec = 15`
+
+### 取舍含义
+- 这轮的核心结论是：普通 build 的不少 boss 战不会自然拖到很晚，而是会在 `接敌 / 交火` 内更早分出胜负。
+- 因此本轮没有继续依赖“更早的时间阈值”去硬塞 `fireline`，而是改成：
+  - 用更高的 `crossfire` HP 承接阈值保证普通样本更容易读到远程前段。
+  - 用更短的 `crossfire minResidenceSec` 给 `fireline` 留出真实接段窗口。
+  - 用更高的 `fireline` HP 承接阈值，让短战局 normal sample 也有机会自然进入收束段。
+- 这依然不是堆血方案：
+  - 没有提高 Boss 基础血量
+  - 没有新增护卫数量层
+  - 没有扩出新的 Boss 系统
+  - 只是用现有 phase carrier 调整“何时读到后段、何时确认后段”
