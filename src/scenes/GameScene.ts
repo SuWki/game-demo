@@ -99,7 +99,7 @@ export class GameScene extends Phaser.Scene {
       const panelKey = `node:${state.phase}:${state.nodeOptions.map((node) => node.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
         this.services.overlay.showNodePanel(getPhaseLabel(state.phase), state.nodeOptions, (nodeId) => {
-          this.services.audio.play('click');
+          this.services.audio.play('confirm');
           this.engine.chooseNode(nodeId);
           this.processAnnouncements();
           this.syncOverlay();
@@ -135,6 +135,7 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'eventChoice' && state.currentEvent) {
       const panelKey = `event:${state.currentEvent.id}:${state.currentEvent.options.map((option) => option.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
+        this.services.audio.play(state.currentEvent.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
         this.services.overlay.showEventPanel(state.currentEvent, (optionId) => {
           this.engine.chooseEventOption(optionId);
           this.processAnnouncements();

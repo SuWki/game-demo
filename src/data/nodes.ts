@@ -141,9 +141,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   2: {
     phase: 'mid',
     countWeights: [
-      { count: 1, weight: 12 },
-      { count: 2, weight: 46 },
-      { count: 3, weight: 42 },
+      { count: 1, weight: 8 },
+      { count: 2, weight: 44 },
+      { count: 3, weight: 48 },
     ],
     blueprints: [
       {
@@ -230,7 +230,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '中段事件',
         description: '高波动拐点，会放大方向差异，但不一定立刻定型。',
         selection: {
-          baseWeight: 2.6,
+          baseWeight: 2.9,
           soloMultiplier: 0.45,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 1,
@@ -243,7 +243,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '偏航窗口',
         description: '可以顺着当前读法微调，也能顺手把转向窗口留住。',
         selection: {
-          baseWeight: 2.8,
+          baseWeight: 3.1,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.8,
@@ -256,7 +256,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '侧频接驳',
         description: '这一拍更像一次重评路线的机会，适合判断要不要借侧频改道。',
         selection: {
-          baseWeight: 1.95,
+          baseWeight: 2.15,
           soloMultiplier: 0.46,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.6,
@@ -269,7 +269,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '改道评估',
         description: '这一拍更像一次主动换线的预演，适合判断现在转过去值不值。',
         selection: {
-          baseWeight: 2.55,
+          baseWeight: 2.8,
           soloMultiplier: 0.48,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.5,
@@ -282,7 +282,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '相位裂缝',
         description: '这不再是普通补给事件，而是一次真正闯进中段节奏的异常试错窗口。',
         selection: {
-          baseWeight: 1.9,
+          baseWeight: 2.15,
           soloMultiplier: 0.4,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.35,
@@ -293,9 +293,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   3: {
     phase: 'late',
     countWeights: [
-      { count: 1, weight: 20 },
-      { count: 2, weight: 52 },
-      { count: 3, weight: 28 },
+      { count: 1, weight: 12 },
+      { count: 2, weight: 46 },
+      { count: 3, weight: 42 },
     ],
     blueprints: [
       {
@@ -387,7 +387,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '后段事件',
         description: '沿着{focusLabel}冒险加码，可能直接站稳路线。',
         selection: {
-          baseWeight: 2.6,
+          baseWeight: 2.9,
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.6,
           noFocusBonus: 0.7,
@@ -400,7 +400,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '尾段押注',
         description: '沿着{focusLabel}再压一次，争取把收尾气质做实。',
         selection: {
-          baseWeight: 2.5,
+          baseWeight: 2.8,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.5,
@@ -413,7 +413,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '黑匣异常',
         description: '低频异常节点，可能让这一局在尾段撞上一段截然不同的记忆点。',
         selection: {
-          baseWeight: 1.28,
+          baseWeight: 1.5,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.3,
@@ -426,7 +426,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: 'Boss 阴影',
         description: '异常提前泄出了最终 Boss 的压力样本，晚段撞上它更像一次收束前的预演。',
         selection: {
-          baseWeight: 1.4,
+          baseWeight: 1.6,
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.15,

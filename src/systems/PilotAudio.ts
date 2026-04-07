@@ -92,6 +92,58 @@ export class PilotAudio {
             return 0.07;
           },
         };
+      case 'confirm':
+        return {
+          cooldownMs: 70,
+          play: (context, masterGain, now) => {
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 420,
+              peak: 0.028,
+              duration: 0.055,
+              sweepTo: 580,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'sine',
+              frequency: 720,
+              peak: 0.016,
+              duration: 0.06,
+              delay: 0.02,
+              sweepTo: 860,
+            });
+            return 0.1;
+          },
+        };
+      case 'start':
+        return {
+          cooldownMs: 500,
+          play: (context, masterGain, now) => {
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 300,
+              peak: 0.03,
+              duration: 0.14,
+              sweepTo: 430,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'sine',
+              frequency: 430,
+              peak: 0.024,
+              duration: 0.16,
+              delay: 0.05,
+              sweepTo: 620,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 620,
+              peak: 0.02,
+              duration: 0.16,
+              delay: 0.1,
+              sweepTo: 820,
+            });
+            return 0.22;
+          },
+        };
       case 'upgrade':
         return {
           cooldownMs: 100,
@@ -112,6 +164,58 @@ export class PilotAudio {
               sweepTo: 940,
             });
             return 0.16;
+          },
+        };
+      case 'anomaly':
+        return {
+          cooldownMs: 180,
+          play: (context, masterGain, now) => {
+            createVoice(context, masterGain, now, {
+              type: 'sine',
+              frequency: 250,
+              peak: 0.022,
+              duration: 0.16,
+              sweepTo: 340,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 640,
+              peak: 0.024,
+              duration: 0.18,
+              delay: 0.04,
+              sweepTo: 930,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'sine',
+              frequency: 920,
+              peak: 0.014,
+              duration: 0.12,
+              delay: 0.08,
+              sweepTo: 760,
+            });
+            return 0.24;
+          },
+        };
+      case 'boss':
+        return {
+          cooldownMs: 520,
+          play: (context, masterGain, now) => {
+            createVoice(context, masterGain, now, {
+              type: 'sawtooth',
+              frequency: 126,
+              peak: 0.042,
+              duration: 0.2,
+              sweepTo: 88,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 340,
+              peak: 0.024,
+              duration: 0.18,
+              delay: 0.04,
+              sweepTo: 480,
+            });
+            return 0.26;
           },
         };
       case 'hit':
@@ -170,6 +274,58 @@ export class PilotAudio {
               sweepTo: 150,
             });
             return 0.2;
+          },
+        };
+      case 'victory':
+        return {
+          cooldownMs: 700,
+          play: (context, masterGain, now) => {
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 260,
+              peak: 0.032,
+              duration: 0.18,
+              sweepTo: 360,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'sine',
+              frequency: 390,
+              peak: 0.026,
+              duration: 0.2,
+              delay: 0.08,
+              sweepTo: 540,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 580,
+              peak: 0.022,
+              duration: 0.22,
+              delay: 0.16,
+              sweepTo: 820,
+            });
+            return 0.34;
+          },
+        };
+      case 'defeat':
+        return {
+          cooldownMs: 700,
+          play: (context, masterGain, now) => {
+            createVoice(context, masterGain, now, {
+              type: 'sawtooth',
+              frequency: 280,
+              peak: 0.032,
+              duration: 0.18,
+              sweepTo: 180,
+            });
+            createVoice(context, masterGain, now, {
+              type: 'triangle',
+              frequency: 180,
+              peak: 0.02,
+              duration: 0.22,
+              delay: 0.06,
+              sweepTo: 108,
+            });
+            return 0.3;
           },
         };
       case 'result':

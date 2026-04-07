@@ -59,6 +59,7 @@ import type {
   EliteBehaviorId,
   NodeOption,
   NodeType,
+  AudioCue,
   PlayerInputState,
   PlayerStats,
   RouteBuildStage,
@@ -74,7 +75,7 @@ import type {
 interface EngineAnnouncement {
   kind: 'tip' | 'audio';
   text?: string;
-  cue?: 'click' | 'upgrade' | 'hit' | 'crit' | 'pressure' | 'result';
+  cue?: AudioCue;
 }
 
 interface RouteAdvanceMeta {
@@ -330,7 +331,7 @@ export class RunEngine {
         toRoute: optionRouteId,
       });
     }
-    this.enqueueAudio('upgrade');
+    this.enqueueAudio(eventDef.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
     this.enqueueTip(`${eventDef.name}：${option.label}`);
     this.advanceRound();
   }
@@ -523,7 +524,7 @@ export class RunEngine {
         ? `Boss 警报：${node.title}`
         : `${getPhaseLabel(node.phase)}进入：${template.name}`,
     );
-    this.enqueueAudio('pressure');
+    this.enqueueAudio(encounterType === 'boss' ? 'boss' : 'pressure');
     this.services.metrics.recordBattleEntered(template.id, node.title, template.contentTier, {
       phase: node.phase,
       isLatePayoff: this.isLatePhase(node.phase) && template.contentTier === 'rare',
@@ -1101,7 +1102,7 @@ export class RunEngine {
       this.services.metrics.recordBossPhaseEntered(battle.templateId, nextPhase.id, nextPhase.label);
     }
     this.enqueueTip(`${battle.encounterType === 'boss' ? 'Boss 转段' : '精英转段'}：${nextPhase.label}`);
-    this.enqueueAudio('pressure');
+    this.enqueueAudio(battle.encounterType === 'boss' ? 'boss' : 'pressure');
   }
 
   private completeBattle(): void {
@@ -1152,6 +1153,7 @@ export class RunEngine {
     this.state.upgradeChoices = [];
     this.state.upgradeSource = null;
     this.state.battle = null;
+    this.enqueuePhaseAdvanceFeedback(nextNodes);
   }
 
   private finishRun(outcome: RunOutcome, endingKind: RunEndingKind): void {
@@ -1204,7 +1206,7 @@ export class RunEngine {
       battleWins: this.state.battleWins,
       nodesCleared,
     });
-    this.enqueueAudio('result');
+    this.enqueueAudio(outcome === 'victory' ? 'victory' : 'defeat');
   }
 
   private getBuildStage(): RouteBuildStage {
@@ -2428,6 +2430,34 @@ export class RunEngine {
     this.state.currentEvent = null;
     this.state.nodeOptions = [];
     this.recordRedirectUpgradeOffers(this.state.upgradeChoices);
+  }
+
+  private enqueuePhaseAdvanceFeedback(nextNodes: NodeOption[]): void {
+    const nextPhase = nextNodes[0]?.phase;
+    if (!nextPhase) {
+      return;
+    }
+
+    switch (nextPhase) {
+      case 'mid':
+        this.enqueueTip('进入中段：开始把当前路线站稳。');
+        this.enqueueAudio('confirm');
+        return;
+      case 'late':
+        this.enqueueTip('进入后段：准备把本局收尾节奏立住。');
+        this.enqueueAudio('confirm');
+        return;
+      case 'finalPrep':
+        this.enqueueTip('进入最终整备：补完这一手后将直面 Boss。');
+        this.enqueueAudio('upgrade');
+        return;
+      case 'finalBattle':
+        this.enqueueTip('最终 Boss 入口已锁定。');
+        this.enqueueAudio('boss');
+        return;
+      default:
+        return;
+    }
   }
 
   private enqueueTip(text: string): void {

@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：redirect 默认吸引力校准 + hybrid 承接强化 + 稀有 / late payoff 比例边界维护 + 实跑样本验证
+- 当前执行焦点：0.9v 流程完整度推进 + 整局反馈闭环首轮覆盖
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -35,11 +35,27 @@
 - 最小表现层收口
 
 ## 当前最大风险
-- 当前 rare / hybrid / late payoff 的边界已经比前几轮清楚，但若后续继续只补普通 route-specific 内容，replay 动机仍会再次被常规分发稀释
-- `redirectOfferSeenCount` 已经能够在真实跑局里稳定非零，说明“可转向机会”已经能被发出来；但 `redirectPickCount / branchSwitchCount` 在自然样本里仍偏低，说明默认吸引力与玩家惯性对冲后还不够稳
-- mid 阶段虽然已不再主要被普通 payoff 污染，但普通 route-specific bridge 如果继续增量失控，仍可能重新把后段兑现感往前挤
-- 稀有内容如果后续只是继续加数量而不守住低频，late 记忆点会重新退化成普通池换皮
+- `boss-bastion / fireline` 在普通 build 下的自然覆盖率仍偏低，Boss 远程后段还需要继续观察
+- 整局完整感虽然已经开始收口，但如果后续只继续补局部内容，不持续维护 `start -> node -> anomaly -> final prep -> boss -> result -> replay` 的承接，仍会重新退回“局部强、整局薄”
+- 基础音效已完成首轮覆盖，但当前仍是轻量 cue 层；如果后续继续叠加而不控频，容易重新变吵
 - 中文乱码与内部设计话术重新泄露到玩家可见文本
+
+## 2026-04-07 0.9v 流程完整度推进更新
+- 当前阶段判断更新为：项目已开始从 `0.9v` 的“读数 / 压力校准阶段”切入“流程完整度推进阶段”。
+- 本轮不再继续深挖单点 Boss pocket，而是优先把一整局的前段 / 中段 / 后段 / final prep / boss / 结算 / replay 承接收口。
+- 当前最新进展：
+  - `opening / mid / late / finalPrep / finalBattle` 的节点面板说明已按阶段重写，不再只是泛“选择下一站”。
+  - `round 2 / round 3` 的节点出牌现在更稳定给出 `2~3` 选，并提高 anomaly 露出率，让整局更像一条完整 run，而不是零散 panel 串联。
+  - `PilotAudio` 已补齐 `start / confirm / anomaly / boss / victory / defeat / result` 首轮 cue，并接到开始、节点确认、异常、Boss、胜负与结果页。
+  - `CORE_LOOP.md` 顶部摘要已经同步改回 `battle / upgrade / anomaly -> final prep -> boss -> 结算 -> replay` 的最新口径。
+- 当前更适合继续做：
+  - 自然 run 的整局节奏样本验证
+  - 基础音效的第二轮去噪与素材替换准备
+  - 普通 build 下 `boss-bastion / fireline` 覆盖率继续观察
+- 当前最大风险更新为：
+  - 远程 Boss 后段的普通 build 覆盖率仍然是最大未收口点
+  - 当前音效仍属于“基础反馈闭环”，不是最终音频表现层
+  - 如果后续内容扩写只顾局部，不继续维护整局承接，流程完整感仍会再次被稀释
 
 ## 2026-04-07 0.9v 远程 pocket 自然成立性校准
 - 当前阶段判断继续保持不变：项目仍处于 `0.9v` 的“读数 / 压力校准阶段”。

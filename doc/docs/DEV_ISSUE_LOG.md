@@ -1,4 +1,91 @@
 # DEV ISSUE LOG
+## [0.9v 流程完整度推进] 整局链路收口与基础音效首轮覆盖
+### 本轮口径
+- 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- 当前项目不再适合继续深挖单点 Boss pocket；本轮目标是把 `start -> battle / upgrade / anomaly -> final prep -> boss -> result -> replay` 的整局完整感和基础反馈闭环收口出来，不改主流程、不重写 `RunEngine`、不引入新系统。
+
+### 盘点结论
+- 当前整局结构已经是完整链路：
+  - `开始页 -> 起始 battle -> opening / mid / late 节点推进 -> final prep -> boss -> 结算 -> replay`
+- 真正的缺口不在“有没有系统”，而在两层轻缺口：
+  - 阶段承接还偏轻，节点面板更像泛用 panel，`mid / late / finalPrep / finalBattle` 的整局味道不够稳
+  - 基础音效只覆盖了 `click / upgrade / hit / crit / pressure / result`，缺少明显的 `start / confirm / anomaly / boss / victory / defeat`
+- 文档口径也有一处需要同步：
+  - `CORE_LOOP.md` 顶部摘要仍残留旧的 `battle / upgrade / event` 说法，需要回到当前代码与基线要求的 `battle / upgrade / anomaly / final prep / boss / replay`
+
+### 本轮实现
+- `src/data/nodes.ts`
+  - 调整 `round 2 / round 3` 的 `countWeights`，降低单选占比，提高 `2~3` 选出现率。
+  - 轻量上调 `mid / late` anomaly 节点蓝图权重，让自然 run 更容易看到 battle / upgrade / anomaly 的完整节奏，而不是单一路径连走。
+- `src/ui/OverlayController.ts`
+  - 节点面板现在会按 `opening / mid / late / finalPrep / finalBattle` 给出阶段说明。
+  - 取舍目标不是重做 UI，而是让 panel 本身承担整局承接说明，减少“只有卡片变了、整局没变”的感觉。
+- `src/scenes/GameScene.ts`
+  - 节点确认音由普通 `click` 改为 `confirm`。
+  - anomaly 面板首次打开时会播放 anomaly cue，让异常节点不再只在按钮确认后才有反馈。
+- `src/game/types.ts`
+  - `AudioCue` 扩展为：
+    - `confirm`
+    - `start`
+    - `anomaly`
+    - `boss`
+    - `victory`
+    - `defeat`
+- `src/systems/PilotAudio.ts`
+  - 在现有轻量合成音结构上补齐上述 cue 的首轮 profile。
+  - 本轮没有新建复杂音频系统，只继续沿 `PilotAudio` 做频率 / 时长 / cooldown 层级区分。
+- `src/scenes/MainMenuScene.ts`
+  - 开始游戏改为播放 `start`，不再和普通 `click` 共用同一 cue。
+- `src/systems/RunEngine.ts`
+  - anomaly 选项确认改为播放 `anomaly`。
+  - 普通 battle 进入仍使用 `pressure`，Boss 进入与 Boss phase 转段改为播放 `boss`。
+  - `mid / late / finalPrep / finalBattle` 进入时补入轻量 phase-advance cue，帮助整局阶段切换更像完整 run。
+  - 胜利 / 失败结算前改为分别播放 `victory / defeat`。
+- `src/scenes/ResultScene.ts`
+  - 结果页打开时播放 `result`，重开时播放 `start`，把“结算打开”和“重新开始一局”分开。
+- `doc/docs/CORE_LOOP.md`
+  - 顶部摘要已同步到当前口径：`battle / upgrade / anomaly -> final prep -> boss -> 结算 -> replay`
+
+### 数据结构变更
+- `AudioCue` 新增：
+  - `confirm`
+  - `start`
+  - `anomaly`
+  - `boss`
+  - `victory`
+  - `defeat`
+- `ROUND_NODE_OFFERS` 的 `round 2 / round 3` 分发权重已更新，用于提高中后段完整跑局的节点丰富度。
+- 本轮没有新增 metrics 字段；继续沿现有埋点结构导出即可。
+
+### 验证
+- `npm run build` 通过。
+- 节点分发抽样验证通过：
+  - `round 2`
+    - `1 选 = 66 / 800`
+    - `2 选 = 329 / 800`
+    - `3 选 = 405 / 800`
+    - `anomalyOffers = 636 / 800`
+  - `round 3`
+    - `1 选 = 104 / 800`
+    - `2 选 = 372 / 800`
+    - `3 选 = 324 / 800`
+    - `anomalyOffers = 452 / 800`
+- 浏览器全链路验证通过：
+  - `node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - `anomalyPanelSeen = true`
+  - `bossNodeSeen = true`
+  - `bossBattleSeen = true`
+  - `replayStarted = true`
+  - `consoleErrors = []`
+  - 最新截图已复查：
+    - 节点 panel 现在会按阶段说明 run 位置
+    - 结果页收尾信息依然干净，`Boss · 锁域主核` 口径保持正确
+
+### 剩余风险
+- `boss-bastion / fireline` 在普通 build 下的自然覆盖率仍偏低，依然是整局阶段里最大的单点风险。
+- 当前音效仍是“基础反馈闭环”版本，不是最终素材和混音版本；后续继续加 cue 时要严控密度，避免重新变吵。
+- 这轮刻意没有继续深挖 Boss pocket、没有扩音频系统、没有大做表现层；原因是当前更高收益的是先把整局完整感和基础闭环站稳。
+
 ## [0.9v 读数 / 压力校准] 远程 phase pocket 转场自然成立性校准
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

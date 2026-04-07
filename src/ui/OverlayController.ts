@@ -200,7 +200,7 @@ export class OverlayController {
   public showNodePanel(phaseLabel: string, options: NodeOption[], onChoose: (nodeId: string) => void): void {
     this.showPanel(
       `${phaseLabel}节点选择`,
-      '选择下一站。',
+      this.getNodePanelDescription(options),
       options.map(
         (node) => `
           <button class="choice-card map-choice" style="--choice-accent: ${NODE_TYPE_ACCENT_MAP[node.type]}" data-choice="${node.id}">
@@ -384,6 +384,24 @@ export class OverlayController {
         return '进入最终 Boss 关。';
       default:
         return node.description;
+    }
+  }
+
+  private getNodePanelDescription(options: NodeOption[]): string {
+    const phase = options[0]?.phase;
+    switch (phase) {
+      case 'opening':
+        return '前段先把节奏立住，尽快读清战斗、强化和异常窗口。';
+      case 'mid':
+        return '中段开始收束构筑，补短板的同时保留异常转向机会。';
+      case 'late':
+        return '后段准备收尾，优先稳住生存、输出和下一站节奏。';
+      case 'finalPrep':
+        return '最后一次整备，补完这一手后会直接进入 Boss 收尾。';
+      case 'finalBattle':
+        return '最终收尾入口已锁定，这一战会决定本局结算。';
+      default:
+        return '选择下一站。';
     }
   }
 

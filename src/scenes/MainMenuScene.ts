@@ -12,7 +12,7 @@ export class MainMenuScene extends Phaser.Scene {
       services.meta.getSummary(),
       () => {
         services.audio.unlock();
-        services.audio.play('click');
+        services.audio.play('start');
         services.metrics.beginRunFromMenu();
         services.overlay.pushToast('试飞开始', 'accent');
         this.scene.start('GameScene');

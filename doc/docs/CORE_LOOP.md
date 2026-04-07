@@ -3,7 +3,7 @@
 > 若涉及 Boss 关、异常关、强化唯一性或玩家操作基线，请同时参考 [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md)。
 
 ## 单局核心循环
-开始页 -> 进入一局 -> battle / upgrade / event 节点推进 -> 战斗内击杀掉经验 / 拾取经验 -> 升级三选一 -> 逐步建立流派 -> 中段成型 -> 后段收尾 -> 结算 -> 重开
+开始页 -> 进入一局 -> battle / upgrade / anomaly 节点推进 -> 战斗内击杀掉经验 / 拾取经验 -> 升级三选一 -> 逐步建立流派 -> 中段成型 -> 后段收尾 -> final prep -> Boss -> 结算 -> replay
 
 ## 当前输入口径
 - 战斗内使用 `WASD` 或方向键移动

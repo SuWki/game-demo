@@ -24,7 +24,19 @@ export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice
 export type RunOutcome = 'victory' | 'defeat';
 export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
 export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
-export type AudioCue = 'click' | 'upgrade' | 'hit' | 'crit' | 'pressure' | 'result';
+export type AudioCue =
+  | 'click'
+  | 'confirm'
+  | 'start'
+  | 'upgrade'
+  | 'anomaly'
+  | 'boss'
+  | 'hit'
+  | 'crit'
+  | 'pressure'
+  | 'victory'
+  | 'defeat'
+  | 'result';
 export type ToastTone = 'neutral' | 'accent' | 'route' | 'danger' | 'success';
 export type UpgradeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type UpgradeSource = 'levelUp' | 'nodePrep';
