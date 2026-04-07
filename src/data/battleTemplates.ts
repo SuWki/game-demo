@@ -115,7 +115,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   elite: {
     id: 'elite',
     name: '精英压制',
-    description: '更偏正面拆主核的中段检定。',
+    description: '更偏正面拆首领的中段检定。',
     durationSec: 31,
     spawnIntervalSec: 1.18,
     enemyHp: 23,
@@ -176,7 +176,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-vice': {
     id: 'elite-vice',
     name: '绞锁压制',
-    description: '低频绞锁模板。主核会不断补援，把中段拖成一场拆线硬仗。',
+    description: '低频绞锁模板。首领会不断补援，把中段拖成一场拆线硬仗。',
     contentTier: 'rare',
     durationSec: 30,
     spawnIntervalSec: 0.96,
@@ -240,7 +240,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-lockdown': {
     id: 'elite-lockdown',
     name: '包围压制',
-    description: '更偏侧压封位的中段主核战，留给你整理空间更少。',
+    description: '更偏侧压封位的中段首领战，留给你整理空间更少。',
     durationSec: 30,
     spawnIntervalSec: 1,
     enemyHp: 23,
@@ -303,7 +303,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-screen': {
     id: 'elite-screen',
     name: '掩护压制',
-    description: '主核会借屏卫和火线遮住本体，逼你先拆屏再收束。',
+    description: '首领会借屏卫和火线遮住本体，逼你先拆屏再收束。',
     durationSec: 34,
     spawnIntervalSec: 1.14,
     enemyHp: 22,
@@ -365,7 +365,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   },
   'boss-hunt': {
     id: 'boss-hunt',
-    name: '主核压制',
+    name: '正面压制',
     description: '最终 Boss 会直接压上来，用明确的高压节奏收束整局。',
     encounterType: 'boss',
     durationSec: 38,
@@ -463,7 +463,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   },
   'boss-lockdown': {
     id: 'boss-lockdown',
-    name: '锁域主核',
+    name: '锁域首领',
     description: '最终 Boss 会提早带着护卫压进来，把最后一段走位空间挤得更紧。',
     encounterType: 'boss',
     durationSec: 37,
@@ -562,7 +562,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   },
   'boss-bastion': {
     id: 'boss-bastion',
-    name: '屏卫主核',
+    name: '屏卫首领',
     description: '最终 Boss 会借护卫与远程火线拖长对局，让最终关不再只是普通 elite 变体。',
     encounterType: 'boss',
     durationSec: 39,
@@ -822,7 +822,7 @@ export function getBattleEncounterLabel(
   const resolvedEncounterType = encounterType ?? template.encounterType ?? 'battle';
 
   if (resolvedEncounterType === 'boss') {
-    return 'Boss载体';
+    return 'Boss战';
   }
 
   switch (template.winCondition.type) {
@@ -883,7 +883,7 @@ export function getBattleEnemyReadout(
   }
 
   if (activeBehavior) {
-    parts.push(`主核 ${ELITE_BEHAVIOR_READOUT_MAP[activeBehavior]}`);
+    parts.push(`首领 ${ELITE_BEHAVIOR_READOUT_MAP[activeBehavior]}`);
   }
 
   parts.push(`敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`);
@@ -907,7 +907,7 @@ export function getBattleProgressText(battle: BattleState): string {
     case 'survive':
       return `${template.name} ${Math.ceil(battle.remainingSec)}s`;
     case 'elite':
-      return `${template.name} ${battle.eliteAlive ? '击破精英' : '准备交火'}`;
+      return `${template.name} ${battle.eliteAlive ? '击破精英' : '交战在即'}`;
     case 'kills':
     default:
       return `${template.name} ${battle.kills}/${template.winCondition.target ?? battle.targetKills}`;

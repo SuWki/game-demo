@@ -12,6 +12,15 @@
 - `boss-bastion / fireline` 仍然是当前最大的单点回归监控项，但本轮验证里没有出现明显回退迹象。
 
 ### 本轮实现
+- `src/data/battleTemplates.ts`
+  - 将玩家可见的战斗读数从偏设计口吻压回更自然的表述：
+    - `Boss载体 -> Boss战`
+    - `主核 -> 首领`
+    - `准备交火 -> 交战在即`
+  - 同步将几处玩家可见的 Boss / 精英模板名改成更外显的命名，避免结果页和 HUD 再出现“主核”口径。
+- `src/data/nodes.ts`
+  - 最终关 Boss 节点标题从 `追猎主核 / 锁域主核 / 屏卫主核` 调整为 `追猎首领 / 锁域首领 / 屏卫首领`。
+  - 中段精英节点说明里的 `主核` 口径同步改为 `首领`。
 - `src/game/types.ts`
   - `RunResult` 补入：
     - `routeTrace`
@@ -44,6 +53,11 @@
   - 新 HUD 截图已复检：
     - 前段不再显示三枚 `0` 路线 chip。
     - Boss 战 HUD 未被本轮修边重新压重。
+  - `consoleErrors = []`
+- 基于最新构建另起预览端口 `127.0.0.1:4174` 复检
+  - 玩家可见的新文案已经生效：
+    - 中段节点说明已显示 `偏首领正压`
+    - 结果页 trace / replay prompt 保持正常
   - `consoleErrors = []`
 - `npx tsx output/qa/boss-pocket-natural-runs.mts`
   - `normal`
