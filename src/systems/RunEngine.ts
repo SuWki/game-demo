@@ -1619,7 +1619,9 @@ export class RunEngine {
       if (openingEscortBatch > 0) {
         this.spawnEliteSupportEnemies(battle, openingEscortBatch);
       }
-      this.enqueueTip(battle.encounterType === 'boss' ? 'Boss 进入战场' : '精英进入战场');
+      this.enqueueTip(
+        battle.encounterType === 'boss' ? 'Boss 已进场：击败金色血条首领即可通关' : '精英进入战场',
+      );
       this.enqueueAudio('pressure');
     }
 

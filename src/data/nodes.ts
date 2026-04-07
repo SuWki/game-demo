@@ -62,7 +62,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           { templateId: 'elimination-pincer', weight: 1.4 },
           { templateId: 'elimination-sweep', weight: 1 },
         ],
-        difficultyScale: 1.08,
+        difficultyScale: 1.12,
         selection: {
           baseWeight: 5,
           repeatTypeMultiplier: 0.72,
@@ -80,7 +80,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           { templateId: 'elimination', weight: 1.3 },
           { templateId: 'elimination-sweep', weight: 1.1 },
         ],
-        difficultyScale: 1.06,
+        difficultyScale: 1.1,
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.72,
@@ -102,7 +102,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           { templateId: 'elimination', weight: 1 },
           { templateId: 'elimination-pincer', weight: 0.8 },
         ],
-        difficultyScale: 1.08,
+        difficultyScale: 1.12,
         selection: {
           baseWeight: 2.8,
           repeatTypeMultiplier: 0.72,
@@ -729,7 +729,7 @@ export function createOpeningBattleNode(): NodeOption {
         { templateId: 'elimination-pincer', weight: 1.1 },
         { templateId: 'elimination-sweep', weight: 0.8 },
       ],
-      difficultyScale: 1,
+      difficultyScale: 1.06,
       selection: {
         baseWeight: 1,
       },

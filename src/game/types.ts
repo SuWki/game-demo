@@ -473,8 +473,11 @@ export interface OverlayHudSnapshot {
   phaseLabel: string;
   nodeLabel: string;
   hpText: string;
+  hpRatio: number;
   levelText: string;
   experienceText: string;
+  experienceRatio: number;
+  routeStatusText: string;
   routeProgress: Array<{
     routeId: RouteId;
     label: string;
@@ -482,8 +485,19 @@ export interface OverlayHudSnapshot {
     color: string;
     active: boolean;
   }>;
-  battleText: string;
-  battleSubtext?: string;
+  statusText: string;
+  statusSubtext?: string;
+  progressLabel: string;
+  progressDetail: string;
+  phaseTrack: Array<{
+    label: string;
+    state: 'done' | 'active' | 'upcoming' | 'boss-upcoming' | 'boss-active';
+  }>;
+  objectiveLabel: string;
+  objectiveText: string;
+  objectiveDetail: string;
+  objectiveProgressText: string;
+  objectiveTone: 'flow' | 'battle' | 'elite' | 'survive' | 'boss';
 }
 
 export interface Services {

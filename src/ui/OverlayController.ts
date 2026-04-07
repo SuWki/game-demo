@@ -159,25 +159,49 @@ export class OverlayController {
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
       <div class="hud-shell">
-        <div class="hud-rail">
+        <div class="hud-rail hud-rail-dense">
           <div class="hud-kicker">
-            <span class="hud-kicker-label">战况</span>
-            <strong>${snapshot.battleText}</strong>
-            ${snapshot.battleSubtext ? `<small>${snapshot.battleSubtext}</small>` : ''}
+            <div class="hud-kicker-head">
+              <div>
+                <span class="hud-kicker-label">当前状态</span>
+                <strong>${snapshot.statusText}</strong>
+              </div>
+              <span class="hud-status-pill">${snapshot.routeStatusText}</span>
+            </div>
+            ${snapshot.statusSubtext ? `<small>${snapshot.statusSubtext}</small>` : ''}
           </div>
-          <div class="hud-bar">
-            <div class="hud-block hud-block-stack">
-              <span>等级 / 经验</span>
-              <strong>${snapshot.levelText}</strong>
-              <small>${snapshot.experienceText}</small>
+          <div class="hud-main-grid">
+            <div class="hud-panel hud-panel-meters">
+              <div class="hud-meter">
+                <div class="hud-meter-head">
+                  <span>耐久</span>
+                  <strong>${snapshot.hpText}</strong>
+                </div>
+                <div class="hud-meter-bar hud-meter-hp ${this.getMeterStateClass(snapshot.hpRatio)}">
+                  <span style="width: ${Math.max(0, Math.min(100, snapshot.hpRatio * 100)).toFixed(1)}%"></span>
+                </div>
+              </div>
+              <div class="hud-meter">
+                <div class="hud-meter-head">
+                  <span>等级 ${snapshot.levelText}</span>
+                  <strong>${snapshot.experienceText}</strong>
+                </div>
+                <div class="hud-meter-bar hud-meter-xp">
+                  <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
+                </div>
+              </div>
             </div>
-            <div class="hud-block">
-              <span>耐久</span>
-              <strong>${snapshot.hpText}</strong>
-            </div>
-            <div class="hud-block hud-block-wide">
-              <span>阶段 / 节点</span>
+            <div class="hud-panel">
+              <span class="hud-panel-label">${snapshot.progressLabel}</span>
               <strong>${snapshot.phaseLabel} · ${snapshot.nodeLabel}</strong>
+              <small>${snapshot.progressDetail}</small>
+              ${this.renderPhaseTrack(snapshot.phaseTrack, 'hud')}
+            </div>
+            <div class="hud-panel hud-objective hud-objective-${snapshot.objectiveTone}">
+              <span class="hud-panel-label">${snapshot.objectiveLabel}</span>
+              <strong>${snapshot.objectiveText}</strong>
+              <small>${snapshot.objectiveDetail}</small>
+              <div class="hud-objective-progress">${snapshot.objectiveProgressText}</div>
             </div>
           </div>
           <div class="route-strip hud-route-strip">
@@ -206,7 +230,12 @@ export class OverlayController {
     `;
   }
 
-  public showNodePanel(phaseLabel: string, options: NodeOption[], onChoose: (nodeId: string) => void): void {
+  public showNodePanel(
+    phaseLabel: string,
+    options: NodeOption[],
+    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+    onChoose: (nodeId: string) => void,
+  ): void {
     this.showPanel(
       `${phaseLabel}节点选择`,
       this.getNodePanelDescription(options),
@@ -219,16 +248,23 @@ export class OverlayController {
           </button>
         `,
       ),
+      progress,
     );
     for (const node of options) {
       this.bindClick(`[data-choice="${node.id}"]`, () => onChoose(node.id));
     }
   }
 
-  public showUpgradePanel(title: string, choices: UpgradeDefinition[], onChoose: (upgradeId: string) => void): void {
+  public showUpgradePanel(
+    title: string,
+    description: string,
+    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+    choices: UpgradeDefinition[],
+    onChoose: (upgradeId: string) => void,
+  ): void {
     this.showPanel(
       title,
-      '选择 1 项强化，立即生效。',
+      description,
       choices.map(
         (upgrade) => `
           <button class="choice-card" style="--choice-accent: ${this.getRouteAccent(upgrade.routeId)}" data-choice="${upgrade.id}">
@@ -239,13 +275,18 @@ export class OverlayController {
           </button>
         `,
       ),
+      progress,
     );
     for (const upgrade of choices) {
       this.bindClick(`[data-choice="${upgrade.id}"]`, () => onChoose(upgrade.id));
     }
   }
 
-  public showEventPanel(eventDef: EventDefinition, onChoose: (optionId: string) => void): void {
+  public showEventPanel(
+    eventDef: EventDefinition,
+    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+    onChoose: (optionId: string) => void,
+  ): void {
     const contentLabel = eventDef.contentKind === 'anomaly' ? '异常' : '事件';
     this.showPanel(
       `${contentLabel} · ${eventDef.name}`,
@@ -259,6 +300,7 @@ export class OverlayController {
           </button>
         `,
       ),
+      progress,
     );
     for (const option of eventDef.options) {
       this.bindClick(`[data-choice="${option.id}"]`, () => onChoose(option.id));
@@ -353,7 +395,12 @@ export class OverlayController {
     this.toastLayer.innerHTML = '';
   }
 
-  private showPanel(title: string, description: string, items: string[]): void {
+  private showPanel(
+    title: string,
+    description: string,
+    items: string[],
+    progress?: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+  ): void {
     this.screenLayer.classList.add('hidden');
     this.panelLayer.classList.remove('hidden');
     this.panelLayer.innerHTML = `
@@ -364,6 +411,7 @@ export class OverlayController {
           <span class="surface-dot"></span>
         </div>
         <p class="eyebrow">${title}</p>
+        ${progress ? this.renderPanelProgress(progress) : ''}
         <p class="panel-description">${description}</p>
         <div class="choice-grid">${items.join('')}</div>
       </section>
@@ -455,6 +503,49 @@ export class OverlayController {
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
     return routeId ? ROUTE_NAME_MAP[routeId] : '未站稳';
+  }
+
+  private getMeterStateClass(ratio: number): string {
+    if (ratio <= 0.35) {
+      return 'danger';
+    }
+    if (ratio <= 0.68) {
+      return 'warn';
+    }
+    return 'stable';
+  }
+
+  private renderPhaseTrack(
+    phaseTrack: OverlayHudSnapshot['phaseTrack'],
+    tone: 'hud' | 'panel',
+  ): string {
+    return `
+      <div class="phase-track phase-track-${tone}">
+        ${phaseTrack
+          .map(
+            (step) => `
+              <span class="phase-step phase-step-${step.state}">
+                ${step.label}
+              </span>
+            `,
+          )
+          .join('')}
+      </div>
+    `;
+  }
+
+  private renderPanelProgress(
+    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+  ): string {
+    return `
+      <div class="panel-progress">
+        <div class="panel-progress-copy">
+          <span>${progress.progressLabel}</span>
+          <strong>${progress.progressDetail}</strong>
+        </div>
+        ${this.renderPhaseTrack(progress.phaseTrack, 'panel')}
+      </div>
+    `;
   }
 
   private renderResultRouteTrace(routeTrace: RunResult['routeTrace']): string {

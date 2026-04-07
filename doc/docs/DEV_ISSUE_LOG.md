@@ -2860,3 +2860,96 @@
   - 敌方投射物
   - 既有行为谱系
 - 如果后续玩家 burst 与机动继续上涨，下一步更可能需要补的是更明确的场地安全区/危险区雕刻，而不是继续加血或加护卫数量。
+## [2026-04-08 / 0.9v 封版检查] HUD / 流程 / 难度曲线阻断项修复
+### 本轮口径
+- 若文档与代码、旧阶段记录与当前任务冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮最新用户口径` 为准。
+- 本轮不扩内容、不重做系统，目标是修掉封版前直接影响验收体验的阻断项。
+
+### 盘点结论
+- HUD 主问题不是缺字段，而是信息组织松散：
+  - 顶部空白过大
+  - HP / XP 仍偏文本读数
+  - 当前在干什么、离 Boss 还有多远、当前目标是什么，没有被压成一眼能懂的结构
+- 流程主问题不是主循环断裂，而是推进感表达不够直观：
+  - 开局读数容易像“还没开始”
+  - 节点推进容易被读成“点完几下就直接进 Boss”
+  - Boss 临近感与最终整备的承接还不够像验收版
+- 难度曲线主问题是：
+  - opening / late 普通 battle 压力偏低
+  - Boss 开场的护卫 / 刷怪 / 起手承压抬得过急
+  - `boss-bastion` 普通 build 容易死在远程后段前半，导致 `fireline` 样本偏少
+- Boss 认知主问题是：
+  - 玩家不一定第一时间知道当前目标是什么
+  - 不一定知道场上哪个单位才是 Boss
+
+### 本轮修改
+- HUD / 面板
+  - `OverlayHudSnapshot` 扩成更完整的 HUD 快照，补上 HP/XP 比例、流程标签、阶段轨、目标卡等字段。
+  - `OverlayController.showHud(...)` 重排为：
+    - 状态栏
+    - HP / XP 数字 + 进度条
+    - 流程进度卡
+    - 当前目标卡
+    - 路线状态条
+  - 节点 / 强化 / 异常面板统一接入流程进度块，减少“只是继续点一下”的临时感。
+- 流程可理解性
+  - 开局流程读数改为从 `推进 1 / 5` 开始，不再出现 `推进 0 / 5`。
+  - 流程文案改成直接告诉玩家“离 Boss 还剩几站”或“再推进 1 站就进 Boss”。
+  - 最终整备与最终战节点描述继续强调“下一步会直接进入 Boss / 本局结算由这一战决定”。
+- Boss 身份 / 目标
+  - Boss 战目标卡明确写出：
+    - `Boss 目标`
+    - `击败场上首领`
+    - `盯住场上的大体型首领与金色血条，击破即可过关`
+  - Boss 本体在战场内增加更显眼的金色血条与箭头标记。
+  - Boss 战状态副标题补充“金色血条与箭头标记就是 Boss”这一层说明。
+- 难度曲线
+  - opening 普通战模板：
+    - `elimination / elimination-pincer / elimination-sweep`
+    - 温和上调基础压力，主要通过刷新节奏、敌群容量与 pressureMultiplier 微调完成。
+  - late 普通战模板：
+    - `survival / survival-rush / survival-gauntlet`
+    - 温和上调持续压力，避免后段仍像无战感过渡。
+  - Boss 开场：
+    - `boss-hunt / boss-lockdown / boss-bastion`
+    - 轻量回收开场 regular cap、escort batch / max、guard 时长与伤害倍率
+    - 起手仍保留 Boss 身份，但不再那么断崖式压上来
+  - `boss-bastion`
+    - 轻量前移 `crossfire / fireline` 的触发窗口
+    - 目的是让普通 build 更常活到并读到远程后段，而不是靠堆血拖时长
+- 数据驱动边界
+  - 所有调整继续落在 `template / node / HUD snapshot` 层，没有改主流程，也没有重写 `RunEngine` 主结构。
+
+### 验证
+- 构建
+  - `npm run build` 通过。
+- Playwright / 浏览器回归
+  - 使用干净预览端口 `http://127.0.0.1:4174` 复检，避免旧预览进程缓存旧构建。
+  - 开局 HUD 读数确认：
+    - `推进 1 / 5 · 离 Boss 还剩 4 站`
+    - `耐久 110 / 110`
+    - `等级 Lv.1 0 / 29`
+    - `当前目标：击破敌群`
+  - 全链路 smoke：
+    - `start -> node -> battle / upgrade / anomaly -> boss -> result -> replay` 可跑通
+    - `consoleErrors = []`
+    - 结果页已显示更完整的收尾信息与 replay 入口
+- `boss-bastion / fireline` 自然样本复检
+  - `normal`
+    - `bossBastionRuns = 10`
+    - `crossfireSeenRuns = 7`
+    - `firelineSeenRuns = 2`
+    - 普通样本里的 `fireline` 自然覆盖率较上一轮有抬升
+  - `highBurst`
+    - `bossBastionRuns = 2`
+    - `firelineSeenRuns = 1`
+  - `highMobility`
+    - `bossBastionRuns = 5`
+    - `firelineSeenRuns = 5`
+  - 说明本轮“缓 Boss 开场 + 轻量前移远程后段”没有把高机动样本打坏，也让普通样本更容易碰到远程收束段。
+
+### 本轮结论
+- 项目仍处于 `0.9v 封版检查阶段`，但这轮已经把最影响验收体验的一批阻断项往“清楚、顺、能懂、能验证”推进了一大步。
+- 当前残余最大风险继续收敛在：
+  - 普通 build 下 `boss-bastion / fireline` 仍不是高频样本
+  - 最终关远程后段仍需继续监控，避免重新掉回“前段成立、收束偏薄”

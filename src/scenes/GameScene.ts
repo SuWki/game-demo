@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BATTLE_TEMPLATES, getBattleEncounterLabel, getBattleEnemyReadout } from '../data/battleTemplates';
+import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type { BattleState, OverlayHudSnapshot, Services, ToastTone } from '../game/types';
@@ -10,6 +10,13 @@ const XP_ORB_STROKE = 0xcfffd7;
 const ENEMY_PROJECTILE_FILL = 0xff5b63;
 const ENEMY_PROJECTILE_TRAIL = 0xff8e95;
 const ENEMY_PROJECTILE_STROKE = 0xffd0d4;
+const PHASE_TRACK = [
+  { phase: 'opening', label: '前段' },
+  { phase: 'mid', label: '中段' },
+  { phase: 'late', label: '后段' },
+  { phase: 'finalPrep', label: '整备' },
+  { phase: 'finalBattle', label: 'Boss' },
+] as const;
 
 export class GameScene extends Phaser.Scene {
   private services!: Services;
@@ -98,12 +105,17 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'nodeChoice') {
       const panelKey = `node:${state.phase}:${state.nodeOptions.map((node) => node.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
-        this.services.overlay.showNodePanel(getPhaseLabel(state.phase), state.nodeOptions, (nodeId) => {
-          this.services.audio.play('confirm');
-          this.engine.chooseNode(nodeId);
-          this.processAnnouncements();
-          this.syncOverlay();
-        });
+        this.services.overlay.showNodePanel(
+          getPhaseLabel(state.phase),
+          state.nodeOptions,
+          this.getPanelProgressSnapshot(),
+          (nodeId) => {
+            this.services.audio.play('confirm');
+            this.engine.chooseNode(nodeId);
+            this.processAnnouncements();
+            this.syncOverlay();
+          },
+        );
         this.lastPanelKey = panelKey;
       }
       return;
@@ -120,6 +132,8 @@ export class GameScene extends Phaser.Scene {
               : `${getPhaseLabel(state.phase)}强化`;
         this.services.overlay.showUpgradePanel(
           panelTitle,
+          this.getUpgradePanelDescription(),
+          this.getPanelProgressSnapshot(),
           state.upgradeChoices,
           (upgradeId) => {
             this.engine.chooseUpgrade(upgradeId);
@@ -136,7 +150,7 @@ export class GameScene extends Phaser.Scene {
       const panelKey = `event:${state.currentEvent.id}:${state.currentEvent.options.map((option) => option.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
         this.services.audio.play(state.currentEvent.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
-        this.services.overlay.showEventPanel(state.currentEvent, (optionId) => {
+        this.services.overlay.showEventPanel(state.currentEvent, this.getPanelProgressSnapshot(), (optionId) => {
           this.engine.chooseEventOption(optionId);
           this.processAnnouncements();
           this.syncOverlay();
@@ -156,7 +170,8 @@ export class GameScene extends Phaser.Scene {
     for (const item of this.engine.drainAnnouncements()) {
       if (item.kind === 'tip' && item.text) {
         const tone = this.getToastTone(item.text);
-        if (this.shouldDisplayToast(tone)) {
+        const forceBattleToast = item.text.includes('Boss 已进场') || item.text.includes('首领已进场');
+        if (this.shouldDisplayToast(tone) || forceBattleToast) {
           this.services.overlay.pushToast(item.text, tone);
         }
       }
@@ -169,16 +184,21 @@ export class GameScene extends Phaser.Scene {
 
   private createHudSnapshot(): OverlayHudSnapshot {
     const state = this.engine.getState();
-    const battleText =
-      state.status === 'battle' && state.battle
-        ? `${getBattleEncounterLabel(state.battle.templateId, state.battle.encounterType)} · ${this.engine.getBattleLabel()}`
-        : this.getRouteStatusText();
+    const routeStatusText = this.getRouteStatusText();
+    const progressSnapshot = this.getRunProgressSnapshot();
+    const objectiveSnapshot = this.getObjectiveSnapshot();
+    const statusText =
+      state.status === 'battle' && state.battle ? this.getBattleStatusText(state.battle) : routeStatusText;
+
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
       hpText: `${Math.ceil(state.stats.hp)} / ${state.stats.maxHp}`,
+      hpRatio: state.stats.hp / Math.max(1, state.stats.maxHp),
       levelText: `Lv.${state.level}`,
       experienceText: `${Math.floor(state.experience)} / ${state.experienceToNext}`,
+      experienceRatio: state.experience / Math.max(1, state.experienceToNext),
+      routeStatusText,
       routeProgress: ROUTES.map((route) => ({
         routeId: route.id,
         label: route.name,
@@ -186,20 +206,215 @@ export class GameScene extends Phaser.Scene {
         color: route.color,
         active: this.engine.getDominantRoute() === route.id,
       })).filter((route) => route.value > 0 || route.active),
-      battleText,
-      battleSubtext:
-        state.status === 'battle' && state.battle
-          ? getBattleEnemyReadout(
-              state.battle.templateId,
-              state.battle.pressurePhaseLabel,
-              state.battle.pressureTransitionSec > 0,
-              state.battle.pressurePhaseIndex,
-              state.battle.pressureSignatureLabel,
-              state.battle.pressurePatternLabel,
-              state.battle.pressureSafeWindowSec > 0 ? state.battle.pressureSafeWindowAxis : undefined,
-              state.battle.pressureSafeWindowSec > 0 ? state.battle.pressureSafeWindowShiftType : undefined,
-            )
-          : undefined,
+      statusText,
+      statusSubtext:
+        state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : progressSnapshot.progressDetail,
+      progressLabel: progressSnapshot.progressLabel,
+      progressDetail: progressSnapshot.progressDetail,
+      phaseTrack: progressSnapshot.phaseTrack,
+      objectiveLabel: objectiveSnapshot.objectiveLabel,
+      objectiveText: objectiveSnapshot.objectiveText,
+      objectiveDetail: objectiveSnapshot.objectiveDetail,
+      objectiveProgressText: objectiveSnapshot.objectiveProgressText,
+      objectiveTone: objectiveSnapshot.objectiveTone,
+    };
+  }
+
+  private getBattleStatusText(battle: BattleState): string {
+    return `${getBattleEncounterLabel(battle.templateId, battle.encounterType)} · ${this.getBattleIdentityLabel(battle)}`;
+  }
+
+  private getBattleIdentityLabel(battle: BattleState): string {
+    const nodeTitle = this.engine.getState().currentNode?.title;
+    if (battle.encounterType === 'boss') {
+      return nodeTitle ?? BATTLE_TEMPLATES[battle.templateId].name;
+    }
+
+    return battle.label || nodeTitle || BATTLE_TEMPLATES[battle.templateId].name;
+  }
+
+  private getBattleStatusSubtext(battle: BattleState): string {
+    const parts: string[] = [];
+
+    if (battle.encounterType === 'boss') {
+      parts.push(battle.eliteAlive ? '首领已进场' : '首领即将进场');
+      parts.push(battle.eliteAlive ? '金色血条与箭头标记就是 Boss' : '金色血条出现后优先锁定首领');
+    }
+
+    if (battle.pressurePhaseLabel) {
+      parts.push(`阶段 ${battle.pressurePhaseLabel}`);
+    }
+
+    if (battle.pressureSignatureLabel) {
+      parts.push(`招式 ${battle.pressureSignatureLabel}`);
+    } else if (battle.pressurePatternLabel) {
+      parts.push(`空间 ${battle.pressurePatternLabel}`);
+    }
+
+    return parts.join(' · ') || BATTLE_TEMPLATES[battle.templateId].description;
+  }
+
+  private getPanelProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
+    const progress = this.getRunProgressSnapshot();
+    return {
+      progressLabel: progress.progressLabel,
+      progressDetail: progress.progressDetail,
+      phaseTrack: progress.phaseTrack,
+    };
+  }
+
+  private getBossDistanceText(currentStep: number, totalRounds: number): string {
+    const remainingStops = Math.max(0, totalRounds - currentStep);
+    if (remainingStops <= 0) {
+      return 'Boss 已登场';
+    }
+    if (remainingStops === 1) {
+      return '再推进 1 站就进 Boss';
+    }
+    return `离 Boss 还剩 ${remainingStops} 站`;
+  }
+
+  private getUpgradePanelDescription(): string {
+    const state = this.engine.getState();
+    if (state.upgradeSource === 'levelUp') {
+      return '这是战斗内升级，选完 1 项强化后会立刻回到当前战斗。';
+    }
+    if (state.currentNode?.isFinalPrep) {
+      return '这是 Boss 前最后一次整备，选完后会直接进入最终战。';
+    }
+    return '选择 1 项强化，补完这一手后继续推进。';
+  }
+
+  private getRunProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
+    const state = this.engine.getState();
+    const currentStep = Math.min(state.totalRounds, Math.max(1, state.round));
+    const currentPhaseLabel = getPhaseLabel(state.phase);
+    const currentPhaseIndex = PHASE_TRACK.findIndex((entry) => entry.phase === state.phase);
+    const bossDistanceText = this.getBossDistanceText(currentStep, state.totalRounds);
+    const nextPhaseLabel =
+      currentPhaseIndex >= 0 && currentPhaseIndex < PHASE_TRACK.length - 1 ? PHASE_TRACK[currentPhaseIndex + 1].label : null;
+
+    let detail = `当前是${currentPhaseLabel}，${bossDistanceText}。`;
+    if (state.phase === 'finalPrep') {
+      detail = '这是 Boss 前最后一次整备，选完这一手就会进入最终战。';
+    } else if (state.phase === 'finalBattle') {
+      detail = '最终 Boss 已登场，本局结果就看这一战能不能收住。';
+    } else if (nextPhaseLabel) {
+      detail = `当前是${currentPhaseLabel}，完成这一站后进入${nextPhaseLabel}。${bossDistanceText}。`;
+    }
+
+    return {
+      progressLabel: `推进 ${currentStep} / ${state.totalRounds} · ${bossDistanceText}`,
+      progressDetail: detail,
+      phaseTrack: PHASE_TRACK.map((entry, index) => {
+        const step = index + 1;
+        if (step < currentStep) {
+          return {
+            label: entry.label,
+            state: 'done' as const,
+          };
+        }
+        if (step === currentStep) {
+          return {
+            label: entry.label,
+            state: entry.phase === 'finalBattle' ? ('boss-active' as const) : ('active' as const),
+          };
+        }
+        return {
+          label: entry.label,
+          state: entry.phase === 'finalBattle' ? ('boss-upcoming' as const) : ('upcoming' as const),
+        };
+      }),
+    };
+  }
+
+  private getObjectiveSnapshot(): Pick<
+    OverlayHudSnapshot,
+    'objectiveLabel' | 'objectiveText' | 'objectiveDetail' | 'objectiveProgressText' | 'objectiveTone'
+  > {
+    const state = this.engine.getState();
+    const currentStep = Math.min(state.totalRounds, Math.max(1, state.round));
+    const bossDistanceText = this.getBossDistanceText(currentStep, state.totalRounds);
+
+    if (state.status === 'battle' && state.battle) {
+      const battle = state.battle;
+      const targetTitle = this.getBattleIdentityLabel(battle);
+      if (battle.encounterType === 'boss') {
+        return {
+          objectiveLabel: 'Boss 目标',
+          objectiveText: '击败场上首领',
+          objectiveDetail: `${targetTitle} 就是本局 Boss。盯住场上的大体型首领与金色血条，击破即可过关。`,
+          objectiveProgressText: battle.eliteAlive ? `${targetTitle} 已进场 · 击败首领就能完成本局` : '首领即将进场 · 先稳住第一轮压力',
+          objectiveTone: 'boss',
+        };
+      }
+
+      const winCondition = BATTLE_TEMPLATES[battle.templateId].winCondition.type;
+      if (winCondition === 'elite') {
+        return {
+          objectiveLabel: '当前目标',
+          objectiveText: '击败精英',
+          objectiveDetail: '精英进场后，拆护卫并击破本体即可过关。',
+          objectiveProgressText: battle.eliteAlive ? '精英已进场 · 击破本体即可过关' : '精英即将进场 · 先稳住战场节奏',
+          objectiveTone: 'elite',
+        };
+      }
+
+      if (winCondition === 'survive') {
+        return {
+          objectiveLabel: '当前目标',
+          objectiveText: '撑到倒计时结束',
+          objectiveDetail: '这是生存战，稳住走位和血量，倒计时归零就能过关。',
+          objectiveProgressText: `剩余 ${Math.ceil(battle.remainingSec)}s`,
+          objectiveTone: 'survive',
+        };
+      }
+
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: '击破敌群',
+        objectiveDetail: `这是普通战，击破 ${battle.targetKills} 个敌人即可推进。`,
+        objectiveProgressText: `已击破 ${battle.kills} / ${battle.targetKills}`,
+        objectiveTone: 'battle',
+      };
+    }
+
+    if (state.status === 'nodeChoice') {
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: '选择下一站',
+        objectiveDetail: `当前第 ${currentStep} / ${state.totalRounds} 段，选完这一站后再继续推进。`,
+        objectiveProgressText: bossDistanceText,
+        objectiveTone: 'flow',
+      };
+    }
+
+    if (state.status === 'upgradeChoice') {
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: state.currentNode?.isFinalPrep ? '完成最终整备' : '完成强化选择',
+        objectiveDetail: state.upgradeSource === 'levelUp' ? '这是战斗内升级，选完后会立刻回到当前战斗。' : '补完这一手后，流程会继续向下一段推进。',
+        objectiveProgressText: state.currentNode?.isFinalPrep ? '选完这一手就进入 Boss' : bossDistanceText,
+        objectiveTone: 'flow',
+      };
+    }
+
+    if (state.status === 'eventChoice') {
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: state.currentEvent?.contentKind === 'anomaly' ? '完成异常抉择' : '完成事件选择',
+        objectiveDetail: '选完这一项后会继续推进，不会额外插入隐藏流程。',
+        objectiveProgressText: bossDistanceText,
+        objectiveTone: 'flow',
+      };
+    }
+
+    return {
+      objectiveLabel: '当前目标',
+      objectiveText: '准备进入下一局',
+      objectiveDetail: '把一条路线扶到成型，并在 Boss 战前尽量补齐收尾能力。',
+      objectiveProgressText: bossDistanceText,
+      objectiveTone: 'flow',
     };
   }
 
@@ -378,10 +593,24 @@ export class GameScene extends Phaser.Scene {
       }
 
       const hpRatio = enemy.hp / enemy.maxHp;
-      this.graphics.fillStyle(0x1b2434, 0.84);
-      this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32, 4);
-      this.graphics.fillStyle(enemy.elite ? 0xffdd7d : enemyStroke, 1);
-      this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32 * hpRatio, 4);
+      if (enemy.elite && battle.encounterType === 'boss') {
+        const barWidth = 88;
+        const barX = enemy.x - barWidth * 0.5;
+        const barY = enemy.y - enemy.radius - 24;
+        this.graphics.fillStyle(0x231b14, 0.92);
+        this.graphics.fillRoundedRect(barX, barY, barWidth, 6, 3);
+        this.graphics.fillStyle(0xffd774, 1);
+        this.graphics.fillRoundedRect(barX, barY, barWidth * hpRatio, 6, 3);
+        this.graphics.lineStyle(2, 0xffd774, 0.5);
+        this.graphics.strokeRoundedRect(barX, barY, barWidth, 6, 3);
+        this.graphics.fillStyle(0xffd774, 0.96);
+        this.graphics.fillTriangle(enemy.x, barY - 10, enemy.x - 7, barY - 1, enemy.x + 7, barY - 1);
+      } else {
+        this.graphics.fillStyle(0x1b2434, 0.84);
+        this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32, 4);
+        this.graphics.fillStyle(enemy.elite ? 0xffdd7d : enemyStroke, 1);
+        this.graphics.fillRect(enemy.x - 16, enemy.y - enemy.radius - 10, 32 * hpRatio, 4);
+      }
     }
 
     this.graphics.fillStyle(accentColor, battle.invulnerableSec > 0 ? 0.16 : 0.08);
