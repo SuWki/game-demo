@@ -1,4 +1,63 @@
 # DEV ISSUE LOG
+## [0.9v freeze sign-off] 封版签收 / 残余风险登记 / 文档收口
+### 本轮口径
+- 若旧阶段文档、代码现状与本轮结论存在口径差异，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮 freeze sign-off 口径` 为准。
+- 当前阶段已从“封版检查 + 可封版判断”正式收口到 `0.9v freeze sign-off`；本轮不继续开发新内容、不重写 `RunEngine`、不引入新系统，只做封版结论、残余风险登记、文档收口与本地提交。
+
+### freeze sign-off 盘点结论
+- 当前主流程已达到可封版状态：
+  - `start -> node -> battle / upgrade / anomaly -> boss -> result -> replay` 已稳定可跑通
+  - 三流派已达到可验收状态
+  - Boss / anomaly / template ownership 已稳定
+  - HUD / 文案 / 音效 / 结果页 / replay 当前没有剩余 blocker
+- 当前没有“必须修掉才能封版”的阻断项。
+- 当前仍需被明确写进封版结论的残余风险只有一项：
+  - 普通 build 下 `boss-bastion / fireline` 仍是低频样本
+  - 最终关远程后段仍存在“前段成立、收束偏薄”的残余风险
+- 该风险当前应定义为：
+  - 后续版本观察项 / 监控项
+  - 而不是当前阻断封版项
+
+### 本轮实现
+- `doc/docs/DEV_ISSUE_LOG.md`
+  - 新增 freeze sign-off 顶部结论，正式记录项目已进入 `0.9v 可封版状态`。
+- `doc/docs/PROJECT_STATUS.md`
+  - 将当前执行焦点收口到 `0.9v freeze sign-off + 残余风险登记 + 文档收口`。
+  - 将 `boss-bastion / fireline` 明确定义为残余风险，而不是继续重开开发轮的阻断项。
+- `doc/docs/FREEZE_SIGNOFF_0_9V.md`
+  - 新增简洁封版结论文档，集中记录：
+    - 当前为何可以定义为 `0.9v 可封版状态`
+    - 当前显式残余风险是什么
+    - 为什么该风险属于监控项而不是阻断项
+- 本轮没有修改玩法代码、没有调整数值、没有新增埋点字段。
+
+### 数据结构变更
+- 无。
+
+### 验证
+- `npm run build`
+  - 通过。
+- 文档一致性复核：
+  - `PROJECT_STATUS.md`
+  - `FREEZE_SIGNOFF_0_9V.md`
+  - `DEV_ISSUE_LOG.md`
+  - 口径已统一为 `0.9v freeze sign-off / 0.9v 可封版状态`
+- 自动化验证口径沿用上一轮封版检查结果：
+  - `start -> node -> battle / upgrade / anomaly -> boss -> result -> replay` 已在上一轮验证中稳定跑通
+  - `boss-bastion / fireline` 在普通 build 中维持“低频但可见”，未被重新定义为 blocker
+- 本轮未重跑自然样本脚本与 Playwright 全链路。
+  - 原因：本轮仅做文档收口，没有任何代码、数据、数值或 UI 逻辑变更
+  - 因此本轮验证重点放在：
+    - 构建仍然通过
+    - 文档结论与最新开发记录口径一致
+
+### 当前结论
+- 项目当前已正式进入 `0.9v 可封版状态`。
+- 当前显式残余风险列表如下：
+  - 普通 build 下 `boss-bastion / fireline` 仍然是低频样本
+  - 最终关远程后段仍存在“前段成立、收束偏薄”的残余风险
+- 上述风险当前属于 freeze 之后的监控项，不属于 `0.9v` 阻断封版项。
+
 ## [0.9v 封版检查] 最终回归 / 残余风险监控 / 清单收口
 ### 本轮口径
 - 若文档与代码、旧阶段记录与当前任务冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮最新用户口径` 为准。
