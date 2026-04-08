@@ -46,6 +46,8 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.services = this.game.registry.get('services') as Services;
+    this.services.audio.unlock();
+    this.services.audio.setMusic('battle');
     this.engine = new RunEngine(this.services);
     this.graphics = this.add.graphics();
     this.moveKeys = this.input.keyboard!.addKeys({
@@ -70,11 +72,11 @@ export class GameScene extends Phaser.Scene {
       right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown,
     });
     this.engine.tick(delta);
+    const state = this.engine.getState();
+    this.syncAudioState(state);
     this.processAnnouncements();
     this.syncOverlay();
     this.renderBattle();
-
-    const state = this.engine.getState();
     if (!this.resultHandled && state.status === 'result' && state.result) {
       this.resultHandled = true;
       this.services.meta.recordRun(state.result);
@@ -180,6 +182,20 @@ export class GameScene extends Phaser.Scene {
         this.services.audio.play(item.cue);
       }
     }
+  }
+
+  private syncAudioState(state: ReturnType<RunEngine['getState']>): void {
+    if (state.phase === 'finalBattle' || (state.status === 'battle' && state.battle?.encounterType === 'boss')) {
+      this.services.audio.setMusic('boss');
+      return;
+    }
+
+    if (state.status === 'result') {
+      this.services.audio.setMusic('result');
+      return;
+    }
+
+    this.services.audio.setMusic('battle');
   }
 
   private createHudSnapshot(): OverlayHudSnapshot {

@@ -8,6 +8,7 @@ export class MainMenuScene extends Phaser.Scene {
 
   public create(): void {
     const services = this.game.registry.get('services') as Services;
+    services.audio.setMusic('menu');
     services.overlay.showMenu(
       services.meta.getSummary(),
       () => {
@@ -18,6 +19,7 @@ export class MainMenuScene extends Phaser.Scene {
         this.scene.start('GameScene');
       },
       () => {
+        services.audio.unlock();
         services.audio.play('click');
         const content = window.__exportPilotMetrics();
         navigator.clipboard.writeText(content).catch(() => undefined);

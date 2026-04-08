@@ -1,4 +1,98 @@
 # DEV ISSUE LOG
+## [0.9v 音频阻断项修复] BGM / 战斗音效 / UI 音效恢复
+### 本轮口径
+- 若文档旧结论与真实运行反馈冲突，本轮继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮最新用户口径` 为准。
+- 因此，即便上轮文档已把项目写到 `0.9v 可封版状态`，本轮仍先按最新真实反馈临时回退到 `0.9v 封版前阻断项修复`：
+  - 原因是游戏内实际听不到持续可感知的声音
+  - 这属于真实 blocker，不属于后续版本监控项
+
+### 盘点结论
+- 仓库中已经存在 `PilotAudio` 与若干 `AudioCue` 接线：
+  - `start / confirm / anomaly / boss / hit / crit / pressure / victory / defeat / result`
+  - `MainMenuScene / GameScene / ResultScene / RunEngine` 也已有对应调用入口
+- 但当前实现存在三个关键问题，叠加后会被玩家体验成“完全没声音”：
+  - 没有任何实际音频资源文件，也没有 BGM 轨道
+  - `PilotAudio` 只有极短、极轻的一次性程序化提示音，缺少持续可感知的声底
+  - 音频解锁依赖场景内局部调用，首个交互后的 `AudioContext.resume()` 与首个 cue 之间没有补播保障，容易让玩家把第一印象直接读成静音
+- 因此本轮切入点不是重做音频系统，而是：
+  - 继续沿用 `PilotAudio`
+  - 补最小可持续的程序化 BGM
+  - 补稳定的浏览器解锁与补播
+  - 保留现有 cue 接线并把听感拉到“实际可听见”
+
+### 本轮实现
+- `src/systems/PilotAudio.ts`
+  - 将原本仅有短提示音的 `PilotAudio` 扩展为最小可用音频层：
+    - 拆出 `music / sfx / master` 三层增益
+    - 补入 `menu / battle / boss / result` 四种程序化 BGM 模式
+    - 用定时调度的音序而不是资源文件，生成持续可听见的背景音乐
+    - 保留既有 cue 类别，但整体提高可感知度，并给 `hit / crit / pressure` 增加更稳的 cooldown
+  - 增加首交互解锁后的补播队列：
+    - 如果 cue 在 `AudioContext` 仍未 running 时触发，不再直接丢失
+    - 在 `resume()` 完成后自动补播排队 cue
+  - 增加运行时音频调试快照：
+    - 当前上下文状态
+    - 当前 / 目标音乐模式
+    - 峰值 RMS
+    - 已调度音乐步数
+    - 已播放 cue 计数
+- `src/main.ts`
+  - 新增全局首次 `pointerdown / keydown` 音频解锁，处理浏览器自动播放限制
+  - 将 `window.__pilotAudioDebug()` 暴露到运行时，供 Playwright 做真实音频状态验证
+- `src/scenes/MainMenuScene.ts`
+  - 开始页进入时声明 `menu` 音乐模式
+  - 开始 / 导出按钮现在都会先解锁音频再播 UI 音效
+- `src/scenes/GameScene.ts`
+  - 进入局内时解锁音频并进入 `battle` 音乐模式
+  - 根据当前状态在 `battle / boss / result` 音乐模式之间切换
+- `src/scenes/ResultScene.ts`
+  - 结果页进入时切到 `result` 音乐模式
+  - replay / 返回开始页 / 导出按钮现在都会先解锁再播 UI 音效
+- 本轮没有引入外部音频资源文件，也没有新建复杂音频系统；采用的是最小可用的程序化生成方案
+
+### 数据结构变更
+- 无 gameplay 数据结构变更。
+- 新增运行时调试接口：
+  - `window.__pilotAudioDebug(): PilotAudioDebugSnapshot`
+
+### 验证
+- `npm run build`
+  - 通过。
+- 开始页音频验证：`output/playwright/audio-blocker-check/menu-audio-summary.json`
+  - `contextState = running`
+  - `currentMusicMode = menu`
+  - `peakRms = 0.01144`
+  - `scheduledMusicSteps = 6`
+  - 说明首次交互后，开始页 BGM 已可实际输出
+- 局内音频验证：`output/playwright/audio-blocker-check/battle-live-audio-summary.json`
+  - `currentMusicMode = battle`
+  - `peakRms = 0.01025`
+  - `cueCounts.start = 1`
+  - `cueCounts.pressure = 1`
+  - `cueCounts.hit = 2`
+  - 说明局内 BGM、命中与压力反馈已可听见
+- Boss / 结果页 / replay 音频验证：`output/playwright/audio-blocker-check/fullflow-audio-summary.json`
+  - `metrics.bossEvents[0].payload.encounterType = boss`
+  - `resultAudio.cueCounts.boss = 2`
+  - `resultAudio.currentMusicMode = result`
+  - `exportAudio.cueCounts.click = 1`
+  - `replayAudio.cueCounts.start = 2`
+  - `replayStarted = true`
+  - 说明 Boss 进入、结果页、导出按钮和 replay 已有明确音频反馈
+- `consoleErrors = []`
+- 本轮验证结论：
+  - 音频不再只是“代码里有结构”
+  - 而是在真实浏览器运行里已经能看到 running 的 `AudioContext`、非零音频峰值和关键 cue 触发
+
+### 当前结论
+- 本轮封版前阻断项“游戏内实际听不到声音”已关闭。
+- 项目当前可恢复判断为：
+  - 回到 `0.9v freeze sign-off`
+  - 回到 `0.9v 可封版状态`
+- 当前显式残余风险重新收口为：
+  - 普通 build 下 `boss-bastion / fireline` 仍然是低频样本
+  - 最终关远程后段仍存在“前段成立、收束偏薄”的残余风险
+
 ## [0.9v freeze sign-off] 封版签收 / 残余风险登记 / 文档收口
 ### 本轮口径
 - 若旧阶段文档、代码现状与本轮结论存在口径差异，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮 freeze sign-off 口径` 为准。

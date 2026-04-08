@@ -10,6 +10,12 @@ import { MetricsTracker } from './systems/MetricsTracker';
 import { PilotAudio } from './systems/PilotAudio';
 import { OverlayController } from './ui/OverlayController';
 
+declare global {
+  interface Window {
+    __pilotAudioDebug?: () => ReturnType<PilotAudio['getDebugSnapshot']>;
+  }
+}
+
 const uiRoot = document.getElementById('ui-root');
 const phaserRoot = document.getElementById('phaser-root');
 
@@ -27,6 +33,19 @@ const services: Services = {
   meta: new MetaProgression(window.localStorage),
   audio: new PilotAudio(),
 };
+
+window.__pilotAudioDebug = () => services.audio.getDebugSnapshot();
+
+const unlockAudio = () => {
+  services.audio.unlock();
+  if (services.audio.isRunning()) {
+    window.removeEventListener('pointerdown', unlockAudio);
+    window.removeEventListener('keydown', unlockAudio);
+  }
+};
+
+window.addEventListener('pointerdown', unlockAudio, { passive: true });
+window.addEventListener('keydown', unlockAudio);
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
