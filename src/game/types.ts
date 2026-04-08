@@ -9,17 +9,20 @@ export type BattleTemplateId =
   | 'elimination'
   | 'elimination-pincer'
   | 'elimination-sweep'
+  | 'elimination-crossline'
   | 'elite'
   | 'elite-vice'
   | 'elite-lockdown'
   | 'elite-screen'
+  | 'elite-bulwark'
   | 'boss-hunt'
   | 'boss-lockdown'
   | 'boss-bastion'
   | 'survival'
   | 'survival-crossfire'
   | 'survival-rush'
-  | 'survival-gauntlet';
+  | 'survival-gauntlet'
+  | 'survival-sieve';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
 export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'result';
 export type RunOutcome = 'victory' | 'defeat';

@@ -1262,6 +1262,11 @@ export class RunEngine {
     return routeTrace.slice(-6);
   }
 
+  private getAnomalyVisitCount(): number {
+    const visited = this.state.traversedNodes.filter((node) => node.type === 'anomaly').length;
+    return visited + (this.state.currentNode?.type === 'anomaly' ? 1 : 0);
+  }
+
   private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
     switch (endingKind) {
       case 'hpDepleted':
@@ -1279,6 +1284,7 @@ export class RunEngine {
     buildStage: RouteBuildStage,
     endingKind: RunEndingKind,
   ): string {
+    const anomalyVisits = this.getAnomalyVisitCount();
     if (!routeId) {
       return '再来一局优先把前段节奏立住，主路线会更容易自然站稳。';
     }
@@ -1286,15 +1292,27 @@ export class RunEngine {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
+        if (anomalyVisits === 0) {
+          return `${routeName}路线这一局已经跑通，下局试着多吃一拍异常或低频模板，收尾味道会更不一样。`;
+        }
         return `${routeName}路线这一局已经跑通，再开一局可以试着换一条路，或把收尾打得更稳。`;
+      }
+      if (anomalyVisits === 0) {
+        return `${routeName}路线已经站住了，下局试着多吃异常窗口，会更容易看到另一种中后段收束。`;
       }
       return `${routeName}路线已经站住了，再来一局可以继续把它压到完整成型。`;
     }
 
     if (endingKind === 'timeOut') {
+      if (anomalyVisits === 0) {
+        return `${routeName}路线已经起势，再来一局多吃一拍异常或尾段变体，通常会更容易把最后一段撑厚。`;
+      }
       return `${routeName}路线已经起势，再来一局重点补最后一段输出和转场决策。`;
     }
     if (buildStage === 'matured' || buildStage === 'committed') {
+      if (anomalyVisits === 0) {
+        return `${routeName}路线已经起势，再来一局把异常窗口和最后一段耐久一起补上，会更容易完整收尾。`;
+      }
       return `${routeName}路线已经起势，再来一局重点把最后一段耐久和收束补齐。`;
     }
     return `${routeName}倾向已经出现，再来一局把前中段节奏接稳，会更容易看到完整收尾。`;

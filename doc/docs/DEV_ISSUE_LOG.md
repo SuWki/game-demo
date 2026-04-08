@@ -1,4 +1,79 @@
 # DEV ISSUE LOG
+## [1.0 第一轮开发] anomaly 深度扩写 / template 家族补量 / 第一批内容扩容
+### 本轮口径
+- 若旧文档仍停留在 `0.9v freeze sign-off` 或封版检查阶段，本轮以 `最新用户 brief + FREEZE_SIGNOFF_0_9V.md + DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
+- `0.9v 可封版状态` 继续作为稳定底座；本轮正式切入 `1.0 第一轮开发`，目标是内容扩写，不回退去做 0.9v 大修。
+- `boss-bastion / fireline` 继续保留为轻量回归监控项，而不是本轮主线任务。
+
+### 盘点结论
+- anomaly 已经独立成层，但 opening / mid 的自然样本仍偏 `routeWindow`，`bossEcho` 在 late / finalPrep 之前偏薄。
+- battle template 家族分层已经成立，但 opening / elite / survival 的原始模板数量仍偏少，节点承载密度还不够像 1.0。
+- nodes / upgrades 已经有阶段身份，但 replay 动机仍更多来自路线收束，缺少“这局没遇到另一类低频内容”的再开一局理由。
+- `boss-bastion / fireline` 在普通 build 下仍然低频，但本轮目标是扩内容厚度，不重开 Boss 专项调参。
+
+### 本轮实现
+- `src/data/battleTemplates.ts`
+  - 新增 opening 模板 `elimination-crossline / 火线歼灭`，把前段远程火线压进普通战，强化基础换位与补线读数。
+  - 新增 elite 模板 `elite-bulwark / 壁垒压制`，让中段更明确承担“拆屏护卫再穿本体”的硬仗角色。
+  - 新增 survival 模板 `survival-sieve / 筛火求生`，把 late 段的漏火线、补线与回线压力拉成独立家族变体。
+- `src/data/nodes.ts`
+  - opening 新增节点载体：`火线试压`、`冷启裂口`
+  - mid 新增节点载体：`壁垒拆解`、`欠账裂纹`
+  - late 新增节点载体：`筛火求生`、`首领残响`
+  - final prep 新增 `Boss 预整备`，补足收尾前的内容承接。
+- `src/data/upgrades.ts`
+  - 通用层新增 `视界缓存`、`终端护幕`
+  - 暴击新增 `灼迹导火`、`余烬爆点`
+  - 穿透新增 `切层折返`、`裂面回响`
+  - 穿梭新增 `相位蓄返`、`回切留影`
+  - 这一批仍走现有 `generic / route / rare / payoff` 体系，没有新建升级系统。
+- `src/data/events.ts`
+  - 新增 anomaly：`冷启偏折`、`裂谱合拍`、`屏卫预读`、`首领残响`
+  - 下调更偏工具化的 `risky-protocol / relay-splice / route-handoff / cross-branch-signal`
+  - 让 anomaly 更偏 `distortion / hybrid / bossEcho`，而不是继续把 routeWindow 堆厚。
+- `src/data/contentSelectors.ts`
+  - 下调 `routeWindow` 在 opening / mid / late / finalPrep 的倍率
+  - 提高 `distortion / hybrid / bossEcho`，尤其 late / finalPrep 的 bossEcho 暴露
+  - 目标是让 anomaly 池更像 1.0 的独立低频内容层，而不是路线补丁层。
+- `src/systems/RunEngine.ts`
+  - 新增 `getAnomalyVisitCount()`
+  - replay prompt 现在会识别“这一局几乎没见到 anomaly”并直接把 replay 动机指向低频内容与异常窗口，而不只是泛化地提示再打一次。
+
+### 数据结构变更
+- `src/game/types.ts`
+  - `BattleTemplateId` 新增：
+    - `elimination-crossline`
+    - `elite-bulwark`
+    - `survival-sieve`
+- 本轮没有改主流程，没有重写 `RunEngine`，没有引入新系统。
+- 本轮没有新增新的埋点族；仍沿用现有 battle / anomaly / boss / result 观测结构。
+
+### 验证
+- `npm run build`
+  - 通过。
+- 内容厚度复核
+  - `eventsTotal = 30`
+  - `anomalyTotal = 24`
+  - `anomalyByClass = { routeWindow: 7, distortion: 9, hybrid: 5, bossEcho: 3 }`
+  - `upgradesTotal = 54`
+  - `templates = { opening: 4, elite: 5, survival: 5, boss: 3 }`
+- 自然样本回归：`npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`: `bossBastionRuns = 7`, `crossfireSeenRuns = 3`, `firelineSeenRuns = 1`, `firelineDecisionRuns = 1`
+  - `highBurst`: `bossBastionRuns = 2`, `firelineSeenRuns = 1`
+  - `highMobility`: `bossBastionRuns = 4`, `firelineSeenRuns = 2`
+  - 结论：这轮内容扩写没有把 `boss-bastion / fireline` 打坏；普通 build 仍是低频监控项，但没有明显变差。
+- 浏览器全链路回归：`npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - anomaly 面板出现
+  - Boss 节点出现
+  - result / replay 跑通
+  - `consoleErrors = []`
+  - `summary.metrics` 明确记录了 `battle_template_entered(encounterType = boss)`、`boss_safe_window_seen(phaseId = fireline)` 等事件
+  - `summary.bossBattleSeen = false` 仍是旧 QA 匹配条件滞后，不是玩法回退；截图与 metrics 都已确认 Boss 战实际进入
+
+### 当前结论
+- 项目已从 `0.9v freeze` 基线正式切到 `1.0 第一轮开发 / 1.0 内容扩写阶段`。
+- 本轮通过现有数据驱动层加厚了 anomaly、battle template、nodes、upgrades 与 replay 动机，没有破坏 `Boss / anomaly / template ownership`。
+- 当前最大残余风险仍然是：普通 build 下 `boss-bastion / fireline` 依旧属于低频样本，最终关远程后段仍需持续监控，但它不是本轮阻断项。
 ## [0.9v 音频阻断项修复] BGM / 战斗音效 / UI 音效恢复
 ### 本轮口径
 - 若文档旧结论与真实运行反馈冲突，本轮继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮最新用户口径` 为准。

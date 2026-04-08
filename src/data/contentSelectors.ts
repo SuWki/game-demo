@@ -155,38 +155,38 @@ function getAnomalyClassMultiplier(anomalyClass: AnomalyClassId | undefined, con
   switch (anomalyClass) {
     case 'distortion':
       return {
-        opening: 0.7,
-        mid: 1.14,
-        late: 1.26,
-        finalPrep: 1.08,
+        opening: 0.84,
+        mid: 1.22,
+        late: 1.34,
+        finalPrep: 1.14,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
     case 'hybrid':
       return {
-        opening: 0.62,
-        mid: 1.18,
-        late: 1.18,
-        finalPrep: 0.9,
+        opening: 0.74,
+        mid: 1.24,
+        late: 1.24,
+        finalPrep: 0.96,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
     case 'bossEcho':
       return {
         opening: 0,
-        mid: 0.24,
-        late: 1.28,
-        finalPrep: 1.42,
+        mid: 0.4,
+        late: 1.52,
+        finalPrep: 1.62,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
     case 'routeWindow':
     default:
       return {
-        opening: 1.08,
-        mid: 0.92,
-        late: 0.72,
-        finalPrep: 0.58,
+        opening: 0.94,
+        mid: 0.78,
+        late: 0.58,
+        finalPrep: 0.42,
         finalBattle: 0,
         ended: 0,
       }[context.phase];

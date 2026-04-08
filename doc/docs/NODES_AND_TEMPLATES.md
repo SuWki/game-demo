@@ -546,3 +546,43 @@
   - Boss 负责阶段承接与最终收束
   - elite 继续只保留轻量模板级压力
   - final battle 继续通过 Boss template pool 收尾
+## 2026-04-09 1.0 第一轮内容扩写补充
+### anomaly 池加厚
+- anomaly 仍沿现有独立载体扩写，没有回退到普通 `event` 语义。
+- 本轮新增 anomaly：
+  - `冷启偏折 / cold-start-warp`
+  - `裂谱合拍 / frayed-accord`
+  - `屏卫预读 / escort-overread`
+  - `首领残响 / crown-residue`
+- 分发口径更新为：
+  - opening 仍允许少量 `routeWindow`
+  - mid / late 更偏 `distortion / hybrid`
+  - late / finalPrep 更偏 `bossEcho`
+- 因此 anomaly 的职责进一步从“给路线一点偏航机会”扩展到“低频失真、混搭与 Boss 前预读”。
+
+### battle template 家族补量
+- opening family 新增 `elimination-crossline / 火线歼灭`
+  - 更早引入远程火线，承担前段基础换位与补线读数。
+- elite family 新增 `elite-bulwark / 壁垒压制`
+  - 强化中段“拆屏护卫 -> 穿本体”的硬仗身份。
+- survival family 新增 `survival-sieve / 筛火求生`
+  - 强化 late 段“漏火线 + 高速怪 + 回线求生”的后段承压。
+- 本轮没有新增新的 Boss 家族，刻意保持 `boss-hunt / boss-lockdown / boss-bastion` 不变，避免破坏 0.9v freeze 基线。
+
+### 节点承载补量
+- opening 新增：
+  - `火线试压`，主承载 `elimination-crossline`
+  - `冷启裂口`，把 opening anomaly 做成真正的低频记忆点入口
+- mid 新增：
+  - `壁垒拆解`，主承载 `elite-bulwark`
+  - `欠账裂纹`，把 mid anomaly 拉成更明确的代价/收益窗口
+- late 新增：
+  - `筛火求生`，主承载 `survival-sieve`
+  - `首领残响`，把 Boss echo 提前泄到 late 段
+- final prep 新增：
+  - `Boss 预整备`，补强首领前最后一次承压与收尾修正载体
+
+### 1.0 第一轮承载边界
+- 本轮仍只用现有 `template / rule / selector / family / blueprint / nodes / upgrades` 数据结构扩写。
+- `boss` 继续只从 Boss 模板池收尾；`anomaly` 继续只从 anomaly 池抽取；普通关 / 生存关 / 精英关继续维持家族分层。
+- `boss-bastion / fireline` 仍是回归监控项，没有因为这轮内容补量被重新拉回主线专项。

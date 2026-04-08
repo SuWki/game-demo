@@ -55,15 +55,70 @@ export const EVENT_CATALOG: EventDefinition[] = [
     anomalyClass: 'routeWindow',
     description: '把机体压进一段红线试飞，用立即承压换一次主动偏航的资格。',
     selection: {
-      baseWeight: 1.6,
+      baseWeight: 1.15,
       maxRound: 2,
       phaseBonuses: {
-        opening: 1.1,
-        mid: 0.3,
+        opening: 0.9,
+        mid: 0.15,
       },
-      noDominantRouteBonus: 1,
+      noDominantRouteBonus: 0.8,
     },
     options: getAnomalyRoutePoolOptions('riskyProtocol', ['crit', 'pierce', 'dash']),
+  },
+  {
+    id: 'cold-start-warp',
+    name: '冷启偏折',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '系统还没完全热起来，就先漏出了一拍失真。它给得不稳，但会直接改变这一局前段的手感。',
+    selection: {
+      baseWeight: 1.05,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 0.95,
+        mid: 0.55,
+      },
+      noDominantRouteBonus: 0.6,
+    },
+    options: [
+      {
+        id: 'cold-start-warp-redline',
+        label: '先吞一口红线',
+        description: '立刻换一段更猛的火力，但会先吃下一次冷启动回震。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              fireRate: 0.14,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -8,
+          },
+        ],
+      },
+      {
+        id: 'cold-start-warp-brace',
+        label: '先垫一层缓冲',
+        description: '把失真压成更厚的前段容错，但弹道会短暂变钝。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 6,
+              regeneration: 0.1,
+              projectileSpeed: -12,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'route-calibration',
@@ -333,15 +388,15 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '侧频总线短暂并轨。你可以借这次裂口强行改道，但这更像异常侧切，而不是普通补给。',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 0.5,
+      baseWeight: 0.32,
       minRound: 2,
       phaseBonuses: {
-        mid: 0.55,
-        late: 0.2,
+        mid: 0.42,
+        late: 0.14,
       },
-      hintedRouteBonus: 0.45,
-      dominantRouteBonus: 0.95,
-      committedRouteBonus: 0.3,
+      hintedRouteBonus: 0.3,
+      dominantRouteBonus: 0.72,
+      committedRouteBonus: 0.18,
       maturedRouteBonus: 0.05,
     },
     options: getAnomalyRoutePoolOptions('relaySplice', ['crit', 'pierce', 'dash']),
@@ -353,15 +408,15 @@ export const EVENT_CATALOG: EventDefinition[] = [
     anomalyClass: 'routeWindow',
     description: '侧频接口短暂打开。它允许你顺着当前读法微调，也允许你借一拍异常把整条线掰向别处。',
     selection: {
-      baseWeight: 0.42,
+      baseWeight: 0.26,
       minRound: 2,
       phaseBonuses: {
-        mid: 0.5,
-        late: 0.18,
+        mid: 0.36,
+        late: 0.12,
       },
       noDominantRouteBonus: 0.1,
-      hintedRouteBonus: 0.3,
-      committedRouteBonus: 0.25,
+      hintedRouteBonus: 0.2,
+      committedRouteBonus: 0.16,
       maturedRouteBonus: 0.05,
     },
     options: getAnomalyRoutePoolOptions('routeHandoff', ['crit', 'pierce', 'dash']),
@@ -501,11 +556,11 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '一段侧频样本插了进来。它不一定比当前方向更强，但足够让这局出现一次真正的转向诱惑。',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 0.88,
+      baseWeight: 0.74,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.5,
-        late: 1.7,
+        mid: 1.35,
+        late: 1.55,
         finalPrep: 0.6,
       },
       hintedRouteBonus: 1.1,
@@ -566,6 +621,69 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'frayed-accord',
+    name: '裂谱合拍',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '几段互不兼容的样本在同一拍里强行合拍。它不稳定，但会把这一局的中后段手感撬向另一种层次。',
+    selection: {
+      baseWeight: 1.62,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.55,
+        late: 1.15,
+      },
+      noDominantRouteBonus: 0.3,
+    },
+    options: [
+      {
+        id: 'frayed-accord-heat-cut',
+        label: '借热切层',
+        description: '把升温与切层样本压在一起，换更主动的清线爆点。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              critChance: 0.02,
+              pierce: 1,
+            },
+          },
+        ],
+      },
+      {
+        id: 'frayed-accord-slide',
+        label: '借滑切并轨',
+        description: '把裂轨和位移短接，换更顺的换边、补线和脱离窗口。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              projectileSpeed: 18,
+              moveSpeed: 12,
+              dashInterval: -0.18,
+            },
+          },
+        ],
+      },
+      {
+        id: 'frayed-accord-counter',
+        label: '借反打升温',
+        description: '把反打和升温揉成一拍，让中后段更容易抢回主动权。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.12,
+              dashInvulnerability: 0.06,
+              critChance: 0.02,
+            },
           },
         ],
       },
@@ -1184,6 +1302,54 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'escort-overread',
+    name: '屏卫预读',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: 'Boss 还没真正出现，屏卫与火线的读数就先漏了出来。你可以提前准备拆屏，也可以提前准备换边。',
+    selection: {
+      baseWeight: 1.2,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.85,
+        finalPrep: 1.25,
+      },
+      noDominantRouteBonus: 0.2,
+    },
+    options: [
+      {
+        id: 'escort-overread-break',
+        label: '预装拆屏火力',
+        description: '把多弹道和弹速先补好，准备在屏卫拉满时更快拆出窗口。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              multishot: 1,
+              damage: 3,
+              projectileSpeed: 18,
+            },
+          },
+        ],
+      },
+      {
+        id: 'escort-overread-lane',
+        label: '预留换边余量',
+        description: '把移速、再生和射速先垫起来，为首领拖线和换边留更宽的读数。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 14,
+              regeneration: 0.12,
+              fireRate: 0.12,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'terminal-tithe',
     name: '终端税',
     contentKind: 'anomaly',
@@ -1249,11 +1415,11 @@ export const EVENT_CATALOG: EventDefinition[] = [
     contentTier: 'rare',
     description: 'Boss 载体边界泄出了一段压力样本。你还没真正撞上最终关，但已经能先决定要拿哪种收束准备。',
     selection: {
-      baseWeight: 1.32,
+      baseWeight: 1.46,
       minRound: 3,
       phaseBonuses: {
-        late: 2.1,
-        finalPrep: 1.35,
+        late: 2.2,
+        finalPrep: 1.45,
       },
       noDominantRouteBonus: 0.25,
     },
@@ -1292,6 +1458,63 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 8,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'crown-residue',
+    name: '首领残响',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    contentTier: 'rare',
+    description: '首领波形留下了一段高压残响。你可以把它压成更稳的承压准备，也可以把它偷成更尖的收尾爆点。',
+    selection: {
+      baseWeight: 1.08,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.9,
+        finalPrep: 1.55,
+      },
+      noDominantRouteBonus: 0.1,
+    },
+    options: [
+      {
+        id: 'crown-residue-brace',
+        label: '先拿承压余量',
+        description: '把残响压成更厚的耐久、回收和基础火力，准备顶住首领正压。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 10,
+              regeneration: 0.14,
+              damage: 2,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+      {
+        id: 'crown-residue-breach',
+        label: '先偷收尾火力',
+        description: '把残响偷成更尖的收尾输出，但会先吞下一口回震。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 5,
+              fireRate: 0.16,
+              projectileSpeed: 20,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -8,
           },
         ],
       },

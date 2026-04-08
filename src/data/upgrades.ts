@@ -524,6 +524,68 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-sightline-cache',
+    name: '视界缓存',
+    category: 'generic',
+    repeatable: true,
+    tags: ['bridge', 'stabilizer'],
+    selection: {
+      baseWeight: 2.8,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.3,
+        late: 1.1,
+        finalPrep: 0.9,
+      },
+      noDominantRouteBonus: 1.2,
+      finalPrepBonus: 1.4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          projectileSpeed: 28,
+          moveSpeed: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-terminal-baffle',
+    name: '终端护幕',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['bridge', 'payoff', 'rare'],
+    selection: {
+      baseWeight: 0.92,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.3,
+        finalPrep: 2.3,
+        finalBattle: 1.1,
+      },
+      finalPrepBonus: 2.4,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 12,
+          regeneration: 0.12,
+          damage: 3,
+          projectileSpeed: 18,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 10,
+      },
+    ],
+  },
+  {
     id: 'crit-aim',
     name: '聚焦瞄准',
     category: 'route',
@@ -630,6 +692,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'crit-flare-path',
+    name: '灼迹导火',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.1,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 1,
+        finalPrep: 0.5,
+      },
+      hintedRouteBonus: 1.1,
+      dominantRouteBonus: 4.1,
+      committedRouteBonus: 2.8,
+      maturedRouteBonus: 1.1,
+      finalPrepBonus: 1.2,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          fireRate: 0.14,
+          critChance: 0.03,
+          projectileSpeed: 18,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
     id: 'crit-sidechannel',
     name: '旁路升温',
     category: 'route',
@@ -665,6 +764,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'route',
         routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-embershard',
+    name: '余烬爆点',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    tags: ['payoff', 'finisher', 'rare'],
+    selection: {
+      baseWeight: 1.02,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.45,
+        finalPrep: 2.1,
+        finalBattle: 2.2,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 3.9,
+      committedRouteBonus: 3.5,
+      maturedRouteBonus: 2.3,
+      finalPrepBonus: 2.3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 4,
+          critChance: 0.04,
+          critMultiplier: 0.28,
+          moveSpeed: 10,
+        },
       },
       {
         type: 'route',
@@ -950,6 +1086,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'pierce-shearline',
+    name: '切层折返',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.1,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 1,
+        finalPrep: 0.5,
+      },
+      hintedRouteBonus: 1.1,
+      dominantRouteBonus: 4.1,
+      committedRouteBonus: 2.8,
+      maturedRouteBonus: 1.1,
+      finalPrepBonus: 1.2,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierce: 1,
+          damage: 2,
+          fireRate: 0.12,
+          projectileSpeed: 20,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
     id: 'pierce-sidechannel',
     name: '侧轨借线',
     category: 'route',
@@ -985,6 +1158,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'route',
         routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-riftbloom',
+    name: '裂面回响',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    tags: ['payoff', 'finisher', 'rare'],
+    selection: {
+      baseWeight: 1.02,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.45,
+        finalPrep: 2.1,
+        finalBattle: 2.2,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 3.9,
+      committedRouteBonus: 3.5,
+      maturedRouteBonus: 2.3,
+      finalPrepBonus: 2.3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          multishot: 1,
+          pierce: 1,
+          damage: 2,
+          projectileSpeed: 22,
+          fireRate: 0.1,
+        },
       },
       {
         type: 'route',
@@ -1030,6 +1241,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'dash-phasebank',
+    name: '相位蓄返',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.1,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 1,
+        finalPrep: 0.5,
+      },
+      hintedRouteBonus: 1.1,
+      dominantRouteBonus: 4.1,
+      committedRouteBonus: 2.8,
+      maturedRouteBonus: 1.1,
+      finalPrepBonus: 1.2,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.22,
+          dashPulseDamage: 5,
+          moveSpeed: 12,
+          regeneration: 0.1,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
     id: 'pierce-fan',
     name: '裂轨分束',
     category: 'route',
@@ -1058,6 +1306,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'route',
         routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'dash-cutback',
+    name: '回切留影',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    tags: ['payoff', 'finisher', 'rare'],
+    selection: {
+      baseWeight: 1.02,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.45,
+        finalPrep: 2.1,
+        finalBattle: 2.2,
+      },
+      hintedRouteBonus: 0.2,
+      dominantRouteBonus: 3.9,
+      committedRouteBonus: 3.5,
+      maturedRouteBonus: 2.3,
+      finalPrepBonus: 2.3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.24,
+          dashInvulnerability: 0.08,
+          dashPulseDamage: 9,
+          fireRate: 0.1,
+          moveSpeed: 14,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
     ],
   },

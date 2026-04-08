@@ -113,6 +113,28 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-1-battle-crossline',
+        type: 'battle',
+        phase: 'opening',
+        title: '火线试压',
+        description: '早段就会被远程线打断直跑，更看基础换位和补线判断。',
+        templateCandidates: [
+          { templateId: 'elimination-crossline', weight: 2.1 },
+          { templateId: 'elimination-pincer', weight: 1.1 },
+          { templateId: 'elimination', weight: 0.8 },
+        ],
+        difficultyScale: 1.13,
+        selection: {
+          baseWeight: 2.9,
+          repeatTypeMultiplier: 0.72,
+          routeBonuses: {
+            pierce: 0.4,
+            dash: 0.9,
+          },
+          battleCatchupBonus: 1.15,
+        },
+      },
+      {
         id: 'round-1-upgrade',
         type: 'upgrade',
         phase: 'opening',
@@ -160,6 +182,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 0.36,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.9,
+        },
+      },
+      {
+        id: 'round-1-event-ripple',
+        type: 'anomaly',
+        phase: 'opening',
+        title: '冷启裂口',
+        description: '前段偶尔会先漏出一拍失真，不一定给路线，但会提前给这一局加记忆点。',
+        selection: {
+          baseWeight: 1.45,
+          soloMultiplier: 0.2,
+          repeatTypeMultiplier: 0.54,
+          noFocusBonus: 0.75,
         },
       },
     ],
@@ -238,6 +273,28 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
             pierce: 1,
           },
           battleCatchupBonus: 1.05,
+        },
+      },
+      {
+        id: 'round-2-battle-bulwark',
+        type: 'battle',
+        phase: 'mid',
+        title: '壁垒拆解',
+        description: '厚屏护卫更重的中段首领战，重点在拆壁垒、穿本体和抢站位。',
+        templateCandidates: [
+          { templateId: 'elite-bulwark', weight: 2.1 },
+          { templateId: 'elite-screen', weight: 1 },
+          { templateId: 'elite', weight: 0.9 },
+        ],
+        difficultyScale: 1.2,
+        selection: {
+          baseWeight: 2.7,
+          soloMultiplier: 0.96,
+          repeatTypeMultiplier: 0.74,
+          routeBonuses: {
+            pierce: 1.15,
+          },
+          battleCatchupBonus: 1.2,
         },
       },
       {
@@ -344,6 +401,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           noFocusBonus: 0.35,
         },
       },
+      {
+        id: 'round-2-anomaly-ledger',
+        type: 'anomaly',
+        phase: 'mid',
+        title: '欠账裂纹',
+        description: '中段异常已经开始逼你在代价和后续窗口之间做明确取舍。',
+        selection: {
+          baseWeight: 2.35,
+          soloMultiplier: 0.38,
+          repeatTypeMultiplier: 0.6,
+          noFocusBonus: 0.28,
+        },
+      },
     ],
   },
   3: {
@@ -442,6 +512,29 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-3-battle-sieve',
+        type: 'battle',
+        phase: 'late',
+        title: '筛火求生',
+        description: '远程火线和高速怪会轮着漏进来，更考后段换边、补线和回线能力。',
+        templateCandidates: [
+          { templateId: 'survival-sieve', weight: 2 },
+          { templateId: 'survival-crossfire', weight: 1 },
+          { templateId: 'survival-rush', weight: 0.8 },
+        ],
+        difficultyScale: 1.29,
+        selection: {
+          baseWeight: 2.4,
+          soloMultiplier: 0.92,
+          repeatTypeMultiplier: 0.78,
+          routeBonuses: {
+            pierce: 0.65,
+            dash: 0.5,
+          },
+          battleCatchupBonus: 1,
+        },
+      },
+      {
         id: 'round-3-upgrade',
         type: 'upgrade',
         phase: 'late',
@@ -517,6 +610,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           noFocusBonus: 0.15,
         },
       },
+      {
+        id: 'round-3-anomaly-residue',
+        type: 'anomaly',
+        phase: 'late',
+        title: '首领残响',
+        description: '后段开始提前泄出 Boss 味道，这一拍更像收尾前的预读与押注。',
+        selection: {
+          baseWeight: 1.7,
+          soloMultiplier: 0.28,
+          repeatTypeMultiplier: 0.56,
+          noFocusBonus: 0.1,
+        },
+      },
     ],
   },
   4: {
@@ -532,6 +638,22 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
+        },
+      },
+      {
+        id: 'final-prep-shadow',
+        type: 'upgrade',
+        phase: 'finalPrep',
+        title: 'Boss 预整备',
+        description: '最后一次补 Boss 收尾准备，先把短板修到能打完为止。',
+        isFinalPrep: true,
+        selection: {
+          baseWeight: 1,
+          routeBonuses: {
+            pierce: 0.1,
+            dash: 0.1,
+            crit: 0.1,
+          },
         },
       },
     ],
