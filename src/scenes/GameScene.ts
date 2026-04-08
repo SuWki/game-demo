@@ -380,6 +380,29 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'nodeChoice') {
+      const hasBossNode = state.nodeOptions.some((node) => node.type === 'boss');
+      const hasFinalPrepNode = state.nodeOptions.some((node) => node.isFinalPrep);
+
+      if (state.phase === 'finalBattle' || hasBossNode) {
+        return {
+          objectiveLabel: '当前目标',
+          objectiveText: '确认最终战',
+          objectiveDetail: '这是最后一站，确认后会立刻进入本局首领收尾。',
+          objectiveProgressText: '选定后立即进入 Boss',
+          objectiveTone: 'flow',
+        };
+      }
+
+      if (state.phase === 'finalPrep' || hasFinalPrepNode) {
+        return {
+          objectiveLabel: '当前目标',
+          objectiveText: '进入最终整备',
+          objectiveDetail: '这是首领战前最后一次整备，确认后先补最后一手。',
+          objectiveProgressText: '整备完成后进入 Boss',
+          objectiveTone: 'flow',
+        };
+      }
+
       return {
         objectiveLabel: '当前目标',
         objectiveText: '选择下一站',

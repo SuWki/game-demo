@@ -1,4 +1,86 @@
 # DEV ISSUE LOG
+## [0.9v 封版检查] 最终回归 / 残余风险监控 / 清单收口
+### 本轮口径
+- 若文档与代码、旧阶段记录与当前任务冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md + 本轮最新用户口径` 为准。
+- 当前阶段已从“验收前修边”推进到 `0.9v 封版检查阶段`；本轮不重开内容扩写、不重写 `RunEngine`、不引入新系统，只做最终回归与小范围高价值修正。
+
+### 盘点结论
+- 当前整局主流程已经达到可封版回归的基础稳定度：
+  - `start -> node -> battle / upgrade / anomaly -> boss -> result -> replay` 可稳定跑通
+  - 三流派在自然 run 中仍能成立
+  - anomaly 仍保有独立识别感
+  - Boss / anomaly / template ownership 没有出现回退迹象
+- 当前仍需显式写进封版结论的残余风险，仍只有一个：
+  - 普通 build 下 `boss-bastion / fireline` 的自然覆盖率偏低
+  - 远程后段已经不是“完全看不到”，但仍属于低频成立项
+- 本轮唯一需要动代码的小问题，是最终整备 / 最终战的目标卡仍然过于泛化：
+  - 只显示 `选择下一站`
+  - 对封版态来说不够直接，不利于玩家理解“这一步已经在锁定收尾”
+
+### 本轮实现
+- `src/scenes/GameScene.ts`
+  - 在 `getObjectiveSnapshot()` 里，为 `nodeChoice` 增加更直接的收尾读数：
+    - 最终整备入口改为 `进入最终整备`
+    - 最终战入口改为 `确认最终战`
+  - 同步补上更明确的说明与进度文本：
+    - `这是首领战前最后一次整备，确认后先补最后一手。`
+    - `这是最后一站，确认后会立刻进入本局首领收尾。`
+- 本轮没有调整数值、没有调整 Boss 模板参数、没有新增埋点字段；`fireline` 继续维持监控项而不是重新拉回专项开发。
+
+### 数据结构变更
+- 无。
+
+### 验证
+- `npm run build`
+  - 通过。
+- `npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 10`
+    - `crossfireSeenRuns = 7`
+    - `firelineSeenRuns = 2`
+    - `firelineDecisionRuns = 1`
+  - `highBurst`
+    - `bossBastionRuns = 2`
+    - `firelineSeenRuns = 1`
+  - `highMobility`
+    - `bossBastionRuns = 5`
+    - `firelineSeenRuns = 5`
+  - 说明本轮只改目标卡读数，没有把普通 / 高 burst / 高机动样本做坏；`fireline` 仍维持“普通样本低频但可见”的状态。
+- `npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - 全链路可跑通。
+  - `anomalyPanelSeen = true`
+  - `bossNodeSeen = true`
+  - `replayStarted = true`
+  - `consoleErrors = []`
+  - 额外人工复检截图：
+    - `panel-14` 已显示 `进入最终整备`
+    - `panel-16` 已显示 `确认最终战`
+    - `result` / `replay` 未出现新的超框或乱码
+- 关于浏览器摘要里的 `bossBattleSeen = false`
+  - 当前确认这是 QA 脚本匹配口径滞后，不是产品回退。
+  - 同一份 `summary.json` 内仍明确记录：
+    - `battle_template_entered(payload.encounterType = boss)`
+  - 再结合最终战节点截图与结果页收尾截图，足以确认 Boss 战实际已进入且流程完整。
+
+### 观测口径
+- 本轮没有新增封版检查专用埋点。
+- 原因：
+  - 当前要回答的问题是“流程是否稳定、残余风险是否回退、封版前小修是否生效”。
+  - 这些问题现有口径已经足够覆盖：
+    - `run_finished`
+    - `battle_template_entered`
+    - `boss_phase_entered`
+    - `boss_phase_pattern_duration`
+    - `boss_safe_window_seen`
+    - 本地样本脚本与 Playwright 截图复检
+
+### 当前结论
+- 项目当前已可判断为：进入 `0.9v 可封版状态`。
+- 但封版结论必须继续保留一条显式风险注记：
+  - 普通 build 下 `boss-bastion / fireline` 仍是低频样本
+  - 最终关远程后段仍需作为 freeze sign-off 的残余监控项
+- 这意味着下一步更适合做最终封版清单复核，而不是重新开启大规模开发轮。
+
 ## [0.9v 验收前修边] 全流程闭环 / 文案-HUD / 结果页收束感修边
 ### 本轮口径
 - 若文档与代码冲突，继续以 `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。
