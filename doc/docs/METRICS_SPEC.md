@@ -277,3 +277,65 @@
 - `boss_pocket_reposition_used`
   - 本轮仍不进正式埋点
   - 如果要判断玩家是否真的完成了 pocket 转场，优先继续依赖 QA 样本与 targeted probe，而不是先把 action 级观测塞进正式导出
+
+## 2026-04-09 1.0 第一阶段第 2 轮 telemetry 补充
+### 新增事件
+- `upgrade_offer_seen`
+  - 触发时机：
+    - 打开普通 `levelUp` 三选一时
+    - 打开 `nodePrep` 三选一时
+  - payload：
+    - `phase`
+    - `source`
+    - `optionIds`
+    - `routeOptionCount`
+    - `redirectOptionCount`
+    - `hybridOptionCount`
+    - `rarityCounts`
+    - `valueBuckets`
+
+### 已扩充的事件 payload
+- `node_selected`
+  - 新增：
+    - `phase`
+    - `focusRoute`
+- `upgrade_selected`
+  - 新增：
+    - `source`
+    - `rarity`
+    - `category`
+    - `valueScore`
+    - `valueBucket`
+    - `tags`
+- `event_selected`
+  - 新增：
+    - `anomalyClass`
+- `branch_switch`
+  - 继续沿用原事件
+  - 但 run summary 现在会额外累计 `branchSwitchPhaseCounts`
+
+### run summary 新增观测
+- 当前 `run_finished` / session run summary 现在还会保留：
+  - `branchSwitchPhaseCounts`
+  - `hybridOfferSeenCount`
+  - `routeUpgradeOfferSeenCount`
+  - `routeUpgradePickCount`
+  - `upgradeOfferRarityCounts`
+  - `upgradeOfferValueBuckets`
+  - `nodeTypeCounts`
+  - `anomalySeenCount`
+  - `anomalyClassCounts`
+
+### 观测目的
+- 这批字段主要服务：
+  - upgrade 品质分布
+  - upgrade 价值分布
+  - 流派词条命中率
+  - redirect / hybrid 命中率
+  - branch switch 发生阶段
+  - node / anomaly 分布
+- 当前仍沿用同一套本地导出链路：
+  - `window.__pilotMetrics`
+  - `window.__exportPilotMetrics()`
+  - `localStorage: commercial_pilot_metrics_v1`
+- 本轮没有新增独立 telemetry 系统，只是在现有 tracker 上补充低成本字段。

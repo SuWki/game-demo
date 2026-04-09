@@ -91,7 +91,7 @@ function getSelectionWeight(
   if (rule.maxRound && context.round > rule.maxRound) {
     return 0;
   }
-  if (rule.excludeFromFinalPrep && source === 'nodePrep') {
+  if (rule.excludeFromFinalPrep && context.phase === 'finalPrep') {
     return 0;
   }
 
@@ -339,7 +339,7 @@ function buildLevelUpRouteWindowPool(
         'levelUp',
         (archetype) => Boolean(archetype.routeId) && Boolean(archetype.tags?.includes('starter')),
       ),
-      0.52,
+      0.56,
     );
   }
 
@@ -361,7 +361,7 @@ function buildLevelUpRouteWindowPool(
         ? fallbackPool
         : dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
 
-  return scaleWeightedPool(resolvedPool, context.committedRoute || context.maturedRoute ? 0.72 : 0.58);
+  return scaleWeightedPool(resolvedPool, context.committedRoute || context.maturedRoute ? 0.78 : 0.64);
 }
 
 function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
@@ -376,7 +376,7 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const routeWindowPool = buildLevelUpRouteWindowPool(context);
   const flexPool = mergeWeightedPools(
     scaleWeightedPool(genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1.22, 0.1),
-    scaleWeightedPool(routeWindowPool, 0.62),
+    scaleWeightedPool(routeWindowPool, 0.68),
   );
 
   appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
@@ -399,24 +399,27 @@ export function rollUpgradeChoices(
     return rollLevelUpChoices(context);
   }
 
-  if (!context.dominantRoute) {
-    return selectStarterSet(context, source).slice(0, 3);
-  }
-
   const picks: UpgradeArchetype[] = [];
+  const genericPool = buildWeightedUpgradePool(context, source, (archetype) => !archetype.routeId);
+  const genericTransitionPool = filterPoolByTags(genericPool, ['bridge', 'stabilizer']);
+  const genericHybridPool = filterPoolByTags(genericPool, ['hybrid', 'redirect'], ['payoff', 'finisher']);
+  const genericLatePayoffPool = filterPoolByTags(genericPool, ['payoff'], ['starter']);
+  const genericLateFlexPool = [...genericLatePayoffPool, ...genericHybridPool, ...genericTransitionPool];
+  const allRoutePool = buildWeightedUpgradePool(context, source, (archetype) => Boolean(archetype.routeId));
+  const noFocusStarterPool = filterPoolByTags(allRoutePool, ['starter']);
+  const noFocusBridgePool = filterPoolByTags(allRoutePool, ['starter', 'bridge'], ['payoff', 'finisher', 'redirect']);
+  const noFocusLateRoutePool = filterPoolByTags(allRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
   const dominantRoute = context.dominantRoute;
-  const dominantRoutePool = buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === dominantRoute);
+  const dominantRoutePool =
+    dominantRoute === null
+      ? []
+      : buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === dominantRoute);
   const dominantNonRedirectPool = dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
   const dominantHintPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge'], ['payoff', 'finisher', 'redirect']);
   const dominantBridgePool = filterPoolByTags(dominantRoutePool, ['bridge'], ['payoff', 'finisher', 'redirect']);
   const dominantStarterPool = filterPoolByTags(dominantRoutePool, ['starter']);
   const dominantCommittedPool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff', 'finisher'], ['redirect']);
   const dominantPayoffPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher']);
-  const genericPool = buildWeightedUpgradePool(context, source, (archetype) => !archetype.routeId);
-  const genericTransitionPool = filterPoolByTags(genericPool, ['bridge', 'stabilizer']);
-  const genericHybridPool = filterPoolByTags(genericPool, ['hybrid', 'redirect'], ['payoff', 'finisher']);
-  const genericLatePayoffPool = filterPoolByTags(genericPool, ['payoff'], ['starter']);
-  const genericLateFlexPool = [...genericLatePayoffPool, ...genericHybridPool, ...genericTransitionPool];
   const offRoutePool = buildWeightedUpgradePool(
     context,
     source,
@@ -426,14 +429,139 @@ export function rollUpgradeChoices(
   const offRouteRedirectPool = filterPoolByTags(offRoutePool, ['redirect'], ['payoff', 'finisher']);
   const offRouteBridgePool = filterPoolByTags(offRoutePool, ['bridge'], ['starter', 'payoff', 'finisher']);
   const midRedirectWindowPool = mergeWeightedPools(
-    scaleWeightedPool(offRouteRedirectPool, 2.05, 0.15),
-    scaleWeightedPool(offRouteBridgePool, 1.08),
-    scaleWeightedPool(genericHybridPool, 0.72),
-    scaleWeightedPool(genericTransitionPool, 0.68),
+    scaleWeightedPool(offRouteRedirectPool, 3.2, 0.2),
+    scaleWeightedPool(offRouteBridgePool, 0.92),
+    scaleWeightedPool(genericHybridPool, 0.58),
+    scaleWeightedPool(genericTransitionPool, 0.42),
+  );
+  const nodePrepLateFlexPool = mergeWeightedPools(
+    scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPool, 1.08),
+    scaleWeightedPool(offRouteRedirectPool, 0.82),
+    scaleWeightedPool(genericHybridPool, 0.92),
   );
   const allWeightedPool = [...dominantNonRedirectPool, ...genericPool, ...offRoutePool];
   const routeMatured = context.maturedRoute === dominantRoute;
   const allowRedirectWindow = context.phase !== 'opening' || context.round >= 2;
+  const nodePrepGenericCorePool = genericTransitionPool.length > 0 ? genericTransitionPool : genericPool;
+  const nodePrepGenericSupportPool =
+    context.phase === 'late' || context.phase === 'finalPrep'
+      ? mergeWeightedPools(
+          scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPool, 1.1),
+          scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, 0.96),
+          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 0.86),
+        )
+      : mergeWeightedPools(
+          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 1.14, 0.08),
+          scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 1.02),
+          scaleWeightedPool(genericPool, 0.84),
+        );
+
+  if (source === 'nodePrep') {
+    const nodePrepNoFocusFlexPool = mergeWeightedPools(
+      scaleWeightedPool(
+        (context.phase === 'late' || context.phase === 'finalPrep') && noFocusLateRoutePool.length > 0
+          ? noFocusLateRoutePool
+          : noFocusBridgePool.length > 0
+            ? noFocusBridgePool
+            : noFocusStarterPool,
+        1.08,
+      ),
+      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, 0.82),
+      scaleWeightedPool(
+        context.phase === 'late' || context.phase === 'finalPrep'
+          ? genericLateFlexPool.length > 0
+            ? genericLateFlexPool
+            : genericPool
+          : nodePrepGenericCorePool.length > 0
+            ? nodePrepGenericCorePool
+            : genericPool,
+        0.48,
+      ),
+    );
+    const nodePrepHintFlexPool = mergeWeightedPools(
+      scaleWeightedPool(
+        dominantHintPool.length > 0
+          ? dominantHintPool
+          : dominantBridgePool.length > 0
+            ? dominantBridgePool
+            : dominantStarterPool.length > 0
+              ? dominantStarterPool
+              : dominantRoutePool,
+        1.14,
+      ),
+      scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 1.16, 0.08),
+      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 0.74),
+    );
+    const nodePrepCommittedFlexPool = mergeWeightedPools(
+      scaleWeightedPool(
+        dominantPayoffPool.length > 0
+          ? dominantPayoffPool
+          : dominantCommittedPool.length > 0
+            ? dominantCommittedPool
+            : dominantRoutePool,
+        1.22,
+      ),
+      scaleWeightedPool(context.phase === 'finalPrep' ? [] : offRouteRedirectPool, 0.84),
+      scaleWeightedPool(nodePrepLateFlexPool.length > 0 ? nodePrepLateFlexPool : genericPool, 0.64),
+    );
+
+    appendUniquePicks(picks, nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 1);
+    appendUniquePicks(picks, nodePrepGenericSupportPool.length > 0 ? nodePrepGenericSupportPool : genericPool, 1);
+
+    if (!context.dominantRoute) {
+      appendUniquePicks(
+        picks,
+        nodePrepNoFocusFlexPool.length > 0
+          ? nodePrepNoFocusFlexPool
+          : noFocusStarterPool.length > 0
+            ? noFocusStarterPool
+            : genericPool,
+        1,
+      );
+    } else if (context.committedRoute || routeMatured || context.round >= 3) {
+      appendUniquePicks(
+        picks,
+        nodePrepCommittedFlexPool.length > 0
+          ? nodePrepCommittedFlexPool
+          : dominantCommittedPool.length > 0
+            ? dominantCommittedPool
+            : nodePrepLateFlexPool.length > 0
+              ? nodePrepLateFlexPool
+              : genericPool,
+        1,
+      );
+    } else {
+      appendUniquePicks(
+        picks,
+        nodePrepHintFlexPool.length > 0
+          ? nodePrepHintFlexPool
+          : dominantHintPool.length > 0
+            ? dominantHintPool
+            : midRedirectWindowPool.length > 0
+              ? midRedirectWindowPool
+              : genericPool,
+        1,
+      );
+    }
+
+    if (picks.length < 3) {
+      appendUniquePicks(
+        picks,
+        nodePrepGenericSupportPool.length > 0 ? nodePrepGenericSupportPool : genericPool,
+        3 - picks.length,
+      );
+    }
+
+    if (picks.length < 3) {
+      appendUniquePicks(picks, genericPool, 3 - picks.length);
+    }
+
+    return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
+  }
+
+  if (!context.dominantRoute) {
+    return selectStarterSet(context, source).slice(0, 3);
+  }
 
   if (!context.committedRoute && context.round <= 2) {
     appendUniquePicks(
@@ -482,13 +610,15 @@ export function rollUpgradeChoices(
     );
     appendUniquePicks(
       picks,
-      genericLateFlexPool.length > 0
-        ? genericLateFlexPool
-        : offRouteRedirectPool.length > 0
-          ? offRouteRedirectPool
-          : genericPool.length > 0
-            ? genericPool
-            : offRoutePivotPool,
+      nodePrepLateFlexPool.length > 0
+        ? nodePrepLateFlexPool
+        : genericLateFlexPool.length > 0
+          ? genericLateFlexPool
+          : offRouteRedirectPool.length > 0
+            ? offRouteRedirectPool
+            : genericPool.length > 0
+              ? genericPool
+              : offRoutePivotPool,
       1,
     );
   } else if (context.committedRoute && context.round >= 3) {

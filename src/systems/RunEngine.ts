@@ -195,7 +195,10 @@ export class RunEngine {
       return;
     }
 
-    this.services.metrics.recordNodeSelected(node.type, node.title);
+    this.services.metrics.recordNodeSelected(node.type, node.title, {
+      phase: node.phase,
+      focusRoute: this.getDominantRoute(),
+    });
     this.state.currentNode = node;
     this.state.nodeOptions = [];
     this.state.traversedNodes.push({
@@ -216,6 +219,10 @@ export class RunEngine {
       this.state.upgradeSource = 'nodePrep';
       this.state.upgradeChoices = this.rollUpgradeChoices('nodePrep');
       this.state.currentEvent = null;
+      this.services.metrics.recordUpgradeOfferSeen(this.state.upgradeChoices, {
+        phase: this.state.phase,
+        source: 'nodePrep',
+      });
       this.recordRedirectUpgradeOffers(this.state.upgradeChoices);
       return;
     }
@@ -244,11 +251,16 @@ export class RunEngine {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
     this.services.metrics.recordUpgradeSelected(
-      `${upgrade.sourceId}:${upgrade.rarity}`,
+      upgrade.sourceId,
       upgrade.routeId,
       upgrade.contentTier,
       {
         phase: this.state.phase,
+        source: source ?? undefined,
+        rarity: upgrade.rarity,
+        category: upgrade.category,
+        valueScore: upgrade.valueScore,
+        valueBucket: upgrade.valueBucket,
         tags: upgrade.tags,
         isHybridPick: this.isHybridTagged(upgrade.tags),
         isLatePayoff: this.isLatePayoffTagged(upgrade.tags, upgrade.contentTier),
@@ -312,6 +324,7 @@ export class RunEngine {
     this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId, eventDef.contentTier, {
       phase: this.state.phase,
       contentKind: eventDef.contentKind ?? 'event',
+      anomalyClass: eventDef.anomalyClass,
       isHybridPick:
         isRedirectPick ||
         eventDef.id === 'signal-soften' ||
@@ -2498,6 +2511,10 @@ export class RunEngine {
     this.state.upgradeChoices = this.rollUpgradeChoices('levelUp');
     this.state.currentEvent = null;
     this.state.nodeOptions = [];
+    this.services.metrics.recordUpgradeOfferSeen(this.state.upgradeChoices, {
+      phase: this.state.phase,
+      source: 'levelUp',
+    });
     this.recordRedirectUpgradeOffers(this.state.upgradeChoices);
   }
 

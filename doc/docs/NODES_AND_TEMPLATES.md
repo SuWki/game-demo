@@ -586,3 +586,51 @@
 - 本轮仍只用现有 `template / rule / selector / family / blueprint / nodes / upgrades` 数据结构扩写。
 - `boss` 继续只从 Boss 模板池收尾；`anomaly` 继续只从 anomaly 池抽取；普通关 / 生存关 / 精英关继续维持家族分层。
 - `boss-bastion / fireline` 仍是回归监控项，没有因为这轮内容补量被重新拉回主线专项。
+
+## 2026-04-09 1.0 第一阶段第 2 轮：node / upgrade / route / selector 承接补充
+### nodePrep 发牌边界
+- `nodePrep` 当前已和普通 `levelUp` 一样，收口为：
+  - `2` 张通用强化
+  - `1` 张弹性槽
+- 这意味着 upgrade 节点当前也遵守：
+  - 单次三选一里最多 `1` 张路线强化
+  - 通用属性强化继续是主干
+  - route / redirect / hybrid 只在弹性槽里承担“提示 / 转向 / 收尾”角色
+
+### 当前节点新增的 route carrier
+- mid 新增 `改道整备`
+  - 主要职责是把 upgrade 节点显式拉成“重评路线”的中段窗口
+  - 重点承接 `bridge / redirect / hybrid`
+- mid 新增 `分叉噪井`
+  - 主要职责是把 anomaly 节点拉成更明确的中段分叉判断点
+  - 不再只是普通 routeWindow 的换名入口
+- late 新增 `收束筹码`
+  - 主要职责是把 upgrade 节点推向 late payoff / rare generic / 混搭收尾
+- late 新增 `余辉偏折`
+  - 主要职责是给后段 anomaly 保留稀有收益、混搭和低频转向的窗口
+
+### selector 当前关系
+- 普通 `levelUp`
+  - 保持 `2 通用 + 1 flex`
+  - `routeWindowWeightScale` 当前为：
+    - 无 dominant：`0.56`
+    - hinted dominant：`0.64`
+    - committed / matured：`0.78`
+- `nodePrep`
+  - 不再走“多张 route 牌堆满 upgrade 节点”的旧近似
+  - 当前更像“通用整备 + 1 张路线/redirect/hybrid/late payoff 弹性槽”
+- `redirect / hybrid`
+  - mid / late 的 upgrade 节点现在是主要承接入口之一
+  - `finalPrep` 继续压住 redirect 专项卡，避免最终整备重新掉回分叉噪音池
+
+### ownership 边界
+- 本轮没有引入新的 node type，也没有把 route 逻辑写回 `RunEngine`。
+- route build 的承接仍然沿：
+  - node blueprint
+  - upgrade archetype
+  - selector weight
+  这三层完成。
+- `Boss / anomaly / template ownership` 边界不变：
+  - Boss 继续由 Boss 模板池收尾
+  - anomaly 继续走 anomaly 池
+  - template family 继续承担 encounter identity

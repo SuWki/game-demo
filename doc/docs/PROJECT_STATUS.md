@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：0.9v freeze sign-off（音频阻断已修复）+ 残余风险登记 + 文档收口
+- 当前执行焦点：1.0 第一阶段中段推进期：node / upgrade / route / selector 深化 + telemetry / docs 收口
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -499,3 +499,28 @@
   - 升级新增一批通用桥接、路线桥接与 late rare payoff
   - replay prompt 会在异常曝光不足时直接提示“下局去看另一类低频内容”
 - 当前最大的显式残余风险保持不变：普通 build 下 `boss-bastion / fireline` 仍然是低频样本；该问题在 1.0 中继续作为监控项，而不是本轮主线任务。
+
+## 2026-04-09 1.0 第一阶段第 2 轮推进
+- 当前阶段判断继续前推为：项目已进入 `1.0 第一阶段中段推进期`。
+- 最新取舍依据更新为：
+  - 最新用户 brief
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  - `ROADMAP_1_0.md`
+- 如与较早仍停在 `0.9v freeze sign-off` 的表述冲突，以以上更新口径覆盖旧阶段摘要。
+- 本轮主线从“补第一批 anomaly / template 内容量”切到：
+  - `node / upgrade / route / selector` 承接加厚
+  - `starter -> committed -> payoff -> hybrid / redirect` 层次补强
+  - telemetry / docs 同步收口
+- 本轮新的结构结论：
+  - 普通 `levelUp` 继续维持 `2 个通用槽 + 1 个弹性槽`，最多 `1` 张路线强化。
+  - `nodePrep` 现在也收口为“`2` 张通用强化 + `1` 张弹性槽”的结构化发牌，不再让 upgrade 节点通过多张路线牌过早锁流派。
+  - `redirect / hybrid` 的主要承接窗口进一步回到 mid / late 的 upgrade 节点与 anomaly 节点，而不是让它们在 final prep 乱入。
+  - `excludeFromFinalPrep` 的实际口径现已收回到“只屏蔽 `finalPrep`”，不再误伤整段 `nodePrep`。
+- 本轮回归结论：
+  - `nodePrep` 在无主路线的 late 样本里不再出现空面板。
+  - 中段 hinted / committed 样本里，路线强化平均仍低于通用强化，且 redirect / hybrid 已进入可见区间。
+  - `boss-bastion / fireline` 监控项在最新自然样本里未见明显恶化：
+    - `normal`: `bossBastionRuns = 7`, `firelineSeenRuns = 1`
+    - `highBurst`: `bossBastionRuns = 13`, `firelineSeenRuns = 6`
+    - `highMobility`: `bossBastionRuns = 8`, `firelineSeenRuns = 3`

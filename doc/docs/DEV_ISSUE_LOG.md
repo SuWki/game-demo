@@ -1,4 +1,177 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 2 轮] node / upgrade / route / selector 深化 + telemetry 收口
+### 本轮口径
+- 若旧文档仍停留在 `0.9v freeze sign-off` 或 `1.0 第一轮开发启动` 的更早摘要，本轮以：
+  - 最新用户 brief
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - `ROADMAP_1_0.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准。
+- `0.9v 可封版状态` 继续作为稳定底座；本轮不回退去做 Boss 专项调参，也不扩新系统。
+- `boss-bastion / fireline` 继续保留为 1.0 监控项，只做回归复检，不作为主线任务。
+
+### 文档盘点结论
+- `PROJECT_STATUS.md` 顶部执行焦点仍停在 `0.9v freeze sign-off`，已落后于最新阶段口径；本轮按 `1.0 第一阶段中段推进期` 修正。
+- docs 已明确可直接实现的边界包括：
+  - 三选一中最多 `1` 张路线强化
+  - 路线强化低于通用强化频率
+  - 路线强化从 `uncommon` 起跳
+  - 同一 `sourceId` 单局唯一
+  - `starter -> committed -> payoff -> hybrid / redirect` 的承接层次
+- docs 仍不够明确、因此本轮按保守近似实现的部分：
+  - `nodePrep` 的具体槽位结构此前没有写死；本轮沿普通 `levelUp` 的结构化发牌思路，收口为 `2 通用 + 1 flex`
+  - telemetry 只补低成本字段，不新建独立 selector 观测系统
+
+### 关键发现
+- 原实现里 `excludeFromFinalPrep` 实际会屏蔽所有 `nodePrep`，而不是只屏蔽 `finalPrep`。
+- 这会直接导致：
+  - redirect / hybrid 在中段 upgrade 节点几乎不可见
+  - late 无主路线 upgrade 节点可能发出空面板
+- 因此本轮先修真实承接问题，再补内容量。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 新增通用 bridge / late flex：
+    - `generic-salvo-cache / 齐射缓存`
+    - `generic-drift-anchor / 漂移定舵`
+    - `generic-branch-buffer / 支路缓冲`
+    - `generic-last-mile / 终段余量`
+  - 新增暴击承接：
+    - `crit-sparkline / 火迹预压`
+    - `crit-crownfire / 冠火收束`
+    - `crit-reroute-spark / 借火切入`
+  - 新增穿透承接：
+    - `pierce-relay-spine / 并轨穿脊`
+    - `pierce-floodgate / 裂层清账`
+    - `pierce-reroute-seam / 借线破层`
+  - 新增穿梭承接：
+    - `dash-sidestep-bank / 侧返蓄窗`
+    - `dash-afterimage / 残影回切`
+    - `dash-reroute-cutin / 偏帧切入`
+- `src/data/nodes.ts`
+  - mid 新增：
+    - `改道整备`
+    - `分叉噪井`
+  - late 新增：
+    - `收束筹码`
+    - `余辉偏折`
+- `src/data/contentSelectors.ts`
+  - 普通 `levelUp` 继续保持 `2 通用 + 1 flex`，并把 route window 倍率更新为：
+    - `0.56 / 0.64 / 0.78`
+  - 修正 `excludeFromFinalPrep`：
+    - 现在只在 `phase = finalPrep` 时生效
+    - 不再误伤 mid / late 的普通 `nodePrep`
+  - `nodePrep` 发牌重构为：
+    - `2` 张通用强化
+    - `1` 张弹性槽
+  - 让 `nodePrep` 也遵守“最多 `1` 张路线强化”的当前设计边界。
+  - 中段 hinted / committed 的 flex 现在会在：
+    - dominant bridge / payoff
+    - redirect
+    - hybrid
+    之间做更明确的承接，而不是一次面板塞入多张 route 卡。
+- `src/data/balance.ts`
+  - 新增 `UpgradeValueBucket` 阈值：
+    - `mid >= 65`
+    - `high >= 105`
+    - `spike >= 150`
+- `src/game/types.ts`
+  - `UpgradeDefinition` 新增：
+    - `valueBucket`
+- `src/systems/MetricsTracker.ts`
+  - 新增 `upgrade_offer_seen`
+  - `node_selected` 补充：
+    - `phase`
+    - `focusRoute`
+  - `upgrade_selected` 补充：
+    - `source`
+    - `rarity`
+    - `category`
+    - `valueScore`
+    - `valueBucket`
+    - `tags`
+  - `event_selected` 补充：
+    - `anomalyClass`
+  - run summary 新增：
+    - `branchSwitchPhaseCounts`
+    - `hybridOfferSeenCount`
+    - `routeUpgradeOfferSeenCount`
+    - `routeUpgradePickCount`
+    - `upgradeOfferRarityCounts`
+    - `upgradeOfferValueBuckets`
+    - `nodeTypeCounts`
+    - `anomalySeenCount`
+    - `anomalyClassCounts`
+- `src/systems/RunEngine.ts`
+  - 打开 `levelUp / nodePrep` 面板时记录 `upgrade_offer_seen`
+  - upgrade / anomaly pick 时把扩展 telemetry meta 透传给 metrics
+
+### 数据结构变更
+- `src/game/types.ts`
+  - 新增 `UpgradeValueBucket = 'low' | 'mid' | 'high' | 'spike'`
+  - `UpgradeDefinition.valueBucket`
+- 本轮没有改主流程，没有重写 `RunEngine`，没有引入新系统。
+
+### 验证
+- `npm run build`
+  - 通过。
+- 静态 selector 抽样
+  - `opening-no-focus-levelup`
+    - `avgRoute = 0.27`
+    - `avgGeneric = 2.73`
+  - `mid-no-focus-nodeprep`
+    - `avgRoute = 0.61`
+    - `avgGeneric = 2.39`
+    - `emptyRuns = 0`
+  - `late-no-focus-nodeprep`
+    - `avgRoute = 0.39`
+    - `avgGeneric = 2.61`
+    - `avgRedirect = 0.12`
+    - `avgHybrid = 1.27`
+    - `emptyRuns = 0`
+  - `mid-crit-hinted-nodeprep`
+    - `avgRoute = 0.78`
+    - `avgGeneric = 2.22`
+    - `avgRedirect = 0.36`
+    - `avgHybrid = 1.38`
+  - 结论：
+    - `nodePrep` 不再出现空面板
+    - 普通 / 节点升级现在都回到“通用强于路线”的分布
+    - redirect / hybrid 在中段已进入可见区间
+- Boss 监控回归：`npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 7`
+    - `crossfireSeenRuns = 3`
+    - `firelineSeenRuns = 1`
+  - `highBurst`
+    - `bossBastionRuns = 13`
+    - `firelineSeenRuns = 6`
+  - `highMobility`
+    - `bossBastionRuns = 8`
+    - `firelineSeenRuns = 3`
+  - 结论：
+    - 本轮主线改动没有把 `boss-bastion / fireline` 明显做坏
+    - 普通 build 仍是低频监控项，但没有恶化为不可见
+- 浏览器全链路回归：`npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - anomaly 面板出现
+  - Boss 节点出现
+  - result / replay 跑通
+  - `consoleErrors = []`
+  - `metricBossEvents = 1`
+  - 说明：
+    - `summary.bossBattleSeen = false` 仍是旧 QA matcher 的文案滞后
+    - 但 metrics 已确认 `battle_template_entered(encounterType = boss)`，截图也已人工复核
+
+### 当前结论
+- 项目当前应判断为：`1.0 第一阶段中段推进期`。
+- 本轮真正补上的不是孤立内容量，而是：
+  - node / upgrade / route / selector 的承接厚度
+  - redirect / hybrid 的可见窗口
+  - upgrade 价值与品质的 telemetry 观测
+- 当前最大残余风险保持不变：
+  - 普通 build 下 `boss-bastion / fireline` 仍然是低频样本
+  - 最终关远程后段仍需继续监控，但不是本轮阻断项
+
 ## [1.0 第一轮开发] anomaly 深度扩写 / template 家族补量 / 第一批内容扩容
 ### 本轮口径
 - 若旧文档仍停留在 `0.9v freeze sign-off` 或封版检查阶段，本轮以 `最新用户 brief + FREEZE_SIGNOFF_0_9V.md + DESIGN_ALIGNMENT_BASELINE_2026-04-05.md + 最新 DEV_ISSUE_LOG.md` 为准。

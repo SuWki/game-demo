@@ -88,3 +88,51 @@
   - upgrade redirect：强调“现在拿不亏”
   - reroute-window：强调“现在转得过去”
   - late payoff：继续留在 late / final，不前移到 mid 伪造转向价值
+
+## 2026-04-09 1.0 第一阶段第 2 轮：构筑承接补充
+### 当前 build 层次
+- 本轮默认按以下层次继续收口：
+  - `starter`
+  - `committed`
+  - `payoff`
+  - `hybrid / redirect`
+- 目标不是把三条流派做成更早锁死，而是让：
+  - 前段更容易读到 starter
+  - mid 更容易出现 committed 或 redirect 判断
+  - late / final 更自然看到 payoff 与混搭收束
+
+### upgrade 分发边界
+- 当前三选一统一遵守：
+  - 最多 `1` 张路线强化
+  - 路线强化出现率低于通用强化
+  - 路线强化从 `uncommon` 起跳
+  - 同一个 `sourceId` 单局不重复出现
+- 这意味着 upgrade 节点不再通过两三张 route 卡把 build 提前锁死；它们的价值更多来自：
+  - 更高的品质
+  - 更清楚的 bridge / redirect / payoff 承接
+
+### redirect / hybrid 当前站位
+- mid 的 upgrade / anomaly 仍是 redirect 的主要承接窗口。
+- late 的 redirect 会保留，但更多承担：
+  - 补救路径
+  - 混搭转接
+  - 收束前的再判断
+- `finalPrep` 当前继续压住 redirect 专项卡，避免最终整备把路线再度打散。
+
+### 本轮新增 route 向 upgrade 承接
+- 暴击：
+  - `火迹预压`
+  - `冠火收束`
+  - `借火切入`
+- 穿透：
+  - `并轨穿脊`
+  - `裂层清账`
+  - `借线破层`
+- 穿梭：
+  - `侧返蓄窗`
+  - `残影回切`
+  - `偏帧切入`
+- 它们的职责切分是：
+  - `bridge`：让 hinted / committed 更清楚
+  - `payoff`：把 late / final 的兑现拉开
+  - `redirect`：让 off-route 改道更像主动判断，而不是普通副路线填充

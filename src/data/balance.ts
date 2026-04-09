@@ -8,6 +8,7 @@ import type {
   StatModifiers,
   UpgradeRarity,
   UpgradeSource,
+  UpgradeValueBucket,
 } from '../game/types';
 
 export const ARENA_WIDTH = 960;
@@ -22,6 +23,12 @@ const RARITY_MULTIPLIERS: Record<UpgradeRarity, number> = {
   epic: 1.75,
   legendary: 2.15,
 };
+
+export const UPGRADE_VALUE_BUCKET_THRESHOLDS = {
+  mid: 65,
+  high: 105,
+  spike: 150,
+} as const;
 
 export const RARITY_LABEL_MAP: Record<UpgradeRarity, string> = {
   common: '白',
@@ -121,6 +128,19 @@ export function getExperienceToNextLevel(level: number): number {
 
 export function getUpgradeRarityMultiplier(rarity: UpgradeRarity): number {
   return RARITY_MULTIPLIERS[rarity];
+}
+
+export function getUpgradeValueBucket(totalValue: number): UpgradeValueBucket {
+  if (totalValue >= UPGRADE_VALUE_BUCKET_THRESHOLDS.spike) {
+    return 'spike';
+  }
+  if (totalValue >= UPGRADE_VALUE_BUCKET_THRESHOLDS.high) {
+    return 'high';
+  }
+  if (totalValue >= UPGRADE_VALUE_BUCKET_THRESHOLDS.mid) {
+    return 'mid';
+  }
+  return 'low';
 }
 
 export function getUpgradeRarityWeights(

@@ -43,6 +43,7 @@ export type AudioCue =
   | 'result';
 export type ToastTone = 'neutral' | 'accent' | 'route' | 'danger' | 'success';
 export type UpgradeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type UpgradeValueBucket = 'low' | 'mid' | 'high' | 'spike';
 export type UpgradeSource = 'levelUp' | 'nodePrep';
 export type UpgradeCategory = 'generic' | 'route';
 export type SpawnPatternId = 'surround' | 'pincers' | 'lanes';
@@ -232,6 +233,7 @@ export interface UpgradeDefinition {
   tags?: string[];
   effects: ContentEffect[];
   valueScore: number;
+  valueBucket: UpgradeValueBucket;
   valueBreakdown: {
     directDps: number;
     utility: number;

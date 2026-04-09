@@ -615,3 +615,46 @@ route window 当前的约束是：
   - 没有新增护卫数量层
   - 没有扩出新的 Boss 系统
   - 只是用现有 phase carrier 调整“何时读到后段、何时确认后段”
+
+## 2026-04-09 升级价值桶与 1.0 第一阶段第 2 轮发牌补充
+### `upgradeValueBucket`
+- 当前所有升级在生成候选时，除了 `valueScore` 外，还会落入一个轻量价值桶：
+  - `low`: `valueScore < 65`
+  - `mid`: `65 <= valueScore < 105`
+  - `high`: `105 <= valueScore < 150`
+  - `spike`: `valueScore >= 150`
+- 这层口径当前只服务：
+  - telemetry 分布观测
+  - run summary 的价值层统计
+- 当前没有引入新的品质系统，`valueBucket` 只是 `valueScore` 的观测分桶。
+
+### 普通升级 `levelUp`
+- 普通升级继续保持：
+  - `levelUpDeal = genericSlotA + genericSlotB + flexSlot`
+  - `routeOfferCount(levelUp) <= 1`
+- 当前 flex 侧的路线窗倍率更新为：
+  - 无 dominant：`routeWindowWeightScale = 0.56`
+  - hinted dominant：`routeWindowWeightScale = 0.64`
+  - committed / matured：`routeWindowWeightScale = 0.78`
+- 当前普通升级的 flex 组合系数更新为：
+  - `flexWeight = genericSecondaryPool * 1.22 + routeWindowPool * 0.68`
+
+### 节点整备 `nodePrep`
+- `nodePrep` 当前也收口为：
+  - `nodePrepDeal = genericSlotA + genericSlotB + flexSlot`
+  - `routeOfferCount(nodePrep) <= 1`
+- 取舍原则是：
+  - upgrade 节点的价值来自“更高品质 / 更清楚的承接”
+  - 而不是通过一次面板塞进多张路线牌把 build 提前锁死
+- 当前 flex 的职责按阶段分化为：
+  - 无 dominant：starter / bridge / hybrid 的轻量探路
+  - hinted：dominant bridge 与 redirect / hybrid 的重评窗口
+  - committed / matured：late payoff / redirect / hybrid 的收束窗口
+
+### `excludeFromFinalPrep`
+- 当前过滤口径更新为：
+  - `upgradeOfferVisible = !excludeFromFinalPrep || phase != finalPrep`
+- 含义：
+  - 这条标记现在只会屏蔽 `finalPrep`
+  - 不再误伤 mid / late 的普通 `nodePrep`
+- 这让 redirect / hybrid 卡可以在中后段 upgrade 节点正常承担改道窗口，同时仍然避免最终整备被 redirect 卡刷屏。

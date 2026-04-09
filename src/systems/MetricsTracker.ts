@@ -1,4 +1,5 @@
 import type {
+  AnomalyClassId,
   BattleEncounterType,
   BattleTemplateId,
   ContentTier,
@@ -11,6 +12,10 @@ import type {
   RouteId,
   RunEndingKind,
   RunOutcome,
+  UpgradeCategory,
+  UpgradeRarity,
+  UpgradeSource,
+  UpgradeValueBucket,
 } from '../game/types';
 
 export const PILOT_METRICS_STORAGE_KEY = 'commercial_pilot_metrics_v1';
@@ -40,9 +45,18 @@ interface MetricRunSummary {
   firstCommitStage?: PhaseId;
   firstCommitPick?: string;
   branchSwitchCount?: number;
+  branchSwitchPhaseCounts?: Partial<Record<PhaseId, number>>;
   rareSeenCount?: number;
   hybridPickCount?: number;
+  hybridOfferSeenCount?: number;
   latePayoffSeenCount?: number;
+  routeUpgradeOfferSeenCount?: number;
+  routeUpgradePickCount?: number;
+  upgradeOfferRarityCounts?: Partial<Record<UpgradeRarity, number>>;
+  upgradeOfferValueBuckets?: Partial<Record<UpgradeValueBucket, number>>;
+  nodeTypeCounts?: Partial<Record<NodeType, number>>;
+  anomalySeenCount?: number;
+  anomalyClassCounts?: Partial<Record<AnomalyClassId, number>>;
   redirectOfferSeenCount?: number;
   redirectPickCount?: number;
   redirectPickStage?: PhaseId;
@@ -50,12 +64,18 @@ interface MetricRunSummary {
 
 interface ContentMetricMeta {
   phase?: PhaseId;
+  source?: UpgradeSource;
+  rarity?: UpgradeRarity;
+  category?: UpgradeCategory;
+  valueScore?: number;
+  valueBucket?: UpgradeValueBucket;
   tags?: string[];
   isHybridPick?: boolean;
   isLatePayoff?: boolean;
   nodeType?: NodeType;
   encounterType?: BattleEncounterType;
   contentKind?: EventContentKind;
+  anomalyClass?: AnomalyClassId;
 }
 
 interface MetricSession {
@@ -101,11 +121,29 @@ export class MetricsTracker {
 
   private branchSwitchCountInRun = 0;
 
+  private branchSwitchPhaseCountsInRun: Partial<Record<PhaseId, number>> = {};
+
   private rareSeenCountInRun = 0;
 
   private hybridPickCountInRun = 0;
 
+  private hybridOfferSeenCountInRun = 0;
+
   private latePayoffSeenCountInRun = 0;
+
+  private routeUpgradeOfferSeenCountInRun = 0;
+
+  private routeUpgradePickCountInRun = 0;
+
+  private upgradeOfferRarityCountsInRun: Partial<Record<UpgradeRarity, number>> = {};
+
+  private upgradeOfferValueBucketsInRun: Partial<Record<UpgradeValueBucket, number>> = {};
+
+  private nodeTypeCountsInRun: Partial<Record<NodeType, number>> = {};
+
+  private anomalySeenCountInRun = 0;
+
+  private anomalyClassCountsInRun: Partial<Record<AnomalyClassId, number>> = {};
 
   private redirectOfferSeenCountInRun = 0;
 
@@ -198,8 +236,66 @@ export class MetricsTracker {
     this.record('route_matured', { routeId });
   }
 
-  public recordNodeSelected(nodeType: NodeType, title: string): void {
-    this.record('node_selected', { nodeType, title });
+  public recordNodeSelected(nodeType: NodeType, title: string, meta?: { phase?: PhaseId; focusRoute?: RouteId | null }): void {
+    this.incrementRecordCount(this.nodeTypeCountsInRun, nodeType);
+    this.record('node_selected', {
+      nodeType,
+      title,
+      phase: meta?.phase,
+      focusRoute: meta?.focusRoute ?? undefined,
+    });
+  }
+
+  public recordUpgradeOfferSeen(
+    choices: Array<{
+      sourceId: string;
+      routeId?: RouteId;
+      tags?: string[];
+      rarity: UpgradeRarity;
+      valueBucket: UpgradeValueBucket;
+    }>,
+    meta: { phase: PhaseId; source: UpgradeSource },
+  ): void {
+    const rarityCounts: Partial<Record<UpgradeRarity, number>> = {};
+    const valueBuckets: Partial<Record<UpgradeValueBucket, number>> = {};
+    let routeOptionCount = 0;
+    let redirectOptionCount = 0;
+    let hybridOptionCount = 0;
+
+    for (const choice of choices) {
+      this.incrementRecordCount(rarityCounts, choice.rarity);
+      this.incrementRecordCount(valueBuckets, choice.valueBucket);
+      this.incrementRecordCount(this.upgradeOfferRarityCountsInRun, choice.rarity);
+      this.incrementRecordCount(this.upgradeOfferValueBucketsInRun, choice.valueBucket);
+
+      if (choice.routeId) {
+        routeOptionCount += 1;
+      }
+      if (choice.tags?.includes('redirect')) {
+        redirectOptionCount += 1;
+      }
+      if (choice.tags?.some((tag) => tag === 'hybrid' || tag === 'redirect')) {
+        hybridOptionCount += 1;
+      }
+    }
+
+    if (routeOptionCount > 0) {
+      this.routeUpgradeOfferSeenCountInRun += 1;
+    }
+    if (hybridOptionCount > 0) {
+      this.hybridOfferSeenCountInRun += 1;
+    }
+
+    this.record('upgrade_offer_seen', {
+      phase: meta.phase,
+      source: meta.source,
+      optionIds: choices.map((choice) => choice.sourceId),
+      routeOptionCount,
+      redirectOptionCount,
+      hybridOptionCount,
+      rarityCounts,
+      valueBuckets,
+    });
   }
 
   public recordUpgradeSelected(
@@ -208,10 +304,24 @@ export class MetricsTracker {
     contentTier?: ContentTier,
     meta?: ContentMetricMeta,
   ): void {
-    this.record('upgrade_selected', { upgradeId, routeId, contentTier, phase: meta?.phase, tags: meta?.tags });
+    this.record('upgrade_selected', {
+      upgradeId,
+      routeId,
+      contentTier,
+      phase: meta?.phase,
+      source: meta?.source,
+      rarity: meta?.rarity,
+      category: meta?.category,
+      valueScore: meta?.valueScore,
+      valueBucket: meta?.valueBucket,
+      tags: meta?.tags,
+    });
     this.trackContentCounters(contentTier, meta);
     if (routeId) {
       this.record(`${routeId}_selected_count`, { increment: 1 });
+    }
+    if (meta?.category === 'route') {
+      this.routeUpgradePickCountInRun += 1;
     }
   }
 
@@ -229,12 +339,16 @@ export class MetricsTracker {
       contentTier,
       phase: meta?.phase,
       contentKind: meta?.contentKind ?? 'event',
+      anomalyClass: meta?.anomalyClass,
     });
     this.trackContentCounters(contentTier, meta);
   }
 
   public recordBranchSwitch(fromRoute: RouteId, toRoute: RouteId, meta?: { phase: PhaseId; pickId: string }): void {
     this.branchSwitchCountInRun += 1;
+    if (meta?.phase) {
+      this.incrementRecordCount(this.branchSwitchPhaseCountsInRun, meta.phase);
+    }
     this.record('branch_switch', {
       fromRoute,
       toRoute,
@@ -427,9 +541,18 @@ export class MetricsTracker {
     currentRun.firstCommitStage = this.firstCommitStageInRun ?? undefined;
     currentRun.firstCommitPick = this.firstCommitPickInRun ?? undefined;
     currentRun.branchSwitchCount = this.branchSwitchCountInRun;
+    currentRun.branchSwitchPhaseCounts = this.branchSwitchPhaseCountsInRun;
     currentRun.rareSeenCount = this.rareSeenCountInRun;
     currentRun.hybridPickCount = this.hybridPickCountInRun;
+    currentRun.hybridOfferSeenCount = this.hybridOfferSeenCountInRun;
     currentRun.latePayoffSeenCount = this.latePayoffSeenCountInRun;
+    currentRun.routeUpgradeOfferSeenCount = this.routeUpgradeOfferSeenCountInRun;
+    currentRun.routeUpgradePickCount = this.routeUpgradePickCountInRun;
+    currentRun.upgradeOfferRarityCounts = this.upgradeOfferRarityCountsInRun;
+    currentRun.upgradeOfferValueBuckets = this.upgradeOfferValueBucketsInRun;
+    currentRun.nodeTypeCounts = this.nodeTypeCountsInRun;
+    currentRun.anomalySeenCount = this.anomalySeenCountInRun;
+    currentRun.anomalyClassCounts = this.anomalyClassCountsInRun;
     currentRun.redirectOfferSeenCount = this.redirectOfferSeenCountInRun;
     currentRun.redirectPickCount = this.redirectPickCountInRun;
     currentRun.redirectPickStage = this.redirectPickStageInRun ?? undefined;
@@ -449,9 +572,18 @@ export class MetricsTracker {
       firstCommitStage: this.firstCommitStageInRun,
       firstCommitPick: this.firstCommitPickInRun,
       branchSwitchCount: this.branchSwitchCountInRun,
+      branchSwitchPhaseCounts: this.branchSwitchPhaseCountsInRun,
       rareSeenCount: this.rareSeenCountInRun,
       hybridPickCount: this.hybridPickCountInRun,
+      hybridOfferSeenCount: this.hybridOfferSeenCountInRun,
       latePayoffSeenCount: this.latePayoffSeenCountInRun,
+      routeUpgradeOfferSeenCount: this.routeUpgradeOfferSeenCountInRun,
+      routeUpgradePickCount: this.routeUpgradePickCountInRun,
+      upgradeOfferRarityCounts: this.upgradeOfferRarityCountsInRun,
+      upgradeOfferValueBuckets: this.upgradeOfferValueBucketsInRun,
+      nodeTypeCounts: this.nodeTypeCountsInRun,
+      anomalySeenCount: this.anomalySeenCountInRun,
+      anomalyClassCounts: this.anomalyClassCountsInRun,
       redirectOfferSeenCount: this.redirectOfferSeenCountInRun,
       redirectPickCount: this.redirectPickCountInRun,
       redirectPickStage: this.redirectPickStageInRun,
@@ -479,9 +611,18 @@ export class MetricsTracker {
     this.firstCommitStageInRun = null;
     this.firstCommitPickInRun = null;
     this.branchSwitchCountInRun = 0;
+    this.branchSwitchPhaseCountsInRun = {};
     this.rareSeenCountInRun = 0;
     this.hybridPickCountInRun = 0;
+    this.hybridOfferSeenCountInRun = 0;
     this.latePayoffSeenCountInRun = 0;
+    this.routeUpgradeOfferSeenCountInRun = 0;
+    this.routeUpgradePickCountInRun = 0;
+    this.upgradeOfferRarityCountsInRun = {};
+    this.upgradeOfferValueBucketsInRun = {};
+    this.nodeTypeCountsInRun = {};
+    this.anomalySeenCountInRun = 0;
+    this.anomalyClassCountsInRun = {};
     this.redirectOfferSeenCountInRun = 0;
     this.redirectPickCountInRun = 0;
     this.redirectPickStageInRun = null;
@@ -524,6 +665,10 @@ export class MetricsTracker {
     this.persist();
   }
 
+  private incrementRecordCount<T extends string>(counter: Partial<Record<T, number>>, key: T, amount = 1): void {
+    counter[key] = (counter[key] ?? 0) + amount;
+  }
+
   private trackContentCounters(contentTier?: ContentTier, meta?: ContentMetricMeta): void {
     if (contentTier === 'rare') {
       this.rareSeenCountInRun += 1;
@@ -536,6 +681,13 @@ export class MetricsTracker {
     const phase = meta?.phase;
     if (meta?.isLatePayoff || ((phase === 'late' || phase === 'finalPrep' || phase === 'finalBattle') && contentTier === 'rare')) {
       this.latePayoffSeenCountInRun += 1;
+    }
+
+    if (meta?.contentKind === 'anomaly') {
+      this.anomalySeenCountInRun += 1;
+      if (meta.anomalyClass) {
+        this.incrementRecordCount(this.anomalyClassCountsInRun, meta.anomalyClass);
+      }
     }
   }
 
