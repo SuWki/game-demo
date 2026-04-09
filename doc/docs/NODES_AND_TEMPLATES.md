@@ -65,6 +65,29 @@
 - 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
+## 2026-04-10 1.0 第一阶段第 3 轮：replay / rare / hybrid 载体补充
+### 新增 node carrier
+- `并轨整备`
+  - 中段 upgrade 载体
+  - 职责：给 hybrid / redirect 一个更自然的整备入口，而不是只靠普通中段强化承载
+- `稀有读数`
+  - 后段 upgrade 载体
+  - 职责：把 rare / late payoff 更明确地拉成“低频高收益窗口”
+- `并线残响`
+  - 后段 anomaly 载体
+  - 职责：把 `hybrid + bossEcho` 一起抬上来，更像这局最后一次偏航与收束前预读
+
+### 当前 late 节点承载原则
+- late 的 battle / upgrade / anomaly 现在需要共同承担：
+  - 收尾修正
+  - 稀有兑现
+  - 低频偏航
+  - replay 记忆点
+- 但仍然保持：
+  - 不新建独立节点系统
+  - 不把 rare carrier 常态化
+  - 不让 anomaly 回退成普通奖励分发
+
 ## 2026-04-07 三流派 carrier 收口补充
 ### route-fit 倾向
 - 本轮没有新建 route-specific node 系统，而是在现有 blueprint 权重上补了一层轻量 `routeBonuses`。

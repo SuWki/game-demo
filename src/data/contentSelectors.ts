@@ -166,17 +166,17 @@ function getAnomalyClassMultiplier(anomalyClass: AnomalyClassId | undefined, con
       return {
         opening: 0.74,
         mid: 1.24,
-        late: 1.24,
-        finalPrep: 0.96,
+        late: 1.32,
+        finalPrep: 1.08,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
     case 'bossEcho':
       return {
         opening: 0,
-        mid: 0.4,
-        late: 1.52,
-        finalPrep: 1.62,
+        mid: 0.46,
+        late: 1.66,
+        finalPrep: 1.78,
         finalBattle: 0,
         ended: 0,
       }[context.phase];

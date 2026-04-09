@@ -47,6 +47,7 @@ interface MetricRunSummary {
   branchSwitchCount?: number;
   branchSwitchPhaseCounts?: Partial<Record<PhaseId, number>>;
   rareSeenCount?: number;
+  rarePayoffPickCount?: number;
   hybridPickCount?: number;
   hybridOfferSeenCount?: number;
   latePayoffSeenCount?: number;
@@ -57,6 +58,7 @@ interface MetricRunSummary {
   nodeTypeCounts?: Partial<Record<NodeType, number>>;
   anomalySeenCount?: number;
   anomalyClassCounts?: Partial<Record<AnomalyClassId, number>>;
+  bossEchoSeenCount?: number;
   redirectOfferSeenCount?: number;
   redirectPickCount?: number;
   redirectPickStage?: PhaseId;
@@ -125,6 +127,8 @@ export class MetricsTracker {
 
   private rareSeenCountInRun = 0;
 
+  private rarePayoffPickCountInRun = 0;
+
   private hybridPickCountInRun = 0;
 
   private hybridOfferSeenCountInRun = 0;
@@ -144,6 +148,8 @@ export class MetricsTracker {
   private anomalySeenCountInRun = 0;
 
   private anomalyClassCountsInRun: Partial<Record<AnomalyClassId, number>> = {};
+
+  private bossEchoSeenCountInRun = 0;
 
   private redirectOfferSeenCountInRun = 0;
 
@@ -543,6 +549,7 @@ export class MetricsTracker {
     currentRun.branchSwitchCount = this.branchSwitchCountInRun;
     currentRun.branchSwitchPhaseCounts = this.branchSwitchPhaseCountsInRun;
     currentRun.rareSeenCount = this.rareSeenCountInRun;
+    currentRun.rarePayoffPickCount = this.rarePayoffPickCountInRun;
     currentRun.hybridPickCount = this.hybridPickCountInRun;
     currentRun.hybridOfferSeenCount = this.hybridOfferSeenCountInRun;
     currentRun.latePayoffSeenCount = this.latePayoffSeenCountInRun;
@@ -553,6 +560,7 @@ export class MetricsTracker {
     currentRun.nodeTypeCounts = this.nodeTypeCountsInRun;
     currentRun.anomalySeenCount = this.anomalySeenCountInRun;
     currentRun.anomalyClassCounts = this.anomalyClassCountsInRun;
+    currentRun.bossEchoSeenCount = this.bossEchoSeenCountInRun;
     currentRun.redirectOfferSeenCount = this.redirectOfferSeenCountInRun;
     currentRun.redirectPickCount = this.redirectPickCountInRun;
     currentRun.redirectPickStage = this.redirectPickStageInRun ?? undefined;
@@ -574,6 +582,7 @@ export class MetricsTracker {
       branchSwitchCount: this.branchSwitchCountInRun,
       branchSwitchPhaseCounts: this.branchSwitchPhaseCountsInRun,
       rareSeenCount: this.rareSeenCountInRun,
+      rarePayoffPickCount: this.rarePayoffPickCountInRun,
       hybridPickCount: this.hybridPickCountInRun,
       hybridOfferSeenCount: this.hybridOfferSeenCountInRun,
       latePayoffSeenCount: this.latePayoffSeenCountInRun,
@@ -584,6 +593,7 @@ export class MetricsTracker {
       nodeTypeCounts: this.nodeTypeCountsInRun,
       anomalySeenCount: this.anomalySeenCountInRun,
       anomalyClassCounts: this.anomalyClassCountsInRun,
+      bossEchoSeenCount: this.bossEchoSeenCountInRun,
       redirectOfferSeenCount: this.redirectOfferSeenCountInRun,
       redirectPickCount: this.redirectPickCountInRun,
       redirectPickStage: this.redirectPickStageInRun,
@@ -613,6 +623,7 @@ export class MetricsTracker {
     this.branchSwitchCountInRun = 0;
     this.branchSwitchPhaseCountsInRun = {};
     this.rareSeenCountInRun = 0;
+    this.rarePayoffPickCountInRun = 0;
     this.hybridPickCountInRun = 0;
     this.hybridOfferSeenCountInRun = 0;
     this.latePayoffSeenCountInRun = 0;
@@ -623,6 +634,7 @@ export class MetricsTracker {
     this.nodeTypeCountsInRun = {};
     this.anomalySeenCountInRun = 0;
     this.anomalyClassCountsInRun = {};
+    this.bossEchoSeenCountInRun = 0;
     this.redirectOfferSeenCountInRun = 0;
     this.redirectPickCountInRun = 0;
     this.redirectPickStageInRun = null;
@@ -683,10 +695,17 @@ export class MetricsTracker {
       this.latePayoffSeenCountInRun += 1;
     }
 
+    if (contentTier === 'rare' && meta?.isLatePayoff) {
+      this.rarePayoffPickCountInRun += 1;
+    }
+
     if (meta?.contentKind === 'anomaly') {
       this.anomalySeenCountInRun += 1;
       if (meta.anomalyClass) {
         this.incrementRecordCount(this.anomalyClassCountsInRun, meta.anomalyClass);
+        if (meta.anomalyClass === 'bossEcho') {
+          this.bossEchoSeenCountInRun += 1;
+        }
       }
     }
   }

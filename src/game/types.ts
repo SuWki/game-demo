@@ -264,6 +264,17 @@ export interface EventDefinition {
   options: EventOption[];
 }
 
+export interface PickedEventRecord {
+  eventId: string;
+  optionId: string;
+  routeId?: RouteId;
+  anomalyClass?: AnomalyClassId;
+  contentTier?: ContentTier;
+  isHybridPick?: boolean;
+  isLatePayoff?: boolean;
+  isRedirectPick?: boolean;
+}
+
 export interface NodeOption {
   id: string;
   type: NodeType;
@@ -458,6 +469,7 @@ export interface RunState {
   maturedRoute: RouteId | null;
   stats: PlayerStats;
   selectedUpgrades: string[];
+  eventHistory: PickedEventRecord[];
   traversedNodes: NodeRecord[];
   battleWins: number;
   nodeOptions: NodeOption[];

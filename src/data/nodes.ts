@@ -350,6 +350,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-2-upgrade-mesh',
+        type: 'upgrade',
+        phase: 'mid',
+        title: '并轨整备',
+        description: '给一次更像混搭预埋的整备窗口，适合让当前路线带上一层旁路味道。',
+        selection: {
+          baseWeight: 2.25,
+          soloMultiplier: 0.88,
+          repeatTypeMultiplier: 0.78,
+          lowHpBonus: 1,
+        },
+      },
+      {
         id: 'round-2-event',
         type: 'anomaly',
         phase: 'mid',
@@ -597,6 +610,18 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-3-upgrade-rareline',
+        type: 'upgrade',
+        phase: 'late',
+        title: '稀有读数',
+        description: '把后段整备更明确地推向低频高收益窗口，适合撞一张真的会改结尾的牌。',
+        selection: {
+          baseWeight: 2.05,
+          repeatTypeMultiplier: 0.8,
+          lowHpBonus: 1.25,
+        },
+      },
+      {
         id: 'round-3-event',
         type: 'anomaly',
         phase: 'late',
@@ -672,6 +697,19 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.18,
+        },
+      },
+      {
+        id: 'round-3-anomaly-switchboard',
+        type: 'anomaly',
+        phase: 'late',
+        title: '并线残响',
+        description: '低频残响会把混搭收束和首领预读一起抬上来，更像这一局最后一次偏航。',
+        selection: {
+          baseWeight: 1.55,
+          soloMultiplier: 0.26,
+          repeatTypeMultiplier: 0.56,
+          noFocusBonus: 0.12,
         },
       },
     ],

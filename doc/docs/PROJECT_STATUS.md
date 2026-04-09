@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：1.0 第一阶段中段推进期：node / upgrade / route / selector 深化 + telemetry / docs 收口
+- 当前执行焦点：1.0 第一阶段第 3 轮：构筑分化 / replay 动机补厚，继续扩写 hybrid / redirect / rare payoff / late payoff，并保持 0.9v freeze 基线稳定
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -37,6 +37,36 @@
 ## 当前最大风险
 - 普通 build 下 `boss-bastion / fireline` 的自然覆盖率仍偏低，最终关远程后段仍有“前段成立、收束偏薄”的残余风险
 - 该风险当前应继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+
+## 2026-04-10 1.0 第一阶段第 3 轮
+- 当前阶段判断继续前推为：`1.0 第一阶段` 中的“构筑分化 / replay 动机补厚轮”。
+- 取舍依据继续以：
+  - 最新用户 brief
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  - `ROADMAP_1_0.md`
+  为准；如与更早仍停在 `0.9v freeze sign-off` 或 `1.0 第一阶段第 2 轮` 的摘要冲突，以最新口径覆盖。
+- 本轮主线不再是继续补骨架，而是把现有承载继续推向：
+  - rare payoff
+  - hybrid
+  - redirect
+  - late payoff
+  - replay 动机
+- 当前最新进展：
+  - upgrade 池新增一批 generic hybrid / rare late-payoff 以及每条路线各 1 张新的 redirect 承载，mid 改道与 late 低频收束都更厚。
+  - anomaly 池新增 `并轨超调 / 影缝并联 / 口袋回读 / 首领并线`，把 `hybrid / bossEcho` 从“有入口”继续推向“更能改变这局走势”。
+  - node 侧新增 `并轨整备 / 稀有读数 / 并线残响`，让中段混搭与后段低频收束更容易拥有自然载体。
+  - replay prompt 不再只看是否碰过 anomaly，而会开始读入 rare payoff / hybrid / redirect / bossEcho 的实际命中。
+  - telemetry 在现有 run summary 上补了：
+    - `rarePayoffPickCount`
+    - `bossEchoSeenCount`
+- 当前更适合继续做：
+  - 继续补 route / anomaly / node 的高记忆点内容
+  - 继续拉开中后段 run 与 run 之间的读法差异
+  - 继续轻量回归验证 `boss-bastion / fireline`
+- 当前最大风险保持不变：
+  - 普通 build 下 `boss-bastion / fireline` 仍是低频样本
+  - 本轮内容扩写没有把它明显做坏，但它仍然是 1.0 期间需要持续监控的残余风险
 
 ## 2026-04-08 0.9v 音频阻断项修复
 - 本轮先按最新真实运行反馈，临时把阶段判断回退为：`0.9v 封版前阻断项修复`。

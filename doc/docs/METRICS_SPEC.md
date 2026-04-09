@@ -100,6 +100,23 @@
 - 2026-04-05 起，`branch_switch` 口径修正为：
   - 如果某次 pick 同时触发 dominant route 翻转与 matured，也必须记录为一次真实 branch switch
   - 仅当 run 在该次 pick 之前就已经 `matured`，才抑制后续 branch switch 计数
+
+## 2026-04-10 replay / late-payoff 观测补充
+- 本轮没有新建独立 telemetry 系统，继续沿用现有：
+  - `upgrade_selected`
+  - `event_selected`
+  - `run_finished`
+  - run summary
+- 在当前 run summary 上补了两个轻量字段：
+  - `rarePayoffPickCount`
+    - 当前 run 内命中的 rare late-payoff / rare replay-grade payoff 次数
+    - 目标是更直接观察“这局有没有真正吃到低频高收益收尾”
+  - `bossEchoSeenCount`
+    - 当前 run 内命中的 `bossEcho` anomaly 次数
+    - 目标是更直接观察 replay 相关的 Boss 前预读内容有没有进到自然样本
+- 取舍说明：
+  - `hybrid / redirect / late payoff / anomalyClass` 的主要观测基础在上一轮已经存在
+  - 本轮只补对 replay 动机更直接的低成本摘要字段，不拆新事件族、不做 action 级埋点
 ## 2026-04-05 Semantics Alignment Addendum
 - `node_selected.payload.nodeType` 现在可能为：
   - `battle`

@@ -45,6 +45,7 @@ import { rollEventDefinition, rollUpgradeChoices } from '../data/contentSelector
 import { ENEMY_ARCHETYPES, getEnemyArchetype, pickEnemyArchetype } from '../data/enemyArchetypes';
 import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
+import { UPGRADE_ARCHETYPES } from '../data/upgrades';
 import type {
   BattlePressurePhaseDefinition,
   BattleState,
@@ -63,12 +64,14 @@ import type {
   AudioCue,
   PlayerInputState,
   PlayerStats,
+  PickedEventRecord,
   RouteBuildStage,
   RouteId,
   RunEndingKind,
   RunOutcome,
   RunState,
   Services,
+  UpgradeArchetype,
   UpgradeDefinition,
   UpgradeSource,
 } from '../game/types';
@@ -162,6 +165,7 @@ export class RunEngine {
       maturedRoute: null,
       stats: createBaseStats(),
       selectedUpgrades: [],
+      eventHistory: [],
       traversedNodes: [],
       battleWins: 0,
       nodeOptions: [],
@@ -321,21 +325,33 @@ export class RunEngine {
       pickId: `event:${eventDef.id}:${option.id}`,
     });
     const isRedirectPick = Boolean(optionRouteId && previousDominantRoute && optionRouteId !== previousDominantRoute);
+    const isHybridPick =
+      isRedirectPick ||
+      eventDef.id === 'signal-soften' ||
+      eventDef.id === 'phase-splitter' ||
+      eventDef.id === 'cross-branch-signal' ||
+      eventDef.id === 'route-handoff' ||
+      eventDef.id === 'relay-splice' ||
+      eventDef.id === 'null-lens' ||
+      eventDef.id === 'mirror-cache' ||
+      eventDef.id === 'carrier-breach';
+    const isLatePayoff = this.isLatePayoffEvent(eventDef);
+    this.state.eventHistory.push({
+      eventId: eventDef.id,
+      optionId: option.id,
+      routeId: optionRouteId,
+      anomalyClass: eventDef.anomalyClass,
+      contentTier: eventDef.contentTier,
+      isHybridPick,
+      isLatePayoff,
+      isRedirectPick,
+    });
     this.services.metrics.recordEventSelected(eventDef.id, option.id, optionRouteId, eventDef.contentTier, {
       phase: this.state.phase,
       contentKind: eventDef.contentKind ?? 'event',
       anomalyClass: eventDef.anomalyClass,
-      isHybridPick:
-        isRedirectPick ||
-        eventDef.id === 'signal-soften' ||
-        eventDef.id === 'phase-splitter' ||
-        eventDef.id === 'cross-branch-signal' ||
-        eventDef.id === 'route-handoff' ||
-        eventDef.id === 'relay-splice' ||
-        eventDef.id === 'null-lens' ||
-        eventDef.id === 'mirror-cache' ||
-        eventDef.id === 'carrier-breach',
-      isLatePayoff: this.isLatePayoffEvent(eventDef),
+      isHybridPick,
+      isLatePayoff,
     });
     if (isRedirectPick && optionRouteId) {
       this.services.metrics.recordRedirectPick({
@@ -1297,7 +1313,7 @@ export class RunEngine {
     buildStage: RouteBuildStage,
     endingKind: RunEndingKind,
   ): string {
-    const anomalyVisits = this.getAnomalyVisitCount();
+    const replayProfile = this.getReplayProfile(routeId);
     if (!routeId) {
       return '再来一局优先把前段节奏立住，主路线会更容易自然站稳。';
     }
@@ -1305,26 +1321,47 @@ export class RunEngine {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        if (anomalyVisits === 0) {
-          return `${routeName}路线这一局已经跑通，下局试着多吃一拍异常或低频模板，收尾味道会更不一样。`;
+        if (replayProfile.bossEchoHits === 0 && replayProfile.rarePayoffHits === 0) {
+          return `${routeName}路线这一局已经跑通，下局试着去撞一拍首领残响或尾段稀有收束，结尾会更像另一种 run。`;
         }
-        return `${routeName}路线这一局已经跑通，再开一局可以试着换一条路，或把收尾打得更稳。`;
+        if (replayProfile.hybridHits + replayProfile.redirectHits >= 2) {
+          return `${routeName}路线这一局是带着偏航味道跑通的，下局反过来压纯收尾，会更像另一种打法。`;
+        }
+        if (replayProfile.hybridHits === 0 && replayProfile.redirectHits === 0) {
+          return `${routeName}路线这一局已经跑通，下局可以故意留一段混搭或改线窗口，看它怎么把尾段带偏。`;
+        }
+        return `${routeName}路线这一局已经跑通，再开一局可以换另一种尾段读法，看看这条线怎么收。`;
       }
-      if (anomalyVisits === 0) {
-        return `${routeName}路线已经站住了，下局试着多吃异常窗口，会更容易看到另一种中后段收束。`;
+      if (replayProfile.rarePayoffHits === 0) {
+        return `${routeName}路线已经站住了，下局试着撞一张尾段高收益牌，会更容易把结尾拉开。`;
+      }
+      if (replayProfile.bossEchoHits > 0 && replayProfile.rarePayoffHits > 0) {
+        return `${routeName}路线已经站住了，这局还吃到了首领残响和尾段高收益；下局换一条收尾线，会更像另一种 run。`;
+      }
+      if (replayProfile.anomalyVisits === 0 || replayProfile.hybridHits === 0) {
+        return `${routeName}路线已经站住了，下局多去撞低频异常和混搭窗口，会更容易读到另一种尾段。`;
       }
       return `${routeName}路线已经站住了，再来一局可以继续把它压到完整成型。`;
     }
 
     if (endingKind === 'timeOut') {
-      if (anomalyVisits === 0) {
-        return `${routeName}路线已经起势，再来一局多吃一拍异常或尾段变体，通常会更容易把最后一段撑厚。`;
+      if (replayProfile.rarePayoffHits === 0) {
+        return `${routeName}路线已经起势，再来一局多去找尾段高收益牌，通常会更容易把最后一段撑厚。`;
+      }
+      if (replayProfile.bossEchoHits === 0) {
+        return `${routeName}路线已经起势，再来一局试着提前吃到首领残响式预读，最后一段会更好接。`;
       }
       return `${routeName}路线已经起势，再来一局重点补最后一段输出和转场决策。`;
     }
     if (buildStage === 'matured' || buildStage === 'committed') {
-      if (anomalyVisits === 0) {
-        return `${routeName}路线已经起势，再来一局把异常窗口和最后一段耐久一起补上，会更容易完整收尾。`;
+      if (replayProfile.hybridHits + replayProfile.redirectHits >= 2) {
+        return `${routeName}路线已经起势，但这局偏航偏得有点深；下局早点补锚点，收尾会更稳。`;
+      }
+      if (replayProfile.rarePayoffHits === 0 || replayProfile.routeRareHits === 0) {
+        return `${routeName}路线已经起势，再来一局把尾段高收益和路线收尾补上，会更容易完整落地。`;
+      }
+      if (replayProfile.anomalyVisits === 0) {
+        return `${routeName}路线已经起势，再来一局把异常窗口也接上，会更容易看到另一种结尾。`;
       }
       return `${routeName}路线已经起势，再来一局重点把最后一段耐久和收束补齐。`;
     }
@@ -1351,6 +1388,65 @@ export class RunEngine {
       return `${routeName}路线已经起势，但这局还是在收尾前被打断了。`;
     }
     return `${routeName}路线刚露出倾向，这局就先被打断了。`;
+  }
+
+  private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {
+    const pickedIds = new Set(this.state.selectedUpgrades);
+    return UPGRADE_ARCHETYPES.filter((archetype) => pickedIds.has(archetype.id));
+  }
+
+  private hasAnyUpgradeTag(tags: string[] | undefined, expected: string[]): boolean {
+    return expected.some((tag) => tags?.includes(tag));
+  }
+
+  private isRarePayoffEvent(record: PickedEventRecord): boolean {
+    return Boolean(
+      record.contentTier === 'rare' &&
+        (record.isLatePayoff || record.anomalyClass === 'bossEcho' || record.anomalyClass === 'hybrid'),
+    );
+  }
+
+  private getReplayProfile(routeId: RouteId | null): {
+    anomalyVisits: number;
+    hybridHits: number;
+    redirectHits: number;
+    latePayoffHits: number;
+    rarePayoffHits: number;
+    bossEchoHits: number;
+    routeRareHits: number;
+  } {
+    const pickedUpgrades = this.getSelectedUpgradeArchetypes();
+    const pickedEvents = this.state.eventHistory;
+
+    const hybridHits =
+      pickedUpgrades.filter((archetype) => this.hasAnyUpgradeTag(archetype.tags, ['hybrid'])).length +
+      pickedEvents.filter((record) => record.isHybridPick || record.anomalyClass === 'hybrid').length;
+    const redirectHits =
+      pickedUpgrades.filter((archetype) => this.hasAnyUpgradeTag(archetype.tags, ['redirect'])).length +
+      pickedEvents.filter((record) => record.isRedirectPick).length;
+    const latePayoffHits =
+      pickedUpgrades.filter((archetype) => this.isLatePayoffTagged(archetype.tags, archetype.contentTier)).length +
+      pickedEvents.filter((record) => record.isLatePayoff).length;
+    const rarePayoffHits =
+      pickedUpgrades.filter(
+        (archetype) =>
+          archetype.contentTier === 'rare' && this.hasAnyUpgradeTag(archetype.tags, ['payoff', 'finisher', 'hybrid']),
+      ).length + pickedEvents.filter((record) => this.isRarePayoffEvent(record)).length;
+    const bossEchoHits = pickedEvents.filter((record) => record.anomalyClass === 'bossEcho').length;
+    const routeRareHits =
+      routeId === null
+        ? 0
+        : pickedUpgrades.filter((archetype) => archetype.routeId === routeId && archetype.contentTier === 'rare').length;
+
+    return {
+      anomalyVisits: this.getAnomalyVisitCount(),
+      hybridHits,
+      redirectHits,
+      latePayoffHits,
+      rarePayoffHits,
+      bossEchoHits,
+      routeRareHits,
+    };
   }
 
   private isHybridTagged(tags: string[] | undefined): boolean {

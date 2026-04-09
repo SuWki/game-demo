@@ -710,6 +710,98 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-mirror-lattice',
+    name: '镜格并流',
+    category: 'generic',
+    repeatable: true,
+    tags: ['bridge', 'hybrid'],
+    selection: {
+      baseWeight: 2.45,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.35,
+        late: 1.05,
+        finalPrep: 0.78,
+      },
+      noDominantRouteBonus: 0.9,
+      finalPrepBonus: 1,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          critChance: 0.05,
+          projectileSpeed: 18,
+          moveSpeed: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-borrowed-tail',
+    name: '借尾并幅',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['bridge', 'payoff', 'hybrid', 'rare'],
+    selection: {
+      baseWeight: 0.9,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.75,
+        finalPrep: 2.1,
+        finalBattle: 1.2,
+      },
+      finalPrepBonus: 2.2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 4,
+          fireRate: 0.14,
+          multishot: 1,
+          moveSpeed: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-crown-pocket',
+    name: '余波护仓',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['payoff', 'rare'],
+    selection: {
+      baseWeight: 0.88,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.42,
+        finalPrep: 2.05,
+        finalBattle: 1.05,
+      },
+      finalPrepBonus: 2.1,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 10,
+          regeneration: 0.16,
+          projectileSpeed: 18,
+          moveSpeed: 8,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 10,
+      },
+    ],
+  },
+  {
     id: 'crit-aim',
     name: '聚焦瞄准',
     category: 'route',
@@ -922,6 +1014,49 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           damage: 2,
           critChance: 0.03,
           projectileSpeed: 16,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-branch-ignite',
+    name: '借爆并焰',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.88,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.75,
+        late: 1,
+      },
+      hintedRouteBonus: 0.04,
+      dominantRouteBonus: 0.12,
+      committedRouteBonus: 0.08,
+      offRouteMultiplier: 2.26,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critChance: 0.08,
+          fireRate: 0.08,
+          moveSpeed: 12,
         },
       },
       {
@@ -1431,6 +1566,50 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           damage: 2,
           pierce: 1,
           projectileSpeed: 18,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-sidestitch',
+    name: '借层并轨',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.88,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.75,
+        late: 1,
+      },
+      hintedRouteBonus: 0.04,
+      dominantRouteBonus: 0.12,
+      committedRouteBonus: 0.08,
+      offRouteMultiplier: 2.26,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          pierce: 1,
+          projectileSpeed: 20,
+          moveSpeed: 8,
         },
       },
       {
@@ -2203,6 +2382,49 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           fireRate: 0.14,
           moveSpeed: 10,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-rebound-window',
+    name: '借窗回返',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.88,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.75,
+        late: 1,
+      },
+      hintedRouteBonus: 0.04,
+      dominantRouteBonus: 0.12,
+      committedRouteBonus: 0.08,
+      offRouteMultiplier: 2.26,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          moveSpeed: 14,
+          dashInterval: -0.18,
+          regeneration: 0.08,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
       {
         type: 'route',

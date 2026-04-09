@@ -136,3 +136,45 @@
   - `bridge`：让 hinted / committed 更清楚
   - `payoff`：把 late / final 的兑现拉开
   - `redirect`：让 off-route 改道更像主动判断，而不是普通副路线填充
+
+## 2026-04-10 1.0 第一阶段第 3 轮：构筑分化 / replay 动机补厚
+### 当前取舍
+- 本轮不再回到“补 starter / 骨架承接”，而是继续加厚：
+  - `hybrid`
+  - `redirect`
+  - `rare payoff`
+  - `late payoff`
+  - replay 动机
+- 目标不是单纯把数值做大，而是让 run 与 run 之间更容易读成不同打法结果。
+
+### route 中后段分化口径
+- `crit`
+  - committed 之后应更明显读成“升温后爆点兑现”而不是单纯高伤。
+  - 新增 `借爆并焰` 这类 redirect 入口，用来让别路 build 临时切向暴击尾段，但不替代暴击本身的升温闭环。
+- `pierce`
+  - committed 之后应更明显读成“清线 / 穿线 / 扩面 / 回响收束”。
+  - 新增 `借层并轨` 这类 redirect 入口，强调“现在改向穿透不亏”，而不是只给普通副路线 starter。
+- `dash`
+  - committed 之后应更明显读成“换位 / 回摆 / 反打 / 回线收束”。
+  - 新增 `借窗回返` 这类 redirect 入口，让转向穿梭更像走位打法变化，而不是单纯的数值逃生。
+
+### generic replay 内容口径
+- generic late-payoff 现在继续允许承载：
+  - 混搭收束
+  - 稀有尾段补厚
+  - 不同 run 之间的 replay 差异
+- 但它们仍然必须遵守：
+  - 不提前回流到 mid 伪造 payoff
+  - 不破坏“三选一最多 1 张路线强化”
+  - 不把 late 收尾重新做回纯数值堆高
+
+### anomaly / route 关系补充
+- `hybrid` anomaly 本轮继续承担：
+  - 并轨试错
+  - 中后段混搭
+  - “这局为什么和上一局不一样”的低频解释
+- `bossEcho` anomaly 本轮继续承担：
+  - Boss 前的预读
+  - 尾段收束方式的提前分岔
+  - replay 层面的高记忆点
+- 它们都不应退回普通 event 的泛补给语义。

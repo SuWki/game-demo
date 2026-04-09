@@ -1,4 +1,157 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 3 轮] replay 动机补厚 / hybrid・redirect・rare payoff 扩写
+### 本轮口径
+- 若旧文档仍停在 `1.0 第一阶段第 2 轮` 的“结构承接补厚”，本轮继续以：
+  - 最新用户 brief
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - `ROADMAP_1_0.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准。
+- `0.9v freeze` 继续作为稳定底座；本轮不是 Boss 专项调参轮，也不是 selector / telemetry 独立优化轮。
+- `boss-bastion / fireline` 继续只做回归监控，不抢占主线。
+
+### 文档盘点结论
+- docs 已足够明确、可直接实现的边界：
+  - rare payoff 主要继续留在 `late / final`
+  - `hybrid / redirect` 需要让 run 与 run 之间更像不同打法，而不是只多一个标签
+  - anomaly 仍要保持独立异常层，不回退成普通 event 奖励分发
+  - 三选一继续遵守“最多 1 张路线强化、路线强化低于通用强化、单局唯一”
+- docs 仍不够明确、因此本轮按保守近似处理的部分：
+  - replay 动机没有单独新系统口径，因此本轮只在现有 result prompt 上做轻量增强
+  - telemetry 不新拆 replay 事件族，只在现有 run summary 上补最小字段
+
+### 当前缺口
+- 内容量虽然已经够做结构承接，但 replay 动机仍容易读成“同一路线继续做大”。
+- `hybrid / redirect / rare payoff / late payoff` 已有入口，但还不够厚，不足以稳定制造“这局和上一局不是一回事”的 run 阅读。
+- `bossEcho` anomaly 仍偏薄，结果页 replay prompt 也还没有真正把低频内容读回给玩家。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 新增 generic：
+    - `镜格并流`
+    - `借尾并幅`
+    - `余波护仓`
+  - 新增 route redirect：
+    - `借爆并焰`
+    - `借层并轨`
+    - `借窗回返`
+  - 目标是同时补：
+    - mid 的真实改道窗口
+    - late 的稀有混搭收束
+    - replay 级低频尾段牌
+- `src/data/events.ts`
+  - 新增 anomaly：
+    - `并轨超调`
+    - `影缝并联`
+    - `口袋回读`
+    - `首领并线`
+  - 方向是继续加厚：
+    - `hybrid`
+    - `bossEcho`
+  - 而不是继续回涨 `routeWindow`
+- `src/data/nodes.ts`
+  - 新增节点载体：
+    - `并轨整备`
+    - `稀有读数`
+    - `并线残响`
+  - 中段多一个 hybrid / redirect 承接口，后段多一个 rare / bossEcho 承接口
+- `src/data/contentSelectors.ts`
+  - 只做轻量 selector 微调：
+    - late / finalPrep 的 `hybrid` anomaly 倍率小幅上调
+    - late / finalPrep 的 `bossEcho` anomaly 倍率小幅上调
+  - 目标只是避免新内容完全投不出来，不把本轮做成 selector 调参轮
+- `src/game/types.ts`
+  - `RunState` 新增 `eventHistory`
+  - 新增 `PickedEventRecord`
+- `src/systems/RunEngine.ts`
+  - anomaly 选择现在会记录轻量 `eventHistory`
+  - replay prompt 不再只看“有没有碰到 anomaly”，开始读入：
+    - rare payoff
+    - hybrid
+    - redirect
+    - bossEcho
+  - 结果页因此能更像“这局为什么值得再开一局”的收尾提示
+- `src/systems/MetricsTracker.ts`
+  - 在现有 run summary 上补：
+    - `rarePayoffPickCount`
+    - `bossEchoSeenCount`
+  - 不新建独立 telemetry 系统
+
+### 数据结构变更
+- `src/game/types.ts`
+  - 新增 `PickedEventRecord`
+  - `RunState.eventHistory`
+- `src/systems/MetricsTracker.ts`
+  - `MetricRunSummary` 新增：
+    - `rarePayoffPickCount`
+    - `bossEchoSeenCount`
+- 本轮没有改主流程，没有重写 `RunEngine`，没有新建大系统。
+
+### 验证
+- `npm run build`
+  - 通过
+- 静态内容盘点
+  - upgrades：
+    - `67 -> 73`
+    - `hybrid 8 -> 10`
+    - `redirect 6 -> 9`
+    - `rare 12 -> 14`
+  - anomaly：
+    - `24 -> 28`
+    - `hybrid 5 -> 7`
+    - `bossEcho 3 -> 5`
+- late `nodePrep` / anomaly 抽样
+  - `lateNodePrepCritHinted`
+    - `avgRoute = 0.55`
+    - `avgHybrid = 1.20`
+    - `avgRedirect = 0.17`
+    - `avgRare = 0.43`
+  - late anomaly 命中（500 样本）
+    - `distortion = 166`
+    - `hybrid = 166`
+    - `bossEcho = 128`
+    - `routeWindow = 40`
+  - 说明：
+    - 新 replay-grade anomaly 已进入自然 late 池
+    - `routeWindow` 仍被压在次级入口，没有重新抢回 anomaly 主味道
+- Boss 监控回归：`npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 9`
+    - `crossfireSeenRuns = 5`
+    - `firelineSeenRuns = 1`
+  - `highBurst`
+    - `bossBastionRuns = 13`
+    - `firelineSeenRuns = 2`
+  - `highMobility`
+    - `bossBastionRuns = 7`
+    - `firelineSeenRuns = 1`
+  - 结论：
+    - 本轮内容扩写没有把 `boss-bastion / fireline` 明显做坏
+    - 普通 build 仍然是低频监控项，但没有发现恶化
+- 浏览器全链路回归：`npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - anomaly panel / boss node / result / replay 均可跑通
+  - `consoleErrors = []`
+  - 最新截图已人工复核：
+    - `result.png`
+    - `panel-14.png`
+    - `panel-40.png`
+    - `replay.png`
+  - 截图确认：
+    - 新 anomaly 文案无乱码、无超框
+    - 结果页 route trace 与 replay 收尾保持干净
+    - HUD / 面板没有被新内容挤坏
+  - `summary.bossBattleSeen = false` 仍是旧 QA matcher 滞后；metrics 继续确认 `battle_template_entered(encounterType = boss)`
+
+### 当前结论
+- 当前阶段判断应更新为：`1.0 第一阶段` 中的“构筑分化 / replay 动机补厚轮”。
+- 本轮真正补上的不是单纯内容数量，而是：
+  - replay-grade low-frequency content
+  - hybrid / redirect 的真实中后段承接
+  - rare / late payoff 的自然载体
+  - result replay prompt 对 run 差异的读法
+- 当前最大残余风险保持不变：
+  - 普通 build 下 `boss-bastion / fireline` 仍是低频样本
+  - 它继续属于监控项，而不是本轮阻断项
 ## [1.0 第一阶段第 2 轮] node / upgrade / route / selector 深化 + telemetry 收口
 ### 本轮口径
 - 若旧文档仍停留在 `0.9v freeze sign-off` 或 `1.0 第一轮开发启动` 的更早摘要，本轮以：

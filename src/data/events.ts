@@ -751,6 +751,66 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'junction-overdrive',
+    name: '并轨超调',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    contentTier: 'rare',
+    description: '两种本不该同拍的收束读法被硬拧到了一起。这一拍不是普通补给，而是在决定这局尾段更像混搭还是单路暴冲。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.04,
+      minRound: 3,
+      phaseBonuses: {
+        late: 2.05,
+        finalPrep: 0.82,
+      },
+      hintedRouteBonus: 0.16,
+      dominantRouteBonus: 1.55,
+      committedRouteBonus: 1.05,
+      maturedRouteBonus: 0.55,
+      noDominantRouteBonus: 0.08,
+    },
+    options: [
+      {
+        id: 'junction-overdrive-splice',
+        label: '压成双向尾段',
+        description: '把两段不兼容的尾劲硬接到一起，换一口更宽的混搭收束。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              multishot: 1,
+              projectileSpeed: 18,
+              moveSpeed: 10,
+            },
+          },
+        ],
+      },
+      {
+        id: 'junction-overdrive-focus',
+        label: '压成当前爆点',
+        description: '放弃混搭，把这一拍全压进当前路线的尾段爆点。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.14,
+              critMultiplier: 0.24,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'crit-heat-bank',
     name: '热区记录',
     contentKind: 'anomaly',
@@ -1185,6 +1245,63 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'shadow-merge',
+    name: '影缝并联',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '两段偏航样本被缝在了一起。你可以让这局继续稳走当前路线，也可以让尾段开始带上一点旁路味道。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.42,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.35,
+        late: 1.1,
+      },
+      hintedRouteBonus: 0.3,
+      dominantRouteBonus: 1.1,
+      committedRouteBonus: 0.7,
+      noDominantRouteBonus: 0.4,
+    },
+    options: [
+      {
+        id: 'shadow-merge-press',
+        label: '顺着当前线压深',
+        description: '沿当前路线再往前压一拍，但把站位余量一起垫上。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.12,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'shadow-merge-buffer',
+        label: '留一段旁路余量',
+        description: '不急着压死方向，先把混搭和转场空间一起留出来。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              projectileSpeed: 20,
+              critChance: 0.05,
+              regeneration: 0.1,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'null-lens',
     name: '空镜偏折',
     contentKind: 'anomaly',
@@ -1350,6 +1467,54 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'pocket-afterread',
+    name: '口袋回读',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: '首领火线还没真正压进场内，侧频里已经先留下了一段口袋回读。你可以把它记成拆线准备，也可以记成换边准备。',
+    selection: {
+      baseWeight: 1.14,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.95,
+        finalPrep: 1.35,
+      },
+      noDominantRouteBonus: 0.18,
+    },
+    options: [
+      {
+        id: 'pocket-afterread-break',
+        label: '先记拆线',
+        description: '先把拆屏、穿线和补刀的手感垫起来，准备吃下首领的火线段。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              multishot: 1,
+              projectileSpeed: 18,
+              pierce: 1,
+            },
+          },
+        ],
+      },
+      {
+        id: 'pocket-afterread-slide',
+        label: '先记回摆',
+        description: '先把换边和回摆窗口垫起来，为首领后段的拖线留更宽的走位。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 16,
+              regeneration: 0.12,
+              dashInterval: -0.16,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'terminal-tithe',
     name: '终端税',
     contentKind: 'anomaly',
@@ -1458,6 +1623,66 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 8,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'crown-switchboard',
+    name: '首领并线',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    contentTier: 'rare',
+    description: '首领波形里不止一种收束方式在抢线。这一拍会让你决定最后一段是继续纯收尾，还是带着偏航味道撞进去。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.02,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.9,
+        finalPrep: 1.55,
+      },
+      hintedRouteBonus: 0.12,
+      dominantRouteBonus: 1.2,
+      committedRouteBonus: 0.85,
+      maturedRouteBonus: 0.45,
+      noDominantRouteBonus: 0.1,
+    },
+    options: [
+      {
+        id: 'crown-switchboard-focus',
+        label: '压成当前收尾',
+        description: '把残响全压回当前路线，准备把尾段收得更尖。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              fireRate: 0.14,
+              projectileSpeed: 16,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'crown-switchboard-drift',
+        label: '压成偏航余量',
+        description: '不把这拍全部压死，改成一段更宽的偏航和回摆空间。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 8,
+              moveSpeed: 14,
+              regeneration: 0.12,
+              multishot: 1,
+            },
           },
         ],
       },
