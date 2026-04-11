@@ -1,4 +1,185 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 6 轮] 残余漂移压缩 / committed 稳定成型
+### 本轮口径
+- 若旧文档仍停在 `1.0 第一阶段第 5 轮` 的“玩法差异稳读 / 低命中样本补洞”，本轮继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准。
+- `0.9v freeze` 继续作为稳定底座；本轮不改主流程、不重写 `RunEngine`、不引入新系统，也不回拉成 Boss 专项轮或 telemetry 轮。
+- 本轮主线继续前推为：`1.0 第一阶段` 中的“残余漂移压缩 / committed 稳定成型轮”。
+
+### 文档盘点结论
+- docs 已足够明确、可直接实现的边界：
+  - 当前主问题已经从“普通样本里的玩法差异不够稳”进一步收窄成“committed retention 不够稳”
+  - ordinary sample 里 dominant route 在 mid-late 需要被持续承接，不能只靠 strongest late carrier / route-specific bossEcho 才成立
+  - `soft closeout` 负责 ordinary-sample hold；`hybrid support` 负责尾段怎么继续接；`bossEcho support` 负责 Boss 前预读；`redirect follow-through` 已有入口，但不应继续在 ordinary sample 里抢主味
+  - `pivot / hold node` 应承担承势与定势，而不是继续把节点只做成 route 标签分发器
+  - 三选一仍遵守“最多 1 张路线强化、路线强化低于通用强化、单局唯一”；`finalPrep` 继续压住 redirect 专项卡
+- docs 仍不够明确、因此本轮按保守近似处理的部分：
+  - 文档没有要求把 committed retention 写回引擎，因此本轮只扩现有 upgrade / anomaly / node carrier，并做轻量 selector 校准
+  - 文档没有要求为了 round6 再补 telemetry 字段，因此本轮沿用现有摘要字段，不额外扩 metrics
+  - 文档没有要求继续补 redirect 新入口；结合当前缺口判断，本轮将 redirect 视为“已有、够用、需要降噪”的内容层，而不是继续加量
+
+### 当前缺口
+- 第 5 轮已经补上了 ordinary-sample soft closeout，但少数 rerun 仍会在 mid-late 漂移，说明问题已经收敛为：
+  - dominant route 持续承接不稳
+  - hinted ordinary sample 的 off-route redirect / generic hybrid 噪音仍偏高
+  - `crit` 比 `pierce` 更容易掉成 `unformed / 只剩 hinted`
+- 因此本轮要解决的不是“再造更亮高潮”，而是让 committed 后的读法更容易站稳。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 新增 committed retention / ordinary-sample support：
+    - `压线留焰`
+    - `拆账铺面`
+    - `回线留窗`
+  - 取舍说明：
+    - `crit / pierce` 是主补对象
+    - `dash` 只做轻量承接，避免本轮再变成穿梭专项轮
+    - `压线留焰` 额外补了 1 层 route 推进，让它更像 committed hold，而不是普通 bridge
+- `src/data/events.ts`
+  - 新增 hybrid retention anomaly：
+    - `压线余焰`
+    - `拆账余缝`
+  - 新增 generic bossEcho support：
+    - `尾段预录`
+  - 取舍说明：
+    - `bossEcho` 本轮只补 support，不再走 route-specific 高记忆点扩写
+    - `redirect` 本轮不继续加新内容，避免 ordinary sample 再被偏航入口稀释
+- `src/data/nodes.ts`
+  - 新增 mid battle hold carrier：
+    - `压线续热`
+    - `拆屏挂账`
+  - 新增 late upgrade hold carrier：
+    - `定势整备`
+  - 目标是让 node 本身也承担“承势 / 定势”，而不是只把 run 阅读交给 upgrade / anomaly
+- `src/data/contentSelectors.ts`
+  - `levelUp`
+    - committed route window scale：`0.78 -> 1.02`
+    - committed flex 内 route window scale：`0.68 -> 0.90`
+    - 目标是让 committed late ordinary sample 更稳定地看见 dominant-route follow-up，而不是连续空吃通用牌
+  - `nodePrep`
+    - late flex pool：
+      - off-route redirect：`0.82 -> 0.74`
+      - generic hybrid：`0.92 -> 0.88`
+    - hinted ordinary sample：
+      - dominant hint：`1.20 -> 1.58`
+      - off-route redirect：`1.22 -> 0.58`
+      - generic hybrid：`0.68 -> 0.36`
+    - committed ordinary sample：
+      - dominant committed：`1.34 -> 1.52`
+      - off-route redirect：`0.92 -> 0.56`
+      - generic late flex：`0.56 -> 0.46`
+  - 取舍说明：
+    - 这轮 selector 的目标是“保护 dominant route 的持续承接”，不是抬高 rare / bossEcho 命中率
+    - redirect / hybrid 仍保留 mid 改道窗口，但不再在 ordinary sample 里与 dominant route 等强对冲
+- docs 同步更新：
+  - `PROJECT_STATUS.md`
+  - `ROUTES_SPEC.md`
+  - `NODES_AND_TEMPLATES.md`
+- 本轮刻意没有改：
+  - `RunEngine`
+  - Boss 模板 / Boss phase 参数
+  - telemetry 字段
+  因为本轮要解决的是 committed retention，而不是系统轮、Boss 轮或观测轮
+
+### 数据结构变更
+- 无新的系统结构或类型结构变更。
+- 本轮只扩：
+  - committed retention carrier
+  - ordinary-sample hybrid / bossEcho support
+  - node 的 hold / commit-hold blueprint
+  - selector 的保护性 route-fit 校准
+
+### 验证
+- `npm run build`
+  - 通过
+- 静态抽样：ordinary sample route continuity
+  - committed late `levelUp`
+    - `crit`
+      - dominant route offer：`0.23 -> 0.37`
+    - `pierce`
+      - dominant route offer：`0.28 -> 0.38`
+  - mid hinted `nodePrep`
+    - `crit`
+      - dominant route offer：`0.40 -> 0.60`
+      - off-route redirect：`0.46 -> 0.30`
+    - `pierce`
+      - dominant route offer：`0.38 -> 0.58`
+      - off-route redirect：`0.48 -> 0.31`
+  - late committed `nodePrep`
+    - `crit`
+      - dominant route offer：`0.50 -> 0.59`
+      - off-route redirect：`0.18 -> 0.13`
+    - `pierce`
+      - dominant route offer：`0.44 -> 0.58`
+      - off-route redirect：`0.21 -> 0.14`
+  - 说明：
+    - round6 的主增益不是“更亮”，而是 dominant route 在 ordinary sample 里的持续承接更稳
+    - 当前 residual drift 更像“偶发未站稳”，而不是整局重新掉散
+- 浏览器 route-flow rerun：`node output/playwright/commitment-pacing/route-flow-check.mjs`
+  - 最新 rerun 仍带有普通样本抖动：
+    - `crit`
+      - 全量 rerun 被早期 `reroute-window` 带偏到 `dash committed`
+      - 说明当前 ordinary sample 仍可能在 hinted 阶段被 mid 改道窗口拉散
+    - `pierce`
+      - 最新 rerun 在 mid 提前结束为 `unformed`
+      - 说明 `pierce -> dash/hinted` 虽比上一轮更少见，但 ordinary-sample retention 仍未完全站稳
+    - `dash`
+      - 最新 rerun 也停在 `unformed`
+      - 符合本轮并未把主线转成穿梭专项补强的边界
+  - 取舍说明：
+    - 该脚本是自然自动游玩监控，不是强制 route harness
+    - 因此它更适合证明“残余漂移是否还存在”，而不适合作为单点 closure 证明
+- 定向 crit rerun：
+  - 额外用定向 Playwright rerun 复检 `crit`
+  - 当前结果：
+    - `routeId = crit`
+    - `buildStage = committed`
+    - `firstCommitStage = mid`
+  - 说明 round6 结束时，`crit -> unformed` 已收窄成“偶发 hinted、可被继续推到 committed”，不再是稳定掉散
+- 结果页截图复查：
+  - `crit-rerun-round6.png`
+    - 已正确显示 `路线 = 暴击`
+    - 已正确显示 `成型 = 开始站稳`
+    - 收尾节点与结束原因可读
+  - `pierce-result.png`
+    - 最新 rerun 结果页仍可正常显示路线 / 成型 / 结束信息
+    - 但该样本停在 `unformed`，印证 ordinary-sample residual drift 仍未清零
+- 通用 Playwright client
+  - 依赖解析失败，原因是 skill 脚本目录未解析到 `playwright` 包
+  - 本轮回归仍以前述项目内 Playwright 脚本与截图复查为主，未影响主结论
+- Boss 监控回归：`npm exec --yes --package=tsx -- tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 6`
+    - `crossfireSeenRuns = 4`
+    - `firelineSeenRuns = 1`
+  - `highBurst`
+    - `bossBastionRuns = 8`
+    - `crossfireSeenRuns = 8`
+    - `firelineSeenRuns = 2`
+  - `highMobility`
+    - `bossBastionRuns = 7`
+    - `crossfireSeenRuns = 7`
+    - `firelineSeenRuns = 4`
+  - 结论：
+    - 未见新的明显恶化
+    - `fireline` 仍不是 normal 样本里的高频承接
+    - 本轮处理方式仍符合“监控 / 保护性观察”，没有把 Boss 风险劫持回主线
+
+### 当前结论
+- 当前阶段判断应更新为：`1.0 第一阶段` 中的“残余漂移压缩 / committed 稳定成型轮”。
+- 本轮真正补上的不是更多高记忆点爆点，而是：
+  - ordinary sample 的 committed retention
+  - `crit / pierce` 的 mid-late hold carrier
+  - generic bossEcho support 的轻量补位
+  - ordinary sample 下 hinted / committed 的 selector 降噪
+- 当前最大残余风险有两条：
+  - residual drift 虽已压缩，但普通样本里仍可能出现 `crit 被 reroute 拉散`、`pierce mid 停在 unformed` 这类还没完全站稳的样本
+  - `boss-bastion / fireline` 监控项未恶化，但仍有抽样波动，暂不宜宣称完全收口
+
 ## [1.0 第一阶段第 5 轮] 玩法差异稳读 / 低命中样本补洞
 ### 本轮口径
 - 若旧文档仍停在 `1.0 第一阶段第 4 轮` 的“高记忆点 run 分化 / 收束显性化”，本轮继续以：

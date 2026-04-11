@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：1.0 第一阶段第 5 轮：玩法差异稳读 / 低命中样本补洞，重点补 ordinary sample 的 committed 后承接，继续保持 0.9v freeze 基线稳定
+- 当前执行焦点：1.0 第一阶段第 6 轮：残余漂移压缩 / committed 稳定成型，重点压 ordinary sample 的 committed retention 漂移，继续保持 0.9v freeze 基线稳定
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -35,8 +35,61 @@
 - 最小表现层收口
 
 ## 当前最大风险
-- 当前主要问题已不再是“高记忆点内容不够多”，而是普通样本里仍有少数 run 会出现“构筑差异已存在，但玩法差异只读出一半”的残余漂移
-- `boss-bastion / fireline` 在 normal 固定样本中的可见性虽较上一轮回升，但 `highBurst / highMobility` 仍有抽样波动，继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+- 当前主要问题已进一步收窄为：ordinary sample 里的 dominant route 虽能被读到，但少数 run 仍会停在 `hinted / 刚站稳`，残余漂移还没有被完全压平
+- `boss-bastion / fireline` 本轮回归未见明显恶化，但 normal / highBurst / highMobility 仍有抽样波动，继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+
+## 2026-04-11 1.0 第一阶段第 6 轮
+- 当前阶段判断继续保持在：`1.0 第一阶段`，且比第 5 轮更适合定义为“残余漂移压缩 / committed 稳定成型轮”。
+- 取舍依据继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准；如与第 4 / 5 轮摘要冲突，以本节覆盖。
+- 本轮主线不再主要追问“玩法差异能不能读出来”，而是继续收窄到：
+  - ordinary sample 的 committed retention
+  - `crit -> unformed`
+  - `pierce -> dash/hinted`
+  - mid-late dominant route 承接稳定性
+- 当前最新进展：
+  - upgrade 池新增：
+    - `压线留焰`
+    - `拆账铺面`
+    - `回线留窗`
+  - anomaly 池新增：
+    - `压线余焰`
+    - `拆账余缝`
+    - `尾段预录`
+  - node 侧新增：
+    - `压线续热`
+    - `拆屏挂账`
+    - `定势整备`
+  - selector 仅做 ordinary-sample 的保护性校准：
+    - committed late `levelUp` dominant route offer 由约 `0.23 / 0.28` 提到 `0.37 / 0.38`
+    - mid hinted `nodePrep` dominant route offer 由约 `0.40 / 0.38` 提到 `0.60 / 0.58`
+    - mid hinted `nodePrep` off-route redirect 由约 `0.46 / 0.48` 压到 `0.30 / 0.31`
+- 当前结论：
+  - 项目主问题已经从“普通样本读法不够稳”进一步收窄成“committed retention 仍有残余漂移”。
+  - 静态抽样显示 dominant-route continuity 已明显改善，但浏览器自然 route-flow rerun 仍能抽到更散的 ordinary sample。
+  - 最新全量 route-flow rerun 中，`crit` 被早期 reroute-window 带偏到 `dash committed`，`pierce` 则在 mid 提前结束为 `unformed`；这说明 residual drift 还没有被完全压平。
+  - 定向 crit rerun 仍可推进到 `crit committed`，因此 round6 更像“压缩漂移但尚未完全收口”，而不是已经彻底解决 ordinary-sample 稳读。
+- Boss 监控项最新回归：
+  - `normal`
+    - `bossBastionRuns = 6`
+    - `crossfireSeenRuns = 4`
+    - `firelineSeenRuns = 1`
+  - `highBurst`
+    - `bossBastionRuns = 8`
+    - `crossfireSeenRuns = 8`
+    - `firelineSeenRuns = 2`
+  - `highMobility`
+    - `bossBastionRuns = 7`
+    - `crossfireSeenRuns = 7`
+    - `firelineSeenRuns = 4`
+  - 结论：
+    - 未见新的明显恶化
+    - `fireline` 仍然不是 normal 样本里的高频承接
+    - 本轮仍不是 Boss 专项轮
 
 ## 2026-04-11 1.0 第一阶段第 5 轮
 - 当前阶段判断继续保持在：`1.0 第一阶段`，且比第 4 轮更适合定义为“玩法差异稳读 / 低命中样本补洞轮”。

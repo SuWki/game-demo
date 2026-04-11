@@ -179,6 +179,56 @@
   - replay 层面的高记忆点
 - 它们都不应退回普通 event 的泛补给语义。
 
+## 2026-04-11 1.0 第一阶段第 6 轮：残余漂移压缩 / committed 稳定成型
+### 当前取舍
+- 本轮不再继续加大 high-memory closeout，也不再把重点放在“redirect 入口够不够多”，而是继续压：
+  - ordinary sample 的 committed retention
+  - dominant route 在 mid-late 的持续承接
+  - `crit -> unformed`
+  - `pierce -> dash/hinted`
+- 因此本轮继续沿现有 upgrade / anomaly / node / selector carrier 做保守扩写，不引入新系统。
+
+### committed retention 当前口径
+- `crit`
+  - ordinary sample 里应更稳定地读成“续热 -> 压线 -> 爆点兑现”。
+  - 本轮新增 committed retention carrier：
+    - `压线留焰`
+    - `压线余焰`
+  - 它们的职责不是制造更亮的爆点，而是让 `crit` 不再轻易掉回 `unformed / 只剩高伤标签`。
+- `pierce`
+  - ordinary sample 里应更稳定地读成“拆线 -> 扩面 -> 清账回收”。
+  - 本轮新增 committed retention carrier：
+    - `拆账铺面`
+    - `拆账余缝`
+  - 它们的职责不是继续堆穿透数值，而是把“拆开、铺开、收回来”的中后段读法站稳。
+- `dash`
+  - 继续读成“换位 -> 回摆 -> 反打 -> 回线追回”。
+  - 本轮只轻量补入：
+    - `回线留窗`
+  - 目标是维持 `dash` 的稳定承接，而不是让它继续吸走 `crit / pierce` 的 ordinary sample。
+
+### soft closeout / hybrid / bossEcho / redirect 边界补充
+- `soft closeout / committed retention`
+  - 本轮负责 ordinary sample 的中后段承接稳压。
+  - 它们要让 dominant route 在没撞 strongest late carrier 时也不至于散掉。
+- `hybrid`
+  - 本轮继续负责“为什么这局尾段会这样接下去”的解释。
+  - `压线余焰 / 拆账余缝` 更偏 retain，而不是把 mixed closeout 再做成一次高记忆点爆闪。
+- `bossEcho`
+  - 继续负责 Boss 前预读和尾段提前分岔。
+  - 本轮新增 `尾段预录`，只补一层“当前打法最容易散掉的那一拍先漏出来”的 support，不替代 Boss 调参，也不让 bossEcho 常态化。
+- `redirect`
+  - 现有 `借焰续拍 / 借层回收 / 借位追回` 已足够承担 follow-through。
+  - 由于 round6 的主问题是 ordinary sample 噪音过高，本轮没有继续扩 redirect 新入口，而是转为压低 committed / hinted ordinary sample 里的 redirect 抢味。
+
+### 当前仍保留的近似实现
+- docs 已明确 ordinary sample 里的 dominant route 需要被持续承接，但没有要求用新系统硬锁路线；因此本轮仍只做 carrier 与 selector 校准。
+- 这意味着：
+  - `crit` 现在更难掉回 `unformed`
+  - `pierce` 更难漂到 `dash/hinted`
+  - 但少数 run 仍可能停在“已经 hinted / 刚开始站稳”，而不是稳定一路推到 matured
+- 因此本轮解决的是 residual drift 压缩，不是宣布 committed retention 已完全收口。
+
 ## 2026-04-11 1.0 第一阶段第 5 轮：玩法差异稳读 / 低命中样本补洞
 ### 当前取舍
 - 本轮不再主要追问“有没有更亮的 high-memory closeout”，而是追问：

@@ -230,6 +230,28 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-2-battle-crit-hold',
+        type: 'battle',
+        phase: 'mid',
+        title: '压线续热',
+        description: '中段敌潮会反复挤你的站位，逼你一边续热一边把短窗留到后面。',
+        templateCandidates: [
+          { templateId: 'elite', weight: 1.6 },
+          { templateId: 'elite-lockdown', weight: 1.2 },
+          { templateId: 'elite-screen', weight: 1 },
+        ],
+        difficultyScale: 1.17,
+        selection: {
+          baseWeight: 2.65,
+          soloMultiplier: 1.02,
+          repeatTypeMultiplier: 0.76,
+          routeBonuses: {
+            crit: 0.84,
+          },
+          battleCatchupBonus: 1.25,
+        },
+      },
+      {
         id: 'round-2-battle-screen',
         type: 'battle',
         phase: 'mid',
@@ -295,6 +317,28 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
             pierce: 1.15,
           },
           battleCatchupBonus: 1.2,
+        },
+      },
+      {
+        id: 'round-2-battle-pierce-hold',
+        type: 'battle',
+        phase: 'mid',
+        title: '拆屏挂账',
+        description: '护卫和本体会交替顶上来，更考你先拆出缝，再把散线清回去。',
+        templateCandidates: [
+          { templateId: 'elite-bulwark', weight: 1.7 },
+          { templateId: 'elite-screen', weight: 1.25 },
+          { templateId: 'elite', weight: 0.95 },
+        ],
+        difficultyScale: 1.18,
+        selection: {
+          baseWeight: 2.72,
+          soloMultiplier: 1.02,
+          repeatTypeMultiplier: 0.76,
+          routeBonuses: {
+            pierce: 0.88,
+          },
+          battleCatchupBonus: 1.25,
         },
       },
       {
@@ -753,6 +797,23 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.82,
           lowHpBonus: 1.8,
+        },
+      },
+      {
+        id: 'round-3-upgrade-commit-hold',
+        type: 'upgrade',
+        phase: 'late',
+        title: '定势整备',
+        description: '给一次更像把当前打法站稳的后段整备窗口，适合补掉最后一段容易散开的手感。',
+        selection: {
+          baseWeight: 2.58,
+          repeatTypeMultiplier: 0.8,
+          lowHpBonus: 1.45,
+          routeBonuses: {
+            crit: 0.38,
+            pierce: 0.5,
+            dash: 0.18,
+          },
         },
       },
       {

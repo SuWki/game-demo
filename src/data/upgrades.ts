@@ -967,6 +967,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'route',
         routeId: 'crit',
       },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
     ],
   },
   {
@@ -1274,6 +1278,45 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           fireRate: 0.14,
           critChance: 0.03,
+          moveSpeed: 8,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-linekeep',
+    name: '压线留焰',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge'],
+    selection: {
+      baseWeight: 3.65,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.46,
+        late: 0.92,
+        finalPrep: 0.28,
+      },
+      hintedRouteBonus: 1.54,
+      dominantRouteBonus: 4.52,
+      committedRouteBonus: 3.88,
+      maturedRouteBonus: 1.56,
+      finalPrepBonus: 0.72,
+      offRouteMultiplier: 0.28,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.12,
+          critChance: 0.03,
+          projectileSpeed: 14,
+          regeneration: 0.08,
           moveSpeed: 8,
         },
       },
@@ -2031,6 +2074,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'pierce-ledger-fanout',
+    name: '拆账铺面',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge'],
+    selection: {
+      baseWeight: 3.62,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.42,
+        late: 0.94,
+        finalPrep: 0.26,
+      },
+      hintedRouteBonus: 1.48,
+      dominantRouteBonus: 4.5,
+      committedRouteBonus: 3.92,
+      maturedRouteBonus: 1.58,
+      finalPrepBonus: 0.68,
+      offRouteMultiplier: 0.28,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierce: 1,
+          projectileSpeed: 16,
+          fireRate: 0.06,
+          moveSpeed: 8,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
     id: 'pierce-floodgate',
     name: '裂层清账',
     category: 'route',
@@ -2653,6 +2734,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           moveSpeed: 14,
           dashInterval: -0.24,
           dashInvulnerability: 0.06,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-return-hold',
+    name: '回线留窗',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge'],
+    selection: {
+      baseWeight: 3.18,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.34,
+        late: 0.82,
+        finalPrep: 0.22,
+      },
+      hintedRouteBonus: 1.18,
+      dominantRouteBonus: 3.92,
+      committedRouteBonus: 2.78,
+      maturedRouteBonus: 1.18,
+      finalPrepBonus: 0.56,
+      offRouteMultiplier: 0.34,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.16,
+          dashInvulnerability: 0.04,
+          regeneration: 0.08,
+          moveSpeed: 10,
         },
       },
       {

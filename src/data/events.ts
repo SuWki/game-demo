@@ -1603,6 +1603,70 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'crit-ember-hold',
+    name: '压线余焰',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '热区已经立住，但尾段还差一拍稳定承接。你可以先把压线站稳，也可以先把爆点留到更后面。',
+    routeAffinity: 'crit',
+    selection: {
+      baseWeight: 0.94,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.34,
+        late: 1.18,
+        finalPrep: 0.42,
+      },
+      hintedRouteBonus: 0.34,
+      dominantRouteBonus: 1.34,
+      committedRouteBonus: 1.18,
+      maturedRouteBonus: 0.58,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'crit-ember-hold-press',
+        label: '先把压线站稳',
+        description: '补一段续热与续航，让后面的爆点不是硬赌。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.12,
+              critChance: 0.03,
+              regeneration: 0.08,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'crit-ember-hold-save',
+        label: '先把爆点留后',
+        description: '先把节奏留宽一点，把那一下更稳地放到后段。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 6,
+              projectileSpeed: 14,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'pierce-ledger-trace',
     name: '拆线余账',
     contentKind: 'anomaly',
@@ -1658,6 +1722,70 @@ export const EVENT_CATALOG: EventDefinition[] = [
               projectileSpeed: 16,
               moveSpeed: 8,
             },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pierce-ledger-hold',
+    name: '拆账余缝',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '拆线方向已经定住，但尾段还差一拍把缝口撑开。你可以先把缝口压稳，也可以先把回收余量留满。',
+    routeAffinity: 'pierce',
+    selection: {
+      baseWeight: 0.94,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.34,
+        late: 1.18,
+        finalPrep: 0.42,
+      },
+      hintedRouteBonus: 0.34,
+      dominantRouteBonus: 1.34,
+      committedRouteBonus: 1.18,
+      maturedRouteBonus: 0.58,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'pierce-ledger-hold-seam',
+        label: '先把缝口压稳',
+        description: '补一段拆线与推进余量，先把后段的缝口撑住。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 16,
+              fireRate: 0.06,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'pierce-ledger-hold-bank',
+        label: '先把回收留满',
+        description: '不急着只冲一条缝，先把补刀和回收余量留得更宽。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              multishot: 1,
+              regeneration: 0.08,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
           },
         ],
       },
@@ -2058,6 +2186,68 @@ export const EVENT_CATALOG: EventDefinition[] = [
               dashInterval: -0.16,
               regeneration: 0.1,
             },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tail-hold-preview',
+    name: '尾段预录',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: '首领还没真正压上来，当前打法最容易散掉的那一拍先漏了出来。你可以先把手感站稳，也可以先把收尾余量留宽。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 0.68,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.72,
+        finalPrep: 1.16,
+      },
+      hintedRouteBonus: 0.14,
+      dominantRouteBonus: 1.92,
+      committedRouteBonus: 2.18,
+      maturedRouteBonus: 1.08,
+    },
+    options: [
+      {
+        id: 'tail-hold-preview-press',
+        label: '先把手感站稳',
+        description: '沿着当前打法补一小段承接，别让尾段突然散开。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.1,
+              projectileSpeed: 14,
+              regeneration: 0.08,
+              moveSpeed: 10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'tail-hold-preview-buffer',
+        label: '先把收尾留宽',
+        description: '补一点容错和回气，把最后那段先撑过去。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 8,
+              regeneration: 0.1,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
           },
         ],
       },

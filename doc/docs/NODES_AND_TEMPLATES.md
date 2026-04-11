@@ -65,6 +65,45 @@
 - 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
+## 2026-04-11 1.0 第一阶段第 6 轮：ordinary sample committed retention 载体
+### 新增 node carrier
+- 中段 battle 新增：
+  - `压线续热`
+    - 更偏 `crit`
+    - 目标读数：在 ordinary sample 的中段就把“续热压线”站稳，不再只等 late closeout 才补读法
+  - `拆屏挂账`
+    - 更偏 `pierce`
+    - 目标读数：把“先拆出缝，再把散线清回去”提前压实，减少漂成别路 hinted 的概率
+- 后段 upgrade 新增：
+  - `定势整备`
+    - 目标读数：把当前打法站稳，补掉后段最容易散开的那一拍
+    - 重点不是抬爆点，而是让 ordinary sample 的 dominant route 更连续
+
+### node / selector 当前边界
+- 本轮没有新建 route-specific node system，也没有改 node type。
+- 仍然只沿：
+  - blueprint title / description
+  - templateCandidates
+  - routeBonuses
+  - selector weight
+  这四层补普通样本承接。
+- `levelUp` 仍保持 `2 通用 + 1 flex`，没有提高单次三选一的路线牌上限。
+- `nodePrep` 本轮只做保护性校准：
+  - hinted ordinary sample 更偏 dominant bridge / soft retention
+  - committed ordinary sample 更偏 dominant payoff / commit-hold
+  - off-route redirect / generic hybrid 仍保留 mid 改道窗口，但不再和 dominant route 同强度抢 ordinary sample 的主味
+
+### 当前承载原则
+- 第 6 轮不再把节点理解成“碰到高记忆点时才负责解释走势”，而是要求：
+  - 中段节点也能承担 dominant route 的承势
+  - 后段节点也能承担 committed route 的定势
+  - anomaly / node / upgrade 要共同稳住 ordinary sample，而不是各自打中几个标签
+- 仍然保持：
+  - 不引入新系统
+  - 不把 redirect 做成常驻噪音池
+  - 不把 rare / bossEcho 常态化
+  - 不让 `finalPrep` 重新掉回 redirect 噪音池
+
 ## 2026-04-10 1.0 第一阶段第 3 轮：replay / rare / hybrid 载体补充
 ### 新增 node carrier
 - `并轨整备`
