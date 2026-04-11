@@ -88,6 +88,45 @@
   - 不把 rare carrier 常态化
   - 不让 anomaly 回退成普通奖励分发
 
+## 2026-04-11 1.0 第一阶段第 5 轮：ordinary sample / soft closeout carrier 补洞
+### 新增 ordinary-sample late carrier
+- 后段 battle 新增：
+  - `热区续压`
+    - 更偏 `crit`
+    - 目标读数：不靠 strongest closeout，也能读到“先把热度续稳，再把爆点兑现出来”
+  - `拆线回收`
+    - 更偏 `pierce`
+    - 目标读数：不靠 rare payoff，也能读到“先拆干净，再把回收节奏接回本体”
+  - `回摆追回`
+    - 更偏 `dash`
+    - 目标读数：不靠强 bossEcho，也能读到“靠回摆与反打把后段追回来”
+
+### ordinary sample 承载原则
+- 第 5 轮不再把 late 承载理解成“必须撞高记忆点才有读法”，而是要求：
+  - 普通样本里的 late battle / upgrade / anomaly 也能共同承接 committed 后玩法差异
+  - strong closeout 继续低频、继续保留亮点
+  - soft closeout 负责把普通样本的读法垫稳
+- 这意味着 ordinary sample 不应只靠 rare battle、route-specific bossEcho 或 strongest late carrier 才成立。
+
+### battle family 的轻量 route-fit 补充
+- `热区续压`
+  - 主要沿 `survival-rush / survival / survival-sieve` 承接
+  - 让 `crit` 的 ordinary sample 更像“续热压线再兑现”
+- `拆线回收`
+  - 主要沿 `survival-sieve / survival-gauntlet / survival` 承接
+  - 让 `pierce` 的 ordinary sample 更像“拆线清账再回收”
+- `回摆追回`
+  - 主要沿 `survival-crossfire / survival-rush / survival` 承接
+  - 让 `dash` 的 ordinary sample 更像“回摆追回而不是单纯苟活”
+
+### 当前承载边界
+- 本轮仍然只是在现有 blueprint 权重与模板候选里补 ordinary-sample carrier，不新建 route-specific node 系统。
+- 这些 soft closeout carrier 允许更明显地偏向不同路线，但仍遵守：
+  - 只做“更可能遇到”，不做“只会遇到”
+  - 不把 rare carrier 常态化
+  - 不让 anomaly 回退成普通奖励分发
+- 这意味着节点与模板现在更像在共同稳住普通样本里的玩法读法，而不是继续追求更大的单点爆发。
+
 ## 2026-04-11 1.0 第一阶段第 4 轮：turn / pivot / closeout carrier 补充
 ### 新增 turn / pivot carrier
 - 中段新增：

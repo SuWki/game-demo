@@ -1,4 +1,157 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 5 轮] 玩法差异稳读 / 低命中样本补洞
+### 本轮口径
+- 若旧文档仍停在 `1.0 第一阶段第 4 轮` 的“高记忆点 run 分化 / 收束显性化”，本轮继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准。
+- `0.9v freeze` 继续作为稳定底座；本轮不改主流程、不重写 `RunEngine`、不引入新系统，也不回拉成 Boss 专项轮或 telemetry 轮。
+- 本轮主线前推为：`1.0 第一阶段` 中的“玩法差异稳读 / 低命中样本补洞轮”。
+
+### 文档盘点结论
+- docs 已足够明确、可直接实现的边界：
+  - 当前主要问题已经不是“内容不够多”，而是普通样本里仍有局面会被读成“主路线不同，但玩法差异只读出一半”
+  - 即使没撞到 route-specific bossEcho / strongest late carrier，committed 后也应通过 ordinary sample carrier 持续读出差异
+  - `closeout` 负责强收束；`bossEcho` 负责 Boss 前预读与尾段分岔；`hybrid` 负责 mixed closeout 的理由；`redirect` 仍主要负责 mid 改道，但允许少量 follow-through 把转向后的玩法读法接稳
+  - `pivot node / soft closeout carrier` 应承担“普通样本里的转折点、偏航点、收束点”承接，而不是继续只靠 rare 命中
+  - 三选一仍遵守“最多 1 张路线强化、路线强化低于通用强化、单局唯一”；`finalPrep` 继续压住 redirect 专项卡
+- docs 仍不够明确、因此本轮按保守近似处理的部分：
+  - 文档没有要求把玩法差异稳读写回引擎，因此本轮只扩现有数据载体，不额外引入状态机或新系统
+  - 文档没有要求额外 telemetry 字段来证明 ordinary sample 稳读，因此本轮沿用现有摘要字段，不为“看起来完整”再扩 telemetry
+  - `boss-bastion / fireline` 本轮只允许做轻量、数据驱动、非专项化支撑，因此没有回到 Boss phase / 数值专项调参
+
+### 当前缺口
+- 第 4 轮补上的 high-memory 内容更像“命中了会明显加分”，但还没把“没命中时的玩法差异稳读”一起补齐。
+- committed 后三流派已经各有 closeout 口径，但在普通样本里仍偶尔会退回“同一种 build 的不同标签”。
+- residual drift 的本质已经不是“没有差异”，而是“差异对 strong late carrier / route-specific bossEcho 的依赖仍偏高”。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 新增 ordinary-sample soft closeout：
+    - `续热压线`
+    - `拆线归账`
+    - `回摆取窗`
+  - 新增 redirect follow-through：
+    - `借焰续拍`
+    - `借层回收`
+    - `借位追回`
+  - 目标不是制造更大爆点，而是让 committed 后即使没撞 strongest closeout，也能继续读成不同玩法。
+- `src/data/events.ts`
+  - 新增 route-specific hybrid soft closeout anomaly：
+    - `热区余拍`
+    - `拆线余账`
+    - `回线余拍`
+  - 新增轻量 bossEcho support：
+    - `迁火预录`
+  - 目标是把 `hybrid / bossEcho` 从“命中会很亮”补成“普通样本里也能解释尾段为什么这么收”。
+- `src/data/nodes.ts`
+  - 新增 late soft-closeout battle carrier：
+    - `热区续压`
+    - `拆线回收`
+    - `回摆追回`
+  - 这些 carrier 继续沿现有 battle family 承接，不新建 route-specific node 系统。
+- `src/data/contentSelectors.ts`
+  - 仅做小幅、非主导式 `nodePrep` 调整：
+    - `nodePrepHintFlexPool`
+      - dominant route scale：`1.14 -> 1.20`
+      - off-route redirect scale：`1.16 -> 1.22`
+      - generic hybrid scale：`0.74 -> 0.68`
+    - `nodePrepCommittedFlexPool`
+      - dominant payoff scale：`1.22 -> 1.34`
+      - off-route redirect scale：`0.84 -> 0.92`
+      - generic late flex scale：`0.64 -> 0.56`
+  - 目标是让 ordinary sample 的 committed 后 route-fit 更稳，不是单纯提高 rare / bossEcho 命中率。
+- docs 同步更新：
+  - `PROJECT_STATUS.md`
+  - `ROUTES_SPEC.md`
+  - `NODES_AND_TEMPLATES.md`
+- 本轮刻意没有改：
+  - `RunEngine`
+  - Boss 模板 / Boss phase 参数
+  - telemetry 字段
+  因为本轮要解决的是 ordinary sample 稳读，而不是再开系统轮、Boss 轮或观测轮。
+
+### 数据结构变更
+- 无新的系统结构或类型结构变更。
+- 本轮只扩：
+  - ordinary-sample route carriers
+  - hybrid / bossEcho anomaly content
+  - late soft-closeout node blueprint
+  - nodePrep 的轻量 route-fit 分发
+
+### 验证
+- `npm run build`
+  - 通过
+- 静态 `nodePrep` 抽样，对比改动前后：
+  - `crit`
+    - mid `avgRoute 0.49 -> 0.59`
+    - late `0.61 -> 0.69`
+  - `pierce`
+    - mid `0.51 -> 0.59`
+    - late `0.61 -> 0.70`
+  - `dash`
+    - mid `0.44 -> 0.62`
+    - late `0.57 -> 0.69`
+  - 说明：
+    - ordinary sample 的 mid / late route-fit 已显著上升
+    - 本轮主要补的是稳读承接，不是 rare 命中
+- ordinary-sample soft carrier 覆盖（改动后）：
+  - `crit`
+    - mid route panels：`101`，其中 soft `36`
+    - late route panels：`233`，其中 soft `102`，strong `15`
+    - late 非 route-specific bossEcho anomalies：`431`，其中 soft `83`
+  - `pierce`
+    - mid `102 / 28`
+    - late `242 / 106`，strong `35`
+    - anomaly `425 / 105`
+  - `dash`
+    - mid `93 / 24`
+    - late `252 / 127`，strong `38`
+    - anomaly `430 / 97`
+  - 说明：
+    - 三流派已不再主要依赖 strongest late carrier 才能被读出来
+    - ordinary sample 的 soft carrier 已能承担更多 committed 后读法
+- 路线与 replay 回归：`npm exec --yes --package=playwright -- node output/playwright/commitment-pacing/route-flow-check.mjs`
+  - 可跑到 `result / replay`
+  - 当前 rerun 里：
+    - `crit` 样本在 mid 提前结束，停在 `unformed`
+    - `pierce` 样本漂到 `dash / hinted`
+    - `dash` 样本停在 `dash / hinted`
+  - 说明“构筑差异已存在，但玩法差异不总能完整读出”的 residual drift 仍在，而且 ordinary sample 稳读还没有完全压住
+- 浏览器全链路回归：`npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - anomaly panel / result / replay / console clean 均正常
+  - 本次单样本没撞到 boss node，因此只能证明主流程与闭环未回退，不能拿来替代 Boss 证明
+- Boss 监控回归：`npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 11`
+    - `crossfireSeenRuns = 3`
+    - `firelineSeenRuns = 2`
+  - `highBurst`
+    - `bossBastionRuns = 12`
+    - `crossfireSeenRuns = 11`
+    - `firelineSeenRuns = 4`
+  - `highMobility`
+    - `bossBastionRuns = 6`
+    - `crossfireSeenRuns = 6`
+    - `firelineSeenRuns = 4`
+  - 结论：
+    - normal 固定样本较第 4 轮 `0 / 8` 已改善
+    - highBurst / highMobility 未见崩坏，但仍有波动，暂不写成全面收口
+    - 本轮处理方式仍符合“轻量支撑，不把 Boss 风险劫持成主线”
+
+### 当前结论
+- 当前阶段判断应更新为：`1.0 第一阶段` 中的“玩法差异稳读 / 低命中样本补洞轮”。
+- 本轮真正补上的不是更多高记忆点爆点，而是：
+  - committed 后 ordinary sample 的 soft closeout 承接
+  - route-specific 的 mid-late bridge / follow-through
+  - hybrid / bossEcho 对尾段读法的轻量支撑
+  - `nodePrep` 的轻量 route-fit 稳读校准
+- 当前最大残余风险有两条：
+  - residual drift 仍未清零，少数 run 仍会出现“主路线已经分化，但玩法差异只读出一半”，此次 ordinary-sample rerun 里甚至出现 `crit -> unformed`、`pierce -> dash/hinted`
+  - `boss-bastion / fireline` 的 normal 样本虽回升，但高 burst / 高机动样本仍有抽样波动，尚不宜宣称完全收口
+
 ## [1.0 第一阶段第 4 轮] 高记忆点 run 分化 / 收束显性化
 ### 本轮口径
 - 若旧文档仍停在 `1.0 第一阶段第 3 轮` 的“构筑分化 / replay 动机补厚”，本轮继续以：

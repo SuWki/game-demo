@@ -600,6 +600,72 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         },
       },
       {
+        id: 'round-3-battle-crit-soft-closeout',
+        type: 'battle',
+        phase: 'late',
+        title: '热区续压',
+        description: '敌潮会持续压线，逼你先把热度续稳，再把那一下短爆兑现出来。',
+        templateCandidates: [
+          { templateId: 'survival-rush', weight: 1.45 },
+          { templateId: 'survival', weight: 1.15 },
+          { templateId: 'survival-sieve', weight: 0.85 },
+        ],
+        difficultyScale: 1.29,
+        selection: {
+          baseWeight: 2.08,
+          soloMultiplier: 0.96,
+          repeatTypeMultiplier: 0.78,
+          routeBonuses: {
+            crit: 0.92,
+          },
+          battleCatchupBonus: 1,
+        },
+      },
+      {
+        id: 'round-3-battle-pierce-soft-closeout',
+        type: 'battle',
+        phase: 'late',
+        title: '拆线回收',
+        description: '厚线和漏火会一层层压来，更考你先拆干净，再把回收节奏接回本体。',
+        templateCandidates: [
+          { templateId: 'survival-sieve', weight: 1.4 },
+          { templateId: 'survival-gauntlet', weight: 1.25 },
+          { templateId: 'survival', weight: 0.85 },
+        ],
+        difficultyScale: 1.29,
+        selection: {
+          baseWeight: 2.06,
+          soloMultiplier: 0.96,
+          repeatTypeMultiplier: 0.78,
+          routeBonuses: {
+            pierce: 0.92,
+          },
+          battleCatchupBonus: 1,
+        },
+      },
+      {
+        id: 'round-3-battle-dash-soft-closeout',
+        type: 'battle',
+        phase: 'late',
+        title: '回摆追回',
+        description: '换边与回摆窗口会被再压短一拍，得靠反打把后段节奏追回来。',
+        templateCandidates: [
+          { templateId: 'survival-crossfire', weight: 1.35 },
+          { templateId: 'survival-rush', weight: 1.2 },
+          { templateId: 'survival', weight: 0.9 },
+        ],
+        difficultyScale: 1.29,
+        selection: {
+          baseWeight: 2.07,
+          soloMultiplier: 0.96,
+          repeatTypeMultiplier: 0.78,
+          routeBonuses: {
+            dash: 0.92,
+          },
+          battleCatchupBonus: 1,
+        },
+      },
+      {
         id: 'round-3-battle-crit-closeout',
         type: 'battle',
         phase: 'late',

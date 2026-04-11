@@ -487,10 +487,10 @@ export function rollUpgradeChoices(
             : dominantStarterPool.length > 0
               ? dominantStarterPool
               : dominantRoutePool,
-        1.14,
+        1.2,
       ),
-      scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 1.16, 0.08),
-      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 0.74),
+      scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 1.22, 0.08),
+      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 0.68),
     );
     const nodePrepCommittedFlexPool = mergeWeightedPools(
       scaleWeightedPool(
@@ -499,10 +499,10 @@ export function rollUpgradeChoices(
           : dominantCommittedPool.length > 0
             ? dominantCommittedPool
             : dominantRoutePool,
-        1.22,
+        1.34,
       ),
-      scaleWeightedPool(context.phase === 'finalPrep' ? [] : offRouteRedirectPool, 0.84),
-      scaleWeightedPool(nodePrepLateFlexPool.length > 0 ? nodePrepLateFlexPool : genericPool, 0.64),
+      scaleWeightedPool(context.phase === 'finalPrep' ? [] : offRouteRedirectPool, 0.92),
+      scaleWeightedPool(nodePrepLateFlexPool.length > 0 ? nodePrepLateFlexPool : genericPool, 0.56),
     );
 
     appendUniquePicks(picks, nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 1);

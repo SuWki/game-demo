@@ -1093,6 +1093,50 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'crit-reroute-feed',
+    name: '借焰续拍',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.78,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.82,
+        late: 0.92,
+      },
+      hintedRouteBonus: 0.04,
+      dominantRouteBonus: 0.12,
+      committedRouteBonus: 0.08,
+      offRouteMultiplier: 2.34,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          fireRate: 0.14,
+          critChance: 0.03,
+          moveSpeed: 10,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
     id: 'crit-branch-ignite',
     name: '借爆并焰',
     category: 'route',
@@ -1343,6 +1387,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           damage: 3,
           critChance: 0.04,
           critMultiplier: 0.18,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-heat-rake',
+    name: '续热压线',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.08,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.32,
+        late: 1.28,
+        finalPrep: 0.5,
+      },
+      hintedRouteBonus: 1.18,
+      dominantRouteBonus: 4.48,
+      committedRouteBonus: 3.46,
+      maturedRouteBonus: 1.72,
+      finalPrepBonus: 1.32,
+      offRouteMultiplier: 0.32,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.14,
+          critChance: 0.04,
+          projectileSpeed: 18,
+          moveSpeed: 10,
         },
       },
       {
@@ -1666,6 +1748,50 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           damage: 2,
           pierce: 1,
           projectileSpeed: 18,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-reroute-ledger',
+    name: '借层回收',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.78,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.82,
+        late: 0.92,
+      },
+      hintedRouteBonus: 0.04,
+      dominantRouteBonus: 0.12,
+      committedRouteBonus: 0.08,
+      offRouteMultiplier: 2.34,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          pierce: 1,
+          projectileSpeed: 18,
+          moveSpeed: 8,
         },
       },
       {
@@ -2087,6 +2213,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'pierce-ledger-line',
+    name: '拆线归账',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.06,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.26,
+        late: 1.34,
+        finalPrep: 0.48,
+      },
+      hintedRouteBonus: 1.12,
+      dominantRouteBonus: 4.46,
+      committedRouteBonus: 3.42,
+      maturedRouteBonus: 1.74,
+      finalPrepBonus: 1.28,
+      offRouteMultiplier: 0.32,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierce: 1,
+          projectileSpeed: 20,
+          fireRate: 0.08,
+          moveSpeed: 8,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
     id: 'pierce-bloom',
     name: '扇裂扩面',
     category: 'route',
@@ -2349,6 +2513,50 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'dash-reroute-recall',
+    name: '借位追回',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'redirect'],
+    selection: {
+      baseWeight: 1.78,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.82,
+        late: 0.92,
+      },
+      hintedRouteBonus: 0.04,
+      dominantRouteBonus: 0.12,
+      committedRouteBonus: 0.08,
+      offRouteMultiplier: 2.34,
+      excludeFromFinalPrep: true,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          moveSpeed: 12,
+          dashInterval: -0.2,
+          dashPulseDamage: 4,
+          fireRate: 0.08,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
     id: 'pierce-prism',
     name: '棱镜破轨',
     category: 'route',
@@ -2556,6 +2764,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashPulseDamage: 6,
           fireRate: 0.14,
           moveSpeed: 10,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-return-snap',
+    name: '回摆取窗',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.04,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.34,
+        late: 1.24,
+        finalPrep: 0.46,
+      },
+      hintedRouteBonus: 1.14,
+      dominantRouteBonus: 4.44,
+      committedRouteBonus: 3.38,
+      maturedRouteBonus: 1.68,
+      finalPrepBonus: 1.24,
+      offRouteMultiplier: 0.32,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.18,
+          dashInvulnerability: 0.06,
+          fireRate: 0.08,
+          moveSpeed: 12,
         },
       },
       {

@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：1.0 第一阶段第 4 轮：高记忆点 run 分化 / 收束显性化，继续扩写 route closeout / bossEcho / hybrid / closeout node，并保持 0.9v freeze 基线稳定
+- 当前执行焦点：1.0 第一阶段第 5 轮：玩法差异稳读 / 低命中样本补洞，重点补 ordinary sample 的 committed 后承接，继续保持 0.9v freeze 基线稳定
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -35,8 +35,49 @@
 - 最小表现层收口
 
 ## 当前最大风险
-- 普通 build 下 `boss-bastion / fireline` 的自然覆盖率仍偏低，最终关远程后段仍有“前段成立、收束偏薄”的残余风险
-- 该风险当前应继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+- 当前主要问题已不再是“高记忆点内容不够多”，而是普通样本里仍有少数 run 会出现“构筑差异已存在，但玩法差异只读出一半”的残余漂移
+- `boss-bastion / fireline` 在 normal 固定样本中的可见性虽较上一轮回升，但 `highBurst / highMobility` 仍有抽样波动，继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+
+## 2026-04-11 1.0 第一阶段第 5 轮
+- 当前阶段判断继续保持在：`1.0 第一阶段`，且比第 4 轮更适合定义为“玩法差异稳读 / 低命中样本补洞轮”。
+- 取舍依据继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准；如与更早仍停在第 3 / 4 轮的摘要冲突，以最新阶段口径覆盖。
+- 本轮主线不再是继续追求更多 high-memory 命中，而是把 ordinary sample 里“没撞 strong late carrier / route-specific bossEcho 也能读出 committed 后玩法差异”的承接补齐。
+- 当前最新进展：
+  - upgrade 池新增 ordinary-sample soft closeout 与 redirect follow-through：
+    - `续热压线 / 拆线归账 / 回摆取窗`
+    - `借焰续拍 / 借层回收 / 借位追回`
+  - anomaly 池新增 route-specific hybrid soft closeout：
+    - `热区余拍 / 拆线余账 / 回线余拍`
+  - 轻量补入 `迁火预录`，把 `fireline` 的 ordinary sample 预读补成更自然的 late support，而不是 Boss 专项调参。
+  - node 侧新增 late soft-closeout battle carrier：
+    - `热区续压 / 拆线回收 / 回摆追回`
+  - selector 仅对 `nodePrep` 做小幅 route-fit 倾斜，目标是提高普通样本稳读，不是抬高 rare / bossEcho 常态命中。
+- 当前结论：
+  - 项目主问题已经从“内容不够多”转向“普通样本里的读法不够稳”。
+  - committed 之后三流派在 ordinary sample 里的 mid-late 读法已比第 4 轮更稳定，但“构筑差异已经存在、玩法差异还没完全读出来”的残余漂移没有清零；ordinary-sample rerun 里仍出现 `crit -> unformed`、`pierce -> dash/hinted`。
+  - `crit / pierce / dash` 现在更容易分别读成“续热兑现 / 拆线回收 / 回摆追回”，而不是同一种 build 只换标签。
+- Boss 监控项最新回归：
+  - `normal`
+    - `bossBastionRuns = 11`
+    - `crossfireSeenRuns = 3`
+    - `firelineSeenRuns = 2`
+  - `highBurst`
+    - `bossBastionRuns = 12`
+    - `crossfireSeenRuns = 11`
+    - `firelineSeenRuns = 4`
+  - `highMobility`
+    - `bossBastionRuns = 6`
+    - `crossfireSeenRuns = 6`
+    - `firelineSeenRuns = 4`
+  - 结论：
+    - normal 固定样本相较第 4 轮 `0 / 8` 已回升
+    - highBurst / highMobility 未见明显崩坏，但仍有样本波动，暂不把它写成完全收口
+    - 本轮仍不是 Boss 专项轮
 
 ## 2026-04-11 1.0 第一阶段第 4 轮
 - 当前阶段判断继续保持在：`1.0 第一阶段`，但比上一轮更适合定义为“高记忆点 run 分化 / 收束显性化轮”。

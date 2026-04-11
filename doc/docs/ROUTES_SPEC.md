@@ -179,6 +179,59 @@
   - replay 层面的高记忆点
 - 它们都不应退回普通 event 的泛补给语义。
 
+## 2026-04-11 1.0 第一阶段第 5 轮：玩法差异稳读 / 低命中样本补洞
+### 当前取舍
+- 本轮不再主要追问“有没有更亮的 high-memory closeout”，而是追问：
+  - 没撞 route-specific bossEcho / strongest late carrier 时，committed 后还能不能稳定读出差异
+  - redirect 转完以后，普通样本里是不是真的更像另一种玩法结果
+  - hybrid / bossEcho 能不能在 ordinary sample 里承担解释，而不只是命中时加分
+- 因此本轮继续沿现有 upgrade / anomaly / node carrier 补 ordinary sample 承接，不引入新系统。
+
+### committed 后的 ordinary-sample 读法
+- `crit`
+  - 即使没撞 strongest closeout，也应继续读成“续热 -> 压线 -> 爆点兑现”，而不只是纯高伤标签。
+  - 新增 ordinary-sample carrier：
+    - `续热压线`
+    - `热区余拍`
+    - `热区续压`
+  - redirect follow-through：
+    - `借焰续拍`
+- `pierce`
+  - 即使没撞 rare payoff，也应继续读成“拆线 -> 扩面 -> 清账回收”，而不只是通用穿透增伤。
+  - 新增 ordinary-sample carrier：
+    - `拆线归账`
+    - `拆线余账`
+    - `拆线回收`
+  - redirect follow-through：
+    - `借层回收`
+- `dash`
+  - 即使没撞 strongest closeout，也应继续读成“换位 -> 回摆 -> 反打 -> 回线追回”，而不只是高机动生存。
+  - 新增 ordinary-sample carrier：
+    - `回摆取窗`
+    - `回线余拍`
+    - `回摆追回`
+  - redirect follow-through：
+    - `借位追回`
+
+### closeout / bossEcho / hybrid / redirect 边界补充
+- `closeout`
+  - 继续负责 strongest late / final 的显性收束。
+  - 但本轮明确补入一层 soft closeout，让 ordinary sample 不再只靠 strongest carrier 才成立。
+- `bossEcho`
+  - 继续负责 Boss 前预读与尾段分岔。
+  - 本轮轻量新增 `迁火预录`，职责是给 ordinary sample 补一层晚段预读，不是把 bossEcho 常态化，更不是替代 Boss 调参。
+- `hybrid`
+  - 继续负责 mixed closeout 的理由与尾段并轨解释。
+  - 本轮新增 `热区余拍 / 拆线余账 / 回线余拍`，让 hybrid 不只在高记忆点局里成立，也能补普通样本的尾段读法。
+- `redirect`
+  - 仍主要站在 mid，职责仍是“现在改向不亏”。
+  - 但文档现已允许少量 follow-through 承接，让转向后的结果更像新路线，而不是只给一次 off-route 标签。
+
+### 当前仍保留的近似实现
+- docs 已明确普通样本里 committed 后也应读出差异，但没有要求用新系统强行锁出三种读法；因此本轮仍只靠 carrier 与轻量 selector 校准。
+- 若某局同时没撞到 strong late carrier、route-specific bossEcho 与合适的 soft carrier，它仍可能被读成“主路线已分化，但玩法差异读得不够满”。
+- 因此本轮解决的是 ordinary sample 稳读，不是宣布 residual drift 已完全消失。
+
 ## 2026-04-11 1.0 第一阶段第 4 轮：高记忆点 closeout / 收束显性化
 ### 当前取舍
 - 本轮不再主要回答“有没有 hybrid / redirect / rare payoff 入口”，而是回答：

@@ -1542,6 +1542,189 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'crit-afterburn-trace',
+    name: '热区余拍',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '热区已经站住，但尾段还没决定是继续把热度续满，还是带着旁路味道一起撞进爆点。',
+    routeAffinity: 'crit',
+    selection: {
+      baseWeight: 1.06,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.28,
+        late: 1.52,
+        finalPrep: 0.64,
+      },
+      hintedRouteBonus: 0.26,
+      dominantRouteBonus: 1.26,
+      committedRouteBonus: 1,
+      maturedRouteBonus: 0.5,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'crit-afterburn-trace-keep',
+        label: '先把热度续满',
+        description: '补一段续热火力，让爆点不是只靠最后一下运气。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.14,
+              critChance: 0.04,
+              projectileSpeed: 16,
+              moveSpeed: 10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'crit-afterburn-trace-carry',
+        label: '带着旁路冲刺',
+        description: '不把旁路剪掉，换一段更宽的压线与补刀余量。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              critMultiplier: 0.2,
+              multishot: 1,
+              moveSpeed: 8,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pierce-ledger-trace',
+    name: '拆线余账',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '拆线节奏已经立住，但尾段还没决定是继续清账，还是把铺开的扇面一路带到结尾。',
+    routeAffinity: 'pierce',
+    selection: {
+      baseWeight: 1.06,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.28,
+        late: 1.52,
+        finalPrep: 0.64,
+      },
+      hintedRouteBonus: 0.26,
+      dominantRouteBonus: 1.26,
+      committedRouteBonus: 1,
+      maturedRouteBonus: 0.5,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'pierce-ledger-trace-break',
+        label: '先把拆线压稳',
+        description: '补一段拆屏与穿线余量，让后段先把账拆干净。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 22,
+              fireRate: 0.08,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'pierce-ledger-trace-fan',
+        label: '把扇面一并带走',
+        description: '不只拆一条缝，顺手把清线和补面也铺开。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              multishot: 1,
+              projectileSpeed: 16,
+              moveSpeed: 8,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'dash-return-trace',
+    name: '回线余拍',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '回线已经开始成形，但尾段还没决定是继续把反打压紧，还是把换边与喘息窗口一并留宽。',
+    routeAffinity: 'dash',
+    selection: {
+      baseWeight: 1.06,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.28,
+        late: 1.52,
+        finalPrep: 0.64,
+      },
+      hintedRouteBonus: 0.26,
+      dominantRouteBonus: 1.26,
+      committedRouteBonus: 1,
+      maturedRouteBonus: 0.5,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'dash-return-trace-counter',
+        label: '先把反打压紧',
+        description: '补一段回摆与擦身火力，让后段更敢抢回主动权。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashInterval: -0.2,
+              dashPulseDamage: 6,
+              fireRate: 0.08,
+              moveSpeed: 10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'dash-return-trace-breath',
+        label: '先把喘息留宽',
+        description: '不急着把每次换位都压成反打，先把回摆后的空档留大一点。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashInvulnerability: 0.08,
+              regeneration: 0.12,
+              moveSpeed: 14,
+              projectileSpeed: 16,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'escort-overread',
     name: '屏卫预读',
     contentKind: 'anomaly',
@@ -1826,6 +2009,54 @@ export const EVENT_CATALOG: EventDefinition[] = [
               moveSpeed: 16,
               regeneration: 0.12,
               dashInterval: -0.16,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'fireline-overread',
+    name: '迁火预录',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: '首领真正把火线往边缘拉开前，场边已经先漏出了一次迁火样本。你可以先补拆线，也可以先补回摆。',
+    selection: {
+      baseWeight: 0.72,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.82,
+        finalPrep: 1.18,
+      },
+      noDominantRouteBonus: 0.12,
+    },
+    options: [
+      {
+        id: 'fireline-overread-break',
+        label: '先补拆线',
+        description: '先把拆屏、穿线和补刀手感垫起来，免得迁火一开就被压住。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 18,
+              fireRate: 0.08,
+            },
+          },
+        ],
+      },
+      {
+        id: 'fireline-overread-return',
+        label: '先补回摆',
+        description: '先把回摆和换边余量留宽一点，准备边压边把节奏追回来。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 14,
+              dashInterval: -0.16,
+              regeneration: 0.1,
             },
           },
         ],
