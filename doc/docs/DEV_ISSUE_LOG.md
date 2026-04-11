@@ -1,4 +1,152 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 4 轮] 高记忆点 run 分化 / 收束显性化
+### 本轮口径
+- 若旧文档仍停在 `1.0 第一阶段第 3 轮` 的“构筑分化 / replay 动机补厚”，本轮继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准。
+- `0.9v freeze` 继续作为稳定底座；本轮不是新系统轮，不重写 `RunEngine`，也不回拉成 Boss 专项调参轮。
+- 本轮主线前推为：`1.0 第一阶段` 中的“高记忆点 run 分化 / 收束显性化轮”。
+
+### 文档盘点结论
+- docs 已足够明确、可直接实现的边界：
+  - 高记忆点内容应继续落在 `late / final` 的 route closeout、`bossEcho / hybrid` anomaly 与 node carrier 上
+  - `redirect` 仍主要负责 mid 改道，不负责替代 late closeout 本身
+  - `bossEcho` 负责 Boss 前预读与收束分岔，不应退回 Boss 调参替代品
+  - committed 之后三流派应分别读成：
+    - `crit`: 升温后爆点兑现
+    - `pierce`: 清线 / 穿线 / 扩面 / 回响收束
+    - `dash`: 换位 / 回摆 / 反打 / 回线收束
+  - `finalPrep` 继续压住 redirect 专项卡，避免最终整备重新变成分叉噪音池
+- docs 仍不够明确、因此本轮按保守近似处理的部分：
+  - build 差异如何 100% 转译成玩法差异，没有单独新系统口径；本轮只继续补 carrier，不把内容逻辑写回引擎
+  - selector / telemetry 没有必要再扩成新一轮主线；本轮优先用现有分发与已有摘要字段承接
+
+### 当前缺口
+- replay prompt 已经能读到低频内容，但很多 run 的走势差异仍然不够强，容易被读成“同一路线 + 少量 rare 变化”。
+- `hybrid / redirect / bossEcho / rare payoff` 已经有入口，但还不够稳定地形成“转折点 / 偏航点 / 收束点”的整局阅读。
+- committed 之后三流派虽然已有口径，但中后段内容量还不够总能把这三种玩法持续读出来。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 新增 generic closeout：
+    - `尾流归并`
+    - `余响备压`
+  - 新增 route closeout：
+    - `灼链追爆`
+    - `裂幕归账`
+    - `回线追拍`
+  - 目标是让 generic late-payoff 与三流派 committed 后的后段承接更像“不同结尾”，而不只是继续涨数值。
+- `src/data/events.ts`
+  - 新增 hybrid anomaly：
+    - `错拍并账`
+    - `侧频并轨`
+  - 新增 route-specific bossEcho：
+    - `灼冠预读`
+    - `裂屏预账`
+    - `回线窥影`
+  - 方向是把 `hybrid / bossEcho` 从“有入口”推到“更能解释这局为什么这么收”。
+- `src/data/nodes.ts`
+  - 中段新增：
+    - `转折校准`
+    - `偏航试拍`
+  - 后段 battle 新增：
+    - `爆点追收`
+    - `裂面清账`
+    - `回线反压`
+  - 后段 upgrade / anomaly 新增：
+    - `终拍定稿`
+    - `旁路归并`
+    - `首领侧录`
+    - `终段偏航`
+  - 目标是让 node 不再只是 phase 占位，而是更像转折点 / 偏航点 / 收束点。
+- docs 同步更新：
+  - `PROJECT_STATUS.md`
+  - `ROUTES_SPEC.md`
+  - `NODES_AND_TEMPLATES.md`
+- 本轮刻意没有改：
+  - selector
+  - telemetry
+  - `RunEngine`
+  - Boss 参数
+  因为抽样显示新内容已能进自然样本，不需要把本轮重新做成调参轮。
+
+### 数据结构变更
+- 无新的系统结构或类型结构变更。
+- 本轮只扩：
+  - upgrade archetype
+  - anomaly content
+  - node blueprint
+
+### 验证
+- `npm run build`
+  - 通过
+- 静态计数
+  - upgrades：
+    - `73 -> 78`
+    - `hybrid 10 -> 11`
+    - `route payoff 21 -> 24`
+  - anomaly：
+    - `28 -> 33`
+    - `hybrid 7 -> 9`
+    - `bossEcho 5 -> 8`
+- late committed 抽样（500 样本 / route）
+  - `crit`
+    - `crit-crown-preview = 108`
+    - `crit-ember-rail = 34`
+    - `round-3-battle-crit-closeout = 82`
+  - `pierce`
+    - `pierce-screen-ledger = 87`
+    - `pierce-seam-ledger = 23`
+    - `round-3-battle-pierce-closeout = 74`
+  - `dash`
+    - `dash-return-preview = 94`
+    - `dash-retrace-beat = 33`
+    - `round-3-battle-dash-closeout = 73`
+  - 说明：
+    - 新 route-specific closeout 与 bossEcho 已进入自然 late 样本
+    - 新增 mid / late node carrier 也已能正常露出
+    - 因此本轮没有额外补 selector
+- 路线与 replay 回归：`npm exec --yes --package=playwright -- node output/playwright/commitment-pacing/route-flow-check.mjs`
+  - 三条路线均可跑到 `result`
+  - replay 重开链路保持正常
+  - 新 late node 已出现在真实样本：
+    - `回线反压`
+  - 但 deterministic 样本里仍存在停在 `hinted` 的局，说明“构筑差异已存在、玩法差异未必总能完整读出”的残余漂移仍在
+- 浏览器全链路回归：`npm exec --yes --package=playwright -- node output/playwright/battle-layer-0.9v/full-flow.mjs`
+  - anomaly panel / boss node / result / replay 均可跑通
+  - `consoleErrors = []`
+  - summary 已看到新增节点：
+    - `首领侧录`
+  - `battle_template_entered(encounterType = boss)` 继续正常记录
+- Boss 监控回归：`npx tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 8`
+    - `crossfireSeenRuns = 2`
+    - `firelineSeenRuns = 0`
+  - `highBurst`
+    - `bossBastionRuns = 12`
+    - `firelineSeenRuns = 5`
+  - `highMobility`
+    - `bossBastionRuns = 9`
+    - `firelineSeenRuns = 5`
+  - 结论：
+    - 高 burst / 高机动样本未见明显回退
+    - 但固定 normal 样本里的 `fireline` 从上一轮 `1 / 9` 回到当前 `0 / 8`
+    - 这一项当前只能定义为“监控项轻微恶化风险”，还不到重开 Boss 专项轮的程度
+
+### 当前结论
+- 当前阶段判断应更新为：`1.0 第一阶段` 中的“高记忆点 run 分化 / 收束显性化轮”。
+- 本轮真正补上的不是更多标签，而是：
+  - route-specific closeout
+  - route-specific bossEcho 预读
+  - mid 的转折 / 偏航节点
+  - late 的 closeout battle / upgrade / anomaly carrier
+- 当前最大残余风险有两条：
+  - 普通 build 下 `boss-bastion / fireline` 监控项出现轻微回落
+  - run 与 run 的玩法差异读法虽然更厚，但仍未达到“任何样本都稳定读出三种完全不同玩法”
 ## [1.0 第一阶段第 3 轮] replay 动机补厚 / hybrid・redirect・rare payoff 扩写
 ### 本轮口径
 - 若旧文档仍停在 `1.0 第一阶段第 2 轮` 的“结构承接补厚”，本轮继续以：

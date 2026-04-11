@@ -811,6 +811,69 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'crossfade-ledger',
+    name: '错拍并账',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '一条旁路收益提前撞进当前节奏。这不是普通补值，而是在决定这局尾段要不要带着另一种打法收回去。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.12,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.62,
+        late: 1.76,
+        finalPrep: 0.72,
+      },
+      hintedRouteBonus: 0.15,
+      dominantRouteBonus: 1.4,
+      committedRouteBonus: 1.08,
+      maturedRouteBonus: 0.56,
+      noDominantRouteBonus: 0.1,
+    },
+    options: [
+      {
+        id: 'crossfade-ledger-focus',
+        label: '压回当前主线',
+        description: '把旁路火力折回当前路线，让尾段更像一次干净定稿。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.1,
+              projectileSpeed: 18,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'crossfade-ledger-keep',
+        label: '保留旁路余拍',
+        description: '不把旁路全裁掉，让这局尾段继续带着一点混搭余味。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              multishot: 1,
+              moveSpeed: 12,
+              regeneration: 0.1,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 6,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'crit-heat-bank',
     name: '热区记录',
     contentKind: 'anomaly',
@@ -1302,6 +1365,66 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'sideband-overlap',
+    name: '侧频并轨',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    contentTier: 'rare',
+    description: '尾段侧频没有消失，反而和当前 build 叠在了一起。这一拍会决定你是纯走既有爆点，还是把旁路也带到结尾。',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.01,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.96,
+        finalPrep: 0.82,
+      },
+      hintedRouteBonus: 0.12,
+      dominantRouteBonus: 1.5,
+      committedRouteBonus: 1.04,
+      maturedRouteBonus: 0.5,
+      noDominantRouteBonus: 0.08,
+    },
+    options: [
+      {
+        id: 'sideband-overlap-focus',
+        label: '压成当前定稿',
+        description: '把旁路收益收回当前路线，准备把最后一段收得更尖。',
+        routeId: 'dominant',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.12,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'sideband-overlap-carry',
+        label: '带着旁路收尾',
+        description: '不把侧频剪掉，保留一口混搭火力和更宽的回旋空间。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              multishot: 1,
+              projectileSpeed: 16,
+              moveSpeed: 10,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'null-lens',
     name: '空镜偏折',
     contentKind: 'anomaly',
@@ -1461,6 +1584,201 @@ export const EVENT_CATALOG: EventDefinition[] = [
               regeneration: 0.12,
               fireRate: 0.12,
             },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'crit-crown-preview',
+    name: '灼冠预读',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: '首领压场还没真正贴脸，短窗爆点已经先从侧频里亮出来。你可以先把爆点压尖，也可以先把续热留住。',
+    routeAffinity: 'crit',
+    selection: {
+      baseWeight: 0.98,
+      minRound: 3,
+      phaseBonuses: {
+        late: 2,
+        finalPrep: 1.42,
+      },
+      hintedRouteBonus: 0.25,
+      dominantRouteBonus: 3.9,
+      committedRouteBonus: 3.15,
+      maturedRouteBonus: 1.95,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'crit-crown-preview-spike',
+        label: '先把爆点压尖',
+        description: '把首领前的短窗压成更尖的一记爆点。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              critChance: 0.04,
+              critMultiplier: 0.28,
+              projectileSpeed: 18,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'crit-crown-preview-feed',
+        label: '先把续热点亮',
+        description: '先把升温链留住，准备把尾段一路烧到首领脸上。',
+        routeId: 'crit',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.16,
+              critChance: 0.05,
+              moveSpeed: 12,
+              regeneration: 0.08,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pierce-screen-ledger',
+    name: '裂屏预账',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: '屏卫和漏火的节奏还没真正压满，拆线和扩面的账已经先摆到面前。你可以先把拆线压厚，也可以先把扇面铺开。',
+    routeAffinity: 'pierce',
+    selection: {
+      baseWeight: 0.98,
+      minRound: 3,
+      phaseBonuses: {
+        late: 2,
+        finalPrep: 1.42,
+      },
+      hintedRouteBonus: 0.25,
+      dominantRouteBonus: 3.9,
+      committedRouteBonus: 3.15,
+      maturedRouteBonus: 1.95,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'pierce-screen-ledger-break',
+        label: '先把拆线压厚',
+        description: '优先把屏卫和火线拆开，准备一路清到本体。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 24,
+              fireRate: 0.12,
+              damage: 2,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'pierce-screen-ledger-fan',
+        label: '先把扇面铺开',
+        description: '让尾段更像清线后接回响，而不是单纯把火力塞进一条缝里。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              multishot: 1,
+              damage: 3,
+              projectileSpeed: 16,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'dash-return-preview',
+    name: '回线窥影',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    description: '首领换边前，回线空档已经先露了一截。你可以先备回摆反打，也可以先把净帧喘息留宽。',
+    routeAffinity: 'dash',
+    selection: {
+      baseWeight: 0.98,
+      minRound: 3,
+      phaseBonuses: {
+        late: 2,
+        finalPrep: 1.42,
+      },
+      hintedRouteBonus: 0.25,
+      dominantRouteBonus: 3.9,
+      committedRouteBonus: 3.15,
+      maturedRouteBonus: 1.95,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'dash-return-preview-counter',
+        label: '先把反打压紧',
+        description: '把回摆和擦身都压成更紧的一次反打窗口。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashInterval: -0.22,
+              dashPulseDamage: 8,
+              fireRate: 0.08,
+              moveSpeed: 12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'dash-return-preview-breath',
+        label: '先把净帧留宽',
+        description: '把换位后的喘息空档留得更宽，准备靠回线把尾段接回来。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashInvulnerability: 0.1,
+              regeneration: 0.12,
+              moveSpeed: 16,
+              dashPulseDamage: 4,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
           },
         ],
       },

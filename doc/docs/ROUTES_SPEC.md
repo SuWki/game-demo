@@ -178,3 +178,52 @@
   - 尾段收束方式的提前分岔
   - replay 层面的高记忆点
 - 它们都不应退回普通 event 的泛补给语义。
+
+## 2026-04-11 1.0 第一阶段第 4 轮：高记忆点 closeout / 收束显性化
+### 当前取舍
+- 本轮不再主要回答“有没有 hybrid / redirect / rare payoff 入口”，而是回答：
+  - committed 之后为什么越玩越不像彼此
+  - 这一局为什么会这样收
+  - redirect / hybrid 转完以后为什么更像另一种玩法结果
+- 因此本轮继续沿现有 upgrade / anomaly / node 载体补 closeout，不引入新系统。
+
+### committed 后的 closeout 口径
+- `crit`
+  - 现在继续按“续热 -> 爆点 -> 首领前短窗预读”收束。
+  - 新增 closeout 承接：
+    - `灼链追爆`
+    - `灼冠预读`
+    - `爆点追收`
+  - 目标是让后段更容易读成“把升温一路顶成爆点兑现”。
+- `pierce`
+  - 现在继续按“拆线 -> 扩面 -> 清账回收”收束。
+  - 新增 closeout 承接：
+    - `裂幕归账`
+    - `裂屏预账`
+    - `裂面清账`
+  - 目标是让后段更容易读成“清线后把贯穿收益收回来”，而不是只剩高伤。
+- `dash`
+  - 现在继续按“换位 -> 回摆 -> 反打追收”收束。
+  - 新增 closeout 承接：
+    - `回线追拍`
+    - `回线窥影`
+    - `回线反压`
+  - 目标是让后段更容易读成“靠回线与反打把尾段追回来”，而不是单纯苟活。
+
+### redirect / hybrid / bossEcho 边界补充
+- redirect 仍然主要站在 mid：
+  - 负责“现在改向不亏”
+  - 不负责替代 late closeout 本身
+- hybrid 现在更明确承担：
+  - 尾段并轨试错
+  - mixed closeout 的理由
+  - “为什么这一局不是纯单路线”的解释
+- bossEcho 现在更明确承担：
+  - Boss 前读法外泄
+  - route-specific closeout 的提前分岔
+  - 收束显性化，而不是 Boss 专项调参
+
+### 当前仍保留的近似实现
+- docs 已经写清 committed 后该怎么读，但内容量仍不是“无论哪局都一定读得出来”。
+- 如果某局没有撞到 late carrier、route-specific bossEcho 或 high-memory anomaly，它仍可能被读成“主路线已经有了，但玩法差异只读出一半”。
+- 因此本轮是把 closeout 载体补齐，不是宣布玩法读法问题已经完全解决。

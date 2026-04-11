@@ -88,6 +88,46 @@
   - 不把 rare carrier 常态化
   - 不让 anomaly 回退成普通奖励分发
 
+## 2026-04-11 1.0 第一阶段第 4 轮：turn / pivot / closeout carrier 补充
+### 新增 turn / pivot carrier
+- 中段新增：
+  - `转折校准`
+    - upgrade 载体
+    - 职责：把“继续站稳 / 提前偏航”做成更明确的一拍判断
+  - `偏航试拍`
+    - anomaly 载体
+    - 职责：让中段就能读到“这局后段可能会整个改写”，而不只是多一次普通异常
+
+### 新增 closeout carrier
+- 后段 battle 新增：
+  - `爆点追收`
+    - 更偏 `crit`
+    - 目标读数：把升温一路顶成爆点兑现
+  - `裂面清账`
+    - 更偏 `pierce`
+    - 目标读数：清线后把贯穿收益收回来
+  - `回线反压`
+    - 更偏 `dash`
+    - 目标读数：靠回摆 / 擦身 / 反打追回尾段
+- 后段 upgrade 新增：
+  - `终拍定稿`
+    - 职责：把后段整备更明确地推向“这一局最后怎么收”
+  - `旁路归并`
+    - 职责：把 redirect / hybrid 后的 build 真正压成另一种结尾
+- 后段 anomaly 新增：
+  - `首领侧录`
+    - 职责：把 Boss 前预读拉成更自然的 late anomaly 入口
+  - `终段偏航`
+    - 职责：把 rare 收益、mixed closeout 与首领预读拧成最后一次重判
+
+### 当前承载原则
+- 本轮仍然只是在现有 blueprint 权重上补 routeBonuses 和载体标题，不新建 route-specific node 系统。
+- closeout carrier 现在允许更明显地偏向不同路线，但仍遵守：
+  - 只做“更可能遇到”，不做“只会遇到”
+  - rare battle / anomaly carrier 继续保持低频
+  - 不把 anomaly 做回普通奖励分发
+- 这意味着节点现在更像在共同解释 run 的转折点 / 偏航点 / 收束点，而不是各自独立命中几个标签。
+
 ## 2026-04-07 三流派 carrier 收口补充
 ### route-fit 倾向
 - 本轮没有新建 route-specific node 系统，而是在现有 blueprint 权重上补了一层轻量 `routeBonuses`。

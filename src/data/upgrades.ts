@@ -802,6 +802,68 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-tailfold',
+    name: '尾流归并',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['bridge', 'payoff', 'hybrid', 'rare'],
+    selection: {
+      baseWeight: 0.86,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.72,
+        finalPrep: 2.12,
+        finalBattle: 1.12,
+      },
+      finalPrepBonus: 2.25,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          fireRate: 0.12,
+          projectileSpeed: 18,
+          moveSpeed: 12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-echo-stow',
+    name: '余响备压',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['payoff', 'rare'],
+    selection: {
+      baseWeight: 0.84,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.48,
+        finalPrep: 2.08,
+        finalBattle: 1.05,
+      },
+      finalPrepBonus: 2.15,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 8,
+          regeneration: 0.16,
+          projectileSpeed: 20,
+          moveSpeed: 10,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 8,
+      },
+    ],
+  },
+  {
     id: 'crit-aim',
     name: '聚焦瞄准',
     category: 'route',
@@ -1207,6 +1269,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critChance: 0.03,
           critMultiplier: 0.3,
           moveSpeed: 12,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-ember-rail',
+    name: '灼链追爆',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.05,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.65,
+        finalPrep: 0.95,
+        finalBattle: 0.72,
+      },
+      hintedRouteBonus: 0.45,
+      dominantRouteBonus: 4.7,
+      committedRouteBonus: 4.1,
+      maturedRouteBonus: 2.1,
+      finalPrepBonus: 1.9,
+      offRouteMultiplier: 0.3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 3,
+          fireRate: 0.16,
+          critChance: 0.04,
+          critMultiplier: 0.16,
+          moveSpeed: 10,
         },
       },
       {
@@ -1842,6 +1942,43 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'pierce-seam-ledger',
+    name: '裂幕归账',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.62,
+        finalPrep: 0.92,
+        finalBattle: 0.72,
+      },
+      hintedRouteBonus: 0.45,
+      dominantRouteBonus: 4.65,
+      committedRouteBonus: 4.15,
+      maturedRouteBonus: 2.15,
+      finalPrepBonus: 1.9,
+      offRouteMultiplier: 0.3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          multishot: 1,
+          pierce: 1,
+          fireRate: 0.08,
+          projectileSpeed: 20,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
     id: 'dash-cutback',
     name: '回切留影',
     category: 'route',
@@ -2345,6 +2482,44 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashInvulnerability: 0.1,
           moveSpeed: 14,
           regeneration: 0.08,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-retrace-beat',
+    name: '回线追拍',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'payoff'],
+    selection: {
+      baseWeight: 3.02,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.64,
+        finalPrep: 0.92,
+        finalBattle: 0.72,
+      },
+      hintedRouteBonus: 0.45,
+      dominantRouteBonus: 4.7,
+      committedRouteBonus: 4.1,
+      maturedRouteBonus: 2.1,
+      finalPrepBonus: 1.92,
+      offRouteMultiplier: 0.3,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.22,
+          dashPulseDamage: 6,
+          dashInvulnerability: 0.06,
+          fireRate: 0.08,
+          moveSpeed: 12,
         },
       },
       {

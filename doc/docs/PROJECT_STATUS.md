@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：1.0 第一阶段第 3 轮：构筑分化 / replay 动机补厚，继续扩写 hybrid / redirect / rare payoff / late payoff，并保持 0.9v freeze 基线稳定
+- 当前执行焦点：1.0 第一阶段第 4 轮：高记忆点 run 分化 / 收束显性化，继续扩写 route closeout / bossEcho / hybrid / closeout node，并保持 0.9v freeze 基线稳定
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -37,6 +37,36 @@
 ## 当前最大风险
 - 普通 build 下 `boss-bastion / fireline` 的自然覆盖率仍偏低，最终关远程后段仍有“前段成立、收束偏薄”的残余风险
 - 该风险当前应继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+
+## 2026-04-11 1.0 第一阶段第 4 轮
+- 当前阶段判断继续保持在：`1.0 第一阶段`，但比上一轮更适合定义为“高记忆点 run 分化 / 收束显性化轮”。
+- 取舍依据继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准；如与更早仍停在 `1.0 第一阶段第 2 / 3 轮` 的摘要冲突，以最新阶段口径覆盖。
+- 本轮主线不是再补 replay 外壳，也不是回到 selector / telemetry 主导，而是继续沿现有数据载体补：
+  - route-specific closeout
+  - high-memory bossEcho / hybrid anomaly
+  - 能承担转折点 / 偏航点 / 收束点的 node carrier
+  - generic late-payoff / mixed closeout
+- 当前最新进展：
+  - upgrade 池新增 `尾流归并 / 余响备压 / 灼链追爆 / 裂幕归账 / 回线追拍`，把 generic late-payoff 与三流派 closeout 承接再往后段推一截。
+  - anomaly 池新增 `错拍并账 / 侧频并轨 / 灼冠预读 / 裂屏预账 / 回线窥影`，让 `hybrid / bossEcho` 更稳定承担“尾段为什么会这样收”的解释。
+  - node 侧新增：
+    - 中段：`转折校准 / 偏航试拍`
+    - 后段 battle：`爆点追收 / 裂面清账 / 回线反压`
+    - 后段整备 / anomaly：`终拍定稿 / 旁路归并 / 首领侧录 / 终段偏航`
+  - 当前没有新增系统层，也没有重写 `RunEngine`；selector / telemetry 也没有被重新做成主线。
+- 当前结论：
+  - committed 之后三流派的中后段读法已比上一轮更像不同玩法结果，而不只是不同标签。
+  - 但“构筑差异已经存在、玩法差异还没完全读出来”的残余漂移仍未彻底消失；当 run 没有吃到 late carrier 或 Boss 前预读时，少数样本仍会偏像“同一路线 + 少量内容差异”。
+  - 本轮更像把 closeout 载体补足，而不是彻底解决所有玩法读法问题。
+- Boss 监控项最新回归：
+  - `highBurst / highMobility` 下 `fireline` 仍可见，未见明显崩掉。
+  - 但固定样本里的 `normal` 场景当前回到 `bossBastionRuns = 8, firelineSeenRuns = 0`，相较上一轮的 `1 / 9` 有轻微回落。
+  - 这一项暂记为“监控项轻微恶化风险”，本轮不回拉成 Boss 专项调参轮，但后续轮次需要继续盯。
 
 ## 2026-04-10 1.0 第一阶段第 3 轮
 - 当前阶段判断继续前推为：`1.0 第一阶段` 中的“构筑分化 / replay 动机补厚轮”。
