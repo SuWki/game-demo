@@ -332,6 +332,8 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
 function buildLevelUpRouteWindowPool(
   context: ContentContext,
 ): Array<{ item: UpgradeArchetype; weight: number }> {
+  const openingLevelUp = context.phase === 'opening';
+  const earlyMidLevelUp = openingLevelUp || context.phase === 'mid';
   const hasCommittedRoute = Boolean(context.committedRoute || context.maturedRoute);
   if (!context.dominantRoute) {
     return scaleWeightedPool(
@@ -340,7 +342,7 @@ function buildLevelUpRouteWindowPool(
         'levelUp',
         (archetype) => Boolean(archetype.routeId) && Boolean(archetype.tags?.includes('starter')),
       ),
-      0.56,
+      openingLevelUp ? 1.16 : earlyMidLevelUp ? 0.92 : 0.62,
     );
   }
 
@@ -362,11 +364,14 @@ function buildLevelUpRouteWindowPool(
         ? fallbackPool
         : dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
 
-  return scaleWeightedPool(resolvedPool, hasCommittedRoute ? 1.02 : 0.82);
+  return scaleWeightedPool(resolvedPool, hasCommittedRoute ? 1.02 : earlyMidLevelUp ? 1.2 : 0.9);
 }
 
 function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
+  const openingLevelUp = context.phase === 'opening';
+  const earlyMidLevelUp = openingLevelUp || context.phase === 'mid';
   const hasCommittedRoute = Boolean(context.committedRoute || context.maturedRoute);
+  const dominantHintedEarlyMid = Boolean(context.dominantRoute) && !hasCommittedRoute && earlyMidLevelUp;
   const picks: UpgradeArchetype[] = [];
   const genericPool = buildWeightedUpgradePool(context, 'levelUp', (archetype) => !archetype.routeId);
   const genericCorePool = filterPoolByTags(genericPool, ['stabilizer', 'bridge'], ['payoff', 'rare']);
@@ -379,10 +384,13 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const flexPool = mergeWeightedPools(
     scaleWeightedPool(
       genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool,
-      hasCommittedRoute ? 1.16 : 1.22,
+      hasCommittedRoute ? 1.16 : dominantHintedEarlyMid ? 1.06 : openingLevelUp ? 1.12 : earlyMidLevelUp ? 1.22 : 1.22,
       0.1,
     ),
-    scaleWeightedPool(routeWindowPool, hasCommittedRoute ? 0.9 : context.dominantRoute ? 0.82 : 0.68),
+    scaleWeightedPool(
+      routeWindowPool,
+      hasCommittedRoute ? 0.9 : context.dominantRoute ? (earlyMidLevelUp ? 1.28 : 0.88) : openingLevelUp ? 1.34 : earlyMidLevelUp ? 0.98 : 0.72,
+    ),
   );
 
   appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
@@ -435,10 +443,10 @@ export function rollUpgradeChoices(
   const offRouteRedirectPool = filterPoolByTags(offRoutePool, ['redirect'], ['payoff', 'finisher']);
   const offRouteBridgePool = filterPoolByTags(offRoutePool, ['bridge'], ['starter', 'payoff', 'finisher']);
   const midRedirectWindowPool = mergeWeightedPools(
-    scaleWeightedPool(offRouteRedirectPool, 3.2, 0.2),
-    scaleWeightedPool(offRouteBridgePool, 0.92),
-    scaleWeightedPool(genericHybridPool, 0.58),
-    scaleWeightedPool(genericTransitionPool, 0.42),
+    scaleWeightedPool(offRouteRedirectPool, 2.46, 0.14),
+    scaleWeightedPool(offRouteBridgePool, 0.72),
+    scaleWeightedPool(genericHybridPool, 0.5),
+    scaleWeightedPool(genericTransitionPool, 0.6),
   );
   const nodePrepLateFlexPool = mergeWeightedPools(
     scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPool, 1.08),
@@ -464,6 +472,7 @@ export function rollUpgradeChoices(
         );
 
   if (source === 'nodePrep') {
+    const earlyMidNoFocus = context.phase === 'opening' || context.phase === 'mid';
     const nodePrepNoFocusFlexPool = mergeWeightedPools(
       scaleWeightedPool(
         (context.phase === 'late' || context.phase === 'finalPrep') && noFocusLateRoutePool.length > 0
@@ -471,9 +480,9 @@ export function rollUpgradeChoices(
           : noFocusBridgePool.length > 0
             ? noFocusBridgePool
             : noFocusStarterPool,
-        1.08,
+        earlyMidNoFocus ? 1.72 : 1.08,
       ),
-      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, 0.82),
+      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, earlyMidNoFocus ? 0.24 : 0.82),
       scaleWeightedPool(
         context.phase === 'late' || context.phase === 'finalPrep'
           ? genericLateFlexPool.length > 0
@@ -482,7 +491,7 @@ export function rollUpgradeChoices(
           : nodePrepGenericCorePool.length > 0
             ? nodePrepGenericCorePool
             : genericPool,
-        0.48,
+        earlyMidNoFocus ? 0.08 : 0.48,
       ),
     );
     const nodePrepHintFlexPool = mergeWeightedPools(
@@ -494,10 +503,10 @@ export function rollUpgradeChoices(
           : dominantStarterPool.length > 0
               ? dominantStarterPool
               : dominantRoutePool,
-        1.58,
+        1.86,
       ),
-      scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 0.58),
-      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 0.36),
+      scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 0.38),
+      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 0.18),
     );
     const nodePrepCommittedFlexPool = mergeWeightedPools(
       scaleWeightedPool(

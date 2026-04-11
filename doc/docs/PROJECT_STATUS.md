@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：1.0 第一阶段第 7 轮：自然 rerun 收口 / 残余漂移定向清扫，重点压 early-mid ordinary sample 的 route continuity 漂移，继续保持 0.9v freeze 基线稳定
+- 当前执行焦点：1.0 第一阶段第 8 轮候选：opening-to-mid continuity 收口 / no-focus starter 漂移清扫，重点压 no-focus opening starter 噪音，并稳住 hinted dominant route 的 bridge 承接
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -35,8 +35,67 @@
 - 最小表现层收口
 
 ## 当前最大风险
-- 当前主要问题已进一步收窄为：ordinary sample 里的 early-mid route continuity 仍有残余噪音，`crit` 的早期改道拉散已明显缓解，但 `pierce` 仍可能在 no-focus opening / mid starter 窗口里被别路 starter 抢走第一拍，残余漂移尚未完全压平
-- `boss-bastion / fireline` 本轮回归未见明显恶化，但 normal / highBurst / highMobility 仍有抽样波动，继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+- 当前主问题已从“dominant route 已存在但 first beat 还不稳”进一步收窄为：`pierce` 的 opening-to-mid continuity 已明显改善，但 committed 时点仍可能偏晚；当前残余更像“starter 先站出来了，bridge / commit timing 还没完全前移”
+- `boss-bastion / fireline` 在本轮最新回归里出现了可见回落：normal 样本回到 `bossBastionRuns = 8 / 24`、`firelineSeenRuns = 0 / 24`；它仍不应劫持主线，但已经从“单纯观察项”重新抬升为 round8 候选是否完全收口的主要风险
+
+## 2026-04-12 1.0 第一阶段第 8 轮候选
+- 当前阶段判断继续保持在：`1.0 第一阶段`，并且 docs 仍未落盘更晚轮次；因此本轮按“opening-to-mid continuity 收口 / no-focus starter 漂移清扫”推进。
+- 若旧摘要仍停在第 7 轮或更早轮次，本节开始的取舍统一以：
+  - 最新阶段文档
+  - 最新 `PROJECT_STATUS.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  为准；如与旧摘要冲突，以本节覆盖。
+- 本轮主线继续收窄到：
+  - opening / mid ordinary sample 的 continuity
+  - no-focus opening starter 的首拍噪音
+  - hinted dominant route 在 mid 不应连续空吃泛用牌
+  - `pierce` 不应再自然漂到 `dash hinted`
+- 当前实现取舍：
+  - 没有继续补 high-memory closeout、rare 或 bossEcho
+  - 没有改主流程、没有重写 `RunEngine`
+  - `levelUp` 仍保持 `2 通用 + 1 flex`
+  - `nodePrep` 仍保持 `2 通用 + 1 flex`
+  - `finalPrep` 仍压住 redirect 噪音
+- 当前最新进展：
+  - upgrade continuity carrier 继续前移：
+    - `续热点火`
+    - `拆线起幅`
+    - `拆缝续程`
+  - anomaly continuity support 补入：
+    - `拆线定幅`
+  - opening / mid node route-fit 继续小幅保护：
+    - `厚线突围`
+    - `交错火线`
+    - `过渡整备`
+    - `转折校准`
+  - `levelUp` 的 no-focus opening flex 更容易看到 route starter，但没有把 mid no-focus 直接做成强制 committed
+- 当前结论：
+  - 浏览器 route-flow rerun 中，`crit` 当前样本回到 `routeId = crit / buildStage = matured / victory`，`branchSwitchCount = 0`
+  - `pierce` 当前样本回到 `routeId = pierce / buildStage = committed / victory`，`branchSwitchCount = 0`，不再复现“被带到 `dash hinted`”
+  - opening 首拍截图里，`crit / pierce` 都已经能在当前样本里看见本线 starter，而不是继续靠 redirect 回正
+  - 但 `pierce` 的 `firstCommitStage` 仍可能偏晚，说明本轮更像“把 first beat continuity 托起来”，还不是完全把 commit timing 也一起前推到位
+- 静态抽样（`levelUp`）：
+  - `opening-no-focus-levelup` 的 route offer rate 由约 `0.50` 提到约 `0.65`
+  - `mid-crit-hinted-levelup` 的 route offer rate 由约 `0.27` 提到约 `0.38`
+  - `mid-pierce-hinted-levelup` 的 route offer rate 由约 `0.26` 提到约 `0.39`
+- Boss 监控项最新回归：
+  - `normal`
+    - `bossBastionRuns = 8 / 24`
+    - `crossfireSeenRuns = 2 / 24`
+    - `firelineSeenRuns = 0 / 24`
+  - `highBurst`
+    - `bossBastionRuns = 5 / 24`
+    - `crossfireSeenRuns = 5 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highMobility`
+    - `bossBastionRuns = 4 / 24`
+    - `crossfireSeenRuns = 3 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - 结论：
+    - 本轮主线目标确实前推了，但 Boss 监控项没有维持在第 7 轮水位
+    - 因此当前更适合定义为“第 8 轮候选已实现，但仍带着 Boss 监控风险”的状态，而不是直接宣布 freeze 观察项已完全平稳
 
 ## 2026-04-11 1.0 第一阶段第 7 轮
 - 当前阶段判断继续保持在：`1.0 第一阶段`，且比第 6 轮更适合定义为“自然 rerun 收口 / 残余漂移定向清扫轮”。

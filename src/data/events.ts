@@ -1623,12 +1623,12 @@ export const EVENT_CATALOG: EventDefinition[] = [
       baseWeight: 1.02,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.46,
+        mid: 1.56,
         late: 1.18,
         finalPrep: 0.42,
       },
-      hintedRouteBonus: 0.46,
-      dominantRouteBonus: 1.46,
+      hintedRouteBonus: 0.54,
+      dominantRouteBonus: 1.58,
       committedRouteBonus: 1.18,
       maturedRouteBonus: 0.58,
       offRouteMultiplier: 0.08,
@@ -1748,12 +1748,12 @@ export const EVENT_CATALOG: EventDefinition[] = [
       baseWeight: 1.06,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.5,
+        mid: 1.62,
         late: 1.18,
         finalPrep: 0.42,
       },
-      hintedRouteBonus: 0.5,
-      dominantRouteBonus: 1.54,
+      hintedRouteBonus: 0.66,
+      dominantRouteBonus: 1.72,
       committedRouteBonus: 1.18,
       maturedRouteBonus: 0.58,
       offRouteMultiplier: 0.08,
@@ -1796,6 +1796,70 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pierce-seam-anchor',
+    name: '拆线定幅',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '清线方向已经露出一拍，但还差一次把缝口稳住的承接。你可以先把拆线站住，也可以先把铺面留宽。',
+    routeAffinity: 'pierce',
+    selection: {
+      baseWeight: 0.94,
+      minRound: 2,
+      maxRound: 3,
+      phaseBonuses: {
+        mid: 1.64,
+        late: 0.44,
+      },
+      hintedRouteBonus: 0.74,
+      dominantRouteBonus: 1.86,
+      committedRouteBonus: 1.04,
+      maturedRouteBonus: 0.24,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'pierce-seam-anchor-seam',
+        label: '先把拆线站住',
+        description: '补一段拆线与推进余量，让中段先有一条清楚的缝口。',
+        routeId: 'pierce',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              pierce: 1,
+              projectileSpeed: 18,
+              fireRate: 0.06,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'pierce-seam-anchor-fan',
+        label: '先把铺面留宽',
+        description: '不急着只冲一条缝，先把回收和补刀余量留得更宽。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              multishot: 1,
+              regeneration: 0.08,
+              moveSpeed: 8,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
           },
         ],
       },

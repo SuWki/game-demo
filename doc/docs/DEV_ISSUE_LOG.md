@@ -1,4 +1,122 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 8 轮候选] opening-to-mid continuity 收口 / no-focus starter 漂移清扫
+### 本轮口径
+- 若旧摘要仍停在第 7 轮或更早轮次，本轮统一以：
+  - 最新阶段文档
+  - 最新 `PROJECT_STATUS.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  为准；如冲突，以本节覆盖。
+- `0.9v freeze` 继续作为稳定底座；本轮不改主流程、不重写 `RunEngine`、不引入新系统，也不回拉成 high-memory closeout / Boss / telemetry 专项轮。
+- 本轮主线前推为：`1.0 第一阶段` 里的“opening-to-mid continuity 收口 / no-focus starter 漂移清扫候选轮”。
+
+### 文档盘点结论
+- docs 已足够明确、可直接实现的边界：
+  - 当前主问题已经不再是 late closeout 或 replay 内容量，而是 opening / mid 的 first beat continuity
+  - `redirect hold` 的职责已明确：它是“继续承接当前路线的一拍”，不是纯缓冲
+  - `nodePrep / levelUp` 只能继续做轻量 dominant-route protection，仍遵守 `2 通用 + 1 flex`
+  - `crit / pierce / dash` 在 opening / mid 的第一拍都应先把自身 starter / bridge 站出来，而不是靠 late carrier 补读法
+- docs 仍不够明确、因此本轮按保守近似处理的部分：
+  - 文档没有要求把 no-focus opening 直接做成强制路由，因此没有把 early game 写成硬锁路线
+  - 文档没有要求为了 continuity 再扩 telemetry，因此继续复用现有字段与 route-flow / Boss 脚本
+  - 文档没有要求为 round8 再扩 bossEcho / closeout 新入口，因此本轮不把 early-mid 问题重新伪装成 late 内容量问题
+
+### 当前成因判断
+- 当前更像“dominant route 已经存在，但 opening / mid 第一拍 continuity 仍不够稳”，而不是 late closeout 再次失效。
+- `crit`
+  - 主因更像 hinted 后的 mid bridge surfacing 偏低，导致在少数 rerun 里连续空吃泛用牌
+  - 不是 reroute-window 再次把它强行带偏
+- `pierce`
+  - 主因更像 no-focus opening starter emergence 仍会漏拍，导致第一张 route starter 有时不浮出来，或者先被别路 starter 抢味
+  - 不是 `pierce -> dash/hinted` 的 redirect 噪音回潮，也不是 late closeout 不够
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 新增 / 补强 continuity carrier：
+    - `续热点火`
+    - `拆线起幅`
+    - `拆缝续程`
+  - 上调 `crit-afterglow / crit-heat-latch / pierce-core / pierce-rail / pierce-seamline / pierce-seamkeep` 的 opening-mid 权重
+  - 给 `crit-afterglow / crit-heat-latch / pierce-seamline / pierce-seamkeep` 小幅补入 `regeneration`，避免“先站路线”直接吃掉普通样本的基础容错
+- `src/data/events.ts`
+  - 上调 `crit-ember-hold / pierce-ledger-hold` 的 mid continuity 倾向
+  - 新增 `pierce-seam-anchor`，作为 mid 的 `pierce` continuity support anomaly
+- `src/data/nodes.ts`
+  - opening / mid node route-fit 继续只做保护性微调：
+    - `厚线突围`
+    - `交错火线`
+    - `过渡整备`
+    - `转折校准`
+  - 目标是让 `crit / pierce` 在 ordinary sample 的 opening-mid 更容易拿到当前线承接
+- `src/data/contentSelectors.ts`
+  - `levelUp`
+    - no-focus opening 的 route starter emergence 明显上调
+    - hinted early-mid dominant route 的 bridge surfacing 上调
+    - no-focus mid 的 route 倾斜保持保守，不直接写成强制 committed
+  - `nodePrep`
+    - 延续上一轮的 protection 口径，不额外扩张 selector 职责
+
+### 静态抽样
+- `levelUp`
+  - `opening-no-focus-levelup`
+    - route offer rate 由约 `0.50` 提到约 `0.65`
+  - `mid-crit-hinted-levelup`
+    - route offer rate 由约 `0.27` 提到约 `0.38`
+  - `mid-pierce-hinted-levelup`
+    - route offer rate 由约 `0.26` 提到约 `0.39`
+- 结论：
+  - 本轮主增益不是把 route 卡变多到失控，而是让 current-line starter / bridge 更容易在正确窗口浮上来
+
+### 验证
+- `npm run build`
+  - 通过
+- 浏览器 route-flow rerun：
+  - `crit`
+    - `routeId = crit`
+    - `buildStage = matured`
+    - `outcome = victory`
+    - `branchSwitchCount = 0`
+  - `pierce`
+    - `routeId = pierce`
+    - `buildStage = committed`
+    - `outcome = victory`
+    - `branchSwitchCount = 0`
+    - 不再复现“被带到 `dash hinted`”
+    - 但 `firstCommitStage` 仍偏晚，说明 continuity 改善已经落地，commit timing 仍有残余
+  - `dash`
+    - 当前 rerun 仍可能落到 `unformed`
+    - 符合本轮没有把主线重新拉成穿梭专项轮的边界
+- 开场截图复检：
+  - `crit / pierce` 当前 rerun 的第一拍都能看见本线 starter，而不是继续靠 redirect 回正
+- Boss 监控回归：
+  - `normal`
+    - `bossBastionRuns = 8 / 24`
+    - `crossfireSeenRuns = 2 / 24`
+    - `firelineSeenRuns = 0 / 24`
+  - `highBurst`
+    - `bossBastionRuns = 5 / 24`
+    - `crossfireSeenRuns = 5 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highMobility`
+    - `bossBastionRuns = 4 / 24`
+    - `crossfireSeenRuns = 3 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - 结论：
+    - route continuity 主线已前推
+    - 但 Boss 监控项相较第 7 轮基线仍有回落，尤其 normal `firelineSeenRuns` 回到 `0 / 24`
+    - 因此 round8 更适合记为“候选已实现，但未完全抹平 freeze 监控风险”
+
+### 当前结论
+- 当前阶段判断仍是：`1.0 第一阶段`。
+- 本轮真正压掉的是：
+  - `crit` 的 hinted 后纯泛用断桥样本
+  - `pierce` 被带到 `dash hinted` 的自然 rerun 样本
+  - no-focus opening 里“整轮都看不到 route starter”的一部分普通样本
+- 本轮仍保留的最大风险是：
+  - `pierce` 的 commit timing 仍可能偏晚
+  - `boss-bastion / fireline` 的 normal 样本可见性弱于第 7 轮基线
+
 ## [1.0 第一阶段第 7 轮] 自然 rerun 收口 / 残余漂移定向清扫
 ### 本轮口径
 - 若旧文档仍停在 `1.0 第一阶段第 6 轮` 的“残余漂移压缩 / committed 稳定成型”，本轮继续以：

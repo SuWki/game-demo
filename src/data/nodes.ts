@@ -107,7 +107,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 2.8,
           repeatTypeMultiplier: 0.72,
           routeBonuses: {
-            pierce: 1.38,
+            pierce: 1.56,
           },
           battleCatchupBonus: 1.15,
         },
@@ -128,7 +128,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 2.9,
           repeatTypeMultiplier: 0.72,
           routeBonuses: {
-            pierce: 0.4,
+            pierce: 0.72,
             dash: 0.9,
           },
           battleCatchupBonus: 1.15,
@@ -144,6 +144,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
           lowHpBonus: 1.2,
+          routeBonuses: {
+            crit: 0.16,
+            pierce: 0.3,
+          },
         },
       },
       {
@@ -156,6 +160,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 0.8,
+          routeBonuses: {
+            crit: 0.1,
+            pierce: 0.24,
+          },
         },
       },
       {
@@ -336,9 +344,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 1.02,
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
-            pierce: 1.14,
+            pierce: 1.3,
           },
-          battleCatchupBonus: 1.32,
+          battleCatchupBonus: 1.38,
         },
       },
       {
@@ -366,8 +374,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.3,
           routeBonuses: {
-            crit: 0.24,
-            pierce: 0.46,
+            crit: 0.32,
+            pierce: 0.62,
           },
         },
       },
@@ -422,8 +430,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.05,
           routeBonuses: {
-            crit: 0.32,
-            pierce: 0.54,
+            crit: 0.4,
+            pierce: 0.72,
           },
         },
       },

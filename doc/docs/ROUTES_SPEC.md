@@ -229,6 +229,50 @@
   - 但少数 run 仍可能停在“已经 hinted / 刚开始站稳”，而不是稳定一路推到 matured
 - 因此本轮解决的是 residual drift 压缩，不是宣布 committed retention 已完全收口。
 
+## 2026-04-12 1.0 第一阶段第 8 轮候选：opening-to-mid continuity 收口 / no-focus starter 漂移清扫
+### 当前取舍
+- 本轮不再继续补 high-memory closeout，也不再扩 redirect / bossEcho 新入口，而是继续把残余问题收窄到：
+  - no-focus opening starter 的 first beat continuity
+  - hinted dominant route 在 mid 的 bridge surfacing
+  - `pierce` 是否还会自然漂成 `dash hinted`
+- 因此本轮继续沿现有 upgrade / anomaly / node / selector carrier 做保护性清扫，不引入新系统。
+
+### opening-to-mid continuity 当前口径
+- `crit`
+  - 本轮目标不是更早锁死，而是让 opening starter 后的第二拍更容易接到本线 bridge。
+  - 因此：
+    - `续热点火 / 余热描边` 这类 bridge 更偏“续热 + 压线 + 少量续航”
+    - hinted early-mid 的 `levelUp` 可以更积极地把 `crit` bridge 浮上来
+    - 但 `redirect hold` 仍保留，且不能把 `crit` 再次拖成 off-route committed
+- `pierce`
+  - 本轮目标不是靠 redirect 把它拉回正轨，而是让 no-focus opening 更容易先看到 `pierce` starter。
+  - 因此：
+    - `拆线起幅 / 拆缝续程 / 拆线定幅` 继续承担 opening-to-mid continuity
+    - `levelUp` 在 no-focus opening 可以更容易出现 `pierce` starter，但 mid no-focus 不会被写成强制 committed
+    - 若当前 rerun 仍在 finalBattle 才 commit，应优先视为 commit timing 残余，而不是重新视为 `dash hinted` 漂移
+- `dash`
+  - 继续保持“换位 / 回摆 / 反打 / 回线追回”的既有口径。
+  - 本轮不因为压 `crit / pierce` 漂移而反向削弱 `dash`，也不把本轮重新做成穿梭专项轮。
+
+### redirect / hold / nodePrep 边界补充
+- `redirect`
+  - 仍主要负责 mid 的“现在转得过去”。
+  - 但 current-line `hold` 继续优先承担“先把当前线稳住一拍”。
+- `levelUp`
+  - 仍保持 `2 通用 + 1 flex`。
+  - opening 的 no-focus flex 可以更积极承担 route starter emergence。
+  - mid 的 no-focus flex 继续保守，避免把 ordinary sample 直接推成硬锁路线。
+- `nodePrep`
+  - 继续保持 `2 通用 + 1 flex`。
+  - hinted ordinary sample 更偏 dominant bridge / soft-hold。
+  - `finalPrep` 继续压住 redirect 噪音，不重新掉回分叉池。
+
+### 当前结论
+- 当前 rerun 中：
+  - `crit` 已不再掉回 hinted / off-route，当前样本回到 `matured`
+  - `pierce` 已不再落到 `dash hinted`，当前样本回到 `committed`
+- 但 `pierce` 的 commit timing 仍可能偏晚，说明本轮更像“先把第一拍站出来”，而不是已经完全把中段成线时间前推到位。
+
 ## 2026-04-11 1.0 第一阶段第 7 轮：自然 rerun 收口 / 残余漂移定向清扫
 ### 当前取舍
 - 本轮不再继续补 high-memory closeout，也不再扩 redirect / bossEcho 新入口，而是继续把 residual drift 收窄到：

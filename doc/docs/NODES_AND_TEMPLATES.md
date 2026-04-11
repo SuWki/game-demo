@@ -65,6 +65,46 @@
 - 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
+## 2026-04-12 1.0 第一阶段第 8 轮候选：opening-to-mid continuity 承接
+### 新增 / 强化 carrier
+- opening / mid upgrade 新增或继续强化：
+  - `续热点火`
+    - 更偏 `crit`
+    - 目标读数：starter 之后更容易把“续热压线”接到第二拍，而不是 hinted 后连续空吃通用牌
+  - `拆线起幅`
+    - 更偏 `pierce`
+    - 目标读数：no-focus opening 先把“拆线”站出来，而不是让第一拍继续被别路 starter 抢味
+  - `拆缝续程`
+    - 更偏 `pierce`
+    - 目标读数：starter 接 bridge 时更容易看到“拆开 -> 扩面”的承接，而不是只剩 generic bridge
+- mid anomaly 新增：
+  - `拆线定幅`
+    - 更偏 `pierce`
+    - 目标读数：把中段 continuity support 写成“先把缝口站稳”，而不是普通 buff / 普通 event 近似
+
+### node / selector 当前边界
+- 本轮仍没有新建 route-specific node system，也没有改 node type。
+- 继续只沿：
+  - routeBonuses
+  - templateCandidates
+  - selector weight
+  - 现有 carrier 权重
+  这四层做保守承接。
+- `levelUp` 继续保持 `2 通用 + 1 flex`。
+- 本轮允许的 selector 校准只到：
+  - opening no-focus 更容易看到 route starter
+  - hinted early-mid 更容易看到 dominant bridge
+  - mid no-focus 不被直接写成强制 committed
+- `nodePrep` 继续保持 `2 通用 + 1 flex`，且 `finalPrep` 仍压住 redirect 噪音。
+
+### 当前承载原则
+- 本轮不是高记忆点补量轮，也不是 Boss 轮。
+- opening / mid 的 node / anomaly / upgrade 现在更强调：
+  - 先把当前线站出来
+  - 再让玩家判断要不要继续站稳或改道
+  - 不通过强制锁路线来伪造 continuity
+- 因此当前更像“让 ordinary sample 的首拍更清楚”，而不是把所有样本都提前推到 committed。
+
 ## 2026-04-11 1.0 第一阶段第 6 轮：ordinary sample committed retention 载体
 ### 新增 node carrier
 - 中段 battle 新增：
