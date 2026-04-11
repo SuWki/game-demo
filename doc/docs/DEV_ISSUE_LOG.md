@@ -1,4 +1,132 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 7 轮] 自然 rerun 收口 / 残余漂移定向清扫
+### 本轮口径
+- 若旧文档仍停在 `1.0 第一阶段第 6 轮` 的“残余漂移压缩 / committed 稳定成型”，本轮继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准。
+- `0.9v freeze` 继续作为稳定底座；本轮不改主流程、不重写 `RunEngine`、不引入新系统，也不回拉成 Boss 专项轮或 telemetry 轮。
+- 本轮主线继续前推为：`1.0 第一阶段` 中的“自然 rerun 收口 / 残余漂移定向清扫轮”。
+
+### 文档盘点结论
+- docs 已足够明确、可直接实现的边界：
+  - 当前主问题已从“committed retention 仍不够稳”继续收窄成“early-mid ordinary sample route continuity 仍有残余噪音”
+  - `soft closeout / committed retention` 继续负责 ordinary-sample 承接，但本轮重点前移到 opening / mid，不再继续补 high-memory closeout
+  - `redirect follow-through`、`hybrid support`、`bossEcho support` 的职责边界已清晰：redirect 仍是 mid 改道窗口，hybrid / bossEcho 继续做 support，不应为了 round7 再扩一轮入口
+  - `reroute-window` 仍可保留“现在转得过去”的窗口感，但 hinted dominant route 不应再被一次 ordinary-sample 改道轻易拉散
+- docs 仍不够明确、因此本轮按保守近似处理的部分：
+  - 文档没有要求把 natural rerun 收口写回引擎，因此本轮继续只改现有 content carrier 和轻量 selector / route-fit
+  - 文档没有要求为 round7 新增 telemetry 字段，因此沿用现有 run summary 与 route-flow / Boss 回归脚本
+  - 文档没有要求把 no-focus opening 直接做成强制路由分发，因此本轮没有把 early game 改成硬锁路线
+
+### 当前缺口
+- round6 结束后，当前最顽固的残余漂移主要收窄为两类：
+  - `crit` hinted 阶段仍可能被早期 `reroute-window` 一拍带偏
+  - `pierce` 即使不再稳定停在 `unformed`，也仍可能在 no-focus opening / mid starter 窗口里被别路 starter 抢走第一拍
+- 因此本轮要解决的不是“再补更多晚段内容”，而是：
+  - 把当前路线的 hold / continuity 做成真实承接
+  - 降低 ordinary sample 里过早改道的噪音
+  - 提高 `crit / pierce` 在 opening-to-mid 的自然成型率
+
+### 本轮实现
+- `src/data/events.ts`
+  - `crit-reroute-window`
+    - hinted 阶段出现权重下调，避免它在 ordinary sample 里过早抢走主味
+  - `crit-reroute-window-hold`
+    - 明确标注为 `crit`
+    - 从“纯数值缓冲”改成“当前路线继续推进 +1”
+  - `pierce-reroute-window-hold`
+    - 明确标注为 `pierce`
+    - 同样补入当前路线推进 +1
+  - `crit-ember-hold / pierce-ledger-hold`
+    - 只做 mid continuity 向的小幅增权，不扩新 anomaly family
+- `src/data/anomalyRoutePools.ts`
+  - `crit-reroute-window-pierce / crit-reroute-window-dash`
+    - 改道推进从 `+3` 压到 `+2`
+    - 目标不是删除 redirect，而是避免 hinted `crit` 被单个 reroute-window 直接拉成别路 committed
+- `src/data/upgrades.ts`
+  - `crit-linekeep`
+    - mid / hinted 权重小幅上调，强化 `crit` 的 early-mid hold
+  - `pierce-ledger-fanout`
+    - mid / hinted 权重小幅上调，强化 `pierce` 的 ordinary-sample commit-hold
+- `src/data/nodes.ts`
+  - `厚线突围`
+    - pierce route-fit 小幅上调
+  - `拆屏挂账`
+    - pierce route-fit 与 battleCatchup 小幅上调
+  - `过渡整备 / 转折校准`
+    - 补入 `crit / pierce` 的小幅 routeBonuses，让 ordinary sample 的 mid upgrade node 更容易承担 continuity，而不是只给泛用节点
+- `src/data/contentSelectors.ts`
+  - `levelUp`
+    - non-committed dominant route 的 route-window scale 轻量上调
+    - 目标是让 ordinary sample 在 early-mid 更容易看到当前路线的 starter / bridge 承接，而不是继续把第三张位完全留给泛用噪音
+- docs 同步更新：
+  - `PROJECT_STATUS.md`
+  - `ROUTES_SPEC.md`
+- 本轮刻意没有改：
+  - `RunEngine`
+  - Boss 模板 / Boss phase 参数
+  - telemetry 字段
+  - redirect / bossEcho 新 family
+  因为本轮要解决的是 natural rerun 的残余漂移，而不是系统轮、Boss 轮或新内容轮
+
+### 数据结构变更
+- 无新的系统结构或类型结构变更。
+- 本轮只调整：
+  - existing reroute-window hold / redirect push 强度
+  - existing crit / pierce continuity carrier 权重
+  - opening / mid node route-fit
+  - ordinary-sample levelUp route-window 保护
+
+### 验证
+- `npm run build`
+  - 通过
+- 浏览器 route-flow rerun：`npm exec --yes --package=playwright -- node output/playwright/commitment-pacing/route-flow-check.mjs`
+  - `crit`
+    - 当前 rerun 回到 `routeId = crit`
+    - `buildStage = committed`
+    - `firstCommitPick = upgrade:crit-flare-path`
+    - 说明 round6 的“早期 reroute-window 直接带偏到 dash committed”已被压下
+  - `pierce`
+    - 当前 rerun 不再停在 `mid unformed`
+    - 但仍可能停在 `dash hinted`
+    - 说明 `pierce` 的残余漂移已从“中段直接散掉”收窄到“opening / mid no-focus starter continuity 仍不够稳”
+  - `dash`
+    - 当前 rerun 仍可能停在 `unformed`
+    - 符合本轮没有把主线重新拉成穿梭专项补强的边界
+- 定向 panel trace（临时 Playwright 复检）
+  - `pierce` rerun 中已能看到 `pierce-rail`
+  - 但 ordinary sample 在无显式焦点时仍可能先吃到泛用或别路 starter，说明剩余问题更像 opening-to-mid continuity / 选择可读性，而不是 late closeout 再次失效
+- Boss 监控回归：`npm exec --yes --package=tsx -- tsx output/qa/boss-pocket-natural-runs.mts`
+  - `normal`
+    - `bossBastionRuns = 8 / 24`
+    - `crossfireSeenRuns = 4 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highBurst`
+    - `bossBastionRuns = 9 / 24`
+    - `crossfireSeenRuns = 9 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highMobility`
+    - `bossBastionRuns = 7 / 24`
+    - `crossfireSeenRuns = 7 / 24`
+    - `firelineSeenRuns = 4 / 24`
+  - 结论：
+    - 未见新的明显恶化
+    - `fireline` 仍不是 normal 样本里的高频承接，但没有因本轮 early-mid continuity 调整而回落
+    - 本轮处理方式仍符合“监控 / 保护性观察”，没有把 Boss 风险拉回主线
+
+### 当前结论
+- 当前阶段判断应更新为：`1.0 第一阶段` 中的“自然 rerun 收口 / 残余漂移定向清扫轮”。
+- 本轮真正收口的是：
+  - `crit` 早期 `reroute-window -> dash committed`
+  - reroute-window hold 只是数值缓冲、不能继续承接当前路线
+  - `crit / pierce` ordinary-sample continuity carrier 偏弱
+- 本轮仍保留的最大残余风险是：
+  - `pierce` 虽不再稳定复现 `mid unformed`，但 natural rerun 仍可能落到 `dash hinted`
+  - 结合 panel trace，这更像 no-focus opening / mid starter continuity 残余噪音，而不是 late carrier 不够或 Boss 问题回潮
+
 ## [1.0 第一阶段第 6 轮] 残余漂移压缩 / committed 稳定成型
 ### 本轮口径
 - 若旧文档仍停在 `1.0 第一阶段第 5 轮` 的“玩法差异稳读 / 低命中样本补洞”，本轮继续以：

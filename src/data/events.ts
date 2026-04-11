@@ -429,15 +429,15 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '当前暴击读法已经起势。你可以趁接口还没关死，把这条线切向别的收束。',
     routeAffinity: 'crit',
     selection: {
-      baseWeight: 1.45,
+      baseWeight: 1.22,
       minRound: 2,
       phaseBonuses: {
-        mid: 2.05,
-        late: 0.78,
+        mid: 1.68,
+        late: 0.7,
       },
-      hintedRouteBonus: 1,
-      dominantRouteBonus: 3.05,
-      committedRouteBonus: 1.9,
+      hintedRouteBonus: 0.24,
+      dominantRouteBonus: 2.68,
+      committedRouteBonus: 1.62,
       maturedRouteBonus: 0.2,
       offRouteMultiplier: 0.05,
     },
@@ -445,6 +445,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       ...getAnomalyRoutePoolOptions('critRerouteWindow', ['pierce', 'dash']),
       {
         id: 'crit-reroute-window-hold',
+        routeId: 'crit',
         label: '先稳当前火力',
         description: '不急着转向，先补一段基础火力和耐久，留着后面再判断。',
         effects: [
@@ -458,6 +459,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 10,
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
           },
         ],
       },
@@ -487,6 +492,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
       ...getAnomalyRoutePoolOptions('pierceRerouteWindow', ['crit', 'dash']),
       {
         id: 'pierce-reroute-window-hold',
+        routeId: 'pierce',
         label: '先稳当前清线',
         description: '不急着转向，先补一段稳定火力和耐久，把窗口留到后面。',
         effects: [
@@ -500,6 +506,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 10,
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
           },
         ],
       },
@@ -1610,15 +1620,15 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '热区已经立住，但尾段还差一拍稳定承接。你可以先把压线站稳，也可以先把爆点留到更后面。',
     routeAffinity: 'crit',
     selection: {
-      baseWeight: 0.94,
+      baseWeight: 1.02,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.34,
+        mid: 1.46,
         late: 1.18,
         finalPrep: 0.42,
       },
-      hintedRouteBonus: 0.34,
-      dominantRouteBonus: 1.34,
+      hintedRouteBonus: 0.46,
+      dominantRouteBonus: 1.46,
       committedRouteBonus: 1.18,
       maturedRouteBonus: 0.58,
       offRouteMultiplier: 0.08,
@@ -1735,15 +1745,15 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '拆线方向已经定住，但尾段还差一拍把缝口撑开。你可以先把缝口压稳，也可以先把回收余量留满。',
     routeAffinity: 'pierce',
     selection: {
-      baseWeight: 0.94,
+      baseWeight: 1.06,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.34,
+        mid: 1.5,
         late: 1.18,
         finalPrep: 0.42,
       },
-      hintedRouteBonus: 0.34,
-      dominantRouteBonus: 1.34,
+      hintedRouteBonus: 0.5,
+      dominantRouteBonus: 1.54,
       committedRouteBonus: 1.18,
       maturedRouteBonus: 0.58,
       offRouteMultiplier: 0.08,

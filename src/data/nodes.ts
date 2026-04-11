@@ -107,7 +107,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 2.8,
           repeatTypeMultiplier: 0.72,
           routeBonuses: {
-            pierce: 1.25,
+            pierce: 1.38,
           },
           battleCatchupBonus: 1.15,
         },
@@ -336,9 +336,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 1.02,
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
-            pierce: 0.88,
+            pierce: 1.14,
           },
-          battleCatchupBonus: 1.25,
+          battleCatchupBonus: 1.32,
         },
       },
       {
@@ -365,6 +365,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 0.9,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.3,
+          routeBonuses: {
+            crit: 0.24,
+            pierce: 0.46,
+          },
         },
       },
       {
@@ -417,6 +421,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 0.88,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.05,
+          routeBonuses: {
+            crit: 0.32,
+            pierce: 0.54,
+          },
         },
       },
       {

@@ -313,10 +313,6 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
           type: 'route',
           routeId: 'pierce',
         },
-        {
-          type: 'route',
-          routeId: 'pierce',
-        },
       ],
     },
     dash: {
@@ -336,10 +332,6 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
         {
           type: 'heal',
           amount: 8,
-        },
-        {
-          type: 'route',
-          routeId: 'dash',
         },
         {
           type: 'route',

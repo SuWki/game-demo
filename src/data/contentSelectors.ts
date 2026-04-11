@@ -362,7 +362,7 @@ function buildLevelUpRouteWindowPool(
         ? fallbackPool
         : dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
 
-  return scaleWeightedPool(resolvedPool, hasCommittedRoute ? 1.02 : 0.72);
+  return scaleWeightedPool(resolvedPool, hasCommittedRoute ? 1.02 : 0.82);
 }
 
 function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
@@ -382,7 +382,7 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
       hasCommittedRoute ? 1.16 : 1.22,
       0.1,
     ),
-    scaleWeightedPool(routeWindowPool, hasCommittedRoute ? 0.9 : context.dominantRoute ? 0.74 : 0.68),
+    scaleWeightedPool(routeWindowPool, hasCommittedRoute ? 0.9 : context.dominantRoute ? 0.82 : 0.68),
   );
 
   appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);

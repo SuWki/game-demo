@@ -20,7 +20,7 @@
 - 当前进入：代码丢失后的文档驱动重建阶段
 - 公式化成长与战斗内升级接入（已完成）
 - 最小表现层收口第一轮（已完成）
-- 当前执行焦点：1.0 第一阶段第 6 轮：残余漂移压缩 / committed 稳定成型，重点压 ordinary sample 的 committed retention 漂移，继续保持 0.9v freeze 基线稳定
+- 当前执行焦点：1.0 第一阶段第 7 轮：自然 rerun 收口 / 残余漂移定向清扫，重点压 early-mid ordinary sample 的 route continuity 漂移，继续保持 0.9v freeze 基线稳定
 
 ## 已确认的测试版结论
 - `route_committed / route_matured` 已在自然长局中稳定触发
@@ -35,8 +35,58 @@
 - 最小表现层收口
 
 ## 当前最大风险
-- 当前主要问题已进一步收窄为：ordinary sample 里的 dominant route 虽能被读到，但少数 run 仍会停在 `hinted / 刚站稳`，残余漂移还没有被完全压平
+- 当前主要问题已进一步收窄为：ordinary sample 里的 early-mid route continuity 仍有残余噪音，`crit` 的早期改道拉散已明显缓解，但 `pierce` 仍可能在 no-focus opening / mid starter 窗口里被别路 starter 抢走第一拍，残余漂移尚未完全压平
 - `boss-bastion / fireline` 本轮回归未见明显恶化，但 normal / highBurst / highMobility 仍有抽样波动，继续作为 freeze sign-off 之后的观察项 / 监控项保留，而不是重新拉回阻断封版项
+
+## 2026-04-11 1.0 第一阶段第 7 轮
+- 当前阶段判断继续保持在：`1.0 第一阶段`，且比第 6 轮更适合定义为“自然 rerun 收口 / 残余漂移定向清扫轮”。
+- 取舍依据继续以：
+  - 最新用户 brief
+  - `ROADMAP_1_0.md`
+  - `DESIGN_ALIGNMENT_BASELINE_2026-04-05.md`
+  - 最新 `DEV_ISSUE_LOG.md`
+  为准；如与第 5 / 6 轮摘要冲突，以本节覆盖。
+- 本轮主线继续从“committed retention 仍有残余漂移”收窄到：
+  - early-mid ordinary sample 的 route continuity
+  - `crit` hinted 阶段被 reroute-window 过早拉散
+  - `pierce` 在 no-focus / ordinary sample 里拿不到稳定的 mid continuity
+- 当前最新进展：
+  - reroute-window 的 `hold` 选项不再只是纯缓冲，而是会继续承接当前路线：
+    - `先稳当前火力`
+    - `先稳当前清线`
+  - `crit-reroute-window` 在 hinted 阶段的出现强度与改道力度被压低，避免一拍把 `crit` 直接掰成 `dash committed`
+  - ordinary-sample continuity carrier 继续补强：
+    - `压线留焰`
+    - `拆账铺面`
+    - `压线余焰`
+    - `拆账余缝`
+  - opening / mid node 的 route-fit 继续做小幅保护：
+    - `厚线突围`
+    - `拆屏挂账`
+    - `过渡整备`
+    - `转折校准`
+  - `levelUp` 只做了轻量 route-window 提前承接，不回到 selector 主导轮
+- 当前结论：
+  - 浏览器 route-flow rerun 中，`crit` 已不再复现“早期 reroute-window 直接带偏到 `dash committed`”，当前样本回到 `crit committed`
+  - `pierce` 已不再复现 round6 的 `mid unformed`，但自然 rerun 仍可能停在 `dash hinted`；结合 panel trace，更像是 no-focus opening / mid starter continuity 仍不够稳，而不是 late closeout 再次失效
+  - 因此本轮更像“把最顽固散点定向压缩”，而不是宣布 natural rerun 已完全收口
+- Boss 监控项最新回归：
+  - `normal`
+    - `bossBastionRuns = 8 / 24`
+    - `crossfireSeenRuns = 4 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highBurst`
+    - `bossBastionRuns = 9 / 24`
+    - `crossfireSeenRuns = 9 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highMobility`
+    - `bossBastionRuns = 7 / 24`
+    - `crossfireSeenRuns = 7 / 24`
+    - `firelineSeenRuns = 4 / 24`
+  - 结论：
+    - 未见新的明显恶化
+    - `fireline` 在 normal 样本里仍非高频承接，但没有因为本轮 early-mid continuity 调整而塌回去
+    - 本轮仍不是 Boss 专项轮
 
 ## 2026-04-11 1.0 第一阶段第 6 轮
 - 当前阶段判断继续保持在：`1.0 第一阶段`，且比第 5 轮更适合定义为“残余漂移压缩 / committed 稳定成型轮”。

@@ -229,6 +229,43 @@
   - 但少数 run 仍可能停在“已经 hinted / 刚开始站稳”，而不是稳定一路推到 matured
 - 因此本轮解决的是 residual drift 压缩，不是宣布 committed retention 已完全收口。
 
+## 2026-04-11 1.0 第一阶段第 7 轮：自然 rerun 收口 / 残余漂移定向清扫
+### 当前取舍
+- 本轮不再继续补 high-memory closeout，也不再扩 redirect / bossEcho 新入口，而是继续把 residual drift 收窄到：
+  - early-mid ordinary sample 的 route continuity
+  - `crit` hinted 阶段被过早改道拉散
+  - `pierce` 在 no-focus opening / mid 里拿不到稳定 starter / bridge 承接
+- 因此本轮继续沿现有 upgrade / anomaly / node / selector carrier 做保护性清扫，不引入新系统。
+
+### early-mid continuity 当前口径
+- `crit`
+  - round7 的目标不是再给更亮的爆点，而是让 `crit` 在 hinted 阶段更容易先把当前线站住，再决定要不要改道。
+  - 因此：
+    - `reroute-window` 仍保留，但 hinted 阶段不应再比 current-line hold 更强
+    - `hold` 选项现在应更像“继续压当前火力”，而不是纯数值缓冲
+    - `压线留焰 / 压线余焰` 继续承担 early-mid continuity，而不是把问题拖到 late payoff
+- `pierce`
+  - round7 的目标不是再补更多晚段清账，而是让 `pierce` 在 ordinary sample 的 opening-to-mid 更容易先站出“拆线 -> 扩面 -> 清账回收”的起手。
+  - 因此：
+    - `拆账铺面 / 拆账余缝` 的职责继续前移到 mid committed-hold
+    - opening / mid 的 node route-fit 可以继续轻量偏向 `pierce`，帮助它先拿到 starter / bridge 承接
+    - 若 natural rerun 仍漂向 `dash hinted`，优先把它视为 no-focus starter continuity 噪音，而不是重新把责任推回 late closeout
+- `dash`
+  - 本轮继续保持“换位 / 回摆 / 反打 / 回线追回”的既有口径。
+  - 但不因为补强 `crit / pierce` 而反向把穿梭做弱，也不把本轮重新做成 dash 专项轮。
+
+### redirect / hybrid / bossEcho 边界补充
+- `redirect`
+  - 仍主要负责 mid 的“现在转得过去”。
+  - 但 round7 明确要求：如果玩家选的是 `hold`，它应该是“稳住当前路线的一拍”，而不是只换一口纯缓冲。
+  - off-route redirect 仍应保留真实改道价值，但不应在 hinted ordinary sample 里一拍抢走整条线。
+- `hybrid`
+  - 继续承担 support / follow-through，不回到本轮主线。
+  - `压线余焰 / 拆账余缝` 这类 anomaly 现在更像 continuity support，而不是新一轮 mixed closeout 扩写。
+- `bossEcho`
+  - round7 不继续扩 bossEcho 内容量。
+  - 它仍只承担 Boss 前预读与尾段 support，不替代 ordinary sample 的 early-mid continuity。
+
 ## 2026-04-11 1.0 第一阶段第 5 轮：玩法差异稳读 / 低命中样本补洞
 ### 当前取舍
 - 本轮不再主要追问“有没有更亮的 high-memory closeout”，而是追问：
