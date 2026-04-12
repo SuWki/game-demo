@@ -11,8 +11,10 @@ import type {
   UpgradeValueBucket,
 } from '../game/types';
 
-export const ARENA_WIDTH = 960;
-export const ARENA_HEIGHT = 540;
+export const VIEWPORT_WIDTH = 960;
+export const VIEWPORT_HEIGHT = 540;
+export const ARENA_WIDTH = 2400;
+export const ARENA_HEIGHT = 1560;
 export const PLAYER_BODY_RADIUS = 12;
 export const PLAYER_COLLISION_RADIUS = 18;
 

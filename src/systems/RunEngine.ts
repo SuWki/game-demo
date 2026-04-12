@@ -1,6 +1,8 @@
 import {
   ARENA_HEIGHT,
   ARENA_WIDTH,
+  VIEWPORT_HEIGHT,
+  VIEWPORT_WIDTH,
   PLAYER_COLLISION_RADIUS,
   clamp,
   createBaseStats,
@@ -737,25 +739,50 @@ export class RunEngine {
     }
   }
 
+  private getBattleViewportBounds(battle: BattleState): {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    width: number;
+    height: number;
+  } {
+    const width = Math.min(VIEWPORT_WIDTH, ARENA_WIDTH);
+    const height = Math.min(VIEWPORT_HEIGHT, ARENA_HEIGHT);
+    const left = clamp(battle.playerX - width * 0.5, 0, Math.max(0, ARENA_WIDTH - width));
+    const top = clamp(battle.playerY - height * 0.5, 0, Math.max(0, ARENA_HEIGHT - height));
+
+    return {
+      left,
+      right: left + width,
+      top,
+      bottom: top + height,
+      width,
+      height,
+    };
+  }
+
   private openPressureSafeWindow(
     battle: BattleState,
     phase: BattlePressurePhaseDefinition,
     axis: PressureSafeWindowAxis,
   ): void {
+    const view = this.getBattleViewportBounds(battle);
+
     if (axis === 'pocket') {
       const shiftType = this.getPressurePocketShiftType(battle, phase);
       const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
-      const baseSafeWindowSpan = clamp(phase.patternSafeWindowSize ?? 184, 152, ARENA_WIDTH * 0.36);
+      const baseSafeWindowSpan = clamp(phase.patternSafeWindowSize ?? 184, 152, view.width * 0.42);
       const baseSafeWindowSecondarySpan = clamp(
         phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.68,
         108,
-        ARENA_HEIGHT * 0.34,
+        view.height * 0.4,
       );
-      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 144, ARENA_WIDTH * 0.38);
+      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 144, view.width * 0.44);
       const safeWindowSecondarySpan = clamp(
         baseSafeWindowSecondarySpan * shiftProfile.heightScale,
         104,
-        ARENA_HEIGHT * 0.36,
+        view.height * 0.42,
       );
       const safeWindowCenter = this.choosePressureSafePocketCenter(battle, safeWindowSpan, safeWindowSecondarySpan, shiftType);
       const safeWindowSec = clamp((phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale, 0.72, 1.72);
@@ -785,9 +812,9 @@ export class RunEngine {
       return;
     }
 
-    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const dimension = axis === 'vertical' ? view.width : view.height;
     const minimumSpan = axis === 'vertical' ? 164 : 132;
-    const maximumSpan = dimension * 0.46;
+    const maximumSpan = dimension * 0.48;
     const safeWindowSpan = clamp(
       phase.patternSafeWindowSize ?? (axis === 'vertical' ? 212 : 156),
       minimumSpan,
@@ -804,7 +831,8 @@ export class RunEngine {
     battle.pressureSafeWindowShiftType = undefined;
     battle.pressureSafeWindowCenter = safeWindowCenter;
     battle.pressureSafeWindowSpan = safeWindowSpan;
-    battle.pressureSafeWindowSecondaryCenter = axis === 'vertical' ? CENTER_Y : CENTER_X;
+    battle.pressureSafeWindowSecondaryCenter =
+      axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
     battle.pressureSafeWindowSecondarySpan = 0;
     battle.pressureSafeWindowSec = safeWindowSec;
 
@@ -826,14 +854,20 @@ export class RunEngine {
     axis: PressureSafeWindowAxis,
     span: number,
   ): number {
-    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const view = this.getBattleViewportBounds(battle);
+    const dimension = axis === 'vertical' ? view.width : view.height;
+    const viewStart = axis === 'vertical' ? view.left : view.top;
     const playerCoord = axis === 'vertical' ? battle.playerX : battle.playerY;
     const laneRatios = axis === 'vertical' ? [0.32, 0.68, 0.5, 0.36, 0.64] : [0.3, 0.7, 0.5, 0.38, 0.62];
     const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1) % laneRatios.length;
-    const anchoredLane = dimension * laneRatios[pulseIndex];
+    const anchoredLane = viewStart + dimension * laneRatios[pulseIndex];
     const blendedCenter = anchoredLane * 0.72 + playerCoord * 0.28;
-    const margin = axis === 'vertical' ? 92 : 74;
-    return clamp(blendedCenter, margin + span * 0.5, dimension - margin - span * 0.5);
+    const margin = axis === 'vertical' ? 72 : 58;
+    return clamp(
+      blendedCenter,
+      viewStart + margin + span * 0.5,
+      viewStart + dimension - margin - span * 0.5,
+    );
   }
 
   private choosePressureSafePocketCenter(
@@ -842,19 +876,20 @@ export class RunEngine {
     spanY: number,
     shiftType: PressurePocketShiftModeId,
   ): { x: number; y: number } {
+    const view = this.getBattleViewportBounds(battle);
     const shiftModes = this.getActivePressurePhase(battle)?.patternPocketShiftModes;
     const shiftModeCount = Math.max(1, shiftModes?.length ?? 0);
     const shiftCycleIndex = Math.floor(Math.max(0, battle.pressurePatternPulseCount - 1) / shiftModeCount);
     const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
     const anchor = shiftProfile.anchors[shiftCycleIndex % shiftProfile.anchors.length];
-    const anchorX = ARENA_WIDTH * anchor.x;
-    const anchorY = ARENA_HEIGHT * anchor.y;
+    const anchorX = view.left + view.width * anchor.x;
+    const anchorY = view.top + view.height * anchor.y;
     const playerBlend = shiftProfile.playerBlend;
     const blendedX = anchorX * (1 - playerBlend) + battle.playerX * playerBlend;
     const blendedY = anchorY * (1 - playerBlend) + battle.playerY * playerBlend;
     return {
-      x: clamp(blendedX, 108 + spanX * 0.5, ARENA_WIDTH - 108 - spanX * 0.5),
-      y: clamp(blendedY, 92 + spanY * 0.5, ARENA_HEIGHT - 92 - spanY * 0.5),
+      x: clamp(blendedX, view.left + 84 + spanX * 0.5, view.right - 84 - spanX * 0.5),
+      y: clamp(blendedY, view.top + 74 + spanY * 0.5, view.bottom - 74 - spanY * 0.5),
     };
   }
 
@@ -982,23 +1017,35 @@ export class RunEngine {
       return;
     }
 
-    const dimension = axis === 'vertical' ? ARENA_WIDTH : ARENA_HEIGHT;
+    const view = this.getBattleViewportBounds(battle);
+    const dimension = axis === 'vertical' ? view.width : view.height;
+    const offset = axis === 'vertical' ? view.left : view.top;
     const margin = axis === 'vertical' ? 72 : 58;
     const shotSlots = Math.max(4, phase.patternWallShotCount ?? (axis === 'vertical' ? 7 : 6));
-    const safeStart = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
-    const safeEnd = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
-    const slotPositions = this.collectPressureSlotPositions(dimension, margin, shotSlots, safeStart, safeEnd);
+    const safeStart = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5 - offset;
+    const safeEnd = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5 - offset;
+    const slotPositions = this.collectPressureSlotPositions(dimension, margin, shotSlots, safeStart, safeEnd).map(
+      (position) => position + offset,
+    );
     const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, 0.7);
 
     for (const position of slotPositions) {
       if (axis === 'vertical') {
-        this.spawnEnemyProjectile(battle, position, -22, projectileSpeed, projectileDamage, 6, Math.PI / 2);
-        this.spawnEnemyProjectile(battle, position, ARENA_HEIGHT + 22, projectileSpeed, projectileDamage, 6, -Math.PI / 2);
+        this.spawnEnemyProjectile(battle, position, view.top - 22, projectileSpeed, projectileDamage, 6, Math.PI / 2);
+        this.spawnEnemyProjectile(
+          battle,
+          position,
+          view.bottom + 22,
+          projectileSpeed,
+          projectileDamage,
+          6,
+          -Math.PI / 2,
+        );
         continue;
       }
 
-      this.spawnEnemyProjectile(battle, -22, position, projectileSpeed, projectileDamage, 6, 0);
-      this.spawnEnemyProjectile(battle, ARENA_WIDTH + 22, position, projectileSpeed, projectileDamage, 6, Math.PI);
+      this.spawnEnemyProjectile(battle, view.left - 22, position, projectileSpeed, projectileDamage, 6, 0);
+      this.spawnEnemyProjectile(battle, view.right + 22, position, projectileSpeed, projectileDamage, 6, Math.PI);
     }
   }
 
@@ -1007,6 +1054,7 @@ export class RunEngine {
       return;
     }
 
+    const view = this.getBattleViewportBounds(battle);
     const shiftType = battle.pressureSafeWindowShiftType ?? 'sweep';
     const safeStartX = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
     const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
@@ -1019,19 +1067,39 @@ export class RunEngine {
     );
     const xMargin = shiftType === 'edgeBounce' ? 72 : 84;
     const yMargin = shiftType === 'centerReset' ? 76 : 68;
-    const xSlots = this.collectPressureSlotPositions(ARENA_WIDTH, xMargin, horizontalSlotCount, safeStartX, safeEndX);
-    const ySlots = this.collectPressureSlotPositions(ARENA_HEIGHT, yMargin, verticalSlotCount, safeStartY, safeEndY);
+    const xSlots = this.collectPressureSlotPositions(
+      view.width,
+      xMargin,
+      horizontalSlotCount,
+      safeStartX - view.left,
+      safeEndX - view.left,
+    ).map((position) => position + view.left);
+    const ySlots = this.collectPressureSlotPositions(
+      view.height,
+      yMargin,
+      verticalSlotCount,
+      safeStartY - view.top,
+      safeEndY - view.top,
+    ).map((position) => position + view.top);
     const damageMultiplier = shiftType === 'centerReset' ? 0.64 : shiftType === 'edgeBounce' ? 0.7 : 0.68;
     const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, damageMultiplier);
 
     for (const x of xSlots) {
-      this.spawnEnemyProjectile(battle, x, -24, projectileSpeed, projectileDamage, 6, Math.PI / 2);
-      this.spawnEnemyProjectile(battle, x, ARENA_HEIGHT + 24, projectileSpeed, projectileDamage, 6, -Math.PI / 2);
+      this.spawnEnemyProjectile(battle, x, view.top - 24, projectileSpeed, projectileDamage, 6, Math.PI / 2);
+      this.spawnEnemyProjectile(
+        battle,
+        x,
+        view.bottom + 24,
+        projectileSpeed,
+        projectileDamage,
+        6,
+        -Math.PI / 2,
+      );
     }
 
     for (const y of ySlots) {
-      this.spawnEnemyProjectile(battle, -24, y, projectileSpeed, projectileDamage, 6, 0);
-      this.spawnEnemyProjectile(battle, ARENA_WIDTH + 24, y, projectileSpeed, projectileDamage, 6, Math.PI);
+      this.spawnEnemyProjectile(battle, view.left - 24, y, projectileSpeed, projectileDamage, 6, 0);
+      this.spawnEnemyProjectile(battle, view.right + 24, y, projectileSpeed, projectileDamage, 6, Math.PI);
     }
   }
 
@@ -1721,13 +1789,14 @@ export class RunEngine {
       if (!eliteRule) {
         return;
       }
+      const view = this.getBattleViewportBounds(battle);
       battle.eliteSpawned = true;
       battle.eliteAlive = true;
       const eliteHp = this.getRegularEnemyHp(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.hpMultiplier);
       battle.enemies.push({
         id: battle.nextEnemyId++,
-        x: CENTER_X,
-        y: -60,
+        x: view.left + view.width * 0.5,
+        y: view.top - 60,
         hp: eliteHp,
         maxHp: eliteHp,
         speed: this.getRegularEnemySpeed(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, eliteRule.speedMultiplier),
@@ -1880,6 +1949,7 @@ export class RunEngine {
     mode: PressurePatternModeId,
     index: number,
   ): { x: number; y: number } {
+    const view = this.getBattleViewportBounds(battle);
     const margin = 44;
     const cursor = battle.spawnCursor++;
     const sideOffset = 46 + Math.floor(index / 2) * 34;
@@ -1887,17 +1957,25 @@ export class RunEngine {
 
     if (mode === 'laneCrush') {
       const fromTop = index % 2 === 0;
-      const x = clamp(battle.playerX + (index % 4 < 2 ? -sideOffset : sideOffset) + jitter, margin, ARENA_WIDTH - margin);
+      const x = clamp(
+        battle.playerX + (index % 4 < 2 ? -sideOffset : sideOffset) + jitter,
+        view.left + margin,
+        view.right - margin,
+      );
       return {
         x,
-        y: fromTop ? -28 : ARENA_HEIGHT + 28,
+        y: fromTop ? view.top - 28 : view.bottom + 28,
       };
     }
 
     const fromLeft = index % 2 === 0;
-    const y = clamp(battle.playerY + (index % 4 < 2 ? -sideOffset : sideOffset) + jitter, margin, ARENA_HEIGHT - margin);
+    const y = clamp(
+      battle.playerY + (index % 4 < 2 ? -sideOffset : sideOffset) + jitter,
+      view.top + margin,
+      view.bottom - margin,
+    );
     return {
-      x: fromLeft ? -28 : ARENA_WIDTH + 28,
+      x: fromLeft ? view.left - 28 : view.right + 28,
       y,
     };
   }
@@ -1921,6 +1999,7 @@ export class RunEngine {
     template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
     burstIndex: number,
   ): { x: number; y: number } {
+    const view = this.getBattleViewportBounds(battle);
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const cursor = battle.spawnCursor++;
@@ -1928,9 +2007,10 @@ export class RunEngine {
 
     if (pattern === 'pincers') {
       const fromLeft = (cursor + burstIndex) % 2 === 0;
-      const y = margin + (((cursor * 73) + burstIndex * 41) % Math.max(1, ARENA_HEIGHT - margin * 2));
+      const y =
+        view.top + margin + (((cursor * 73) + burstIndex * 41) % Math.max(1, Math.round(view.height - margin * 2)));
       return {
-        x: fromLeft ? -28 : ARENA_WIDTH + 28,
+        x: fromLeft ? view.left - 28 : view.right + 28,
         y,
       };
     }
@@ -1943,14 +2023,22 @@ export class RunEngine {
 
       if (laneBias === 'vertical') {
         return {
-          x: clamp(((lane + 1) / (laneCount + 1)) * ARENA_WIDTH + jitter, margin, ARENA_WIDTH - margin),
-          y: sideIndex === 0 ? -28 : ARENA_HEIGHT + 28,
+          x: clamp(
+            view.left + ((lane + 1) / (laneCount + 1)) * view.width + jitter,
+            view.left + margin,
+            view.right - margin,
+          ),
+          y: sideIndex === 0 ? view.top - 28 : view.bottom + 28,
         };
       }
 
       return {
-        x: sideIndex === 0 ? -28 : ARENA_WIDTH + 28,
-        y: clamp(((lane + 1) / (laneCount + 1)) * ARENA_HEIGHT + jitter, margin, ARENA_HEIGHT - margin),
+        x: sideIndex === 0 ? view.left - 28 : view.right + 28,
+        y: clamp(
+          view.top + ((lane + 1) / (laneCount + 1)) * view.height + jitter,
+          view.top + margin,
+          view.bottom - margin,
+        ),
       };
     }
 
@@ -1958,25 +2046,25 @@ export class RunEngine {
     const t = (((cursor * 53) + burstIndex * 17) % 100) / 100;
     if (side === 0) {
       return {
-        x: margin + t * (ARENA_WIDTH - margin * 2),
-        y: -28,
+        x: view.left + margin + t * (view.width - margin * 2),
+        y: view.top - 28,
       };
     }
     if (side === 1) {
       return {
-        x: ARENA_WIDTH + 28,
-        y: margin + t * (ARENA_HEIGHT - margin * 2),
+        x: view.right + 28,
+        y: view.top + margin + t * (view.height - margin * 2),
       };
     }
     if (side === 2) {
       return {
-        x: margin + t * (ARENA_WIDTH - margin * 2),
-        y: ARENA_HEIGHT + 28,
+        x: view.left + margin + t * (view.width - margin * 2),
+        y: view.bottom + 28,
       };
     }
     return {
-      x: -28,
-      y: margin + t * (ARENA_HEIGHT - margin * 2),
+      x: view.left - 28,
+      y: view.top + margin + t * (view.height - margin * 2),
     };
   }
 

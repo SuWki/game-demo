@@ -26,10 +26,10 @@ const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
 };
 
 const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
-  battle: '#ff8f70',
-  upgrade: '#68d4ff',
-  anomaly: '#c98eff',
-  boss: '#ff6d6d',
+  battle: '#ff9966',
+  upgrade: '#5bc6ff',
+  anomaly: '#b56cff',
+  boss: '#ff6d58',
 };
 
 const TOAST_BADGES: Record<ToastTone, string> = {
@@ -85,56 +85,51 @@ export class OverlayController {
         </div>
         <div class="hero-layout">
           <div class="hero-copy">
-            <p class="eyebrow">短局自动射击</p>
-            <h1>节点推进 Demo</h1>
-            <p class="lead">用 WASD 走位、自动开火和节点抉择，把一条流派在短局内扶到成型。</p>
+            <p class="eyebrow">短局生存射击</p>
+            <h1>节点推进作战</h1>
+            <p class="lead">一边走位清怪，一边在节点和升级里把路线打成型。</p>
             <div class="hero-routes">
-              <span class="route-badge route-badge-crit">暴击</span>
-              <span class="route-badge route-badge-pierce">穿透</span>
-              <span class="route-badge route-badge-dash">穿梭</span>
+              <span class="route-badge route-badge-crit">暴击线</span>
+              <span class="route-badge route-badge-pierce">穿透线</span>
+              <span class="route-badge route-badge-dash">穿梭线</span>
             </div>
             <div class="menu-pills">
-              <span class="menu-pill">WASD 走位</span>
-              <span class="menu-pill">自动射击</span>
-              <span class="menu-pill">战斗内升级</span>
-              <span class="menu-pill">节点路线推进</span>
+              <span class="menu-pill">WASD 移动</span>
+              <span class="menu-pill">自动开火</span>
+              <span class="menu-pill">战斗中升级</span>
+              <span class="menu-pill">节点推进</span>
+            </div>
+            <div class="menu-actions">
+              <button class="primary-action" data-action="start">开始行动</button>
+              <button class="secondary-action" data-action="export">导出记录</button>
             </div>
           </div>
           <div class="hero-aside">
             <div class="hero-support">
-              <span>操作</span>
-              <strong>靠走位读压力</strong>
-              <small>自动开火，重点在拉扯、贴身、回摆和收经验节奏。</small>
+              <span>当前目标</span>
+              <strong>把一条线收成型</strong>
+              <small>中途可以改道，但越往后越要读清楚自己这局在打什么。</small>
             </div>
             <div class="hero-support">
-              <span>成长</span>
-              <strong>战斗内成型</strong>
-              <small>击落敌人拿经验，升级三选一，再靠节点把路线慢慢站稳。</small>
+              <span>操作节奏</span>
+              <strong>先活下来，再拿关键一拍</strong>
+              <small>敌人会从视野外包进来，站位和路线选择同样重要。</small>
             </div>
-            <div class="hero-support">
-              <span>目标</span>
-              <strong>把一条线收住</strong>
-              <small>暴击、穿透、穿梭各有读法，尽量在 Boss 前把收束能力补齐。</small>
+            <div class="menu-stats">
+              <div>
+                <span>累计试飞</span>
+                <strong>${summary.totalRuns}</strong>
+              </div>
+              <div>
+                <span>完成次数</span>
+                <strong>${summary.wins}</strong>
+              </div>
+              <div>
+                <span>上次路线</span>
+                <strong>${summary.lastRouteName}</strong>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="menu-stats">
-          <div>
-            <span>累计试飞</span>
-            <strong>${summary.totalRuns}</strong>
-          </div>
-          <div>
-            <span>完成试飞</span>
-            <strong>${summary.wins}</strong>
-          </div>
-          <div>
-            <span>最近路线</span>
-            <strong>${summary.lastRouteName}</strong>
-          </div>
-        </div>
-        <div class="menu-actions">
-          <button class="primary-action" data-action="start">开始试飞</button>
-          <button class="secondary-action" data-action="export">导出埋点</button>
         </div>
       </section>
     `;
@@ -146,54 +141,58 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
-      <div class="hud-shell hud-shell-compact">
-        <div class="hud-compact-row">
-          <section class="hud-compact-card hud-compact-player">
-            <div class="hud-compact-head">
-              <span class="hud-panel-label">状态</span>
-              <span class="hud-status-pill">${snapshot.levelText}</span>
+      <div class="hud-shell hud-shell-game">
+        <section class="hud-anchor hud-anchor-left hud-player-card">
+          <div class="hud-compact-head">
+            <span class="hud-panel-label">状态</span>
+            <span class="hud-status-pill">${snapshot.levelText}</span>
+          </div>
+          <div class="hud-meter">
+            <div class="hud-meter-head">
+              <span>生命</span>
+              <strong>${snapshot.hpText}</strong>
             </div>
-            <div class="hud-meter">
-              <div class="hud-meter-head">
-                <span>耐久</span>
-                <strong>${snapshot.hpText}</strong>
-              </div>
-              <div class="hud-meter-bar hud-meter-hp ${this.getMeterStateClass(snapshot.hpRatio)}">
-                <span style="width: ${Math.max(0, Math.min(100, snapshot.hpRatio * 100)).toFixed(1)}%"></span>
-              </div>
+            <div class="hud-meter-bar hud-meter-hp ${this.getMeterStateClass(snapshot.hpRatio)}">
+              <span style="width: ${Math.max(0, Math.min(100, snapshot.hpRatio * 100)).toFixed(1)}%"></span>
             </div>
-            <div class="hud-meter">
-              <div class="hud-meter-head">
-                <span>经验</span>
-                <strong>${snapshot.experienceText}</strong>
-              </div>
-              <div class="hud-meter-bar hud-meter-xp">
-                <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
-              </div>
+          </div>
+          <div class="hud-meter">
+            <div class="hud-meter-head">
+              <span>经验</span>
+              <strong>${snapshot.experienceText}</strong>
             </div>
-          </section>
-          <section class="hud-compact-card hud-compact-stage">
-            <div class="hud-compact-head">
-              <span class="hud-panel-label">${snapshot.progressLabel}</span>
-              <span class="hud-compact-inline">${snapshot.routeStatusText}</span>
+            <div class="hud-meter-bar hud-meter-xp">
+              <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
-            <strong>${snapshot.statusText}</strong>
-            <small>${snapshot.progressDetail}</small>
-            ${this.renderPhaseTrack(snapshot.phaseTrack, 'hud')}
-          </section>
-          <section class="hud-compact-card hud-compact-objective hud-objective-${snapshot.objectiveTone}">
-            <div class="hud-compact-head">
-              <span class="hud-panel-label">${snapshot.objectiveLabel}</span>
-              <span class="hud-compact-inline">${snapshot.nodeLabel}</span>
-            </div>
-            <strong>${snapshot.objectiveText}</strong>
-            <small>${snapshot.objectiveDetail}</small>
-            <div class="hud-objective-progress">${snapshot.objectiveProgressText}</div>
-            <div class="route-strip hud-route-strip hud-route-strip-compact">
-              ${this.renderRouteStrip(snapshot.routeProgress)}
-            </div>
-          </section>
-        </div>
+          </div>
+        </section>
+        <section class="hud-anchor hud-anchor-center hud-stage-card">
+          <div class="hud-compact-head">
+            <span class="hud-panel-label">${snapshot.progressLabel}</span>
+            <span class="hud-compact-inline">${snapshot.routeStatusText}</span>
+          </div>
+          <strong>${snapshot.statusText}</strong>
+          <small>${snapshot.statusSubtext ?? snapshot.progressDetail}</small>
+          ${this.renderPhaseTrack(snapshot.phaseTrack, 'hud')}
+        </section>
+        <section class="hud-anchor hud-anchor-right hud-objective-card hud-objective-${snapshot.objectiveTone}">
+          <div class="hud-compact-head">
+            <span class="hud-panel-label">${snapshot.objectiveLabel}</span>
+            <span class="hud-compact-inline">${snapshot.nodeLabel}</span>
+          </div>
+          <strong>${snapshot.objectiveText}</strong>
+          <small>${snapshot.objectiveDetail}</small>
+          <div class="hud-objective-progress">${snapshot.objectiveProgressText}</div>
+        </section>
+        <section class="hud-anchor hud-anchor-bottom hud-route-card">
+          <div class="hud-compact-head">
+            <span class="hud-panel-label">路线走势</span>
+            <span class="hud-compact-inline">${snapshot.phaseLabel}</span>
+          </div>
+          <div class="route-strip hud-route-strip hud-route-strip-compact">
+            ${this.renderRouteStrip(snapshot.routeProgress)}
+          </div>
+        </section>
       </div>
     `;
   }
@@ -206,9 +205,9 @@ export class OverlayController {
   ): void {
     this.showPanel({
       panelClassName: 'panel-node-choice',
-      modeLabel: '路线选择',
-      modeHint: '决定下一站去哪里',
-      title: `${phaseLabel}节点选择`,
+      modeLabel: '关卡路线选择',
+      modeHint: '下一站去哪里',
+      title: `${phaseLabel}路线`,
       description: this.getNodePanelDescription(options),
       items: options.map((node) => this.renderNodeChoiceCard(node)),
       progress,
@@ -226,22 +225,22 @@ export class OverlayController {
     onChoose: (upgradeId: string) => void,
   ): void {
     const modeLabel = title.includes('等级提升')
-      ? '战斗升级'
+      ? '强化属性选择'
       : title.includes('最终整备')
-        ? 'Boss 前整备'
-        : '强化选择';
+        ? '最终整备'
+        : '强化属性选择';
     const modeHint = title.includes('等级提升')
-      ? '选完立即回到当前战斗'
+      ? '选完立刻回到战斗'
       : title.includes('最终整备')
-        ? '选完后直接进入 Boss'
-        : '补强当前构筑';
+        ? '选完直接进 Boss'
+        : '补当前打法';
 
     this.showPanel({
       panelClassName: 'panel-upgrade-choice',
       modeLabel,
       modeHint,
       title,
-      description,
+      description: description || '挑一项强化，补上这局最缺的一拍。',
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade)),
       progress,
     });
@@ -255,12 +254,12 @@ export class OverlayController {
     progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
     onChoose: (optionId: string) => void,
   ): void {
-    const contentLabel = eventDef.contentKind === 'anomaly' ? '异常' : '事件';
+    const contentLabel = eventDef.contentKind === 'anomaly' ? '异常处理' : '事件处理';
     this.showPanel({
       panelClassName: 'panel-event-choice',
-      modeLabel: eventDef.contentKind === 'anomaly' ? '异常抉择' : '事件处理',
+      modeLabel: contentLabel,
       modeHint: eventDef.contentKind === 'anomaly' ? '选一种处理方式' : '选一种结果',
-      title: `${contentLabel} · ${eventDef.name}`,
+      title: eventDef.name,
       description: this.getEventPanelDescription(eventDef),
       items: eventDef.options.map((option) => this.renderEventChoiceCard(eventDef, option)),
       progress,
@@ -283,15 +282,9 @@ export class OverlayController {
           <span class="surface-dot"></span>
           <span class="surface-dot"></span>
         </div>
-        <p class="eyebrow">${result.outcome === 'victory' ? '试飞完成' : '试飞中止'}</p>
-        <h1>${result.outcome === 'victory' ? '这局已经顺利收住' : '这局还差最后一口气'}</h1>
+        <p class="eyebrow">${result.outcome === 'victory' ? '本局完成' : '本局结束'}</p>
+        <h1>${result.outcome === 'victory' ? '路线已经收住' : '还差最后一拍'}</h1>
         <p class="lead">${result.summary}</p>
-        <div class="menu-pills result-pills">
-          <span class="menu-pill">收尾节点 ${result.finalNodeType ? `${NODE_TYPE_LABEL_MAP[result.finalNodeType]} · ` : ''}${result.finalNodeTitle}</span>
-          <span class="menu-pill">战斗胜场 ${result.battleWins}</span>
-          <span class="menu-pill">推进节点 ${result.nodesCleared}</span>
-          <span class="menu-pill">时长 ${result.runDurationSec.toFixed(1)}s</span>
-        </div>
         <div class="menu-stats">
           <div>
             <span>路线</span>
@@ -302,7 +295,7 @@ export class OverlayController {
             <strong>${result.buildLabel}</strong>
           </div>
           <div>
-            <span>结束</span>
+            <span>结局</span>
             <strong>${result.endingLabel}</strong>
           </div>
           <div>
@@ -312,9 +305,14 @@ export class OverlayController {
         </div>
         <div class="result-callout">
           <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
-          <p class="panel-description">本局从 ${routeLabel} 起势，最终以 ${result.endingLabel} 收尾。</p>
+          <div class="menu-pills result-pills">
+            <span class="menu-pill">收尾节点 ${result.finalNodeType ? NODE_TYPE_LABEL_MAP[result.finalNodeType] : '阶段'} / ${result.finalNodeTitle}</span>
+            <span class="menu-pill">胜场 ${result.battleWins}</span>
+            <span class="menu-pill">推进 ${result.nodesCleared}</span>
+            <span class="menu-pill">时长 ${result.runDurationSec.toFixed(1)}s</span>
+          </div>
           <div class="result-route-block">
-            <span class="result-route-label">本局路线</span>
+            <span class="result-route-label">本局路径</span>
             ${this.renderResultRouteTrace(result.routeTrace)}
           </div>
           <p class="result-replay-prompt">${result.replayPrompt}</p>
@@ -322,7 +320,7 @@ export class OverlayController {
         <div class="menu-actions">
           <button class="primary-action" data-action="restart">再来一局</button>
           <button class="secondary-action" data-action="menu">返回开始页</button>
-          <button class="secondary-action" data-action="export">导出埋点</button>
+          <button class="secondary-action" data-action="export">导出记录</button>
         </div>
       </section>
     `;
@@ -341,7 +339,7 @@ export class OverlayController {
     this.toastLayer.appendChild(toast);
     window.setTimeout(() => {
       toast.remove();
-    }, 2800);
+    }, 2600);
   }
 
   public hidePanel(): void {
@@ -370,7 +368,7 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.panelLayer.classList.remove('hidden');
     this.panelLayer.innerHTML = `
-      <section class="floating-panel ${config.panelClassName}">
+      <section class="floating-panel dock-panel ${config.panelClassName}">
         <div class="surface-mark">
           <span class="surface-dot"></span>
           <span class="surface-dot"></span>
@@ -378,7 +376,7 @@ export class OverlayController {
         </div>
         <div class="panel-heading">
           <div class="panel-mode-row">
-            <span class="panel-mode-badge">${config.modeLabel}</span>
+            <p class="eyebrow">${config.modeLabel}</p>
             ${config.modeHint ? `<span class="panel-mode-hint">${config.modeHint}</span>` : ''}
           </div>
           <h2 class="panel-title">${config.title}</h2>
@@ -402,7 +400,7 @@ export class OverlayController {
       return `
         <div class="route-chip route-chip-compact route-chip-muted">
           <span>路线</span>
-          <strong>未站稳</strong>
+          <strong>未成线</strong>
         </div>
       `;
     }
@@ -430,34 +428,51 @@ export class OverlayController {
   }
 
   private renderNodeChoiceCard(node: NodeOption): string {
+    const detail =
+      node.type === 'battle'
+        ? getBattleEncounterLabel(node.templateId ?? 'elimination')
+        : node.type === 'upgrade'
+          ? node.isFinalPrep
+            ? 'Boss 前补强'
+            : '拿一项强化'
+          : node.type === 'anomaly'
+            ? '处理异常'
+            : '进入首领战';
+
     return `
       <button class="choice-card choice-card-node map-choice" style="--choice-accent: ${NODE_TYPE_ACCENT_MAP[node.type]}" data-choice="${node.id}">
         <div class="choice-card-top">
-          <span class="choice-kind-badge">路线站点</span>
+          <span class="choice-type">关卡路线</span>
           <span class="choice-node-pill choice-node-pill-${node.type}">${NODE_TYPE_LABEL_MAP[node.type]}</span>
+        </div>
+        <div class="choice-card-tags">
+          <span class="choice-kind-badge">下一站</span>
+          <span class="choice-brief-tag">${detail}</span>
         </div>
         <strong>${node.title}</strong>
         <small>${this.getNodeCardDescription(node)}</small>
-        <span class="choice-card-foot">选择这一站的推进路线</span>
       </button>
     `;
   }
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
-    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '无路线限制';
-    const categoryLabel = upgrade.routeId ? '流派强化' : '通用强化';
+    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用强化';
+    const kindLabel = upgrade.routeId ? '流派强化' : '属性强化';
+    const effectText = describeContentEffects(upgrade.effects, upgrade.routeId);
+
     return `
       <button class="choice-card choice-card-upgrade" style="--choice-accent: ${routeAccent}; --rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}" data-choice="${upgrade.id}">
         <div class="choice-card-top">
-          <span class="choice-kind-badge">${categoryLabel}</span>
+          <span class="choice-type">强化选择</span>
           <span class="choice-rarity" style="--rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}">${upgrade.rarityLabel}</span>
         </div>
         <div class="choice-card-tags">
+          <span class="choice-kind-badge">${kindLabel}</span>
           <span class="choice-route-pill ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
         </div>
         <strong>${upgrade.name}</strong>
-        <small>${upgrade.description}</small>
+        <small>${effectText || upgrade.description}</small>
       </button>
     `;
   }
@@ -467,12 +482,16 @@ export class OverlayController {
     option: EventDefinition['options'][number],
   ): string {
     const routeAccent = this.getRouteAccent(option.routeId);
-    const routeLabel = option.routeId ? this.getOptionTypeLabel(option.routeId, eventDef.contentKind) : null;
+    const routeLabel = option.routeId ? this.getOptionTypeLabel(option.routeId, eventDef.contentKind) : '当前处理';
+
     return `
       <button class="choice-card choice-card-event" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
         <div class="choice-card-top">
-          <span class="choice-kind-badge">${eventDef.contentKind === 'anomaly' ? '异常处理' : '事件处理'}</span>
-          ${routeLabel ? `<span class="choice-route-pill active" style="--route-pill: ${routeAccent}">${routeLabel}</span>` : ''}
+          <span class="choice-type">${eventDef.contentKind === 'anomaly' ? '异常处理' : '事件选择'}</span>
+          <span class="choice-route-pill ${option.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
+        </div>
+        <div class="choice-card-tags">
+          <span class="choice-kind-badge">${eventDef.contentKind === 'anomaly' ? '处理方式' : '结果'}</span>
         </div>
         <strong>${option.label}</strong>
         <small>${this.getEventOptionDescription(option)}</small>
@@ -481,52 +500,49 @@ export class OverlayController {
   }
 
   private getNodeCardDescription(node: NodeOption): string {
-    switch (node.type) {
-      case 'battle':
-        return `${getBattleEncounterLabel(node.templateId ?? 'elimination')} · ${node.description}`;
-      case 'upgrade':
-        return node.isFinalPrep ? '最后一次整备，选完后直接进入 Boss。' : node.description;
-      case 'anomaly':
-      case 'boss':
-      default:
-        return node.description;
+    if (node.type === 'battle') {
+      return node.description;
     }
+    if (node.type === 'upgrade') {
+      return node.isFinalPrep ? '最后补一手，随后直接进 Boss。' : '补强当前打法，再继续推进。';
+    }
+    return node.description;
   }
 
   private getNodePanelDescription(options: NodeOption[]): string {
     const phase = options[0]?.phase;
     switch (phase) {
       case 'opening':
-        return '这一拍先决定往哪一类站点走，让开局路线更快站出来。';
+        return '先让这局的第一条线站出来。';
       case 'mid':
-        return '中段开始要补桥接与承接，路线、强化、异常的选择会直接影响成线速度。';
+        return '这一站决定是继续收线，还是借异常改道。';
       case 'late':
-        return '后段优先补短板和收束能力，让最终站点更容易读成同一条线。';
+        return '后段优先补短板和收尾能力。';
       case 'finalPrep':
-        return '这是 Boss 前的最后一次整备，选完这一站就会进入最终战。';
+        return '最后一次整备，选完直接进 Boss。';
       case 'finalBattle':
-        return '最终收束入口已经锁定，这一战会决定本局结算。';
+        return '这一站就是本局的最终收束。';
       default:
-        return '选择下一站。';
+        return '选一条推进路线。';
     }
   }
 
   private getEventPanelDescription(eventDef: EventDefinition): string {
     if (eventDef.contentKind !== 'anomaly') {
-      return '选择一项处理结果。';
+      return '选一个处理结果。';
     }
 
     switch (eventDef.anomalyClass) {
       case 'routeWindow':
-        return '当前出现了改道窗口，选一条更偏航或更稳住的处理方式。';
+        return '出现改道窗口，选继续稳线还是切线。';
       case 'distortion':
-        return '当前出现了扭曲窗口，选一段代价与收益的交换。';
+        return '拿收益，也要接住代价。';
       case 'hybrid':
-        return '当前出现了并线样本，选一段混搭处理方式。';
+        return '这次会把两条线临时并在一起。';
       case 'bossEcho':
-        return '当前泄露了 Boss 的后段样本，先决定这次收束怎么补。';
+        return '提前读到一段 Boss 后程。';
       default:
-        return '当前出现了异常窗口，选一项处理方式。';
+        return '选一种异常处理方式。';
     }
   }
 
@@ -539,13 +555,13 @@ export class OverlayController {
 
   private getRouteAccent(routeId?: UpgradeDefinition['routeId'] | EventDefinition['options'][number]['routeId']): string {
     if (!routeId || routeId === 'dominant') {
-      return '#68d4ff';
+      return '#6ab9ff';
     }
     return ROUTE_COLOR_MAP[routeId];
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
-    return routeId ? ROUTE_NAME_MAP[routeId] : '未站稳';
+    return routeId ? ROUTE_NAME_MAP[routeId] : '未成线';
   }
 
   private getMeterStateClass(ratio: number): string {
@@ -593,7 +609,7 @@ export class OverlayController {
 
   private renderResultRouteTrace(routeTrace: RunResult['routeTrace']): string {
     if (routeTrace.length === 0) {
-      return '<p class="result-trace-empty">这一局结束得很快，路线还没来得及完整展开。</p>';
+      return '<p class="result-trace-empty">这局结束得太快，路线还没来得及完全展开。</p>';
     }
 
     return `
