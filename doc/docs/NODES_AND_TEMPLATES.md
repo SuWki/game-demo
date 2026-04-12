@@ -65,6 +65,29 @@
 - 后段同时应承接少量低频高辨识度内容：rare anomaly、rare battle 变体、late rare payoff，用来强化 replay 记忆点，但不能回渗到 mid
 - 当前 round 2 的事件节点比前几轮更需要承担“重评路线”的职责；round 3 的 rare 节点则应继续保持低频而非变成常规池
 
+## 2026-04-12 Round8 候选签收复检补充
+### 当前取舍
+- 本轮没有新增 node family，也没有改 node type；仍然只沿现有 `battle / upgrade / anomaly / boss template` carrier 做签收复检。
+- node 侧只做保护性前推：
+  - `round-2-battle-crit-hold`
+  - `round-2-battle-pierce-hold`
+  - `round-2-upgrade-bridge`
+- boss template 侧只做 `crossfire -> fireline` phase handoff 校准，不改 Boss 主流程：
+  - `crossfire`
+    - `triggerHpRatio = 0.82`
+    - `triggerRemainingSec = 28`
+    - `minResidenceSec = 3.2`
+  - `fireline`
+    - `triggerHpRatio = 0.72`
+    - `triggerRemainingSec = 18`
+
+### 最新复检结果
+- node / route continuity 侧，`pierce` 已能更稳定在 mid 站到 committed。
+- Boss 侧，`normal` 样本里的 `crossfire` 有所回升，但 `fireline` 仍未恢复：
+  - `crossfireSeenRuns = 3 / 24`
+  - `firelineSeenRuns = 0 / 24`
+- 因此模板级边界依旧成立，但 `boss-bastion / fireline` 仍只是 freeze 监控回补中的未签收项。
+
 ## 2026-04-12 1.0 第一阶段第 8 轮候选：opening-to-mid continuity 承接
 ### 新增 / 强化 carrier
 - opening / mid upgrade 新增或继续强化：

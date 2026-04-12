@@ -1753,7 +1753,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
         finalPrep: 0.42,
       },
       hintedRouteBonus: 0.66,
-      dominantRouteBonus: 1.72,
+      dominantRouteBonus: 1.84,
       committedRouteBonus: 1.18,
       maturedRouteBonus: 0.58,
       offRouteMultiplier: 0.08,
@@ -1773,6 +1773,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
               fireRate: 0.06,
               moveSpeed: 8,
             },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
           },
           {
             type: 'route',
@@ -1809,7 +1813,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
     description: '清线方向已经露出一拍，但还差一次把缝口稳住的承接。你可以先把拆线站住，也可以先把铺面留宽。',
     routeAffinity: 'pierce',
     selection: {
-      baseWeight: 0.94,
+      baseWeight: 1.02,
       minRound: 2,
       maxRound: 3,
       phaseBonuses: {
@@ -1817,7 +1821,7 @@ export const EVENT_CATALOG: EventDefinition[] = [
         late: 0.44,
       },
       hintedRouteBonus: 0.74,
-      dominantRouteBonus: 1.86,
+      dominantRouteBonus: 1.94,
       committedRouteBonus: 1.04,
       maturedRouteBonus: 0.24,
       offRouteMultiplier: 0.08,
@@ -1837,6 +1841,10 @@ export const EVENT_CATALOG: EventDefinition[] = [
               fireRate: 0.06,
               moveSpeed: 8,
             },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
           },
           {
             type: 'route',

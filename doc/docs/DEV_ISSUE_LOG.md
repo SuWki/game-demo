@@ -1,4 +1,73 @@
 # DEV ISSUE LOG
+## [1.0 第一阶段第 8 轮候选签收复检] commit timing 前推 / freeze 监控回补
+### 本轮口径
+- 本轮继续按 `1.0 第一阶段第 8 轮候选` 处理，不前推到第 9 轮。原因是最新阶段文档、最新 [PROJECT_STATUS.md](./PROJECT_STATUS.md) 与最新 [DEV_ISSUE_LOG.md](./DEV_ISSUE_LOG.md) 都还把 round8 候选签收列为当前任务，尚无更晚轮次落盘。
+- 若旧摘要与当前 docs 冲突，本节开始统一以后续顺序覆盖：
+  - 最新阶段文档
+  - 最新 [PROJECT_STATUS.md](./PROJECT_STATUS.md)
+  - 最新 [DEV_ISSUE_LOG.md](./DEV_ISSUE_LOG.md)
+  - [ROADMAP_1_0.md](./ROADMAP_1_0.md)
+  - [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md)
+- 本轮继续遵守：
+  - 不改主流程
+  - 不重写 `RunEngine`
+  - 不引入新系统
+  - 不把内容逻辑写回引擎
+  - 不把整轮重新做成 Boss 专项轮 / high-memory 轮 / selector-only 轮
+
+### 文档盘点后的当前判断
+- route 侧的主问题已经从“starter 漂移”继续收窄成 `pierce` 的 `bridge -> committed` 坡度仍偏晚。
+- `boss-bastion / fireline` 仍是 round8 候选是否签收的主阻塞；允许做轻量 phase handoff 校准，但不允许回退成拖时长或 Boss 主流程改造。
+- `crit` 的既有边界仍然是“不能重新被拉成 off-route committed”；docs 没有要求为了 round8 签收把它强行提前锁死。
+
+### 本轮实现
+- `src/data/upgrades.ts`
+  - 上调 `pierce-core / pierce-rail / pierce-seamline` 的 opening starter emergence
+  - 上调 `pierce-fan / pierce-relay-spine / pierce-seamkeep` 的 mid bridge surfacing，并把 `pierce-fan / pierce-relay-spine` 调成更像真实 commit-hold carrier
+  - 对 `crit-afterglow / crit-heat-latch` 只做极轻量 bridge surfacing 前推，避免 `crit` 因为本轮只顾 `pierce` 而完全掉回 generic
+- `src/data/events.ts`
+  - `pierce-ledger-hold` 与 `pierce-seam-anchor` 的 route option 各补一拍 `route` 承接，让 anomaly 真正承担 `bridge -> committed` 的保守前推
+- `src/data/nodes.ts`
+  - `round-2-battle-pierce-hold / round-2-upgrade-bridge` 做保护性前推
+  - `round-2-battle-crit-hold` 只做轻量保护，不把本轮变成 `crit` 专项轮
+- `src/data/battleTemplates.ts`
+  - `boss-bastion / crossfire`
+    - `triggerHpRatio = 0.82`
+    - `triggerRemainingSec = 28`
+    - `minResidenceSec = 3.2`
+  - `boss-bastion / fireline`
+    - `triggerHpRatio = 0.72`
+    - `triggerRemainingSec = 18`
+
+### 回归结果
+- `npm run build`
+  - 通过
+- 浏览器 route-flow rerun
+  - `pierce`
+    - 当前样本为 `routeId = pierce / buildStage = matured / firstCommitStage = mid / firstCommitPick = upgrade:pierce-seamkeep`
+    - 本轮主阻塞里的 `pierce -> dash hinted` 未再复现
+  - `crit`
+    - 当前样本仍可能以 `routeId = crit / buildStage = hinted / firstCommitStage = null` 结束
+    - 但没有出现 off-route reroute；当前更像 run 提前折损导致 commit 没站满，而不是被别路线抢走主味
+- Boss 自然样本复检
+  - `normal`
+    - `bossBastionRuns = 8 / 24`
+    - `crossfireSeenRuns = 3 / 24`
+    - `firelineSeenRuns = 0 / 24`
+  - `highBurst`
+    - `bossBastionRuns = 5 / 24`
+    - `crossfireSeenRuns = 5 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highMobility`
+    - `bossBastionRuns = 5 / 24`
+    - `crossfireSeenRuns = 4 / 24`
+    - `firelineSeenRuns = 1 / 24`
+
+### 当前结论
+- `pierce` 的 commit timing 已经前推到 mid，不再主要依赖更后的 late carrier 才能成线。
+- `boss-bastion / fireline` 只部分回补：`crossfire` 有抬升，但 `normal firelineSeenRuns` 仍为 `0 / 24`。
+- 因此 round8 候选本轮仍不能签收；主原因是 `boss-bastion / fireline`，而不是 `pierce` starter 漂移。
+
 ## [1.0 第一阶段第 8 轮候选] opening-to-mid continuity 收口 / no-focus starter 漂移清扫
 ### 本轮口径
 - 若旧摘要仍停在第 7 轮或更早轮次，本轮统一以：

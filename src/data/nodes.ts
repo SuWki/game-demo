@@ -250,11 +250,11 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.17,
         selection: {
-          baseWeight: 2.65,
+          baseWeight: 2.72,
           soloMultiplier: 1.02,
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
-            crit: 0.84,
+            crit: 0.92,
           },
           battleCatchupBonus: 1.25,
         },
@@ -340,11 +340,11 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.18,
         selection: {
-          baseWeight: 2.72,
+          baseWeight: 2.84,
           soloMultiplier: 1.02,
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
-            pierce: 1.3,
+            pierce: 1.42,
           },
           battleCatchupBonus: 1.38,
         },
@@ -374,8 +374,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.3,
           routeBonuses: {
-            crit: 0.32,
-            pierce: 0.62,
+            crit: 0.4,
+            pierce: 0.74,
           },
         },
       },

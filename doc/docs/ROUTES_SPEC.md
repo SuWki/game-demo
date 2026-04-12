@@ -229,6 +229,43 @@
   - 但少数 run 仍可能停在“已经 hinted / 刚开始站稳”，而不是稳定一路推到 matured
 - 因此本轮解决的是 residual drift 压缩，不是宣布 committed retention 已完全收口。
 
+## 2026-04-12 1.0 第一阶段第 8 轮候选签收复检：commit timing 前推 / continuity 验收
+### 当前取舍
+- 当前仍按 round8 候选签收处理，而不是 round9。最新阶段文档尚未落盘更晚轮次，因此仍以 round8 的 continuity / commit timing 收口为准。
+- 若旧摘要与当前 docs 冲突，本节开始统一以后续顺序覆盖：
+  - 最新阶段文档
+  - 最新 [PROJECT_STATUS.md](./PROJECT_STATUS.md)
+  - 最新 [DEV_ISSUE_LOG.md](./DEV_ISSUE_LOG.md)
+  - [ROADMAP_1_0.md](./ROADMAP_1_0.md)
+  - [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md)
+
+### route 侧本轮实现
+- `pierce`
+  - 不再把问题解释回 starter 漂移或 late closeout，而是直接前推 `starter -> bridge -> committed`
+  - 本轮继续补的是：
+    - `pierce-core / pierce-rail / pierce-seamline`
+    - `pierce-fan / pierce-relay-spine / pierce-seamkeep`
+    - `pierce-ledger-hold / pierce-seam-anchor`
+  - 目标不是更早硬锁，而是让 ordinary sample 里“starter 先成立，再由 bridge / hold 自然站到 committed”更稳定
+- `crit`
+  - 只做极轻量 bridge surfacing 保护，不把本轮重新变成 `crit` 专项轮
+  - 当前 residual 不再是 off-route reroute，而是自然 rerun 里仍可能在死亡前停在 `crit hinted`
+
+### 最新验证结论
+- 浏览器 route-flow rerun 中：
+  - `pierce`
+    - 当前样本为 `routeId = pierce / buildStage = matured`
+    - `firstCommitStage = mid`
+    - `firstCommitPick = upgrade:pierce-seamkeep`
+    - 未再复现 `pierce -> dash hinted`
+  - `crit`
+    - 当前样本仍可能以 `routeId = crit / buildStage = hinted / firstCommitStage = null` 结束
+    - 但没有重新被带去别路线；当前更像“commit 机会数不足”，不是 route continuity 被抢走
+- 因此本轮 route 侧更接近签收，但 full signoff 仍未完成：
+  - `pierce commit timing` 已明显前推
+  - `crit` 的自然 rerun 仍有 hinted 结束样本
+  - 真正挡住 round8 签收的主因已经回到 `boss-bastion / fireline`
+
 ## 2026-04-12 1.0 第一阶段第 8 轮候选：opening-to-mid continuity 收口 / no-focus starter 漂移清扫
 ### 当前取舍
 - 本轮不再继续补 high-memory closeout，也不再扩 redirect / bossEcho 新入口，而是继续把残余问题收窄到：

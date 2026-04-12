@@ -589,6 +589,27 @@ route window 当前的约束是：
   - 让高 burst / 高机动自然 build 更容易至少遇到一次真实转场判断
   - 同时保留 `crossfire` 作为远程前段主味道，避免后段过早顶掉前段身份
 
+## 2026-04-12 round8 候选签收复检补充
+- 本轮没有新增 telemetry 公式，继续复用：
+  - `firstCommitStage`
+  - `firstCommitPick`
+  - `route_hint_time`
+  - `route_lock_time`
+  - `branchSwitchCount`
+- `boss-bastion` 本轮只做轻量 phase handoff 校准：
+  - `crossfire`
+    - `triggerHpRatio = 0.82`
+    - `triggerRemainingSec = 28`
+    - `minResidenceSec = 3.2`
+  - `fireline`
+    - `triggerHpRatio = 0.72`
+    - `triggerRemainingSec = 18`
+- 最新复检结果：
+  - `normal`
+    - `crossfireSeenRuns = 3 / 24`
+    - `firelineSeenRuns = 0 / 24`
+  - 说明 `crossfire -> fireline` 的公式承接只部分回补；`fireline` 仍未恢复到第 7 轮水位，因此本组数值不能写成“已签收恢复”。
+
 ## 2026-04-08 普通 build fireline 回归校准补充
 ### 当前承接参数
 - `boss-bastion / crossfire`

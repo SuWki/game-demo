@@ -38,6 +38,42 @@
 - 当前主问题已从“dominant route 已存在但 first beat 还不稳”进一步收窄为：`pierce` 的 opening-to-mid continuity 已明显改善，但 committed 时点仍可能偏晚；当前残余更像“starter 先站出来了，bridge / commit timing 还没完全前移”
 - `boss-bastion / fireline` 在本轮最新回归里出现了可见回落：normal 样本回到 `bossBastionRuns = 8 / 24`、`firelineSeenRuns = 0 / 24`；它仍不应劫持主线，但已经从“单纯观察项”重新抬升为 round8 候选是否完全收口的主要风险
 
+## 2026-04-12 1.0 第一阶段第 8 轮候选签收复检
+- 当前阶段判断仍然保持为：`1.0 第一阶段`。最新落盘阶段文档仍停在“第 8 轮候选”，没有更晚轮次，因此本轮按“round8 候选签收 / commit timing 前推 / freeze 监控回补”执行，而不是提前开第 9 轮主题。
+- 若旧摘要与当前 docs 冲突，本节开始的口径统一以后续顺序覆盖：
+  - 最新阶段文档
+  - 最新 [PROJECT_STATUS.md](./PROJECT_STATUS.md)
+  - 最新 [DEV_ISSUE_LOG.md](./DEV_ISSUE_LOG.md)
+  - [ROADMAP_1_0.md](./ROADMAP_1_0.md)
+  - [DESIGN_ALIGNMENT_BASELINE_2026-04-05.md](./DESIGN_ALIGNMENT_BASELINE_2026-04-05.md)
+- 本轮直接实现：
+  - `pierce` 的 starter / bridge / commit-hold 继续前推：上调 `pierce-core / pierce-rail / pierce-seamline / pierce-fan / pierce-relay-spine / pierce-seamkeep`
+  - `pierce-ledger-hold / pierce-seam-anchor` 的 route hold 由单拍承接补到更像“bridge -> committed”承接
+  - `round-2-battle-pierce-hold / round-2-upgrade-bridge` 做保护性 route-fit 前推；`round-2-battle-crit-hold` 只做极轻量保护，避免顺手把 `crit` 推回 off-route
+  - `boss-bastion` 只做 `crossfire -> fireline` 触发承接校准：`crossfire` 调到 `triggerHpRatio = 0.82 / triggerRemainingSec = 28 / minResidenceSec = 3.2`，`fireline` 调到 `triggerHpRatio = 0.72 / triggerRemainingSec = 18`
+- 最新验证结果：
+  - `npm run build` 通过
+  - 浏览器 route-flow rerun 中，`pierce` 当前样本回到 `routeId = pierce / buildStage = matured / firstCommitStage = mid / firstCommitPick = upgrade:pierce-seamkeep / branchSwitchCount = 0`
+  - 当前未再复现本轮主阻塞里的 `pierce -> dash hinted`；`pierce` 的 commit timing 已从“还要拖到更后面”前推到 mid bridge / hold carrier
+  - `crit` 当前 rerun 没有被带离本路线，但仍可能以 `routeId = crit / buildStage = hinted / firstCommitStage = null` 结束；这更像“自然 rerun 机会数不够时的 continuity 仍偏薄”，而不是 다시回到 off-route drift
+- Boss 监控项最新回归：
+  - `normal`
+    - `bossBastionRuns = 8 / 24`
+    - `crossfireSeenRuns = 3 / 24`
+    - `firelineSeenRuns = 0 / 24`
+  - `highBurst`
+    - `bossBastionRuns = 5 / 24`
+    - `crossfireSeenRuns = 5 / 24`
+    - `firelineSeenRuns = 2 / 24`
+  - `highMobility`
+    - `bossBastionRuns = 5 / 24`
+    - `crossfireSeenRuns = 4 / 24`
+    - `firelineSeenRuns = 1 / 24`
+- 当前结论：
+  - route continuity / `pierce` commit timing 的 round8 主线已经继续前推
+  - 但 `boss-bastion / fireline` 的 `normal firelineSeenRuns` 仍停在 `0 / 24`，没有恢复到不弱于第 7 轮的水位
+  - 因此 round8 候选本轮仍不能写成“已签收”；主阻塞项是 `boss-bastion / fireline`，次级残余是 `crit` 自然 rerun 仍可能停在 hinted
+
 ## 2026-04-12 1.0 第一阶段第 8 轮候选
 - 当前阶段判断继续保持在：`1.0 第一阶段`，并且 docs 仍未落盘更晚轮次；因此本轮按“opening-to-mid continuity 收口 / no-focus starter 漂移清扫”推进。
 - 若旧摘要仍停在第 7 轮或更早轮次，本节开始的取舍统一以：
