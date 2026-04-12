@@ -41,7 +41,7 @@ const RMS_AUDIBLE_THRESHOLD = 0.0035;
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   menu: {
     stepSec: 0.34,
-    gain: 0.25,
+    gain: 0.34,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -55,7 +55,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   battle: {
     stepSec: 0.28,
-    gain: 0.24,
+    gain: 0.34,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
@@ -69,7 +69,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   boss: {
     stepSec: 0.22,
-    gain: 0.27,
+    gain: 0.4,
     bassType: 'sawtooth',
     leadType: 'square',
     accentType: 'triangle',
@@ -83,7 +83,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   result: {
     stepSec: 0.34,
-    gain: 0.2,
+    gain: 0.3,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -267,9 +267,9 @@ export class PilotAudio {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
-    this.masterGain.gain.value = 0.74;
+    this.masterGain.gain.value = 0.94;
     this.musicGain.gain.value = 0.0001;
-    this.sfxGain.gain.value = 0.86;
+    this.sfxGain.gain.value = 1.08;
 
     this.musicGain.connect(this.masterGain);
     this.sfxGain.connect(this.masterGain);

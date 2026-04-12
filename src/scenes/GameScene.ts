@@ -107,6 +107,7 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'nodeChoice') {
       const panelKey = `node:${state.phase}:${state.nodeOptions.map((node) => node.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
+        this.services.audio.play('click');
         this.services.overlay.showNodePanel(
           getPhaseLabel(state.phase),
           state.nodeOptions,
@@ -126,6 +127,7 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'upgradeChoice') {
       const panelKey = `upgrade:${state.phase}:${state.upgradeChoices.map((upgrade) => upgrade.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
+        this.services.audio.play(state.upgradeSource === 'levelUp' ? 'upgrade' : 'confirm');
         const panelTitle =
           state.upgradeSource === 'levelUp'
             ? `等级提升 Lv.${state.level}`
