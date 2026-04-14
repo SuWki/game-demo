@@ -41,56 +41,56 @@ const RMS_AUDIBLE_THRESHOLD = 0.0035;
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   menu: {
     stepSec: 0.34,
-    gain: 0.34,
+    gain: 0.38,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
-    bassPeak: 0.072,
-    leadPeak: 0.032,
-    accentPeak: 0.017,
-    padPeak: 0.022,
+    bassPeak: 0.078,
+    leadPeak: 0.036,
+    accentPeak: 0.019,
+    padPeak: 0.025,
     bass: [45, null, 48, null, 52, null, 48, null],
     lead: [57, 60, 64, 60, 55, 59, 62, 59],
     accent: [69, null, null, 72, null, null, 71, null],
   },
   battle: {
     stepSec: 0.28,
-    gain: 0.34,
+    gain: 0.44,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
-    bassPeak: 0.068,
-    leadPeak: 0.026,
-    accentPeak: 0.015,
-    padPeak: 0.012,
+    bassPeak: 0.076,
+    leadPeak: 0.032,
+    accentPeak: 0.02,
+    padPeak: 0.016,
     bass: [38, null, 38, null, 41, null, 43, null, 36, null, 38, null, 41, null, 43, null],
     lead: [53, null, 56, null, 58, null, 60, null, 53, null, 56, null, 60, null, 63, null],
     accent: [65, null, null, null, 68, null, null, null, 65, null, null, null, 70, null, null, null],
   },
   boss: {
     stepSec: 0.22,
-    gain: 0.4,
+    gain: 0.48,
     bassType: 'sawtooth',
     leadType: 'square',
     accentType: 'triangle',
-    bassPeak: 0.074,
-    leadPeak: 0.028,
-    accentPeak: 0.018,
-    padPeak: 0.014,
+    bassPeak: 0.082,
+    leadPeak: 0.034,
+    accentPeak: 0.022,
+    padPeak: 0.018,
     bass: [34, null, 34, 36, 34, null, 31, null, 34, null, 36, 38, 34, null, 29, null],
     lead: [58, null, 61, 58, null, 62, null, 65, 58, null, 63, 66, null, 65, null, 70],
     accent: [70, null, null, 73, null, null, 70, null, 68, null, null, 72, null, null, 68, null],
   },
   result: {
     stepSec: 0.34,
-    gain: 0.3,
+    gain: 0.34,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
-    bassPeak: 0.058,
-    leadPeak: 0.024,
-    accentPeak: 0.013,
-    padPeak: 0.018,
+    bassPeak: 0.064,
+    leadPeak: 0.028,
+    accentPeak: 0.015,
+    padPeak: 0.02,
     bass: [45, null, 48, null, 52, null, 57, null],
     lead: [60, 64, 67, 72, 69, 64, 67, 64],
     accent: [72, null, null, 76, null, null, 74, null],
@@ -267,9 +267,9 @@ export class PilotAudio {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
-    this.masterGain.gain.value = 0.94;
+    this.masterGain.gain.value = 1.02;
     this.musicGain.gain.value = 0.0001;
-    this.sfxGain.gain.value = 1.08;
+    this.sfxGain.gain.value = 1.18;
 
     this.musicGain.connect(this.masterGain);
     this.sfxGain.connect(this.masterGain);
@@ -585,16 +585,103 @@ export class PilotAudio {
             });
           },
         };
+      case 'dash':
+        return {
+          cooldownMs: 140,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'sawtooth',
+              frequency: 180,
+              peak: 0.04,
+              duration: 0.08,
+              sweepTo: 320,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 520,
+              peak: 0.026,
+              duration: 0.1,
+              delay: 0.02,
+              sweepTo: 760,
+            });
+          },
+        };
       case 'hit':
         return {
           cooldownMs: 100,
           play: (context, destination, now) => {
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 200,
-              peak: 0.024,
-              duration: 0.028,
-              sweepTo: 146,
+              frequency: 190,
+              peak: 0.044,
+              duration: 0.04,
+              sweepTo: 138,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 360,
+              peak: 0.02,
+              duration: 0.05,
+              delay: 0.008,
+              sweepTo: 250,
+            });
+          },
+        };
+      case 'kill':
+        return {
+          cooldownMs: 90,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 280,
+              peak: 0.054,
+              duration: 0.075,
+              sweepTo: 450,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 640,
+              peak: 0.032,
+              duration: 0.09,
+              delay: 0.014,
+              sweepTo: 920,
+            });
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 210,
+              peak: 0.02,
+              duration: 0.05,
+              delay: 0.01,
+              sweepTo: 170,
+            });
+          },
+        };
+      case 'pickup':
+        return {
+          cooldownMs: 90,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 520,
+              peak: 0.042,
+              duration: 0.09,
+              sweepTo: 760,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 820,
+              peak: 0.032,
+              duration: 0.1,
+              delay: 0.014,
+              sweepTo: 1060,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 1120,
+              peak: 0.019,
+              duration: 0.05,
+              delay: 0.028,
+              sweepTo: 1320,
             });
           },
         };
@@ -626,14 +713,14 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'sawtooth',
               frequency: 150,
-              peak: 0.05,
+              peak: 0.06,
               duration: 0.18,
               sweepTo: 100,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 235,
-              peak: 0.022,
+              peak: 0.03,
               duration: 0.14,
               delay: 0.02,
               sweepTo: 152,

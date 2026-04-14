@@ -35,7 +35,10 @@ export type AudioCue =
   | 'upgrade'
   | 'anomaly'
   | 'boss'
+  | 'dash'
   | 'hit'
+  | 'kill'
+  | 'pickup'
   | 'crit'
   | 'pressure'
   | 'victory'
@@ -320,6 +323,10 @@ export interface EnemyState {
   guardDamageMultiplier: number;
   grazeCooldownSec: number;
   rangedCooldownSec: number;
+  hitFlashSec: number;
+  spawnFlashSec: number;
+  hitOffsetX: number;
+  hitOffsetY: number;
 }
 
 export interface BulletState {
@@ -332,6 +339,7 @@ export interface BulletState {
   lifeSec: number;
   pierceRemaining: number;
   canEcho: boolean;
+  routeFocus?: RouteId;
 }
 
 export interface PulseState {
@@ -340,6 +348,14 @@ export interface PulseState {
   y: number;
   radius: number;
   lifeSec: number;
+  maxLifeSec: number;
+  color: number;
+  secondaryColor: number;
+  fillAlpha: number;
+  strokeAlpha: number;
+  strokeWidth: number;
+  growthPerSec: number;
+  innerRadiusRatio: number;
 }
 
 export interface ExperienceOrbState {
@@ -413,6 +429,8 @@ export interface BattleState {
   fireCooldownSec: number;
   dashCooldownSec: number;
   invulnerableSec: number;
+  impactFreezeSec: number;
+  impactFreezeFactor: number;
   enemies: EnemyState[];
   bullets: BulletState[];
   pulses: PulseState[];
@@ -420,12 +438,28 @@ export interface BattleState {
   enemyProjectiles: EnemyProjectileState[];
   playerX: number;
   playerY: number;
+  playerMoveDirX: number;
+  playerMoveDirY: number;
+  playerAimDirX: number;
+  playerAimDirY: number;
   eliteAlive: boolean;
   eliteSpawned: boolean;
   critOverdriveSec: number;
   critChain: number;
   dashCharge: number;
   dashDriveSec: number;
+  playerKnockbackVX: number;
+  playerKnockbackVY: number;
+  playerImpactSec: number;
+  playerRecoverySec: number;
+  cameraShakeSec: number;
+  cameraShakeStrength: number;
+  tempoPulseSec: number;
+  playerShotFlashSec: number;
+  playerShotRecoilSec: number;
+  playerShotRecoilStrength: number;
+  playerNearMissSec: number;
+  playerNearMissCooldownSec: number;
 }
 
 export interface NodeRecord {

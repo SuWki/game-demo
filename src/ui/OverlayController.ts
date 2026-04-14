@@ -142,10 +142,11 @@ export class OverlayController {
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
       <div class="hud-shell hud-shell-game">
-        <section class="hud-anchor hud-anchor-left hud-player-card">
-          <div class="hud-compact-head">
+        <section class="hud-ribbon hud-ribbon-left">
+          <div class="hud-vitals-head">
             <span class="hud-panel-label">状态</span>
-            <span class="hud-status-pill">${snapshot.levelText}</span>
+            <span class="hud-level-badge">${snapshot.levelText}</span>
+            <span class="hud-phase-badge">${snapshot.phaseLabel}</span>
           </div>
           <div class="hud-meter">
             <div class="hud-meter-head">
@@ -166,7 +167,7 @@ export class OverlayController {
             </div>
           </div>
         </section>
-        <section class="hud-anchor hud-anchor-center hud-stage-card">
+        <section class="hud-ribbon hud-ribbon-center hud-stage-card">
           <div class="hud-compact-head">
             <span class="hud-panel-label">${snapshot.progressLabel}</span>
             <span class="hud-compact-inline">${snapshot.routeStatusText}</span>
@@ -175,7 +176,7 @@ export class OverlayController {
           <small>${snapshot.statusSubtext ?? snapshot.progressDetail}</small>
           ${this.renderPhaseTrack(snapshot.phaseTrack, 'hud')}
         </section>
-        <section class="hud-anchor hud-anchor-right hud-objective-card hud-objective-${snapshot.objectiveTone}">
+        <section class="hud-ribbon hud-ribbon-right hud-objective-card hud-objective-${snapshot.objectiveTone}">
           <div class="hud-compact-head">
             <span class="hud-panel-label">${snapshot.objectiveLabel}</span>
             <span class="hud-compact-inline">${snapshot.nodeLabel}</span>
@@ -369,21 +370,17 @@ export class OverlayController {
     this.panelLayer.classList.remove('hidden');
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel ${config.panelClassName}">
-        <div class="surface-mark">
-          <span class="surface-dot"></span>
-          <span class="surface-dot"></span>
-          <span class="surface-dot"></span>
-        </div>
-        <div class="panel-heading">
-          <div class="panel-mode-row">
+        <div class="tray-header">
+          <div class="tray-title-group">
             <p class="eyebrow">${config.modeLabel}</p>
-            ${config.modeHint ? `<span class="panel-mode-hint">${config.modeHint}</span>` : ''}
+            <h2 class="panel-title">${config.title}</h2>
           </div>
-          <h2 class="panel-title">${config.title}</h2>
-          <p class="panel-description">${config.description}</p>
+          <div class="tray-header-side">
+            ${config.modeHint ? `<span class="panel-mode-hint">${config.modeHint}</span>` : ''}
+            ${config.progress ? `<span class="tray-progress">${config.progress.progressLabel}</span>` : ''}
+          </div>
         </div>
-        ${config.progress ? this.renderPanelProgress(config.progress) : ''}
-        <div class="choice-grid">${config.items.join('')}</div>
+        <div class="choice-grid choice-grid-tray">${config.items.join('')}</div>
       </section>
     `;
   }
