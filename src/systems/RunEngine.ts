@@ -1774,6 +1774,7 @@ export class RunEngine {
     battle.playerMoveDirX = hasInput ? normalizedX : 0;
     battle.playerMoveDirY = hasInput ? normalizedY : 0;
     const moveSpeed = this.getPlayerMoveSpeed();
+    const tempoMoveMultiplier = 1 + Math.min(0.12, battle.tempoPulseSec * 0.28);
     const controlFactor = battle.playerImpactSec > 0 ? 0.52 : 1;
     const knockbackDamping = battle.playerImpactSec > 0 ? 7.5 : 11;
     battle.playerKnockbackVX *= Math.max(0, 1 - dt * knockbackDamping);
@@ -1786,12 +1787,12 @@ export class RunEngine {
     }
 
     battle.playerX = clamp(
-      battle.playerX + normalizedX * moveSpeed * controlFactor * dt + battle.playerKnockbackVX * dt,
+      battle.playerX + normalizedX * moveSpeed * controlFactor * tempoMoveMultiplier * dt + battle.playerKnockbackVX * dt,
       24,
       ARENA_WIDTH - 24,
     );
     battle.playerY = clamp(
-      battle.playerY + normalizedY * moveSpeed * controlFactor * dt + battle.playerKnockbackVY * dt,
+      battle.playerY + normalizedY * moveSpeed * controlFactor * tempoMoveMultiplier * dt + battle.playerKnockbackVY * dt,
       24,
       ARENA_HEIGHT - 24,
     );
@@ -1868,7 +1869,7 @@ export class RunEngine {
     battle.enemySpawnTimerSec -= dt;
     battle.eliteSupportCooldownSec = Math.max(0, battle.eliteSupportCooldownSec - dt);
     const regularEnemyCap = this.getRegularEnemyCap(battle);
-    const activeRegularEnemies = battle.enemies.filter((enemy) => !enemy.elite);
+    const activeRegularEnemies = battle.enemies.filter((enemy) => !enemy.elite && enemy.hp > 0);
     const activeArchetypeCounts = this.countArchetypes(activeRegularEnemies);
     if (
       battle.encounterType === 'battle' &&
@@ -1878,13 +1879,14 @@ export class RunEngine {
     ) {
       const lowPressureThreshold = Math.max(2, Math.floor(regularEnemyCap * 0.38));
       if (activeRegularEnemies.length <= lowPressureThreshold) {
-        const refillWindow = this.getOrdinaryRefillWindow(
-          template,
-          activeRegularEnemies.length,
-          regularEnemyCap,
-          activeArchetypeCounts,
-        );
-        battle.enemySpawnTimerSec = Math.min(battle.enemySpawnTimerSec, refillWindow);
+        const refillWindow =
+          this.getOrdinaryRefillWindow(
+            template,
+            activeRegularEnemies.length,
+            regularEnemyCap,
+            activeArchetypeCounts,
+          ) - Math.min(0.06, battle.tempoPulseSec * 0.16);
+        battle.enemySpawnTimerSec = Math.min(battle.enemySpawnTimerSec, Math.max(0.08, refillWindow));
       }
     }
     if (shouldSpawnElite(battle)) {
@@ -2154,6 +2156,49 @@ export class RunEngine {
     }
 
     return counts;
+  }
+
+  private countActiveRegularEnemies(battle: BattleState): number {
+    return battle.enemies.filter((enemy) => !enemy.elite && enemy.hp > 0).length;
+  }
+
+  private feedBattleFlow(
+    battle: BattleState,
+    source: 'kill' | 'pickup',
+    intensity: number,
+  ): void {
+    if (battle.encounterType !== 'battle' || battle.eliteAlive) {
+      return;
+    }
+
+    const regularEnemyCap = this.getRegularEnemyCap(battle);
+    if (regularEnemyCap === null) {
+      return;
+    }
+
+    const activeRegularCount = this.countActiveRegularEnemies(battle);
+    const missingCount = Math.max(0, regularEnemyCap - activeRegularCount);
+    if (missingCount <= 0) {
+      return;
+    }
+
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const pattern = template.spawnRule?.pattern ?? 'surround';
+    let nudge = source === 'kill' ? 0.05 : 0.026;
+    nudge += Math.min(source === 'kill' ? 0.055 : 0.032, intensity * (source === 'kill' ? 0.008 : 0.0028));
+    if (activeRegularCount <= Math.max(2, Math.floor(regularEnemyCap * 0.36))) {
+      nudge += 0.024;
+    }
+    if (missingCount >= 3) {
+      nudge += 0.018;
+    }
+    if (pattern === 'pincers') {
+      nudge += 0.008;
+    } else if (pattern === 'lanes') {
+      nudge += 0.012;
+    }
+
+    battle.enemySpawnTimerSec = Math.max(0.06, battle.enemySpawnTimerSec - nudge);
   }
 
   private isSkirmisherHeavyTemplate(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): boolean {
@@ -2921,6 +2966,14 @@ export class RunEngine {
       }
     }
 
+    if (recoveryRatio > 0) {
+      const peelSign = enemy.id % 2 === 0 ? -1 : 1;
+      moveX += strafeX * peelSign * (0.16 + recoveryRatio * 0.3);
+      moveY += strafeY * peelSign * (0.16 + recoveryRatio * 0.3);
+      moveX -= dirX * (0.08 + recoveryRatio * 0.18);
+      moveY -= dirY * (0.08 + recoveryRatio * 0.18);
+    }
+
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
     const speedMultiplier = 1 - recoveryRatio * 0.48;
 
@@ -3004,6 +3057,20 @@ export class RunEngine {
     }
 
     if (recoveryRatio > 0) {
+      const shoulderSign =
+        pattern === 'lanes'
+          ? laneBias === 'horizontal'
+            ? battle.playerY >= enemy.y
+              ? 1
+              : -1
+            : battle.playerX >= enemy.x
+              ? 1
+              : -1
+          : enemy.id % 2 === 0
+            ? -1
+            : 1;
+      moveX += strafeX * shoulderSign * (0.08 + recoveryRatio * 0.18);
+      moveY += strafeY * shoulderSign * (0.08 + recoveryRatio * 0.18);
       moveX -= dirX * (0.2 + recoveryRatio * 0.36);
       moveY -= dirY * (0.2 + recoveryRatio * 0.36);
     }
@@ -3064,6 +3131,9 @@ export class RunEngine {
         dirY * (pincerHeavy ? collapsePulse * 0.28 - 0.06 : -0.24);
     }
     if (recoveryRatio > 0) {
+      const peelSign = enemy.x < battle.playerX ? -1 : 1;
+      moveX += strafeX * peelSign * (0.18 + recoveryRatio * 0.32);
+      moveY += strafeY * peelSign * (0.18 + recoveryRatio * 0.32);
       moveX -= dirX * (0.14 + recoveryRatio * 0.26);
       moveY -= dirY * (0.14 + recoveryRatio * 0.26);
     }
@@ -3127,8 +3197,21 @@ export class RunEngine {
     }
 
     if (recoveryRatio > 0) {
-      moveX -= dirX * (0.26 + recoveryRatio * 0.38);
-      moveY -= dirY * (0.26 + recoveryRatio * 0.38);
+      const laneResetSign =
+        laneBias === 'vertical'
+          ? enemy.x < battle.playerX
+            ? -1
+            : 1
+          : enemy.y < battle.playerY
+            ? -1
+            : 1;
+      if (laneBias === 'vertical') {
+        moveX += laneResetSign * (0.18 + recoveryRatio * 0.34);
+        moveY -= dirY * (0.22 + recoveryRatio * 0.34);
+      } else {
+        moveY += laneResetSign * (0.18 + recoveryRatio * 0.34);
+        moveX -= dirX * (0.22 + recoveryRatio * 0.34);
+      }
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
@@ -3470,6 +3553,7 @@ export class RunEngine {
         this.gainExperience(orb.value);
         battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.18);
         battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.14 + Math.min(0.12, orb.value * 0.006));
+        this.feedBattleFlow(battle, 'pickup', orb.value);
         if (this.state.status === 'battle') {
           battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - Math.min(0.02, 0.006 + orb.value * 0.0007));
         }
@@ -3908,6 +3992,7 @@ export class RunEngine {
     this.queueImpactFreeze(battle, enemy.elite ? 0.072 : 0.032, enemy.elite ? 0.1 : 0.3);
     this.kickBattleShake(battle, enemy.elite ? 0.24 : 0.1, enemy.elite ? 0.78 : 0.24);
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.3 : 0.18);
+    this.feedBattleFlow(battle, 'kill', enemy.elite ? 5 : enemy.archetype === 'brute' ? 2.5 : enemy.archetype === 'ranged' ? 2 : 1.4);
     battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.02 : 0.01));
     this.enqueueAudio(enemy.elite ? 'crit' : 'kill');
 

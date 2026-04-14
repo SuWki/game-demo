@@ -1914,6 +1914,24 @@ export class GameScene extends Phaser.Scene {
     if (tempoRatio > 0) {
       this.graphics.lineStyle(2, accentColor, 0.16 + tempoRatio * 0.22);
       this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 40 + tempoRatio * 10);
+      const surgeDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
+      const surgeDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
+      const surgeOrthoX = -surgeDirY;
+      const surgeOrthoY = surgeDirX;
+      const surgeColor = this.mixColor(liveFocusColor, 0xffffff, 0.18);
+      for (let streak = 0; streak < 3; streak += 1) {
+        const offset = 18 + streak * 12 + tempoRatio * 10;
+        const width = 8 + streak * 2;
+        this.graphics.fillStyle(surgeColor, 0.06 + tempoRatio * (0.06 - streak * 0.01));
+        this.graphics.fillTriangle(
+          bodyX - surgeDirX * (offset + 12) + surgeOrthoX * width,
+          bodyY - surgeDirY * (offset + 12) + surgeOrthoY * width,
+          bodyX - surgeDirX * offset,
+          bodyY - surgeDirY * offset,
+          bodyX - surgeDirX * (offset + 12) - surgeOrthoX * width,
+          bodyY - surgeDirY * (offset + 12) - surgeOrthoY * width,
+        );
+      }
     }
     if (nearMissRatio > 0) {
       const nearMissColor = this.mixColor(0xffa289, 0xffffff, 0.22);
