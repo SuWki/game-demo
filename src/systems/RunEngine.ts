@@ -1912,6 +1912,7 @@ export class RunEngine {
         guardDamageMultiplier: eliteRule.guardDamageMultiplier ?? 1,
         grazeCooldownSec: 0,
         rangedCooldownSec: 0,
+        recoverySec: 0,
         hitFlashSec: 0,
         spawnFlashSec: 0.46,
         hitOffsetX: 0,
@@ -2427,6 +2428,7 @@ export class RunEngine {
       guardDamageMultiplier: 1,
       grazeCooldownSec: 0,
       rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.45 + Math.random() * this.getRangedShotIntervalSec(archetypeDef, battle) : 0,
+      recoverySec: 0,
       hitFlashSec: 0,
       spawnFlashSec: role === 'escort' ? 0.28 : 0.22,
       hitOffsetX: 0,
@@ -2591,6 +2593,7 @@ export class RunEngine {
         lifeSec: bulletLifeSec,
         pierceRemaining: this.state.stats.pierce,
         canEcho: this.state.routeCounts.pierce > 0,
+        hitCount: 0,
         routeFocus: focusRoute ?? undefined,
       });
     }
@@ -2617,10 +2620,17 @@ export class RunEngine {
 
         const critical = Math.random() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
+        const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+        if (recoveryRatio > 0) {
+          const punishBonus =
+            bullet.routeFocus === 'crit' ? 0.22 : bullet.routeFocus === 'pierce' ? 0.16 : bullet.routeFocus === 'dash' ? 0.14 : 0.12;
+          damage *= 1 + punishBonus * recoveryRatio;
+        }
         if (enemy.elite && enemy.guardSec > 0) {
           damage *= enemy.guardDamageMultiplier;
         }
         enemy.hp -= damage;
+        bullet.hitCount += 1;
         this.enqueueAudio(critical ? 'crit' : 'hit');
         this.registerEnemyImpact(battle, enemy, bullet.x, bullet.y, {
           flashSec: critical ? 0.22 : 0.14,
@@ -2660,12 +2670,50 @@ export class RunEngine {
             }
           }
           this.enqueueTip('暴击命中');
+          if (recoveryRatio > 0.25 && (critStage === 'committed' || critStage === 'matured')) {
+            battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - 0.012);
+            this.createCombatPulse(battle, {
+              x: enemy.x,
+              y: enemy.y,
+              radius: enemy.radius + 20,
+              lifeSec: 0.14,
+              color: 0xffe39c,
+              secondaryColor: 0xfff9df,
+              fillAlpha: 0.06,
+              strokeAlpha: 0.62,
+              strokeWidth: 2,
+              growthPerSec: 170,
+              innerRadiusRatio: 0.68,
+            });
+          }
           if (battle.critChain >= 2 && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
             this.enqueueTip('暴击节奏开始升温');
           }
         } else if (battle.critChain > 0) {
           battle.critChain = Math.max(0, battle.critChain - 1);
+        }
+
+        if (bullet.routeFocus === 'pierce') {
+          const laneScore = this.getPierceLaneScore(battle, enemy);
+          if (laneScore >= 1.2 || bullet.hitCount >= 2) {
+            const refund = Math.min(0.028, 0.01 + laneScore * 0.005 + Math.max(0, bullet.hitCount - 1) * 0.004);
+            battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - refund);
+            battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
+            this.createCombatPulse(battle, {
+              x: enemy.x,
+              y: enemy.y,
+              radius: enemy.radius + 16 + Math.min(10, laneScore * 3),
+              lifeSec: 0.14,
+              color: 0x8fdbff,
+              secondaryColor: 0xf6fcff,
+              fillAlpha: 0.05,
+              strokeAlpha: 0.52,
+              strokeWidth: 2,
+              growthPerSec: 182,
+              innerRadiusRatio: 0.66,
+            });
+          }
         }
 
         this.trySpawnPierceEchoShots(battle, bullet, enemy);
@@ -2703,6 +2751,7 @@ export class RunEngine {
         enemy.guardDamageMultiplier = template.eliteRule?.guardDamageMultiplier ?? 1;
       }
       enemy.grazeCooldownSec = Math.max(0, enemy.grazeCooldownSec - dt);
+      enemy.recoverySec = Math.max(0, enemy.recoverySec - dt);
       enemy.hitFlashSec = Math.max(0, enemy.hitFlashSec - dt);
       enemy.spawnFlashSec = Math.max(0, enemy.spawnFlashSec - dt);
       enemy.hitOffsetX *= Math.max(0, 1 - dt * 14);
@@ -2785,6 +2834,20 @@ export class RunEngine {
         enemy.hitOffsetX = Math.cos(bounceAngle) * (enemy.elite ? 8 : 11);
         enemy.hitOffsetY = Math.sin(bounceAngle) * (enemy.elite ? 8 : 11);
         enemy.hitFlashSec = Math.max(enemy.hitFlashSec, 0.1);
+        this.pushEnemyRecovery(enemy, this.getEnemyRecoveryOnCollisionSec(enemy));
+        this.createCombatPulse(battle, {
+          x: enemy.x,
+          y: enemy.y,
+          radius: enemy.radius + 12,
+          lifeSec: 0.14,
+          color: 0xbef6ff,
+          secondaryColor: 0xffffff,
+          fillAlpha: 0.04,
+          strokeAlpha: 0.42,
+          strokeWidth: 2,
+          growthPerSec: 140,
+          innerRadiusRatio: 0.72,
+        });
         survivors.push(enemy);
         continue;
       }
@@ -2823,6 +2886,7 @@ export class RunEngine {
     const dirY = dy / distance;
     const strafeX = -dirY;
     const strafeY = dirX;
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const weave = Math.sin(battle.elapsedSec * 1.4 + enemy.id * 0.33);
@@ -2858,9 +2922,10 @@ export class RunEngine {
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
+    const speedMultiplier = 1 - recoveryRatio * 0.48;
 
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * dt, -36, ARENA_WIDTH + 36);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * dt, -36, ARENA_HEIGHT + 36);
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
   }
 
   private updateBruteEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
@@ -2872,6 +2937,7 @@ export class RunEngine {
     const dirY = dy / distance;
     const strafeX = -dirY;
     const strafeY = dirX;
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const lanePulse = 0.5 + Math.sin(battle.elapsedSec * 1.28 + enemy.id * 0.29) * 0.5;
@@ -2937,10 +3003,16 @@ export class RunEngine {
       moveY += dirY * 0.6;
     }
 
+    if (recoveryRatio > 0) {
+      moveX -= dirX * (0.2 + recoveryRatio * 0.36);
+      moveY -= dirY * (0.2 + recoveryRatio * 0.36);
+    }
+
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
     const speedMultiplier =
       (distance <= 132 ? 1.16 : distance <= 188 ? 1.08 : 0.94) +
-      (pattern === 'lanes' && laneBias === 'horizontal' ? lanePulse * 0.08 : 0);
+      (pattern === 'lanes' && laneBias === 'horizontal' ? lanePulse * 0.08 : 0) -
+      recoveryRatio * 0.56;
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_WIDTH + 44);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_HEIGHT + 44);
   }
@@ -2949,6 +3021,7 @@ export class RunEngine {
     const template = BATTLE_TEMPLATES[battle.templateId];
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const pincerHeavy = pattern === 'pincers' || this.isSkirmisherHeavyTemplate(template);
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     const leadX = battle.playerX + (moveMagnitude > 0.08 ? battle.playerMoveDirX * 54 : 0);
     const leadY = battle.playerY + (moveMagnitude > 0.08 ? battle.playerMoveDirY * 54 : 0);
@@ -2990,10 +3063,15 @@ export class RunEngine {
         strafeY * strafeDirection * (strafeStrength + (pincerHeavy ? 0.3 : 0.24)) +
         dirY * (pincerHeavy ? collapsePulse * 0.28 - 0.06 : -0.24);
     }
+    if (recoveryRatio > 0) {
+      moveX -= dirX * (0.14 + recoveryRatio * 0.26);
+      moveY -= dirY * (0.14 + recoveryRatio * 0.26);
+    }
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
+    const speedMultiplier = 1 - recoveryRatio * 0.5;
 
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * dt, -36, ARENA_WIDTH + 36);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * dt, -36, ARENA_HEIGHT + 36);
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
   }
 
   private updateRangedEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
@@ -3012,6 +3090,7 @@ export class RunEngine {
     const dirY = dy / distance;
     const strafeX = -dirY;
     const strafeY = dirX;
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     const strafeDirection = Math.sin(battle.elapsedSec * 1.6 + enemy.id * 0.41);
     let moveX = strafeX * strafeDirection * strafeStrength;
     let moveY = strafeY * strafeDirection * strafeStrength;
@@ -3047,9 +3126,15 @@ export class RunEngine {
       }
     }
 
+    if (recoveryRatio > 0) {
+      moveX -= dirX * (0.26 + recoveryRatio * 0.38);
+      moveY -= dirY * (0.26 + recoveryRatio * 0.38);
+    }
+
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * dt, -42, ARENA_WIDTH + 42);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * dt, -42, ARENA_HEIGHT + 42);
+    const speedMultiplier = 1 - recoveryRatio * 0.58;
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_WIDTH + 42);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_HEIGHT + 42);
 
     enemy.rangedCooldownSec = Math.max(0, enemy.rangedCooldownSec - dt);
     if (enemy.rangedCooldownSec > 0 || distance > preferredDistance * 1.45) {
@@ -3108,6 +3193,7 @@ export class RunEngine {
     }
 
     enemy.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle) + (shotsPerVolley > 1 ? 0.14 : 0);
+    this.pushEnemyRecovery(enemy, shotsPerVolley > 1 || pattern === 'lanes' ? 0.42 : 0.32);
   }
 
   private getRangedShotIntervalSec(
@@ -3649,13 +3735,36 @@ export class RunEngine {
       return;
     }
 
+    const bulletSpeed = Math.max(1, Math.hypot(bullet.vx, bullet.vy));
+    const dirX = bullet.vx / bulletSpeed;
+    const dirY = bullet.vy / bulletSpeed;
     const nearbyTargets = battle.enemies
-      .filter((enemy) => enemy.id !== currentEnemy.id && enemy.hp > 0)
-      .sort(
-        (left, right) =>
-          Math.hypot(left.x - currentEnemy.x, left.y - currentEnemy.y) -
-          Math.hypot(right.x - currentEnemy.x, right.y - currentEnemy.y),
-      );
+      .filter((enemy) => {
+        if (enemy.id === currentEnemy.id || enemy.hp <= 0) {
+          return false;
+        }
+        const dx = enemy.x - currentEnemy.x;
+        const dy = enemy.y - currentEnemy.y;
+        const along = dx * dirX + dy * dirY;
+        const lateral = Math.abs(dx * dirY - dy * dirX);
+        return along >= -18 && along <= 220 && lateral <= enemy.radius + 44;
+      })
+      .sort((left, right) => {
+        const leftDx = left.x - currentEnemy.x;
+        const leftDy = left.y - currentEnemy.y;
+        const leftAlong = leftDx * dirX + leftDy * dirY;
+        const leftLateral = Math.abs(leftDx * dirY - leftDy * dirX);
+        const leftScore = leftAlong * 0.04 - leftLateral * 0.45 + (left.elite ? 8 : 0) + (left.archetype === 'ranged' ? 4 : 0);
+
+        const rightDx = right.x - currentEnemy.x;
+        const rightDy = right.y - currentEnemy.y;
+        const rightAlong = rightDx * dirX + rightDy * dirY;
+        const rightLateral = Math.abs(rightDx * dirY - rightDy * dirX);
+        const rightScore =
+          rightAlong * 0.04 - rightLateral * 0.45 + (right.elite ? 8 : 0) + (right.archetype === 'ranged' ? 4 : 0);
+
+        return rightScore - leftScore;
+      });
 
     if (nearbyTargets.length === 0) {
       return;
@@ -3688,6 +3797,7 @@ export class RunEngine {
         lifeSec: 0.75,
         pierceRemaining: Math.max(0, this.state.stats.pierce - 1),
         canEcho: false,
+        hitCount: 0,
         routeFocus: 'pierce',
       });
       this.createCombatPulse(battle, {
@@ -3839,6 +3949,7 @@ export class RunEngine {
       const dx = enemy.x - battle.playerX;
       const dy = enemy.y - battle.playerY;
       const distance = Math.max(1, Math.hypot(dx, dy));
+      const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
 
       if (focusRoute === 'crit') {
@@ -3847,10 +3958,12 @@ export class RunEngine {
         score += enemy.elite ? (battle.critOverdriveSec > 0 ? 34 : 16) : 0;
         score += battle.critChain >= 2 && distance <= 180 ? 18 : 0;
         score += hpRatio <= 0.35 ? 26 : 0;
+        score += recoveryRatio * (battle.critOverdriveSec > 0 ? 34 : 20);
       } else if (focusRoute === 'pierce') {
         score += this.getPierceLaneScore(battle, enemy) * 26;
         score += Math.max(0, distance - 110) * 0.08;
         score += enemy.archetype === 'ranged' ? 6 : 0;
+        score += recoveryRatio * 16;
       } else if (focusRoute === 'dash') {
         score += Math.max(0, 200 - distance) * 0.28;
         score += enemy.archetype === 'ranged' ? 18 : 0;
@@ -3862,6 +3975,8 @@ export class RunEngine {
           score += 24;
         }
       }
+
+      score += recoveryRatio * 6;
 
       if (score > bestScore) {
         bestScore = score;
@@ -3914,6 +4029,50 @@ export class RunEngine {
     }
 
     return score;
+  }
+
+  private pushEnemyRecovery(enemy: BattleState['enemies'][number], recoverySec: number): void {
+    enemy.recoverySec = Math.max(enemy.recoverySec, recoverySec);
+  }
+
+  private getEnemyRecoveryOnCollisionSec(enemy: BattleState['enemies'][number]): number {
+    if (enemy.elite) {
+      return 0.28;
+    }
+
+    switch (enemy.archetype) {
+      case 'brute':
+        return 0.44;
+      case 'ranged':
+        return 0.38;
+      case 'skirmisher':
+        return 0.3;
+      case 'standard':
+      default:
+        return 0.22;
+    }
+  }
+
+  private getEnemyRecoveryWindowSec(enemy: BattleState['enemies'][number]): number {
+    if (enemy.elite) {
+      return 0.32;
+    }
+
+    switch (enemy.archetype) {
+      case 'brute':
+        return 0.44;
+      case 'ranged':
+        return 0.42;
+      case 'skirmisher':
+        return 0.34;
+      case 'standard':
+      default:
+        return 0.24;
+    }
+  }
+
+  private getEnemyRecoveryRatio(enemy: BattleState['enemies'][number]): number {
+    return clamp(enemy.recoverySec / this.getEnemyRecoveryWindowSec(enemy), 0, 1);
   }
 
   private getRegularEnemyHp(

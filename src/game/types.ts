@@ -323,6 +323,7 @@ export interface EnemyState {
   guardDamageMultiplier: number;
   grazeCooldownSec: number;
   rangedCooldownSec: number;
+  recoverySec: number;
   hitFlashSec: number;
   spawnFlashSec: number;
   hitOffsetX: number;
@@ -339,6 +340,7 @@ export interface BulletState {
   lifeSec: number;
   pierceRemaining: number;
   canEcho: boolean;
+  hitCount: number;
   routeFocus?: RouteId;
 }
 

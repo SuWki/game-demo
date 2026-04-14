@@ -1452,6 +1452,7 @@ export class GameScene extends Phaser.Scene {
         bullet.routeFocus === 'dash' ? 0.042 : bullet.routeFocus === 'crit' ? 0.04 : bullet.routeFocus === 'pierce' ? 0.05 : 0.035;
       const tail = this.worldToScreen(camera, bullet.x - bullet.vx * tailDistance, bullet.y - bullet.vy * tailDistance);
       const bulletSpeedRatio = Phaser.Math.Clamp(Math.hypot(bullet.vx, bullet.vy) / 520, 0.35, 1);
+      const bulletHitRatio = Phaser.Math.Clamp(bullet.hitCount / 3, 0, 1);
       const bulletDirX = bulletSpeedRatio > 0 ? bullet.vx / Math.max(1, Math.hypot(bullet.vx, bullet.vy)) : 0;
       const bulletDirY = bulletSpeedRatio > 0 ? bullet.vy / Math.max(1, Math.hypot(bullet.vx, bullet.vy)) : 0;
       const bulletOrthoX = -bulletDirY;
@@ -1464,17 +1465,25 @@ export class GameScene extends Phaser.Scene {
       } else if (bullet.routeFocus === 'dash') {
         bulletTint = this.mixColor(0x8cffdf, accentColor, 0.26);
       }
-      this.graphics.lineStyle(bullet.pierceRemaining > 0 ? 4 : 3, bulletTint, bullet.canEcho ? 0.22 : 0.14);
+      this.graphics.lineStyle(
+        (bullet.pierceRemaining > 0 ? 4 : 3) + bulletHitRatio * 1.2,
+        bulletTint,
+        (bullet.canEcho ? 0.22 : 0.14) + bulletHitRatio * 0.08,
+      );
       this.graphics.lineBetween(
         tail.x - bulletDirX * (14 + bulletSpeedRatio * 8),
         tail.y - bulletDirY * (14 + bulletSpeedRatio * 8),
         screen.x,
         screen.y,
       );
-      this.graphics.lineStyle(bullet.pierceRemaining > 0 ? 3 : 2, bulletTint, bullet.canEcho ? 0.44 : 0.32);
+      this.graphics.lineStyle(
+        (bullet.pierceRemaining > 0 ? 3 : 2) + bulletHitRatio,
+        bulletTint,
+        (bullet.canEcho ? 0.44 : 0.32) + bulletHitRatio * 0.12,
+      );
       this.graphics.lineBetween(tail.x, tail.y, screen.x, screen.y);
-      this.graphics.fillStyle(bulletTint, bullet.canEcho ? 0.28 : 0.18);
-      this.graphics.fillCircle(screen.x, screen.y, bullet.canEcho ? 8 : 6);
+      this.graphics.fillStyle(bulletTint, (bullet.canEcho ? 0.28 : 0.18) + bulletHitRatio * 0.08);
+      this.graphics.fillCircle(screen.x, screen.y, (bullet.canEcho ? 8 : 6) + bulletHitRatio * 1.6);
       if (bullet.routeFocus === 'crit') {
         this.graphics.lineStyle(2, bulletTint, 0.2 + bulletSpeedRatio * 0.14);
         this.graphics.lineBetween(
@@ -1490,7 +1499,7 @@ export class GameScene extends Phaser.Scene {
           screen.y + bulletDirY * 10,
         );
       } else if (bullet.routeFocus === 'pierce') {
-        this.graphics.lineStyle(1.5, bulletTint, 0.18 + bulletSpeedRatio * 0.14);
+        this.graphics.lineStyle(1.5 + bulletHitRatio * 0.8, bulletTint, 0.18 + bulletSpeedRatio * 0.14 + bulletHitRatio * 0.08);
         this.graphics.lineBetween(
           tail.x + bulletOrthoX * 5,
           tail.y + bulletOrthoY * 5,
@@ -1503,6 +1512,15 @@ export class GameScene extends Phaser.Scene {
           screen.x - bulletOrthoX * 5,
           screen.y - bulletOrthoY * 5,
         );
+        if (bulletHitRatio > 0) {
+          this.graphics.lineStyle(1.4, this.mixColor(bulletTint, 0xffffff, 0.24), 0.14 + bulletHitRatio * 0.16);
+          this.graphics.lineBetween(
+            tail.x + bulletDirX * 4,
+            tail.y + bulletDirY * 4,
+            screen.x + bulletDirX * 10,
+            screen.y + bulletDirY * 10,
+          );
+        }
       } else if (bullet.routeFocus === 'dash') {
         this.graphics.fillStyle(bulletTint, 0.18 + bulletSpeedRatio * 0.12);
         this.graphics.fillTriangle(
@@ -1515,10 +1533,10 @@ export class GameScene extends Phaser.Scene {
         );
       }
       this.graphics.fillStyle(0xf8fbff, 0.98);
-      this.graphics.fillCircle(screen.x, screen.y, bullet.canEcho ? 3.4 : 2.8);
+      this.graphics.fillCircle(screen.x, screen.y, (bullet.canEcho ? 3.4 : 2.8) + bulletHitRatio * 0.5);
       if (bullet.pierceRemaining > 0) {
-        this.graphics.lineStyle(1, this.mixColor(accentColor, 0xffffff, 0.35), 0.4);
-        this.graphics.strokeCircle(screen.x, screen.y, 6);
+        this.graphics.lineStyle(1 + bulletHitRatio * 0.4, this.mixColor(accentColor, 0xffffff, 0.35), 0.4 + bulletHitRatio * 0.1);
+        this.graphics.strokeCircle(screen.x, screen.y, 6 + bulletHitRatio * 1.5);
       }
     }
 
@@ -1547,8 +1565,9 @@ export class GameScene extends Phaser.Scene {
     for (const enemy of battle.enemies) {
       const flashRatio = Math.min(1, enemy.hitFlashSec / 0.22);
       const spawnRatio = Math.min(1, enemy.spawnFlashSec / (enemy.elite ? 0.46 : 0.28));
-      const enemyFill = this.mixColor(this.getEnemyFillColor(enemy), 0xffffff, flashRatio * 0.55);
-      const enemyStroke = this.mixColor(this.getEnemyStrokeColor(enemy), 0xffffff, flashRatio * 0.4);
+      const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+      const enemyFill = this.mixColor(this.getEnemyFillColor(enemy), 0xffffff, flashRatio * 0.55 + recoveryRatio * 0.1);
+      const enemyStroke = this.mixColor(this.getEnemyStrokeColor(enemy), 0xffffff, flashRatio * 0.4 + recoveryRatio * 0.16);
       const onScreen = this.isVisibleInCamera(camera, enemy.x, enemy.y, enemy.radius + 30);
       const screen = this.worldToScreen(camera, enemy.x + enemy.hitOffsetX, enemy.y + enemy.hitOffsetY);
 
@@ -1584,6 +1603,24 @@ export class GameScene extends Phaser.Scene {
 
       this.graphics.fillStyle(0x000000, enemy.elite ? 0.24 : 0.18);
       this.graphics.fillEllipse(screen.x, screen.y + enemy.radius + 7, enemy.radius * 1.8, enemy.radius * 0.72);
+      if (recoveryRatio > 0) {
+        const recoveryColor =
+          enemy.archetype === 'ranged'
+            ? this.mixColor(enemyStroke, 0xa8f6ff, 0.44)
+            : enemy.archetype === 'brute'
+              ? this.mixColor(enemyStroke, 0xffd7af, 0.34)
+              : enemy.archetype === 'skirmisher'
+                ? this.mixColor(enemyStroke, 0xb8ffef, 0.34)
+                : this.mixColor(enemyStroke, 0xffefc4, 0.28);
+        const recoveryRadius = enemy.radius + 10 + (1 - recoveryRatio) * 8;
+        this.graphics.lineStyle(2.4, recoveryColor, 0.12 + recoveryRatio * 0.26);
+        this.graphics.strokeCircle(screen.x, screen.y, recoveryRadius);
+        this.graphics.fillStyle(recoveryColor, 0.03 + recoveryRatio * 0.08);
+        this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 4 + recoveryRatio * 2);
+        this.graphics.lineStyle(2, recoveryColor, 0.14 + recoveryRatio * 0.24);
+        this.graphics.lineBetween(screen.x - recoveryRadius, screen.y, screen.x - enemy.radius - 4, screen.y);
+        this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + recoveryRadius, screen.y);
+      }
       if (spawnRatio > 0) {
         this.graphics.lineStyle(2, enemyStroke, 0.36 * spawnRatio);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10 + (1 - spawnRatio) * 18);
@@ -1731,6 +1768,12 @@ export class GameScene extends Phaser.Scene {
           this.graphics.lineBetween(predictedTarget.x, predictedTarget.y + 5, predictedTarget.x, predictedTarget.y + 14);
           this.graphics.lineStyle(1, enemyStroke, 0.14 + lockRatio * 0.16);
           this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 14 + lockRatio * 5);
+        }
+        if (recoveryRatio > 0) {
+          const recoverColor = this.mixColor(enemyStroke, 0xb4ffff, 0.28);
+          this.graphics.lineStyle(2, recoverColor, 0.16 + recoveryRatio * 0.22);
+          this.graphics.lineBetween(screen.x - enemy.radius - 10, screen.y - enemy.radius - 8, screen.x - enemy.radius - 3, screen.y - 2);
+          this.graphics.lineBetween(screen.x + enemy.radius + 10, screen.y - enemy.radius - 8, screen.x + enemy.radius + 3, screen.y - 2);
         }
       }
 
@@ -2425,6 +2468,20 @@ export class GameScene extends Phaser.Scene {
     this.graphics.lineBetween(leftInset - 8, safeStart, camera.width - rightInset + 8, safeStart);
     this.graphics.lineBetween(leftInset - 8, safeEnd, camera.width - rightInset + 8, safeEnd);
     return true;
+  }
+
+  private getEnemyRecoveryRatio(enemy: BattleState['enemies'][number]): number {
+    const recoveryWindow =
+      enemy.elite
+        ? 0.32
+        : enemy.archetype === 'brute'
+          ? 0.44
+          : enemy.archetype === 'ranged'
+            ? 0.42
+            : enemy.archetype === 'skirmisher'
+              ? 0.34
+              : 0.24;
+    return clamp(enemy.recoverySec / recoveryWindow, 0, 1);
   }
 
   private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {

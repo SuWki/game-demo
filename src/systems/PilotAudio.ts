@@ -613,14 +613,14 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'square',
               frequency: 190,
-              peak: 0.044,
+              peak: 0.048,
               duration: 0.04,
               sweepTo: 138,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 360,
-              peak: 0.02,
+              peak: 0.023,
               duration: 0.05,
               delay: 0.008,
               sweepTo: 250,
@@ -634,14 +634,14 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 280,
-              peak: 0.054,
+              peak: 0.058,
               duration: 0.075,
               sweepTo: 450,
             });
             createVoice(context, destination, now, {
               type: 'sine',
               frequency: 640,
-              peak: 0.032,
+              peak: 0.036,
               duration: 0.09,
               delay: 0.014,
               sweepTo: 920,
@@ -692,17 +692,25 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 820,
-              peak: 0.05,
+              peak: 0.055,
               duration: 0.1,
               sweepTo: 1120,
             });
             createVoice(context, destination, now, {
               type: 'sine',
               frequency: 1120,
-              peak: 0.034,
+              peak: 0.038,
               duration: 0.11,
               delay: 0.016,
               sweepTo: 1380,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 1460,
+              peak: 0.016,
+              duration: 0.07,
+              delay: 0.022,
+              sweepTo: 1710,
             });
           },
         };
