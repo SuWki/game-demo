@@ -77,47 +77,15 @@ export class OverlayController {
     this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
-      <section class="menu-card hero-card">
-        <div class="screen-topline">
-          <span class="screen-chip">短局生存</span>
-          <span class="screen-chip">节点推进</span>
-        </div>
-        <div class="hero-layout">
-          <div class="hero-copy">
-            <p class="eyebrow">Node Run</p>
-            <h1>节点作战</h1>
-            <p class="lead">移动，清场，成线。</p>
-            <div class="hero-routes">
-              <span class="route-badge route-badge-crit">暴击</span>
-              <span class="route-badge route-badge-pierce">穿透</span>
-              <span class="route-badge route-badge-dash">穿梭</span>
-            </div>
-            <div class="menu-pills">
-              <span class="menu-pill">WASD</span>
-              <span class="menu-pill">自动开火</span>
-              <span class="menu-pill">战斗升级</span>
-              <span class="menu-pill">节点推进</span>
-            </div>
-            <div class="menu-actions">
-              <button class="primary-action" data-action="start">开始</button>
-              <button class="secondary-action" data-action="export">导出记录</button>
-            </div>
-          </div>
-          <div class="hero-aside">
-            <div class="menu-stats">
-              <div>
-                <span>总局数</span>
-                <strong>${summary.totalRuns}</strong>
-              </div>
-              <div>
-                <span>完成</span>
-                <strong>${summary.wins}</strong>
-              </div>
-              <div>
-                <span>上局路线</span>
-                <strong>${summary.lastRouteName}</strong>
-              </div>
-            </div>
+      <section class="screen-minimal menu-screen">
+        <div class="screen-anchor screen-anchor-bottom">
+          <p class="screen-kicker">NODE RUN</p>
+          <h1 class="screen-title">节点作战</h1>
+          <p class="screen-subtitle">移动 · 清场 · 成线</p>
+          <p class="screen-meta-line">${summary.totalRuns} 局 · ${summary.wins} 胜 · ${summary.lastRouteName}</p>
+          <div class="screen-actions">
+            <button class="text-action text-action-primary" data-action="start">开始</button>
+            <button class="text-action" data-action="export">导出记录</button>
           </div>
         </div>
       </section>
@@ -130,48 +98,26 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
-      <div class="hud-shell hud-shell-game">
-        <section class="hud-ribbon hud-ribbon-left">
-          <div class="hud-chip-row">
-            <span class="hud-level-badge">${snapshot.levelText}</span>
-            <span class="hud-phase-badge">${snapshot.phaseLabel}</span>
-          </div>
-          <div class="hud-meter hud-meter-tight">
-            <div class="hud-meter-head">
-              <span>生命</span>
-              <strong>${snapshot.hpText}</strong>
-            </div>
-            <div class="hud-meter-bar hud-meter-hp ${this.getMeterStateClass(snapshot.hpRatio)}">
+      <div class="hud-shell-minimal">
+        <section class="hud-block hud-block-left">
+          <div class="hud-stat-stack">
+            <span class="hud-stat-value">${snapshot.hpText}</span>
+            <div class="hud-bar hud-bar-hp ${this.getMeterStateClass(snapshot.hpRatio)}">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.hpRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
-          <div class="hud-meter hud-meter-tight">
-            <div class="hud-meter-head">
-              <span>经验</span>
-              <strong>${snapshot.experienceText}</strong>
-            </div>
-            <div class="hud-meter-bar hud-meter-xp">
+          <div class="hud-stat-stack">
+            <span class="hud-stat-value">${snapshot.experienceText}</span>
+            <div class="hud-bar hud-bar-xp">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
         </section>
-        <section class="hud-ribbon hud-ribbon-center hud-stage-card">
-          <div class="hud-compact-head">
-            <span class="hud-panel-label">${snapshot.progressLabel}</span>
-            <span class="hud-status-pill">${snapshot.routeStatusText}</span>
-          </div>
-          <strong>${snapshot.statusText}</strong>
-          <div class="route-strip hud-route-strip hud-route-strip-inline">
-            ${this.renderRouteStrip(snapshot.routeProgress)}
-          </div>
+        <section class="hud-block hud-block-center">
+          <span class="hud-wave-text">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
         </section>
-        <section class="hud-ribbon hud-ribbon-right hud-objective-card hud-objective-${snapshot.objectiveTone}">
-          <div class="hud-compact-head">
-            <span class="hud-panel-label">${snapshot.objectiveLabel}</span>
-            <span class="hud-stage-counter">${snapshot.nodeLabel}</span>
-          </div>
-          <strong>${snapshot.objectiveText}</strong>
-          <div class="hud-objective-progress">${snapshot.objectiveProgressText}</div>
+        <section class="hud-block hud-block-right">
+          <span class="hud-goal-text">${this.getHudObjectiveText(snapshot)}</span>
         </section>
       </div>
     `;
@@ -210,7 +156,7 @@ export class OverlayController {
         ? '最终整备'
         : '强化选择';
     const modeHint = title.includes('等级提升')
-      ? '战斗内强化'
+      ? '战斗内补强'
       : title.includes('最终整备')
         ? 'Boss 前补一手'
         : '补当前打法';
@@ -256,50 +202,17 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
     this.screenLayer.innerHTML = `
-      <section class="menu-card result-card">
-        <div class="screen-topline">
-          <span class="screen-chip">${result.outcome === 'victory' ? '本局完成' : '本局结束'}</span>
-          <span class="screen-chip">${routeLabel}</span>
-        </div>
-        <p class="eyebrow">${result.outcome === 'victory' ? 'Run Closed' : 'Run Ended'}</p>
-        <h1>${result.outcome === 'victory' ? '收束完成' : '差最后一拍'}</h1>
-        <p class="lead">${result.summary}</p>
-        <div class="menu-stats">
-          <div>
-            <span>路线</span>
-            <strong>${routeLabel}</strong>
+      <section class="screen-minimal result-screen ${result.outcome === 'victory' ? 'is-victory' : 'is-defeat'}">
+        <div class="screen-anchor screen-anchor-center">
+          <p class="screen-kicker">${result.outcome === 'victory' ? 'RUN CLEAR' : 'RUN END'}</p>
+          <h1 class="screen-title">${result.outcome === 'victory' ? '完成' : '失败'}</h1>
+          <p class="screen-meta-line">${routeLabel} · ${result.buildLabel} · ${result.endingLabel}</p>
+          <p class="screen-meta-line">Lv.${result.levelReached} · ${result.battleWins} 战 · ${result.nodesCleared} 节点</p>
+          <div class="screen-actions">
+            <button class="text-action text-action-primary" data-action="restart">再来一局</button>
+            <button class="text-action" data-action="menu">返回开始</button>
+            <button class="text-action" data-action="export">导出记录</button>
           </div>
-          <div>
-            <span>成型</span>
-            <strong>${result.buildLabel}</strong>
-          </div>
-          <div>
-            <span>结局</span>
-            <strong>${result.endingLabel}</strong>
-          </div>
-          <div>
-            <span>等级</span>
-            <strong>Lv.${result.levelReached}</strong>
-          </div>
-        </div>
-        <div class="result-callout">
-          <p class="panel-description">${result.buildSummary}，${result.endingReason}。</p>
-          <div class="menu-pills result-pills">
-            <span class="menu-pill">收尾节点 ${result.finalNodeType ? NODE_TYPE_LABEL_MAP[result.finalNodeType] : '阶段'} / ${result.finalNodeTitle}</span>
-            <span class="menu-pill">胜场 ${result.battleWins}</span>
-            <span class="menu-pill">推进 ${result.nodesCleared}</span>
-            <span class="menu-pill">时长 ${result.runDurationSec.toFixed(1)}s</span>
-          </div>
-          <div class="result-route-block">
-            <span class="result-route-label">本局路径</span>
-            ${this.renderResultRouteTrace(result.routeTrace)}
-          </div>
-          <p class="result-replay-prompt">${result.replayPrompt}</p>
-        </div>
-        <div class="menu-actions">
-          <button class="primary-action" data-action="restart">再来一局</button>
-          <button class="secondary-action" data-action="menu">返回开始</button>
-          <button class="secondary-action" data-action="export">导出记录</button>
         </div>
       </section>
     `;
@@ -368,28 +281,6 @@ export class OverlayController {
     if (target) {
       target.onclick = handler;
     }
-  }
-
-  private renderRouteStrip(routeProgress: OverlayHudSnapshot['routeProgress']): string {
-    if (routeProgress.length === 0) {
-      return `
-        <div class="route-chip route-chip-muted">
-          <span>路线</span>
-          <strong>未成线</strong>
-        </div>
-      `;
-    }
-
-    return routeProgress
-      .map(
-        (route) => `
-          <div class="route-chip ${route.active ? 'active' : ''}" style="--route-accent: ${route.color}">
-            <span>${route.label}</span>
-            <strong>${route.value}</strong>
-          </div>
-        `,
-      )
-      .join('');
   }
 
   private getOptionTypeLabel(
@@ -490,7 +381,7 @@ export class OverlayController {
     const phase = options[0]?.phase;
     switch (phase) {
       case 'opening':
-        return '先让这局的第一条线站出来。';
+        return '先让这一局的第一条线站出来。';
       case 'mid':
         return '决定继续收线，还是借异常改道。';
       case 'late':
@@ -551,25 +442,30 @@ export class OverlayController {
     return 'stable';
   }
 
-  private renderResultRouteTrace(routeTrace: RunResult['routeTrace']): string {
-    if (routeTrace.length === 0) {
-      return '<p class="result-trace-empty">这局结束得太快，路线还没来得及完全展开。</p>';
+  private getHudWaveLabel(progressLabel: string): string {
+    const compactWave = progressLabel.match(/(\d+\s*\/\s*\d+)/);
+    return compactWave ? `波次 ${compactWave[1]}` : progressLabel;
+  }
+
+  private getHudObjectiveText(snapshot: OverlayHudSnapshot): string {
+    if (snapshot.objectiveTone === 'survive') {
+      const surviveValue = snapshot.objectiveProgressText.match(/(\d+\s*s?)/);
+      return surviveValue ? `生存: ${surviveValue[1]}` : '生存';
     }
 
-    return `
-      <div class="result-trace">
-        ${routeTrace
-          .map(
-            (node, index) => `
-              <span class="result-trace-item">
-                <em>${NODE_TYPE_LABEL_MAP[node.type]}</em>
-                <strong>${node.title}</strong>
-              </span>
-              ${index < routeTrace.length - 1 ? '<span class="result-trace-arrow">&rarr;</span>' : ''}
-            `,
-          )
-          .join('')}
-      </div>
-    `;
+    if (snapshot.objectiveTone === 'battle') {
+      const killValue = snapshot.objectiveProgressText.match(/(\d+\s*\/\s*\d+)/);
+      return killValue ? `歼灭: ${killValue[1]}` : '歼灭';
+    }
+
+    if (snapshot.objectiveTone === 'elite') {
+      return snapshot.objectiveProgressText.includes('已') ? '精英: 已出现' : '精英: 即将出现';
+    }
+
+    if (snapshot.objectiveTone === 'boss') {
+      return snapshot.objectiveProgressText.includes('即将') ? '首领: 即将出现' : '首领: 终结';
+    }
+
+    return `目标: ${snapshot.objectiveText}`;
   }
 }
