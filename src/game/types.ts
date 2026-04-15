@@ -326,6 +326,8 @@ export interface EnemyState {
   recoverySec: number;
   hitFlashSec: number;
   spawnFlashSec: number;
+  pressurePulseSec: number;
+  tacticCooldownSec: number;
   hitOffsetX: number;
   hitOffsetY: number;
 }

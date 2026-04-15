@@ -1566,6 +1566,7 @@ export class GameScene extends Phaser.Scene {
       const flashRatio = Math.min(1, enemy.hitFlashSec / 0.22);
       const spawnRatio = Math.min(1, enemy.spawnFlashSec / (enemy.elite ? 0.46 : 0.28));
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+      const pressureRatio = this.getEnemyPressureRatio(enemy);
       const enemyFill = this.mixColor(this.getEnemyFillColor(enemy), 0xffffff, flashRatio * 0.55 + recoveryRatio * 0.1);
       const enemyStroke = this.mixColor(this.getEnemyStrokeColor(enemy), 0xffffff, flashRatio * 0.4 + recoveryRatio * 0.16);
       const onScreen = this.isVisibleInCamera(camera, enemy.x, enemy.y, enemy.radius + 30);
@@ -1654,6 +1655,59 @@ export class GameScene extends Phaser.Scene {
           screen.y + hitDirY * (enemy.radius + 2) - hitOrthoY * (10 + flashRatio * 6),
         );
       }
+      if (pressureRatio > 0) {
+        const pressureColor =
+          enemy.elite
+            ? this.mixColor(BATTLE_TEMPLATES[battle.templateId].accent, 0xfff0bf, 0.3)
+            : enemy.archetype === 'brute'
+              ? this.mixColor(enemyStroke, 0xffe1b2, 0.28)
+              : enemy.archetype === 'skirmisher'
+                ? this.mixColor(enemyStroke, 0xcaffef, 0.28)
+                : enemy.archetype === 'ranged'
+                  ? this.mixColor(enemyStroke, 0xdff7ff, 0.32)
+                  : this.mixColor(enemyStroke, 0xfff1c9, 0.24);
+        this.graphics.lineStyle(
+          enemy.elite ? 3 : 2,
+          pressureColor,
+          enemy.elite ? 0.16 + pressureRatio * 0.3 : 0.08 + pressureRatio * 0.2,
+        );
+        this.graphics.strokeCircle(
+          screen.x,
+          screen.y,
+          enemy.radius + (enemy.elite ? 14 : 9) + (1 - pressureRatio) * (enemy.elite ? 10 : 6),
+        );
+        if (enemy.elite) {
+          const nearbyEscorts = battle.enemies
+            .filter((candidate) => !candidate.elite)
+            .sort(
+              (left, right) =>
+                Math.hypot(left.x - enemy.x, left.y - enemy.y) - Math.hypot(right.x - enemy.x, right.y - enemy.y),
+            )
+            .slice(0, 2);
+          if (nearbyEscorts.length > 0) {
+            this.graphics.lineStyle(2, pressureColor, 0.08 + pressureRatio * 0.18);
+            for (const escort of nearbyEscorts) {
+              const escortScreen = this.worldToScreen(camera, escort.x, escort.y);
+              this.graphics.lineBetween(screen.x, screen.y, escortScreen.x, escortScreen.y);
+            }
+          } else {
+            const faceAngle = Math.atan2(playerScreen.y - screen.y, playerScreen.x - screen.x);
+            this.graphics.lineStyle(2, pressureColor, 0.12 + pressureRatio * 0.18);
+            this.graphics.lineBetween(
+              screen.x + Math.cos(faceAngle - 0.22) * (enemy.radius + 2),
+              screen.y + Math.sin(faceAngle - 0.22) * (enemy.radius + 2),
+              screen.x + Math.cos(faceAngle) * (enemy.radius + 22 + pressureRatio * 12),
+              screen.y + Math.sin(faceAngle) * (enemy.radius + 22 + pressureRatio * 12),
+            );
+            this.graphics.lineBetween(
+              screen.x + Math.cos(faceAngle + 0.22) * (enemy.radius + 2),
+              screen.y + Math.sin(faceAngle + 0.22) * (enemy.radius + 2),
+              screen.x + Math.cos(faceAngle) * (enemy.radius + 22 + pressureRatio * 12),
+              screen.y + Math.sin(faceAngle) * (enemy.radius + 22 + pressureRatio * 12),
+            );
+          }
+        }
+      }
       this.graphics.fillStyle(enemyFill, enemy.elite ? 0.98 : 0.95);
 
       if (enemy.elite) {
@@ -1720,6 +1774,10 @@ export class GameScene extends Phaser.Scene {
           screen.y + Math.sin(orbitAngle + Math.PI) * orbitRadius,
           2,
         );
+        if (pressureRatio > 0) {
+          this.graphics.lineStyle(2, enemyStroke, 0.12 + pressureRatio * 0.18);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 13 + pressureRatio * 4);
+        }
       }
 
       if (!enemy.elite && enemy.archetype === 'brute') {
@@ -1747,6 +1805,10 @@ export class GameScene extends Phaser.Scene {
           screen.x + Math.cos(faceAngle) * (enemy.radius + 10),
           screen.y + Math.sin(faceAngle) * (enemy.radius + 10),
         );
+        if (pressureRatio > 0) {
+          this.graphics.lineStyle(3, enemyStroke, 0.1 + pressureRatio * 0.18);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 11 + pressureRatio * 4);
+        }
       }
 
       if (!enemy.elite && enemy.archetype === 'ranged') {
@@ -1775,6 +1837,27 @@ export class GameScene extends Phaser.Scene {
           this.graphics.lineBetween(screen.x - enemy.radius - 10, screen.y - enemy.radius - 8, screen.x - enemy.radius - 3, screen.y - 2);
           this.graphics.lineBetween(screen.x + enemy.radius + 10, screen.y - enemy.radius - 8, screen.x + enemy.radius + 3, screen.y - 2);
         }
+        if (pressureRatio > 0) {
+          this.graphics.lineStyle(1.5, enemyStroke, 0.12 + pressureRatio * 0.18);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 16 + pressureRatio * 5);
+        }
+      }
+
+      if (!enemy.elite && enemy.archetype === 'standard' && pressureRatio > 0) {
+        const faceAngle = Math.atan2(playerScreen.y - screen.y, playerScreen.x - screen.x);
+        this.graphics.lineStyle(2, enemyStroke, 0.1 + pressureRatio * 0.18);
+        this.graphics.lineBetween(
+          screen.x + Math.cos(faceAngle - 0.24) * (enemy.radius + 1),
+          screen.y + Math.sin(faceAngle - 0.24) * (enemy.radius + 1),
+          screen.x + Math.cos(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
+          screen.y + Math.sin(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
+        );
+        this.graphics.lineBetween(
+          screen.x + Math.cos(faceAngle + 0.24) * (enemy.radius + 1),
+          screen.y + Math.sin(faceAngle + 0.24) * (enemy.radius + 1),
+          screen.x + Math.cos(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
+          screen.y + Math.sin(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
+        );
       }
 
       const hpRatio = enemy.hp / enemy.maxHp;
@@ -2500,6 +2583,20 @@ export class GameScene extends Phaser.Scene {
               ? 0.34
               : 0.24;
     return clamp(enemy.recoverySec / recoveryWindow, 0, 1);
+  }
+
+  private getEnemyPressureRatio(enemy: BattleState['enemies'][number]): number {
+    const pressureWindow =
+      enemy.elite
+        ? 0.72
+        : enemy.archetype === 'brute'
+          ? 0.22
+          : enemy.archetype === 'ranged'
+            ? 0.2
+            : enemy.archetype === 'skirmisher'
+              ? 0.18
+              : 0.16;
+    return clamp(enemy.pressurePulseSec / pressureWindow, 0, 1);
   }
 
   private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {

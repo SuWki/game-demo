@@ -1917,6 +1917,8 @@ export class RunEngine {
         recoverySec: 0,
         hitFlashSec: 0,
         spawnFlashSec: 0.46,
+        pressurePulseSec: 0,
+        tacticCooldownSec: 0,
         hitOffsetX: 0,
         hitOffsetY: 0,
       });
@@ -2476,6 +2478,8 @@ export class RunEngine {
       recoverySec: 0,
       hitFlashSec: 0,
       spawnFlashSec: role === 'escort' ? 0.28 : 0.22,
+      pressurePulseSec: 0,
+      tacticCooldownSec: 0,
       hitOffsetX: 0,
       hitOffsetY: 0,
     };
@@ -2791,6 +2795,7 @@ export class RunEngine {
     const survivors = [];
     const template = BATTLE_TEMPLATES[battle.templateId];
     for (const enemy of battle.enemies) {
+      const hadPressurePulse = enemy.pressurePulseSec > 0;
       enemy.guardSec = Math.max(0, enemy.guardSec - dt);
       if (enemy.elite && enemy.guardSec <= 0) {
         enemy.guardDamageMultiplier = template.eliteRule?.guardDamageMultiplier ?? 1;
@@ -2799,6 +2804,8 @@ export class RunEngine {
       enemy.recoverySec = Math.max(0, enemy.recoverySec - dt);
       enemy.hitFlashSec = Math.max(0, enemy.hitFlashSec - dt);
       enemy.spawnFlashSec = Math.max(0, enemy.spawnFlashSec - dt);
+      enemy.pressurePulseSec = Math.max(0, enemy.pressurePulseSec - dt);
+      enemy.tacticCooldownSec = Math.max(0, enemy.tacticCooldownSec - dt);
       enemy.hitOffsetX *= Math.max(0, 1 - dt * 14);
       enemy.hitOffsetY *= Math.max(0, 1 - dt * 14);
       if (enemy.hp <= 0) {
@@ -2814,6 +2821,10 @@ export class RunEngine {
         this.updateEliteEnemy(enemy, battle, template, dt);
       } else {
         this.updateArchetypeEnemy(enemy, battle, dt);
+      }
+
+      if (enemy.elite && hadPressurePulse && enemy.pressurePulseSec <= 0) {
+        this.resolveElitePressurePulse(enemy, battle, template);
       }
 
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
@@ -2935,6 +2946,16 @@ export class RunEngine {
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const weave = Math.sin(battle.elapsedSec * 1.4 + enemy.id * 0.33);
+    const frontlineAnchor = this.findNearestAlly(
+      battle,
+      enemy,
+      (candidate) => candidate.elite || candidate.archetype === 'brute',
+    );
+    const rangedAnchor = this.findNearestAlly(
+      battle,
+      enemy,
+      (candidate) => !candidate.elite && candidate.archetype === 'ranged',
+    );
     const pushWeight = distance > 150 ? 1.02 : distance > 90 ? 0.9 : 0.78;
     let moveX = dirX * pushWeight + strafeX * weave * 0.08;
     let moveY = dirY * pushWeight + strafeY * weave * 0.08;
@@ -2966,6 +2987,48 @@ export class RunEngine {
       }
     }
 
+    if (frontlineAnchor) {
+      const anchorDistance = Math.max(1, Math.hypot(frontlineAnchor.x - enemy.x, frontlineAnchor.y - enemy.y));
+      if (anchorDistance <= 156) {
+        const anchorPlayerDx = battle.playerX - frontlineAnchor.x;
+        const anchorPlayerDy = battle.playerY - frontlineAnchor.y;
+        const anchorPlayerDistance = Math.max(1, Math.hypot(anchorPlayerDx, anchorPlayerDy));
+        const anchorDirX = anchorPlayerDx / anchorPlayerDistance;
+        const anchorDirY = anchorPlayerDy / anchorPlayerDistance;
+        const anchorOrthoX = -anchorDirY;
+        const anchorOrthoY = anchorDirX;
+        const shoulderSign = enemy.id % 2 === 0 ? -1 : 1;
+        const slotX =
+          frontlineAnchor.x +
+          anchorDirX * (frontlineAnchor.radius + enemy.radius + 10) +
+          anchorOrthoX * shoulderSign * (frontlineAnchor.radius * 0.42 + 8);
+        const slotY =
+          frontlineAnchor.y +
+          anchorDirY * (frontlineAnchor.radius + enemy.radius + 10) +
+          anchorOrthoY * shoulderSign * (frontlineAnchor.radius * 0.42 + 8);
+        const slotDx = slotX - enemy.x;
+        const slotDy = slotY - enemy.y;
+        const slotDistance = Math.max(1, Math.hypot(slotDx, slotDy));
+        moveX += (slotDx / slotDistance) * 0.62;
+        moveY += (slotDy / slotDistance) * 0.62;
+        if (distance <= 140 && recoveryRatio <= 0.05) {
+          this.triggerEnemyPressurePulse(enemy, 0.16, 1.35);
+        }
+      }
+    } else if (rangedAnchor) {
+      const anchorDistance = Math.max(1, Math.hypot(rangedAnchor.x - enemy.x, rangedAnchor.y - enemy.y));
+      if (anchorDistance <= 144) {
+        moveX += ((rangedAnchor.x - enemy.x) / anchorDistance) * 0.34;
+        moveY += ((rangedAnchor.y - enemy.y) / anchorDistance) * 0.34;
+      }
+    }
+
+    if (enemy.pressurePulseSec > 0) {
+      const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
+      moveX += dirX * (0.12 + pressureRatio * 0.24);
+      moveY += dirY * (0.12 + pressureRatio * 0.24);
+    }
+
     if (recoveryRatio > 0) {
       const peelSign = enemy.id % 2 === 0 ? -1 : 1;
       moveX += strafeX * peelSign * (0.16 + recoveryRatio * 0.3);
@@ -2994,6 +3057,12 @@ export class RunEngine {
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const lanePulse = 0.5 + Math.sin(battle.elapsedSec * 1.28 + enemy.id * 0.29) * 0.5;
+    const supportCount = this.countNearbyAllies(
+      battle,
+      enemy,
+      124,
+      (candidate) => candidate.elite || candidate.archetype === 'standard',
+    );
     const alignBias =
       pattern === 'lanes'
         ? laneBias === 'horizontal'
@@ -3075,6 +3144,21 @@ export class RunEngine {
       moveY -= dirY * (0.2 + recoveryRatio * 0.36);
     }
 
+    if (
+      supportCount > 0 &&
+      recoveryRatio <= 0.08 &&
+      distance <= 132 &&
+      driveWindow > -0.1
+    ) {
+      this.triggerEnemyPressurePulse(enemy, 0.22, 1.72);
+    }
+
+    if (enemy.pressurePulseSec > 0) {
+      const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
+      moveX += dirX * (0.18 + pressureRatio * 0.34);
+      moveY += dirY * (0.18 + pressureRatio * 0.34);
+    }
+
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
     const speedMultiplier =
       (distance <= 132 ? 1.16 : distance <= 188 ? 1.08 : 0.94) +
@@ -3090,13 +3174,35 @@ export class RunEngine {
     const pincerHeavy = pattern === 'pincers' || this.isSkirmisherHeavyTemplate(template);
     const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
+    const flankAnchor = this.findNearestAlly(
+      battle,
+      enemy,
+      (candidate) => candidate.elite || candidate.archetype === 'ranged',
+    );
     const leadX = battle.playerX + (moveMagnitude > 0.08 ? battle.playerMoveDirX * 54 : 0);
     const leadY = battle.playerY + (moveMagnitude > 0.08 ? battle.playerMoveDirY * 54 : 0);
-    const sideSign = enemy.x < battle.playerX ? -1 : 1;
+    const sideSign = flankAnchor ? (flankAnchor.x < battle.playerX ? -1 : 1) : enemy.x < battle.playerX ? -1 : 1;
     const flankDirX = moveMagnitude > 0.08 ? -battle.playerMoveDirY : 0;
     const flankDirY = moveMagnitude > 0.08 ? battle.playerMoveDirX : 1;
-    const targetX = pincerHeavy ? leadX + flankDirX * 36 * sideSign + sideSign * 24 : leadX;
-    const targetY = pincerHeavy ? leadY + flankDirY * 42 * sideSign : leadY;
+    let targetX = pincerHeavy ? leadX + flankDirX * 36 * sideSign + sideSign * 24 : leadX;
+    let targetY = pincerHeavy ? leadY + flankDirY * 42 * sideSign : leadY;
+    if (flankAnchor) {
+      const anchorPlayerDx = battle.playerX - flankAnchor.x;
+      const anchorPlayerDy = battle.playerY - flankAnchor.y;
+      const anchorPlayerDistance = Math.max(1, Math.hypot(anchorPlayerDx, anchorPlayerDy));
+      if (anchorPlayerDistance <= 220) {
+        const anchorOrthoX = -anchorPlayerDy / anchorPlayerDistance;
+        const anchorOrthoY = anchorPlayerDx / anchorPlayerDistance;
+        targetX =
+          leadX +
+          anchorOrthoX * 54 * sideSign -
+          (anchorPlayerDx / anchorPlayerDistance) * 18;
+        targetY =
+          leadY +
+          anchorOrthoY * 54 * sideSign -
+          (anchorPlayerDy / anchorPlayerDistance) * 18;
+      }
+    }
     const dx = targetX - enemy.x;
     const dy = targetY - enemy.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -3130,6 +3236,19 @@ export class RunEngine {
         strafeY * strafeDirection * (strafeStrength + (pincerHeavy ? 0.3 : 0.24)) +
         dirY * (pincerHeavy ? collapsePulse * 0.28 - 0.06 : -0.24);
     }
+    if (
+      flankAnchor &&
+      recoveryRatio <= 0.05 &&
+      distance <= 126 &&
+      Math.abs(strafeDirection) >= 0.58
+    ) {
+      this.triggerEnemyPressurePulse(enemy, 0.18, 1.36);
+    }
+    if (enemy.pressurePulseSec > 0) {
+      const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
+      moveX += strafeX * strafeDirection * (0.16 + pressureRatio * 0.18);
+      moveY += strafeY * strafeDirection * (0.16 + pressureRatio * 0.18);
+    }
     if (recoveryRatio > 0) {
       const peelSign = enemy.x < battle.playerX ? -1 : 1;
       moveX += strafeX * peelSign * (0.18 + recoveryRatio * 0.32);
@@ -3151,6 +3270,13 @@ export class RunEngine {
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const rangedHeavy = this.isRangedHeavyTemplate(template);
+    const screenAnchor = this.findNearestAlly(
+      battle,
+      enemy,
+      (candidate) => candidate.elite || candidate.archetype === 'brute',
+    );
+    const screenAnchorDistance = screenAnchor ? Math.hypot(screenAnchor.x - enemy.x, screenAnchor.y - enemy.y) : Number.POSITIVE_INFINITY;
+    const screenedByAnchor = Boolean(screenAnchor && screenAnchorDistance <= 176);
     const preferredDistance = (archetype.preferredDistance ?? 205) + (pattern === 'lanes' ? 12 : 0);
     const strafeStrength = archetype.strafeStrength ?? 0.22;
     const dx = battle.playerX - enemy.x;
@@ -3196,6 +3322,33 @@ export class RunEngine {
       }
     }
 
+    if (screenAnchor && screenedByAnchor) {
+      const anchorDistance = Math.max(1, screenAnchorDistance);
+      if (anchorDistance <= 176) {
+        const anchorPlayerDx = battle.playerX - screenAnchor.x;
+        const anchorPlayerDy = battle.playerY - screenAnchor.y;
+        const anchorPlayerDistance = Math.max(1, Math.hypot(anchorPlayerDx, anchorPlayerDy));
+        const anchorDirX = anchorPlayerDx / anchorPlayerDistance;
+        const anchorDirY = anchorPlayerDy / anchorPlayerDistance;
+        const anchorOrthoX = -anchorDirY;
+        const anchorOrthoY = anchorDirX;
+        const backSign = enemy.id % 2 === 0 ? -1 : 1;
+        const slotX =
+          screenAnchor.x -
+          anchorDirX * (screenAnchor.radius + enemy.radius + 18) +
+          anchorOrthoX * backSign * 18;
+        const slotY =
+          screenAnchor.y -
+          anchorDirY * (screenAnchor.radius + enemy.radius + 18) +
+          anchorOrthoY * backSign * 18;
+        const slotDx = slotX - enemy.x;
+        const slotDy = slotY - enemy.y;
+        const slotDistance = Math.max(1, Math.hypot(slotDx, slotDy));
+        moveX += (slotDx / slotDistance) * 0.54;
+        moveY += (slotDy / slotDistance) * 0.54;
+      }
+    }
+
     if (recoveryRatio > 0) {
       const laneResetSign =
         laneBias === 'vertical'
@@ -3212,6 +3365,16 @@ export class RunEngine {
         moveY += laneResetSign * (0.18 + recoveryRatio * 0.34);
         moveX -= dirX * (0.22 + recoveryRatio * 0.34);
       }
+    }
+
+    if (screenedByAnchor && recoveryRatio <= 0.06 && distance <= preferredDistance * 1.08) {
+      this.triggerEnemyPressurePulse(enemy, 0.2, 1.42);
+    }
+
+    if (enemy.pressurePulseSec > 0) {
+      const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
+      moveX += strafeX * strafeDirection * (0.1 + pressureRatio * 0.18);
+      moveY += strafeY * strafeDirection * (0.1 + pressureRatio * 0.18);
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
@@ -3242,7 +3405,7 @@ export class RunEngine {
     const targetY =
       predictedY + (pattern === 'lanes' && laneBias === 'horizontal' ? laneSideSign * (rangedHeavy ? 18 : 10) : 0);
     const baseAngle = Math.atan2(targetY - enemy.y, targetX - enemy.x);
-    const shotsPerVolley = pattern === 'lanes' || rangedHeavy ? 2 : 1;
+    const shotsPerVolley = pattern === 'lanes' || rangedHeavy || screenedByAnchor ? 2 : 1;
     const spreadRad = shotsPerVolley > 1 ? (pattern === 'lanes' ? (rangedHeavy ? 0.15 : 0.12) : 0.09) : 0;
     const centerIndex = (shotsPerVolley - 1) / 2;
 
@@ -3260,6 +3423,7 @@ export class RunEngine {
     }
 
     if (shotsPerVolley > 1 || pattern === 'lanes') {
+      enemy.pressurePulseSec = Math.max(enemy.pressurePulseSec, 0.2);
       this.createCombatPulse(battle, {
         x: enemy.x,
         y: enemy.y,
@@ -3275,7 +3439,7 @@ export class RunEngine {
       });
     }
 
-    enemy.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle) + (shotsPerVolley > 1 ? 0.14 : 0);
+    enemy.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle) + (shotsPerVolley > 1 ? 0.12 : 0);
     this.pushEnemyRecovery(enemy, shotsPerVolley > 1 || pattern === 'lanes' ? 0.42 : 0.32);
   }
 
@@ -3447,6 +3611,8 @@ export class RunEngine {
 
     const pressurePhase = this.getActivePressurePhase(battle);
     const activeBehavior = this.getActiveEliteBehavior(battle, template);
+    const cycle = this.getElitePressureCycle(activeBehavior);
+    const escortCount = this.getActiveEscortCount(battle);
     const preferredDistance =
       (eliteRule.preferredDistance ?? 170) + (pressurePhase?.preferredDistanceDelta ?? 0);
     const strafeStrength = (eliteRule.strafeStrength ?? 0.2) + (pressurePhase?.strafeStrengthBonus ?? 0);
@@ -3459,8 +3625,24 @@ export class RunEngine {
     const strafeX = -dirY;
     const strafeY = dirX;
     const strafeDirection = Math.sin(battle.elapsedSec * 1.35 + enemy.id * 0.7);
+    const pressureRatio = Math.min(1, enemy.pressurePulseSec / cycle.pulseSec);
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     let moveX = 0;
     let moveY = 0;
+
+    const canTriggerPulse =
+      enemy.pressurePulseSec <= 0 &&
+      enemy.tacticCooldownSec <= 0 &&
+      enemy.recoverySec <= 0.08 &&
+      (
+        (activeBehavior === 'frontline' && distance <= preferredDistance * 1.14) ||
+        (activeBehavior === 'kiting' && distance <= preferredDistance * 1.08) ||
+        (activeBehavior === 'screened' && escortCount > 0 && distance <= preferredDistance * 1.14) ||
+        (activeBehavior === 'summoner' && (escortCount <= 1 || distance <= preferredDistance * 0.9))
+      );
+    if (canTriggerPulse) {
+      this.startElitePressurePulse(enemy, battle, template, activeBehavior);
+    }
 
     const applyKitingBaseline = (): void => {
       if (distance < preferredDistance * 0.88) {
@@ -3477,6 +3659,12 @@ export class RunEngine {
     switch (activeBehavior) {
       case 'kiting':
         applyKitingBaseline();
+        if (pressureRatio > 0) {
+          moveX -= dirX * (0.12 + pressureRatio * 0.2);
+          moveY -= dirY * (0.12 + pressureRatio * 0.2);
+          moveX += strafeX * strafeDirection * (0.18 + pressureRatio * 0.26);
+          moveY += strafeY * strafeDirection * (0.18 + pressureRatio * 0.26);
+        }
         break;
       case 'screened':
       case 'summoner': {
@@ -3510,8 +3698,19 @@ export class RunEngine {
             moveX -= dirX * 0.55;
             moveY -= dirY * 0.55;
           }
+          if (pressureRatio > 0) {
+            const screenStrength = activeBehavior === 'summoner' ? 0.34 : 0.24;
+            moveX -= dirX * (screenStrength + pressureRatio * 0.16);
+            moveY -= dirY * (screenStrength + pressureRatio * 0.16);
+            moveX += strafeX * strafeDirection * (0.18 + pressureRatio * 0.18);
+            moveY += strafeY * strafeDirection * (0.18 + pressureRatio * 0.18);
+          }
         } else {
           applyKitingBaseline();
+          if (pressureRatio > 0) {
+            moveX += strafeX * strafeDirection * (0.18 + pressureRatio * 0.14);
+            moveY += strafeY * strafeDirection * (0.18 + pressureRatio * 0.14);
+          }
         }
         break;
       }
@@ -3526,12 +3725,27 @@ export class RunEngine {
         }
         moveX += strafeX * strafeDirection * Math.max(0.08, strafeStrength * 0.6);
         moveY += strafeY * strafeDirection * Math.max(0.08, strafeStrength * 0.6);
+        if (pressureRatio > 0) {
+          moveX += dirX * (0.4 + pressureRatio * 0.44);
+          moveY += dirY * (0.4 + pressureRatio * 0.44);
+        }
         break;
     }
 
+    if (recoveryRatio > 0) {
+      moveX -= dirX * (0.14 + recoveryRatio * 0.24);
+      moveY -= dirY * (0.14 + recoveryRatio * 0.24);
+      moveX += strafeX * strafeDirection * (0.08 + recoveryRatio * 0.16);
+      moveY += strafeY * strafeDirection * (0.08 + recoveryRatio * 0.16);
+    }
+
     const moveMagnitude = Math.max(1, Math.hypot(moveX, moveY));
-    enemy.x = clamp(enemy.x + (moveX / moveMagnitude) * movementSpeed * dt, -48, ARENA_WIDTH + 48);
-    enemy.y = clamp(enemy.y + (moveY / moveMagnitude) * movementSpeed * dt, -48, ARENA_HEIGHT + 48);
+    const speedMultiplier =
+      1 +
+      pressureRatio * (activeBehavior === 'frontline' ? 0.18 : activeBehavior === 'kiting' ? 0.12 : 0.1) -
+      recoveryRatio * 0.42;
+    enemy.x = clamp(enemy.x + (moveX / moveMagnitude) * movementSpeed * speedMultiplier * dt, -48, ARENA_WIDTH + 48);
+    enemy.y = clamp(enemy.y + (moveY / moveMagnitude) * movementSpeed * speedMultiplier * dt, -48, ARENA_HEIGHT + 48);
   }
 
   private updatePulses(battle: BattleState, dt: number): void {
@@ -3909,6 +4123,7 @@ export class RunEngine {
 
   private handleEnemyDefeated(battle: BattleState, enemy: BattleState['enemies'][number]): void {
     const critStage = this.getRouteBuildStage('crit');
+    const pierceStage = this.getRouteBuildStage('pierce');
     const dashStage = this.getRouteBuildStage('dash');
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     const critSplashRatio = this.getCritSplashRatio(battle);
@@ -3927,6 +4142,26 @@ export class RunEngine {
     const pierceRefund = this.getPierceCooldownRefund();
     if (pierceRefund > 0) {
       battle.fireCooldownSec = Math.max(0.04, battle.fireCooldownSec - pierceRefund);
+    }
+    if (pierceStage === 'committed' || pierceStage === 'matured') {
+      const laneScore = this.getPierceLaneScore(battle, enemy);
+      if (enemy.elite || laneScore >= 1.2) {
+        battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.028 : 0.014));
+        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.28 : 0.22);
+        this.createCombatPulse(battle, {
+          x: enemy.x,
+          y: enemy.y,
+          radius: enemy.radius + (enemy.elite ? 24 : 18) + Math.min(10, laneScore * 3),
+          lifeSec: 0.16,
+          color: 0x8fd8ff,
+          secondaryColor: 0xf7fcff,
+          fillAlpha: 0.05,
+          strokeAlpha: 0.6,
+          strokeWidth: 2,
+          growthPerSec: 196,
+          innerRadiusRatio: 0.66,
+        });
+      }
     }
 
     if (critStage === 'committed' || critStage === 'matured') {
@@ -4031,6 +4266,9 @@ export class RunEngine {
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const enemy of battle.enemies) {
+      if (enemy.hp <= 0) {
+        continue;
+      }
       const dx = enemy.x - battle.playerX;
       const dy = enemy.y - battle.playerY;
       const distance = Math.max(1, Math.hypot(dx, dy));
@@ -4044,11 +4282,14 @@ export class RunEngine {
         score += battle.critChain >= 2 && distance <= 180 ? 18 : 0;
         score += hpRatio <= 0.35 ? 26 : 0;
         score += recoveryRatio * (battle.critOverdriveSec > 0 ? 34 : 20);
+        score += enemy.elite && recoveryRatio > 0.2 ? 28 + recoveryRatio * 24 : 0;
       } else if (focusRoute === 'pierce') {
-        score += this.getPierceLaneScore(battle, enemy) * 26;
+        const laneScore = this.getPierceLaneScore(battle, enemy);
+        score += laneScore * 26;
         score += Math.max(0, distance - 110) * 0.08;
         score += enemy.archetype === 'ranged' ? 6 : 0;
         score += recoveryRatio * 16;
+        score += enemy.elite && laneScore >= 1.2 ? 24 + laneScore * 8 : 0;
       } else if (focusRoute === 'dash') {
         score += Math.max(0, 200 - distance) * 0.28;
         score += enemy.archetype === 'ranged' ? 18 : 0;
@@ -4059,6 +4300,7 @@ export class RunEngine {
         if (battle.dashDriveSec > 0 && distance <= 150) {
           score += 24;
         }
+        score += enemy.elite && recoveryRatio > 0.2 ? 8 + recoveryRatio * 12 : 0;
       }
 
       score += recoveryRatio * 6;
@@ -4094,7 +4336,7 @@ export class RunEngine {
     let score = 0;
 
     for (const enemy of battle.enemies) {
-      if (enemy.id === candidate.id) {
+      if (enemy.id === candidate.id || enemy.hp <= 0) {
         continue;
       }
 
@@ -4158,6 +4400,211 @@ export class RunEngine {
 
   private getEnemyRecoveryRatio(enemy: BattleState['enemies'][number]): number {
     return clamp(enemy.recoverySec / this.getEnemyRecoveryWindowSec(enemy), 0, 1);
+  }
+
+  private getEnemyPressureWindowSec(enemy: BattleState['enemies'][number]): number {
+    if (enemy.elite) {
+      return 0.72;
+    }
+
+    switch (enemy.archetype) {
+      case 'brute':
+        return 0.22;
+      case 'ranged':
+        return 0.2;
+      case 'skirmisher':
+        return 0.18;
+      case 'standard':
+      default:
+        return 0.16;
+    }
+  }
+
+  private triggerEnemyPressurePulse(
+    enemy: BattleState['enemies'][number],
+    durationSec: number,
+    cooldownSec: number,
+  ): boolean {
+    if (enemy.tacticCooldownSec > 0) {
+      return false;
+    }
+
+    enemy.pressurePulseSec = Math.max(enemy.pressurePulseSec, durationSec);
+    enemy.tacticCooldownSec = Math.max(enemy.tacticCooldownSec, cooldownSec);
+    return true;
+  }
+
+  private findNearestAlly(
+    battle: BattleState,
+    source: BattleState['enemies'][number],
+    predicate?: (candidate: BattleState['enemies'][number]) => boolean,
+  ): BattleState['enemies'][number] | null {
+    let best: BattleState['enemies'][number] | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (const candidate of battle.enemies) {
+      if (candidate.id === source.id || candidate.hp <= 0) {
+        continue;
+      }
+      if (predicate && !predicate(candidate)) {
+        continue;
+      }
+
+      const distance = Math.hypot(candidate.x - source.x, candidate.y - source.y);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = candidate;
+      }
+    }
+
+    return best;
+  }
+
+  private countNearbyAllies(
+    battle: BattleState,
+    source: BattleState['enemies'][number],
+    maxDistance: number,
+    predicate?: (candidate: BattleState['enemies'][number]) => boolean,
+  ): number {
+    let count = 0;
+    for (const candidate of battle.enemies) {
+      if (candidate.id === source.id || candidate.hp <= 0) {
+        continue;
+      }
+      if (predicate && !predicate(candidate)) {
+        continue;
+      }
+      if (Math.hypot(candidate.x - source.x, candidate.y - source.y) <= maxDistance) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  private getActiveEscortCount(battle: BattleState): number {
+    return battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
+  }
+
+  private getElitePressureCycle(behavior: EliteBehaviorId): {
+    pulseSec: number;
+    cooldownSec: number;
+    recoverySec: number;
+  } {
+    switch (behavior) {
+      case 'kiting':
+        return { pulseSec: 0.56, cooldownSec: 3.1, recoverySec: 0.24 };
+      case 'screened':
+        return { pulseSec: 0.62, cooldownSec: 3.25, recoverySec: 0.28 };
+      case 'summoner':
+        return { pulseSec: 0.7, cooldownSec: 2.9, recoverySec: 0.22 };
+      case 'frontline':
+      default:
+        return { pulseSec: 0.66, cooldownSec: 2.75, recoverySec: 0.3 };
+    }
+  }
+
+  private startElitePressurePulse(
+    enemy: BattleState['enemies'][number],
+    battle: BattleState,
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    behavior: EliteBehaviorId,
+  ): void {
+    const cycle = this.getElitePressureCycle(behavior);
+    if (!this.triggerEnemyPressurePulse(enemy, cycle.pulseSec, cycle.cooldownSec)) {
+      return;
+    }
+
+    const escortCount = this.getActiveEscortCount(battle);
+    if (behavior === 'kiting') {
+      this.firePressureVolley(battle, 1, {
+        spreadRad: 0.18,
+        shotsPerShooter: 2,
+      });
+    } else if (behavior === 'screened') {
+      if (escortCount <= 1) {
+        this.spawnPhaseEscortBurst(battle, 1);
+      }
+    } else if (behavior === 'summoner') {
+      this.spawnPhaseEscortBurst(battle, escortCount === 0 ? 2 : 1);
+    } else if (behavior === 'frontline' && escortCount === 0 && (template.eliteRule?.escortBatch ?? 0) > 0) {
+      this.spawnPhaseEscortBurst(battle, 1);
+    }
+
+    this.createCombatPulse(battle, {
+      x: enemy.x,
+      y: enemy.y,
+      radius: enemy.radius + 16,
+      lifeSec: 0.16,
+      color: 0xffc47b,
+      secondaryColor: 0xfff6d4,
+      fillAlpha: 0.06,
+      strokeAlpha: 0.62,
+      strokeWidth: 3,
+      growthPerSec: 168,
+      innerRadiusRatio: 0.68,
+    });
+    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
+    this.enqueueAudio('pressure');
+  }
+
+  private resolveElitePressurePulse(
+    enemy: BattleState['enemies'][number],
+    battle: BattleState,
+    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+  ): void {
+    const behavior = this.getActiveEliteBehavior(battle, template);
+    const cycle = this.getElitePressureCycle(behavior);
+    const pierceStage = this.getRouteBuildStage('pierce');
+    const critStage = this.getRouteBuildStage('crit');
+    const dashStage = this.getRouteBuildStage('dash');
+
+    this.pushEnemyRecovery(enemy, cycle.recoverySec);
+    this.createCombatPulse(battle, {
+      x: enemy.x,
+      y: enemy.y,
+      radius: enemy.radius + 22,
+      lifeSec: 0.18,
+      color: 0xffefb8,
+      secondaryColor: 0xffffff,
+      fillAlpha: 0.05,
+      strokeAlpha: 0.54,
+      strokeWidth: 2.5,
+      growthPerSec: 154,
+      innerRadiusRatio: 0.72,
+    });
+
+    if (critStage === 'committed' || critStage === 'matured') {
+      battle.critOverdriveSec = Math.max(
+        battle.critOverdriveSec,
+        critStage === 'matured' ? 0.7 : 0.48,
+      );
+      battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (critStage === 'matured' ? 0.032 : 0.018));
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
+    }
+
+    const laneScore = pierceStage !== 'unformed' ? this.getPierceLaneScore(battle, enemy) : 0;
+    if ((pierceStage === 'committed' || pierceStage === 'matured') && laneScore >= 1.2) {
+      battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - Math.min(0.036, 0.016 + laneScore * 0.006));
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22);
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 18 + Math.min(12, laneScore * 3),
+        lifeSec: 0.14,
+        color: 0x8fdcff,
+        secondaryColor: 0xf5fbff,
+        fillAlpha: 0.04,
+        strokeAlpha: 0.52,
+        strokeWidth: 2,
+        growthPerSec: 180,
+        innerRadiusRatio: 0.7,
+      });
+    }
+
+    if (dashStage === 'committed' || dashStage === 'matured') {
+      battle.dashDriveSec = Math.max(battle.dashDriveSec, dashStage === 'matured' ? 0.86 : 0.62);
+      battle.dashCharge = Math.min(6, battle.dashCharge + 1);
+    }
   }
 
   private getRegularEnemyHp(
