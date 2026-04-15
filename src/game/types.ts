@@ -462,6 +462,10 @@ export interface BattleState {
   playerKnockbackVY: number;
   playerImpactSec: number;
   playerRecoverySec: number;
+  killFlowSec: number;
+  killFlowCount: number;
+  playerDamageFlashSec: number;
+  playerDamageAngle: number;
   cameraShakeSec: number;
   cameraShakeStrength: number;
   tempoPulseSec: number;
@@ -471,6 +475,7 @@ export interface BattleState {
   playerMoveBoostSec: number;
   playerTurnBurstSec: number;
   playerNearMissSec: number;
+  playerNearMissAngle: number;
   playerNearMissCooldownSec: number;
 }
 

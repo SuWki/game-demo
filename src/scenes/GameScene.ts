@@ -2067,6 +2067,11 @@ export class GameScene extends Phaser.Scene {
     const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.16) : 0;
     const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.12) : 0;
     const nearMissRatio = battle.playerNearMissSec > 0 ? Math.min(1, battle.playerNearMissSec / 0.14) : 0;
+    const killFlowRatio =
+      battle.killFlowSec > 0
+        ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
+        : 0;
+    const damageFlashRatio = battle.playerDamageFlashSec > 0 ? Math.min(1, battle.playerDamageFlashSec / 0.34) : 0;
     const hpRatio = state.stats.hp / Math.max(1, state.stats.maxHp);
     const lowHpRatio = Phaser.Math.Clamp((0.46 - hpRatio) / 0.46, 0, 1);
     const criticalHpRatio = Phaser.Math.Clamp((0.24 - hpRatio) / 0.24, 0, 1);
@@ -2081,6 +2086,10 @@ export class GameScene extends Phaser.Scene {
     const aimDirY = aimMagnitude > 0.01 ? battle.playerAimDirY / aimMagnitude : -1;
     const aimOrthoX = -aimDirY;
     const aimOrthoY = aimDirX;
+    const damageDirX = Math.cos(battle.playerDamageAngle);
+    const damageDirY = Math.sin(battle.playerDamageAngle);
+    const nearMissDirX = Math.cos(battle.playerNearMissAngle);
+    const nearMissDirY = Math.sin(battle.playerNearMissAngle);
     const knockbackSpeed = Math.hypot(battle.playerKnockbackVX, battle.playerKnockbackVY);
     const knockbackRatio = Math.min(1, knockbackSpeed / 240);
     const hurtDirX = knockbackSpeed > 0.01 ? battle.playerKnockbackVX / knockbackSpeed : -aimDirX;
@@ -2098,6 +2107,8 @@ export class GameScene extends Phaser.Scene {
       critAuraRatio,
       dashDriveRatio,
       nearMissRatio,
+      killFlowRatio,
+      damageFlashRatio * 0.9,
       pierceReadRatio,
       moveBoostRatio,
       turnBurstRatio,
@@ -2142,6 +2153,50 @@ export class GameScene extends Phaser.Scene {
         playerScreen.y + hurtDirY * (18 + freezeRatio * 10),
       );
     }
+    if (damageFlashRatio > 0) {
+      const damageColor = this.mixColor(0xff6a63, 0xfff0cb, 0.22);
+      const damageRadius = 42 + damageFlashRatio * 10;
+      this.graphics.lineStyle(2.2, damageColor, 0.12 + damageFlashRatio * 0.24);
+      this.graphics.lineBetween(
+        playerScreen.x + damageDirX * 20,
+        playerScreen.y + damageDirY * 20,
+        playerScreen.x + damageDirX * (damageRadius - 6),
+        playerScreen.y + damageDirY * (damageRadius - 6),
+      );
+      this.renderDirectionalChevron(
+        playerScreen.x,
+        playerScreen.y,
+        battle.playerDamageAngle,
+        damageRadius,
+        18 + damageFlashRatio * 16,
+        9 + damageFlashRatio * 5,
+        damageColor,
+        0.16 + damageFlashRatio * 0.34,
+        0.05 + damageFlashRatio * 0.12,
+      );
+      this.renderDirectionalChevron(
+        playerScreen.x,
+        playerScreen.y,
+        battle.playerDamageAngle + 0.17,
+        damageRadius + 8,
+        10 + damageFlashRatio * 8,
+        5 + damageFlashRatio * 3,
+        damageColor,
+        0.08 + damageFlashRatio * 0.16,
+        0,
+      );
+      this.renderDirectionalChevron(
+        playerScreen.x,
+        playerScreen.y,
+        battle.playerDamageAngle - 0.17,
+        damageRadius + 8,
+        10 + damageFlashRatio * 8,
+        5 + damageFlashRatio * 3,
+        damageColor,
+        0.08 + damageFlashRatio * 0.16,
+        0,
+      );
+    }
     if (recoveryRatio > 0) {
       this.graphics.lineStyle(3, 0x8cffc7, 0.3 + recoveryRatio * 0.34);
       this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 30 + (1 - recoveryRatio) * 16);
@@ -2165,6 +2220,40 @@ export class GameScene extends Phaser.Scene {
           bodyY - surgeDirY * offset,
           bodyX - surgeDirX * (offset + 12) - surgeOrthoX * width,
           bodyY - surgeDirY * (offset + 12) - surgeOrthoY * width,
+        );
+      }
+    }
+    if (killFlowRatio > 0) {
+      const flowDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
+      const flowDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
+      const flowOrthoX = -flowDirY;
+      const flowOrthoY = flowDirX;
+      const flowAngle = Math.atan2(flowDirY, flowDirX);
+      const flowColor = this.mixColor(liveFocusColor, 0xfff2c3, 0.26 + killFlowRatio * 0.16);
+      const chainCount = Math.max(1, battle.killFlowCount);
+      this.graphics.lineStyle(2.2, flowColor, 0.12 + killFlowRatio * 0.22);
+      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 46 + killFlowRatio * 8 + chainCount * 2);
+      for (let streak = 0; streak < Math.min(4, chainCount + 1); streak += 1) {
+        const offset = 14 + streak * 10 + killFlowRatio * 8;
+        const width = 8 + streak * 2 + killFlowRatio * 4;
+        this.graphics.fillStyle(flowColor, 0.05 + killFlowRatio * 0.05 - streak * 0.008);
+        this.graphics.fillTriangle(
+          bodyX - flowDirX * (offset + 14) + flowOrthoX * width,
+          bodyY - flowDirY * (offset + 14) + flowOrthoY * width,
+          bodyX - flowDirX * offset,
+          bodyY - flowDirY * offset,
+          bodyX - flowDirX * (offset + 14) - flowOrthoX * width,
+          bodyY - flowDirY * (offset + 14) - flowOrthoY * width,
+        );
+      }
+      for (let pip = 0; pip < chainCount; pip += 1) {
+        const spreadAngle = flowAngle + (pip - (chainCount - 1) / 2) * 0.24;
+        const pipRadius = 34 + killFlowRatio * 8;
+        this.graphics.fillStyle(flowColor, 0.46 + killFlowRatio * 0.18);
+        this.graphics.fillCircle(
+          playerScreen.x + Math.cos(spreadAngle) * pipRadius,
+          playerScreen.y + Math.sin(spreadAngle) * pipRadius,
+          2.4 + killFlowRatio * 1.2,
         );
       }
     }
@@ -2210,6 +2299,24 @@ export class GameScene extends Phaser.Scene {
       this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 36 + (1 - nearMissRatio) * 12);
       this.graphics.lineStyle(1.5, nearMissColor, 0.06 + nearMissRatio * 0.16);
       this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 54 + (1 - nearMissRatio) * 18);
+      this.graphics.lineStyle(1.5, nearMissColor, 0.08 + nearMissRatio * 0.18);
+      this.graphics.lineBetween(
+        playerScreen.x + nearMissDirX * 28,
+        playerScreen.y + nearMissDirY * 28,
+        playerScreen.x + nearMissDirX * (44 + nearMissRatio * 10),
+        playerScreen.y + nearMissDirY * (44 + nearMissRatio * 10),
+      );
+      this.renderDirectionalChevron(
+        playerScreen.x,
+        playerScreen.y,
+        battle.playerNearMissAngle,
+        48 + (1 - nearMissRatio) * 8,
+        12 + nearMissRatio * 8,
+        7 + nearMissRatio * 4,
+        nearMissColor,
+        0.1 + nearMissRatio * 0.18,
+        0.03 + nearMissRatio * 0.06,
+      );
     }
     if (critAuraRatio > 0) {
       const spokeColor = this.mixColor(accentColor, 0xfff0ad, 0.38);
@@ -2487,6 +2594,43 @@ export class GameScene extends Phaser.Scene {
     const predictedX = battle.playerX + battle.playerMoveDirX * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
     const predictedY = battle.playerY + battle.playerMoveDirY * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
     return this.worldToScreen(camera, predictedX, predictedY);
+  }
+
+  private renderDirectionalChevron(
+    centerX: number,
+    centerY: number,
+    angle: number,
+    innerRadius: number,
+    length: number,
+    halfWidth: number,
+    color: number,
+    lineAlpha: number,
+    fillAlpha: number,
+  ): void {
+    const dirX = Math.cos(angle);
+    const dirY = Math.sin(angle);
+    const orthoX = -dirY;
+    const orthoY = dirX;
+    const baseX = centerX + dirX * innerRadius;
+    const baseY = centerY + dirY * innerRadius;
+    const tipX = centerX + dirX * (innerRadius + length);
+    const tipY = centerY + dirY * (innerRadius + length);
+    const leftX = baseX - dirX * (length * 0.28) + orthoX * halfWidth;
+    const leftY = baseY - dirY * (length * 0.28) + orthoY * halfWidth;
+    const rightX = baseX - dirX * (length * 0.28) - orthoX * halfWidth;
+    const rightY = baseY - dirY * (length * 0.28) - orthoY * halfWidth;
+
+    if (fillAlpha > 0) {
+      this.graphics.fillStyle(color, fillAlpha);
+      this.graphics.fillTriangle(tipX, tipY, leftX, leftY, rightX, rightY);
+    }
+
+    this.graphics.lineStyle(2, color, lineAlpha);
+    this.graphics.lineBetween(leftX, leftY, tipX, tipY);
+    this.graphics.lineBetween(rightX, rightY, tipX, tipY);
+    this.graphics.lineStyle(1.4, color, lineAlpha * 0.8);
+    this.graphics.lineBetween(baseX + orthoX * (halfWidth * 0.42), baseY + orthoY * (halfWidth * 0.42), leftX, leftY);
+    this.graphics.lineBetween(baseX - orthoX * (halfWidth * 0.42), baseY - orthoY * (halfWidth * 0.42), rightX, rightY);
   }
 
   private renderEliteEscortField(

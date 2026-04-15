@@ -55,13 +55,13 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   battle: {
     stepSec: 0.28,
-    gain: 0.48,
+    gain: 0.5,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
     bassPeak: 0.076,
-    leadPeak: 0.032,
-    accentPeak: 0.02,
+    leadPeak: 0.034,
+    accentPeak: 0.022,
     padPeak: 0.016,
     bass: [38, null, 38, null, 41, null, 43, null, 36, null, 38, null, 41, null, 43, null],
     lead: [53, null, 56, null, 58, null, 60, null, 53, null, 56, null, 60, null, 63, null],
@@ -267,9 +267,9 @@ export class PilotAudio {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
-    this.masterGain.gain.value = 1.08;
+    this.masterGain.gain.value = 1.12;
     this.musicGain.gain.value = 0.0001;
-    this.sfxGain.gain.value = 1.28;
+    this.sfxGain.gain.value = 1.34;
 
     this.musicGain.connect(this.masterGain);
     this.sfxGain.connect(this.masterGain);
@@ -634,14 +634,14 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'square',
               frequency: 190,
-              peak: 0.048,
+              peak: 0.054,
               duration: 0.04,
               sweepTo: 138,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 360,
-              peak: 0.023,
+              peak: 0.027,
               duration: 0.05,
               delay: 0.008,
               sweepTo: 250,
@@ -655,14 +655,14 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'sawtooth',
               frequency: 150,
-              peak: 0.064,
+              peak: 0.076,
               duration: 0.09,
               sweepTo: 92,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 410,
-              peak: 0.03,
+              peak: 0.036,
               duration: 0.08,
               delay: 0.01,
               sweepTo: 240,
@@ -676,14 +676,14 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 280,
-              peak: 0.058,
+              peak: 0.066,
               duration: 0.075,
               sweepTo: 450,
             });
             createVoice(context, destination, now, {
               type: 'sine',
               frequency: 640,
-              peak: 0.036,
+              peak: 0.042,
               duration: 0.09,
               delay: 0.014,
               sweepTo: 920,
@@ -691,7 +691,7 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'square',
               frequency: 210,
-              peak: 0.02,
+              peak: 0.024,
               duration: 0.05,
               delay: 0.01,
               sweepTo: 170,
@@ -762,18 +762,18 @@ export class PilotAudio {
           play: (context, destination, now) => {
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 330,
-              peak: 0.034,
-              duration: 0.05,
-              sweepTo: 250,
+              frequency: 300,
+              peak: 0.042,
+              duration: 0.055,
+              sweepTo: 214,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 780,
-              peak: 0.022,
-              duration: 0.06,
+              frequency: 720,
+              peak: 0.026,
+              duration: 0.065,
               delay: 0.004,
-              sweepTo: 620,
+              sweepTo: 560,
             });
           },
         };
@@ -784,17 +784,25 @@ export class PilotAudio {
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 720,
-              peak: 0.028,
-              duration: 0.05,
-              sweepTo: 920,
+              peak: 0.032,
+              duration: 0.055,
+              sweepTo: 980,
             });
             createVoice(context, destination, now, {
               type: 'sine',
               frequency: 1080,
-              peak: 0.016,
-              duration: 0.05,
+              peak: 0.02,
+              duration: 0.055,
               delay: 0.01,
-              sweepTo: 1360,
+              sweepTo: 1440,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 1420,
+              peak: 0.012,
+              duration: 0.04,
+              delay: 0.018,
+              sweepTo: 1180,
             });
           },
         };

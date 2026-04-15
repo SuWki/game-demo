@@ -387,6 +387,8 @@ export class RunEngine {
     battle.invulnerableSec = Math.max(0, battle.invulnerableSec - simulationDt);
     battle.playerImpactSec = Math.max(0, battle.playerImpactSec - dt);
     battle.playerRecoverySec = Math.max(0, battle.playerRecoverySec - dt);
+    battle.killFlowSec = Math.max(0, battle.killFlowSec - dt);
+    battle.playerDamageFlashSec = Math.max(0, battle.playerDamageFlashSec - dt);
     battle.cameraShakeSec = Math.max(0, battle.cameraShakeSec - dt);
     battle.tempoPulseSec = Math.max(0, battle.tempoPulseSec - dt);
     battle.playerShotFlashSec = Math.max(0, battle.playerShotFlashSec - dt);
@@ -395,6 +397,9 @@ export class RunEngine {
     battle.playerTurnBurstSec = Math.max(0, battle.playerTurnBurstSec - dt);
     battle.playerNearMissSec = Math.max(0, battle.playerNearMissSec - dt);
     battle.playerNearMissCooldownSec = Math.max(0, battle.playerNearMissCooldownSec - dt);
+    if (battle.killFlowSec <= 0) {
+      battle.killFlowCount = 0;
+    }
     if (battle.playerShotRecoilSec <= 0) {
       battle.playerShotRecoilStrength = 0;
     } else {
@@ -589,6 +594,10 @@ export class RunEngine {
       playerKnockbackVY: 0,
       playerImpactSec: 0,
       playerRecoverySec: 0,
+      killFlowSec: 0,
+      killFlowCount: 0,
+      playerDamageFlashSec: 0,
+      playerDamageAngle: -Math.PI / 2,
       cameraShakeSec: 0,
       cameraShakeStrength: 0,
       tempoPulseSec: 0,
@@ -598,6 +607,7 @@ export class RunEngine {
       playerMoveBoostSec: 0,
       playerTurnBurstSec: 0,
       playerNearMissSec: 0,
+      playerNearMissAngle: -Math.PI / 2,
       playerNearMissCooldownSec: 0,
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
@@ -2239,6 +2249,30 @@ export class RunEngine {
     return battle.enemies.filter((enemy) => !enemy.elite && enemy.hp > 0).length;
   }
 
+  private registerKillFlow(battle: BattleState, enemy: BattleState['enemies'][number]): number {
+    if (battle.killFlowSec > 0) {
+      battle.killFlowCount = Math.min(4, battle.killFlowCount + 1);
+    } else {
+      battle.killFlowCount = 1;
+    }
+
+    battle.killFlowSec = Math.max(battle.killFlowSec, enemy.elite ? 1 : 0.72);
+    battle.playerMoveBoostSec = Math.max(
+      battle.playerMoveBoostSec,
+      enemy.elite ? 0.24 : 0.12 + Math.min(0.14, battle.killFlowCount * 0.03),
+    );
+    battle.tempoPulseSec = Math.max(
+      battle.tempoPulseSec,
+      enemy.elite ? 0.34 : 0.16 + Math.min(0.18, battle.killFlowCount * 0.05),
+    );
+    return battle.killFlowCount;
+  }
+
+  private registerPlayerThreatDirection(battle: BattleState, sourceX: number, sourceY: number, flashSec: number): void {
+    battle.playerDamageAngle = Math.atan2(sourceY - battle.playerY, sourceX - battle.playerX);
+    battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, flashSec);
+  }
+
   private feedBattleFlow(
     battle: BattleState,
     source: 'kill' | 'pickup',
@@ -2680,6 +2714,11 @@ export class RunEngine {
     let projectileSpeed = this.getProjectileSpeed();
     let bulletLifeSec = 1.8;
     let muzzleColor = 0xf8fbff;
+    const killFlowRatio =
+      battle.killFlowSec > 0
+        ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
+        : 0;
+    const killFlowBoost = killFlowRatio > 0 ? Math.min(1.8, battle.killFlowCount * 0.32 + killFlowRatio * 0.8) : 0;
     if (focusRoute === 'crit') {
       spreadStep = shotCount > 1 ? (battle.critOverdriveSec > 0 ? 0.11 : 0.15) : 0;
       projectileSpeed *= battle.critOverdriveSec > 0 ? 1.08 : 1.03;
@@ -2716,10 +2755,20 @@ export class RunEngine {
         }
       }
     }
+    if (killFlowBoost > 0) {
+      projectileSpeed *= 1 + Math.min(0.04, killFlowBoost * 0.012);
+      bulletLifeSec += Math.min(0.08, killFlowBoost * 0.03);
+    }
     const spreadCenter = (shotCount - 1) / 2;
     const shotRecoilBase =
-      focusRoute === 'pierce' ? 5.8 : focusRoute === 'dash' ? (battle.dashDriveSec > 0 ? 6.6 : 5.2) : battle.critOverdriveSec > 0 ? 6.8 : 5.6;
-    battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.08);
+      (focusRoute === 'pierce'
+        ? 5.8
+        : focusRoute === 'dash'
+          ? (battle.dashDriveSec > 0 ? 6.6 : 5.2)
+          : battle.critOverdriveSec > 0
+            ? 6.8
+            : 5.6) + killFlowBoost * 0.7;
+    battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.08 + killFlowBoost * 0.01);
     battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, 0.11);
     battle.playerShotRecoilStrength = Math.max(
       battle.playerShotRecoilStrength * 0.55,
@@ -2728,17 +2777,17 @@ export class RunEngine {
     this.createCombatPulse(battle, {
       x: battle.playerX + battle.playerAimDirX * 18,
       y: battle.playerY + battle.playerAimDirY * 18,
-      radius: 10 + Math.min(6, shotCount * 1.2),
-      lifeSec: 0.08,
+      radius: 10 + Math.min(6, shotCount * 1.2) + killFlowBoost * 1.2,
+      lifeSec: 0.08 + killFlowRatio * 0.02,
       color: muzzleColor,
       secondaryColor: 0xffffff,
       fillAlpha: 0.12,
-      strokeAlpha: 0.34,
+      strokeAlpha: 0.34 + killFlowRatio * 0.08,
       strokeWidth: 2,
-      growthPerSec: 220,
+      growthPerSec: 220 + killFlowBoost * 14,
       innerRadiusRatio: 0.54,
     });
-    this.kickBattleShake(battle, 0.05, focusRoute === 'dash' ? 0.18 : 0.12);
+    this.kickBattleShake(battle, 0.05 + killFlowBoost * 0.008, focusRoute === 'dash' ? 0.18 + killFlowRatio * 0.03 : 0.12 + killFlowRatio * 0.02);
     this.enqueueAudio('shoot');
 
     for (let index = 0; index < shotCount; index += 1) {
@@ -2980,6 +3029,7 @@ export class RunEngine {
           this.queueImpactFreeze(battle, enemy.elite ? 0.09 : 0.068, enemy.elite ? 0.1 : 0.15);
           this.pushPlayerKnockback(battle, enemy.x, enemy.y, enemy.elite ? 240 : 190);
           this.kickBattleShake(battle, 0.22, enemy.elite ? 0.76 : 0.48);
+          this.registerPlayerThreatDirection(battle, enemy.x, enemy.y, 0.34);
           this.createCombatPulse(battle, {
             x: battle.playerX,
             y: battle.playerY,
@@ -3679,6 +3729,7 @@ export class RunEngine {
           this.queueImpactFreeze(battle, projectile.radius > 5 ? 0.074 : 0.056, projectile.radius > 5 ? 0.12 : 0.18);
           this.pushPlayerKnockback(battle, projectile.x, projectile.y, projectile.radius > 5 ? 220 : 170);
           this.kickBattleShake(battle, 0.18, 0.38);
+          this.registerPlayerThreatDirection(battle, projectile.x, projectile.y, 0.3);
           this.createCombatPulse(battle, {
             x: battle.playerX,
             y: battle.playerY,
@@ -3702,6 +3753,7 @@ export class RunEngine {
         distance <= projectile.radius + PLAYER_COLLISION_RADIUS + 24
       ) {
         battle.playerNearMissSec = Math.max(battle.playerNearMissSec, 0.14);
+        battle.playerNearMissAngle = Math.atan2(projectile.y - battle.playerY, projectile.x - battle.playerX);
         battle.playerNearMissCooldownSec = 0.09;
         this.kickBattleShake(battle, 0.05, 0.14);
         this.createCombatPulse(battle, {
@@ -3895,6 +3947,17 @@ export class RunEngine {
         this.gainExperience(orb.value);
         battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.18);
         battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.14 + Math.min(0.12, orb.value * 0.006));
+        if (battle.killFlowSec > 0) {
+          battle.killFlowSec = Math.max(battle.killFlowSec, 0.26 + Math.min(0.18, orb.value * 0.01));
+          battle.playerMoveBoostSec = Math.max(
+            battle.playerMoveBoostSec,
+            0.1 + Math.min(0.12, battle.killFlowCount * 0.03),
+          );
+          battle.tempoPulseSec = Math.max(
+            battle.tempoPulseSec,
+            0.16 + Math.min(0.16, battle.killFlowCount * 0.04 + orb.value * 0.004),
+          );
+        }
         this.feedBattleFlow(battle, 'pickup', orb.value);
         if (this.state.status === 'battle') {
           battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - Math.min(0.02, 0.006 + orb.value * 0.0007));
@@ -4255,6 +4318,8 @@ export class RunEngine {
     const dashStage = this.getRouteBuildStage('dash');
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     const critSplashRatio = this.getCritSplashRatio(battle);
+    const flowChainCount = this.registerKillFlow(battle, enemy);
+    const flowChainBonus = Math.max(0, flowChainCount - 1);
     if (critSplashRatio > 0) {
       for (const target of battle.enemies) {
         if (target.id === enemy.id || target.hp <= 0) {
@@ -4274,8 +4339,11 @@ export class RunEngine {
     if (pierceStage === 'committed' || pierceStage === 'matured') {
       const laneScore = this.getPierceLaneScore(battle, enemy);
       if (enemy.elite || laneScore >= 1.2) {
-        battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.028 : 0.014));
-        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.28 : 0.22);
+        battle.fireCooldownSec = Math.max(
+          0.035,
+          battle.fireCooldownSec - (enemy.elite ? 0.028 : 0.014) - flowChainBonus * 0.003,
+        );
+        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.28 : 0.22 + flowChainBonus * 0.02);
         this.createCombatPulse(battle, {
           x: enemy.x,
           y: enemy.y,
@@ -4294,7 +4362,10 @@ export class RunEngine {
 
     if (critStage === 'committed' || critStage === 'matured') {
       battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + (enemy.elite ? 0.42 : 0.18));
-      battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.04 : critStage === 'matured' ? 0.028 : 0.018));
+      battle.fireCooldownSec = Math.max(
+        0.035,
+        battle.fireCooldownSec - (enemy.elite ? 0.04 : critStage === 'matured' ? 0.028 : 0.018) - flowChainBonus * 0.003,
+      );
       if (this.state.routeCounts.crit > 0) {
         this.createCombatPulse(battle, {
           x: enemy.x,
@@ -4320,10 +4391,40 @@ export class RunEngine {
         battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.22);
         battle.dashCharge = Math.min(6, battle.dashCharge + (enemy.elite ? 2 : 1));
         if (moveMagnitude > 0.08) {
-          battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.04 : 0.022));
-          battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
+          battle.fireCooldownSec = Math.max(
+            0.035,
+            battle.fireCooldownSec - (enemy.elite ? 0.04 : 0.022) - flowChainBonus * 0.004,
+          );
+          battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18 + flowChainBonus * 0.03);
         }
       }
+    }
+
+    if (!enemy.elite) {
+      const familyColor =
+        enemy.archetype === 'brute'
+          ? 0xffc08a
+          : enemy.archetype === 'ranged'
+            ? 0x9ae1ff
+            : enemy.archetype === 'skirmisher'
+              ? 0x9fffd8
+              : 0xffd6c7;
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius:
+          enemy.radius +
+          (enemy.archetype === 'brute' ? 22 : enemy.archetype === 'ranged' ? 16 : enemy.archetype === 'skirmisher' ? 18 : 14) +
+          flowChainBonus * 3,
+        lifeSec: enemy.archetype === 'brute' ? 0.2 : 0.14,
+        color: familyColor,
+        secondaryColor: 0xffffff,
+        fillAlpha: enemy.archetype === 'brute' ? 0.12 : 0.08,
+        strokeAlpha: 0.42 + flowChainBonus * 0.06,
+        strokeWidth: enemy.archetype === 'brute' ? 2.8 : 2,
+        growthPerSec: enemy.archetype === 'brute' ? 240 : 190,
+        innerRadiusRatio: enemy.archetype === 'skirmisher' ? 0.48 : 0.62,
+      });
     }
 
     this.createCombatPulse(battle, {
@@ -4352,11 +4453,23 @@ export class RunEngine {
       growthPerSec: enemy.elite ? 220 : 180,
       innerRadiusRatio: 0.54,
     });
-    this.queueImpactFreeze(battle, enemy.elite ? 0.072 : 0.032, enemy.elite ? 0.1 : 0.3);
-    this.kickBattleShake(battle, enemy.elite ? 0.24 : 0.1, enemy.elite ? 0.78 : 0.24);
-    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.3 : 0.18);
-    this.feedBattleFlow(battle, 'kill', enemy.elite ? 5 : enemy.archetype === 'brute' ? 2.5 : enemy.archetype === 'ranged' ? 2 : 1.4);
-    battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.02 : 0.01));
+    this.queueImpactFreeze(
+      battle,
+      enemy.elite ? 0.072 : enemy.archetype === 'brute' ? 0.042 : 0.032,
+      enemy.elite ? 0.1 : enemy.archetype === 'brute' ? 0.22 : 0.3,
+    );
+    this.kickBattleShake(
+      battle,
+      enemy.elite ? 0.24 : enemy.archetype === 'brute' ? 0.14 : enemy.archetype === 'skirmisher' ? 0.12 : 0.1,
+      enemy.elite ? 0.78 : enemy.archetype === 'brute' ? 0.34 : enemy.archetype === 'ranged' ? 0.28 : 0.24,
+    );
+    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.3 : 0.18 + flowChainBonus * 0.04);
+    this.feedBattleFlow(
+      battle,
+      'kill',
+      enemy.elite ? 5 + flowChainBonus * 0.8 : (enemy.archetype === 'brute' ? 2.5 : enemy.archetype === 'ranged' ? 2 : 1.4) + flowChainBonus * 0.45,
+    );
+    battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.02 : 0.01) - flowChainBonus * 0.003);
     this.enqueueAudio(enemy.elite ? 'crit' : 'kill');
 
     const orbValue = Math.round(this.getEnemyExperienceValue(battle, enemy.elite) * ENEMY_ARCHETYPES[enemy.archetype].experienceMultiplier);
