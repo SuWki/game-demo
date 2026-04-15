@@ -41,7 +41,7 @@ const RMS_AUDIBLE_THRESHOLD = 0.0035;
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   menu: {
     stepSec: 0.34,
-    gain: 0.38,
+    gain: 0.42,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -55,7 +55,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   battle: {
     stepSec: 0.28,
-    gain: 0.44,
+    gain: 0.48,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
@@ -69,7 +69,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   boss: {
     stepSec: 0.22,
-    gain: 0.48,
+    gain: 0.52,
     bassType: 'sawtooth',
     leadType: 'square',
     accentType: 'triangle',
@@ -83,7 +83,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   result: {
     stepSec: 0.34,
-    gain: 0.34,
+    gain: 0.38,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -267,9 +267,9 @@ export class PilotAudio {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
-    this.masterGain.gain.value = 1.02;
+    this.masterGain.gain.value = 1.08;
     this.musicGain.gain.value = 0.0001;
-    this.sfxGain.gain.value = 1.18;
+    this.sfxGain.gain.value = 1.28;
 
     this.musicGain.connect(this.masterGain);
     this.sfxGain.connect(this.masterGain);
@@ -585,6 +585,27 @@ export class PilotAudio {
             });
           },
         };
+      case 'shoot':
+        return {
+          cooldownMs: 70,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 240,
+              peak: 0.042,
+              duration: 0.045,
+              sweepTo: 170,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 640,
+              peak: 0.022,
+              duration: 0.05,
+              delay: 0.006,
+              sweepTo: 460,
+            });
+          },
+        };
       case 'dash':
         return {
           cooldownMs: 140,
@@ -624,6 +645,27 @@ export class PilotAudio {
               duration: 0.05,
               delay: 0.008,
               sweepTo: 250,
+            });
+          },
+        };
+      case 'hurt':
+        return {
+          cooldownMs: 120,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'sawtooth',
+              frequency: 150,
+              peak: 0.064,
+              duration: 0.09,
+              sweepTo: 92,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 410,
+              peak: 0.03,
+              duration: 0.08,
+              delay: 0.01,
+              sweepTo: 240,
             });
           },
         };
@@ -711,6 +753,48 @@ export class PilotAudio {
               duration: 0.07,
               delay: 0.022,
               sweepTo: 1710,
+            });
+          },
+        };
+      case 'enemyShot':
+        return {
+          cooldownMs: 90,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 330,
+              peak: 0.034,
+              duration: 0.05,
+              sweepTo: 250,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 780,
+              peak: 0.022,
+              duration: 0.06,
+              delay: 0.004,
+              sweepTo: 620,
+            });
+          },
+        };
+      case 'nearMiss':
+        return {
+          cooldownMs: 90,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 720,
+              peak: 0.028,
+              duration: 0.05,
+              sweepTo: 920,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 1080,
+              peak: 0.016,
+              duration: 0.05,
+              delay: 0.01,
+              sweepTo: 1360,
             });
           },
         };

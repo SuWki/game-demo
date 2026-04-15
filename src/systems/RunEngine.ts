@@ -391,6 +391,8 @@ export class RunEngine {
     battle.tempoPulseSec = Math.max(0, battle.tempoPulseSec - dt);
     battle.playerShotFlashSec = Math.max(0, battle.playerShotFlashSec - dt);
     battle.playerShotRecoilSec = Math.max(0, battle.playerShotRecoilSec - dt);
+    battle.playerMoveBoostSec = Math.max(0, battle.playerMoveBoostSec - dt);
+    battle.playerTurnBurstSec = Math.max(0, battle.playerTurnBurstSec - dt);
     battle.playerNearMissSec = Math.max(0, battle.playerNearMissSec - dt);
     battle.playerNearMissCooldownSec = Math.max(0, battle.playerNearMissCooldownSec - dt);
     if (battle.playerShotRecoilSec <= 0) {
@@ -571,6 +573,8 @@ export class RunEngine {
       enemyProjectiles: [],
       playerX: CENTER_X,
       playerY: CENTER_Y,
+      playerVelocityX: 0,
+      playerVelocityY: 0,
       playerMoveDirX: 0,
       playerMoveDirY: 0,
       playerAimDirX: 0,
@@ -591,6 +595,8 @@ export class RunEngine {
       playerShotFlashSec: 0,
       playerShotRecoilSec: 0,
       playerShotRecoilStrength: 0,
+      playerMoveBoostSec: 0,
+      playerTurnBurstSec: 0,
       playerNearMissSec: 0,
       playerNearMissCooldownSec: 0,
     };
@@ -1771,11 +1777,72 @@ export class RunEngine {
     const magnitude = hasInput ? Math.hypot(moveX, moveY) : 1;
     const normalizedX = hasInput ? moveX / magnitude : 0;
     const normalizedY = hasInput ? moveY / magnitude : 0;
-    battle.playerMoveDirX = hasInput ? normalizedX : 0;
-    battle.playerMoveDirY = hasInput ? normalizedY : 0;
     const moveSpeed = this.getPlayerMoveSpeed();
     const tempoMoveMultiplier = 1 + Math.min(0.12, battle.tempoPulseSec * 0.28);
     const controlFactor = battle.playerImpactSec > 0 ? 0.52 : 1;
+    const currentVelocitySpeed = Math.hypot(battle.playerVelocityX, battle.playerVelocityY);
+    const currentVelocityDirX = currentVelocitySpeed > 0.01 ? battle.playerVelocityX / currentVelocitySpeed : 0;
+    const currentVelocityDirY = currentVelocitySpeed > 0.01 ? battle.playerVelocityY / currentVelocitySpeed : 0;
+    const directionDot =
+      hasInput && currentVelocitySpeed > 14 ? currentVelocityDirX * normalizedX + currentVelocityDirY * normalizedY : 1;
+
+    if (hasInput && currentVelocitySpeed <= moveSpeed * 0.16 && battle.playerMoveBoostSec <= 0.01) {
+      battle.playerMoveBoostSec = 0.16;
+      this.createCombatPulse(battle, {
+        x: battle.playerX,
+        y: battle.playerY,
+        radius: 22,
+        lifeSec: 0.1,
+        color: 0x96ecff,
+        secondaryColor: 0xffffff,
+        fillAlpha: 0.04,
+        strokeAlpha: 0.28,
+        strokeWidth: 2,
+        growthPerSec: 132,
+        innerRadiusRatio: 0.72,
+      });
+    }
+
+    if (hasInput && currentVelocitySpeed > moveSpeed * 0.18 && directionDot < -0.18) {
+      battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.12);
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.08);
+    }
+
+    const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.16) : 0;
+    const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.12) : 0;
+    const targetSpeed =
+      moveSpeed *
+      controlFactor *
+      tempoMoveMultiplier *
+      (1 + moveBoostRatio * 0.13 + turnBurstRatio * 0.06 + (battle.dashDriveSec > 0 ? 0.08 : 0));
+    const desiredVelocityX = normalizedX * targetSpeed;
+    const desiredVelocityY = normalizedY * targetSpeed;
+    const velocityBlend = hasInput
+      ? Math.min(1, dt * (battle.dashDriveSec > 0 ? 18 : turnBurstRatio > 0.08 ? 16 : 13))
+      : Math.min(1, dt * 11);
+    battle.playerVelocityX += (desiredVelocityX - battle.playerVelocityX) * velocityBlend;
+    battle.playerVelocityY += (desiredVelocityY - battle.playerVelocityY) * velocityBlend;
+    if (!hasInput) {
+      const coastDamping = Math.max(0, 1 - dt * (battle.dashDriveSec > 0 ? 3.4 : 7.8));
+      battle.playerVelocityX *= coastDamping;
+      battle.playerVelocityY *= coastDamping;
+    }
+    if (Math.abs(battle.playerVelocityX) < 3) {
+      battle.playerVelocityX = 0;
+    }
+    if (Math.abs(battle.playerVelocityY) < 3) {
+      battle.playerVelocityY = 0;
+    }
+
+    const resolvedVelocitySpeed = Math.hypot(battle.playerVelocityX, battle.playerVelocityY);
+    if (resolvedVelocitySpeed > 0.01) {
+      battle.playerMoveDirX = battle.playerVelocityX / resolvedVelocitySpeed;
+      battle.playerMoveDirY = battle.playerVelocityY / resolvedVelocitySpeed;
+    } else {
+      battle.playerMoveDirX = hasInput ? normalizedX : 0;
+      battle.playerMoveDirY = hasInput ? normalizedY : 0;
+    }
+
     const knockbackDamping = battle.playerImpactSec > 0 ? 7.5 : 11;
     battle.playerKnockbackVX *= Math.max(0, 1 - dt * knockbackDamping);
     battle.playerKnockbackVY *= Math.max(0, 1 - dt * knockbackDamping);
@@ -1786,16 +1853,24 @@ export class RunEngine {
       battle.playerKnockbackVY = 0;
     }
 
-    battle.playerX = clamp(
-      battle.playerX + normalizedX * moveSpeed * controlFactor * tempoMoveMultiplier * dt + battle.playerKnockbackVX * dt,
+    const nextPlayerX = clamp(
+      battle.playerX + battle.playerVelocityX * dt + battle.playerKnockbackVX * dt,
       24,
       ARENA_WIDTH - 24,
     );
-    battle.playerY = clamp(
-      battle.playerY + normalizedY * moveSpeed * controlFactor * tempoMoveMultiplier * dt + battle.playerKnockbackVY * dt,
+    const nextPlayerY = clamp(
+      battle.playerY + battle.playerVelocityY * dt + battle.playerKnockbackVY * dt,
       24,
       ARENA_HEIGHT - 24,
     );
+    if ((nextPlayerX <= 24 && battle.playerVelocityX < 0) || (nextPlayerX >= ARENA_WIDTH - 24 && battle.playerVelocityX > 0)) {
+      battle.playerVelocityX = 0;
+    }
+    if ((nextPlayerY <= 24 && battle.playerVelocityY < 0) || (nextPlayerY >= ARENA_HEIGHT - 24 && battle.playerVelocityY > 0)) {
+      battle.playerVelocityY = 0;
+    }
+    battle.playerX = nextPlayerX;
+    battle.playerY = nextPlayerY;
 
     battle.dashCooldownSec -= dt;
     if (this.state.stats.dashPulseDamage <= 0 || battle.dashCooldownSec > 0) {
@@ -2664,6 +2739,7 @@ export class RunEngine {
       innerRadiusRatio: 0.54,
     });
     this.kickBattleShake(battle, 0.05, focusRoute === 'dash' ? 0.18 : 0.12);
+    this.enqueueAudio('shoot');
 
     for (let index = 0; index < shotCount; index += 1) {
       const offset = (index - spreadCenter) * spreadStep;
@@ -2917,7 +2993,7 @@ export class RunEngine {
             growthPerSec: 210,
             innerRadiusRatio: 0.62,
           });
-          this.enqueueAudio('pressure');
+          this.enqueueAudio('hurt');
         }
         const bounceAngle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
         const bounceDistance = enemy.elite ? 14 : 22;
@@ -3477,6 +3553,7 @@ export class RunEngine {
 
     enemy.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle) + (shotsPerVolley > 1 ? 0.12 : 0);
     this.pushEnemyRecovery(enemy, shotsPerVolley > 1 || pattern === 'lanes' ? 0.42 : 0.32);
+    this.enqueueAudio('enemyShot');
   }
 
   private getRangedShotIntervalSec(
@@ -3506,6 +3583,19 @@ export class RunEngine {
       damage,
       lifeSec: 3.2,
       radius,
+    });
+    this.createCombatPulse(battle, {
+      x,
+      y,
+      radius: radius + 6,
+      lifeSec: 0.08,
+      color: 0xff887d,
+      secondaryColor: 0xfff1eb,
+      fillAlpha: 0.04,
+      strokeAlpha: 0.24,
+      strokeWidth: 1.5,
+      growthPerSec: 112,
+      innerRadiusRatio: 0.7,
     });
   }
 
@@ -3559,6 +3649,7 @@ export class RunEngine {
         shooter.rangedCooldownSec = this.getRangedShotIntervalSec(archetype, battle);
       }
     }
+    this.enqueueAudio('enemyShot');
   }
 
   private updateEnemyProjectiles(battle: BattleState, dt: number): void {
@@ -3601,7 +3692,7 @@ export class RunEngine {
             growthPerSec: 180,
             innerRadiusRatio: 0.62,
           });
-          this.enqueueAudio('pressure');
+          this.enqueueAudio('hurt');
         }
         continue;
       }
@@ -3626,6 +3717,7 @@ export class RunEngine {
           growthPerSec: 120,
           innerRadiusRatio: 0.8,
         });
+        this.enqueueAudio('nearMiss');
       }
 
       survivors.push(projectile);

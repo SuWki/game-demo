@@ -35,11 +35,15 @@ export type AudioCue =
   | 'upgrade'
   | 'anomaly'
   | 'boss'
+  | 'shoot'
   | 'dash'
   | 'hit'
+  | 'hurt'
   | 'kill'
   | 'pickup'
   | 'crit'
+  | 'enemyShot'
+  | 'nearMiss'
   | 'pressure'
   | 'victory'
   | 'defeat'
@@ -442,6 +446,8 @@ export interface BattleState {
   enemyProjectiles: EnemyProjectileState[];
   playerX: number;
   playerY: number;
+  playerVelocityX: number;
+  playerVelocityY: number;
   playerMoveDirX: number;
   playerMoveDirY: number;
   playerAimDirX: number;
@@ -462,6 +468,8 @@ export interface BattleState {
   playerShotFlashSec: number;
   playerShotRecoilSec: number;
   playerShotRecoilStrength: number;
+  playerMoveBoostSec: number;
+  playerTurnBurstSec: number;
   playerNearMissSec: number;
   playerNearMissCooldownSec: number;
 }

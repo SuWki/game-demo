@@ -1285,6 +1285,7 @@ export class GameScene extends Phaser.Scene {
       const screenY = tileY * TERRAIN_TILE_SIZE - camera.top;
       this.graphics.lineBetween(0, screenY, camera.width, screenY);
     }
+    this.renderEncounterBackdrop(battle, camera, accentColor);
 
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
@@ -1407,6 +1408,97 @@ export class GameScene extends Phaser.Scene {
       camera.width * 0.82,
       camera.height * 0.5,
     );
+  }
+
+  private renderEncounterBackdrop(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+    accentColor: number,
+  ): void {
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const pulse = 0.5 + Math.sin(battle.elapsedSec * 1.7 + battle.kills * 0.08) * 0.5;
+    const encounterGlow =
+      template.winCondition.type === 'survive'
+        ? this.mixColor(accentColor, 0xff8677, 0.22)
+        : template.winCondition.type === 'elite'
+          ? this.mixColor(accentColor, 0xffd8a8, 0.22)
+          : this.mixColor(accentColor, 0xc2e0ff, 0.2);
+
+    if (template.winCondition.type === 'survive') {
+      const edgeAlpha = 0.032 + pulse * 0.03;
+      this.graphics.fillStyle(encounterGlow, edgeAlpha);
+      this.graphics.fillRect(0, 0, camera.width, 26);
+      this.graphics.fillRect(0, camera.height - 26, camera.width, 26);
+      this.graphics.lineStyle(2, encounterGlow, 0.08 + pulse * 0.12);
+      this.graphics.lineBetween(0, 34, camera.width, 34);
+      this.graphics.lineBetween(0, camera.height - 34, camera.width, camera.height - 34);
+    } else if (template.winCondition.type === 'elite') {
+      const topBeaconY = this.worldToScreen(camera, ARENA_WIDTH * 0.5, 116).y;
+      const centerBeacon = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
+      this.graphics.lineStyle(2, encounterGlow, 0.08 + pulse * 0.12);
+      this.graphics.lineBetween(camera.width * 0.5, topBeaconY, centerBeacon.x, centerBeacon.y - 64);
+      this.graphics.lineStyle(1.5, encounterGlow, 0.06 + pulse * 0.1);
+      this.graphics.strokeCircle(centerBeacon.x, centerBeacon.y, 84 + pulse * 14);
+      this.graphics.strokeCircle(centerBeacon.x, centerBeacon.y, 132 + pulse * 20);
+    } else {
+      const center = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
+      this.graphics.lineStyle(1.5, encounterGlow, 0.06 + pulse * 0.08);
+      this.graphics.strokeCircle(center.x, center.y, 116 + pulse * 16);
+      this.graphics.lineBetween(center.x - 92, center.y, center.x - 44, center.y);
+      this.graphics.lineBetween(center.x + 44, center.y, center.x + 92, center.y);
+    }
+
+    const pattern = template.spawnRule?.pattern ?? 'surround';
+    const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
+    if (pattern === 'lanes' && laneBias === 'vertical') {
+      for (const worldX of [ARENA_WIDTH * 0.24, ARENA_WIDTH * 0.5, ARENA_WIDTH * 0.76]) {
+        const screenX = worldX - camera.left;
+        if (screenX < -40 || screenX > camera.width + 40) {
+          continue;
+        }
+        this.graphics.fillStyle(encounterGlow, 0.032 + pulse * 0.026);
+        this.graphics.fillRect(screenX - 18, 0, 36, camera.height);
+        this.graphics.lineStyle(1.5, encounterGlow, 0.08 + pulse * 0.1);
+        this.graphics.lineBetween(screenX, 0, screenX, camera.height);
+      }
+      return;
+    }
+
+    if (pattern === 'lanes' && laneBias === 'horizontal') {
+      for (const worldY of [ARENA_HEIGHT * 0.24, ARENA_HEIGHT * 0.5, ARENA_HEIGHT * 0.76]) {
+        const screenY = worldY - camera.top;
+        if (screenY < -40 || screenY > camera.height + 40) {
+          continue;
+        }
+        this.graphics.fillStyle(encounterGlow, 0.03 + pulse * 0.024);
+        this.graphics.fillRect(0, screenY - 16, camera.width, 32);
+        this.graphics.lineStyle(1.5, encounterGlow, 0.08 + pulse * 0.1);
+        this.graphics.lineBetween(0, screenY, camera.width, screenY);
+      }
+      return;
+    }
+
+    if (pattern === 'pincers') {
+      const sideYBase = (battle.elapsedSec * 88) % Math.max(180, ARENA_HEIGHT - 120);
+      for (let index = 0; index < 3; index += 1) {
+        const worldY = 72 + ((sideYBase + index * 180) % Math.max(220, ARENA_HEIGHT - 120));
+        const left = this.worldToScreen(camera, 52, worldY);
+        const right = this.worldToScreen(camera, ARENA_WIDTH - 52, worldY);
+        if (left.y >= -48 && left.y <= camera.height + 48) {
+          this.graphics.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
+          this.graphics.fillTriangle(left.x, left.y, left.x + 24, left.y - 16, left.x + 24, left.y + 16);
+        }
+        if (right.y >= -48 && right.y <= camera.height + 48) {
+          this.graphics.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
+          this.graphics.fillTriangle(right.x, right.y, right.x - 24, right.y - 16, right.x - 24, right.y + 16);
+        }
+      }
+      return;
+    }
+
+    const center = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
+    this.graphics.lineStyle(1.5, encounterGlow, 0.06 + pulse * 0.08);
+    this.graphics.strokeCircle(center.x, center.y, 170 + pulse * 24);
   }
 
   private renderBattleEntities(
@@ -1972,6 +2064,8 @@ export class GameScene extends Phaser.Scene {
     const freezeRatio = battle.impactFreezeSec > 0 ? Math.min(1, battle.impactFreezeSec / 0.09) : 0;
     const shotFlashRatio = battle.playerShotFlashSec > 0 ? Math.min(1, battle.playerShotFlashSec / 0.08) : 0;
     const shotRecoilRatio = battle.playerShotRecoilSec > 0 ? Math.min(1, battle.playerShotRecoilSec / 0.11) : 0;
+    const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.16) : 0;
+    const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.12) : 0;
     const nearMissRatio = battle.playerNearMissSec > 0 ? Math.min(1, battle.playerNearMissSec / 0.14) : 0;
     const hpRatio = state.stats.hp / Math.max(1, state.stats.maxHp);
     const lowHpRatio = Phaser.Math.Clamp((0.46 - hpRatio) / 0.46, 0, 1);
@@ -1980,6 +2074,8 @@ export class GameScene extends Phaser.Scene {
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     const moveDirX = moveMagnitude > 0.01 ? battle.playerMoveDirX / moveMagnitude : 0;
     const moveDirY = moveMagnitude > 0.01 ? battle.playerMoveDirY / moveMagnitude : 0;
+    const velocityMagnitude = Math.hypot(battle.playerVelocityX, battle.playerVelocityY);
+    const velocityRatio = Phaser.Math.Clamp(velocityMagnitude / Math.max(1, getPlayerMoveSpeed(state.stats) * 1.16), 0, 1);
     const aimMagnitude = Math.hypot(battle.playerAimDirX, battle.playerAimDirY);
     const aimDirX = aimMagnitude > 0.01 ? battle.playerAimDirX / aimMagnitude : 0;
     const aimDirY = aimMagnitude > 0.01 ? battle.playerAimDirY / aimMagnitude : -1;
@@ -1996,7 +2092,17 @@ export class GameScene extends Phaser.Scene {
     const bodyY = playerScreen.y - aimDirY * recoilOffset;
     const muzzleX = bodyX + aimDirX * (16 + shotFlashRatio * 10);
     const muzzleY = bodyY + aimDirY * (16 + shotFlashRatio * 10);
-    const combatReadRatio = Math.max(tempoRatio, shotFlashRatio, critAuraRatio, dashDriveRatio, nearMissRatio, pierceReadRatio);
+    const combatReadRatio = Math.max(
+      tempoRatio,
+      shotFlashRatio,
+      critAuraRatio,
+      dashDriveRatio,
+      nearMissRatio,
+      pierceReadRatio,
+      moveBoostRatio,
+      turnBurstRatio,
+      velocityRatio * 0.8,
+    );
     const liveFocusColor =
       liveFocusRoute === 'crit'
         ? this.mixColor(accentColor, 0xffd882, 0.34)
@@ -2061,6 +2167,42 @@ export class GameScene extends Phaser.Scene {
           bodyY - surgeDirY * (offset + 12) - surgeOrthoY * width,
         );
       }
+    }
+    if (velocityRatio > 0.08 || moveBoostRatio > 0.08) {
+      const trailDirX = moveMagnitude > 0.08 ? moveDirX : -aimDirX;
+      const trailDirY = moveMagnitude > 0.08 ? moveDirY : -aimDirY;
+      const trailOrthoX = -trailDirY;
+      const trailOrthoY = trailDirX;
+      const trailColor = this.mixColor(liveFocusColor, 0xe9ffff, 0.22 + moveBoostRatio * 0.16);
+      for (let streak = 0; streak < 3; streak += 1) {
+        const offset = 14 + streak * (10 + velocityRatio * 8);
+        const width = 7 + streak * 2 + moveBoostRatio * 4;
+        this.graphics.fillStyle(trailColor, 0.04 + velocityRatio * 0.04 + moveBoostRatio * 0.05 - streak * 0.01);
+        this.graphics.fillTriangle(
+          bodyX - trailDirX * (offset + 14) + trailOrthoX * width,
+          bodyY - trailDirY * (offset + 14) + trailOrthoY * width,
+          bodyX - trailDirX * offset,
+          bodyY - trailDirY * offset,
+          bodyX - trailDirX * (offset + 14) - trailOrthoX * width,
+          bodyY - trailDirY * (offset + 14) - trailOrthoY * width,
+        );
+      }
+    }
+    if (turnBurstRatio > 0.08) {
+      const skidColor = this.mixColor(0xbef7ff, liveFocusColor, 0.28);
+      this.graphics.lineStyle(2, skidColor, 0.12 + turnBurstRatio * 0.24);
+      this.graphics.lineBetween(
+        bodyX + moveDirY * 16,
+        bodyY - moveDirX * 16,
+        bodyX + moveDirY * (30 + turnBurstRatio * 18),
+        bodyY - moveDirX * (30 + turnBurstRatio * 18),
+      );
+      this.graphics.lineBetween(
+        bodyX - moveDirY * 16,
+        bodyY + moveDirX * 16,
+        bodyX - moveDirY * (30 + turnBurstRatio * 18),
+        bodyY + moveDirX * (30 + turnBurstRatio * 18),
+      );
     }
     if (nearMissRatio > 0) {
       const nearMissColor = this.mixColor(0xffa289, 0xffffff, 0.22);
@@ -2307,7 +2449,7 @@ export class GameScene extends Phaser.Scene {
         muzzleY + aimDirY * (20 + shotFlashRatio * 18),
       );
     }
-    this.graphics.fillCircle(bodyX, bodyY, 10);
+    this.graphics.fillCircle(bodyX, bodyY, 10 + velocityRatio * 0.8);
 
     this.graphics.fillGradientStyle(
       0x000000,
