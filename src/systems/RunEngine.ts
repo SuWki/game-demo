@@ -2505,28 +2505,28 @@ export class RunEngine {
       const spread = count === 1 ? 0 : ((index / Math.max(1, count - 1)) - 0.5) * 0.95;
       const distance =
         activeBehavior === 'screened'
-          ? 34 + index * 6
+          ? 42 + index * 8
           : activeBehavior === 'summoner'
-            ? 54 + index * 10
+            ? 62 + index * 11
             : activeBehavior === 'kiting'
               ? 48 + index * 9
-              : 42 + index * 8;
+              : 46 + index * 8;
       const frontBias =
         activeBehavior === 'screened'
-          ? 1.04
+          ? 1.12
           : activeBehavior === 'summoner'
-            ? 0.38
+            ? 0.42
             : activeBehavior === 'kiting'
               ? 0.58
-              : 0.9;
+              : 0.94;
       const lateralSpread =
         activeBehavior === 'screened'
-          ? 58
+          ? 72
           : activeBehavior === 'summoner'
-            ? 72
+            ? 84
             : activeBehavior === 'kiting'
               ? 62
-              : 44;
+              : 52;
       const anchorX = eliteEnemy?.x ?? CENTER_X;
       const anchorY = eliteEnemy?.y ?? -30;
       const offsetX = Math.cos(screenAngle) * distance;
@@ -2552,7 +2552,7 @@ export class RunEngine {
         activeBehavior === 'screened' ? 0.4 : activeBehavior === 'summoner' ? 0.34 : 0.3,
       );
       if (activeBehavior === 'screened' || activeBehavior === 'summoner') {
-        escort.pressurePulseSec = Math.max(escort.pressurePulseSec, 0.18);
+        escort.pressurePulseSec = Math.max(escort.pressurePulseSec, activeBehavior === 'screened' ? 0.24 : 0.2);
       }
       if (
         escort.archetype === 'ranged' &&
@@ -4297,6 +4297,17 @@ export class RunEngine {
     }
 
     const focusRoute = this.getLiveCombatFocusRoute(battle);
+    const activeElite = battle.eliteAlive ? this.getEliteEnemy(battle) : null;
+    const activeEliteRecovery = activeElite ? this.getEnemyRecoveryRatio(activeElite) : 0;
+    const activeEliteEscortCount =
+      activeElite && activeEliteRecovery > 0.18
+        ? this.countNearbyAllies(
+            battle,
+            activeElite,
+            208,
+            (candidate) => !candidate.elite && candidate.role === 'escort',
+          )
+        : 0;
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     let bestTarget: BattleState['enemies'][number] | null = null;
     let bestScore = Number.NEGATIVE_INFINITY;
@@ -4319,6 +4330,17 @@ export class RunEngine {
             )
           : 0;
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
+
+      if (activeElite && activeEliteRecovery > 0.18) {
+        if (enemy.id === activeElite.id) {
+          score += 36 + activeEliteRecovery * 34 + activeEliteEscortCount * 6;
+        } else if (
+          enemy.role === 'escort' &&
+          Math.hypot(enemy.x - activeElite.x, enemy.y - activeElite.y) <= 224
+        ) {
+          score -= 12 + activeEliteRecovery * 18;
+        }
+      }
 
       if (focusRoute === 'crit') {
         const hpRatio = enemy.hp / Math.max(1, enemy.maxHp);
@@ -4644,9 +4666,16 @@ export class RunEngine {
             : escort.archetype === 'skirmisher'
               ? 0.28
               : 0.32;
-      this.pushEnemyRecovery(escort, recoverySec + (behavior === 'screened' ? 0.08 : behavior === 'summoner' ? 0.06 : 0));
-      escort.tacticCooldownSec = Math.max(escort.tacticCooldownSec, 0.4 + index * 0.04);
+      this.pushEnemyRecovery(
+        escort,
+        recoverySec + (behavior === 'screened' ? 0.12 : behavior === 'summoner' ? 0.08 : 0.04),
+      );
+      escort.tacticCooldownSec = Math.max(escort.tacticCooldownSec, 0.5 + index * 0.05);
       escort.pressurePulseSec = Math.min(escort.pressurePulseSec, 0.08);
+      if (escort.archetype === 'ranged') {
+        escort.rangedCooldownSec = Math.max(escort.rangedCooldownSec, 0.58 + index * 0.08);
+      }
+      this.displaceEscortOnEliteCrack(battle, eliteEnemy, escort, behavior, index);
       this.createCombatPulse(battle, {
         x: escort.x,
         y: escort.y,
@@ -4664,6 +4693,38 @@ export class RunEngine {
     });
 
     return crackedCount;
+  }
+
+  private displaceEscortOnEliteCrack(
+    battle: BattleState,
+    eliteEnemy: BattleState['enemies'][number],
+    escort: BattleState['enemies'][number],
+    behavior: EliteBehaviorId,
+    index: number,
+  ): void {
+    const playerDx = battle.playerX - eliteEnemy.x;
+    const playerDy = battle.playerY - eliteEnemy.y;
+    const playerDistance = Math.max(1, Math.hypot(playerDx, playerDy));
+    const playerDirX = playerDx / playerDistance;
+    const playerDirY = playerDy / playerDistance;
+    const orthoX = -playerDirY;
+    const orthoY = playerDirX;
+    const escortDx = escort.x - eliteEnemy.x;
+    const escortDy = escort.y - eliteEnemy.y;
+    const lateral = escortDx * orthoX + escortDy * orthoY;
+    const forward = escortDx * playerDirX + escortDy * playerDirY;
+    const peelSign = Math.abs(lateral) > 6 ? Math.sign(lateral) : index % 2 === 0 ? -1 : 1;
+    const sidePush =
+      (behavior === 'screened' ? 30 : behavior === 'summoner' ? 24 : 20) + Math.min(16, index * 5);
+    const backPush =
+      (behavior === 'screened' ? 18 : behavior === 'summoner' ? 22 : 16) + Math.max(0, 24 - forward * 0.12);
+    const shoveX = orthoX * peelSign * sidePush - playerDirX * backPush;
+    const shoveY = orthoY * peelSign * sidePush - playerDirY * backPush;
+
+    escort.x = clamp(escort.x + shoveX, -42, ARENA_WIDTH + 42);
+    escort.y = clamp(escort.y + shoveY, -42, ARENA_HEIGHT + 42);
+    escort.hitOffsetX = shoveX * 0.34;
+    escort.hitOffsetY = shoveY * 0.34;
   }
 
   private getElitePressureCycle(behavior: EliteBehaviorId): {

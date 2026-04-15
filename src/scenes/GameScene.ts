@@ -98,6 +98,50 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  public getBattleDebugSnapshot():
+    | {
+        status: string;
+        phase: string;
+        templateId: string | null;
+        encounterType: string | null;
+        eliteAlive: boolean;
+        eliteRecoverySec: number;
+        elitePressureSec: number;
+        escortCount: number;
+        escortRecoveryCount: number;
+      }
+    | null {
+    const state = this.engine.getState();
+    const battle = state.battle;
+    if (!battle) {
+      return {
+        status: state.status,
+        phase: state.phase,
+        templateId: null,
+        encounterType: null,
+        eliteAlive: false,
+        eliteRecoverySec: 0,
+        elitePressureSec: 0,
+        escortCount: 0,
+        escortRecoveryCount: 0,
+      };
+    }
+
+    const elite = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
+    const escorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0);
+    return {
+      status: state.status,
+      phase: state.phase,
+      templateId: battle.templateId,
+      encounterType: battle.encounterType,
+      eliteAlive: battle.eliteAlive,
+      eliteRecoverySec: elite?.recoverySec ?? 0,
+      elitePressureSec: elite?.pressurePulseSec ?? 0,
+      escortCount: escorts.length,
+      escortRecoveryCount: escorts.filter((enemy) => enemy.recoverySec > 0.08).length,
+    };
+  }
+
   /*
   private syncOverlay(): void {
     const state = this.engine.getState();
@@ -2333,6 +2377,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const eliteScreen = this.worldToScreen(camera, elite.x, elite.y);
+    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
     const pulseColor = this.mixColor(BATTLE_TEMPLATES[battle.templateId].accent, 0xffefbf, 0.34);
     const crackColor = this.mixColor(0xfff0c4, 0xf5fbff, 0.42);
 
@@ -2354,6 +2399,26 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (eliteRecovery > 0.08) {
+      const chaseDx = playerScreen.x - eliteScreen.x;
+      const chaseDy = playerScreen.y - eliteScreen.y;
+      const chaseDistance = Math.max(1, Math.hypot(chaseDx, chaseDy));
+      const chaseDirX = chaseDx / chaseDistance;
+      const chaseDirY = chaseDy / chaseDistance;
+      const chaseOrthoX = -chaseDirY;
+      const chaseOrthoY = chaseDirX;
+      const breachLength = Math.max(28, Math.min(chaseDistance - 12, elite.radius + 86 + eliteRecovery * 42));
+      const breachWidth = elite.radius + 8 + eliteRecovery * 14;
+      const breachLeftX = eliteScreen.x + chaseOrthoX * breachWidth;
+      const breachLeftY = eliteScreen.y + chaseOrthoY * breachWidth;
+      const breachRightX = eliteScreen.x - chaseOrthoX * breachWidth;
+      const breachRightY = eliteScreen.y - chaseOrthoY * breachWidth;
+      const breachTipX = eliteScreen.x + chaseDirX * breachLength;
+      const breachTipY = eliteScreen.y + chaseDirY * breachLength;
+      this.graphics.fillStyle(crackColor, 0.03 + eliteRecovery * 0.06);
+      this.graphics.fillTriangle(breachLeftX, breachLeftY, breachTipX, breachTipY, breachRightX, breachRightY);
+      this.graphics.lineStyle(1.6, crackColor, 0.08 + eliteRecovery * 0.18);
+      this.graphics.lineBetween(breachLeftX, breachLeftY, breachTipX, breachTipY);
+      this.graphics.lineBetween(breachRightX, breachRightY, breachTipX, breachTipY);
       this.graphics.lineStyle(2.2, crackColor, 0.08 + eliteRecovery * 0.22);
       this.graphics.strokeCircle(eliteScreen.x, eliteScreen.y, elite.radius + 26 + (1 - eliteRecovery) * 10);
       this.graphics.lineStyle(1.8, crackColor, 0.08 + eliteRecovery * 0.2);

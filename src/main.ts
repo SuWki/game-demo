@@ -13,6 +13,7 @@ import { OverlayController } from './ui/OverlayController';
 declare global {
   interface Window {
     __pilotAudioDebug?: () => ReturnType<PilotAudio['getDebugSnapshot']>;
+    __pilotBattleDebug?: () => ReturnType<GameScene['getBattleDebugSnapshot']> | null;
   }
 }
 
@@ -61,3 +62,11 @@ const game = new Phaser.Game({
 });
 
 game.registry.set('services', services);
+window.__pilotBattleDebug = () => {
+  try {
+    const scene = game.scene.getScene('GameScene');
+    return scene instanceof GameScene ? scene.getBattleDebugSnapshot() : null;
+  } catch {
+    return null;
+  }
+};
