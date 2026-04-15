@@ -53,7 +53,7 @@ const game = new Phaser.Game({
   width: 960,
   height: 540,
   parent: phaserRoot,
-  backgroundColor: '#09101a',
+  backgroundColor: '#f5e2bc',
   scene: [BootScene, MainMenuScene, GameScene, ResultScene],
   scale: {
     mode: Phaser.Scale.FIT,
