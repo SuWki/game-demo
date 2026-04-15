@@ -2491,7 +2491,8 @@ export class RunEngine {
     }
 
     const template = BATTLE_TEMPLATES[battle.templateId];
-    const eliteEnemy = battle.enemies.find((enemy) => enemy.elite);
+    const eliteEnemy = this.getEliteEnemy(battle);
+    const activeBehavior = this.getActiveEliteBehavior(battle, template);
     const battleIndex = this.getCurrentBattleIndex();
     const escortHp = Math.round(this.getRegularEnemyHp(template, battleIndex, this.state.phase, battle.difficultyScale) * 0.82);
     const escortSpeed = Math.round(this.getRegularEnemySpeed(template, battleIndex, this.state.phase, battle.difficultyScale, 1.06));
@@ -2502,29 +2503,64 @@ export class RunEngine {
 
     for (let index = 0; index < count; index += 1) {
       const spread = count === 1 ? 0 : ((index / Math.max(1, count - 1)) - 0.5) * 0.95;
-      const distance = 42 + index * 8;
+      const distance =
+        activeBehavior === 'screened'
+          ? 34 + index * 6
+          : activeBehavior === 'summoner'
+            ? 54 + index * 10
+            : activeBehavior === 'kiting'
+              ? 48 + index * 9
+              : 42 + index * 8;
+      const frontBias =
+        activeBehavior === 'screened'
+          ? 1.04
+          : activeBehavior === 'summoner'
+            ? 0.38
+            : activeBehavior === 'kiting'
+              ? 0.58
+              : 0.9;
+      const lateralSpread =
+        activeBehavior === 'screened'
+          ? 58
+          : activeBehavior === 'summoner'
+            ? 72
+            : activeBehavior === 'kiting'
+              ? 62
+              : 44;
       const anchorX = eliteEnemy?.x ?? CENTER_X;
       const anchorY = eliteEnemy?.y ?? -30;
       const offsetX = Math.cos(screenAngle) * distance;
       const offsetY = Math.sin(screenAngle) * distance;
-      const strafeX = -Math.sin(screenAngle) * spread * 44;
-      const strafeY = Math.cos(screenAngle) * spread * 44;
+      const strafeX = -Math.sin(screenAngle) * spread * lateralSpread;
+      const strafeY = Math.cos(screenAngle) * spread * lateralSpread;
 
-      battle.enemies.push(
-        this.createArchetypedEnemy(
-          battle,
-          template,
-          'escort',
-          anchorX - offsetX + strafeX,
-          anchorY - offsetY + strafeY,
-          {
-            hp: escortHp,
-            speed: escortSpeed,
-            damage: escortDamage,
-            radius: 11 + (index % 2),
-          },
-        ),
+      const escort = this.createArchetypedEnemy(
+        battle,
+        template,
+        'escort',
+        anchorX - offsetX * frontBias + strafeX,
+        anchorY - offsetY * frontBias + strafeY,
+        {
+          hp: escortHp,
+          speed: escortSpeed,
+          damage: escortDamage,
+          radius: 11 + (index % 2),
+        },
       );
+      escort.spawnFlashSec = Math.max(
+        escort.spawnFlashSec,
+        activeBehavior === 'screened' ? 0.4 : activeBehavior === 'summoner' ? 0.34 : 0.3,
+      );
+      if (activeBehavior === 'screened' || activeBehavior === 'summoner') {
+        escort.pressurePulseSec = Math.max(escort.pressurePulseSec, 0.18);
+      }
+      if (
+        escort.archetype === 'ranged' &&
+        (activeBehavior === 'screened' || activeBehavior === 'summoner' || activeBehavior === 'kiting')
+      ) {
+        escort.rangedCooldownSec = 0.22 + index * 0.08;
+      }
+      battle.enemies.push(escort);
     }
   }
 
@@ -4273,6 +4309,15 @@ export class RunEngine {
       const dy = enemy.y - battle.playerY;
       const distance = Math.max(1, Math.hypot(dx, dy));
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+      const eliteEscortCount =
+        enemy.elite
+          ? this.countNearbyAllies(
+              battle,
+              enemy,
+              188,
+              (candidate) => !candidate.elite && candidate.role === 'escort',
+            )
+          : 0;
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
 
       if (focusRoute === 'crit') {
@@ -4283,6 +4328,9 @@ export class RunEngine {
         score += hpRatio <= 0.35 ? 26 : 0;
         score += recoveryRatio * (battle.critOverdriveSec > 0 ? 34 : 20);
         score += enemy.elite && recoveryRatio > 0.2 ? 28 + recoveryRatio * 24 : 0;
+        if (enemy.elite && eliteEscortCount > 0) {
+          score += eliteEscortCount * (recoveryRatio > 0.18 ? 14 : 7);
+        }
       } else if (focusRoute === 'pierce') {
         const laneScore = this.getPierceLaneScore(battle, enemy);
         score += laneScore * 26;
@@ -4290,6 +4338,9 @@ export class RunEngine {
         score += enemy.archetype === 'ranged' ? 6 : 0;
         score += recoveryRatio * 16;
         score += enemy.elite && laneScore >= 1.2 ? 24 + laneScore * 8 : 0;
+        if (enemy.elite && eliteEscortCount > 0) {
+          score += eliteEscortCount * (laneScore >= 1.2 ? 10 : 4);
+        }
       } else if (focusRoute === 'dash') {
         score += Math.max(0, 200 - distance) * 0.28;
         score += enemy.archetype === 'ranged' ? 18 : 0;
@@ -4485,6 +4536,136 @@ export class RunEngine {
     return battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
   }
 
+  private getEliteEnemy(battle: BattleState): BattleState['enemies'][number] | null {
+    return battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
+  }
+
+  private getEliteNearbyEscorts(
+    battle: BattleState,
+    eliteEnemy: BattleState['enemies'][number] | null,
+    maxDistance: number,
+  ): Array<BattleState['enemies'][number]> {
+    if (!eliteEnemy) {
+      return [];
+    }
+
+    return battle.enemies
+      .filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0)
+      .map((enemy) => ({
+        enemy,
+        distance: Math.hypot(enemy.x - eliteEnemy.x, enemy.y - eliteEnemy.y),
+      }))
+      .filter((entry) => entry.distance <= maxDistance)
+      .sort((left, right) => left.distance - right.distance)
+      .map((entry) => entry.enemy);
+  }
+
+  private syncEscortPressureFromElite(
+    battle: BattleState,
+    eliteEnemy: BattleState['enemies'][number],
+    behavior: EliteBehaviorId,
+  ): {
+    syncedCount: number;
+    rangedCount: number;
+  } {
+    const syncDistance = behavior === 'summoner' ? 224 : behavior === 'screened' ? 196 : 184;
+    const escorts = this.getEliteNearbyEscorts(battle, eliteEnemy, syncDistance);
+    let syncedCount = 0;
+    let rangedCount = 0;
+
+    escorts.forEach((escort, index) => {
+      const escortDistance = Math.max(1, Math.hypot(escort.x - eliteEnemy.x, escort.y - eliteEnemy.y));
+      const proximityRatio = 1 - escortDistance / syncDistance;
+      const basePulseSec =
+        escort.archetype === 'brute'
+          ? 0.22
+          : escort.archetype === 'ranged'
+            ? 0.24
+            : escort.archetype === 'skirmisher'
+              ? 0.18
+              : 0.2;
+      const pulseSec = basePulseSec + proximityRatio * 0.08;
+      const cooldownSec =
+        escort.archetype === 'ranged'
+          ? 1.44
+          : escort.archetype === 'brute'
+            ? 1.28
+            : escort.archetype === 'skirmisher'
+              ? 1.16
+              : 1.22;
+      if (this.triggerEnemyPressurePulse(escort, pulseSec, cooldownSec + index * 0.06)) {
+        syncedCount += 1;
+      }
+      if (escort.archetype === 'ranged') {
+        rangedCount += 1;
+        const rangedLead =
+          behavior === 'screened' ? 0.24 : behavior === 'summoner' ? 0.3 : behavior === 'kiting' ? 0.34 : 0.4;
+        escort.rangedCooldownSec =
+          escort.rangedCooldownSec <= 0
+            ? rangedLead + index * 0.08
+            : Math.min(escort.rangedCooldownSec, rangedLead + index * 0.08);
+      }
+      this.createCombatPulse(battle, {
+        x: escort.x,
+        y: escort.y,
+        radius: escort.radius + 8 + proximityRatio * 4,
+        lifeSec: 0.12,
+        color: 0xffd7a1,
+        secondaryColor: 0xfffbeb,
+        fillAlpha: 0.03,
+        strokeAlpha: 0.3 + proximityRatio * 0.12,
+        strokeWidth: 1.5,
+        growthPerSec: 116,
+        innerRadiusRatio: 0.74,
+      });
+    });
+
+    return {
+      syncedCount,
+      rangedCount,
+    };
+  }
+
+  private crackEliteEscortScreen(
+    battle: BattleState,
+    eliteEnemy: BattleState['enemies'][number],
+    behavior: EliteBehaviorId,
+  ): number {
+    const crackDistance = behavior === 'screened' ? 208 : 188;
+    const escorts = this.getEliteNearbyEscorts(battle, eliteEnemy, crackDistance);
+    let crackedCount = 0;
+
+    escorts.forEach((escort, index) => {
+      const recoverySec =
+        escort.archetype === 'brute'
+          ? 0.34
+          : escort.archetype === 'ranged'
+            ? 0.46
+            : escort.archetype === 'skirmisher'
+              ? 0.28
+              : 0.32;
+      this.pushEnemyRecovery(escort, recoverySec + (behavior === 'screened' ? 0.08 : behavior === 'summoner' ? 0.06 : 0));
+      escort.tacticCooldownSec = Math.max(escort.tacticCooldownSec, 0.4 + index * 0.04);
+      escort.pressurePulseSec = Math.min(escort.pressurePulseSec, 0.08);
+      this.createCombatPulse(battle, {
+        x: escort.x,
+        y: escort.y,
+        radius: escort.radius + 10,
+        lifeSec: 0.14,
+        color: 0xfff0c1,
+        secondaryColor: 0xf9ffff,
+        fillAlpha: 0.03,
+        strokeAlpha: 0.34,
+        strokeWidth: 1.8,
+        growthPerSec: 142,
+        innerRadiusRatio: 0.76,
+      });
+      crackedCount += 1;
+    });
+
+    return crackedCount;
+  }
+
   private getElitePressureCycle(behavior: EliteBehaviorId): {
     pulseSec: number;
     cooldownSec: number;
@@ -4529,6 +4710,7 @@ export class RunEngine {
     } else if (behavior === 'frontline' && escortCount === 0 && (template.eliteRule?.escortBatch ?? 0) > 0) {
       this.spawnPhaseEscortBurst(battle, 1);
     }
+    const syncedEscortState = this.syncEscortPressureFromElite(battle, enemy, behavior);
 
     this.createCombatPulse(battle, {
       x: enemy.x,
@@ -4543,7 +4725,22 @@ export class RunEngine {
       growthPerSec: 168,
       innerRadiusRatio: 0.68,
     });
-    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
+    if (syncedEscortState.syncedCount > 0) {
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 28 + Math.min(12, syncedEscortState.syncedCount * 4),
+        lifeSec: 0.12,
+        color: 0xffdfae,
+        secondaryColor: 0xfff8e2,
+        fillAlpha: 0.03,
+        strokeAlpha: 0.34,
+        strokeWidth: 2,
+        growthPerSec: 156,
+        innerRadiusRatio: 0.76,
+      });
+    }
+    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, syncedEscortState.syncedCount > 0 ? 0.22 : 0.18);
     this.enqueueAudio('pressure');
   }
 
@@ -4557,6 +4754,7 @@ export class RunEngine {
     const pierceStage = this.getRouteBuildStage('pierce');
     const critStage = this.getRouteBuildStage('crit');
     const dashStage = this.getRouteBuildStage('dash');
+    const crackedEscorts = this.crackEliteEscortScreen(battle, enemy, behavior);
 
     this.pushEnemyRecovery(enemy, cycle.recoverySec);
     this.createCombatPulse(battle, {
@@ -4574,22 +4772,31 @@ export class RunEngine {
     });
 
     if (critStage === 'committed' || critStage === 'matured') {
-      battle.critOverdriveSec = Math.max(
-        battle.critOverdriveSec,
-        critStage === 'matured' ? 0.7 : 0.48,
+      const crackCarry = crackedEscorts > 0 ? Math.min(0.28, crackedEscorts * (critStage === 'matured' ? 0.09 : 0.06)) : 0;
+      battle.critOverdriveSec = Math.min(
+        4.2,
+        Math.max(
+          battle.critOverdriveSec,
+          critStage === 'matured' ? 0.7 : 0.48,
+        ) + crackCarry,
       );
-      battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (critStage === 'matured' ? 0.032 : 0.018));
-      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
+      const critRefund = (critStage === 'matured' ? 0.032 : 0.018) + Math.min(0.018, crackedEscorts * 0.006);
+      battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - critRefund);
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, crackedEscorts > 0 ? 0.24 : 0.2);
     }
 
     const laneScore = pierceStage !== 'unformed' ? this.getPierceLaneScore(battle, enemy) : 0;
-    if ((pierceStage === 'committed' || pierceStage === 'matured') && laneScore >= 1.2) {
-      battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - Math.min(0.036, 0.016 + laneScore * 0.006));
-      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22);
+    if ((pierceStage === 'committed' || pierceStage === 'matured') && (laneScore >= 1.2 || crackedEscorts >= 2)) {
+      const crackLaneBonus = crackedEscorts > 0 ? Math.min(0.024, crackedEscorts * 0.008) : 0;
+      battle.fireCooldownSec = Math.max(
+        0.035,
+        battle.fireCooldownSec - Math.min(0.044, 0.016 + laneScore * 0.006 + crackLaneBonus),
+      );
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, crackedEscorts > 0 ? 0.26 : 0.22);
       this.createCombatPulse(battle, {
         x: enemy.x,
         y: enemy.y,
-        radius: enemy.radius + 18 + Math.min(12, laneScore * 3),
+        radius: enemy.radius + 18 + Math.min(12, laneScore * 3) + Math.min(8, crackedEscorts * 2),
         lifeSec: 0.14,
         color: 0x8fdcff,
         secondaryColor: 0xf5fbff,
@@ -4602,8 +4809,27 @@ export class RunEngine {
     }
 
     if (dashStage === 'committed' || dashStage === 'matured') {
-      battle.dashDriveSec = Math.max(battle.dashDriveSec, dashStage === 'matured' ? 0.86 : 0.62);
-      battle.dashCharge = Math.min(6, battle.dashCharge + 1);
+      battle.dashDriveSec = Math.max(
+        battle.dashDriveSec,
+        (dashStage === 'matured' ? 0.86 : 0.62) + Math.min(0.12, crackedEscorts * 0.04),
+      );
+      battle.dashCharge = Math.min(6, battle.dashCharge + 1 + (crackedEscorts >= 2 ? 1 : 0));
+    }
+
+    if (crackedEscorts > 0) {
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 30 + Math.min(12, crackedEscorts * 4),
+        lifeSec: 0.12,
+        color: 0xfff1c6,
+        secondaryColor: 0xffffff,
+        fillAlpha: 0.03,
+        strokeAlpha: 0.32,
+        strokeWidth: 2,
+        growthPerSec: 168,
+        innerRadiusRatio: 0.78,
+      });
     }
   }
 

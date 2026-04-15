@@ -1562,6 +1562,8 @@ export class GameScene extends Phaser.Scene {
       this.graphics.strokeCircle(screen.x, screen.y, projectile.radius + 2);
     }
 
+    this.renderEliteEscortField(battle, camera);
+
     for (const enemy of battle.enemies) {
       const flashRatio = Math.min(1, enemy.hitFlashSec / 0.22);
       const spawnRatio = Math.min(1, enemy.spawnFlashSec / (enemy.elite ? 0.46 : 0.28));
@@ -2299,6 +2301,100 @@ export class GameScene extends Phaser.Scene {
     const predictedX = battle.playerX + battle.playerMoveDirX * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
     const predictedY = battle.playerY + battle.playerMoveDirY * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
     return this.worldToScreen(camera, predictedX, predictedY);
+  }
+
+  private renderEliteEscortField(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    const elite = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0);
+    if (!elite || !this.isVisibleInCamera(camera, elite.x, elite.y, elite.radius + 96)) {
+      return;
+    }
+
+    const elitePressure = this.getEnemyPressureRatio(elite);
+    const eliteRecovery = this.getEnemyRecoveryRatio(elite);
+    const escorts = battle.enemies
+      .filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0)
+      .map((enemy) => ({
+        enemy,
+        distance: Math.hypot(enemy.x - elite.x, enemy.y - elite.y),
+      }))
+      .filter(
+        (entry) =>
+          entry.distance <= 228 &&
+          this.isVisibleInCamera(camera, entry.enemy.x, entry.enemy.y, entry.enemy.radius + 28),
+      )
+      .sort((left, right) => left.distance - right.distance)
+      .slice(0, 4);
+
+    if (escorts.length === 0 && elitePressure <= 0.05 && eliteRecovery <= 0.08) {
+      return;
+    }
+
+    const eliteScreen = this.worldToScreen(camera, elite.x, elite.y);
+    const pulseColor = this.mixColor(BATTLE_TEMPLATES[battle.templateId].accent, 0xffefbf, 0.34);
+    const crackColor = this.mixColor(0xfff0c4, 0xf5fbff, 0.42);
+
+    if (escorts.length > 0 && elitePressure > 0.04) {
+      this.graphics.lineStyle(1.8, pulseColor, 0.06 + elitePressure * 0.18);
+      for (const entry of escorts) {
+        const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
+        this.graphics.lineBetween(eliteScreen.x, eliteScreen.y, escortScreen.x, escortScreen.y);
+        this.graphics.strokeCircle(escortScreen.x, escortScreen.y, entry.enemy.radius + 10 + elitePressure * 6);
+      }
+      if (escorts.length >= 2) {
+        this.graphics.lineStyle(1.3, pulseColor, 0.04 + elitePressure * 0.14);
+        for (let index = 0; index < escorts.length - 1; index += 1) {
+          const from = this.worldToScreen(camera, escorts[index].enemy.x, escorts[index].enemy.y);
+          const to = this.worldToScreen(camera, escorts[index + 1].enemy.x, escorts[index + 1].enemy.y);
+          this.graphics.lineBetween(from.x, from.y, to.x, to.y);
+        }
+      }
+    }
+
+    if (eliteRecovery > 0.08) {
+      this.graphics.lineStyle(2.2, crackColor, 0.08 + eliteRecovery * 0.22);
+      this.graphics.strokeCircle(eliteScreen.x, eliteScreen.y, elite.radius + 26 + (1 - eliteRecovery) * 10);
+      this.graphics.lineStyle(1.8, crackColor, 0.08 + eliteRecovery * 0.2);
+      this.graphics.lineBetween(
+        eliteScreen.x - (elite.radius + 8),
+        eliteScreen.y,
+        eliteScreen.x - (elite.radius + 24 + eliteRecovery * 10),
+        eliteScreen.y,
+      );
+      this.graphics.lineBetween(
+        eliteScreen.x + elite.radius + 8,
+        eliteScreen.y,
+        eliteScreen.x + elite.radius + 24 + eliteRecovery * 10,
+        eliteScreen.y,
+      );
+      for (const entry of escorts) {
+        const escortRecovery = this.getEnemyRecoveryRatio(entry.enemy);
+        if (escortRecovery <= 0.05) {
+          continue;
+        }
+        const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
+        const dx = escortScreen.x - eliteScreen.x;
+        const dy = escortScreen.y - eliteScreen.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const dirX = dx / distance;
+        const dirY = dy / distance;
+        const linkAlpha = 0.06 + Math.max(eliteRecovery, escortRecovery) * 0.18;
+        this.graphics.lineStyle(1.8, crackColor, linkAlpha);
+        this.graphics.lineBetween(
+          eliteScreen.x + dirX * (elite.radius + 6),
+          eliteScreen.y + dirY * (elite.radius + 6),
+          escortScreen.x - dirX * (entry.enemy.radius + 6),
+          escortScreen.y - dirY * (entry.enemy.radius + 6),
+        );
+        this.graphics.strokeCircle(
+          escortScreen.x,
+          escortScreen.y,
+          entry.enemy.radius + 12 + escortRecovery * 8,
+        );
+      }
+    }
   }
 
   private renderEncounterFlowOverlay(
