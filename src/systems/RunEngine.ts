@@ -3131,6 +3131,13 @@ export class RunEngine {
       enemy,
       (candidate) => !candidate.elite && candidate.archetype === 'ranged',
     );
+    const packCount = this.countNearbyAllies(
+      battle,
+      enemy,
+      92,
+      (candidate) => !candidate.elite && (candidate.archetype === 'standard' || candidate.archetype === 'brute'),
+    );
+    const openingRatio = Math.min(1, enemy.spawnFlashSec / 0.22);
     const pushWeight = distance > 150 ? 1.02 : distance > 90 ? 0.9 : 0.78;
     let moveX = dirX * pushWeight + strafeX * weave * 0.08;
     let moveY = dirY * pushWeight + strafeY * weave * 0.08;
@@ -3186,8 +3193,19 @@ export class RunEngine {
         const slotDistance = Math.max(1, Math.hypot(slotDx, slotDy));
         moveX += (slotDx / slotDistance) * 0.62;
         moveY += (slotDy / slotDistance) * 0.62;
-        if (distance <= 140 && recoveryRatio <= 0.05) {
-          this.triggerEnemyPressurePulse(enemy, 0.16, 1.35);
+        if (
+          distance <= 140 &&
+          recoveryRatio <= 0.05 &&
+          (openingRatio > 0.18 || packCount >= 2) &&
+          this.triggerRegularPressureBeat(battle, enemy, 0.18, 1.3)
+        ) {
+          this.syncRegularPressurePack(battle, enemy, {
+            radius: 88,
+            limit: packCount >= 2 ? 2 : 1,
+            durationSec: 0.11,
+            cooldownSec: 0.86,
+            predicate: (candidate) => candidate.archetype === 'standard' || candidate.archetype === 'brute',
+          });
         }
       }
     } else if (rangedAnchor) {
@@ -3197,11 +3215,19 @@ export class RunEngine {
         moveY += ((rangedAnchor.y - enemy.y) / anchorDistance) * 0.34;
       }
     }
+    if (openingRatio > 0) {
+      moveX += dirX * (0.08 + openingRatio * (frontlineAnchor ? 0.24 : 0.18));
+      moveY += dirY * (0.08 + openingRatio * (frontlineAnchor ? 0.24 : 0.18));
+      if (!frontlineAnchor && packCount > 0) {
+        moveX += strafeX * weave * 0.04;
+        moveY += strafeY * weave * 0.04;
+      }
+    }
 
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
-      moveX += dirX * (0.12 + pressureRatio * 0.24);
-      moveY += dirY * (0.12 + pressureRatio * 0.24);
+      moveX += dirX * (0.16 + pressureRatio * 0.3 + Math.min(0.12, packCount * 0.03));
+      moveY += dirY * (0.16 + pressureRatio * 0.3 + Math.min(0.12, packCount * 0.03));
     }
 
     if (recoveryRatio > 0) {
@@ -3213,7 +3239,8 @@ export class RunEngine {
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
-    const speedMultiplier = 1 - recoveryRatio * 0.48;
+    const speedMultiplier =
+      1 + openingRatio * (frontlineAnchor ? 0.14 : 0.08) + Math.min(0.06, packCount * 0.02) - recoveryRatio * 0.48;
 
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
@@ -3245,6 +3272,7 @@ export class RunEngine {
           : clamp((battle.playerX - enemy.x) / 96, -1, 1)
         : 0;
     const driveWindow = Math.sin(battle.elapsedSec * 0.92 + enemy.id * 0.41);
+    const openingRatio = Math.min(1, enemy.spawnFlashSec / 0.22);
     let moveX = dirX * 0.84;
     let moveY = dirY * 0.84;
 
@@ -3299,6 +3327,10 @@ export class RunEngine {
       moveX += dirX * 0.6;
       moveY += dirY * 0.6;
     }
+    if (openingRatio > 0) {
+      moveX += dirX * (0.14 + openingRatio * 0.32);
+      moveY += dirY * (0.14 + openingRatio * 0.32);
+    }
 
     if (recoveryRatio > 0) {
       const shoulderSign =
@@ -3323,22 +3355,37 @@ export class RunEngine {
       supportCount > 0 &&
       recoveryRatio <= 0.08 &&
       distance <= 132 &&
-      driveWindow > -0.1
+      driveWindow > -0.1 &&
+      this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.24 ? 0.26 : 0.22, 1.66)
     ) {
-      this.triggerEnemyPressurePulse(enemy, 0.22, 1.72);
+      this.syncRegularPressurePack(battle, enemy, {
+        radius: 96,
+        limit: 1,
+        durationSec: 0.12,
+        cooldownSec: 0.92,
+        predicate: (candidate) => candidate.archetype === 'standard',
+      });
+    } else if (
+      openingRatio > 0.22 &&
+      recoveryRatio <= 0.06 &&
+      distance <= 156 &&
+      driveWindow > -0.24
+    ) {
+      this.triggerRegularPressureBeat(battle, enemy, 0.24, 1.58);
     }
 
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
-      moveX += dirX * (0.18 + pressureRatio * 0.34);
-      moveY += dirY * (0.18 + pressureRatio * 0.34);
+      moveX += dirX * (0.24 + pressureRatio * 0.44 + openingRatio * 0.12);
+      moveY += dirY * (0.24 + pressureRatio * 0.44 + openingRatio * 0.12);
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
     const speedMultiplier =
       (distance <= 132 ? 1.16 : distance <= 188 ? 1.08 : 0.94) +
       (pattern === 'lanes' && laneBias === 'horizontal' ? lanePulse * 0.08 : 0) -
-      recoveryRatio * 0.56;
+      recoveryRatio * 0.56 +
+      openingRatio * 0.14;
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_WIDTH + 44);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_HEIGHT + 44);
   }
@@ -3386,6 +3433,7 @@ export class RunEngine {
     const strafeX = -dirY;
     const strafeY = dirX;
     const strafeStrength = getEnemyArchetype(enemy.archetype).strafeStrength ?? 0.3;
+    const openingRatio = Math.min(1, enemy.spawnFlashSec / 0.22);
     const strafeDirection = pincerHeavy
       ? sideSign * (0.72 + Math.sin(battle.elapsedSec * 2.6 + enemy.id * 0.54) * 0.28)
       : Math.sin(battle.elapsedSec * 2.25 + enemy.id * 0.6);
@@ -3411,18 +3459,28 @@ export class RunEngine {
         strafeY * strafeDirection * (strafeStrength + (pincerHeavy ? 0.3 : 0.24)) +
         dirY * (pincerHeavy ? collapsePulse * 0.28 - 0.06 : -0.24);
     }
+    if (openingRatio > 0) {
+      moveX += strafeX * strafeDirection * (0.14 + openingRatio * 0.24);
+      moveY += strafeY * strafeDirection * (0.14 + openingRatio * 0.24);
+      if (moveMagnitude > 0.08) {
+        moveX += dirX * (0.04 + openingRatio * 0.12);
+        moveY += dirY * (0.04 + openingRatio * 0.12);
+      }
+    }
     if (
       flankAnchor &&
       recoveryRatio <= 0.05 &&
       distance <= 126 &&
-      Math.abs(strafeDirection) >= 0.58
+      (Math.abs(strafeDirection) >= 0.58 || openingRatio > 0.24) &&
+      this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.18 ? 0.2 : 0.18, 1.32)
     ) {
-      this.triggerEnemyPressurePulse(enemy, 0.18, 1.36);
     }
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
-      moveX += strafeX * strafeDirection * (0.16 + pressureRatio * 0.18);
-      moveY += strafeY * strafeDirection * (0.16 + pressureRatio * 0.18);
+      moveX += strafeX * strafeDirection * (0.18 + pressureRatio * 0.22 + openingRatio * 0.06);
+      moveY += strafeY * strafeDirection * (0.18 + pressureRatio * 0.22 + openingRatio * 0.06);
+      moveX += dirX * (0.06 + pressureRatio * 0.12);
+      moveY += dirY * (0.06 + pressureRatio * 0.12);
     }
     if (recoveryRatio > 0) {
       const peelSign = enemy.x < battle.playerX ? -1 : 1;
@@ -3432,7 +3490,7 @@ export class RunEngine {
       moveY -= dirY * (0.14 + recoveryRatio * 0.26);
     }
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
-    const speedMultiplier = 1 - recoveryRatio * 0.5;
+    const speedMultiplier = 1 + openingRatio * (pincerHeavy ? 0.14 : 0.08) - recoveryRatio * 0.5;
 
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
@@ -3462,6 +3520,7 @@ export class RunEngine {
     const strafeX = -dirY;
     const strafeY = dirX;
     const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+    const openingRatio = Math.min(1, enemy.spawnFlashSec / 0.22);
     const strafeDirection = Math.sin(battle.elapsedSec * 1.6 + enemy.id * 0.41);
     let moveX = strafeX * strafeDirection * strafeStrength;
     let moveY = strafeY * strafeDirection * strafeStrength;
@@ -3521,7 +3580,16 @@ export class RunEngine {
         const slotDistance = Math.max(1, Math.hypot(slotDx, slotDy));
         moveX += (slotDx / slotDistance) * 0.54;
         moveY += (slotDy / slotDistance) * 0.54;
+        if (openingRatio > 0) {
+          moveX += (slotDx / slotDistance) * (0.16 + openingRatio * 0.18);
+          moveY += (slotDy / slotDistance) * (0.16 + openingRatio * 0.18);
+        }
       }
+    }
+    if (openingRatio > 0 && (screenedByAnchor || rangedHeavy)) {
+      enemy.rangedCooldownSec = Math.min(enemy.rangedCooldownSec, 0.34 + (1 - openingRatio) * 0.16);
+      moveX -= dirX * (0.04 + openingRatio * 0.08);
+      moveY -= dirY * (0.04 + openingRatio * 0.08);
     }
 
     if (recoveryRatio > 0) {
@@ -3542,18 +3610,26 @@ export class RunEngine {
       }
     }
 
-    if (screenedByAnchor && recoveryRatio <= 0.06 && distance <= preferredDistance * 1.08) {
-      this.triggerEnemyPressurePulse(enemy, 0.2, 1.42);
+    if (
+      screenedByAnchor &&
+      recoveryRatio <= 0.06 &&
+      distance <= preferredDistance * 1.08 &&
+      this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.16 ? 0.22 : 0.2, 1.34, {
+        rangedLeadSec: 0.3,
+      })
+    ) {
     }
 
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
-      moveX += strafeX * strafeDirection * (0.1 + pressureRatio * 0.18);
-      moveY += strafeY * strafeDirection * (0.1 + pressureRatio * 0.18);
+      moveX += strafeX * strafeDirection * (0.12 + pressureRatio * 0.22);
+      moveY += strafeY * strafeDirection * (0.12 + pressureRatio * 0.22);
+      moveX -= dirX * (0.08 + pressureRatio * 0.12);
+      moveY -= dirY * (0.08 + pressureRatio * 0.12);
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
-    const speedMultiplier = 1 - recoveryRatio * 0.58;
+    const speedMultiplier = 1 + openingRatio * (screenedByAnchor ? 0.1 : 0.06) - recoveryRatio * 0.58;
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_WIDTH + 42);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_HEIGHT + 42);
 
@@ -4460,6 +4536,7 @@ export class RunEngine {
         innerRadiusRatio: enemy.archetype === 'skirmisher' ? 0.48 : 0.62,
       });
     }
+    this.applyRegularDefeatHandoff(battle, enemy, flowChainBonus);
 
     this.createCombatPulse(battle, {
       x: enemy.x,
@@ -4527,6 +4604,193 @@ export class RunEngine {
         velocityX: Math.cos(angle) * launchSpeed + (Math.random() - 0.5) * 26,
         velocityY: Math.sin(angle) * launchSpeed + (Math.random() - 0.5) * 26,
       });
+    }
+  }
+
+  private applyRegularDefeatHandoff(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    flowChainBonus: number,
+  ): void {
+    if (enemy.elite || enemy.role !== 'regular' || battle.encounterType !== 'battle') {
+      return;
+    }
+
+    const getNearbyRegulars = (
+      radius: number,
+      predicate?: (candidate: BattleState['enemies'][number]) => boolean,
+    ): Array<BattleState['enemies'][number]> =>
+      battle.enemies
+        .filter((candidate) => {
+          if (candidate.id === enemy.id || candidate.hp <= 0 || candidate.elite || candidate.role !== 'regular') {
+            return false;
+          }
+          if (predicate && !predicate(candidate)) {
+            return false;
+          }
+          return Math.hypot(candidate.x - enemy.x, candidate.y - enemy.y) <= radius;
+        })
+        .sort(
+          (left, right) =>
+            Math.hypot(left.x - enemy.x, left.y - enemy.y) - Math.hypot(right.x - enemy.x, right.y - enemy.y),
+        );
+
+    const midpointPulse = (target: BattleState['enemies'][number], color: number, secondaryColor: number): void => {
+      this.createCombatPulse(battle, {
+        x: (enemy.x + target.x) * 0.5,
+        y: (enemy.y + target.y) * 0.5,
+        radius: 12 + flowChainBonus * 2,
+        lifeSec: 0.11,
+        color,
+        secondaryColor,
+        fillAlpha: 0.03,
+        strokeAlpha: 0.24,
+        strokeWidth: 1.5,
+        growthPerSec: 132,
+        innerRadiusRatio: 0.7,
+      });
+    };
+
+    switch (enemy.archetype) {
+      case 'standard': {
+        const relay = getNearbyRegulars(
+          96,
+          (candidate) =>
+            (candidate.archetype === 'standard' || candidate.archetype === 'brute') &&
+            candidate.recoverySec <= 0.08 &&
+            candidate.tacticCooldownSec <= 0.06,
+        )[0];
+        if (!relay) {
+          return;
+        }
+        if (
+          this.triggerRegularPressureBeat(
+            battle,
+            relay,
+            0.14 + Math.min(0.03, flowChainBonus * 0.01),
+            0.78 + Math.min(0.08, flowChainBonus * 0.02),
+          )
+        ) {
+          relay.spawnFlashSec = Math.max(relay.spawnFlashSec, 0.12);
+          this.syncRegularPressurePack(battle, relay, {
+            radius: 84,
+            limit: 1,
+            durationSec: 0.1,
+            cooldownSec: 0.82,
+            predicate: (candidate) => candidate.archetype === 'standard',
+          });
+          midpointPulse(relay, 0xffd8c7, 0xffffff);
+        }
+        return;
+      }
+      case 'skirmisher': {
+        const relay = getNearbyRegulars(
+          124,
+          (candidate) =>
+            (candidate.archetype === 'skirmisher' || candidate.archetype === 'standard') &&
+            candidate.recoverySec <= 0.1 &&
+            candidate.tacticCooldownSec <= 0.08,
+        )[0];
+        if (!relay) {
+          return;
+        }
+        if (
+          this.triggerRegularPressureBeat(
+            battle,
+            relay,
+            0.16 + Math.min(0.03, flowChainBonus * 0.01),
+            0.94 + Math.min(0.08, flowChainBonus * 0.02),
+          )
+        ) {
+          const dx = relay.x - enemy.x;
+          const dy = relay.y - enemy.y;
+          const distance = Math.max(1, Math.hypot(dx, dy));
+          relay.hitOffsetX = clamp(relay.hitOffsetX + (dx / distance) * 5, -16, 16);
+          relay.hitOffsetY = clamp(relay.hitOffsetY + (dy / distance) * 5, -16, 16);
+          relay.spawnFlashSec = Math.max(relay.spawnFlashSec, 0.14);
+          midpointPulse(relay, 0x9fffe2, 0xf4fffb);
+        }
+        return;
+      }
+      case 'brute': {
+        const disrupted = getNearbyRegulars(126).slice(0, 3);
+        if (disrupted.length === 0) {
+          return;
+        }
+        battle.playerMoveBoostSec = Math.max(battle.playerMoveBoostSec, 0.18 + Math.min(0.04, flowChainBonus * 0.01));
+        disrupted.forEach((candidate, index) => {
+          const dx = candidate.x - enemy.x;
+          const dy = candidate.y - enemy.y;
+          const distance = Math.max(1, Math.hypot(dx, dy));
+          const recoil = candidate.archetype === 'brute' ? 8 : candidate.archetype === 'ranged' ? 7 : 6;
+          candidate.hitOffsetX = clamp(candidate.hitOffsetX + (dx / distance) * recoil, -18, 18);
+          candidate.hitOffsetY = clamp(candidate.hitOffsetY + (dy / distance) * recoil, -18, 18);
+          this.pushEnemyRecovery(
+            candidate,
+            candidate.archetype === 'ranged' ? 0.18 : candidate.archetype === 'skirmisher' ? 0.16 : 0.14,
+          );
+          candidate.spawnFlashSec = Math.max(candidate.spawnFlashSec, 0.1 - index * 0.01);
+          if (candidate.archetype === 'ranged') {
+            candidate.rangedCooldownSec = Math.max(candidate.rangedCooldownSec, 0.38 + index * 0.04);
+          }
+        });
+        this.createCombatPulse(battle, {
+          x: enemy.x,
+          y: enemy.y,
+          radius: enemy.radius + 28 + disrupted.length * 4,
+          lifeSec: 0.16,
+          color: 0xffd0a2,
+          secondaryColor: 0xfff4e2,
+          fillAlpha: 0.08,
+          strokeAlpha: 0.34,
+          strokeWidth: 2,
+          growthPerSec: 176,
+          innerRadiusRatio: 0.68,
+        });
+        return;
+      }
+      case 'ranged': {
+        const softened = getNearbyRegulars(
+          136,
+          (candidate) => candidate.archetype === 'ranged' || candidate.archetype === 'skirmisher',
+        ).slice(0, 2);
+        if (softened.length === 0) {
+          return;
+        }
+        battle.playerTurnBurstSec = Math.max(
+          battle.playerTurnBurstSec,
+          0.08 + Math.min(0.03, flowChainBonus * 0.01),
+        );
+        softened.forEach((candidate, index) => {
+          const dx = candidate.x - enemy.x;
+          const dy = candidate.y - enemy.y;
+          const distance = Math.max(1, Math.hypot(dx, dy));
+          candidate.hitOffsetX = clamp(candidate.hitOffsetX + (dx / distance) * 5, -14, 14);
+          candidate.hitOffsetY = clamp(candidate.hitOffsetY + (dy / distance) * 5, -14, 14);
+          this.pushEnemyRecovery(candidate, candidate.archetype === 'ranged' ? 0.18 : 0.14);
+          candidate.spawnFlashSec = Math.max(candidate.spawnFlashSec, 0.12);
+          candidate.tacticCooldownSec = Math.max(candidate.tacticCooldownSec, 0.18 + index * 0.04);
+          if (candidate.archetype === 'ranged') {
+            candidate.rangedCooldownSec = Math.max(candidate.rangedCooldownSec, 0.44 + index * 0.06);
+          }
+        });
+        this.createCombatPulse(battle, {
+          x: enemy.x,
+          y: enemy.y,
+          radius: enemy.radius + 24 + softened.length * 4,
+          lifeSec: 0.15,
+          color: 0xaee8ff,
+          secondaryColor: 0xf6fcff,
+          fillAlpha: 0.06,
+          strokeAlpha: 0.32,
+          strokeWidth: 2,
+          growthPerSec: 164,
+          innerRadiusRatio: 0.72,
+        });
+        return;
+      }
+      default:
+        return;
     }
   }
 
@@ -4749,6 +5013,95 @@ export class RunEngine {
     enemy.pressurePulseSec = Math.max(enemy.pressurePulseSec, durationSec);
     enemy.tacticCooldownSec = Math.max(enemy.tacticCooldownSec, cooldownSec);
     return true;
+  }
+
+  private triggerRegularPressureBeat(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    durationSec: number,
+    cooldownSec: number,
+    options?: {
+      rangedLeadSec?: number;
+    },
+  ): boolean {
+    if (enemy.elite) {
+      return false;
+    }
+    if (!this.triggerEnemyPressurePulse(enemy, durationSec, cooldownSec)) {
+      return false;
+    }
+
+    enemy.spawnFlashSec = Math.max(
+      enemy.spawnFlashSec,
+      enemy.archetype === 'brute' ? 0.18 : enemy.archetype === 'ranged' ? 0.16 : enemy.archetype === 'skirmisher' ? 0.15 : 0.13,
+    );
+    if (enemy.archetype === 'ranged' && enemy.rangedCooldownSec > 0) {
+      enemy.rangedCooldownSec = Math.min(enemy.rangedCooldownSec, options?.rangedLeadSec ?? 0.42);
+    }
+
+    const pulseColor =
+      enemy.archetype === 'brute'
+        ? 0xffc386
+        : enemy.archetype === 'ranged'
+          ? 0x9edfff
+          : enemy.archetype === 'skirmisher'
+            ? 0x92ffe1
+            : 0xffd6c2;
+    this.createCombatPulse(battle, {
+      x: enemy.x,
+      y: enemy.y,
+      radius: enemy.radius + (enemy.archetype === 'brute' ? 12 : enemy.archetype === 'ranged' ? 10 : 9),
+      lifeSec: enemy.archetype === 'brute' ? 0.14 : 0.11,
+      color: pulseColor,
+      secondaryColor: 0xffffff,
+      fillAlpha: 0.04,
+      strokeAlpha: 0.34,
+      strokeWidth: enemy.archetype === 'brute' ? 2.6 : 2,
+      growthPerSec: enemy.archetype === 'skirmisher' ? 160 : 132,
+      innerRadiusRatio: enemy.archetype === 'skirmisher' ? 0.54 : 0.68,
+    });
+    return true;
+  }
+
+  private syncRegularPressurePack(
+    battle: BattleState,
+    source: BattleState['enemies'][number],
+    options?: {
+      radius?: number;
+      limit?: number;
+      durationSec?: number;
+      cooldownSec?: number;
+      predicate?: (candidate: BattleState['enemies'][number]) => boolean;
+    },
+  ): void {
+    const radius = options?.radius ?? 104;
+    const limit = options?.limit ?? 1;
+    const durationSec = options?.durationSec ?? 0.12;
+    const cooldownSec = options?.cooldownSec ?? 0.92;
+    const candidates = battle.enemies
+      .filter((candidate) => {
+        if (candidate.id === source.id || candidate.hp <= 0 || candidate.elite || candidate.role !== 'regular') {
+          return false;
+        }
+        if (candidate.recoverySec > 0.08 || candidate.tacticCooldownSec > 0.04) {
+          return false;
+        }
+        if (options?.predicate && !options.predicate(candidate)) {
+          return false;
+        }
+        return Math.hypot(candidate.x - source.x, candidate.y - source.y) <= radius;
+      })
+      .sort(
+        (left, right) =>
+          Math.hypot(left.x - source.x, left.y - source.y) - Math.hypot(right.x - source.x, right.y - source.y),
+      )
+      .slice(0, limit);
+
+    candidates.forEach((candidate, index) => {
+      if (this.triggerEnemyPressurePulse(candidate, durationSec, cooldownSec + index * 0.08)) {
+        candidate.spawnFlashSec = Math.max(candidate.spawnFlashSec, 0.1);
+      }
+    });
   }
 
   private findNearestAlly(
