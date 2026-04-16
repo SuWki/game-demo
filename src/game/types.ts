@@ -454,6 +454,8 @@ export interface BattleState {
   playerAimDirY: number;
   eliteAlive: boolean;
   eliteSpawned: boolean;
+  eliteCrackWindowSec: number;
+  eliteCrackEscortCount: number;
   critOverdriveSec: number;
   critChain: number;
   dashCharge: number;

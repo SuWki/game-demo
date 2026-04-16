@@ -384,6 +384,7 @@ export class RunEngine {
     battle.remainingSec = Math.max(0, battle.remainingSec - simulationDt);
     battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - simulationDt);
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - simulationDt);
+    battle.eliteCrackWindowSec = Math.max(0, battle.eliteCrackWindowSec - simulationDt);
     battle.invulnerableSec = Math.max(0, battle.invulnerableSec - simulationDt);
     battle.playerImpactSec = Math.max(0, battle.playerImpactSec - dt);
     battle.playerRecoverySec = Math.max(0, battle.playerRecoverySec - dt);
@@ -397,6 +398,9 @@ export class RunEngine {
     battle.playerTurnBurstSec = Math.max(0, battle.playerTurnBurstSec - dt);
     battle.playerNearMissSec = Math.max(0, battle.playerNearMissSec - dt);
     battle.playerNearMissCooldownSec = Math.max(0, battle.playerNearMissCooldownSec - dt);
+    if (battle.eliteCrackWindowSec <= 0) {
+      battle.eliteCrackEscortCount = 0;
+    }
     if (battle.killFlowSec <= 0) {
       battle.killFlowCount = 0;
     }
@@ -586,6 +590,8 @@ export class RunEngine {
       playerAimDirY: -1,
       eliteAlive: false,
       eliteSpawned: false,
+      eliteCrackWindowSec: 0,
+      eliteCrackEscortCount: 0,
       critOverdriveSec: 0,
       critChain: 0,
       dashCharge: 0,
@@ -4802,8 +4808,9 @@ export class RunEngine {
     const focusRoute = this.getLiveCombatFocusRoute(battle);
     const activeElite = battle.eliteAlive ? this.getEliteEnemy(battle) : null;
     const activeEliteRecovery = activeElite ? this.getEnemyRecoveryRatio(activeElite) : 0;
+    const eliteCrackRatio = activeElite ? this.getEliteCrackWindowRatio(battle) : 0;
     const activeEliteEscortCount =
-      activeElite && activeEliteRecovery > 0.18
+      activeElite && (activeEliteRecovery > 0.18 || eliteCrackRatio > 0.08)
         ? this.countNearbyAllies(
             battle,
             activeElite,
@@ -4835,16 +4842,18 @@ export class RunEngine {
           : 0;
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
 
-      if (activeElite && activeEliteRecovery > 0.18) {
+      if (activeElite && (activeEliteRecovery > 0.18 || eliteCrackRatio > 0.08)) {
         const crackEscortGap = Math.max(0, 2 - activeEliteEscortCount);
+        const crackBias = activeEliteRecovery * 42 + eliteCrackRatio * 56;
         if (enemy.id === activeElite.id) {
-          score += 44 + activeEliteRecovery * 42 + activeEliteEscortCount * 5 + crackEscortGap * 18;
+          score += 44 + crackBias + activeEliteEscortCount * 5 + crackEscortGap * 18;
+          score += eliteCrackRatio > 0 ? 18 + eliteCrackRatio * 28 : 0;
           if (moveMagnitude > 0.05) {
             const chaseAlignment = ((dx / distance) * battle.playerMoveDirX) + ((dy / distance) * battle.playerMoveDirY);
-            score += Math.max(0, chaseAlignment) * (18 + crackEscortGap * 10);
+            score += Math.max(0, chaseAlignment) * (18 + crackEscortGap * 10 + eliteCrackRatio * 14);
           }
         } else if (enemy.role === 'escort' && eliteLinkDistance <= 236) {
-          score -= 18 + activeEliteRecovery * 24 + crackEscortGap * 12;
+          score -= 18 + activeEliteRecovery * 24 + crackEscortGap * 12 + eliteCrackRatio * 32;
         }
       }
 
@@ -4856,6 +4865,7 @@ export class RunEngine {
         score += hpRatio <= 0.35 ? 26 : 0;
         score += recoveryRatio * (battle.critOverdriveSec > 0 ? 34 : 20);
         score += enemy.elite && recoveryRatio > 0.2 ? 28 + recoveryRatio * 24 : 0;
+        score += enemy.elite ? eliteCrackRatio * 28 : 0;
         if (enemy.elite && eliteEscortCount > 0) {
           score += eliteEscortCount * (recoveryRatio > 0.18 ? 14 : 7);
         }
@@ -4867,6 +4877,7 @@ export class RunEngine {
         score += recoveryRatio * 16;
         score += enemy.elite && laneScore >= 1.2 ? 24 + laneScore * 8 : 0;
         score += activeElite && enemy.id === activeElite.id && activeEliteRecovery > 0.18 ? 18 + laneScore * 10 : 0;
+        score += enemy.elite ? eliteCrackRatio * (laneScore >= 1.2 ? 34 : 18) : 0;
         score -= activeElite && enemy.role === 'escort' && activeEliteRecovery > 0.18 && eliteLinkDistance <= 236 ? 8 : 0;
         if (enemy.elite && eliteEscortCount > 0) {
           score += eliteEscortCount * (laneScore >= 1.2 ? 10 : 4);
@@ -5179,6 +5190,48 @@ export class RunEngine {
       .map((entry) => entry.enemy);
   }
 
+  private getEliteCrackWindowRatio(battle: BattleState): number {
+    return clamp(battle.eliteCrackWindowSec / 0.82, 0, 1);
+  }
+
+  private extendEliteCrackWindow(
+    battle: BattleState,
+    eliteEnemy: BattleState['enemies'][number],
+    behavior: EliteBehaviorId,
+    crackedEscorts: number,
+    laneScore: number,
+    critStage: RouteBuildStage,
+    pierceStage: RouteBuildStage,
+  ): void {
+    const focusRoute = this.getLiveCombatFocusRoute(battle);
+    const eliteDistance = Math.hypot(eliteEnemy.x - battle.playerX, eliteEnemy.y - battle.playerY);
+    let windowSec = crackedEscorts > 0 ? 0.36 : 0.24;
+    windowSec += behavior === 'screened' ? 0.08 : behavior === 'summoner' ? 0.05 : behavior === 'frontline' ? 0.04 : 0.03;
+    windowSec += Math.min(0.18, crackedEscorts * 0.06);
+    if (eliteDistance <= 220) {
+      windowSec += 0.06;
+    } else if (eliteDistance <= 280) {
+      windowSec += 0.03;
+    }
+    if (focusRoute === 'crit' && (critStage === 'committed' || critStage === 'matured')) {
+      windowSec += critStage === 'matured' ? 0.08 : 0.05;
+    }
+    if (focusRoute === 'pierce' && (pierceStage === 'committed' || pierceStage === 'matured')) {
+      windowSec += laneScore >= 1.2 ? 0.08 : 0.04;
+    }
+
+    battle.eliteCrackWindowSec = Math.max(battle.eliteCrackWindowSec, Math.min(0.82, windowSec));
+    battle.eliteCrackEscortCount = Math.max(battle.eliteCrackEscortCount, crackedEscorts);
+    battle.playerTurnBurstSec = Math.max(
+      battle.playerTurnBurstSec,
+      0.08 + Math.min(0.08, crackedEscorts * 0.02 + (focusRoute === 'crit' ? 0.03 : focusRoute === 'pierce' ? 0.02 : 0)),
+    );
+    battle.playerShotFlashSec = Math.max(
+      battle.playerShotFlashSec,
+      0.05 + Math.min(0.05, crackedEscorts * 0.01 + (focusRoute === 'crit' ? 0.02 : focusRoute === 'pierce' ? 0.012 : 0)),
+    );
+  }
+
   private syncEscortPressureFromElite(
     battle: BattleState,
     eliteEnemy: BattleState['enemies'][number],
@@ -5269,6 +5322,8 @@ export class RunEngine {
       );
       escort.tacticCooldownSec = Math.max(escort.tacticCooldownSec, 0.5 + index * 0.05);
       escort.pressurePulseSec = Math.min(escort.pressurePulseSec, 0.08);
+      escort.hitFlashSec = Math.max(escort.hitFlashSec, 0.16);
+      escort.spawnFlashSec = Math.max(escort.spawnFlashSec, 0.14);
       if (escort.archetype === 'ranged') {
         escort.rangedCooldownSec = Math.max(escort.rangedCooldownSec, 0.58 + index * 0.08);
       }
@@ -5413,6 +5468,9 @@ export class RunEngine {
     const critStage = this.getRouteBuildStage('crit');
     const dashStage = this.getRouteBuildStage('dash');
     const crackedEscorts = this.crackEliteEscortScreen(battle, enemy, behavior);
+    const laneScore = pierceStage !== 'unformed' ? this.getPierceLaneScore(battle, enemy) : 0;
+
+    this.extendEliteCrackWindow(battle, enemy, behavior, crackedEscorts, laneScore, critStage, pierceStage);
 
     this.pushEnemyRecovery(enemy, cycle.recoverySec);
     this.createCombatPulse(battle, {
@@ -5455,9 +5513,12 @@ export class RunEngine {
       const critRefund = (critStage === 'matured' ? 0.032 : 0.018) + Math.min(0.018, crackedEscorts * 0.006);
       battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - critRefund);
       battle.tempoPulseSec = Math.max(battle.tempoPulseSec, crackedEscorts > 0 ? 0.24 : 0.2);
+      battle.playerTurnBurstSec = Math.max(
+        battle.playerTurnBurstSec,
+        crackedEscorts > 0 ? 0.12 + Math.min(0.06, crackedEscorts * 0.02) : 0.08,
+      );
     }
 
-    const laneScore = pierceStage !== 'unformed' ? this.getPierceLaneScore(battle, enemy) : 0;
     if ((pierceStage === 'committed' || pierceStage === 'matured') && (laneScore >= 1.2 || crackedEscorts >= 2)) {
       const crackLaneBonus = crackedEscorts > 0 ? Math.min(0.024, crackedEscorts * 0.008) : 0;
       battle.fireCooldownSec = Math.max(
@@ -5465,6 +5526,10 @@ export class RunEngine {
         battle.fireCooldownSec - Math.min(0.044, 0.016 + laneScore * 0.006 + crackLaneBonus),
       );
       battle.tempoPulseSec = Math.max(battle.tempoPulseSec, crackedEscorts > 0 ? 0.26 : 0.22);
+      battle.playerMoveBoostSec = Math.max(
+        battle.playerMoveBoostSec,
+        crackedEscorts > 0 ? 0.18 + Math.min(0.08, laneScore * 0.02) : 0.14,
+      );
       this.createCombatPulse(battle, {
         x: enemy.x,
         y: enemy.y,
