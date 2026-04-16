@@ -18,6 +18,8 @@ interface ResultActions {
   onExport: () => void;
 }
 
+type PanelProgress = Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>;
+
 const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
   battle: '战斗',
   upgrade: '强化',
@@ -27,16 +29,16 @@ const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
 
 const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
   battle: '#f09a54',
-  upgrade: '#58b3e6',
-  anomaly: '#9f73e8',
+  upgrade: '#59baf3',
+  anomaly: '#a773ff',
   boss: '#f06d56',
 };
 
 const TOAST_BADGES: Record<ToastTone, string> = {
-  neutral: '提示',
+  neutral: '信息',
   accent: '阶段',
-  route: '路线',
-  danger: '高压',
+  route: '流派',
+  danger: '危险',
   success: '完成',
 };
 
@@ -78,14 +80,30 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
       <section class="screen-minimal menu-screen">
+        <div class="screen-gridline" aria-hidden="true"></div>
+        <div class="screen-center-glyph" aria-hidden="true">
+          <span class="screen-ring ring-a"></span>
+          <span class="screen-ring ring-b"></span>
+          <span class="screen-ring ring-c"></span>
+        </div>
         <div class="screen-anchor screen-anchor-bottom">
           <p class="screen-kicker">NODE RUN</p>
           <h1 class="screen-title">节点作战</h1>
           <p class="screen-subtitle">移动 · 清场 · 成线</p>
-          <p class="screen-meta-line">${summary.totalRuns} 局 · ${summary.wins} 胜 · ${summary.lastRouteName}</p>
+          <div class="screen-meta-strip">
+            <span>${summary.totalRuns} 局</span>
+            <span>${summary.wins} 胜</span>
+            <span>${summary.lastRouteName}</span>
+          </div>
           <div class="screen-actions">
-            <button class="text-action text-action-primary" data-action="start">开始</button>
-            <button class="text-action" data-action="export">导出记录</button>
+            <button class="text-action text-action-primary" data-action="start">
+              <span>开始</span>
+              <small>ENTER</small>
+            </button>
+            <button class="text-action" data-action="export">
+              <span>记录</span>
+              <small>LOG</small>
+            </button>
           </div>
         </div>
       </section>
@@ -126,7 +144,7 @@ export class OverlayController {
   public showNodePanel(
     phaseLabel: string,
     options: NodeOption[],
-    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+    progress: PanelProgress,
     onChoose: (nodeId: string) => void,
   ): void {
     this.showPanel({
@@ -134,7 +152,6 @@ export class OverlayController {
       modeLabel: '路线选择',
       modeHint: '下一站',
       title: `${phaseLabel}路线`,
-      description: this.getNodePanelDescription(options),
       items: options.map((node) => this.renderNodeChoiceCard(node)),
       progress,
     });
@@ -145,28 +162,18 @@ export class OverlayController {
 
   public showUpgradePanel(
     title: string,
-    description: string,
-    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+    _description: string,
+    progress: PanelProgress,
     choices: UpgradeDefinition[],
     onChoose: (upgradeId: string) => void,
   ): void {
-    const modeLabel = title.includes('等级提升')
-      ? '强化选择'
-      : title.includes('最终整备')
-        ? '最终整备'
-        : '强化选择';
-    const modeHint = title.includes('等级提升')
-      ? '战斗内补强'
-      : title.includes('最终整备')
-        ? 'Boss 前补一手'
-        : '补当前打法';
-
+    const isLevelUp = title.includes('等级提升');
+    const isFinalPrep = title.includes('最终整备');
     this.showPanel({
       panelClassName: 'panel-upgrade-choice',
-      modeLabel,
-      modeHint,
+      modeLabel: isFinalPrep ? '最终整备' : '强化选择',
+      modeHint: isLevelUp ? '拿一项' : isFinalPrep ? 'Boss前' : '补一拍',
       title,
-      description: description || '补这一局最缺的一拍。',
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade)),
       progress,
     });
@@ -177,16 +184,15 @@ export class OverlayController {
 
   public showEventPanel(
     eventDef: EventDefinition,
-    progress: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>,
+    progress: PanelProgress,
     onChoose: (optionId: string) => void,
   ): void {
-    const contentLabel = eventDef.contentKind === 'anomaly' ? '异常处理' : '事件选择';
+    const isAnomaly = eventDef.contentKind === 'anomaly';
     this.showPanel({
       panelClassName: 'panel-event-choice',
-      modeLabel: contentLabel,
-      modeHint: eventDef.contentKind === 'anomaly' ? '选一种处理方式' : '选一个结果',
+      modeLabel: isAnomaly ? '异常处理' : '事件选择',
+      modeHint: isAnomaly ? '处理方式' : '执行',
       title: eventDef.name,
-      description: this.getEventPanelDescription(eventDef),
       items: eventDef.options.map((option) => this.renderEventChoiceCard(eventDef, option)),
       progress,
     });
@@ -203,15 +209,33 @@ export class OverlayController {
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
     this.screenLayer.innerHTML = `
       <section class="screen-minimal result-screen ${result.outcome === 'victory' ? 'is-victory' : 'is-defeat'}">
+        <div class="screen-gridline" aria-hidden="true"></div>
+        <div class="screen-center-glyph" aria-hidden="true">
+          <span class="screen-ring ring-a"></span>
+          <span class="screen-ring ring-b"></span>
+        </div>
         <div class="screen-anchor screen-anchor-center">
           <p class="screen-kicker">${result.outcome === 'victory' ? 'RUN CLEAR' : 'RUN END'}</p>
           <h1 class="screen-title">${result.outcome === 'victory' ? '完成' : '失败'}</h1>
-          <p class="screen-meta-line">${routeLabel} · ${result.buildLabel} · ${result.endingLabel}</p>
+          <div class="screen-meta-strip">
+            <span>${routeLabel}</span>
+            <span>${result.buildLabel}</span>
+            <span>${result.endingLabel}</span>
+          </div>
           <p class="screen-meta-line">Lv.${result.levelReached} · ${result.battleWins} 战 · ${result.nodesCleared} 节点</p>
           <div class="screen-actions">
-            <button class="text-action text-action-primary" data-action="restart">再来一局</button>
-            <button class="text-action" data-action="menu">返回开始</button>
-            <button class="text-action" data-action="export">导出记录</button>
+            <button class="text-action text-action-primary" data-action="restart">
+              <span>再来一局</span>
+              <small>RERUN</small>
+            </button>
+            <button class="text-action" data-action="menu">
+              <span>开始</span>
+              <small>MENU</small>
+            </button>
+            <button class="text-action" data-action="export">
+              <span>记录</span>
+              <small>LOG</small>
+            </button>
           </div>
         </div>
       </section>
@@ -231,7 +255,7 @@ export class OverlayController {
     this.toastLayer.appendChild(toast);
     window.setTimeout(() => {
       toast.remove();
-    }, 2600);
+    }, 2200);
   }
 
   public hidePanel(): void {
@@ -253,9 +277,8 @@ export class OverlayController {
     modeLabel: string;
     modeHint?: string;
     title: string;
-    description: string;
     items: string[];
-    progress?: Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>;
+    progress?: PanelProgress;
   }): void {
     this.screenLayer.classList.add('hidden');
     this.panelLayer.classList.remove('hidden');
@@ -267,8 +290,8 @@ export class OverlayController {
             <h2 class="panel-title">${config.title}</h2>
           </div>
           <div class="tray-header-side">
+            ${config.progress ? `<span class="tray-progress">${this.getCompactProgressLabel(config.progress.progressLabel)}</span>` : ''}
             ${config.modeHint ? `<span class="tray-mode-hint">${config.modeHint}</span>` : ''}
-            ${config.progress ? `<span class="tray-progress">${config.progress.progressLabel}</span>` : ''}
           </div>
         </div>
         <div class="choice-grid choice-grid-tray">${config.items.join('')}</div>
@@ -283,62 +306,59 @@ export class OverlayController {
     }
   }
 
-  private getOptionTypeLabel(
-    routeId: EventDefinition['options'][number]['routeId'],
-    contentKind: EventDefinition['contentKind'],
-  ): string {
-    if (!routeId || routeId === 'dominant') {
-      return contentKind === 'anomaly' ? '当前路线' : '当前处理';
-    }
-    return ROUTE_NAME_MAP[routeId];
-  }
-
   private renderNodeChoiceCard(node: NodeOption): string {
+    const accent = NODE_TYPE_ACCENT_MAP[node.type];
     const detail =
       node.type === 'battle'
         ? getBattleEncounterLabel(node.templateId ?? 'elimination')
         : node.type === 'upgrade'
           ? node.isFinalPrep
-            ? 'Boss 前补强'
-            : '补一张强化'
+            ? 'Boss前补强'
+            : '补一项强化'
           : node.type === 'anomaly'
             ? '处理异常'
-            : '进入首领战';
+            : '首领战';
 
     return `
-      <button class="choice-card choice-card-node map-choice" style="--choice-accent: ${NODE_TYPE_ACCENT_MAP[node.type]}" data-choice="${node.id}">
-        <div class="choice-card-top">
+      <button class="choice-strip choice-strip-node" style="--choice-accent: ${accent}" data-choice="${node.id}">
+        <div class="choice-strip-head">
           <span class="choice-type">路线</span>
-          <span class="choice-node-pill choice-node-pill-${node.type}">${NODE_TYPE_LABEL_MAP[node.type]}</span>
+          <span class="choice-mode-badge">${NODE_TYPE_LABEL_MAP[node.type]}</span>
         </div>
-        <div class="choice-card-tags">
-          <span class="choice-focus-pill choice-focus-pill-node">关卡分支</span>
-          <span class="choice-route-pill active" style="--route-pill: ${NODE_TYPE_ACCENT_MAP[node.type]}">${detail}</span>
+        <div class="choice-strip-body">
+          <strong>${node.title}</strong>
+          <small>${this.getNodeCardDescription(node)}</small>
         </div>
-        <strong>${node.title}</strong>
-        <small>${this.getNodeCardDescription(node)}</small>
+        <div class="choice-strip-side">
+          <span class="choice-side-label">${detail}</span>
+          <span class="choice-prompt">进入</span>
+        </div>
       </button>
     `;
   }
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
-    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用强化';
-    const kindLabel = upgrade.routeId ? '流派强化' : '属性强化';
     const effectText = describeContentEffects(upgrade.effects, upgrade.routeId);
-
+    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
     return `
-      <button class="choice-card choice-card-upgrade ${upgrade.routeId ? 'choice-card-route-boost' : ''}" style="--choice-accent: ${routeAccent}; --rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}" data-choice="${upgrade.id}">
-        <div class="choice-card-top">
+      <button
+        class="choice-strip choice-strip-upgrade ${upgrade.routeId ? 'is-route-upgrade' : 'is-generic-upgrade'}"
+        style="--choice-accent: ${routeAccent}; --rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}"
+        data-choice="${upgrade.id}"
+      >
+        <div class="choice-strip-head">
           <span class="choice-type">强化</span>
-          <span class="choice-rarity" style="--rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}">${upgrade.rarityLabel}</span>
+          <span class="choice-rarity">${upgrade.rarityLabel}</span>
         </div>
-        <div class="choice-card-tags">
-          <span class="choice-focus-pill ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
-          <span class="choice-kind-badge">${kindLabel}</span>
+        <div class="choice-strip-body">
+          <strong>${upgrade.name}</strong>
+          <small>${effectText || upgrade.description}</small>
         </div>
-        <strong>${upgrade.name}</strong>
-        <small>${effectText || upgrade.description}</small>
+        <div class="choice-strip-side">
+          <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
+          <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
+        </div>
       </button>
     `;
   }
@@ -348,21 +368,22 @@ export class OverlayController {
     option: EventDefinition['options'][number],
   ): string {
     const routeAccent = this.getRouteAccent(option.routeId);
-    const routeLabel = this.getOptionTypeLabel(option.routeId, eventDef.contentKind);
-
+    const routeLabel = this.getEventRouteLabel(option.routeId, eventDef.contentKind);
+    const prompt = eventDef.contentKind === 'anomaly' ? '处理' : '执行';
     return `
-      <button class="choice-card choice-card-event" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
-        <div class="choice-card-top">
+      <button class="choice-strip choice-strip-event" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
+        <div class="choice-strip-head">
           <span class="choice-type">${eventDef.contentKind === 'anomaly' ? '异常' : '事件'}</span>
-          <span class="choice-route-pill ${option.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
+          <span class="choice-mode-badge">${routeLabel}</span>
         </div>
-        <div class="choice-card-tags">
-          <span class="choice-focus-pill ${option.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">
-            ${eventDef.contentKind === 'anomaly' ? '处理方式' : '结果'}
-          </span>
+        <div class="choice-strip-body">
+          <strong>${option.label}</strong>
+          <small>${this.getEventOptionDescription(option)}</small>
         </div>
-        <strong>${option.label}</strong>
-        <small>${this.getEventOptionDescription(option)}</small>
+        <div class="choice-strip-side">
+          <span class="choice-side-label">${prompt}</span>
+          <span class="choice-prompt">确认</span>
+        </div>
       </button>
     `;
   }
@@ -372,46 +393,19 @@ export class OverlayController {
       return node.description;
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '补完直接进 Boss。' : '补强当前打法，再继续推进。';
+      return node.isFinalPrep ? '拿完直接进 Boss。' : '补一拍再继续推进。';
     }
     return node.description;
   }
 
-  private getNodePanelDescription(options: NodeOption[]): string {
-    const phase = options[0]?.phase;
-    switch (phase) {
-      case 'opening':
-        return '先让这一局的第一条线站出来。';
-      case 'mid':
-        return '决定继续收线，还是借异常改道。';
-      case 'late':
-        return '后段优先补短板和收尾。';
-      case 'finalPrep':
-        return '最后整备，选完直接进 Boss。';
-      case 'finalBattle':
-        return '这一站就是本局收束。';
-      default:
-        return '选一条推进路线。';
+  private getEventRouteLabel(
+    routeId: EventDefinition['options'][number]['routeId'],
+    contentKind: EventDefinition['contentKind'],
+  ): string {
+    if (!routeId || routeId === 'dominant') {
+      return contentKind === 'anomaly' ? '当前路线' : '当前处理';
     }
-  }
-
-  private getEventPanelDescription(eventDef: EventDefinition): string {
-    if (eventDef.contentKind !== 'anomaly') {
-      return '选一个处理结果。';
-    }
-
-    switch (eventDef.anomalyClass) {
-      case 'routeWindow':
-        return '出现改道窗口，选继续承接还是切线。';
-      case 'distortion':
-        return '拿收益，也要接住代价。';
-      case 'hybrid':
-        return '这一拍会把两条线临时并起来。';
-      case 'bossEcho':
-        return '提前读到一段 Boss 后程。';
-      default:
-        return '选一种异常处理方式。';
-    }
+    return ROUTE_NAME_MAP[routeId];
   }
 
   private getEventOptionDescription(option: EventDefinition['options'][number]): string {
@@ -442,6 +436,11 @@ export class OverlayController {
     return 'stable';
   }
 
+  private getCompactProgressLabel(progressLabel: string): string {
+    const match = progressLabel.match(/(\d+\s*\/\s*\d+)/);
+    return match ? `推进 ${match[1]}` : progressLabel;
+  }
+
   private getHudWaveLabel(progressLabel: string): string {
     const compactWave = progressLabel.match(/(\d+\s*\/\s*\d+)/);
     return compactWave ? `波次 ${compactWave[1]}` : progressLabel;
@@ -459,11 +458,31 @@ export class OverlayController {
     }
 
     if (snapshot.objectiveTone === 'elite') {
-      return snapshot.objectiveProgressText.includes('已') ? '精英: 已出现' : '精英: 即将出现';
+      return snapshot.objectiveProgressText.includes('已')
+        ? '精英: 已出现'
+        : '精英: 即将出现';
     }
 
     if (snapshot.objectiveTone === 'boss') {
-      return snapshot.objectiveProgressText.includes('即将') ? '首领: 即将出现' : '首领: 终结';
+      return snapshot.objectiveProgressText.includes('即将')
+        ? '首领: 即将出现'
+        : '首领: 终结';
+    }
+
+    if (snapshot.objectiveText.includes('强化选择')) {
+      return '目标: 强化';
+    }
+
+    if (snapshot.objectiveText.includes('最终整备')) {
+      return '目标: 整备';
+    }
+
+    if (snapshot.objectiveText.includes('路线')) {
+      return '目标: 选路';
+    }
+
+    if (snapshot.objectiveText.includes('异常')) {
+      return '目标: 处理';
     }
 
     return `目标: ${snapshot.objectiveText}`;
