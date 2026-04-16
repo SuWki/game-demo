@@ -2713,6 +2713,7 @@ export class RunEngine {
       : fallbackAngle;
     const targetDistance = target ? Math.hypot(target.x - battle.playerX, target.y - battle.playerY) : Number.POSITIVE_INFINITY;
     const targetHpRatio = target ? target.hp / Math.max(1, target.maxHp) : 1;
+    const eliteCrackRatio = target?.elite ? this.getEliteCrackWindowRatio(battle) : 0;
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     const targetAlignment =
       target && moveMagnitude > 0.05
@@ -2749,6 +2750,13 @@ export class RunEngine {
         battle.fireCooldownSec = Math.max(0.04, battle.fireCooldownSec - (critStage === 'matured' ? 0.022 : 0.012));
         battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.14);
       }
+      if (target?.elite && eliteCrackRatio > 0.08) {
+        projectileSpeed *= 1 + eliteCrackRatio * 0.08;
+        bulletLifeSec += 0.1 + eliteCrackRatio * 0.12;
+        battle.fireCooldownSec = Math.max(0.038, battle.fireCooldownSec - (critStage === 'matured' ? 0.028 : 0.018));
+        battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.1 + eliteCrackRatio * 0.08);
+        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + eliteCrackRatio * 0.08);
+      }
     } else if (focusRoute === 'pierce') {
       spreadStep = shotCount > 1 ? 0.11 : 0.04;
       projectileSpeed *= 1.08;
@@ -2757,6 +2765,13 @@ export class RunEngine {
       if (pierceLaneScore >= 1.25) {
         projectileSpeed *= 1.05;
         bulletLifeSec += 0.12;
+      }
+      if (target?.elite && eliteCrackRatio > 0.08) {
+        spreadStep = shotCount > 1 ? Math.max(0.05, spreadStep - (0.016 + eliteCrackRatio * 0.022)) : 0.02;
+        projectileSpeed *= 1 + eliteCrackRatio * 0.1;
+        bulletLifeSec += 0.12 + eliteCrackRatio * 0.14;
+        battle.playerMoveBoostSec = Math.max(battle.playerMoveBoostSec, 0.08 + eliteCrackRatio * 0.12);
+        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + eliteCrackRatio * 0.08);
       }
     } else if (focusRoute === 'dash') {
       if (battle.dashDriveSec > 0 && shotCount < 2) {
@@ -2778,6 +2793,9 @@ export class RunEngine {
       projectileSpeed *= 1 + Math.min(0.04, killFlowBoost * 0.012);
       bulletLifeSec += Math.min(0.08, killFlowBoost * 0.03);
     }
+    if (eliteCrackRatio > 0.08) {
+      battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.09 + eliteCrackRatio * 0.02);
+    }
     const spreadCenter = (shotCount - 1) / 2;
     const shotRecoilBase =
       (focusRoute === 'pierce'
@@ -2786,7 +2804,7 @@ export class RunEngine {
           ? (battle.dashDriveSec > 0 ? 6.6 : 5.2)
           : battle.critOverdriveSec > 0
             ? 6.8
-            : 5.6) + killFlowBoost * 0.7;
+            : 5.6) + killFlowBoost * 0.7 + eliteCrackRatio * (focusRoute === 'crit' ? 1.4 : focusRoute === 'pierce' ? 1.1 : 0.7);
     battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.08 + killFlowBoost * 0.01);
     battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, 0.11);
     battle.playerShotRecoilStrength = Math.max(
@@ -2850,10 +2868,21 @@ export class RunEngine {
         const critical = Math.random() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
         const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+        const eliteCrackRatio = enemy.elite ? this.getEliteCrackWindowRatio(battle) : 0;
         if (recoveryRatio > 0) {
           const punishBonus =
             bullet.routeFocus === 'crit' ? 0.22 : bullet.routeFocus === 'pierce' ? 0.16 : bullet.routeFocus === 'dash' ? 0.14 : 0.12;
           damage *= 1 + punishBonus * recoveryRatio;
+        }
+        if (enemy.elite && eliteCrackRatio > 0.08) {
+          if (bullet.routeFocus === 'crit') {
+            damage *= 1 + 0.08 + eliteCrackRatio * 0.14;
+          } else if (bullet.routeFocus === 'pierce') {
+            const laneScore = this.getPierceLaneScore(battle, enemy);
+            damage *= 1 + Math.min(0.18, 0.06 + eliteCrackRatio * 0.08 + laneScore * 0.018);
+          } else {
+            damage *= 1 + eliteCrackRatio * 0.06;
+          }
         }
         if (enemy.elite && enemy.guardSec > 0) {
           damage *= enemy.guardDamageMultiplier;
@@ -2874,6 +2903,25 @@ export class RunEngine {
           this.queueImpactFreeze(battle, 0.026, 0.44);
         }
         this.kickBattleShake(battle, critical ? 0.14 : 0.08, critical ? 0.34 : 0.14);
+        if (enemy.elite && eliteCrackRatio > 0.08) {
+          battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22 + eliteCrackRatio * 0.08);
+          battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.07 + eliteCrackRatio * 0.03);
+          if (bullet.routeFocus === 'crit' || bullet.routeFocus === 'pierce') {
+            this.createCombatPulse(battle, {
+              x: enemy.x,
+              y: enemy.y,
+              radius: enemy.radius + 20 + eliteCrackRatio * 10,
+              lifeSec: 0.12,
+              color: bullet.routeFocus === 'crit' ? 0xffdfa0 : 0xa4e4ff,
+              secondaryColor: 0xffffff,
+              fillAlpha: 0.05,
+              strokeAlpha: 0.48,
+              strokeWidth: 2,
+              growthPerSec: 196,
+              innerRadiusRatio: 0.68,
+            });
+          }
+        }
         if (critical) {
           battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + this.getCritOverdriveDurationGain());
           battle.critChain += 1;
@@ -3000,6 +3048,9 @@ export class RunEngine {
       if (enemy.elite && template.eliteRule) {
         this.updateEliteEnemy(enemy, battle, template, dt);
       } else {
+        if (!enemy.elite && enemy.role === 'escort' && battle.eliteAlive && battle.eliteCrackWindowSec > 0) {
+          this.stabilizeEliteCrackEscort(battle, enemy);
+        }
         this.updateArchetypeEnemy(enemy, battle, dt);
       }
 
@@ -3902,10 +3953,12 @@ export class RunEngine {
     const strafeDirection = Math.sin(battle.elapsedSec * 1.35 + enemy.id * 0.7);
     const pressureRatio = Math.min(1, enemy.pressurePulseSec / cycle.pulseSec);
     const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+    const crackRatio = this.getEliteCrackWindowRatio(battle);
     let moveX = 0;
     let moveY = 0;
 
     const canTriggerPulse =
+      crackRatio <= 0.08 &&
       enemy.pressurePulseSec <= 0 &&
       enemy.tacticCooldownSec <= 0 &&
       enemy.recoverySec <= 0.08 &&
@@ -4007,6 +4060,27 @@ export class RunEngine {
         break;
     }
 
+    if (crackRatio > 0.08) {
+      const chaseBlend = Math.min(0.68, 0.22 + crackRatio * 0.42);
+      const chaseForward =
+        distance > preferredDistance * 0.84
+          ? activeBehavior === 'kiting'
+            ? 0.18
+            : activeBehavior === 'screened' || activeBehavior === 'summoner'
+              ? 0.26
+              : 0.34
+          : distance < preferredDistance * 0.62
+            ? activeBehavior === 'kiting'
+              ? -0.14
+              : -0.08
+            : 0.1;
+      const chaseStrafeScale = activeBehavior === 'kiting' ? 0.55 : activeBehavior === 'screened' || activeBehavior === 'summoner' ? 0.4 : 0.28;
+      const chaseMoveX = dirX * chaseForward + strafeX * strafeDirection * Math.max(0.04, strafeStrength * chaseStrafeScale);
+      const chaseMoveY = dirY * chaseForward + strafeY * strafeDirection * Math.max(0.04, strafeStrength * chaseStrafeScale);
+      moveX = moveX * (1 - chaseBlend) + chaseMoveX * chaseBlend;
+      moveY = moveY * (1 - chaseBlend) + chaseMoveY * chaseBlend;
+    }
+
     if (recoveryRatio > 0) {
       moveX -= dirX * (0.14 + recoveryRatio * 0.24);
       moveY -= dirY * (0.14 + recoveryRatio * 0.24);
@@ -4018,7 +4092,8 @@ export class RunEngine {
     const speedMultiplier =
       1 +
       pressureRatio * (activeBehavior === 'frontline' ? 0.18 : activeBehavior === 'kiting' ? 0.12 : 0.1) -
-      recoveryRatio * 0.42;
+      recoveryRatio * 0.42 -
+      crackRatio * 0.12;
     enemy.x = clamp(enemy.x + (moveX / moveMagnitude) * movementSpeed * speedMultiplier * dt, -48, ARENA_WIDTH + 48);
     enemy.y = clamp(enemy.y + (moveY / moveMagnitude) * movementSpeed * speedMultiplier * dt, -48, ARENA_HEIGHT + 48);
   }
@@ -5230,6 +5305,51 @@ export class RunEngine {
       battle.playerShotFlashSec,
       0.05 + Math.min(0.05, crackedEscorts * 0.01 + (focusRoute === 'crit' ? 0.02 : focusRoute === 'pierce' ? 0.012 : 0)),
     );
+  }
+
+  private stabilizeEliteCrackEscort(
+    battle: BattleState,
+    escort: BattleState['enemies'][number],
+  ): void {
+    const crackRatio = this.getEliteCrackWindowRatio(battle);
+    if (crackRatio <= 0.08 || escort.elite || escort.role !== 'escort') {
+      return;
+    }
+
+    const eliteEnemy = this.getEliteEnemy(battle);
+    if (!eliteEnemy) {
+      return;
+    }
+
+    const eliteDistance = Math.hypot(escort.x - eliteEnemy.x, escort.y - eliteEnemy.y);
+    if (eliteDistance > 232) {
+      return;
+    }
+
+    const sustainRecovery =
+      escort.archetype === 'ranged'
+        ? 0.1 + crackRatio * 0.22
+        : escort.archetype === 'brute'
+          ? 0.08 + crackRatio * 0.16
+          : 0.08 + crackRatio * 0.14;
+    escort.recoverySec = Math.max(escort.recoverySec, sustainRecovery);
+    escort.tacticCooldownSec = Math.max(escort.tacticCooldownSec, 0.16 + crackRatio * 0.22);
+    escort.hitFlashSec = Math.max(escort.hitFlashSec, 0.08 + crackRatio * 0.08);
+    if (escort.archetype === 'ranged') {
+      escort.rangedCooldownSec = Math.max(escort.rangedCooldownSec, 0.32 + crackRatio * 0.26);
+    }
+
+    const playerDx = battle.playerX - eliteEnemy.x;
+    const playerDy = battle.playerY - eliteEnemy.y;
+    const playerDistance = Math.max(1, Math.hypot(playerDx, playerDy));
+    const orthoX = -(playerDy / playerDistance);
+    const orthoY = playerDx / playerDistance;
+    const escortDx = escort.x - eliteEnemy.x;
+    const escortDy = escort.y - eliteEnemy.y;
+    const lateral = escortDx * orthoX + escortDy * orthoY;
+    const peelSign = Math.abs(lateral) > 4 ? Math.sign(lateral) : escort.id % 2 === 0 ? -1 : 1;
+    escort.hitOffsetX = clamp(escort.hitOffsetX + orthoX * peelSign * (1.8 + crackRatio * 4.4), -16, 16);
+    escort.hitOffsetY = clamp(escort.hitOffsetY + orthoY * peelSign * (1.8 + crackRatio * 4.4), -16, 16);
   }
 
   private syncEscortPressureFromElite(
