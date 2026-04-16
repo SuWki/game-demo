@@ -1512,6 +1512,18 @@ export class GameScene extends Phaser.Scene {
     const dominantRoute = this.engine.getDominantRoute();
     const state = this.engine.getState();
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
+    const flowChainRatio =
+      battle.killFlowSec > 0
+        ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
+        : 0;
+    const flowGuideColor =
+      liveFocusRoute === 'crit'
+        ? this.mixColor(accentColor, 0xffd882, 0.24)
+        : liveFocusRoute === 'pierce'
+          ? this.mixColor(accentColor, 0xdff6ff, 0.22)
+          : liveFocusRoute === 'dash'
+            ? this.mixColor(accentColor, 0xbfffea, 0.22)
+            : this.mixColor(accentColor, 0xfff2c3, 0.18);
     const pierceReadRatio = liveFocusRoute === 'pierce' ? Math.min(1, state.routeCounts.pierce / 5) : 0;
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
     let targetingIntensity = 0;
@@ -1547,6 +1559,12 @@ export class GameScene extends Phaser.Scene {
       if (distanceToPlayer <= 180) {
         const linkAlpha = 0.04 + (1 - distanceToPlayer / 180) * 0.14;
         this.graphics.lineStyle(1.2, XP_ORB_STROKE, linkAlpha);
+        this.graphics.lineBetween(screen.x, screen.y, playerScreen.x, playerScreen.y);
+      }
+      if (flowChainRatio > 0.12 && distanceToPlayer <= 210 + battle.killFlowCount * 16) {
+        const flowLinkAlpha =
+          0.03 + flowChainRatio * (0.08 + Math.max(0, 1 - distanceToPlayer / (210 + battle.killFlowCount * 16)) * 0.08);
+        this.graphics.lineStyle(1.5, flowGuideColor, flowLinkAlpha);
         this.graphics.lineBetween(screen.x, screen.y, playerScreen.x, playerScreen.y);
       }
       this.graphics.fillStyle(XP_ORB_FILL, 0.12 + pulse * 0.14 + orbSpeedRatio * 0.08);
@@ -2720,6 +2738,29 @@ export class GameScene extends Phaser.Scene {
         eliteScreen.x + elite.radius + 24 + eliteRecovery * 10,
         eliteScreen.y,
       );
+      const chaseGuideColor = this.mixColor(crackColor, 0xffffff, 0.18);
+      const chaseGuideAlpha = 0.04 + eliteRecovery * 0.14;
+      this.graphics.lineStyle(1.6, chaseGuideColor, chaseGuideAlpha);
+      this.graphics.lineBetween(playerScreen.x, playerScreen.y, breachTipX, breachTipY);
+      for (let marker = 0; marker < 3; marker += 1) {
+        const markerDistance = breachLength * (0.32 + marker * 0.18);
+        const markerX = eliteScreen.x + chaseDirX * markerDistance;
+        const markerY = eliteScreen.y + chaseDirY * markerDistance;
+        const markerSize = 6 + eliteRecovery * 4 + marker * 1.5;
+        this.graphics.lineStyle(1.4, chaseGuideColor, chaseGuideAlpha + 0.04 - marker * 0.01);
+        this.graphics.lineBetween(
+          markerX - chaseDirX * markerSize + chaseOrthoX * markerSize * 0.8,
+          markerY - chaseDirY * markerSize + chaseOrthoY * markerSize * 0.8,
+          markerX,
+          markerY,
+        );
+        this.graphics.lineBetween(
+          markerX - chaseDirX * markerSize - chaseOrthoX * markerSize * 0.8,
+          markerY - chaseDirY * markerSize - chaseOrthoY * markerSize * 0.8,
+          markerX,
+          markerY,
+        );
+      }
       for (const entry of escorts) {
         const escortRecovery = this.getEnemyRecoveryRatio(entry.enemy);
         if (escortRecovery <= 0.05) {

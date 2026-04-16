@@ -2256,14 +2256,17 @@ export class RunEngine {
       battle.killFlowCount = 1;
     }
 
-    battle.killFlowSec = Math.max(battle.killFlowSec, enemy.elite ? 1 : 0.72);
+    battle.killFlowSec = Math.max(
+      battle.killFlowSec,
+      enemy.elite ? 1.08 : 0.76 + Math.min(0.12, battle.killFlowCount * 0.03),
+    );
     battle.playerMoveBoostSec = Math.max(
       battle.playerMoveBoostSec,
-      enemy.elite ? 0.24 : 0.12 + Math.min(0.14, battle.killFlowCount * 0.03),
+      enemy.elite ? 0.26 : 0.13 + Math.min(0.16, battle.killFlowCount * 0.034),
     );
     battle.tempoPulseSec = Math.max(
       battle.tempoPulseSec,
-      enemy.elite ? 0.34 : 0.16 + Math.min(0.18, battle.killFlowCount * 0.05),
+      enemy.elite ? 0.36 : 0.17 + Math.min(0.2, battle.killFlowCount * 0.054),
     );
     return battle.killFlowCount;
   }
@@ -2295,6 +2298,10 @@ export class RunEngine {
 
     const template = BATTLE_TEMPLATES[battle.templateId];
     const pattern = template.spawnRule?.pattern ?? 'surround';
+    const flowRatio =
+      battle.killFlowSec > 0
+        ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
+        : 0;
     let nudge = source === 'kill' ? 0.05 : 0.026;
     nudge += Math.min(source === 'kill' ? 0.055 : 0.032, intensity * (source === 'kill' ? 0.008 : 0.0028));
     if (activeRegularCount <= Math.max(2, Math.floor(regularEnemyCap * 0.36))) {
@@ -2302,6 +2309,12 @@ export class RunEngine {
     }
     if (missingCount >= 3) {
       nudge += 0.018;
+    }
+    if (battle.killFlowCount >= 2) {
+      nudge += 0.008 + Math.min(0.018, battle.killFlowCount * 0.004 + flowRatio * 0.012);
+    }
+    if (source === 'pickup' && flowRatio > 0) {
+      nudge += 0.006 + flowRatio * 0.01;
     }
     if (pattern === 'pincers') {
       nudge += 0.008;
@@ -3939,28 +3952,43 @@ export class RunEngine {
   private updateExperienceOrbs(battle: BattleState, dt: number): void {
     const pickupRadius = this.getPickupRadius();
     const magnetRadius = this.getMagnetRadius();
+    const flowRatio =
+      battle.killFlowSec > 0
+        ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
+        : 0;
+    const flowCarry = flowRatio > 0 ? battle.killFlowCount * 0.72 + flowRatio * 1.24 : 0;
+    const effectiveMagnetRadius = magnetRadius + (flowRatio > 0 ? 30 + battle.killFlowCount * 10 : 0);
     const survivors = [];
 
     for (const orb of battle.experienceOrbs) {
       const distance = Math.hypot(orb.x - battle.playerX, orb.y - battle.playerY);
       if (distance <= pickupRadius) {
         this.gainExperience(orb.value);
-        battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.18);
-        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.14 + Math.min(0.12, orb.value * 0.006));
+        battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.18 + Math.min(0.08, flowCarry * 0.026));
+        battle.tempoPulseSec = Math.max(
+          battle.tempoPulseSec,
+          0.14 + Math.min(0.16, orb.value * 0.006 + flowCarry * 0.028),
+        );
         if (battle.killFlowSec > 0) {
-          battle.killFlowSec = Math.max(battle.killFlowSec, 0.26 + Math.min(0.18, orb.value * 0.01));
+          battle.killFlowSec = Math.max(
+            battle.killFlowSec,
+            0.3 + Math.min(0.24, orb.value * 0.01 + flowCarry * 0.042),
+          );
           battle.playerMoveBoostSec = Math.max(
             battle.playerMoveBoostSec,
-            0.1 + Math.min(0.12, battle.killFlowCount * 0.03),
+            0.12 + Math.min(0.14, battle.killFlowCount * 0.03 + flowCarry * 0.018),
           );
           battle.tempoPulseSec = Math.max(
             battle.tempoPulseSec,
-            0.16 + Math.min(0.16, battle.killFlowCount * 0.04 + orb.value * 0.004),
+            0.18 + Math.min(0.2, battle.killFlowCount * 0.04 + orb.value * 0.004 + flowCarry * 0.02),
           );
         }
-        this.feedBattleFlow(battle, 'pickup', orb.value);
+        this.feedBattleFlow(battle, 'pickup', orb.value + flowCarry * 2.4);
         if (this.state.status === 'battle') {
-          battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - Math.min(0.02, 0.006 + orb.value * 0.0007));
+          battle.fireCooldownSec = Math.max(
+            0.035,
+            battle.fireCooldownSec - Math.min(0.026, 0.006 + orb.value * 0.0007 + flowCarry * 0.0024),
+          );
         }
         this.createCombatPulse(battle, {
           x: battle.playerX,
@@ -3988,7 +4016,7 @@ export class RunEngine {
           growthPerSec: 110,
           innerRadiusRatio: 0.72,
         });
-        const chainVacuumRadius = magnetRadius * 0.78;
+        const chainVacuumRadius = effectiveMagnetRadius * (flowRatio > 0 ? 0.92 : 0.78);
         for (const linkedOrb of battle.experienceOrbs) {
           if (linkedOrb === orb) {
             continue;
@@ -3998,7 +4026,10 @@ export class RunEngine {
             continue;
           }
           const linkedAngle = Math.atan2(battle.playerY - linkedOrb.y, battle.playerX - linkedOrb.x);
-          const linkedSpeed = Math.max(220, 280 + Math.max(0, chainVacuumRadius - linkedDistance) * 2.8);
+          const linkedSpeed = Math.max(
+            240,
+            300 + Math.max(0, chainVacuumRadius - linkedDistance) * 3 + flowCarry * 26,
+          );
           linkedOrb.velocityX = Math.cos(linkedAngle) * linkedSpeed;
           linkedOrb.velocityY = Math.sin(linkedAngle) * linkedSpeed;
         }
@@ -4006,12 +4037,15 @@ export class RunEngine {
         continue;
       }
 
-      if (distance <= magnetRadius) {
+      if (distance <= effectiveMagnetRadius) {
         const angle = Math.atan2(battle.playerY - orb.y, battle.playerX - orb.x);
         const attraction =
-          (220 + Math.max(0, magnetRadius - distance) * 3 + Math.min(90, battle.tempoPulseSec * 420)) *
-          (distance <= magnetRadius * 0.42 ? 1.2 : 1);
-        const pullBlend = Math.min(1, 0.2 + dt * 8);
+          (220 +
+            Math.max(0, effectiveMagnetRadius - distance) * 3.1 +
+            Math.min(90, battle.tempoPulseSec * 420) +
+            flowCarry * 28) *
+          (distance <= effectiveMagnetRadius * 0.42 ? 1.24 : 1);
+        const pullBlend = Math.min(1, 0.22 + dt * (8.5 + flowCarry * 0.9));
         const targetVX = Math.cos(angle) * attraction;
         const targetVY = Math.sin(angle) * attraction;
         orb.velocityX += (targetVX - orb.velocityX) * pullBlend;
@@ -4525,6 +4559,7 @@ export class RunEngine {
       const dy = enemy.y - battle.playerY;
       const distance = Math.max(1, Math.hypot(dx, dy));
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+      const eliteLinkDistance = activeElite ? Math.hypot(enemy.x - activeElite.x, enemy.y - activeElite.y) : Number.POSITIVE_INFINITY;
       const eliteEscortCount =
         enemy.elite
           ? this.countNearbyAllies(
@@ -4537,13 +4572,15 @@ export class RunEngine {
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
 
       if (activeElite && activeEliteRecovery > 0.18) {
+        const crackEscortGap = Math.max(0, 2 - activeEliteEscortCount);
         if (enemy.id === activeElite.id) {
-          score += 36 + activeEliteRecovery * 34 + activeEliteEscortCount * 6;
-        } else if (
-          enemy.role === 'escort' &&
-          Math.hypot(enemy.x - activeElite.x, enemy.y - activeElite.y) <= 224
-        ) {
-          score -= 12 + activeEliteRecovery * 18;
+          score += 44 + activeEliteRecovery * 42 + activeEliteEscortCount * 5 + crackEscortGap * 18;
+          if (moveMagnitude > 0.05) {
+            const chaseAlignment = ((dx / distance) * battle.playerMoveDirX) + ((dy / distance) * battle.playerMoveDirY);
+            score += Math.max(0, chaseAlignment) * (18 + crackEscortGap * 10);
+          }
+        } else if (enemy.role === 'escort' && eliteLinkDistance <= 236) {
+          score -= 18 + activeEliteRecovery * 24 + crackEscortGap * 12;
         }
       }
 
@@ -4565,6 +4602,8 @@ export class RunEngine {
         score += enemy.archetype === 'ranged' ? 6 : 0;
         score += recoveryRatio * 16;
         score += enemy.elite && laneScore >= 1.2 ? 24 + laneScore * 8 : 0;
+        score += activeElite && enemy.id === activeElite.id && activeEliteRecovery > 0.18 ? 18 + laneScore * 10 : 0;
+        score -= activeElite && enemy.role === 'escort' && activeEliteRecovery > 0.18 && eliteLinkDistance <= 236 ? 8 : 0;
         if (enemy.elite && eliteEscortCount > 0) {
           score += eliteEscortCount * (laneScore >= 1.2 ? 10 : 4);
         }
@@ -5036,6 +5075,20 @@ export class RunEngine {
       growthPerSec: 154,
       innerRadiusRatio: 0.72,
     });
+    const crackFollowThrough = crackedEscorts > 0 ? Math.min(0.18, crackedEscorts * 0.05) : 0;
+    battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (0.01 + crackFollowThrough * 0.5));
+    battle.playerMoveBoostSec = Math.max(
+      battle.playerMoveBoostSec,
+      crackedEscorts > 0 ? 0.16 + crackFollowThrough : 0.12,
+    );
+    battle.tempoPulseSec = Math.max(
+      battle.tempoPulseSec,
+      crackedEscorts > 0 ? 0.26 + crackFollowThrough : 0.22,
+    );
+    battle.eliteSupportCooldownSec = Math.max(
+      battle.eliteSupportCooldownSec,
+      crackedEscorts > 0 ? 1.08 + crackedEscorts * 0.2 : 0.72,
+    );
 
     if (critStage === 'committed' || critStage === 'matured') {
       const crackCarry = crackedEscorts > 0 ? Math.min(0.28, crackedEscorts * (critStage === 'matured' ? 0.09 : 0.06)) : 0;
