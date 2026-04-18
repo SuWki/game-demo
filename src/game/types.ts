@@ -392,6 +392,7 @@ export interface EnemyProjectileState {
   damage: number;
   lifeSec: number;
   radius: number;
+  respectsSafeWindow?: boolean;
 }
 
 export interface PlayerInputState {

@@ -425,7 +425,13 @@ export class RunEngine {
     this.updateShooting(battle, simulationDt);
     this.updateBullets(battle, simulationDt);
     this.updateEnemies(battle, simulationDt);
+    if (this.state.battle !== battle) {
+      return;
+    }
     this.updateEnemyProjectiles(battle, simulationDt);
+    if (this.state.battle !== battle) {
+      return;
+    }
     this.updatePulses(battle, dt);
     this.updateExperienceOrbs(battle, simulationDt);
 
@@ -437,10 +443,7 @@ export class RunEngine {
       );
     }
 
-    if (this.state.stats.hp <= 0) {
-      this.finalizeBossPressureMetrics(battle);
-      this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
-      this.finishRun('defeat', 'hpDepleted');
+    if (this.finishBattleOnPlayerDefeat(battle)) {
       return;
     }
 
@@ -799,6 +802,7 @@ export class RunEngine {
         this.firePressureVolley(battle, phase.patternVolleyCount ?? 0, {
           spreadRad: phase.patternVolleySpreadRad ?? 0.2,
           shotsPerShooter: phase.patternVolleyShotsPerShooter ?? 2,
+          respectsSafeWindow: true,
         });
         return;
       default:
@@ -1033,11 +1037,12 @@ export class RunEngine {
     safeEnd: number,
   ): number[] {
     const slotPositions: number[] = [];
+    const safePadding = 30;
 
     for (let index = 0; index < shotSlots; index += 1) {
       const ratio = shotSlots === 1 ? 0.5 : index / (shotSlots - 1);
       const position = margin + ratio * (dimension - margin * 2);
-      if (position > safeStart - 18 && position < safeEnd + 18) {
+      if (position > safeStart - safePadding && position < safeEnd + safePadding) {
         continue;
       }
       slotPositions.push(position);
@@ -1045,12 +1050,42 @@ export class RunEngine {
 
     if (slotPositions.length === 0) {
       slotPositions.push(
-        clamp(safeStart - 36, margin, dimension - margin),
-        clamp(safeEnd + 36, margin, dimension - margin),
+        clamp(safeStart - (safePadding + 18), margin, dimension - margin),
+        clamp(safeEnd + safePadding + 18, margin, dimension - margin),
       );
     }
 
     return slotPositions;
+  }
+
+  private isPointInsidePressureSafeWindow(
+    battle: BattleState,
+    x: number,
+    y: number,
+    padding = 0,
+  ): boolean {
+    if (!battle.pressureSafeWindowAxis || battle.pressureSafeWindowSec <= 0 || battle.pressureSafeWindowSpan <= 0) {
+      return false;
+    }
+
+    const safeStartX = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5 - padding;
+    const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5 + padding;
+
+    if (battle.pressureSafeWindowAxis === 'vertical') {
+      return x >= safeStartX && x <= safeEndX;
+    }
+
+    if (battle.pressureSafeWindowAxis === 'horizontal') {
+      return y >= safeStartX && y <= safeEndX;
+    }
+
+    if (battle.pressureSafeWindowSecondarySpan <= 0) {
+      return false;
+    }
+
+    const safeStartY = battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5 - padding;
+    const safeEndY = battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
+    return x >= safeStartX && x <= safeEndX && y >= safeStartY && y <= safeEndY;
   }
 
   private getPressureProjectileStats(
@@ -1098,7 +1133,9 @@ export class RunEngine {
 
     for (const position of slotPositions) {
       if (axis === 'vertical') {
-        this.spawnEnemyProjectile(battle, position, view.top - 22, projectileSpeed, projectileDamage, 6, Math.PI / 2);
+        this.spawnEnemyProjectile(battle, position, view.top - 22, projectileSpeed, projectileDamage, 6, Math.PI / 2, {
+          respectsSafeWindow: true,
+        });
         this.spawnEnemyProjectile(
           battle,
           position,
@@ -1107,12 +1144,19 @@ export class RunEngine {
           projectileDamage,
           6,
           -Math.PI / 2,
+          {
+            respectsSafeWindow: true,
+          },
         );
         continue;
       }
 
-      this.spawnEnemyProjectile(battle, view.left - 22, position, projectileSpeed, projectileDamage, 6, 0);
-      this.spawnEnemyProjectile(battle, view.right + 22, position, projectileSpeed, projectileDamage, 6, Math.PI);
+      this.spawnEnemyProjectile(battle, view.left - 22, position, projectileSpeed, projectileDamage, 6, 0, {
+        respectsSafeWindow: true,
+      });
+      this.spawnEnemyProjectile(battle, view.right + 22, position, projectileSpeed, projectileDamage, 6, Math.PI, {
+        respectsSafeWindow: true,
+      });
     }
   }
 
@@ -1152,7 +1196,9 @@ export class RunEngine {
     const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, damageMultiplier);
 
     for (const x of xSlots) {
-      this.spawnEnemyProjectile(battle, x, view.top - 24, projectileSpeed, projectileDamage, 6, Math.PI / 2);
+      this.spawnEnemyProjectile(battle, x, view.top - 24, projectileSpeed, projectileDamage, 6, Math.PI / 2, {
+        respectsSafeWindow: true,
+      });
       this.spawnEnemyProjectile(
         battle,
         x,
@@ -1161,13 +1207,31 @@ export class RunEngine {
         projectileDamage,
         6,
         -Math.PI / 2,
+        {
+          respectsSafeWindow: true,
+        },
       );
     }
 
     for (const y of ySlots) {
-      this.spawnEnemyProjectile(battle, view.left - 24, y, projectileSpeed, projectileDamage, 6, 0);
-      this.spawnEnemyProjectile(battle, view.right + 24, y, projectileSpeed, projectileDamage, 6, Math.PI);
+      this.spawnEnemyProjectile(battle, view.left - 24, y, projectileSpeed, projectileDamage, 6, 0, {
+        respectsSafeWindow: true,
+      });
+      this.spawnEnemyProjectile(battle, view.right + 24, y, projectileSpeed, projectileDamage, 6, Math.PI, {
+        respectsSafeWindow: true,
+      });
     }
+  }
+
+  private finishBattleOnPlayerDefeat(battle: BattleState): boolean {
+    if (this.state.stats.hp > 0 || this.state.status === 'result' || this.state.battle !== battle) {
+      return false;
+    }
+
+    this.finalizeBossPressureMetrics(battle);
+    this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
+    this.finishRun('defeat', 'hpDepleted');
+    return true;
   }
 
   private recordBossPhaseMetrics(
@@ -3129,6 +3193,10 @@ export class RunEngine {
             spinRate: enemy.elite ? 6.8 : 5.2,
           });
           this.enqueueAudio('hurt');
+          if (this.finishBattleOnPlayerDefeat(battle)) {
+            battle.enemies = survivors;
+            return;
+          }
         }
         const bounceAngle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
         const bounceDistance = enemy.elite ? 14 : 22;
@@ -3820,6 +3888,9 @@ export class RunEngine {
     damage: number,
     radius: number,
     angleOverride?: number,
+    options?: {
+      respectsSafeWindow?: boolean;
+    },
   ): void {
     const shotAngle = angleOverride ?? Math.atan2(battle.playerY - y, battle.playerX - x);
     battle.enemyProjectiles.push({
@@ -3831,6 +3902,7 @@ export class RunEngine {
       damage,
       lifeSec: 3.2,
       radius,
+      respectsSafeWindow: options?.respectsSafeWindow ?? false,
     });
     this.createCombatPulse(battle, {
       x,
@@ -3853,6 +3925,7 @@ export class RunEngine {
     options?: {
       spreadRad?: number;
       shotsPerShooter?: number;
+      respectsSafeWindow?: boolean;
     },
   ): void {
     if (requestedShooterCount <= 0 || !battle.eliteAlive) {
@@ -3891,6 +3964,9 @@ export class RunEngine {
           Math.max(1, Math.round(shooter.contactDamage * projectileDamageMultiplier)),
           projectileRadius,
           baseAngle + angleOffset,
+          {
+            respectsSafeWindow: options?.respectsSafeWindow ?? false,
+          },
         );
       }
       if (!shooter.elite) {
@@ -3915,6 +3991,10 @@ export class RunEngine {
         projectile.y < -48 ||
         projectile.y > ARENA_HEIGHT + 48
       ) {
+        continue;
+      }
+
+      if (projectile.respectsSafeWindow && this.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 10)) {
         continue;
       }
 
@@ -3946,6 +4026,10 @@ export class RunEngine {
             spinRate: projectile.radius > 5 ? 6 : 4.8,
           });
           this.enqueueAudio('hurt');
+          if (this.finishBattleOnPlayerDefeat(battle)) {
+            battle.enemyProjectiles = survivors;
+            return;
+          }
         }
         continue;
       }
