@@ -3,10 +3,12 @@ import { RARITY_COLOR_MAP } from '../data/balance';
 import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import { describeContentEffects } from '../data/upgrades';
 import type {
+  ContentEffect,
   EventDefinition,
   NodeOption,
   OverlayHudSnapshot,
   OverlayMetaSummary,
+  RouteReference,
   RunResult,
   ToastTone,
   UpgradeDefinition,
@@ -292,7 +294,8 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.panelLayer.className = `panel-layer ${config.panelLayerClassName ?? ''}`.trim();
     this.panelLayer.classList.remove('hidden');
-    const itemCountClass = config.items.length === 1 ? 'is-single-choice' : '';
+    const itemCountClass =
+      config.items.length === 1 ? 'is-single-choice' : config.items.length === 2 ? 'is-two-choice' : '';
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel ${config.panelClassName}">
         ${config.alertText ? `<div class="panel-alert">${config.alertText}</div>` : ''}
@@ -342,8 +345,9 @@ export class OverlayController {
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
-    const effectText = this.getChoiceEffectSummary(upgrade.effects) || upgrade.description;
+    const effectText = this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 2 }) || upgrade.description;
     const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
+    const focusLabel = this.getEffectFocusLabel(upgrade.effects);
     return `
       <button
         class="choice-strip choice-strip-upgrade ${upgrade.routeId ? 'is-route-upgrade' : 'is-generic-upgrade'}"
@@ -360,7 +364,10 @@ export class OverlayController {
         </div>
         <div class="choice-strip-foot">
           <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
-          <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
+          <div class="choice-foot-trail">
+            <span class="choice-effect-tag">${focusLabel}</span>
+            <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
+          </div>
         </div>
       </button>
     `;
@@ -370,23 +377,39 @@ export class OverlayController {
     eventDef: EventDefinition,
     option: EventDefinition['options'][number],
   ): string {
-    const routeAccent = this.getRouteAccent(option.routeId);
-    const routeLabel = this.getEventRouteLabel(option.routeId, eventDef.contentKind);
-    const prompt = eventDef.contentKind === 'anomaly' ? '处理' : '执行';
+    const isAnomaly = eventDef.contentKind === 'anomaly';
+    const routeAccent = this.getEventChoiceAccent(eventDef, option);
+    const routeRef = this.getEventRouteReference(eventDef, option);
+    const routeLabel = this.getEventRouteLabel(routeRef, eventDef);
+    const prompt = isAnomaly ? '处理' : '执行';
     const anomalyClass = eventDef.contentKind === 'anomaly' ? ' is-anomaly-event' : '';
+    const effectText = this.getEventOptionDescription(eventDef, option);
+    const actionLabel = this.getEventChoiceActionLabel(eventDef, option);
+    const detailTags = this.getEventChoiceTags(eventDef, option);
     return `
       <button class="choice-strip choice-strip-event${anomalyClass}" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
         <div class="choice-strip-head">
-          <span class="choice-type">${eventDef.contentKind === 'anomaly' ? '异常' : '事件'}</span>
-          <span class="choice-mode-badge">${routeLabel}</span>
+          <span class="choice-type">${isAnomaly ? '异常' : '事件'}</span>
+          ${isAnomaly ? `<span class="choice-mode-badge choice-event-class">${this.getEventClassLabel(eventDef)}</span>` : ''}
+          <span class="choice-mode-badge choice-event-route ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
         </div>
-        <div class="choice-strip-body">
+        <div class="choice-strip-body choice-strip-body-event">
           <strong>${option.label}</strong>
-          <small>${this.getEventOptionDescription(option)}</small>
+          <small>${effectText}</small>
         </div>
-        <div class="choice-strip-side">
-          <span class="choice-side-label">${prompt}</span>
-          <span class="choice-prompt">确认</span>
+        ${
+          detailTags.length > 0
+            ? `<div class="choice-strip-event-meta">${detailTags
+                .map((tag) => `<span class="choice-effect-tag">${tag}</span>`)
+                .join('')}</div>`
+            : ''
+        }
+        <div class="choice-strip-foot">
+          <span class="choice-route-boost ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${actionLabel}</span>
+          <div class="choice-foot-trail">
+            <span class="choice-side-label">${prompt}</span>
+            <span class="choice-prompt">确认</span>
+          </div>
         </div>
       </button>
     `;
@@ -421,50 +444,80 @@ export class OverlayController {
     return '首领战';
   }
 
-  private getEventRouteLabel(
-    routeId: EventDefinition['options'][number]['routeId'],
-    contentKind: EventDefinition['contentKind'],
-  ): string {
+  private getEventRouteLabel(routeId: RouteReference | undefined, eventDef: EventDefinition): string {
     if (!routeId || routeId === 'dominant') {
-      return contentKind === 'anomaly' ? '当前路线' : '当前处理';
+      if (eventDef.contentKind !== 'anomaly') {
+        return '当前处理';
+      }
+      switch (eventDef.anomalyClass) {
+        case 'hybrid':
+          return '并线样本';
+        case 'bossEcho':
+          return 'Boss 预读';
+        case 'distortion':
+          return '异常读数';
+        default:
+          return '当前路线';
+      }
     }
     return ROUTE_NAME_MAP[routeId];
   }
 
-  private getEventOptionDescription(option: EventDefinition['options'][number]): string {
-    return this.getChoiceEffectSummary(option.effects) || option.description;
+  private getEventOptionDescription(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
+    const summary = this.getChoiceEffectSummary(option.effects, {
+      includeRoute: eventDef.contentKind === 'anomaly',
+      maxSegments: eventDef.contentKind === 'anomaly' ? 3 : 2,
+    });
+    return summary || option.description;
   }
 
   private getChoiceEffectSummary(
     effects?: UpgradeDefinition['effects'] | EventDefinition['options'][number]['effects'],
+    options?: {
+      includeRoute?: boolean;
+      maxSegments?: number;
+    },
   ): string {
     if (!effects || effects.length === 0) {
       return '';
     }
 
-    const statsEffect = effects.find((effect) => effect.type === 'stats');
+    const segments: string[] = [];
+    const maxSegments = options?.maxSegments ?? 2;
+    const statsEffect = effects.find((effect): effect is Extract<ContentEffect, { type: 'stats' }> => effect.type === 'stats');
     if (statsEffect) {
-      return describeContentEffects([
-        {
-          type: 'stats',
-          modifiers: {
-            ...statsEffect.modifiers,
+      segments.push(
+        ...describeContentEffects([
+          {
+            type: 'stats',
+            modifiers: {
+              ...statsEffect.modifiers,
+            },
           },
-        },
-      ]);
+        ]).split('，'),
+      );
     }
 
-    const healEffect = effects.find((effect) => effect.type === 'heal');
+    const healEffect = effects.find((effect): effect is Extract<ContentEffect, { type: 'heal' }> => effect.type === 'heal');
     if (healEffect) {
-      return describeContentEffects([
-        {
-          type: 'heal',
-          amount: healEffect.amount,
-        },
-      ]);
+      segments.push(
+        describeContentEffects([
+          {
+            type: 'heal',
+            amount: healEffect.amount,
+          },
+        ]),
+      );
     }
 
-    return '';
+    if (options?.includeRoute) {
+      const routeSummary = this.getRouteEffectSummary(effects);
+      if (routeSummary) {
+        segments.push(routeSummary);
+      }
+    }
+
+    return segments.filter(Boolean).slice(0, maxSegments).join('，');
   }
 
   private getRouteAccent(routeId?: UpgradeDefinition['routeId'] | EventDefinition['options'][number]['routeId']): string {
@@ -472,6 +525,178 @@ export class OverlayController {
       return '#76bfe7';
     }
     return ROUTE_COLOR_MAP[routeId];
+  }
+
+  private getEventChoiceAccent(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
+    const routeRef = this.getEventRouteReference(eventDef, option);
+    if (routeRef && routeRef !== 'dominant') {
+      return this.getRouteAccent(routeRef);
+    }
+
+    if (eventDef.contentKind !== 'anomaly') {
+      return '#76bfe7';
+    }
+
+    switch (eventDef.anomalyClass) {
+      case 'hybrid':
+        return '#ffbd72';
+      case 'bossEcho':
+        return '#ff8f69';
+      case 'distortion':
+        return '#bb8aff';
+      default:
+        return '#76bfe7';
+    }
+  }
+
+  private getEventRouteReference(
+    eventDef: EventDefinition,
+    option: EventDefinition['options'][number],
+  ): RouteReference | undefined {
+    if (option.routeId) {
+      return option.routeId;
+    }
+
+    const firstRouteEffect = option.effects?.find(
+      (effect): effect is Extract<ContentEffect, { type: 'route' }> => effect.type === 'route',
+    );
+    if (firstRouteEffect) {
+      return firstRouteEffect.routeId;
+    }
+
+    if (eventDef.contentKind !== 'anomaly') {
+      return undefined;
+    }
+
+    if (eventDef.routeAffinity) {
+      return eventDef.routeAffinity;
+    }
+
+    if (eventDef.anomalyClass === 'hybrid' || eventDef.anomalyClass === 'bossEcho') {
+      return 'dominant';
+    }
+
+    return undefined;
+  }
+
+  private getRouteEffectSummary(
+    effects: UpgradeDefinition['effects'] | EventDefinition['options'][number]['effects'],
+  ): string {
+    const routeCounts = new Map<RouteReference, number>();
+    for (const effect of effects ?? []) {
+      if (effect.type !== 'route') {
+        continue;
+      }
+      routeCounts.set(effect.routeId, (routeCounts.get(effect.routeId) ?? 0) + 1);
+    }
+
+    const entries = Array.from(routeCounts.entries());
+    if (entries.length === 0) {
+      return '';
+    }
+
+    return entries
+      .map(([routeId, count]) => `${routeId === 'dominant' ? '当前路线' : ROUTE_NAME_MAP[routeId]}推进 +${count}`)
+      .join(' / ');
+  }
+
+  private getEffectFocusLabel(effects?: UpgradeDefinition['effects'] | EventDefinition['options'][number]['effects']): string {
+    const statsEffect = effects?.find((effect): effect is Extract<ContentEffect, { type: 'stats' }> => effect.type === 'stats');
+    if (statsEffect) {
+      const [primaryKey] = Object.keys(statsEffect.modifiers);
+      if (primaryKey) {
+        return this.getStatFocusLabel(primaryKey);
+      }
+    }
+
+    const healEffect = effects?.find((effect): effect is Extract<ContentEffect, { type: 'heal' }> => effect.type === 'heal');
+    if (healEffect) {
+      return healEffect.amount >= 0 ? '续航' : '承压';
+    }
+
+    return '承接';
+  }
+
+  private getStatFocusLabel(statKey: string): string {
+    const labelMap: Record<string, string> = {
+      maxHp: '耐久',
+      damage: '伤害',
+      fireRate: '射速',
+      projectileSpeed: '弹速',
+      critChance: '暴击',
+      critMultiplier: '爆伤',
+      pierce: '穿透',
+      multishot: '扩面',
+      moveSpeed: '移速',
+      dashInterval: '穿梭',
+      dashPulseDamage: '脉冲',
+      dashInvulnerability: '无伤',
+      regeneration: '回复',
+    };
+    return labelMap[statKey] ?? '强化';
+  }
+
+  private getEventClassLabel(eventDef: EventDefinition): string {
+    switch (eventDef.anomalyClass) {
+      case 'routeWindow':
+        return '改道窗';
+      case 'hybrid':
+        return '并线';
+      case 'bossEcho':
+        return '预读';
+      case 'distortion':
+        return '失真';
+      default:
+        return '异常';
+    }
+  }
+
+  private getEventChoiceActionLabel(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
+    if (eventDef.contentKind !== 'anomaly') {
+      return '补一拍';
+    }
+
+    const routeRef = this.getEventRouteReference(eventDef, option);
+    const routeSummary = this.getRouteEffectSummary(option.effects);
+    if (eventDef.anomalyClass === 'routeWindow') {
+      if (routeRef && eventDef.routeAffinity && routeRef !== eventDef.routeAffinity) {
+        return '真改道';
+      }
+      return routeSummary ? '续当前线' : '保留窗口';
+    }
+
+    if (eventDef.anomalyClass === 'hybrid') {
+      return '并线承接';
+    }
+
+    if (eventDef.anomalyClass === 'bossEcho') {
+      return 'Boss 承接';
+    }
+
+    const hasPressure = option.effects?.some((effect) => effect.type === 'heal' && effect.amount < 0);
+    return hasPressure ? '冒压换读法' : '失真补一拍';
+  }
+
+  private getEventChoiceTags(eventDef: EventDefinition, option: EventDefinition['options'][number]): string[] {
+    const tags: string[] = [];
+    const focusLabel = this.getEffectFocusLabel(option.effects);
+    if (focusLabel) {
+      tags.push(focusLabel);
+    }
+
+    const routeSummary = this.getRouteEffectSummary(option.effects);
+    if (routeSummary) {
+      tags.push(routeSummary);
+    } else if (eventDef.contentKind === 'anomaly' && eventDef.anomalyClass === 'hybrid') {
+      tags.push('当前路线承接');
+    }
+
+    const healEffect = option.effects?.find((effect): effect is Extract<ContentEffect, { type: 'heal' }> => effect.type === 'heal');
+    if (healEffect) {
+      tags.push(healEffect.amount < 0 ? '承压' : '留余量');
+    }
+
+    return tags.slice(0, 2);
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {

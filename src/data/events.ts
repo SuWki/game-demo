@@ -1,6 +1,6 @@
 import { getAnomalyRoutePoolOptions } from './anomalyRoutePools';
 import { normalizeEffectsToSingleStat } from './upgrades';
-import type { EventContentKind, EventDefinition } from '../game/types';
+import type { ContentEffect, EventContentKind, EventDefinition, RouteReference } from '../game/types';
 
 const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
@@ -2570,6 +2570,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
 ];
 
 function normalizeEventOptionEffects(
+  eventDef: EventDefinition,
   eventId: string,
   option: EventDefinition['options'][number],
 ): EventDefinition['options'][number] {
@@ -2577,19 +2578,21 @@ function normalizeEventOptionEffects(
     return option;
   }
 
+  const normalizedEffects = normalizeEffectsToSingleStat(
+    `${eventId}:${option.id}`,
+    option.effects,
+    option.routeId && option.routeId !== 'dominant' ? option.routeId : undefined,
+  );
+
   return {
     ...option,
-    effects: normalizeEffectsToSingleStat(
-      `${eventId}:${option.id}`,
-      option.effects,
-      option.routeId && option.routeId !== 'dominant' ? option.routeId : undefined,
-    ),
+    effects: appendImplicitAnomalyRouteSupport(eventDef, option, normalizedEffects),
   };
 }
 
 export const EVENT_CATALOG: EventDefinition[] = RAW_EVENT_CATALOG.map((eventDef) => ({
   ...eventDef,
-  options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef.id, option)),
+  options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef, eventDef.id, option)),
 }));
 
 export const STANDARD_EVENT_CATALOG = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'event');
@@ -2601,4 +2604,65 @@ export function getEventCatalogByKind(contentKind: EventContentKind): EventDefin
     return ANOMALY_EVENT_CATALOG.length > 0 ? ANOMALY_EVENT_CATALOG : EVENT_CATALOG;
   }
   return STANDARD_EVENT_CATALOG.length > 0 ? STANDARD_EVENT_CATALOG : EVENT_CATALOG;
+}
+
+function appendImplicitAnomalyRouteSupport(
+  eventDef: EventDefinition,
+  option: EventDefinition['options'][number],
+  effects: ContentEffect[],
+): ContentEffect[] {
+  if ((eventDef.contentKind ?? 'event') !== 'anomaly') {
+    return effects;
+  }
+
+  if (effects.some((effect) => effect.type === 'route')) {
+    return effects;
+  }
+
+  const routeSupport = resolveImplicitAnomalyRouteSupport(eventDef, option);
+  if (!routeSupport) {
+    return effects;
+  }
+
+  return [
+    ...effects.map((effect) =>
+      effect.type === 'stats'
+        ? {
+            type: 'stats' as const,
+            modifiers: {
+              ...effect.modifiers,
+            },
+          }
+        : { ...effect },
+    ),
+    ...Array.from({ length: routeSupport.count }, () => ({
+      type: 'route' as const,
+      routeId: routeSupport.routeId,
+    })),
+  ];
+}
+
+function resolveImplicitAnomalyRouteSupport(
+  eventDef: EventDefinition,
+  option: EventDefinition['options'][number],
+): { routeId: RouteReference; count: number } | null {
+  const explicitRoute = option.routeId ?? eventDef.routeAffinity;
+
+  if (eventDef.anomalyClass === 'routeWindow') {
+    return explicitRoute ? { routeId: explicitRoute, count: 2 } : null;
+  }
+
+  if (eventDef.anomalyClass === 'bossEcho') {
+    return { routeId: explicitRoute ?? 'dominant', count: 1 };
+  }
+
+  if (eventDef.anomalyClass === 'hybrid') {
+    return { routeId: explicitRoute ?? 'dominant', count: 1 };
+  }
+
+  if (eventDef.anomalyClass === 'distortion') {
+    return { routeId: explicitRoute ?? 'dominant', count: 1 };
+  }
+
+  return null;
 }
