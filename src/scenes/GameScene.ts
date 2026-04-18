@@ -1667,12 +1667,26 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.renderEliteEscortField(battle, camera);
+    const pickupLeadRatio =
+      battle.pickupLeadEnemyId === null
+        ? 0
+        : Phaser.Math.Clamp(battle.pickupLeadSec / 0.36, 0, 1);
+    const pickupLeadFlowRatio =
+      battle.pickupFlowSec > 0
+        ? Phaser.Math.Clamp(
+            battle.pickupFlowSec /
+              (battle.pickupFlowCount >= 4 ? 0.88 : battle.pickupFlowCount === 3 ? 0.8 : battle.pickupFlowCount === 2 ? 0.72 : 0.62),
+            0,
+            1,
+          )
+        : 0;
 
     for (const enemy of battle.enemies) {
       const flashRatio = Math.min(1, enemy.hitFlashSec / 0.22);
       const spawnRatio = Math.min(1, enemy.spawnFlashSec / (enemy.elite ? 0.46 : 0.28));
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
       const pressureRatio = this.getEnemyPressureRatio(enemy);
+      const leadFocusRatio = battle.pickupLeadEnemyId === enemy.id ? pickupLeadRatio : 0;
       const enemyFill = this.mixColor(this.getEnemyFillColor(enemy), 0xffffff, flashRatio * 0.55 + recoveryRatio * 0.1);
       const enemyStroke = this.mixColor(this.getEnemyStrokeColor(enemy), 0xffffff, flashRatio * 0.4 + recoveryRatio * 0.16);
       const onScreen = this.isVisibleInCamera(camera, enemy.x, enemy.y, enemy.radius + 30);
@@ -1706,6 +1720,65 @@ export class GameScene extends Phaser.Scene {
 
       if (!onScreen) {
         continue;
+      }
+
+      if (!enemy.elite && leadFocusRatio > 0.08) {
+        const leadColor = this.mixColor(0x9df7c5, enemyStroke, 0.28);
+        const faceAngle = Math.atan2(playerScreen.y - screen.y, playerScreen.x - screen.x);
+        this.graphics.fillStyle(leadColor, 0.03 + leadFocusRatio * 0.07);
+        this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 6 + pickupLeadFlowRatio * 3);
+        this.graphics.lineStyle(1.8, leadColor, 0.14 + leadFocusRatio * 0.24);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 12 + pickupLeadFlowRatio * 6);
+        if (enemy.archetype === 'standard') {
+          this.graphics.lineStyle(2, leadColor, 0.16 + leadFocusRatio * 0.2);
+          this.graphics.lineBetween(
+            screen.x + Math.cos(faceAngle - 0.2) * (enemy.radius + 3),
+            screen.y + Math.sin(faceAngle - 0.2) * (enemy.radius + 3),
+            screen.x + Math.cos(faceAngle) * (enemy.radius + 15 + leadFocusRatio * 8),
+            screen.y + Math.sin(faceAngle) * (enemy.radius + 15 + leadFocusRatio * 8),
+          );
+          this.graphics.lineBetween(
+            screen.x + Math.cos(faceAngle + 0.2) * (enemy.radius + 3),
+            screen.y + Math.sin(faceAngle + 0.2) * (enemy.radius + 3),
+            screen.x + Math.cos(faceAngle) * (enemy.radius + 15 + leadFocusRatio * 8),
+            screen.y + Math.sin(faceAngle) * (enemy.radius + 15 + leadFocusRatio * 8),
+          );
+        } else if (enemy.archetype === 'brute') {
+          this.graphics.fillStyle(leadColor, 0.04 + leadFocusRatio * 0.08);
+          this.graphics.fillTriangle(
+            screen.x + Math.cos(faceAngle) * (enemy.radius + 18 + leadFocusRatio * 10),
+            screen.y + Math.sin(faceAngle) * (enemy.radius + 18 + leadFocusRatio * 10),
+            screen.x + Math.cos(faceAngle + 0.4) * (enemy.radius + 4),
+            screen.y + Math.sin(faceAngle + 0.4) * (enemy.radius + 4),
+            screen.x + Math.cos(faceAngle - 0.4) * (enemy.radius + 4),
+            screen.y + Math.sin(faceAngle - 0.4) * (enemy.radius + 4),
+          );
+        } else if (enemy.archetype === 'skirmisher') {
+          this.graphics.lineStyle(2, leadColor, 0.16 + leadFocusRatio * 0.22);
+          this.graphics.lineBetween(
+            screen.x - enemy.radius - 10,
+            screen.y - enemy.radius - 8,
+            screen.x + enemy.radius + 6,
+            screen.y - 2,
+          );
+          this.graphics.lineBetween(
+            screen.x - enemy.radius - 10,
+            screen.y + enemy.radius + 8,
+            screen.x + enemy.radius + 6,
+            screen.y + 2,
+          );
+        } else if (enemy.archetype === 'ranged') {
+          const bracket = enemy.radius + 12 + leadFocusRatio * 6;
+          this.graphics.lineStyle(1.8, leadColor, 0.14 + leadFocusRatio * 0.22);
+          this.graphics.lineBetween(screen.x - bracket, screen.y - bracket, screen.x - bracket + 10, screen.y - bracket);
+          this.graphics.lineBetween(screen.x - bracket, screen.y - bracket, screen.x - bracket, screen.y - bracket + 10);
+          this.graphics.lineBetween(screen.x + bracket, screen.y - bracket, screen.x + bracket - 10, screen.y - bracket);
+          this.graphics.lineBetween(screen.x + bracket, screen.y - bracket, screen.x + bracket, screen.y - bracket + 10);
+          this.graphics.lineBetween(screen.x - bracket, screen.y + bracket, screen.x - bracket + 10, screen.y + bracket);
+          this.graphics.lineBetween(screen.x - bracket, screen.y + bracket, screen.x - bracket, screen.y + bracket - 10);
+          this.graphics.lineBetween(screen.x + bracket, screen.y + bracket, screen.x + bracket - 10, screen.y + bracket);
+          this.graphics.lineBetween(screen.x + bracket, screen.y + bracket, screen.x + bracket, screen.y + bracket - 10);
+        }
       }
 
       this.graphics.fillStyle(0x000000, enemy.elite ? 0.24 : 0.18);

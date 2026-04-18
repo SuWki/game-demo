@@ -2378,6 +2378,37 @@ export class RunEngine {
     return Math.min(1, battle.pickupFlowSec / this.getPickupFlowWindowSec(battle.pickupFlowCount));
   }
 
+  private getKillFlowRatio(battle: BattleState): number {
+    if (battle.killFlowSec <= 0 || battle.killFlowCount <= 0) {
+      return 0;
+    }
+
+    return Math.min(
+      1,
+      battle.killFlowSec /
+        (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72),
+    );
+  }
+
+  private getPickupLeadRatio(battle: BattleState): number {
+    if (battle.pickupLeadEnemyId === null || battle.pickupLeadSec <= 0) {
+      return 0;
+    }
+
+    return Math.min(1, battle.pickupLeadSec / 0.36);
+  }
+
+  private getOrdinaryBattleSurgeRatio(battle: BattleState): number {
+    return Math.min(1, this.getPickupFlowRatio(battle) * 0.74 + this.getKillFlowRatio(battle) * 0.56);
+  }
+
+  private isPickupLeadEnemy(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+  ): boolean {
+    return battle.pickupLeadEnemyId === enemy.id && battle.pickupLeadSec > 0.02;
+  }
+
   private registerPickupFlow(battle: BattleState, orbValue: number): number {
     if (battle.pickupFlowSec > 0) {
       battle.pickupFlowCount = Math.min(5, battle.pickupFlowCount + 1);
@@ -2935,6 +2966,8 @@ export class RunEngine {
     const target = this.getNearestEnemy(battle);
     const critStage = this.getRouteBuildStage('crit');
     const dashStage = this.getRouteBuildStage('dash');
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+    const pickupLeadRatio = this.getPickupLeadRatio(battle);
     const effectiveFireRate = this.getEffectiveFireRate(battle);
     battle.fireCooldownSec = 1 / effectiveFireRate;
     const fallbackAngle =
@@ -2947,6 +2980,7 @@ export class RunEngine {
     const targetDistance = target ? Math.hypot(target.x - battle.playerX, target.y - battle.playerY) : Number.POSITIVE_INFINITY;
     const targetHpRatio = target ? target.hp / Math.max(1, target.maxHp) : 1;
     const eliteCrackRatio = target?.elite ? this.getEliteCrackWindowRatio(battle) : 0;
+    const targetIsPickupLead = target ? this.isPickupLeadEnemy(battle, target) : false;
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
     const targetAlignment =
       target && moveMagnitude > 0.05
@@ -3026,6 +3060,22 @@ export class RunEngine {
       projectileSpeed *= 1 + Math.min(0.04, killFlowBoost * 0.012);
       bulletLifeSec += Math.min(0.08, killFlowBoost * 0.03);
     }
+    if (targetIsPickupLead && target && !target.elite) {
+      projectileSpeed *= 1 + ordinarySurgeRatio * 0.04 + pickupLeadRatio * 0.05;
+      bulletLifeSec += 0.05 + ordinarySurgeRatio * 0.04 + pickupLeadRatio * 0.04;
+      battle.fireCooldownSec = Math.max(
+        0.035,
+        battle.fireCooldownSec - (0.006 + ordinarySurgeRatio * 0.008 + pickupLeadRatio * 0.01),
+      );
+      battle.playerMoveBoostSec = Math.max(
+        battle.playerMoveBoostSec,
+        0.08 + ordinarySurgeRatio * 0.08 + pickupLeadRatio * 0.06,
+      );
+      battle.tempoPulseSec = Math.max(
+        battle.tempoPulseSec,
+        0.16 + ordinarySurgeRatio * 0.08 + pickupLeadRatio * 0.08,
+      );
+    }
     if (eliteCrackRatio > 0.08) {
       battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.09 + eliteCrackRatio * 0.02);
     }
@@ -3037,7 +3087,10 @@ export class RunEngine {
           ? (battle.dashDriveSec > 0 ? 6.6 : 5.2)
           : battle.critOverdriveSec > 0
             ? 6.8
-            : 5.6) + killFlowBoost * 0.7 + eliteCrackRatio * (focusRoute === 'crit' ? 1.4 : focusRoute === 'pierce' ? 1.1 : 0.7);
+            : 5.6) +
+      killFlowBoost * 0.7 +
+      eliteCrackRatio * (focusRoute === 'crit' ? 1.4 : focusRoute === 'pierce' ? 1.1 : 0.7) +
+      (targetIsPickupLead ? 0.9 + ordinarySurgeRatio * 1.2 + pickupLeadRatio * 1 : 0);
     battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.08 + killFlowBoost * 0.01);
     battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, 0.11);
     battle.playerShotRecoilStrength = Math.max(
@@ -3106,6 +3159,8 @@ export class RunEngine {
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
         const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
         const eliteCrackRatio = enemy.elite ? this.getEliteCrackWindowRatio(battle) : 0;
+        const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+        const pickupLeadRatio = this.isPickupLeadEnemy(battle, enemy) ? this.getPickupLeadRatio(battle) : 0;
         if (recoveryRatio > 0) {
           const punishBonus =
             bullet.routeFocus === 'crit' ? 0.22 : bullet.routeFocus === 'pierce' ? 0.16 : bullet.routeFocus === 'dash' ? 0.14 : 0.12;
@@ -3120,6 +3175,9 @@ export class RunEngine {
           } else {
             damage *= 1 + eliteCrackRatio * 0.06;
           }
+        }
+        if (!enemy.elite && pickupLeadRatio > 0.08) {
+          damage *= 1 + 0.04 + ordinarySurgeRatio * 0.06 + pickupLeadRatio * 0.08;
         }
         if (enemy.elite && enemy.guardSec > 0) {
           damage *= enemy.guardDamageMultiplier;
@@ -3143,6 +3201,56 @@ export class RunEngine {
         battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, critical ? 0.095 : 0.072);
         battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, critical ? 0.11 : 0.09);
         battle.playerShotRecoilStrength = Math.max(battle.playerShotRecoilStrength, critical ? 7.2 : 5.6);
+        if (!enemy.elite && pickupLeadRatio > 0.08) {
+          battle.pickupLeadSec = Math.max(
+            battle.pickupLeadSec,
+            0.14 + ordinarySurgeRatio * 0.08 + pickupLeadRatio * 0.08,
+          );
+          battle.pickupFlowSec = Math.max(
+            battle.pickupFlowSec,
+            0.24 + ordinarySurgeRatio * 0.1 + pickupLeadRatio * 0.08,
+          );
+          battle.playerMoveBoostSec = Math.max(
+            battle.playerMoveBoostSec,
+            0.1 + ordinarySurgeRatio * 0.1 + pickupLeadRatio * 0.08,
+          );
+          battle.tempoPulseSec = Math.max(
+            battle.tempoPulseSec,
+            0.18 + ordinarySurgeRatio * 0.1 + pickupLeadRatio * 0.08,
+          );
+          battle.fireCooldownSec = Math.max(
+            0.035,
+            battle.fireCooldownSec - (0.006 + ordinarySurgeRatio * 0.008 + pickupLeadRatio * 0.008),
+          );
+          enemy.spawnFlashSec = Math.max(enemy.spawnFlashSec, 0.08 + pickupLeadRatio * 0.08);
+          enemy.pressurePulseSec = Math.max(
+            enemy.pressurePulseSec,
+            0.08 + ordinarySurgeRatio * 0.06 + pickupLeadRatio * 0.06,
+          );
+          if (enemy.hp > 0) {
+            this.pushEnemyRecovery(
+              enemy,
+              enemy.archetype === 'brute'
+                ? 0.12 + pickupLeadRatio * 0.04
+                : enemy.archetype === 'ranged'
+                  ? 0.14 + pickupLeadRatio * 0.04
+                  : 0.08 + pickupLeadRatio * 0.04,
+            );
+          }
+          this.createCombatPulse(battle, {
+            x: enemy.x,
+            y: enemy.y,
+            radius: enemy.radius + 14 + pickupLeadRatio * 8,
+            lifeSec: 0.1 + pickupLeadRatio * 0.04,
+            color: 0x9df7c5,
+            secondaryColor: 0xffffff,
+            fillAlpha: 0.04,
+            strokeAlpha: 0.26 + ordinarySurgeRatio * 0.12 + pickupLeadRatio * 0.12,
+            strokeWidth: 1.8,
+            growthPerSec: 170,
+            innerRadiusRatio: 0.7,
+          });
+        }
         if (enemy.elite && eliteCrackRatio > 0.08) {
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22 + eliteCrackRatio * 0.08);
           battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.07 + eliteCrackRatio * 0.03);
@@ -3436,6 +3544,9 @@ export class RunEngine {
       enemy,
       (candidate) => !candidate.elite && candidate.archetype === 'ranged',
     );
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+    const pickupFlowRatio = this.getPickupFlowRatio(battle);
+    const pickupLeadRatio = this.isPickupLeadEnemy(battle, enemy) ? this.getPickupLeadRatio(battle) : 0;
     const packCount = this.countNearbyAllies(
       battle,
       enemy,
@@ -3531,6 +3642,15 @@ export class RunEngine {
         moveY += strafeY * weave * 0.04;
       }
     }
+    if (ordinarySurgeRatio > 0.12) {
+      const surgePush = 0.06 + ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.26 : 0.16);
+      moveX += dirX * surgePush;
+      moveY += dirY * surgePush;
+      if (packCount > 0) {
+        moveX += strafeX * weave * (0.02 + ordinarySurgeRatio * 0.04);
+        moveY += strafeY * weave * (0.02 + ordinarySurgeRatio * 0.04);
+      }
+    }
 
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
@@ -3545,10 +3665,37 @@ export class RunEngine {
       moveX -= dirX * (0.08 + recoveryRatio * 0.18);
       moveY -= dirY * (0.08 + recoveryRatio * 0.18);
     }
+    if (
+      ordinarySurgeRatio > 0.18 &&
+      recoveryRatio <= 0.06 &&
+      distance <= 142 &&
+      (pickupLeadRatio > 0.08 || packCount >= 1 || pickupFlowRatio > 0.22) &&
+      this.triggerRegularPressureBeat(
+        battle,
+        enemy,
+        0.12 + ordinarySurgeRatio * 0.08,
+        0.92 - Math.min(0.12, ordinarySurgeRatio * 0.14),
+      )
+    ) {
+      const syncedCount = this.syncRegularPressurePack(battle, enemy, {
+        radius: 86 + ordinarySurgeRatio * 18,
+        limit: pickupLeadRatio > 0.08 || packCount >= 2 ? 2 : 1,
+        durationSec: 0.1 + ordinarySurgeRatio * 0.04,
+        cooldownSec: 0.78 + Math.max(0, 0.08 - ordinarySurgeRatio * 0.04),
+        predicate: (candidate) => candidate.archetype === 'standard' || candidate.archetype === 'brute',
+      });
+      if (syncedCount > 0) {
+        this.primeRegularPressureLead(battle, enemy, 0.76 + ordinarySurgeRatio * 0.36);
+      }
+    }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
     const speedMultiplier =
-      1 + openingRatio * (frontlineAnchor ? 0.14 : 0.08) + Math.min(0.06, packCount * 0.02) - recoveryRatio * 0.48;
+      1 +
+      openingRatio * (frontlineAnchor ? 0.14 : 0.08) +
+      Math.min(0.06, packCount * 0.02) +
+      ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.12 : 0.06) -
+      recoveryRatio * 0.48;
 
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
@@ -3573,6 +3720,8 @@ export class RunEngine {
       124,
       (candidate) => candidate.elite || candidate.archetype === 'standard',
     );
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+    const pickupLeadRatio = this.isPickupLeadEnemy(battle, enemy) ? this.getPickupLeadRatio(battle) : 0;
     const alignBias =
       pattern === 'lanes'
         ? laneBias === 'horizontal'
@@ -3639,6 +3788,11 @@ export class RunEngine {
       moveX += dirX * (0.14 + openingRatio * 0.32);
       moveY += dirY * (0.14 + openingRatio * 0.32);
     }
+    if (ordinarySurgeRatio > 0.12) {
+      const shove = 0.08 + ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.32 : 0.22);
+      moveX += dirX * shove;
+      moveY += dirY * shove;
+    }
 
     if (recoveryRatio > 0) {
       const shoulderSign =
@@ -3663,7 +3817,7 @@ export class RunEngine {
       supportCount > 0 &&
       recoveryRatio <= 0.08 &&
       distance <= 132 &&
-      driveWindow > -0.1 &&
+      driveWindow > (-0.1 - ordinarySurgeRatio * 0.18) &&
       this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.24 ? 0.26 : 0.22, 1.66)
     ) {
       const syncedCount = this.syncRegularPressurePack(battle, enemy, {
@@ -3684,6 +3838,27 @@ export class RunEngine {
     ) {
       this.triggerRegularPressureBeat(battle, enemy, 0.24, 1.58);
     }
+    if (
+      ordinarySurgeRatio > 0.18 &&
+      recoveryRatio <= 0.08 &&
+      distance <= 156 &&
+      (pickupLeadRatio > 0.08 || supportCount > 0) &&
+      this.triggerRegularPressureBeat(
+        battle,
+        enemy,
+        0.14 + ordinarySurgeRatio * 0.08,
+        1.02 + Math.max(0, 0.1 - ordinarySurgeRatio * 0.12),
+      )
+    ) {
+      this.syncRegularPressurePack(battle, enemy, {
+        radius: 98 + ordinarySurgeRatio * 18,
+        limit: supportCount >= 2 || pickupLeadRatio > 0.08 ? 2 : 1,
+        durationSec: 0.1 + ordinarySurgeRatio * 0.04,
+        cooldownSec: 0.84,
+        predicate: (candidate) => candidate.archetype === 'standard',
+      });
+      this.primeRegularPressureLead(battle, enemy, 0.84 + ordinarySurgeRatio * 0.28);
+    }
 
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
@@ -3696,7 +3871,8 @@ export class RunEngine {
       (distance <= 132 ? 1.16 : distance <= 188 ? 1.08 : 0.94) +
       (pattern === 'lanes' && laneBias === 'horizontal' ? lanePulse * 0.08 : 0) -
       recoveryRatio * 0.56 +
-      openingRatio * 0.14;
+      openingRatio * 0.14 +
+      ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.12 : 0.06);
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_WIDTH + 44);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_HEIGHT + 44);
   }
@@ -3712,13 +3888,20 @@ export class RunEngine {
       enemy,
       (candidate) => candidate.elite || candidate.archetype === 'ranged',
     );
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+    const pickupLeadRatio = this.isPickupLeadEnemy(battle, enemy) ? this.getPickupLeadRatio(battle) : 0;
     const leadX = battle.playerX + (moveMagnitude > 0.08 ? battle.playerMoveDirX * 54 : 0);
     const leadY = battle.playerY + (moveMagnitude > 0.08 ? battle.playerMoveDirY * 54 : 0);
     const sideSign = flankAnchor ? (flankAnchor.x < battle.playerX ? -1 : 1) : enemy.x < battle.playerX ? -1 : 1;
     const flankDirX = moveMagnitude > 0.08 ? -battle.playerMoveDirY : 0;
     const flankDirY = moveMagnitude > 0.08 ? battle.playerMoveDirX : 1;
+    const surgeLeadDistance = ordinarySurgeRatio > 0.12 ? 18 + ordinarySurgeRatio * 26 : 0;
     let targetX = pincerHeavy ? leadX + flankDirX * 36 * sideSign + sideSign * 24 : leadX;
     let targetY = pincerHeavy ? leadY + flankDirY * 42 * sideSign : leadY;
+    if (ordinarySurgeRatio > 0.12) {
+      targetX += battle.playerMoveDirX * surgeLeadDistance + flankDirX * sideSign * (8 + ordinarySurgeRatio * 18);
+      targetY += battle.playerMoveDirY * surgeLeadDistance + flankDirY * sideSign * (10 + ordinarySurgeRatio * 18);
+    }
     if (flankAnchor) {
       const anchorPlayerDx = battle.playerX - flankAnchor.x;
       const anchorPlayerDy = battle.playerY - flankAnchor.y;
@@ -3778,11 +3961,17 @@ export class RunEngine {
         moveY += dirY * (0.04 + openingRatio * 0.12);
       }
     }
+    if (ordinarySurgeRatio > 0.12) {
+      moveX += strafeX * strafeDirection * (0.08 + ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.26 : 0.18));
+      moveY += strafeY * strafeDirection * (0.08 + ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.26 : 0.18));
+      moveX += dirX * (pickupLeadRatio > 0.08 ? 0.04 + ordinarySurgeRatio * 0.1 : ordinarySurgeRatio * 0.04);
+      moveY += dirY * (pickupLeadRatio > 0.08 ? 0.04 + ordinarySurgeRatio * 0.1 : ordinarySurgeRatio * 0.04);
+    }
     if (
-      flankAnchor &&
+      (flankAnchor || pickupLeadRatio > 0.08) &&
       recoveryRatio <= 0.05 &&
       distance <= 126 &&
-      (Math.abs(strafeDirection) >= 0.58 || openingRatio > 0.24) &&
+      (Math.abs(strafeDirection) >= 0.58 || openingRatio > 0.24 || ordinarySurgeRatio > 0.2) &&
       this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.18 ? 0.2 : 0.18, 1.32)
     ) {
       const syncedCount = this.syncRegularPressurePack(battle, enemy, {
@@ -3794,13 +3983,27 @@ export class RunEngine {
           candidate.archetype === 'skirmisher' ||
           (candidate.archetype === 'standard' && Math.hypot(candidate.x - battle.playerX, candidate.y - battle.playerY) <= 168),
       });
-      if (flankAnchor.role === 'regular' && !flankAnchor.elite) {
+      if (flankAnchor?.role === 'regular' && !flankAnchor.elite) {
         flankAnchor.spawnFlashSec = Math.max(flankAnchor.spawnFlashSec, 0.12);
         flankAnchor.pressurePulseSec = Math.max(flankAnchor.pressurePulseSec, 0.12);
       }
       if (syncedCount > 0) {
         this.enqueueRegularRelayAudio('skirmisher');
       }
+    }
+    if (
+      ordinarySurgeRatio > 0.2 &&
+      recoveryRatio <= 0.06 &&
+      distance <= 138 &&
+      pickupLeadRatio > 0.08 &&
+      this.triggerRegularPressureBeat(
+        battle,
+        enemy,
+        0.12 + ordinarySurgeRatio * 0.08,
+        0.88 + Math.max(0, 0.08 - ordinarySurgeRatio * 0.04),
+      )
+    ) {
+      this.primeRegularPressureLead(battle, enemy, 0.72 + ordinarySurgeRatio * 0.26);
     }
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
@@ -3817,7 +4020,11 @@ export class RunEngine {
       moveY -= dirY * (0.14 + recoveryRatio * 0.26);
     }
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
-    const speedMultiplier = 1 + openingRatio * (pincerHeavy ? 0.14 : 0.08) - recoveryRatio * 0.5;
+    const speedMultiplier =
+      1 +
+      openingRatio * (pincerHeavy ? 0.14 : 0.08) +
+      ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.14 : 0.08) -
+      recoveryRatio * 0.5;
 
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
@@ -3848,6 +4055,8 @@ export class RunEngine {
     const strafeY = dirX;
     const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
     const openingRatio = Math.min(1, enemy.spawnFlashSec / 0.22);
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+    const pickupLeadRatio = this.isPickupLeadEnemy(battle, enemy) ? this.getPickupLeadRatio(battle) : 0;
     const strafeDirection = Math.sin(battle.elapsedSec * 1.6 + enemy.id * 0.41);
     let moveX = strafeX * strafeDirection * strafeStrength;
     let moveY = strafeY * strafeDirection * strafeStrength;
@@ -3918,6 +4127,22 @@ export class RunEngine {
       moveX -= dirX * (0.04 + openingRatio * 0.08);
       moveY -= dirY * (0.04 + openingRatio * 0.08);
     }
+    if (ordinarySurgeRatio > 0.12) {
+      moveX += strafeX * strafeDirection * (0.06 + ordinarySurgeRatio * 0.14);
+      moveY += strafeY * strafeDirection * (0.06 + ordinarySurgeRatio * 0.14);
+      if (screenedByAnchor || rangedHeavy) {
+        enemy.rangedCooldownSec = Math.min(
+          enemy.rangedCooldownSec,
+          0.28 + (1 - ordinarySurgeRatio) * 0.12,
+        );
+        moveX -= dirX * (0.04 + ordinarySurgeRatio * 0.08);
+        moveY -= dirY * (0.04 + ordinarySurgeRatio * 0.08);
+      }
+      if (pickupLeadRatio > 0.08) {
+        moveX -= dirX * (0.04 + pickupLeadRatio * 0.08);
+        moveY -= dirY * (0.04 + pickupLeadRatio * 0.08);
+      }
+    }
 
     if (recoveryRatio > 0) {
       const laneResetSign =
@@ -3971,7 +4196,11 @@ export class RunEngine {
     }
 
     const magnitude = Math.max(1, Math.hypot(moveX, moveY));
-    const speedMultiplier = 1 + openingRatio * (screenedByAnchor ? 0.1 : 0.06) - recoveryRatio * 0.58;
+    const speedMultiplier =
+      1 +
+      openingRatio * (screenedByAnchor ? 0.1 : 0.06) +
+      ordinarySurgeRatio * (screenedByAnchor ? 0.08 : 0.04) -
+      recoveryRatio * 0.58;
     enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_WIDTH + 42);
     enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_HEIGHT + 42);
 
@@ -4853,9 +5082,44 @@ export class RunEngine {
     const pierceStage = this.getRouteBuildStage('pierce');
     const dashStage = this.getRouteBuildStage('dash');
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
+    const pickupLeadRatio = this.isPickupLeadEnemy(battle, enemy) ? this.getPickupLeadRatio(battle) : 0;
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
     const critSplashRatio = this.getCritSplashRatio(battle);
     const flowChainCount = this.registerKillFlow(battle, enemy);
     const flowChainBonus = Math.max(0, flowChainCount - 1);
+    if (!enemy.elite && pickupLeadRatio > 0.08) {
+      battle.pickupFlowSec = Math.max(
+        battle.pickupFlowSec,
+        0.34 + ordinarySurgeRatio * 0.12 + pickupLeadRatio * 0.12,
+      );
+      battle.playerTurnBurstSec = Math.max(
+        battle.playerTurnBurstSec,
+        0.08 + ordinarySurgeRatio * 0.08 + pickupLeadRatio * 0.08,
+      );
+      battle.tempoPulseSec = Math.max(
+        battle.tempoPulseSec,
+        0.2 + ordinarySurgeRatio * 0.08 + pickupLeadRatio * 0.08,
+      );
+      battle.pickupLeadEnemyId = null;
+      battle.pickupLeadSec = 0;
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 20 + ordinarySurgeRatio * 10,
+        lifeSec: 0.14 + pickupLeadRatio * 0.04,
+        color: 0xbaffcf,
+        secondaryColor: 0xffffff,
+        fillAlpha: 0.05,
+        strokeAlpha: 0.34 + pickupLeadRatio * 0.12,
+        strokeWidth: 2.2,
+        growthPerSec: 188,
+        innerRadiusRatio: 0.7,
+        spokeCount: 4,
+        spokeLength: 12 + ordinarySurgeRatio * 6,
+        angle: Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX),
+        spinRate: 5.4,
+      });
+    }
     if (critSplashRatio > 0) {
       for (const target of battle.enemies) {
         if (target.id === enemy.id || target.hp <= 0) {
@@ -5298,6 +5562,9 @@ export class RunEngine {
           )
         : 0;
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
+    const pickupFlowRatio = this.getPickupFlowRatio(battle);
+    const pickupLeadRatio = this.getPickupLeadRatio(battle);
+    const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
     let bestTarget: BattleState['enemies'][number] | null = null;
     let bestScore = Number.NEGATIVE_INFINITY;
 
@@ -5309,6 +5576,7 @@ export class RunEngine {
       const dy = enemy.y - battle.playerY;
       const distance = Math.max(1, Math.hypot(dx, dy));
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+      const isPickupLead = this.isPickupLeadEnemy(battle, enemy);
       const eliteLinkDistance = activeElite ? Math.hypot(enemy.x - activeElite.x, enemy.y - activeElite.y) : Number.POSITIVE_INFINITY;
       const eliteEscortCount =
         enemy.elite
@@ -5320,6 +5588,16 @@ export class RunEngine {
             )
           : 0;
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
+      if (!enemy.elite && isPickupLead) {
+        score += 28 + pickupLeadRatio * 34 + ordinarySurgeRatio * 18;
+      }
+      if (!enemy.elite && ordinarySurgeRatio > 0.08) {
+        score += Math.max(0, 180 - distance) * 0.03;
+        if (moveMagnitude > 0.05) {
+          const surgeAlignment = ((dx / distance) * battle.playerMoveDirX) + ((dy / distance) * battle.playerMoveDirY);
+          score += Math.max(0, surgeAlignment) * (8 + pickupFlowRatio * 14 + ordinarySurgeRatio * 8);
+        }
+      }
 
       if (activeElite && (activeEliteRecovery > 0.18 || eliteCrackRatio > 0.08)) {
         const crackEscortGap = Math.max(0, 2 - activeEliteEscortCount);
@@ -5372,6 +5650,16 @@ export class RunEngine {
           score += 24;
         }
         score += enemy.elite && recoveryRatio > 0.2 ? 8 + recoveryRatio * 12 : 0;
+      }
+      if (!enemy.elite && ordinarySurgeRatio > 0.1) {
+        score +=
+          enemy.archetype === 'skirmisher'
+            ? 6 + ordinarySurgeRatio * 8
+            : enemy.archetype === 'ranged'
+              ? 4 + pickupFlowRatio * 10
+              : enemy.archetype === 'standard'
+                ? 4 + ordinarySurgeRatio * 6
+                : 2 + ordinarySurgeRatio * 4;
       }
 
       score += recoveryRatio * 6;
