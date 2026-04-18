@@ -1,7 +1,8 @@
 import { getAnomalyRoutePoolOptions } from './anomalyRoutePools';
+import { normalizeEffectsToSingleStat } from './upgrades';
 import type { EventContentKind, EventDefinition } from '../game/types';
 
-export const EVENT_CATALOG: EventDefinition[] = [
+const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'field-maintenance',
     name: '临时整备',
@@ -2567,6 +2568,29 @@ export const EVENT_CATALOG: EventDefinition[] = [
     ],
   },
 ];
+
+function normalizeEventOptionEffects(
+  eventId: string,
+  option: EventDefinition['options'][number],
+): EventDefinition['options'][number] {
+  if (!option.effects || option.effects.length === 0) {
+    return option;
+  }
+
+  return {
+    ...option,
+    effects: normalizeEffectsToSingleStat(
+      `${eventId}:${option.id}`,
+      option.effects,
+      option.routeId && option.routeId !== 'dominant' ? option.routeId : undefined,
+    ),
+  };
+}
+
+export const EVENT_CATALOG: EventDefinition[] = RAW_EVENT_CATALOG.map((eventDef) => ({
+  ...eventDef,
+  options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef.id, option)),
+}));
 
 export const STANDARD_EVENT_CATALOG = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'event');
 

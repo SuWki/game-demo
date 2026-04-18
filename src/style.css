@@ -559,6 +559,11 @@ button:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.choice-grid-tray.is-single-choice {
+  grid-template-columns: minmax(280px, 420px);
+  justify-content: center;
+}
+
 .choice-strip {
   position: relative;
   display: grid;
@@ -924,6 +929,36 @@ button:hover {
   align-items: stretch;
 }
 
+.panel-event-choice-anomaly {
+  width: min(900px, calc(100vw - 88px));
+  max-height: min(58vh, 420px);
+  padding: 18px 0 8px;
+}
+
+.panel-event-choice-anomaly .panel-alert {
+  min-height: 38px;
+  padding: 0 24px;
+  background:
+    linear-gradient(90deg, rgba(187, 138, 255, 0.92), rgba(115, 216, 255, 0.84)),
+    rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(187, 138, 255, 0.24),
+    0 0 26px rgba(115, 216, 255, 0.18);
+}
+
+.panel-event-choice-anomaly .choice-grid-tray {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  align-items: stretch;
+}
+
+.panel-route-choice .choice-grid-tray.is-single-choice,
+.panel-upgrade-choice .choice-grid-tray.is-single-choice,
+.panel-event-choice-anomaly .choice-grid-tray.is-single-choice {
+  grid-template-columns: minmax(280px, 420px);
+  justify-content: center;
+}
+
 .panel-upgrade-choice .choice-strip {
   min-height: 168px;
   padding: 18px 20px 16px;
@@ -939,6 +974,13 @@ button:hover {
 
 .choice-strip-event {
   border-color: color-mix(in srgb, var(--choice-accent, var(--accent-violet)) 32%, rgba(221, 236, 248, 0.08));
+}
+
+.choice-strip-event.is-anomaly-event {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--choice-accent, var(--accent-violet)) 22%, transparent),
+    0 14px 28px rgba(3, 8, 14, 0.22),
+    0 0 24px color-mix(in srgb, var(--choice-accent, var(--accent-violet)) 14%, transparent);
 }
 
 .panel-node-choice .choice-strip,

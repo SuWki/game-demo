@@ -1292,95 +1292,6 @@ export class GameScene extends Phaser.Scene {
       this.graphics.lineBetween(0, screenY, camera.width, screenY);
     }
     this.renderEncounterBackdrop(battle, camera, accentColor);
-
-    const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
-    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
-    const aimMagnitude = Math.hypot(battle.playerAimDirX, battle.playerAimDirY);
-    const aimDirX = aimMagnitude > 0.01 ? battle.playerAimDirX / aimMagnitude : 0;
-    const aimDirY = aimMagnitude > 0.01 ? battle.playerAimDirY / aimMagnitude : -1;
-    const aimOrthoX = -aimDirY;
-    const aimOrthoY = aimDirX;
-    const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
-    const moveDirX = moveMagnitude > 0.01 ? battle.playerMoveDirX / moveMagnitude : -aimDirX;
-    const moveDirY = moveMagnitude > 0.01 ? battle.playerMoveDirY / moveMagnitude : -aimDirY;
-    const tempoGlow = Math.min(1, battle.tempoPulseSec / 0.3);
-    const routeCharge = Math.min(
-      1,
-      Math.max(
-        tempoGlow,
-        battle.playerShotFlashSec > 0 ? battle.playerShotFlashSec / 0.08 : 0,
-        battle.critOverdriveSec > 0 ? 0.56 : 0,
-        battle.dashDriveSec > 0 ? 0.52 : 0,
-        battle.playerNearMissSec > 0 ? 0.44 : 0,
-      ),
-    );
-
-    if (liveFocusRoute === 'crit' && routeCharge > 0.08) {
-      const critFieldColor = this.mixColor(accentColor, 0xffde86, 0.34);
-      this.graphics.fillStyle(critFieldColor, 0.04 + routeCharge * 0.08);
-      this.graphics.fillTriangle(
-        playerScreen.x + aimDirX * (camera.width * 0.4),
-        playerScreen.y + aimDirY * (camera.height * 0.34),
-        playerScreen.x - aimOrthoX * (58 + routeCharge * 44),
-        playerScreen.y - aimOrthoY * (58 + routeCharge * 44),
-        playerScreen.x + aimOrthoX * (58 + routeCharge * 44),
-        playerScreen.y + aimOrthoY * (58 + routeCharge * 44),
-      );
-      this.graphics.lineStyle(2, critFieldColor, 0.08 + routeCharge * 0.16);
-      this.graphics.lineBetween(
-        playerScreen.x - aimOrthoX * 20,
-        playerScreen.y - aimOrthoY * 20,
-        playerScreen.x + aimDirX * (camera.width * 0.42) + aimOrthoX * 26,
-        playerScreen.y + aimDirY * (camera.height * 0.3) + aimOrthoY * 26,
-      );
-      this.graphics.lineBetween(
-        playerScreen.x + aimOrthoX * 20,
-        playerScreen.y + aimOrthoY * 20,
-        playerScreen.x + aimDirX * (camera.width * 0.42) - aimOrthoX * 26,
-        playerScreen.y + aimDirY * (camera.height * 0.3) - aimOrthoY * 26,
-      );
-    } else if (liveFocusRoute === 'pierce' && routeCharge > 0.08) {
-      const pierceFieldColor = this.mixColor(accentColor, 0xd9f5ff, 0.3);
-      for (let lane = -1; lane <= 1; lane += 1) {
-        const laneOffset = lane * (28 + routeCharge * 8);
-        this.graphics.lineStyle(lane === 0 ? 2.4 : 1.5, pierceFieldColor, 0.06 + routeCharge * (lane === 0 ? 0.18 : 0.1));
-        this.graphics.lineBetween(
-          playerScreen.x - aimDirX * 180 + aimOrthoX * laneOffset,
-          playerScreen.y - aimDirY * 180 + aimOrthoY * laneOffset,
-          playerScreen.x + aimDirX * (camera.width * 0.72) + aimOrthoX * laneOffset,
-          playerScreen.y + aimDirY * (camera.height * 0.52) + aimOrthoY * laneOffset,
-        );
-      }
-    } else if (liveFocusRoute === 'dash' && routeCharge > 0.08) {
-      const dashFieldColor = this.mixColor(accentColor, 0xbfffea, 0.32);
-      this.graphics.fillStyle(dashFieldColor, 0.04 + routeCharge * 0.07);
-      this.graphics.fillEllipse(
-        playerScreen.x - moveDirX * (68 + routeCharge * 44),
-        playerScreen.y - moveDirY * (68 + routeCharge * 44),
-        180 + routeCharge * 120,
-        90 + routeCharge * 50,
-      );
-      this.graphics.lineStyle(2, dashFieldColor, 0.08 + routeCharge * 0.16);
-      this.graphics.lineBetween(
-        playerScreen.x - moveDirX * (148 + routeCharge * 64),
-        playerScreen.y - moveDirY * (148 + routeCharge * 64),
-        playerScreen.x - moveDirX * 18,
-        playerScreen.y - moveDirY * 18,
-      );
-      this.graphics.lineBetween(
-        playerScreen.x - moveDirX * (112 + routeCharge * 52) + aimOrthoX * 22,
-        playerScreen.y - moveDirY * (112 + routeCharge * 52) + aimOrthoY * 22,
-        playerScreen.x + aimOrthoX * 10,
-        playerScreen.y + aimOrthoY * 10,
-      );
-      this.graphics.lineBetween(
-        playerScreen.x - moveDirX * (112 + routeCharge * 52) - aimOrthoX * 22,
-        playerScreen.y - moveDirY * (112 + routeCharge * 52) - aimOrthoY * 22,
-        playerScreen.x - aimOrthoX * 10,
-        playerScreen.y - aimOrthoY * 10,
-      );
-    }
-
   }
 
   private renderEncounterBackdrop(
@@ -1505,8 +1416,6 @@ export class GameScene extends Phaser.Scene {
             : this.mixColor(accentColor, 0xfff2c3, 0.18);
     const pierceReadRatio = liveFocusRoute === 'pierce' ? Math.min(1, state.routeCounts.pierce / 5) : 0;
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
-    let targetingIntensity = 0;
-
     for (const orb of battle.experienceOrbs) {
       if (!this.isVisibleInCamera(camera, orb.x, orb.y, 20)) {
         continue;
@@ -2135,7 +2044,6 @@ export class GameScene extends Phaser.Scene {
         this.graphics.lineStyle(1, enemyStroke, enemy.rangedCooldownSec <= 0.65 ? 0.24 + lockRatio * 0.14 : 0.12);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10);
         if (enemy.rangedCooldownSec <= 0.65) {
-          targetingIntensity = Math.max(targetingIntensity, lockRatio);
           const predictedTarget = this.getProjectedEnemyAimScreenPoint(enemy, battle, camera);
           this.graphics.lineStyle(1 + lockRatio, this.mixColor(enemyStroke, 0xffffff, 0.22), 0.2 + lockRatio * 0.18);
           this.graphics.lineBetween(screen.x, screen.y, predictedTarget.x, predictedTarget.y);
@@ -2418,13 +2326,7 @@ export class GameScene extends Phaser.Scene {
         0,
       );
     }
-    if (recoveryRatio > 0) {
-      this.graphics.lineStyle(3, 0x8cffc7, 0.3 + recoveryRatio * 0.34);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 30 + (1 - recoveryRatio) * 16);
-    }
     if (tempoRatio > 0) {
-      this.graphics.lineStyle(2, accentColor, 0.16 + tempoRatio * 0.22);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 40 + tempoRatio * 10);
       const surgeDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
       const surgeDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
       const surgeOrthoX = -surgeDirY;
@@ -2449,11 +2351,8 @@ export class GameScene extends Phaser.Scene {
       const flowDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
       const flowOrthoX = -flowDirY;
       const flowOrthoY = flowDirX;
-      const flowAngle = Math.atan2(flowDirY, flowDirX);
       const flowColor = this.mixColor(liveFocusColor, 0xfff2c3, 0.26 + killFlowRatio * 0.16);
       const chainCount = Math.max(1, battle.killFlowCount);
-      this.graphics.lineStyle(2.2, flowColor, 0.12 + killFlowRatio * 0.22);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 46 + killFlowRatio * 8 + chainCount * 2);
       for (let streak = 0; streak < Math.min(4, chainCount + 1); streak += 1) {
         const offset = 14 + streak * 10 + killFlowRatio * 8;
         const width = 8 + streak * 2 + killFlowRatio * 4;
@@ -2465,16 +2364,6 @@ export class GameScene extends Phaser.Scene {
           bodyY - flowDirY * offset,
           bodyX - flowDirX * (offset + 14) - flowOrthoX * width,
           bodyY - flowDirY * (offset + 14) - flowOrthoY * width,
-        );
-      }
-      for (let pip = 0; pip < chainCount; pip += 1) {
-        const spreadAngle = flowAngle + (pip - (chainCount - 1) / 2) * 0.24;
-        const pipRadius = 34 + killFlowRatio * 8;
-        this.graphics.fillStyle(flowColor, 0.46 + killFlowRatio * 0.18);
-        this.graphics.fillCircle(
-          playerScreen.x + Math.cos(spreadAngle) * pipRadius,
-          playerScreen.y + Math.sin(spreadAngle) * pipRadius,
-          2.4 + killFlowRatio * 1.2,
         );
       }
     }
@@ -2555,10 +2444,6 @@ export class GameScene extends Phaser.Scene {
     }
     if (nearMissRatio > 0) {
       const nearMissColor = this.mixColor(0xffa289, 0xffffff, 0.22);
-      this.graphics.lineStyle(2, nearMissColor, 0.08 + nearMissRatio * 0.22);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 36 + (1 - nearMissRatio) * 12);
-      this.graphics.lineStyle(1.5, nearMissColor, 0.06 + nearMissRatio * 0.16);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 54 + (1 - nearMissRatio) * 18);
       this.graphics.lineStyle(1.5, nearMissColor, 0.08 + nearMissRatio * 0.18);
       this.graphics.lineBetween(
         playerScreen.x + nearMissDirX * 28,
@@ -2636,18 +2521,6 @@ export class GameScene extends Phaser.Scene {
         bodyY - aimOrthoY * 12,
       );
     }
-    if (battle.dashCharge > 0) {
-      const pipColor = this.mixColor(accentColor, 0xbffff3, 0.44);
-      for (let pip = 0; pip < battle.dashCharge; pip += 1) {
-        const angle = -Math.PI / 2 + (pip / 6) * Math.PI * 2;
-        this.graphics.fillStyle(pipColor, 0.56 + dashDriveRatio * 0.18);
-        this.graphics.fillCircle(
-          playerScreen.x + Math.cos(angle) * 34,
-          playerScreen.y + Math.sin(angle) * 34,
-          2.6,
-        );
-      }
-    }
     if (pierceReadRatio > 0) {
       const laneColor = this.mixColor(accentColor, 0xe7f7ff, 0.34);
       this.graphics.lineStyle(2, laneColor, 0.08 + pierceReadRatio * 0.14);
@@ -2707,29 +2580,6 @@ export class GameScene extends Phaser.Scene {
         playerScreen.y - trailDirY * 8,
       );
     }
-    if (liveFocusRoute === 'dash' && (combatReadRatio > 0.08 || moveMagnitude > 0.08)) {
-      const dashDirX = moveMagnitude > 0.08 ? moveDirX : -aimDirX;
-      const dashDirY = moveMagnitude > 0.08 ? moveDirY : -aimDirY;
-      const dashAfterColor = this.mixColor(accentColor, 0xd8fff5, 0.34);
-      for (let afterimage = 1; afterimage <= 2; afterimage += 1) {
-        const offset = 18 + afterimage * (12 + combatReadRatio * 10);
-        this.graphics.fillStyle(dashAfterColor, 0.08 + combatReadRatio * 0.06 - afterimage * 0.02);
-        this.graphics.fillCircle(
-          bodyX - dashDirX * offset,
-          bodyY - dashDirY * offset,
-          Math.max(8, 12 - afterimage * 2 + combatReadRatio * 3),
-        );
-      }
-    }
-    if (targetingIntensity > 0) {
-      const warningColor = this.mixColor(0xff8d84, 0xffffff, 0.24);
-      this.graphics.lineStyle(2, warningColor, 0.14 + targetingIntensity * 0.24);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 34 + targetingIntensity * 10);
-      this.graphics.lineBetween(playerScreen.x - 26, playerScreen.y, playerScreen.x - 12, playerScreen.y);
-      this.graphics.lineBetween(playerScreen.x + 12, playerScreen.y, playerScreen.x + 26, playerScreen.y);
-      this.graphics.lineBetween(playerScreen.x, playerScreen.y - 26, playerScreen.x, playerScreen.y - 12);
-      this.graphics.lineBetween(playerScreen.x, playerScreen.y + 12, playerScreen.x, playerScreen.y + 26);
-    }
     if (lowHpRatio > 0) {
       const dangerColor = this.mixColor(0xff5d58, accentColor, 0.16);
       const dangerHighlight = this.mixColor(dangerColor, 0xffffff, 0.16);
@@ -2769,17 +2619,15 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    const auraColor = this.mixColor(liveFocusColor, 0xffffff, recoveryRatio * 0.26 + critAuraRatio * 0.14);
-    this.graphics.fillStyle(auraColor, battle.invulnerableSec > 0 ? 0.22 : 0.11 + dashDriveRatio * 0.04);
-    this.graphics.fillCircle(playerScreen.x, playerScreen.y, 58 + dashDriveRatio * 6);
-    if (freezeRatio > 0) {
-      this.graphics.lineStyle(2 + freezeRatio, 0xffffff, 0.12 + freezeRatio * 0.22);
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 22 + freezeRatio * 12);
+    if (battle.invulnerableSec > 0 || freezeRatio > 0.08) {
+      const shieldColor = battle.invulnerableSec > 0 ? 0x9cff97 : this.mixColor(liveFocusColor, 0xffffff, 0.16);
+      this.graphics.lineStyle(
+        1.8 + freezeRatio * 0.8,
+        shieldColor,
+        battle.invulnerableSec > 0 ? 0.48 : 0.18 + freezeRatio * 0.16,
+      );
+      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 18 + freezeRatio * 8);
     }
-    this.graphics.lineStyle(2, auraColor, battle.invulnerableSec > 0 ? 0.62 : 0.26 + critAuraRatio * 0.08);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 26 + dashDriveRatio * 2);
-    this.graphics.lineStyle(1, 0xffffff, battle.invulnerableSec > 0 ? 0.48 : 0.18 + recoveryRatio * 0.08);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 15 + dashDriveRatio);
     this.graphics.fillStyle(
       impactRatio > 0 ? this.mixColor(0xf8fbff, 0xff8c86, impactRatio * 0.8) : battle.invulnerableSec > 0 ? 0x9cff97 : 0xf8fbff,
       1,

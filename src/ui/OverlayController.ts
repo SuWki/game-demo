@@ -193,12 +193,14 @@ export class OverlayController {
   ): void {
     const isAnomaly = eventDef.contentKind === 'anomaly';
     this.showPanel({
-      panelClassName: 'panel-event-choice',
+      panelClassName: `panel-event-choice${isAnomaly ? ' panel-event-choice-anomaly' : ''}`,
+      panelLayerClassName: isAnomaly ? 'panel-layer-center' : undefined,
       modeLabel: isAnomaly ? '异常处理' : '事件选择',
       modeHint: isAnomaly ? '处理方式' : '执行',
       title: eventDef.name,
       items: eventDef.options.map((option) => this.renderEventChoiceCard(eventDef, option)),
       progress,
+      alertText: isAnomaly ? '异常节点：选择 1 项处理' : '选择 1 项事件处理',
     });
     for (const option of eventDef.options) {
       this.bindClick(`[data-choice="${option.id}"]`, () => onChoose(option.id));
@@ -290,6 +292,7 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.panelLayer.className = `panel-layer ${config.panelLayerClassName ?? ''}`.trim();
     this.panelLayer.classList.remove('hidden');
+    const itemCountClass = config.items.length === 1 ? 'is-single-choice' : '';
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel ${config.panelClassName}">
         ${config.alertText ? `<div class="panel-alert">${config.alertText}</div>` : ''}
@@ -303,7 +306,7 @@ export class OverlayController {
             ${config.modeHint ? `<span class="tray-mode-hint">${config.modeHint}</span>` : ''}
           </div>
         </div>
-        <div class="choice-grid choice-grid-tray">${config.items.join('')}</div>
+        <div class="choice-grid choice-grid-tray ${itemCountClass}">${config.items.join('')}</div>
       </section>
     `;
   }
@@ -339,7 +342,7 @@ export class OverlayController {
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
-    const effectText = describeContentEffects(upgrade.effects, upgrade.routeId);
+    const effectText = this.getChoiceEffectSummary(upgrade.effects) || upgrade.description;
     const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
     return `
       <button
@@ -353,7 +356,7 @@ export class OverlayController {
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${upgrade.name}</strong>
-          <small>${effectText || upgrade.description}</small>
+          <small>${effectText}</small>
         </div>
         <div class="choice-strip-foot">
           <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
@@ -370,8 +373,9 @@ export class OverlayController {
     const routeAccent = this.getRouteAccent(option.routeId);
     const routeLabel = this.getEventRouteLabel(option.routeId, eventDef.contentKind);
     const prompt = eventDef.contentKind === 'anomaly' ? '处理' : '执行';
+    const anomalyClass = eventDef.contentKind === 'anomaly' ? ' is-anomaly-event' : '';
     return `
-      <button class="choice-strip choice-strip-event" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
+      <button class="choice-strip choice-strip-event${anomalyClass}" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
         <div class="choice-strip-head">
           <span class="choice-type">${eventDef.contentKind === 'anomaly' ? '异常' : '事件'}</span>
           <span class="choice-mode-badge">${routeLabel}</span>
@@ -428,10 +432,39 @@ export class OverlayController {
   }
 
   private getEventOptionDescription(option: EventDefinition['options'][number]): string {
-    if (option.effects && option.effects.length > 0) {
-      return describeContentEffects(option.effects, option.routeId === 'dominant' ? undefined : option.routeId);
+    return this.getChoiceEffectSummary(option.effects) || option.description;
+  }
+
+  private getChoiceEffectSummary(
+    effects?: UpgradeDefinition['effects'] | EventDefinition['options'][number]['effects'],
+  ): string {
+    if (!effects || effects.length === 0) {
+      return '';
     }
-    return option.description;
+
+    const statsEffect = effects.find((effect) => effect.type === 'stats');
+    if (statsEffect) {
+      return describeContentEffects([
+        {
+          type: 'stats',
+          modifiers: {
+            ...statsEffect.modifiers,
+          },
+        },
+      ]);
+    }
+
+    const healEffect = effects.find((effect) => effect.type === 'heal');
+    if (healEffect) {
+      return describeContentEffects([
+        {
+          type: 'heal',
+          amount: healEffect.amount,
+        },
+      ]);
+    }
+
+    return '';
   }
 
   private getRouteAccent(routeId?: UpgradeDefinition['routeId'] | EventDefinition['options'][number]['routeId']): string {

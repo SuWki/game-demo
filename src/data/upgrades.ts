@@ -77,15 +77,25 @@ const GENERIC_PRIMARY_MODIFIER_MAP: Partial<Record<string, keyof StatModifiers>>
   'generic-echo-stow': 'regeneration',
 };
 
-const GENERIC_PRIMARY_MODIFIER_LIMITS: Partial<Record<keyof StatModifiers, number>> = {
+const ROUTE_PRIMARY_MODIFIER_PRIORITY: Record<NonNullable<UpgradeArchetype['routeId']>, Array<keyof StatModifiers>> = {
+  crit: ['critChance', 'critMultiplier', 'fireRate', 'damage', 'projectileSpeed', 'regeneration', 'moveSpeed'],
+  pierce: ['pierce', 'projectileSpeed', 'multishot', 'damage', 'fireRate', 'moveSpeed', 'regeneration'],
+  dash: ['dashInterval', 'dashPulseDamage', 'dashInvulnerability', 'moveSpeed', 'regeneration', 'fireRate'],
+};
+
+const SINGLE_PRIMARY_MODIFIER_LIMITS: Partial<Record<keyof StatModifiers, number>> = {
   maxHp: 36,
   damage: 7,
   fireRate: 0.42,
   projectileSpeed: 120,
   critChance: 0.12,
   critMultiplier: 0.85,
+  pierce: 2,
   multishot: 2,
   moveSpeed: 56,
+  dashInterval: 0.78,
+  dashPulseDamage: 12,
+  dashInvulnerability: 0.18,
   regeneration: 0.24,
 };
 
@@ -119,6 +129,23 @@ function pickGenericPrimaryModifier(sourceId: string, modifiers: StatModifiers):
   }
 
   return bestKey ?? 'damage';
+}
+
+function pickRoutePriorityModifier(
+  routeId: UpgradeArchetype['routeId'] | 'dominant' | undefined,
+  modifiers: StatModifiers,
+): keyof StatModifiers | null {
+  if (!routeId || routeId === 'dominant') {
+    return null;
+  }
+
+  for (const key of ROUTE_PRIMARY_MODIFIER_PRIORITY[routeId]) {
+    if (typeof modifiers[key] === 'number' && modifiers[key] !== 0) {
+      return key;
+    }
+  }
+
+  return null;
 }
 
 function fitSingleModifierToValue(key: keyof StatModifiers, seedValue: number, targetValue: number): number {
@@ -164,8 +191,8 @@ function fitSingleModifierToValue(key: keyof StatModifiers, seedValue: number, t
   return pickedModifier;
 }
 
-function capGenericModifierValue(key: keyof StatModifiers, value: number): number {
-  const limit = GENERIC_PRIMARY_MODIFIER_LIMITS[key];
+function capSingleModifierValue(key: keyof StatModifiers, value: number): number {
+  const limit = SINGLE_PRIMARY_MODIFIER_LIMITS[key];
   if (typeof limit !== 'number') {
     return value;
   }
@@ -175,7 +202,7 @@ function capGenericModifierValue(key: keyof StatModifiers, value: number): numbe
   return roundModifier(key, Math.min(value, limit));
 }
 
-function collectGenericStatModifiers(effects: ContentEffect[]): StatModifiers {
+function collectStatModifiers(effects: ContentEffect[]): StatModifiers {
   const modifiers: StatModifiers = {};
   for (const effect of effects) {
     if (effect.type !== 'stats') {
@@ -192,39 +219,62 @@ function collectGenericStatModifiers(effects: ContentEffect[]): StatModifiers {
   return modifiers;
 }
 
-function normalizeGenericEffects(sourceId: string, effects: ContentEffect[]): ContentEffect[] {
-  const modifiers = collectGenericStatModifiers(effects);
+export function normalizeEffectsToSingleStat(
+  sourceId: string,
+  effects: ContentEffect[],
+  routeId?: UpgradeArchetype['routeId'] | 'dominant',
+): ContentEffect[] {
+  const modifiers = collectStatModifiers(effects);
   const modifierEntries = Object.entries(modifiers).filter(([, rawValue]) => typeof rawValue === 'number' && rawValue !== 0);
   if (modifierEntries.length === 0) {
     return effects;
   }
 
-  const onlySingleStat =
-    effects.length === 1 &&
-    effects[0]?.type === 'stats' &&
-    Object.keys((effects[0] as Extract<ContentEffect, { type: 'stats' }>).modifiers).filter(
-      (key) => typeof (effects[0] as Extract<ContentEffect, { type: 'stats' }>).modifiers[key as keyof StatModifiers] === 'number',
-    ).length <= 1;
-  if (onlySingleStat) {
+  if (modifierEntries.length <= 1) {
     return effects;
   }
 
-  const primaryKey = pickGenericPrimaryModifier(sourceId, modifiers);
+  const primaryKey = pickRoutePriorityModifier(routeId, modifiers) ?? pickGenericPrimaryModifier(sourceId, modifiers);
   const seedValue = modifiers[primaryKey] ?? 0;
   if (seedValue === 0) {
     return effects;
   }
 
-  const targetValue = estimateUpgradeValue(effects).total;
-  const fittedValue = capGenericModifierValue(primaryKey, fitSingleModifierToValue(primaryKey, seedValue, targetValue));
-  return [
-    {
-      type: 'stats',
-      modifiers: {
-        [primaryKey]: fittedValue,
-      },
+  const statsOnlyEffects = effects.filter((effect): effect is Extract<ContentEffect, { type: 'stats' }> => effect.type === 'stats');
+  const targetValue = estimateUpgradeValue(statsOnlyEffects).total;
+  const fittedValue = capSingleModifierValue(primaryKey, fitSingleModifierToValue(primaryKey, seedValue, targetValue));
+  const normalizedStatsEffect: Extract<ContentEffect, { type: 'stats' }> = {
+    type: 'stats',
+    modifiers: {
+      [primaryKey]: fittedValue,
     },
-  ];
+  };
+
+  let inserted = false;
+  const normalizedEffects: ContentEffect[] = [];
+  for (const effect of effects) {
+    if (effect.type === 'stats') {
+      if (!inserted) {
+        normalizedEffects.push(normalizedStatsEffect);
+        inserted = true;
+      }
+      continue;
+    }
+
+    if (effect.type === 'heal') {
+      normalizedEffects.push({
+        type: 'heal',
+        amount: effect.amount,
+      });
+      continue;
+    }
+
+    normalizedEffects.push({
+      ...effect,
+    });
+  }
+
+  return normalizedEffects;
 }
 
 function formatModifierLabel(key: keyof StatModifiers, value: number): string {
@@ -260,7 +310,13 @@ function formatModifierLabel(key: keyof StatModifiers, value: number): string {
   }
 }
 
-export function describeContentEffects(effects: ContentEffect[], routeId?: UpgradeArchetype['routeId']): string {
+export function describeContentEffects(
+  effects: ContentEffect[],
+  routeId?: UpgradeArchetype['routeId'],
+  options?: {
+    includeRouteProgress?: boolean;
+  },
+): string {
   const segments: string[] = [];
 
   for (const effect of effects) {
@@ -3426,7 +3482,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
 
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
   const scaledEffects = scaleEffects(archetype.effects, rarity);
-  const effects = archetype.category === 'generic' ? normalizeGenericEffects(archetype.id, scaledEffects) : scaledEffects;
+  const effects = normalizeEffectsToSingleStat(archetype.id, scaledEffects, archetype.routeId);
   const valueBreakdown = estimateUpgradeValue(effects);
   const valueBucket = getUpgradeValueBucket(valueBreakdown.total);
   return {
