@@ -1916,6 +1916,10 @@ export class RunEngine {
       strokeWidth: 3,
       growthPerSec: 240,
       innerRadiusRatio: 0.58,
+      spokeCount: 6 + Math.min(3, dashCharge),
+      spokeLength: 22 + dashCharge * 3,
+      angle: Math.atan2(battle.playerAimDirY, battle.playerAimDirX),
+      spinRate: 9.2,
     });
     this.kickBattleShake(battle, 0.18, 0.42 + dashCharge * 0.06);
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
@@ -2823,6 +2827,10 @@ export class RunEngine {
       strokeWidth: 2,
       growthPerSec: 220 + killFlowBoost * 14,
       innerRadiusRatio: 0.54,
+      spokeCount: Math.min(6, 3 + shotCount),
+      spokeLength: 16 + killFlowBoost * 3,
+      angle: baseAngle,
+      spinRate: focusRoute === 'dash' ? 7.6 : focusRoute === 'pierce' ? 5.8 : 6.4,
     });
     this.kickBattleShake(battle, 0.05 + killFlowBoost * 0.008, focusRoute === 'dash' ? 0.18 + killFlowRatio * 0.03 : 0.12 + killFlowRatio * 0.02);
     this.enqueueAudio('shoot');
@@ -2898,11 +2906,14 @@ export class RunEngine {
           secondaryColor: critical ? 0xfff8d4 : 0xffffff,
         });
         if (critical) {
-          this.queueImpactFreeze(battle, enemy.elite ? 0.06 : 0.042, enemy.elite ? 0.12 : 0.18);
+          this.queueImpactFreeze(battle, enemy.elite ? 0.064 : 0.048, enemy.elite ? 0.12 : 0.16);
         } else if (enemy.elite) {
-          this.queueImpactFreeze(battle, 0.026, 0.44);
+          this.queueImpactFreeze(battle, 0.03, 0.42);
         }
         this.kickBattleShake(battle, critical ? 0.14 : 0.08, critical ? 0.34 : 0.14);
+        battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, critical ? 0.095 : 0.072);
+        battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, critical ? 0.11 : 0.09);
+        battle.playerShotRecoilStrength = Math.max(battle.playerShotRecoilStrength, critical ? 7.2 : 5.6);
         if (enemy.elite && eliteCrackRatio > 0.08) {
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22 + eliteCrackRatio * 0.08);
           battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.07 + eliteCrackRatio * 0.03);
@@ -3112,6 +3123,10 @@ export class RunEngine {
             strokeWidth: 3,
             growthPerSec: 210,
             innerRadiusRatio: 0.62,
+            spokeCount: enemy.elite ? 6 : 4,
+            spokeLength: enemy.elite ? 26 : 20,
+            angle: Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x),
+            spinRate: enemy.elite ? 6.8 : 5.2,
           });
           this.enqueueAudio('hurt');
         }
@@ -3872,9 +3887,9 @@ export class RunEngine {
           this.state.stats.hp = clamp(this.state.stats.hp - projectile.damage, 0, this.state.stats.maxHp);
           battle.invulnerableSec = 0.32;
           battle.playerImpactSec = Math.max(battle.playerImpactSec, 0.3);
-          this.queueImpactFreeze(battle, projectile.radius > 5 ? 0.074 : 0.056, projectile.radius > 5 ? 0.12 : 0.18);
+          this.queueImpactFreeze(battle, projectile.radius > 5 ? 0.082 : 0.062, projectile.radius > 5 ? 0.12 : 0.16);
           this.pushPlayerKnockback(battle, projectile.x, projectile.y, projectile.radius > 5 ? 220 : 170);
-          this.kickBattleShake(battle, 0.18, 0.38);
+          this.kickBattleShake(battle, 0.2, projectile.radius > 5 ? 0.44 : 0.4);
           this.registerPlayerThreatDirection(battle, projectile.x, projectile.y, 0.3);
           this.createCombatPulse(battle, {
             x: battle.playerX,
@@ -3888,6 +3903,10 @@ export class RunEngine {
             strokeWidth: 3,
             growthPerSec: 180,
             innerRadiusRatio: 0.62,
+            spokeCount: projectile.radius > 5 ? 5 : 4,
+            spokeLength: projectile.radius > 5 ? 24 : 18,
+            angle: Math.atan2(battle.playerY - projectile.y, battle.playerX - projectile.x),
+            spinRate: projectile.radius > 5 ? 6 : 4.8,
           });
           this.enqueueAudio('hurt');
         }
@@ -3914,6 +3933,10 @@ export class RunEngine {
           strokeWidth: 2,
           growthPerSec: 120,
           innerRadiusRatio: 0.8,
+          spokeCount: 3,
+          spokeLength: 18,
+          angle: battle.playerNearMissAngle,
+          spinRate: 7.2,
         });
         this.enqueueAudio('nearMiss');
       }
@@ -4102,6 +4125,7 @@ export class RunEngine {
     for (const pulse of battle.pulses) {
       pulse.lifeSec -= dt;
       pulse.radius += pulse.growthPerSec * dt;
+      pulse.angle += pulse.spinRate * dt;
     }
     battle.pulses = battle.pulses.filter((pulse) => pulse.lifeSec > 0);
   }
@@ -4318,6 +4342,10 @@ export class RunEngine {
       strokeWidth?: number;
       growthPerSec?: number;
       innerRadiusRatio?: number;
+      spokeCount?: number;
+      spokeLength?: number;
+      angle?: number;
+      spinRate?: number;
     },
   ): void {
     battle.pulses.push({
@@ -4334,6 +4362,10 @@ export class RunEngine {
       strokeWidth: config.strokeWidth ?? 2,
       growthPerSec: config.growthPerSec ?? 120,
       innerRadiusRatio: config.innerRadiusRatio ?? 0.62,
+      spokeCount: config.spokeCount ?? 0,
+      spokeLength: config.spokeLength ?? 0,
+      angle: config.angle ?? 0,
+      spinRate: config.spinRate ?? 0,
     });
   }
 
@@ -4387,10 +4419,11 @@ export class RunEngine {
     const dx = enemy.x - sourceX;
     const dy = enemy.y - sourceY;
     const distance = Math.max(1, Math.hypot(dx, dy));
-    const kick = options?.kick ?? 6;
-    enemy.hitFlashSec = Math.max(enemy.hitFlashSec, options?.flashSec ?? 0.14);
+    const kick = options?.kick ?? 7;
+    enemy.hitFlashSec = Math.max(enemy.hitFlashSec, options?.flashSec ?? 0.16);
     enemy.hitOffsetX = (dx / distance) * kick;
     enemy.hitOffsetY = (dy / distance) * kick;
+    const impactAngle = Math.atan2(dy, dx);
     this.createCombatPulse(battle, {
       x: enemy.x,
       y: enemy.y,
@@ -4398,11 +4431,15 @@ export class RunEngine {
       lifeSec: 0.14,
       color: options?.pulseColor ?? 0xff8291,
       secondaryColor: options?.secondaryColor ?? 0xffffff,
-      fillAlpha: 0.06,
-      strokeAlpha: 0.62,
-      strokeWidth: 2,
-      growthPerSec: 140,
-      innerRadiusRatio: 0.72,
+      fillAlpha: 0.08,
+      strokeAlpha: 0.68,
+      strokeWidth: 2.2,
+      growthPerSec: 158,
+      innerRadiusRatio: 0.68,
+      spokeCount: enemy.elite ? 5 : enemy.archetype === 'brute' ? 4 : 3,
+      spokeLength: Math.max(10, (options?.pulseRadius ?? enemy.radius + 6) * 0.58 + kick * 0.4),
+      angle: impactAngle,
+      spinRate: enemy.elite ? 5.4 : 4.2,
     });
   }
 
@@ -4547,6 +4584,10 @@ export class RunEngine {
           strokeWidth: 2,
           growthPerSec: 196,
           innerRadiusRatio: 0.66,
+          spokeCount: enemy.elite ? 6 : 4,
+          spokeLength: enemy.elite ? 24 : 16 + Math.min(8, laneScore * 2),
+          angle: Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX),
+          spinRate: enemy.elite ? 6.4 : 5,
         });
       }
     }
@@ -4570,6 +4611,10 @@ export class RunEngine {
           strokeWidth: 2,
           growthPerSec: 190,
           innerRadiusRatio: 0.68,
+          spokeCount: enemy.elite ? 7 : 5,
+          spokeLength: enemy.elite ? 28 : 18,
+          angle: Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x),
+          spinRate: enemy.elite ? 6.8 : 5.2,
         });
       }
     }
@@ -4631,6 +4676,10 @@ export class RunEngine {
       strokeWidth: enemy.elite ? 4 : 3,
       growthPerSec: enemy.elite ? 260 : 210,
       innerRadiusRatio: 0.6,
+      spokeCount: enemy.elite ? 7 : enemy.archetype === 'brute' ? 5 : 4,
+      spokeLength: enemy.elite ? 34 : enemy.archetype === 'brute' ? 24 : 18,
+      angle: Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x),
+      spinRate: enemy.elite ? 8 : 6.2,
     });
     this.createCombatPulse(battle, {
       x: enemy.x,
@@ -4644,6 +4693,10 @@ export class RunEngine {
       strokeWidth: enemy.elite ? 2.5 : 2,
       growthPerSec: enemy.elite ? 220 : 180,
       innerRadiusRatio: 0.54,
+      spokeCount: enemy.elite ? 5 : 3,
+      spokeLength: enemy.elite ? 22 : 14,
+      angle: Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX),
+      spinRate: enemy.elite ? -5.6 : -4.2,
     });
     this.queueImpactFreeze(
       battle,
@@ -4654,6 +4707,12 @@ export class RunEngine {
       battle,
       enemy.elite ? 0.24 : enemy.archetype === 'brute' ? 0.14 : enemy.archetype === 'skirmisher' ? 0.12 : 0.1,
       enemy.elite ? 0.78 : enemy.archetype === 'brute' ? 0.34 : enemy.archetype === 'ranged' ? 0.28 : 0.24,
+    );
+    battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, enemy.elite ? 0.11 : 0.085 + flowChainBonus * 0.01);
+    battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, enemy.elite ? 0.12 : 0.096);
+    battle.playerShotRecoilStrength = Math.max(
+      battle.playerShotRecoilStrength,
+      enemy.elite ? 8 : enemy.archetype === 'brute' ? 6.4 : 5.8,
     );
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, enemy.elite ? 0.3 : 0.18 + flowChainBonus * 0.04);
     this.feedBattleFlow(

@@ -41,7 +41,7 @@ const RMS_AUDIBLE_THRESHOLD = 0.0035;
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   menu: {
     stepSec: 0.34,
-    gain: 0.42,
+    gain: 0.46,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -55,7 +55,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   battle: {
     stepSec: 0.28,
-    gain: 0.5,
+    gain: 0.54,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
@@ -69,7 +69,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   boss: {
     stepSec: 0.22,
-    gain: 0.52,
+    gain: 0.56,
     bassType: 'sawtooth',
     leadType: 'square',
     accentType: 'triangle',
@@ -83,7 +83,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   result: {
     stepSec: 0.34,
-    gain: 0.38,
+    gain: 0.42,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -138,6 +138,65 @@ function createVoice(
   oscillator.stop(stopAt);
 }
 
+function connectWithOptionalPanner(
+  context: AudioContext,
+  source: AudioNode,
+  destination: AudioNode,
+  pan = 0,
+): void {
+  if ('createStereoPanner' in context) {
+    const panner = context.createStereoPanner();
+    panner.pan.value = Math.max(-1, Math.min(1, pan));
+    source.connect(panner);
+    panner.connect(destination);
+    return;
+  }
+
+  source.connect(destination);
+}
+
+function createImpactThump(
+  context: AudioContext,
+  destination: AudioNode,
+  now: number,
+  options: {
+    peak: number;
+    duration: number;
+    frequency: number;
+    sweepTo?: number;
+    delay?: number;
+    pan?: number;
+    type?: OscillatorType;
+  },
+): void {
+  const oscillator = context.createOscillator();
+  const filter = context.createBiquadFilter();
+  const gain = context.createGain();
+  const startAt = now + (options.delay ?? 0);
+  const attackAt = startAt + Math.min(0.012, Math.max(0.003, options.duration * 0.18));
+  const releaseAt = startAt + options.duration;
+  const stopAt = releaseAt + 0.06;
+
+  oscillator.type = options.type ?? 'sine';
+  oscillator.frequency.setValueAtTime(options.frequency, startAt);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(34, options.sweepTo ?? options.frequency * 0.68), releaseAt);
+
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(Math.max(180, options.frequency * 3.8), startAt);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(96, options.frequency * 2.1), releaseAt);
+  filter.Q.value = 0.55;
+
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(options.peak, attackAt);
+  gain.gain.exponentialRampToValueAtTime(0.0001, stopAt);
+
+  oscillator.connect(filter);
+  connectWithOptionalPanner(context, filter, gain, options.pan ?? 0);
+  gain.connect(destination);
+  oscillator.start(startAt);
+  oscillator.stop(stopAt);
+}
+
 export class PilotAudio {
   private context: AudioContext | null = null;
 
@@ -150,6 +209,8 @@ export class PilotAudio {
   private analyser: AnalyserNode | null = null;
 
   private analyserData: Float32Array<ArrayBuffer> | null = null;
+
+  private noiseBuffer: AudioBuffer | null = null;
 
   private readonly lastPlayedAt = new Map<AudioCue, number>();
 
@@ -230,6 +291,7 @@ export class PilotAudio {
     this.lastPlayedAt.set(cue, nowMs);
     this.cueCounts.set(cue, (this.cueCounts.get(cue) ?? 0) + 1);
     profile.play(this.context, this.sfxGain, this.context.currentTime);
+    this.applyCueDuck(cue);
   }
 
   public getDebugSnapshot(): PilotAudioDebugSnapshot {
@@ -267,9 +329,9 @@ export class PilotAudio {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
-    this.masterGain.gain.value = 1.12;
+    this.masterGain.gain.value = 1.16;
     this.musicGain.gain.value = 0.0001;
-    this.sfxGain.gain.value = 1.34;
+    this.sfxGain.gain.value = 1.42;
 
     this.musicGain.connect(this.masterGain);
     this.sfxGain.connect(this.masterGain);
@@ -449,18 +511,135 @@ export class PilotAudio {
     return MUSIC_PROFILES[mode];
   }
 
+  private createNoiseBuffer(): AudioBuffer | null {
+    if (!this.context) {
+      return null;
+    }
+    if (this.noiseBuffer) {
+      return this.noiseBuffer;
+    }
+
+    const buffer = this.context.createBuffer(1, this.context.sampleRate * 1.2, this.context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let index = 0; index < data.length; index += 1) {
+      data[index] = Math.random() * 2 - 1;
+    }
+    this.noiseBuffer = buffer;
+    return buffer;
+  }
+
+  private createNoiseBurst(
+    context: AudioContext,
+    destination: AudioNode,
+    now: number,
+    options: {
+      peak: number;
+      duration: number;
+      delay?: number;
+      filterType?: BiquadFilterType;
+      frequency?: number;
+      q?: number;
+      pan?: number;
+      playbackRate?: number;
+    },
+  ): void {
+    const buffer = this.createNoiseBuffer();
+    if (!buffer) {
+      return;
+    }
+
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = options.playbackRate ?? 1;
+
+    const filter = context.createBiquadFilter();
+    filter.type = options.filterType ?? 'bandpass';
+    filter.frequency.value = options.frequency ?? 1400;
+    filter.Q.value = options.q ?? 0.8;
+
+    const gain = context.createGain();
+    const startAt = now + (options.delay ?? 0);
+    const attackAt = startAt + Math.min(0.008, Math.max(0.002, options.duration * 0.18));
+    const releaseAt = startAt + options.duration;
+    const stopAt = releaseAt + 0.05;
+
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(options.peak, attackAt);
+    gain.gain.exponentialRampToValueAtTime(0.0001, stopAt);
+
+    source.connect(filter);
+    connectWithOptionalPanner(context, filter, gain, options.pan ?? 0);
+    gain.connect(destination);
+    source.start(startAt);
+    source.stop(stopAt);
+  }
+
+  private getCueVariant(cue: AudioCue, range: number): number {
+    const count = this.cueCounts.get(cue) ?? 0;
+    const phase = (count % 4) - 1.5;
+    return (phase / 1.5) * range;
+  }
+
+  private duckMusic(amount: number, durationSec: number): void {
+    if (!this.context || !this.musicGain || this.context.state !== 'running') {
+      return;
+    }
+
+    const profile = this.getMusicProfile(this.currentMusicMode);
+    if (!profile) {
+      return;
+    }
+
+    const now = this.context.currentTime;
+    const baseGain = profile.gain;
+    const duckedGain = Math.max(0.0001, baseGain * (1 - Math.min(0.78, Math.max(0, amount))));
+    const currentGain = Math.max(0.0001, this.musicGain.gain.value);
+    this.musicGain.gain.cancelScheduledValues(now);
+    this.musicGain.gain.setValueAtTime(currentGain, now);
+    this.musicGain.gain.exponentialRampToValueAtTime(duckedGain, now + 0.014);
+    this.musicGain.gain.exponentialRampToValueAtTime(baseGain, now + Math.max(0.04, durationSec));
+  }
+
+  private applyCueDuck(cue: AudioCue): void {
+    switch (cue) {
+      case 'shoot':
+        this.duckMusic(0.06, 0.045);
+        return;
+      case 'dash':
+        this.duckMusic(0.1, 0.075);
+        return;
+      case 'hit':
+      case 'enemyShot':
+      case 'nearMiss':
+        this.duckMusic(0.12, 0.07);
+        return;
+      case 'kill':
+      case 'crit':
+        this.duckMusic(0.18, 0.1);
+        return;
+      case 'hurt':
+      case 'pressure':
+      case 'boss':
+        this.duckMusic(0.2, 0.14);
+        return;
+      default:
+        return;
+    }
+  }
+
   private getProfile(cue: AudioCue): CueProfile {
     switch (cue) {
       case 'click':
         return {
           cooldownMs: 60,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('click', 36);
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 720,
+              frequency: 720 + variant,
               peak: 0.048,
               duration: 0.06,
-              sweepTo: 520,
+              sweepTo: 520 + variant * 0.4,
             });
           },
         };
@@ -589,20 +768,28 @@ export class PilotAudio {
         return {
           cooldownMs: 70,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('shoot', 28);
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 240,
+              frequency: 240 + variant,
               peak: 0.042,
               duration: 0.045,
-              sweepTo: 170,
+              sweepTo: 170 + variant * 0.28,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 640,
+              frequency: 640 + variant * 1.6,
               peak: 0.022,
               duration: 0.05,
               delay: 0.006,
-              sweepTo: 460,
+              sweepTo: 460 + variant,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.026,
+              duration: 0.036,
+              frequency: 2200 + variant * 8,
+              q: 1.1,
+              pan: variant * 0.006,
             });
           },
         };
@@ -610,20 +797,36 @@ export class PilotAudio {
         return {
           cooldownMs: 140,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('dash', 32);
             createVoice(context, destination, now, {
               type: 'sawtooth',
-              frequency: 180,
+              frequency: 180 + variant,
               peak: 0.04,
               duration: 0.08,
-              sweepTo: 320,
+              sweepTo: 320 + variant * 0.7,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 520,
+              frequency: 520 + variant * 1.3,
               peak: 0.026,
               duration: 0.1,
               delay: 0.02,
-              sweepTo: 760,
+              sweepTo: 760 + variant * 1.8,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.024,
+              duration: 0.06,
+              frequency: 1480 + variant * 7,
+              q: 0.9,
+              pan: variant * 0.007,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.03,
+              duration: 0.09,
+              frequency: 96 + variant * 0.2,
+              sweepTo: 60 + variant * 0.06,
+              pan: variant * 0.004,
+              type: 'triangle',
             });
           },
         };
@@ -631,20 +834,35 @@ export class PilotAudio {
         return {
           cooldownMs: 100,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('hit', 22);
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 190,
+              frequency: 190 + variant,
               peak: 0.054,
               duration: 0.04,
-              sweepTo: 138,
+              sweepTo: 138 + variant * 0.22,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 360,
+              frequency: 360 + variant,
               peak: 0.027,
               duration: 0.05,
               delay: 0.008,
-              sweepTo: 250,
+              sweepTo: 250 + variant * 0.4,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.03,
+              duration: 0.042,
+              frequency: 1240 + variant * 5,
+              q: 1.4,
+              pan: variant * 0.008,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.028,
+              duration: 0.06,
+              frequency: 104 + variant * 0.24,
+              sweepTo: 68 + variant * 0.08,
+              pan: variant * 0.006,
             });
           },
         };
@@ -652,20 +870,34 @@ export class PilotAudio {
         return {
           cooldownMs: 120,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('hurt', 18);
             createVoice(context, destination, now, {
               type: 'sawtooth',
-              frequency: 150,
+              frequency: 150 + variant,
               peak: 0.076,
               duration: 0.09,
-              sweepTo: 92,
+              sweepTo: 92 + variant * 0.14,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 410,
+              frequency: 410 + variant,
               peak: 0.036,
               duration: 0.08,
               delay: 0.01,
-              sweepTo: 240,
+              sweepTo: 240 + variant * 0.3,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.04,
+              duration: 0.08,
+              frequency: 920 + variant * 4,
+              q: 0.85,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.036,
+              duration: 0.12,
+              frequency: 90 + variant * 0.18,
+              sweepTo: 48 + variant * 0.05,
+              type: 'triangle',
             });
           },
         };
@@ -673,28 +905,43 @@ export class PilotAudio {
         return {
           cooldownMs: 90,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('kill', 26);
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 280,
+              frequency: 280 + variant,
               peak: 0.066,
               duration: 0.075,
-              sweepTo: 450,
+              sweepTo: 450 + variant * 1.4,
             });
             createVoice(context, destination, now, {
               type: 'sine',
-              frequency: 640,
+              frequency: 640 + variant * 1.8,
               peak: 0.042,
               duration: 0.09,
               delay: 0.014,
-              sweepTo: 920,
+              sweepTo: 920 + variant * 2.1,
             });
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 210,
+              frequency: 210 + variant * 0.8,
               peak: 0.024,
               duration: 0.05,
               delay: 0.01,
-              sweepTo: 170,
+              sweepTo: 170 + variant * 0.4,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.032,
+              duration: 0.06,
+              frequency: 1760 + variant * 6,
+              q: 1.1,
+              pan: variant * 0.007,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.026,
+              duration: 0.074,
+              frequency: 116 + variant * 0.16,
+              sweepTo: 72 + variant * 0.05,
+              pan: variant * 0.005,
             });
           },
         };
@@ -702,28 +949,36 @@ export class PilotAudio {
         return {
           cooldownMs: 90,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('pickup', 18);
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 520,
+              frequency: 520 + variant,
               peak: 0.042,
               duration: 0.09,
-              sweepTo: 760,
+              sweepTo: 760 + variant * 1.2,
             });
             createVoice(context, destination, now, {
               type: 'sine',
-              frequency: 820,
+              frequency: 820 + variant * 1.4,
               peak: 0.032,
               duration: 0.1,
               delay: 0.014,
-              sweepTo: 1060,
+              sweepTo: 1060 + variant * 1.6,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 1120,
+              frequency: 1120 + variant * 1.8,
               peak: 0.019,
               duration: 0.05,
               delay: 0.028,
-              sweepTo: 1320,
+              sweepTo: 1320 + variant * 2,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.014,
+              duration: 0.026,
+              frequency: 2800 + variant * 8,
+              q: 1.5,
+              pan: variant * 0.008,
             });
           },
         };
@@ -731,28 +986,43 @@ export class PilotAudio {
         return {
           cooldownMs: 115,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('crit', 34);
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 820,
+              frequency: 820 + variant * 1.2,
               peak: 0.055,
               duration: 0.1,
-              sweepTo: 1120,
+              sweepTo: 1120 + variant * 2.2,
             });
             createVoice(context, destination, now, {
               type: 'sine',
-              frequency: 1120,
+              frequency: 1120 + variant * 1.8,
               peak: 0.038,
               duration: 0.11,
               delay: 0.016,
-              sweepTo: 1380,
+              sweepTo: 1380 + variant * 2.4,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 1460,
+              frequency: 1460 + variant * 2.1,
               peak: 0.016,
               duration: 0.07,
               delay: 0.022,
-              sweepTo: 1710,
+              sweepTo: 1710 + variant * 2.8,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.034,
+              duration: 0.05,
+              frequency: 2400 + variant * 9,
+              q: 1.35,
+              pan: variant * 0.006,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.024,
+              duration: 0.068,
+              frequency: 132 + variant * 0.2,
+              sweepTo: 84 + variant * 0.05,
+              pan: variant * 0.004,
             });
           },
         };
@@ -760,20 +1030,28 @@ export class PilotAudio {
         return {
           cooldownMs: 90,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('enemyShot', 20);
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 300,
+              frequency: 300 + variant,
               peak: 0.042,
               duration: 0.055,
-              sweepTo: 214,
+              sweepTo: 214 + variant * 0.36,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 720,
+              frequency: 720 + variant * 1.2,
               peak: 0.026,
               duration: 0.065,
               delay: 0.004,
-              sweepTo: 560,
+              sweepTo: 560 + variant,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.022,
+              duration: 0.042,
+              frequency: 1880 + variant * 5,
+              q: 1.2,
+              pan: variant * 0.009,
             });
           },
         };
@@ -781,28 +1059,36 @@ export class PilotAudio {
         return {
           cooldownMs: 90,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('nearMiss', 18);
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 720,
+              frequency: 720 + variant,
               peak: 0.032,
               duration: 0.055,
-              sweepTo: 980,
+              sweepTo: 980 + variant * 1.4,
             });
             createVoice(context, destination, now, {
               type: 'sine',
-              frequency: 1080,
+              frequency: 1080 + variant * 1.6,
               peak: 0.02,
               duration: 0.055,
               delay: 0.01,
-              sweepTo: 1440,
+              sweepTo: 1440 + variant * 2,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 1420,
+              frequency: 1420 + variant * 1.8,
               peak: 0.012,
               duration: 0.04,
               delay: 0.018,
-              sweepTo: 1180,
+              sweepTo: 1180 + variant,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.018,
+              duration: 0.038,
+              frequency: 2600 + variant * 6,
+              q: 1.3,
+              pan: variant * 0.008,
             });
           },
         };
@@ -810,20 +1096,34 @@ export class PilotAudio {
         return {
           cooldownMs: 220,
           play: (context, destination, now) => {
+            const variant = this.getCueVariant('pressure', 16);
             createVoice(context, destination, now, {
               type: 'sawtooth',
-              frequency: 150,
+              frequency: 150 + variant,
               peak: 0.06,
               duration: 0.18,
-              sweepTo: 100,
+              sweepTo: 100 + variant * 0.2,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 235,
+              frequency: 235 + variant,
               peak: 0.03,
               duration: 0.14,
               delay: 0.02,
-              sweepTo: 152,
+              sweepTo: 152 + variant * 0.3,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.03,
+              duration: 0.08,
+              frequency: 1080 + variant * 4,
+              q: 0.88,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.03,
+              duration: 0.14,
+              frequency: 82 + variant * 0.14,
+              sweepTo: 44 + variant * 0.03,
+              type: 'triangle',
             });
           },
         };

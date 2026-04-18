@@ -364,6 +364,10 @@ export interface PulseState {
   strokeWidth: number;
   growthPerSec: number;
   innerRadiusRatio: number;
+  spokeCount: number;
+  spokeLength: number;
+  angle: number;
+  spinRate: number;
 }
 
 export interface ExperienceOrbState {
