@@ -4403,6 +4403,10 @@ export class RunEngine {
         continue;
       }
 
+      if (this.dampenEliteBreachProjectile(battle, projectile, dt)) {
+        continue;
+      }
+
       const distance = Math.hypot(projectile.x - battle.playerX, projectile.y - battle.playerY);
       if (distance <= projectile.radius + PLAYER_COLLISION_RADIUS) {
         if (battle.invulnerableSec <= 0) {
@@ -6125,6 +6129,123 @@ export class RunEngine {
     return Math.max(crackRatio, recoveryCarry);
   }
 
+  private getEliteBreachProjectileSuppressionRatio(battle: BattleState): number {
+    if (battle.encounterType !== 'battle' || !battle.eliteAlive) {
+      return 0;
+    }
+
+    const crackRatio = this.getEliteCrackWindowRatio(battle);
+    if (crackRatio <= 0.08) {
+      return 0;
+    }
+
+    const recoveryRatio = clamp(battle.playerRecoverySec / 0.26, 0, 1);
+    const impactPenalty = clamp(battle.playerImpactSec / 0.34, 0, 1);
+    return clamp(crackRatio * 0.76 + recoveryRatio * 0.24 - impactPenalty * 0.12, 0, 1);
+  }
+
+  private getEliteBreachProjectileCorridorRatio(
+    battle: BattleState,
+    projectile: BattleState['enemyProjectiles'][number],
+  ): number {
+    const eliteEnemy = this.getEliteEnemy(battle);
+    if (!eliteEnemy) {
+      return 0;
+    }
+
+    const crackRatio = this.getEliteCrackWindowRatio(battle);
+    if (crackRatio <= 0.08) {
+      return 0;
+    }
+
+    const playerDx = battle.playerX - eliteEnemy.x;
+    const playerDy = battle.playerY - eliteEnemy.y;
+    const playerDistance = Math.max(1, Math.hypot(playerDx, playerDy));
+    const dirX = playerDx / playerDistance;
+    const dirY = playerDy / playerDistance;
+    const orthoX = -dirY;
+    const orthoY = dirX;
+    const relX = projectile.x - eliteEnemy.x;
+    const relY = projectile.y - eliteEnemy.y;
+    const projection = relX * dirX + relY * dirY;
+    const corridorLength = Math.max(
+      eliteEnemy.radius + 20,
+      Math.min(playerDistance - 10, eliteEnemy.radius + 92 + crackRatio * 36 + battle.eliteCrackEscortCount * 8),
+    );
+    if (projection < eliteEnemy.radius - 8 || projection > corridorLength) {
+      return 0;
+    }
+
+    const lateral = Math.abs(relX * orthoX + relY * orthoY);
+    const corridorWidth =
+      eliteEnemy.radius + 18 + crackRatio * 24 + battle.eliteCrackEscortCount * 5 + projectile.radius * 1.2;
+    if (lateral > corridorWidth) {
+      return 0;
+    }
+
+    const centerRatio = 1 - lateral / Math.max(1, corridorWidth);
+    const depthRatio =
+      1 -
+      Math.min(
+        1,
+        Math.abs(projection - corridorLength * 0.54) / Math.max(16, corridorLength * 0.62),
+      );
+    return clamp(centerRatio * 0.74 + depthRatio * 0.26, 0, 1);
+  }
+
+  private dampenEliteBreachProjectile(
+    battle: BattleState,
+    projectile: BattleState['enemyProjectiles'][number],
+    dt: number,
+  ): boolean {
+    const suppressionRatio = this.getEliteBreachProjectileSuppressionRatio(battle);
+    if (suppressionRatio <= 0.08) {
+      return false;
+    }
+
+    const corridorRatio = this.getEliteBreachProjectileCorridorRatio(battle, projectile);
+    if (corridorRatio <= 0.08) {
+      return false;
+    }
+
+    const slowBlend = clamp(dt * (1.28 + suppressionRatio * 1.46 + corridorRatio * 1.14), 0, 0.38);
+    projectile.vx *= 1 - slowBlend;
+    projectile.vy *= 1 - slowBlend;
+    projectile.radius = Math.max(
+      2.4,
+      projectile.radius - dt * (2.3 + suppressionRatio * 2.7 + corridorRatio * 2.1),
+    );
+    projectile.lifeSec -= dt * (0.16 + suppressionRatio * 0.24 + corridorRatio * 0.18);
+
+    const speedAfterDampen = Math.max(1, Math.hypot(projectile.vx, projectile.vy));
+    if (corridorRatio > 0.46 && (speedAfterDampen <= 112 || projectile.radius <= 2.9 || projectile.lifeSec <= 0.16)) {
+      battle.playerRecoverySec = Math.max(
+        battle.playerRecoverySec,
+        0.08 + suppressionRatio * 0.08 + corridorRatio * 0.06,
+      );
+      this.createCombatPulse(battle, {
+        x: projectile.x,
+        y: projectile.y,
+        radius: 10 + projectile.radius * 2 + corridorRatio * 6,
+        lifeSec: 0.1,
+        color: 0xffefc4,
+        secondaryColor: 0xf7ffff,
+        fillAlpha: 0.03,
+        strokeAlpha: 0.2 + corridorRatio * 0.14,
+        strokeWidth: 1.4,
+        growthPerSec: 136,
+        innerRadiusRatio: 0.76,
+        spokeCount: 3,
+        spokeLength: 10 + corridorRatio * 4,
+        angle: Math.atan2(projectile.vy, projectile.vx),
+        spinRate: 5.6,
+      });
+      return true;
+    }
+
+    return false;
+  }
+
   private applyEliteBreachHitFollowThrough(
     battle: BattleState,
     enemy: BattleState['enemies'][number],
@@ -6142,6 +6263,7 @@ export class RunEngine {
 
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22 + breachRatio * 0.1 + (critical ? 0.03 : 0));
     battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.08 + breachRatio * 0.08);
+    battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.08 + breachRatio * 0.1 + (critical ? 0.02 : 0));
     battle.playerMoveBoostSec = Math.max(
       battle.playerMoveBoostSec,
       0.08 + breachRatio * 0.08 + (recoveryRatio > 0.18 ? 0.04 : 0),

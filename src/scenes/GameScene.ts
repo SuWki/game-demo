@@ -111,6 +111,9 @@ export class GameScene extends Phaser.Scene {
         escortCount: number;
         escortRecoveryCount: number;
         escortCrackCount: number;
+        enemyProjectileCount: number;
+        breachProjectileCount: number;
+        breachSuppressionRatio: number;
       }
     | null {
     const state = this.engine.getState();
@@ -128,11 +131,19 @@ export class GameScene extends Phaser.Scene {
         escortCount: 0,
         escortRecoveryCount: 0,
         escortCrackCount: 0,
+        enemyProjectileCount: 0,
+        breachProjectileCount: 0,
+        breachSuppressionRatio: 0,
       };
     }
 
     const elite = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
     const escorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0);
+    const breachSuppressionRatio = this.getEliteBreachProjectileSuppressionRatio(battle);
+    const breachProjectileCount =
+      elite && breachSuppressionRatio > 0.08
+        ? battle.enemyProjectiles.filter((projectile) => this.getEliteBreachProjectileCorridorRatio(battle, projectile) > 0.18).length
+        : 0;
     return {
       status: state.status,
       phase: state.phase,
@@ -145,6 +156,9 @@ export class GameScene extends Phaser.Scene {
       escortCount: escorts.length,
       escortRecoveryCount: escorts.filter((enemy) => enemy.recoverySec > 0.08).length,
       escortCrackCount: battle.eliteCrackEscortCount,
+      enemyProjectileCount: battle.enemyProjectiles.length,
+      breachProjectileCount,
+      breachSuppressionRatio,
     };
   }
 
@@ -1615,16 +1629,45 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    const eliteProjectileSuppressionRatio = this.getEliteBreachProjectileSuppressionRatio(battle);
     for (const projectile of battle.enemyProjectiles) {
       if (!this.isVisibleInCamera(camera, projectile.x, projectile.y, 24)) {
         continue;
       }
 
+      const breachCorridorRatio =
+        eliteProjectileSuppressionRatio > 0.08
+          ? this.getEliteBreachProjectileCorridorRatio(battle, projectile)
+          : 0;
+      const projectileTrailColor =
+        breachCorridorRatio > 0.08
+          ? this.mixColor(
+              ENEMY_PROJECTILE_TRAIL,
+              0xffe0a3,
+              0.16 + eliteProjectileSuppressionRatio * 0.18 + breachCorridorRatio * 0.18,
+            )
+          : ENEMY_PROJECTILE_TRAIL;
+      const projectileFillColor =
+        breachCorridorRatio > 0.08
+          ? this.mixColor(
+              ENEMY_PROJECTILE_FILL,
+              0xfff1c6,
+              0.18 + eliteProjectileSuppressionRatio * 0.2 + breachCorridorRatio * 0.18,
+            )
+          : ENEMY_PROJECTILE_FILL;
+      const projectileStrokeColor =
+        breachCorridorRatio > 0.08
+          ? this.mixColor(
+              ENEMY_PROJECTILE_STROKE,
+              0xfaffff,
+              0.12 + eliteProjectileSuppressionRatio * 0.16 + breachCorridorRatio * 0.12,
+            )
+          : ENEMY_PROJECTILE_STROKE;
       const screen = this.worldToScreen(camera, projectile.x, projectile.y);
       const tail = this.worldToScreen(
         camera,
-        projectile.x - projectile.vx * 0.075,
-        projectile.y - projectile.vy * 0.075,
+        projectile.x - projectile.vx * (0.075 - breachCorridorRatio * 0.018),
+        projectile.y - projectile.vy * (0.075 - breachCorridorRatio * 0.018),
       );
       const projectileSpeed = Math.max(1, Math.hypot(projectile.vx, projectile.vy));
       const projectileDirX = projectile.vx / projectileSpeed;
@@ -1632,11 +1675,15 @@ export class GameScene extends Phaser.Scene {
       const projectileOrthoX = -projectileDirY;
       const projectileOrthoY = projectileDirX;
       const projectilePulse = 0.5 + Math.sin(battle.elapsedSec * 9 + projectile.id * 0.43) * 0.5;
-      this.graphics.lineStyle(projectile.radius > 5 ? 3 : 2, ENEMY_PROJECTILE_TRAIL, 0.22 + projectilePulse * 0.08);
+      this.graphics.lineStyle(
+        projectile.radius > 5 ? 3 : 2,
+        projectileTrailColor,
+        0.18 + projectilePulse * 0.08 + breachCorridorRatio * 0.06,
+      );
       this.graphics.lineBetween(tail.x, tail.y, screen.x, screen.y);
       const headLength = projectile.radius + 6 + projectilePulse * 4;
       const wingWidth = projectile.radius + 3 + projectilePulse * 2;
-      this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.12 + projectilePulse * 0.08);
+      this.graphics.fillStyle(projectileFillColor, 0.1 + projectilePulse * 0.08 + breachCorridorRatio * 0.04);
       this.graphics.fillTriangle(
         screen.x + projectileDirX * headLength,
         screen.y + projectileDirY * headLength,
@@ -1645,13 +1692,13 @@ export class GameScene extends Phaser.Scene {
         screen.x - projectileDirX * (projectile.radius * 0.6) - projectileOrthoX * wingWidth,
         screen.y - projectileDirY * (projectile.radius * 0.6) - projectileOrthoY * wingWidth,
       );
-      this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.14 + projectilePulse * 0.08);
+      this.graphics.fillStyle(projectileFillColor, 0.12 + projectilePulse * 0.08 + breachCorridorRatio * 0.04);
       this.graphics.fillCircle(screen.x, screen.y, projectile.radius + 4 + projectilePulse * 2);
-      this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.96);
+      this.graphics.fillStyle(projectileFillColor, 0.94);
       this.graphics.fillCircle(screen.x, screen.y, projectile.radius);
-      this.graphics.lineStyle(1, ENEMY_PROJECTILE_STROKE, 0.42 + projectilePulse * 0.06);
+      this.graphics.lineStyle(1, projectileStrokeColor, 0.36 + projectilePulse * 0.06 + breachCorridorRatio * 0.06);
       this.graphics.strokeCircle(screen.x, screen.y, projectile.radius + 2);
-      this.graphics.lineStyle(1.2, ENEMY_PROJECTILE_STROKE, 0.16 + projectilePulse * 0.18);
+      this.graphics.lineStyle(1.2, projectileStrokeColor, 0.14 + projectilePulse * 0.18 + breachCorridorRatio * 0.04);
       this.graphics.lineBetween(
         screen.x - projectileDirX * 2 + projectileOrthoX * (wingWidth * 0.72),
         screen.y - projectileDirY * 2 + projectileOrthoY * (wingWidth * 0.72),
@@ -3581,6 +3628,73 @@ export class GameScene extends Phaser.Scene {
               ? 0.18
               : 0.16;
     return clamp(enemy.pressurePulseSec / pressureWindow, 0, 1);
+  }
+
+  private getEliteBreachProjectileSuppressionRatio(battle: BattleState): number {
+    if (battle.encounterType !== 'battle' || !battle.eliteAlive) {
+      return 0;
+    }
+
+    const crackRatio = clamp(battle.eliteCrackWindowSec / 0.82, 0, 1);
+    if (crackRatio <= 0.08) {
+      return 0;
+    }
+
+    const recoveryRatio = clamp(battle.playerRecoverySec / 0.26, 0, 1);
+    const impactPenalty = clamp(battle.playerImpactSec / 0.34, 0, 1);
+    return clamp(crackRatio * 0.76 + recoveryRatio * 0.24 - impactPenalty * 0.12, 0, 1);
+  }
+
+  private getEliteBreachProjectileCorridorRatio(
+    battle: BattleState,
+    projectile: BattleState['enemyProjectiles'][number],
+  ): number {
+    if (battle.encounterType !== 'battle' || !battle.eliteAlive) {
+      return 0;
+    }
+
+    const elite = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
+    if (!elite) {
+      return 0;
+    }
+
+    const crackRatio = clamp(battle.eliteCrackWindowSec / 0.82, 0, 1);
+    if (crackRatio <= 0.08) {
+      return 0;
+    }
+
+    const playerDx = battle.playerX - elite.x;
+    const playerDy = battle.playerY - elite.y;
+    const playerDistance = Math.max(1, Math.hypot(playerDx, playerDy));
+    const dirX = playerDx / playerDistance;
+    const dirY = playerDy / playerDistance;
+    const orthoX = -dirY;
+    const orthoY = dirX;
+    const relX = projectile.x - elite.x;
+    const relY = projectile.y - elite.y;
+    const projection = relX * dirX + relY * dirY;
+    const corridorLength = Math.max(
+      elite.radius + 20,
+      Math.min(playerDistance - 10, elite.radius + 92 + crackRatio * 36 + battle.eliteCrackEscortCount * 8),
+    );
+    if (projection < elite.radius - 8 || projection > corridorLength) {
+      return 0;
+    }
+
+    const lateral = Math.abs(relX * orthoX + relY * orthoY);
+    const corridorWidth = elite.radius + 18 + crackRatio * 24 + battle.eliteCrackEscortCount * 5 + projectile.radius * 1.2;
+    if (lateral > corridorWidth) {
+      return 0;
+    }
+
+    const centerRatio = 1 - lateral / Math.max(1, corridorWidth);
+    const depthRatio =
+      1 -
+      Math.min(
+        1,
+        Math.abs(projection - corridorLength * 0.54) / Math.max(16, corridorLength * 0.62),
+      );
+    return clamp(centerRatio * 0.74 + depthRatio * 0.26, 0, 1);
   }
 
   private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {
