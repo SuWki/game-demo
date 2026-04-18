@@ -1809,6 +1809,80 @@ export class GameScene extends Phaser.Scene {
         this.graphics.lineStyle(2, recoveryColor, 0.14 + recoveryRatio * 0.24);
         this.graphics.lineBetween(screen.x - recoveryRadius, screen.y, screen.x - enemy.radius - 4, screen.y);
         this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + recoveryRadius, screen.y);
+        const recoilLength = Math.hypot(enemy.hitOffsetX, enemy.hitOffsetY);
+        if (recoilLength > 0.25) {
+          const recoilDirX = enemy.hitOffsetX / recoilLength;
+          const recoilDirY = enemy.hitOffsetY / recoilLength;
+          const recoilOrthoX = -recoilDirY;
+          const recoilOrthoY = recoilDirX;
+          const tailReach = enemy.radius + 12 + recoveryRatio * 12;
+          if (enemy.archetype === 'brute') {
+            this.graphics.fillStyle(recoveryColor, 0.04 + recoveryRatio * 0.08);
+            this.graphics.fillTriangle(
+              screen.x - recoilDirX * (tailReach + 10),
+              screen.y - recoilDirY * (tailReach + 10),
+              screen.x - recoilDirX * 6 + recoilOrthoX * (8 + recoveryRatio * 6),
+              screen.y - recoilDirY * 6 + recoilOrthoY * (8 + recoveryRatio * 6),
+              screen.x - recoilDirX * 6 - recoilOrthoX * (8 + recoveryRatio * 6),
+              screen.y - recoilDirY * 6 - recoilOrthoY * (8 + recoveryRatio * 6),
+            );
+            this.graphics.lineStyle(2.6, recoveryColor, 0.12 + recoveryRatio * 0.2);
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 3),
+              screen.y - recoilDirY * (enemy.radius + 3),
+              screen.x - recoilDirX * (tailReach + 4),
+              screen.y - recoilDirY * (tailReach + 4),
+            );
+          } else if (enemy.archetype === 'skirmisher') {
+            this.graphics.lineStyle(2, recoveryColor, 0.14 + recoveryRatio * 0.2);
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 2) + recoilOrthoX * 7,
+              screen.y - recoilDirY * (enemy.radius + 2) + recoilOrthoY * 7,
+              screen.x - recoilDirX * tailReach + recoilOrthoX * (12 + recoveryRatio * 6),
+              screen.y - recoilDirY * tailReach + recoilOrthoY * (12 + recoveryRatio * 6),
+            );
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 2) - recoilOrthoX * 7,
+              screen.y - recoilDirY * (enemy.radius + 2) - recoilOrthoY * 7,
+              screen.x - recoilDirX * tailReach - recoilOrthoX * (12 + recoveryRatio * 6),
+              screen.y - recoilDirY * tailReach - recoilOrthoY * (12 + recoveryRatio * 6),
+            );
+          } else if (enemy.archetype === 'ranged') {
+            this.graphics.lineStyle(1.8, recoveryColor, 0.12 + recoveryRatio * 0.2);
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 4) + recoilOrthoX * (enemy.radius * 0.7),
+              screen.y - recoilDirY * (enemy.radius + 4) + recoilOrthoY * (enemy.radius * 0.7),
+              screen.x - recoilDirX * tailReach + recoilOrthoX * (enemy.radius * 0.96),
+              screen.y - recoilDirY * tailReach + recoilOrthoY * (enemy.radius * 0.96),
+            );
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 4) - recoilOrthoX * (enemy.radius * 0.7),
+              screen.y - recoilDirY * (enemy.radius + 4) - recoilOrthoY * (enemy.radius * 0.7),
+              screen.x - recoilDirX * tailReach - recoilOrthoX * (enemy.radius * 0.96),
+              screen.y - recoilDirY * tailReach - recoilOrthoY * (enemy.radius * 0.96),
+            );
+          } else {
+            this.graphics.lineStyle(2, recoveryColor, 0.12 + recoveryRatio * 0.2);
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 2),
+              screen.y - recoilDirY * (enemy.radius + 2),
+              screen.x - recoilDirX * tailReach,
+              screen.y - recoilDirY * tailReach,
+            );
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 1) + recoilOrthoX * 5,
+              screen.y - recoilDirY * (enemy.radius + 1) + recoilOrthoY * 5,
+              screen.x - recoilDirX * (tailReach - 4) + recoilOrthoX * 9,
+              screen.y - recoilDirY * (tailReach - 4) + recoilOrthoY * 9,
+            );
+            this.graphics.lineBetween(
+              screen.x - recoilDirX * (enemy.radius + 1) - recoilOrthoX * 5,
+              screen.y - recoilDirY * (enemy.radius + 1) - recoilOrthoY * 5,
+              screen.x - recoilDirX * (tailReach - 4) - recoilOrthoX * 9,
+              screen.y - recoilDirY * (tailReach - 4) - recoilOrthoY * 9,
+            );
+          }
+        }
       }
       if (spawnRatio > 0) {
         this.graphics.lineStyle(2, enemyStroke, 0.36 * spawnRatio);

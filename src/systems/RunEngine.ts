@@ -3271,13 +3271,16 @@ export class RunEngine {
           (openingRatio > 0.18 || packCount >= 2) &&
           this.triggerRegularPressureBeat(battle, enemy, 0.18, 1.3)
         ) {
-          this.syncRegularPressurePack(battle, enemy, {
+          const syncedCount = this.syncRegularPressurePack(battle, enemy, {
             radius: 88,
             limit: packCount >= 2 ? 2 : 1,
             durationSec: 0.11,
             cooldownSec: 0.86,
             predicate: (candidate) => candidate.archetype === 'standard' || candidate.archetype === 'brute',
           });
+          if (syncedCount > 0) {
+            this.enqueueRegularRelayAudio('standard');
+          }
         }
       }
     } else if (rangedAnchor) {
@@ -3430,13 +3433,16 @@ export class RunEngine {
       driveWindow > -0.1 &&
       this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.24 ? 0.26 : 0.22, 1.66)
     ) {
-      this.syncRegularPressurePack(battle, enemy, {
+      const syncedCount = this.syncRegularPressurePack(battle, enemy, {
         radius: 96,
         limit: 1,
         durationSec: 0.12,
         cooldownSec: 0.92,
         predicate: (candidate) => candidate.archetype === 'standard',
       });
+      if (syncedCount > 0) {
+        this.enqueueRegularRelayAudio('brute');
+      }
     } else if (
       openingRatio > 0.22 &&
       recoveryRatio <= 0.06 &&
@@ -3546,7 +3552,7 @@ export class RunEngine {
       (Math.abs(strafeDirection) >= 0.58 || openingRatio > 0.24) &&
       this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.18 ? 0.2 : 0.18, 1.32)
     ) {
-      this.syncRegularPressurePack(battle, enemy, {
+      const syncedCount = this.syncRegularPressurePack(battle, enemy, {
         radius: pincerHeavy ? 118 : 98,
         limit: pincerHeavy ? 2 : 1,
         durationSec: 0.14,
@@ -3558,6 +3564,9 @@ export class RunEngine {
       if (flankAnchor.role === 'regular' && !flankAnchor.elite) {
         flankAnchor.spawnFlashSec = Math.max(flankAnchor.spawnFlashSec, 0.12);
         flankAnchor.pressurePulseSec = Math.max(flankAnchor.pressurePulseSec, 0.12);
+      }
+      if (syncedCount > 0) {
+        this.enqueueRegularRelayAudio('skirmisher');
       }
     }
     if (enemy.pressurePulseSec > 0) {
@@ -3704,7 +3713,7 @@ export class RunEngine {
       })
     ) {
       enemy.rangedCooldownSec = Math.min(enemy.rangedCooldownSec, screenedByAnchor ? 0.22 : 0.28);
-      this.syncRegularPressurePack(battle, enemy, {
+      const syncedCount = this.syncRegularPressurePack(battle, enemy, {
         radius: 124,
         limit: screenedByAnchor ? 2 : 1,
         durationSec: 0.13,
@@ -3714,6 +3723,9 @@ export class RunEngine {
       if (screenAnchor && !screenAnchor.elite && screenAnchor.role === 'regular') {
         screenAnchor.spawnFlashSec = Math.max(screenAnchor.spawnFlashSec, 0.14);
         screenAnchor.pressurePulseSec = Math.max(screenAnchor.pressurePulseSec, 0.14);
+      }
+      if (syncedCount > 0) {
+        this.enqueueRegularRelayAudio('ranged');
       }
     }
 
@@ -4446,8 +4458,7 @@ export class RunEngine {
     const distance = Math.max(1, Math.hypot(dx, dy));
     const kick = options?.kick ?? 7;
     enemy.hitFlashSec = Math.max(enemy.hitFlashSec, options?.flashSec ?? 0.16);
-    enemy.hitOffsetX = (dx / distance) * kick;
-    enemy.hitOffsetY = (dy / distance) * kick;
+    this.applyEnemyHitRecoil(enemy, dx / distance, dy / distance, kick);
     const impactAngle = Math.atan2(dy, dx);
     this.createCombatPulse(battle, {
       x: enemy.x,
@@ -4813,6 +4824,10 @@ export class RunEngine {
         strokeWidth: 1.5,
         growthPerSec: 132,
         innerRadiusRatio: 0.7,
+        spokeCount: 3,
+        spokeLength: 10 + flowChainBonus * 2,
+        angle: Math.atan2(target.y - enemy.y, target.x - enemy.x),
+        spinRate: 5.2,
       });
     };
 
@@ -4836,6 +4851,7 @@ export class RunEngine {
             0.78 + Math.min(0.08, flowChainBonus * 0.02),
           )
         ) {
+          this.primeRegularPressureLead(battle, relay, 1);
           relay.spawnFlashSec = Math.max(relay.spawnFlashSec, 0.12);
           this.syncRegularPressurePack(battle, relay, {
             radius: 84,
@@ -4845,6 +4861,7 @@ export class RunEngine {
             predicate: (candidate) => candidate.archetype === 'standard',
           });
           midpointPulse(relay, 0xffd8c7, 0xffffff);
+          this.enqueueRegularRelayAudio('standard');
         }
         return;
       }
@@ -4867,6 +4884,7 @@ export class RunEngine {
             0.94 + Math.min(0.08, flowChainBonus * 0.02),
           )
         ) {
+          this.primeRegularPressureLead(battle, relay, 1.04);
           const dx = relay.x - enemy.x;
           const dy = relay.y - enemy.y;
           const distance = Math.max(1, Math.hypot(dx, dy));
@@ -4874,6 +4892,7 @@ export class RunEngine {
           relay.hitOffsetY = clamp(relay.hitOffsetY + (dy / distance) * 5, -16, 16);
           relay.spawnFlashSec = Math.max(relay.spawnFlashSec, 0.14);
           midpointPulse(relay, 0x9fffe2, 0xf4fffb);
+          this.enqueueRegularRelayAudio('skirmisher');
         }
         return;
       }
@@ -4899,6 +4918,18 @@ export class RunEngine {
             candidate.rangedCooldownSec = Math.max(candidate.rangedCooldownSec, 0.38 + index * 0.04);
           }
         });
+        const relay = disrupted.find((candidate) => candidate.archetype === 'standard' || candidate.archetype === 'brute');
+        if (
+          relay &&
+          this.triggerRegularPressureBeat(
+            battle,
+            relay,
+            0.16 + Math.min(0.03, flowChainBonus * 0.01),
+            0.98 + Math.min(0.08, flowChainBonus * 0.02),
+          )
+        ) {
+          this.primeRegularPressureLead(battle, relay, 0.92);
+        }
         this.createCombatPulse(battle, {
           x: enemy.x,
           y: enemy.y,
@@ -4912,6 +4943,7 @@ export class RunEngine {
           growthPerSec: 176,
           innerRadiusRatio: 0.68,
         });
+        this.enqueueRegularRelayAudio('brute');
         return;
       }
       case 'ranged': {
@@ -4939,6 +4971,21 @@ export class RunEngine {
             candidate.rangedCooldownSec = Math.max(candidate.rangedCooldownSec, 0.44 + index * 0.06);
           }
         });
+        const relay = softened.find((candidate) => candidate.archetype === 'ranged') ?? softened[0];
+        if (
+          relay &&
+          this.triggerRegularPressureBeat(
+            battle,
+            relay,
+            0.16 + Math.min(0.04, flowChainBonus * 0.012),
+            0.92 + Math.min(0.08, flowChainBonus * 0.02),
+            {
+              rangedLeadSec: 0.24,
+            },
+          )
+        ) {
+          this.primeRegularPressureLead(battle, relay, 0.88);
+        }
         this.createCombatPulse(battle, {
           x: enemy.x,
           y: enemy.y,
@@ -4952,6 +4999,7 @@ export class RunEngine {
           growthPerSec: 164,
           innerRadiusRatio: 0.72,
         });
+        this.enqueueRegularRelayAudio('ranged');
         return;
       }
       default:
@@ -5113,6 +5161,67 @@ export class RunEngine {
     enemy.recoverySec = Math.max(enemy.recoverySec, recoverySec);
   }
 
+  private applyEnemyHitRecoil(
+    enemy: BattleState['enemies'][number],
+    dirX: number,
+    dirY: number,
+    kick: number,
+  ): void {
+    if (enemy.elite) {
+      enemy.hitOffsetX = dirX * kick;
+      enemy.hitOffsetY = dirY * kick;
+      return;
+    }
+
+    const orthoX = -dirY;
+    const orthoY = dirX;
+    const sideSign = enemy.id % 2 === 0 ? -1 : 1;
+    let worldPush = 2.6 + kick * 0.16;
+    let lateralPush = 0;
+    let visualPush = kick * 0.82 + 1.4;
+    let recoverySec = 0.12 + kick * 0.004;
+    let tacticSec = 0.06;
+    let rangedDelaySec = 0;
+
+    switch (enemy.archetype) {
+      case 'brute':
+        worldPush = 1.8 + kick * 0.1;
+        lateralPush = sideSign * (0.6 + kick * 0.03);
+        visualPush = kick * 0.66 + 1.2;
+        recoverySec = 0.1 + kick * 0.004;
+        tacticSec = 0.07;
+        break;
+      case 'skirmisher':
+        worldPush = 3.2 + kick * 0.18;
+        lateralPush = sideSign * (1.8 + kick * 0.08);
+        visualPush = kick * 0.86 + 1.8;
+        recoverySec = 0.13 + kick * 0.005;
+        tacticSec = 0.08;
+        break;
+      case 'ranged':
+        worldPush = 4.2 + kick * 0.2;
+        lateralPush = sideSign * (1.2 + kick * 0.05);
+        visualPush = kick * 0.92 + 2;
+        recoverySec = 0.16 + kick * 0.006;
+        tacticSec = 0.1;
+        rangedDelaySec = 0.16 + kick * 0.012;
+        break;
+      case 'standard':
+      default:
+        break;
+    }
+
+    enemy.x = clamp(enemy.x + dirX * worldPush + orthoX * lateralPush, -44, ARENA_WIDTH + 44);
+    enemy.y = clamp(enemy.y + dirY * worldPush + orthoY * lateralPush, -44, ARENA_HEIGHT + 44);
+    enemy.hitOffsetX = clamp(enemy.hitOffsetX + dirX * visualPush + orthoX * lateralPush * 1.1, -20, 20);
+    enemy.hitOffsetY = clamp(enemy.hitOffsetY + dirY * visualPush + orthoY * lateralPush * 1.1, -20, 20);
+    this.pushEnemyRecovery(enemy, recoverySec);
+    enemy.tacticCooldownSec = Math.max(enemy.tacticCooldownSec, tacticSec);
+    if (rangedDelaySec > 0) {
+      enemy.rangedCooldownSec = Math.max(enemy.rangedCooldownSec, rangedDelaySec);
+    }
+  }
+
   private getEnemyRecoveryOnCollisionSec(enemy: BattleState['enemies'][number]): number {
     if (enemy.elite) {
       return 0.28;
@@ -5169,6 +5278,67 @@ export class RunEngine {
       default:
         return 0.16;
     }
+  }
+
+  private primeRegularPressureLead(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    intensity = 1,
+  ): void {
+    if (enemy.elite) {
+      return;
+    }
+
+    const dx = battle.playerX - enemy.x;
+    const dy = battle.playerY - enemy.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    const orthoX = -dirY;
+    const orthoY = dirX;
+    const sideSign = enemy.id % 2 === 0 ? -1 : 1;
+    let worldLead = 1.4 * intensity;
+    let visualLead = 2.8 * intensity;
+    let lateralLead = 0;
+
+    switch (enemy.archetype) {
+      case 'brute':
+        worldLead = 1.8 * intensity;
+        visualLead = 3.2 * intensity;
+        lateralLead = sideSign * 0.6 * intensity;
+        break;
+      case 'skirmisher':
+        worldLead = 1.4 * intensity;
+        visualLead = 3 * intensity;
+        lateralLead = sideSign * 2.8 * intensity;
+        break;
+      case 'ranged':
+        worldLead = 0.8 * intensity;
+        visualLead = 2.2 * intensity;
+        lateralLead = sideSign * 1.2 * intensity;
+        enemy.rangedCooldownSec = enemy.rangedCooldownSec > 0 ? Math.min(enemy.rangedCooldownSec, 0.26) : 0;
+        break;
+      case 'standard':
+      default:
+        break;
+    }
+
+    enemy.x = clamp(enemy.x + dirX * worldLead + orthoX * lateralLead * 0.35, -42, ARENA_WIDTH + 42);
+    enemy.y = clamp(enemy.y + dirY * worldLead + orthoY * lateralLead * 0.35, -42, ARENA_HEIGHT + 42);
+    enemy.hitOffsetX = clamp(enemy.hitOffsetX + dirX * visualLead + orthoX * lateralLead, -18, 18);
+    enemy.hitOffsetY = clamp(enemy.hitOffsetY + dirY * visualLead + orthoY * lateralLead, -18, 18);
+  }
+
+  private enqueueRegularRelayAudio(archetype: EnemyArchetypeId): void {
+    const cue: AudioCue =
+      archetype === 'brute'
+        ? 'relayBrute'
+        : archetype === 'skirmisher'
+          ? 'relaySkirmisher'
+          : archetype === 'ranged'
+            ? 'relayRanged'
+            : 'relayStandard';
+    this.enqueueAudio(cue);
   }
 
   private triggerEnemyPressurePulse(
@@ -5247,7 +5417,7 @@ export class RunEngine {
       cooldownSec?: number;
       predicate?: (candidate: BattleState['enemies'][number]) => boolean;
     },
-  ): void {
+  ): number {
     const radius = options?.radius ?? 104;
     const limit = options?.limit ?? 1;
     const durationSec = options?.durationSec ?? 0.12;
@@ -5271,11 +5441,15 @@ export class RunEngine {
       )
       .slice(0, limit);
 
+    let syncedCount = 0;
     candidates.forEach((candidate, index) => {
       if (this.triggerEnemyPressurePulse(candidate, durationSec, cooldownSec + index * 0.08)) {
         candidate.spawnFlashSec = Math.max(candidate.spawnFlashSec, 0.1);
+        this.primeRegularPressureLead(battle, candidate, candidate.archetype === 'ranged' ? 0.82 : 0.9);
+        syncedCount += 1;
       }
     });
+    return syncedCount;
   }
 
   private findNearestAlly(

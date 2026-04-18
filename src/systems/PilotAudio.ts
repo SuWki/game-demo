@@ -611,10 +611,14 @@ export class PilotAudio {
       case 'hit':
       case 'enemyShot':
       case 'nearMiss':
+      case 'relayStandard':
+      case 'relaySkirmisher':
+      case 'relayRanged':
         this.duckMusic(0.12, 0.07);
         return;
       case 'kill':
       case 'crit':
+      case 'relayBrute':
         this.duckMusic(0.18, 0.1);
         return;
       case 'hurt':
@@ -624,6 +628,144 @@ export class PilotAudio {
         return;
       default:
         return;
+    }
+  }
+
+  private createRelayCueProfile(family: 'standard' | 'skirmisher' | 'brute' | 'ranged'): CueProfile {
+    switch (family) {
+      case 'standard':
+        return {
+          cooldownMs: 125,
+          play: (context, destination, now) => {
+            const variant = this.getCueVariant('relayStandard', 18);
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 248 + variant,
+              peak: 0.038,
+              duration: 0.055,
+              sweepTo: 184 + variant * 0.3,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 430 + variant * 1.1,
+              peak: 0.022,
+              duration: 0.05,
+              delay: 0.01,
+              sweepTo: 300 + variant * 0.55,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.018,
+              duration: 0.03,
+              frequency: 1420 + variant * 5,
+              q: 1.24,
+              pan: variant * 0.006,
+            });
+          },
+        };
+      case 'skirmisher':
+        return {
+          cooldownMs: 130,
+          play: (context, destination, now) => {
+            const variant = this.getCueVariant('relaySkirmisher', 22);
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 620 + variant,
+              peak: 0.03,
+              duration: 0.05,
+              sweepTo: 860 + variant * 1.4,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 920 + variant * 1.6,
+              peak: 0.018,
+              duration: 0.055,
+              delay: 0.012,
+              sweepTo: 1220 + variant * 1.8,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.02,
+              duration: 0.04,
+              frequency: 2480 + variant * 7,
+              q: 1.34,
+              pan: variant * 0.008,
+            });
+          },
+        };
+      case 'brute':
+        return {
+          cooldownMs: 170,
+          play: (context, destination, now) => {
+            const variant = this.getCueVariant('relayBrute', 14);
+            createVoice(context, destination, now, {
+              type: 'sawtooth',
+              frequency: 140 + variant,
+              peak: 0.052,
+              duration: 0.12,
+              sweepTo: 96 + variant * 0.18,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 228 + variant,
+              peak: 0.024,
+              duration: 0.08,
+              delay: 0.018,
+              sweepTo: 170 + variant * 0.24,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.02,
+              duration: 0.05,
+              frequency: 860 + variant * 3,
+              q: 0.86,
+              pan: variant * 0.004,
+            });
+            createImpactThump(context, destination, now, {
+              peak: 0.03,
+              duration: 0.1,
+              frequency: 82 + variant * 0.16,
+              sweepTo: 48 + variant * 0.05,
+              pan: variant * 0.004,
+              type: 'triangle',
+            });
+          },
+        };
+      case 'ranged':
+      default:
+        return {
+          cooldownMs: 140,
+          play: (context, destination, now) => {
+            const variant = this.getCueVariant('relayRanged', 18);
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 338 + variant,
+              peak: 0.032,
+              duration: 0.05,
+              sweepTo: 246 + variant * 0.34,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 820 + variant * 1.2,
+              peak: 0.018,
+              duration: 0.06,
+              delay: 0.006,
+              sweepTo: 620 + variant,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 1180 + variant * 1.6,
+              peak: 0.014,
+              duration: 0.04,
+              delay: 0.016,
+              sweepTo: 980 + variant * 1.2,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.016,
+              duration: 0.028,
+              frequency: 2220 + variant * 6,
+              q: 1.22,
+              pan: variant * 0.008,
+            });
+          },
+        };
     }
   }
 
@@ -1092,6 +1234,14 @@ export class PilotAudio {
             });
           },
         };
+      case 'relayStandard':
+        return this.createRelayCueProfile('standard');
+      case 'relaySkirmisher':
+        return this.createRelayCueProfile('skirmisher');
+      case 'relayBrute':
+        return this.createRelayCueProfile('brute');
+      case 'relayRanged':
+        return this.createRelayCueProfile('ranged');
       case 'pressure':
         return {
           cooldownMs: 220,
