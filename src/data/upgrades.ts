@@ -47,6 +47,186 @@ function scaleEffects(effects: ContentEffect[], rarity: UpgradeRarity): ContentE
   });
 }
 
+const GENERIC_PRIMARY_MODIFIER_MAP: Partial<Record<string, keyof StatModifiers>> = {
+  'generic-firepower': 'damage',
+  'generic-cadence': 'fireRate',
+  'generic-ballistics': 'projectileSpeed',
+  'generic-optics': 'critChance',
+  'generic-reactor': 'critMultiplier',
+  'generic-frame': 'maxHp',
+  'generic-thrusters': 'moveSpeed',
+  'generic-overclock': 'regeneration',
+  'generic-vector-buffer': 'moveSpeed',
+  'generic-pressure-bypass': 'regeneration',
+  'generic-sideband-cache': 'fireRate',
+  'generic-open-loop': 'maxHp',
+  'generic-crossfeed': 'fireRate',
+  'generic-reroute-buffer': 'moveSpeed',
+  'generic-relay-throttle': 'fireRate',
+  'generic-terminal-weave': 'damage',
+  'generic-sightline-cache': 'projectileSpeed',
+  'generic-terminal-baffle': 'maxHp',
+  'generic-salvo-cache': 'damage',
+  'generic-drift-anchor': 'moveSpeed',
+  'generic-branch-buffer': 'moveSpeed',
+  'generic-last-mile': 'damage',
+  'generic-mirror-lattice': 'critChance',
+  'generic-borrowed-tail': 'multishot',
+  'generic-crown-pocket': 'maxHp',
+  'generic-tailfold': 'damage',
+  'generic-echo-stow': 'regeneration',
+};
+
+const GENERIC_PRIMARY_MODIFIER_LIMITS: Partial<Record<keyof StatModifiers, number>> = {
+  maxHp: 36,
+  damage: 7,
+  fireRate: 0.42,
+  projectileSpeed: 120,
+  critChance: 0.12,
+  critMultiplier: 0.85,
+  multishot: 2,
+  moveSpeed: 56,
+  regeneration: 0.24,
+};
+
+function estimateStatsOnlyValue(modifiers: StatModifiers): number {
+  return estimateUpgradeValue([
+    {
+      type: 'stats',
+      modifiers,
+    },
+  ]).total;
+}
+
+function pickGenericPrimaryModifier(sourceId: string, modifiers: StatModifiers): keyof StatModifiers {
+  const preferred = GENERIC_PRIMARY_MODIFIER_MAP[sourceId];
+  if (preferred && typeof modifiers[preferred] === 'number' && modifiers[preferred] !== 0) {
+    return preferred;
+  }
+
+  let bestKey: keyof StatModifiers | null = null;
+  let bestValue = Number.NEGATIVE_INFINITY;
+  for (const [rawKey, rawValue] of Object.entries(modifiers)) {
+    if (typeof rawValue !== 'number' || rawValue === 0) {
+      continue;
+    }
+    const key = rawKey as keyof StatModifiers;
+    const valueScore = estimateStatsOnlyValue({ [key]: rawValue } as StatModifiers);
+    if (valueScore > bestValue) {
+      bestKey = key;
+      bestValue = valueScore;
+    }
+  }
+
+  return bestKey ?? 'damage';
+}
+
+function fitSingleModifierToValue(key: keyof StatModifiers, seedValue: number, targetValue: number): number {
+  if (targetValue <= 0 || seedValue === 0) {
+    return seedValue;
+  }
+
+  const direction = seedValue < 0 ? -1 : 1;
+  const evaluate = (magnitude: number): number =>
+    estimateStatsOnlyValue({
+      [key]: roundModifier(key, direction * magnitude),
+    } as StatModifiers);
+
+  let low = 0;
+  let high = Math.max(Math.abs(seedValue), 0.01);
+  let highValue = evaluate(high);
+  let guard = 0;
+  while (highValue < targetValue && guard < 24) {
+    high *= 1.35;
+    highValue = evaluate(high);
+    guard += 1;
+  }
+
+  for (let iteration = 0; iteration < 18; iteration += 1) {
+    const mid = (low + high) * 0.5;
+    const midValue = evaluate(mid);
+    if (midValue < targetValue) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  const lowModifier = roundModifier(key, direction * low);
+  const highModifier = roundModifier(key, direction * high);
+  const lowDiff = Math.abs(estimateStatsOnlyValue({ [key]: lowModifier } as StatModifiers) - targetValue);
+  const highDiff = Math.abs(estimateStatsOnlyValue({ [key]: highModifier } as StatModifiers) - targetValue);
+  const pickedModifier = lowDiff <= highDiff ? lowModifier : highModifier;
+
+  if (pickedModifier === 0) {
+    return roundModifier(key, seedValue);
+  }
+  return pickedModifier;
+}
+
+function capGenericModifierValue(key: keyof StatModifiers, value: number): number {
+  const limit = GENERIC_PRIMARY_MODIFIER_LIMITS[key];
+  if (typeof limit !== 'number') {
+    return value;
+  }
+  if (value < 0) {
+    return roundModifier(key, Math.max(value, -limit));
+  }
+  return roundModifier(key, Math.min(value, limit));
+}
+
+function collectGenericStatModifiers(effects: ContentEffect[]): StatModifiers {
+  const modifiers: StatModifiers = {};
+  for (const effect of effects) {
+    if (effect.type !== 'stats') {
+      continue;
+    }
+    for (const [rawKey, rawValue] of Object.entries(effect.modifiers)) {
+      if (typeof rawValue !== 'number' || rawValue === 0) {
+        continue;
+      }
+      const key = rawKey as keyof StatModifiers;
+      modifiers[key] = (modifiers[key] ?? 0) + rawValue;
+    }
+  }
+  return modifiers;
+}
+
+function normalizeGenericEffects(sourceId: string, effects: ContentEffect[]): ContentEffect[] {
+  const modifiers = collectGenericStatModifiers(effects);
+  const modifierEntries = Object.entries(modifiers).filter(([, rawValue]) => typeof rawValue === 'number' && rawValue !== 0);
+  if (modifierEntries.length === 0) {
+    return effects;
+  }
+
+  const onlySingleStat =
+    effects.length === 1 &&
+    effects[0]?.type === 'stats' &&
+    Object.keys((effects[0] as Extract<ContentEffect, { type: 'stats' }>).modifiers).filter(
+      (key) => typeof (effects[0] as Extract<ContentEffect, { type: 'stats' }>).modifiers[key as keyof StatModifiers] === 'number',
+    ).length <= 1;
+  if (onlySingleStat) {
+    return effects;
+  }
+
+  const primaryKey = pickGenericPrimaryModifier(sourceId, modifiers);
+  const seedValue = modifiers[primaryKey] ?? 0;
+  if (seedValue === 0) {
+    return effects;
+  }
+
+  const targetValue = estimateUpgradeValue(effects).total;
+  const fittedValue = capGenericModifierValue(primaryKey, fitSingleModifierToValue(primaryKey, seedValue, targetValue));
+  return [
+    {
+      type: 'stats',
+      modifiers: {
+        [primaryKey]: fittedValue,
+      },
+    },
+  ];
+}
+
 function formatModifierLabel(key: keyof StatModifiers, value: number): string {
   switch (key) {
     case 'maxHp':
@@ -3245,7 +3425,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
 ];
 
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
-  const effects = scaleEffects(archetype.effects, rarity);
+  const scaledEffects = scaleEffects(archetype.effects, rarity);
+  const effects = archetype.category === 'generic' ? normalizeGenericEffects(archetype.id, scaledEffects) : scaledEffects;
   const valueBreakdown = estimateUpgradeValue(effects);
   const valueBucket = getUpgradeValueBucket(valueBreakdown.total);
   return {

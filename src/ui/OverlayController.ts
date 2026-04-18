@@ -89,7 +89,7 @@ export class OverlayController {
         <div class="screen-anchor screen-anchor-bottom">
           <p class="screen-kicker">NODE RUN</p>
           <h1 class="screen-title">节点作战</h1>
-          <p class="screen-subtitle">移动 · 清场 · 成线</p>
+          <p class="screen-subtitle">移动 / 清场 / 成线</p>
           <div class="screen-meta-strip">
             <span>${summary.totalRuns} 局</span>
             <span>${summary.wins} 胜</span>
@@ -148,12 +148,14 @@ export class OverlayController {
     onChoose: (nodeId: string) => void,
   ): void {
     this.showPanel({
-      panelClassName: 'panel-node-choice',
+      panelClassName: 'panel-node-choice panel-route-choice',
+      panelLayerClassName: 'panel-layer-center',
       modeLabel: '路线选择',
       modeHint: '下一站',
       title: `${phaseLabel}路线`,
       items: options.map((node) => this.renderNodeChoiceCard(node)),
       progress,
+      alertText: '选择 1 条路线',
     });
     for (const node of options) {
       this.bindClick(`[data-choice="${node.id}"]`, () => onChoose(node.id));
@@ -171,11 +173,13 @@ export class OverlayController {
     const isFinalPrep = title.includes('最终整备');
     this.showPanel({
       panelClassName: 'panel-upgrade-choice',
+      panelLayerClassName: 'panel-layer-center',
       modeLabel: isFinalPrep ? '最终整备' : '强化选择',
-      modeHint: isLevelUp ? '拿一项' : isFinalPrep ? 'Boss前' : '补一拍',
+      modeHint: isLevelUp ? '拿一项' : isFinalPrep ? 'Boss 前' : '补一拍',
       title,
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade)),
       progress,
+      alertText: isFinalPrep ? '选择 1 项最终强化' : '请选择 1 项强化',
     });
     for (const upgrade of choices) {
       this.bindClick(`[data-choice="${upgrade.id}"]`, () => onChoose(upgrade.id));
@@ -222,14 +226,14 @@ export class OverlayController {
             <span>${result.buildLabel}</span>
             <span>${result.endingLabel}</span>
           </div>
-          <p class="screen-meta-line">Lv.${result.levelReached} · ${result.battleWins} 战 · ${result.nodesCleared} 节点</p>
+          <p class="screen-meta-line">Lv.${result.levelReached} / ${result.battleWins} 战 / ${result.nodesCleared} 节点</p>
           <div class="screen-actions">
             <button class="text-action text-action-primary" data-action="restart">
               <span>再来一局</span>
               <small>RERUN</small>
             </button>
             <button class="text-action" data-action="menu">
-              <span>开始</span>
+              <span>开始页</span>
               <small>MENU</small>
             </button>
             <button class="text-action" data-action="export">
@@ -259,6 +263,7 @@ export class OverlayController {
   }
 
   public hidePanel(): void {
+    this.panelLayer.className = 'panel-layer hidden';
     this.panelLayer.classList.add('hidden');
     this.panelLayer.innerHTML = '';
   }
@@ -274,16 +279,20 @@ export class OverlayController {
 
   private showPanel(config: {
     panelClassName: string;
+    panelLayerClassName?: string;
     modeLabel: string;
     modeHint?: string;
     title: string;
     items: string[];
     progress?: PanelProgress;
+    alertText?: string;
   }): void {
     this.screenLayer.classList.add('hidden');
+    this.panelLayer.className = `panel-layer ${config.panelLayerClassName ?? ''}`.trim();
     this.panelLayer.classList.remove('hidden');
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel ${config.panelClassName}">
+        ${config.alertText ? `<div class="panel-alert">${config.alertText}</div>` : ''}
         <div class="tray-header">
           <div class="tray-title-group">
             <p class="eyebrow">${config.modeLabel}</p>
@@ -308,30 +317,21 @@ export class OverlayController {
 
   private renderNodeChoiceCard(node: NodeOption): string {
     const accent = NODE_TYPE_ACCENT_MAP[node.type];
-    const detail =
-      node.type === 'battle'
-        ? getBattleEncounterLabel(node.templateId ?? 'elimination')
-        : node.type === 'upgrade'
-          ? node.isFinalPrep
-            ? 'Boss前补强'
-            : '补一项强化'
-          : node.type === 'anomaly'
-            ? '处理异常'
-            : '首领战';
+    const detail = this.getNodeCardEntryLabel(node);
 
     return `
       <button class="choice-strip choice-strip-node" style="--choice-accent: ${accent}" data-choice="${node.id}">
-        <div class="choice-strip-head">
-          <span class="choice-type">路线</span>
-          <span class="choice-mode-badge">${NODE_TYPE_LABEL_MAP[node.type]}</span>
+        <div class="choice-node-top">
+          <span class="choice-mode-badge choice-node-mode">${NODE_TYPE_LABEL_MAP[node.type]}</span>
+          <span class="choice-node-step">下一步</span>
         </div>
-        <div class="choice-strip-body">
+        <div class="choice-strip-body choice-strip-body-node">
           <strong>${node.title}</strong>
           <small>${this.getNodeCardDescription(node)}</small>
         </div>
-        <div class="choice-strip-side">
-          <span class="choice-side-label">${detail}</span>
-          <span class="choice-prompt">进入</span>
+        <div class="choice-strip-foot choice-strip-foot-node">
+          <span class="choice-node-detail">${detail}</span>
+          <span class="choice-node-enter">进入</span>
         </div>
       </button>
     `;
@@ -351,11 +351,11 @@ export class OverlayController {
           <span class="choice-type">强化</span>
           <span class="choice-rarity">${upgrade.rarityLabel}</span>
         </div>
-        <div class="choice-strip-body">
+        <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${upgrade.name}</strong>
           <small>${effectText || upgrade.description}</small>
         </div>
-        <div class="choice-strip-side">
+        <div class="choice-strip-foot">
           <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
           <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
         </div>
@@ -390,12 +390,31 @@ export class OverlayController {
 
   private getNodeCardDescription(node: NodeOption): string {
     if (node.type === 'battle') {
-      return node.description;
+      return `打一场${getBattleEncounterLabel(node.templateId ?? 'elimination')}，继续推进。`;
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '拿完直接进 Boss。' : '补一拍再继续推进。';
+      return node.isFinalPrep ? '拿完直接进 Boss。' : '补 1 项强化再继续推进。';
     }
-    return node.description;
+    if (node.type === 'anomaly') {
+      return '做一次异常处理，拿当前这拍的变化。';
+    }
+    if (node.type === 'boss') {
+      return '直接进入首领战。';
+    }
+    return '继续推进。';
+  }
+
+  private getNodeCardEntryLabel(node: NodeOption): string {
+    if (node.type === 'battle') {
+      return getBattleEncounterLabel(node.templateId ?? 'elimination');
+    }
+    if (node.type === 'upgrade') {
+      return node.isFinalPrep ? '最终整备' : '补 1 项强化';
+    }
+    if (node.type === 'anomaly') {
+      return '处理异常';
+    }
+    return '首领战';
   }
 
   private getEventRouteLabel(
@@ -458,15 +477,11 @@ export class OverlayController {
     }
 
     if (snapshot.objectiveTone === 'elite') {
-      return snapshot.objectiveProgressText.includes('已')
-        ? '精英: 已出现'
-        : '精英: 即将出现';
+      return snapshot.objectiveProgressText.includes('已') ? '精英: 已出现' : '精英: 即将出现';
     }
 
     if (snapshot.objectiveTone === 'boss') {
-      return snapshot.objectiveProgressText.includes('即将')
-        ? '首领: 即将出现'
-        : '首领: 终结';
+      return snapshot.objectiveProgressText.includes('即将') ? '首领: 即将出现' : '首领: 终结';
     }
 
     if (snapshot.objectiveText.includes('强化选择')) {
