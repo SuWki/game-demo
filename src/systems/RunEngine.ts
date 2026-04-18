@@ -3138,6 +3138,7 @@ export class RunEngine {
 
   private updateBullets(battle: BattleState, dt: number): void {
     const critStage = this.getRouteBuildStage('crit');
+    const pierceStage = this.getRouteBuildStage('pierce');
     const dashStage = this.getRouteBuildStage('dash');
     const nextBullets = [];
     for (const bullet of battle.bullets) {
@@ -3270,6 +3271,16 @@ export class RunEngine {
             });
           }
         }
+        this.applyEliteBreachHitFollowThrough(
+          battle,
+          enemy,
+          bullet.routeFocus,
+          critical,
+          recoveryRatio,
+          critStage,
+          pierceStage,
+          dashStage,
+        );
         if (critical) {
           battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + this.getCritOverdriveDurationGain());
           battle.critChain += 1;
@@ -5613,6 +5624,15 @@ export class RunEngine {
           score -= 18 + activeEliteRecovery * 24 + crackEscortGap * 12 + eliteCrackRatio * 32;
         }
       }
+      if (battle.encounterType === 'battle' && activeElite && enemy.id === activeElite.id) {
+        const eliteHpRatio = enemy.hp / Math.max(1, enemy.maxHp);
+        if (focusRoute === 'crit' && (activeEliteRecovery > 0.16 || eliteCrackRatio > 0.08)) {
+          score += 14 + (1 - eliteHpRatio) * 28 + Math.max(activeEliteRecovery, eliteCrackRatio) * 24;
+        } else if (focusRoute === 'pierce' && (activeEliteRecovery > 0.16 || eliteCrackRatio > 0.08)) {
+          const laneScore = this.getPierceLaneScore(battle, enemy);
+          score += 12 + laneScore * 12 + Math.max(activeEliteRecovery, eliteCrackRatio) * 20;
+        }
+      }
 
       if (focusRoute === 'crit') {
         const hpRatio = enemy.hp / Math.max(1, enemy.maxHp);
@@ -6089,6 +6109,171 @@ export class RunEngine {
 
   private getEliteCrackWindowRatio(battle: BattleState): number {
     return clamp(battle.eliteCrackWindowSec / 0.82, 0, 1);
+  }
+
+  private getEliteBreachFollowThroughRatio(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+  ): number {
+    if (battle.encounterType !== 'battle' || !enemy.elite) {
+      return 0;
+    }
+
+    const crackRatio = this.getEliteCrackWindowRatio(battle);
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+    const recoveryCarry = clamp((recoveryRatio - 0.08) / 0.32, 0, 1);
+    return Math.max(crackRatio, recoveryCarry);
+  }
+
+  private applyEliteBreachHitFollowThrough(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    bulletRouteFocus: BattleState['bullets'][number]['routeFocus'],
+    critical: boolean,
+    recoveryRatio: number,
+    critStage: RouteBuildStage,
+    pierceStage: RouteBuildStage,
+    dashStage: RouteBuildStage,
+  ): void {
+    const breachRatio = this.getEliteBreachFollowThroughRatio(battle, enemy);
+    if (breachRatio <= 0.08) {
+      return;
+    }
+
+    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.22 + breachRatio * 0.1 + (critical ? 0.03 : 0));
+    battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.08 + breachRatio * 0.08);
+    battle.playerMoveBoostSec = Math.max(
+      battle.playerMoveBoostSec,
+      0.08 + breachRatio * 0.08 + (recoveryRatio > 0.18 ? 0.04 : 0),
+    );
+    battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.07 + breachRatio * 0.03);
+    battle.fireCooldownSec = Math.max(
+      0.035,
+      battle.fireCooldownSec - (0.004 + breachRatio * 0.008 + (critical ? 0.003 : 0)),
+    );
+
+    this.createCombatPulse(battle, {
+      x: enemy.x,
+      y: enemy.y,
+      radius: enemy.radius + 18 + breachRatio * 10,
+      lifeSec: 0.11 + breachRatio * 0.04,
+      color: 0xffefc8,
+      secondaryColor: 0xffffff,
+      fillAlpha: 0.03,
+      strokeAlpha: 0.28 + breachRatio * 0.14,
+      strokeWidth: 1.8,
+      growthPerSec: 184,
+      innerRadiusRatio: 0.72,
+    });
+
+    if (bulletRouteFocus === 'crit' && (critStage === 'committed' || critStage === 'matured')) {
+      const hpRatio = enemy.hp / Math.max(1, enemy.maxHp);
+      const overdriveFloor =
+        (critStage === 'matured' ? 0.72 : 0.56) +
+        breachRatio * (critStage === 'matured' ? 0.24 : 0.18) +
+        (critical ? 0.08 : 0);
+      battle.critOverdriveSec = Math.min(4.2, Math.max(battle.critOverdriveSec, overdriveFloor));
+      if (hpRatio <= (critStage === 'matured' ? 0.58 : 0.46) || recoveryRatio > 0.2) {
+        battle.fireCooldownSec = Math.max(
+          0.035,
+          battle.fireCooldownSec - (critStage === 'matured' ? 0.016 : 0.01) - breachRatio * 0.01,
+        );
+        battle.playerMoveBoostSec = Math.max(
+          battle.playerMoveBoostSec,
+          0.1 + breachRatio * 0.12 + (critical ? 0.04 : 0),
+        );
+      }
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 22 + breachRatio * 8,
+        lifeSec: 0.13,
+        color: 0xffda7a,
+        secondaryColor: 0xfff7da,
+        fillAlpha: 0.05,
+        strokeAlpha: 0.46 + breachRatio * 0.16,
+        strokeWidth: 2,
+        growthPerSec: 196,
+        innerRadiusRatio: 0.68,
+        spokeCount: 5,
+        spokeLength: 18 + breachRatio * 8,
+        angle: Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX),
+        spinRate: 6.1,
+      });
+    }
+
+    if (bulletRouteFocus === 'pierce' && (pierceStage === 'committed' || pierceStage === 'matured')) {
+      const laneScore = this.getPierceLaneScore(battle, enemy);
+      const behavior = this.getActiveEliteBehavior(battle, BATTLE_TEMPLATES[battle.templateId]);
+      const escortLimit = laneScore >= 1.2 || breachRatio > 0.66 ? 2 : 1;
+      const escorts = this.getEliteNearbyEscorts(battle, enemy, 218).slice(0, escortLimit);
+      escorts.forEach((escort, index) => {
+        this.pushEnemyRecovery(
+          escort,
+          (escort.archetype === 'ranged' ? 0.16 : escort.archetype === 'brute' ? 0.13 : 0.11) +
+            breachRatio * 0.12,
+        );
+        escort.tacticCooldownSec = Math.max(escort.tacticCooldownSec, 0.22 + breachRatio * 0.16 + index * 0.04);
+        escort.hitFlashSec = Math.max(escort.hitFlashSec, 0.1 + breachRatio * 0.08);
+        escort.spawnFlashSec = Math.max(escort.spawnFlashSec, 0.1);
+        if (escort.archetype === 'ranged') {
+          escort.rangedCooldownSec = Math.max(escort.rangedCooldownSec, 0.34 + breachRatio * 0.18 + index * 0.06);
+        }
+        this.displaceEscortOnEliteCrack(battle, enemy, escort, behavior, index);
+        this.createCombatPulse(battle, {
+          x: (enemy.x + escort.x) * 0.5,
+          y: (enemy.y + escort.y) * 0.5,
+          radius: 14 + breachRatio * 8,
+          lifeSec: 0.1,
+          color: 0x96ddff,
+          secondaryColor: 0xf6fcff,
+          fillAlpha: 0.03,
+          strokeAlpha: 0.26 + breachRatio * 0.14,
+          strokeWidth: 1.5,
+          growthPerSec: 154,
+          innerRadiusRatio: 0.74,
+          spokeCount: 3,
+          spokeLength: 12 + breachRatio * 6,
+          angle: Math.atan2(escort.y - enemy.y, escort.x - enemy.x),
+          spinRate: 5.8,
+        });
+      });
+      battle.fireCooldownSec = Math.max(
+        0.035,
+        battle.fireCooldownSec -
+          Math.min(0.032, 0.01 + laneScore * 0.004 + breachRatio * 0.008 + escorts.length * 0.004),
+      );
+      battle.playerMoveBoostSec = Math.max(
+        battle.playerMoveBoostSec,
+        0.1 + breachRatio * 0.08 + Math.min(0.08, laneScore * 0.018),
+      );
+      battle.tempoPulseSec = Math.max(
+        battle.tempoPulseSec,
+        0.22 + breachRatio * 0.08 + Math.min(0.06, laneScore * 0.016),
+      );
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 20 + Math.min(10, laneScore * 3) + escorts.length * 4,
+        lifeSec: 0.13,
+        color: 0x8fdcff,
+        secondaryColor: 0xf4fbff,
+        fillAlpha: 0.04,
+        strokeAlpha: 0.44 + breachRatio * 0.14,
+        strokeWidth: 2,
+        growthPerSec: 186,
+        innerRadiusRatio: 0.7,
+      });
+    }
+
+    if (bulletRouteFocus === 'dash' && (dashStage === 'committed' || dashStage === 'matured')) {
+      battle.dashDriveSec = Math.max(
+        battle.dashDriveSec,
+        (dashStage === 'matured' ? 0.82 : 0.64) + breachRatio * 0.14 + (critical ? 0.06 : 0),
+      );
+      battle.playerMoveBoostSec = Math.max(battle.playerMoveBoostSec, 0.12 + breachRatio * 0.12);
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + breachRatio * 0.08);
+    }
   }
 
   private extendEliteCrackWindow(

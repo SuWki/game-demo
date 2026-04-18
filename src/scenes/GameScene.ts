@@ -3198,6 +3198,69 @@ export class GameScene extends Phaser.Scene {
             eliteScreen.y + chaseOrthoY * (elite.radius + 10),
           );
         }
+
+        if (battle.encounterType === 'battle') {
+          if (liveFocusRoute === 'crit') {
+            for (let index = 0; index < 2; index += 1) {
+              const chaseOffset = 42 + index * 22 + eliteCrackRatio * 10;
+              const chevronX = eliteScreen.x - chaseDirX * chaseOffset;
+              const chevronY = eliteScreen.y - chaseDirY * chaseOffset;
+              this.renderDirectionalChevron(
+                chevronX,
+                chevronY,
+                chaseAngle,
+                16 + eliteCrackRatio * 6,
+                9 + eliteCrackRatio * 5,
+                4 + eliteCrackRatio * 2,
+                focusColor,
+                focusAlpha * (0.82 - index * 0.12),
+                0.02 + eliteCrackRatio * 0.04,
+              );
+            }
+            this.graphics.lineStyle(1.6, focusColor, focusAlpha * 0.88);
+            this.graphics.strokeCircle(eliteScreen.x, eliteScreen.y, elite.radius + 10 + eliteCrackRatio * 6);
+            this.graphics.strokeCircle(eliteScreen.x, eliteScreen.y, elite.radius + 18 + eliteCrackRatio * 8);
+          } else if (liveFocusRoute === 'pierce') {
+            const throughLength = elite.radius + 42 + eliteCrackRatio * 24 + battle.eliteCrackEscortCount * 10;
+            const railOffset = elite.radius + 16 + eliteCrackRatio * 8;
+            this.graphics.lineStyle(1.8, focusColor, focusAlpha * 0.86);
+            this.graphics.lineBetween(
+              eliteScreen.x - chaseDirX * (elite.radius + 14),
+              eliteScreen.y - chaseDirY * (elite.radius + 14),
+              eliteScreen.x + chaseDirX * throughLength,
+              eliteScreen.y + chaseDirY * throughLength,
+            );
+            this.graphics.lineStyle(1.3, focusColor, focusAlpha * 0.68);
+            this.graphics.lineBetween(
+              eliteScreen.x - chaseDirX * 10 + chaseOrthoX * railOffset,
+              eliteScreen.y - chaseDirY * 10 + chaseOrthoY * railOffset,
+              eliteScreen.x + chaseDirX * (throughLength - 10) + chaseOrthoX * railOffset,
+              eliteScreen.y + chaseDirY * (throughLength - 10) + chaseOrthoY * railOffset,
+            );
+            this.graphics.lineBetween(
+              eliteScreen.x - chaseDirX * 10 - chaseOrthoX * railOffset,
+              eliteScreen.y - chaseDirY * 10 - chaseOrthoY * railOffset,
+              eliteScreen.x + chaseDirX * (throughLength - 10) - chaseOrthoX * railOffset,
+              eliteScreen.y + chaseDirY * (throughLength - 10) - chaseOrthoY * railOffset,
+            );
+            for (const entry of escorts.slice(0, 2)) {
+              const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
+              this.graphics.lineStyle(1.2, focusColor, focusAlpha * 0.52);
+              this.graphics.lineBetween(
+                escortScreen.x,
+                escortScreen.y,
+                escortScreen.x - chaseOrthoX * (10 + eliteCrackRatio * 4),
+                escortScreen.y - chaseOrthoY * (10 + eliteCrackRatio * 4),
+              );
+              this.graphics.lineBetween(
+                escortScreen.x,
+                escortScreen.y,
+                escortScreen.x + chaseOrthoX * (10 + eliteCrackRatio * 4),
+                escortScreen.y + chaseOrthoY * (10 + eliteCrackRatio * 4),
+              );
+            }
+          }
+        }
       }
     }
   }
