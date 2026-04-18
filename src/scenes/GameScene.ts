@@ -1708,15 +1708,44 @@ export class GameScene extends Phaser.Scene {
         projectile.x - projectile.vx * 0.075,
         projectile.y - projectile.vy * 0.075,
       );
+      const projectileSpeed = Math.max(1, Math.hypot(projectile.vx, projectile.vy));
+      const projectileDirX = projectile.vx / projectileSpeed;
+      const projectileDirY = projectile.vy / projectileSpeed;
+      const projectileOrthoX = -projectileDirY;
+      const projectileOrthoY = projectileDirX;
       const projectilePulse = 0.5 + Math.sin(battle.elapsedSec * 9 + projectile.id * 0.43) * 0.5;
       this.graphics.lineStyle(projectile.radius > 5 ? 3 : 2, ENEMY_PROJECTILE_TRAIL, 0.22 + projectilePulse * 0.08);
       this.graphics.lineBetween(tail.x, tail.y, screen.x, screen.y);
+      const headLength = projectile.radius + 6 + projectilePulse * 4;
+      const wingWidth = projectile.radius + 3 + projectilePulse * 2;
+      this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.12 + projectilePulse * 0.08);
+      this.graphics.fillTriangle(
+        screen.x + projectileDirX * headLength,
+        screen.y + projectileDirY * headLength,
+        screen.x - projectileDirX * (projectile.radius * 0.6) + projectileOrthoX * wingWidth,
+        screen.y - projectileDirY * (projectile.radius * 0.6) + projectileOrthoY * wingWidth,
+        screen.x - projectileDirX * (projectile.radius * 0.6) - projectileOrthoX * wingWidth,
+        screen.y - projectileDirY * (projectile.radius * 0.6) - projectileOrthoY * wingWidth,
+      );
       this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.14 + projectilePulse * 0.08);
       this.graphics.fillCircle(screen.x, screen.y, projectile.radius + 4 + projectilePulse * 2);
       this.graphics.fillStyle(ENEMY_PROJECTILE_FILL, 0.96);
       this.graphics.fillCircle(screen.x, screen.y, projectile.radius);
       this.graphics.lineStyle(1, ENEMY_PROJECTILE_STROKE, 0.42 + projectilePulse * 0.06);
       this.graphics.strokeCircle(screen.x, screen.y, projectile.radius + 2);
+      this.graphics.lineStyle(1.2, ENEMY_PROJECTILE_STROKE, 0.16 + projectilePulse * 0.18);
+      this.graphics.lineBetween(
+        screen.x - projectileDirX * 2 + projectileOrthoX * (wingWidth * 0.72),
+        screen.y - projectileDirY * 2 + projectileOrthoY * (wingWidth * 0.72),
+        screen.x + projectileDirX * (headLength - 1),
+        screen.y + projectileDirY * (headLength - 1),
+      );
+      this.graphics.lineBetween(
+        screen.x - projectileDirX * 2 - projectileOrthoX * (wingWidth * 0.72),
+        screen.y - projectileDirY * 2 - projectileOrthoY * (wingWidth * 0.72),
+        screen.x + projectileDirX * (headLength - 1),
+        screen.y + projectileDirY * (headLength - 1),
+      );
     }
 
     this.renderEliteEscortField(battle, camera);
@@ -2214,6 +2243,10 @@ export class GameScene extends Phaser.Scene {
           : liveFocusRoute === 'dash'
             ? this.mixColor(accentColor, 0xbfffea, 0.3)
             : accentColor;
+    const incomingThreatMarkers =
+      impactRatio <= 0.12 && damageFlashRatio <= 0.18 && nearMissRatio <= 0.1
+        ? this.getIncomingThreatMarkers(battle)
+        : [];
 
     this.graphics.fillStyle(0x000000, 0.22);
     this.graphics.fillEllipse(bodyX, bodyY + 18, 34, 14);
@@ -2405,6 +2438,45 @@ export class GameScene extends Phaser.Scene {
         bodyY + moveDirX * 16,
         bodyX - moveDirY * (30 + turnBurstRatio * 18),
         bodyY + moveDirX * (30 + turnBurstRatio * 18),
+      );
+    }
+    for (const [index, marker] of incomingThreatMarkers.entries()) {
+      const markerColor =
+        marker.kind === 'projectile'
+          ? this.mixColor(0xff6f74, 0xffe6dd, 0.18)
+          : marker.kind === 'ranged'
+            ? this.mixColor(0xff9a78, 0xffffff, 0.22)
+            : this.mixColor(0xffb694, liveFocusColor, 0.1);
+      const radius = 56 + index * 10 + marker.strength * 8;
+      const length = 10 + marker.strength * 10;
+      const halfWidth = 5 + marker.strength * 3;
+      const dirX = Math.cos(marker.angle);
+      const dirY = Math.sin(marker.angle);
+      const orthoX = -dirY;
+      const orthoY = dirX;
+      this.renderDirectionalChevron(
+        playerScreen.x,
+        playerScreen.y,
+        marker.angle,
+        radius,
+        length,
+        halfWidth,
+        markerColor,
+        0.06 + marker.strength * 0.16,
+        0.02 + marker.strength * 0.06,
+      );
+      this.graphics.lineStyle(1.2, markerColor, 0.04 + marker.strength * 0.14);
+      this.graphics.lineBetween(
+        playerScreen.x + dirX * (radius - 9) + orthoX * 5,
+        playerScreen.y + dirY * (radius - 9) + orthoY * 5,
+        playerScreen.x + dirX * (radius + length * 0.24),
+        playerScreen.y + dirY * (radius + length * 0.24),
+      );
+      this.graphics.lineBetween(
+        playerScreen.x + dirX * (radius - 9) - orthoX * 5,
+        playerScreen.y + dirY * (radius - 9) - orthoY * 5,
+        playerScreen.x + dirX * (radius + length * 0.24),
+        playerScreen.y + dirY * (radius + length * 0.24),
       );
     }
     if (nearMissRatio > 0) {
@@ -2740,6 +2812,92 @@ export class GameScene extends Phaser.Scene {
     const predictedX = battle.playerX + battle.playerMoveDirX * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
     const predictedY = battle.playerY + battle.playerMoveDirY * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
     return this.worldToScreen(camera, predictedX, predictedY);
+  }
+
+  private getIncomingThreatMarkers(
+    battle: BattleState,
+  ): Array<{ angle: number; strength: number; kind: 'projectile' | 'ranged' | 'pressure' }> {
+    const markers: Array<{ angle: number; strength: number; kind: 'projectile' | 'ranged' | 'pressure' }> = [];
+
+    for (const projectile of battle.enemyProjectiles) {
+      const dx = projectile.x - battle.playerX;
+      const dy = projectile.y - battle.playerY;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      if (distance > 186) {
+        continue;
+      }
+      const toPlayerX = -dx / distance;
+      const toPlayerY = -dy / distance;
+      const speed = Math.max(1, Math.hypot(projectile.vx, projectile.vy));
+      const velocityX = projectile.vx / speed;
+      const velocityY = projectile.vy / speed;
+      const approach = velocityX * toPlayerX + velocityY * toPlayerY;
+      if (approach < 0.12) {
+        continue;
+      }
+      const proximity = Phaser.Math.Clamp(1 - distance / 186, 0, 1);
+      markers.push({
+        angle: Math.atan2(dy, dx),
+        strength: Phaser.Math.Clamp(proximity * 0.72 + approach * 0.56 + (projectile.radius > 5 ? 0.08 : 0), 0, 1),
+        kind: 'projectile',
+      });
+    }
+
+    for (const enemy of battle.enemies) {
+      if (enemy.hp <= 0 || enemy.elite) {
+        continue;
+      }
+      const dx = enemy.x - battle.playerX;
+      const dy = enemy.y - battle.playerY;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const angle = Math.atan2(dy, dx);
+      if (enemy.archetype === 'ranged') {
+        const lockRatio =
+          enemy.rangedCooldownSec <= 0.72 ? Phaser.Math.Clamp((0.72 - enemy.rangedCooldownSec) / 0.72, 0, 1) : 0;
+        const pressureRatio = this.getEnemyPressureRatio(enemy);
+        if (distance <= 252 && (lockRatio > 0.18 || pressureRatio > 0.18)) {
+          const proximity = Phaser.Math.Clamp(1 - distance / 252, 0, 1);
+          markers.push({
+            angle,
+            strength: Phaser.Math.Clamp(lockRatio * 0.68 + pressureRatio * 0.38 + proximity * 0.26, 0, 1),
+            kind: 'ranged',
+          });
+        }
+        continue;
+      }
+
+      const pressureRatio = this.getEnemyPressureRatio(enemy);
+      if (pressureRatio <= 0.18) {
+        continue;
+      }
+      const maxDistance = enemy.archetype === 'skirmisher' ? 178 : enemy.archetype === 'brute' ? 164 : 150;
+      if (distance > maxDistance) {
+        continue;
+      }
+      const proximity = Phaser.Math.Clamp(1 - distance / maxDistance, 0, 1);
+      const archetypeBias = enemy.archetype === 'skirmisher' ? 0.14 : enemy.archetype === 'brute' ? 0.1 : 0.04;
+      markers.push({
+        angle,
+        strength: Phaser.Math.Clamp(pressureRatio * 0.64 + proximity * 0.34 + archetypeBias, 0, 1),
+        kind: 'pressure',
+      });
+    }
+
+    markers.sort((left, right) => right.strength - left.strength);
+    const chosen: Array<{ angle: number; strength: number; kind: 'projectile' | 'ranged' | 'pressure' }> = [];
+    for (const marker of markers) {
+      const overlaps = chosen.some(
+        (existing) => Math.abs(Phaser.Math.Angle.Wrap(existing.angle - marker.angle)) < 0.42,
+      );
+      if (overlaps) {
+        continue;
+      }
+      chosen.push(marker);
+      if (chosen.length >= 2) {
+        break;
+      }
+    }
+    return chosen;
   }
 
   private renderDirectionalChevron(

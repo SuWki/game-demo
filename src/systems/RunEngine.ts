@@ -3546,6 +3546,19 @@ export class RunEngine {
       (Math.abs(strafeDirection) >= 0.58 || openingRatio > 0.24) &&
       this.triggerRegularPressureBeat(battle, enemy, openingRatio > 0.18 ? 0.2 : 0.18, 1.32)
     ) {
+      this.syncRegularPressurePack(battle, enemy, {
+        radius: pincerHeavy ? 118 : 98,
+        limit: pincerHeavy ? 2 : 1,
+        durationSec: 0.14,
+        cooldownSec: 0.84,
+        predicate: (candidate) =>
+          candidate.archetype === 'skirmisher' ||
+          (candidate.archetype === 'standard' && Math.hypot(candidate.x - battle.playerX, candidate.y - battle.playerY) <= 168),
+      });
+      if (flankAnchor.role === 'regular' && !flankAnchor.elite) {
+        flankAnchor.spawnFlashSec = Math.max(flankAnchor.spawnFlashSec, 0.12);
+        flankAnchor.pressurePulseSec = Math.max(flankAnchor.pressurePulseSec, 0.12);
+      }
     }
     if (enemy.pressurePulseSec > 0) {
       const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
@@ -3690,6 +3703,18 @@ export class RunEngine {
         rangedLeadSec: 0.3,
       })
     ) {
+      enemy.rangedCooldownSec = Math.min(enemy.rangedCooldownSec, screenedByAnchor ? 0.22 : 0.28);
+      this.syncRegularPressurePack(battle, enemy, {
+        radius: 124,
+        limit: screenedByAnchor ? 2 : 1,
+        durationSec: 0.13,
+        cooldownSec: 0.92,
+        predicate: (candidate) => candidate.archetype === 'ranged' || candidate.archetype === 'skirmisher',
+      });
+      if (screenAnchor && !screenAnchor.elite && screenAnchor.role === 'regular') {
+        screenAnchor.spawnFlashSec = Math.max(screenAnchor.spawnFlashSec, 0.14);
+        screenAnchor.pressurePulseSec = Math.max(screenAnchor.pressurePulseSec, 0.14);
+      }
     }
 
     if (enemy.pressurePulseSec > 0) {
@@ -5204,6 +5229,10 @@ export class RunEngine {
       strokeWidth: enemy.archetype === 'brute' ? 2.6 : 2,
       growthPerSec: enemy.archetype === 'skirmisher' ? 160 : 132,
       innerRadiusRatio: enemy.archetype === 'skirmisher' ? 0.54 : 0.68,
+      spokeCount: enemy.archetype === 'brute' ? 4 : enemy.archetype === 'ranged' ? 5 : enemy.archetype === 'skirmisher' ? 5 : 3,
+      spokeLength: enemy.archetype === 'brute' ? 16 : enemy.archetype === 'ranged' ? 18 : enemy.archetype === 'skirmisher' ? 16 : 12,
+      angle: Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x),
+      spinRate: enemy.archetype === 'skirmisher' ? 6.2 : enemy.archetype === 'ranged' ? 5.4 : 4.6,
     });
     return true;
   }
