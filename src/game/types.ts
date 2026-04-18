@@ -475,6 +475,10 @@ export interface BattleState {
   playerRecoverySec: number;
   killFlowSec: number;
   killFlowCount: number;
+  pickupFlowSec: number;
+  pickupFlowCount: number;
+  pickupLeadSec: number;
+  pickupLeadEnemyId: number | null;
   playerDamageFlashSec: number;
   playerDamageAngle: number;
   cameraShakeSec: number;

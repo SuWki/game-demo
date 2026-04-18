@@ -1406,6 +1406,14 @@ export class GameScene extends Phaser.Scene {
       battle.killFlowSec > 0
         ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
         : 0;
+    const pickupFlowRatio =
+      battle.pickupFlowSec > 0
+        ? Math.min(
+            1,
+            battle.pickupFlowSec /
+              (battle.pickupFlowCount >= 4 ? 0.88 : battle.pickupFlowCount === 3 ? 0.8 : battle.pickupFlowCount === 2 ? 0.72 : 0.62),
+          )
+        : 0;
     const flowGuideColor =
       liveFocusRoute === 'crit'
         ? this.mixColor(accentColor, 0xffd882, 0.24)
@@ -1414,6 +1422,7 @@ export class GameScene extends Phaser.Scene {
           : liveFocusRoute === 'dash'
             ? this.mixColor(accentColor, 0xbfffea, 0.22)
             : this.mixColor(accentColor, 0xfff2c3, 0.18);
+    const pickupGuideColor = this.mixColor(0x9df7c5, liveFocusRoute === 'dash' ? 0xdffff6 : 0xffffff, 0.18);
     const pierceReadRatio = liveFocusRoute === 'pierce' ? Math.min(1, state.routeCounts.pierce / 5) : 0;
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
     for (const orb of battle.experienceOrbs) {
@@ -2199,6 +2208,14 @@ export class GameScene extends Phaser.Scene {
     const hurtDirY = knockbackSpeed > 0.01 ? battle.playerKnockbackVY / knockbackSpeed : -aimDirY;
     const hurtOrthoX = -hurtDirY;
     const hurtOrthoY = hurtDirX;
+    const pickupGuideEnemy =
+      battle.pickupLeadEnemyId === null
+        ? null
+        : battle.enemies.find((enemy) => enemy.id === battle.pickupLeadEnemyId && enemy.hp > 0) ?? null;
+    const pickupGuideDirX = pickupGuideEnemy ? (pickupGuideEnemy.x - battle.playerX) / Math.max(1, Math.hypot(pickupGuideEnemy.x - battle.playerX, pickupGuideEnemy.y - battle.playerY)) : moveMagnitude > 0.08 ? moveDirX : aimDirX;
+    const pickupGuideDirY = pickupGuideEnemy ? (pickupGuideEnemy.y - battle.playerY) / Math.max(1, Math.hypot(pickupGuideEnemy.x - battle.playerX, pickupGuideEnemy.y - battle.playerY)) : moveMagnitude > 0.08 ? moveDirY : aimDirY;
+    const pickupGuideOrthoX = -pickupGuideDirY;
+    const pickupGuideOrthoY = pickupGuideDirX;
     const recoilOffset = shotRecoilRatio * battle.playerShotRecoilStrength;
     const bodyX = playerScreen.x - aimDirX * recoilOffset;
     const bodyY = playerScreen.y - aimDirY * recoilOffset;
@@ -2364,6 +2381,59 @@ export class GameScene extends Phaser.Scene {
           bodyY - flowDirY * offset,
           bodyX - flowDirX * (offset + 14) - flowOrthoX * width,
           bodyY - flowDirY * (offset + 14) - flowOrthoY * width,
+        );
+      }
+    }
+    if (pickupFlowRatio > 0) {
+      for (let streak = 0; streak < Math.min(4, Math.max(1, battle.pickupFlowCount)); streak += 1) {
+        const offset = 10 + streak * 9 + pickupFlowRatio * 7;
+        const width = 6 + streak * 2 + pickupFlowRatio * 3;
+        this.graphics.fillStyle(pickupGuideColor, 0.04 + pickupFlowRatio * 0.05 - streak * 0.006);
+        this.graphics.fillTriangle(
+          bodyX + pickupGuideDirX * (offset + 16) + pickupGuideOrthoX * width,
+          bodyY + pickupGuideDirY * (offset + 16) + pickupGuideOrthoY * width,
+          bodyX + pickupGuideDirX * offset,
+          bodyY + pickupGuideDirY * offset,
+          bodyX + pickupGuideDirX * (offset + 16) - pickupGuideOrthoX * width,
+          bodyY + pickupGuideDirY * (offset + 16) - pickupGuideOrthoY * width,
+        );
+      }
+
+      const pipCount = Math.min(4, Math.max(1, battle.pickupFlowCount));
+      for (let index = 0; index < pipCount; index += 1) {
+        const angle = battle.elapsedSec * 6.4 + index * 0.5 - 0.55;
+        const radius = 22 + index * 5 + pickupFlowRatio * 6;
+        this.graphics.fillStyle(pickupGuideColor, 0.08 + pickupFlowRatio * 0.14 - index * 0.015);
+        this.graphics.fillCircle(
+          bodyX + pickupGuideDirX * 8 + pickupGuideOrthoX * Math.sin(angle) * 10,
+          bodyY + pickupGuideDirY * 8 + pickupGuideOrthoY * Math.cos(angle) * (radius * 0.18),
+          2.6 + pickupFlowRatio * 1.8 - index * 0.2,
+        );
+      }
+
+      if (
+        pickupGuideEnemy &&
+        this.isVisibleInCamera(camera, pickupGuideEnemy.x, pickupGuideEnemy.y, pickupGuideEnemy.radius + 18)
+      ) {
+        const guideTargetScreen = this.worldToScreen(camera, pickupGuideEnemy.x, pickupGuideEnemy.y);
+        const guideDistance = Math.max(
+          1,
+          Math.hypot(guideTargetScreen.x - bodyX, guideTargetScreen.y - bodyY),
+        );
+        const guideDirX = (guideTargetScreen.x - bodyX) / guideDistance;
+        const guideDirY = (guideTargetScreen.y - bodyY) / guideDistance;
+        this.graphics.lineStyle(1.6, pickupGuideColor, 0.08 + pickupFlowRatio * 0.2);
+        this.graphics.lineBetween(
+          bodyX + guideDirX * 18,
+          bodyY + guideDirY * 18,
+          guideTargetScreen.x - guideDirX * (pickupGuideEnemy.radius + 10),
+          guideTargetScreen.y - guideDirY * (pickupGuideEnemy.radius + 10),
+        );
+        this.graphics.lineStyle(1.2, pickupGuideColor, 0.08 + pickupFlowRatio * 0.16);
+        this.graphics.strokeCircle(
+          guideTargetScreen.x,
+          guideTargetScreen.y,
+          pickupGuideEnemy.radius + 10 + pickupFlowRatio * 6,
         );
       }
     }

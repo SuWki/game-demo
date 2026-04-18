@@ -389,6 +389,8 @@ export class RunEngine {
     battle.playerImpactSec = Math.max(0, battle.playerImpactSec - dt);
     battle.playerRecoverySec = Math.max(0, battle.playerRecoverySec - dt);
     battle.killFlowSec = Math.max(0, battle.killFlowSec - dt);
+    battle.pickupFlowSec = Math.max(0, battle.pickupFlowSec - dt);
+    battle.pickupLeadSec = Math.max(0, battle.pickupLeadSec - dt);
     battle.playerDamageFlashSec = Math.max(0, battle.playerDamageFlashSec - dt);
     battle.cameraShakeSec = Math.max(0, battle.cameraShakeSec - dt);
     battle.tempoPulseSec = Math.max(0, battle.tempoPulseSec - dt);
@@ -398,6 +400,12 @@ export class RunEngine {
     battle.playerTurnBurstSec = Math.max(0, battle.playerTurnBurstSec - dt);
     battle.playerNearMissSec = Math.max(0, battle.playerNearMissSec - dt);
     battle.playerNearMissCooldownSec = Math.max(0, battle.playerNearMissCooldownSec - dt);
+    if (battle.pickupFlowSec <= 0) {
+      battle.pickupFlowCount = 0;
+    }
+    if (battle.pickupLeadSec <= 0) {
+      battle.pickupLeadEnemyId = null;
+    }
     if (battle.eliteCrackWindowSec <= 0) {
       battle.eliteCrackEscortCount = 0;
     }
@@ -605,6 +613,10 @@ export class RunEngine {
       playerRecoverySec: 0,
       killFlowSec: 0,
       killFlowCount: 0,
+      pickupFlowSec: 0,
+      pickupFlowCount: 0,
+      pickupLeadSec: 0,
+      pickupLeadEnemyId: null,
       playerDamageFlashSec: 0,
       playerDamageAngle: -Math.PI / 2,
       cameraShakeSec: 0,
@@ -2345,6 +2357,56 @@ export class RunEngine {
     return battle.killFlowCount;
   }
 
+  private getPickupFlowWindowSec(chainCount: number): number {
+    if (chainCount >= 4) {
+      return 0.88;
+    }
+    if (chainCount === 3) {
+      return 0.8;
+    }
+    if (chainCount === 2) {
+      return 0.72;
+    }
+    return 0.62;
+  }
+
+  private getPickupFlowRatio(battle: BattleState): number {
+    if (battle.pickupFlowSec <= 0 || battle.pickupFlowCount <= 0) {
+      return 0;
+    }
+
+    return Math.min(1, battle.pickupFlowSec / this.getPickupFlowWindowSec(battle.pickupFlowCount));
+  }
+
+  private registerPickupFlow(battle: BattleState, orbValue: number): number {
+    if (battle.pickupFlowSec > 0) {
+      battle.pickupFlowCount = Math.min(5, battle.pickupFlowCount + 1);
+    } else {
+      battle.pickupFlowCount = 1;
+    }
+
+    const chainCount = battle.pickupFlowCount;
+    const windowSec = this.getPickupFlowWindowSec(chainCount);
+    const pickupIntensity = Math.min(1, orbValue * 0.05 + chainCount * 0.16);
+    battle.pickupFlowSec = Math.max(
+      battle.pickupFlowSec,
+      windowSec + Math.min(0.12, pickupIntensity * 0.08),
+    );
+    battle.playerMoveBoostSec = Math.max(
+      battle.playerMoveBoostSec,
+      0.1 + Math.min(0.14, chainCount * 0.028 + pickupIntensity * 0.08),
+    );
+    battle.playerTurnBurstSec = Math.max(
+      battle.playerTurnBurstSec,
+      0.06 + Math.min(0.08, chainCount * 0.018 + pickupIntensity * 0.05),
+    );
+    battle.tempoPulseSec = Math.max(
+      battle.tempoPulseSec,
+      0.14 + Math.min(0.14, chainCount * 0.028 + pickupIntensity * 0.08),
+    );
+    return chainCount;
+  }
+
   private registerPlayerThreatDirection(battle: BattleState, sourceX: number, sourceY: number, flashSec: number): void {
     battle.playerDamageAngle = Math.atan2(sourceY - battle.playerY, sourceX - battle.playerX);
     battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, flashSec);
@@ -2397,6 +2459,109 @@ export class RunEngine {
     }
 
     battle.enemySpawnTimerSec = Math.max(0.06, battle.enemySpawnTimerSec - nudge);
+  }
+
+  private getPickupFollowThroughTarget(
+    battle: BattleState,
+  ): BattleState['enemies'][number] | null {
+    let bestTarget: BattleState['enemies'][number] | null = null;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const enemy of battle.enemies) {
+      if (enemy.elite || enemy.hp <= 0) {
+        continue;
+      }
+
+      const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
+      if (distance > 420) {
+        continue;
+      }
+
+      const distanceScore = 1 - distance / 420;
+      const behaviorScore =
+        enemy.archetype === 'ranged'
+          ? 0.12
+          : enemy.archetype === 'skirmisher'
+            ? 0.1
+            : enemy.archetype === 'standard'
+              ? 0.08
+              : 0.04;
+      const pressureScore = enemy.pressurePulseSec > 0.04 ? 0.08 : 0;
+      const recoveryPenalty = enemy.recoverySec > 0.08 ? 0.12 : 0;
+      const score = distanceScore + behaviorScore + pressureScore - recoveryPenalty;
+      if (score > bestScore) {
+        bestScore = score;
+        bestTarget = enemy;
+      }
+    }
+
+    return bestTarget;
+  }
+
+  private triggerPickupFollowThrough(
+    battle: BattleState,
+    orbValue: number,
+    chainCount: number,
+  ): void {
+    if (battle.encounterType !== 'battle' || battle.eliteAlive) {
+      battle.pickupLeadEnemyId = null;
+      battle.pickupLeadSec = 0;
+      return;
+    }
+
+    const target = this.getPickupFollowThroughTarget(battle);
+    if (!target) {
+      battle.pickupLeadEnemyId = null;
+      battle.pickupLeadSec = 0;
+      return;
+    }
+
+    const pickupFlowRatio = this.getPickupFlowRatio(battle);
+    const chainRatio = Math.min(1, chainCount / 4);
+    const pickupIntensity = Math.min(1, orbValue * 0.04 + chainRatio * 0.58 + pickupFlowRatio * 0.44);
+    battle.pickupLeadEnemyId = target.id;
+    battle.pickupLeadSec = Math.max(
+      battle.pickupLeadSec,
+      0.2 + Math.min(0.24, chainRatio * 0.16 + pickupFlowRatio * 0.12),
+    );
+    target.spawnFlashSec = Math.max(target.spawnFlashSec, 0.08 + pickupIntensity * 0.08);
+    target.hitFlashSec = Math.max(target.hitFlashSec, 0.04 + pickupFlowRatio * 0.05);
+
+    this.createCombatPulse(battle, {
+      x: target.x,
+      y: target.y,
+      radius: target.radius + 10 + pickupFlowRatio * 10,
+      lifeSec: 0.1 + pickupFlowRatio * 0.06,
+      color: 0x9df7c5,
+      secondaryColor: 0xffffff,
+      fillAlpha: 0.03,
+      strokeAlpha: 0.24 + pickupFlowRatio * 0.12,
+      strokeWidth: 1.8,
+      growthPerSec: 116,
+      innerRadiusRatio: 0.72,
+      spokeCount: target.archetype === 'ranged' ? 5 : 4,
+      spokeLength: 10 + pickupFlowRatio * 6,
+      angle: Math.atan2(battle.playerY - target.y, battle.playerX - target.x),
+      spinRate: target.archetype === 'skirmisher' ? 5.8 : 4.8,
+    });
+
+    if (chainCount >= 2) {
+      this.triggerRegularPressureBeat(
+        battle,
+        target,
+        0.08 + pickupFlowRatio * 0.08,
+        target.archetype === 'ranged' ? 1.02 : 0.92,
+        { rangedLeadSec: 0.24 },
+      );
+    } else {
+      target.pressurePulseSec = Math.max(target.pressurePulseSec, 0.06 + pickupFlowRatio * 0.04);
+    }
+
+    this.primeRegularPressureLead(
+      battle,
+      target,
+      0.42 + pickupIntensity * (target.archetype === 'brute' ? 0.16 : 0.22),
+    );
   }
 
   private isSkirmisherHeavyTemplate(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): boolean {
@@ -4258,40 +4423,58 @@ export class RunEngine {
       battle.killFlowSec > 0
         ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
         : 0;
+    const pickupFlowRatio = this.getPickupFlowRatio(battle);
     const flowCarry = flowRatio > 0 ? battle.killFlowCount * 0.72 + flowRatio * 1.24 : 0;
-    const effectiveMagnetRadius = magnetRadius + (flowRatio > 0 ? 30 + battle.killFlowCount * 10 : 0);
+    const pickupCarry = pickupFlowRatio > 0 ? battle.pickupFlowCount * 0.34 + pickupFlowRatio * 0.9 : 0;
+    const effectiveMagnetRadius =
+      magnetRadius +
+      (flowRatio > 0 ? 30 + battle.killFlowCount * 10 : 0) +
+      (pickupFlowRatio > 0 ? 18 + battle.pickupFlowCount * 8 : 0);
     const survivors = [];
 
     for (const orb of battle.experienceOrbs) {
       const distance = Math.hypot(orb.x - battle.playerX, orb.y - battle.playerY);
       if (distance <= pickupRadius) {
         this.gainExperience(orb.value);
-        battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.18 + Math.min(0.08, flowCarry * 0.026));
+        const pickupChain = this.registerPickupFlow(battle, orb.value);
+        const pickupChainRatio = this.getPickupFlowRatio(battle);
+        const pickupChainCarry =
+          battle.pickupFlowCount * 0.36 + pickupChainRatio * 0.96;
+        battle.playerRecoverySec = Math.max(
+          battle.playerRecoverySec,
+          0.18 + Math.min(0.1, flowCarry * 0.026 + pickupChainCarry * 0.022),
+        );
         battle.tempoPulseSec = Math.max(
           battle.tempoPulseSec,
-          0.14 + Math.min(0.16, orb.value * 0.006 + flowCarry * 0.028),
+          0.14 + Math.min(0.18, orb.value * 0.006 + flowCarry * 0.028 + pickupChainCarry * 0.026),
         );
         if (battle.killFlowSec > 0) {
           battle.killFlowSec = Math.max(
             battle.killFlowSec,
-            0.3 + Math.min(0.24, orb.value * 0.01 + flowCarry * 0.042),
+            0.34 + Math.min(0.28, orb.value * 0.01 + flowCarry * 0.042 + pickupChainCarry * 0.03),
           );
           battle.playerMoveBoostSec = Math.max(
             battle.playerMoveBoostSec,
-            0.12 + Math.min(0.14, battle.killFlowCount * 0.03 + flowCarry * 0.018),
+            0.14 + Math.min(0.16, battle.killFlowCount * 0.03 + flowCarry * 0.018 + pickupChainCarry * 0.024),
           );
           battle.tempoPulseSec = Math.max(
             battle.tempoPulseSec,
-            0.18 + Math.min(0.2, battle.killFlowCount * 0.04 + orb.value * 0.004 + flowCarry * 0.02),
+            0.2 + Math.min(0.2, battle.killFlowCount * 0.04 + orb.value * 0.004 + flowCarry * 0.02 + pickupChainCarry * 0.02),
           );
         }
-        this.feedBattleFlow(battle, 'pickup', orb.value + flowCarry * 2.4);
+        battle.playerTurnBurstSec = Math.max(
+          battle.playerTurnBurstSec,
+          0.08 + Math.min(0.08, pickupChain * 0.016 + pickupChainCarry * 0.02),
+        );
+        this.feedBattleFlow(battle, 'pickup', orb.value + flowCarry * 2.4 + pickupChainCarry * 2);
         if (this.state.status === 'battle') {
           battle.fireCooldownSec = Math.max(
             0.035,
-            battle.fireCooldownSec - Math.min(0.026, 0.006 + orb.value * 0.0007 + flowCarry * 0.0024),
+            battle.fireCooldownSec -
+              Math.min(0.03, 0.006 + orb.value * 0.0007 + flowCarry * 0.0024 + pickupChainCarry * 0.002),
           );
         }
+        this.triggerPickupFollowThrough(battle, orb.value, pickupChain);
         this.createCombatPulse(battle, {
           x: battle.playerX,
           y: battle.playerY,
@@ -4304,6 +4487,10 @@ export class RunEngine {
           strokeWidth: 2,
           growthPerSec: 150,
           innerRadiusRatio: 0.68,
+          spokeCount: Math.min(6, 3 + pickupChain),
+          spokeLength: 8 + pickupChain * 2,
+          angle: Math.atan2(battle.playerAimDirY, battle.playerAimDirX),
+          spinRate: 4.8 + pickupChainRatio * 2,
         });
         this.createCombatPulse(battle, {
           x: orb.x,
@@ -4330,7 +4517,7 @@ export class RunEngine {
           const linkedAngle = Math.atan2(battle.playerY - linkedOrb.y, battle.playerX - linkedOrb.x);
           const linkedSpeed = Math.max(
             240,
-            300 + Math.max(0, chainVacuumRadius - linkedDistance) * 3 + flowCarry * 26,
+            300 + Math.max(0, chainVacuumRadius - linkedDistance) * 3 + flowCarry * 26 + pickupChainCarry * 18,
           );
           linkedOrb.velocityX = Math.cos(linkedAngle) * linkedSpeed;
           linkedOrb.velocityY = Math.sin(linkedAngle) * linkedSpeed;
@@ -4345,9 +4532,10 @@ export class RunEngine {
           (220 +
             Math.max(0, effectiveMagnetRadius - distance) * 3.1 +
             Math.min(90, battle.tempoPulseSec * 420) +
-            flowCarry * 28) *
+            flowCarry * 28 +
+            pickupCarry * 22) *
           (distance <= effectiveMagnetRadius * 0.42 ? 1.24 : 1);
-        const pullBlend = Math.min(1, 0.22 + dt * (8.5 + flowCarry * 0.9));
+        const pullBlend = Math.min(1, 0.22 + dt * (8.5 + flowCarry * 0.9 + pickupCarry * 0.7));
         const targetVX = Math.cos(angle) * attraction;
         const targetVY = Math.sin(angle) * attraction;
         orb.velocityX += (targetVX - orb.velocityX) * pullBlend;
