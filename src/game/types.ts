@@ -480,6 +480,8 @@ export interface BattleState {
   playerRecoverySec: number;
   killFlowSec: number;
   killFlowCount: number;
+  pierceFlowSec: number;
+  pierceFlowCount: number;
   pickupFlowSec: number;
   pickupFlowCount: number;
   pickupLeadSec: number;

@@ -438,6 +438,7 @@ export class RunEngine {
     battle.playerImpactSec = Math.max(0, battle.playerImpactSec - dt);
     battle.playerRecoverySec = Math.max(0, battle.playerRecoverySec - dt);
     battle.killFlowSec = Math.max(0, battle.killFlowSec - dt);
+    battle.pierceFlowSec = Math.max(0, battle.pierceFlowSec - dt);
     battle.pickupFlowSec = Math.max(0, battle.pickupFlowSec - dt);
     battle.pickupLeadSec = Math.max(0, battle.pickupLeadSec - dt);
     battle.playerDamageFlashSec = Math.max(0, battle.playerDamageFlashSec - dt);
@@ -460,6 +461,9 @@ export class RunEngine {
     }
     if (battle.killFlowSec <= 0) {
       battle.killFlowCount = 0;
+    }
+    if (battle.pierceFlowSec <= 0) {
+      battle.pierceFlowCount = 0;
     }
     if (battle.playerShotRecoilSec <= 0) {
       battle.playerShotRecoilStrength = 0;
@@ -679,6 +683,8 @@ export class RunEngine {
       playerRecoverySec: 0,
       killFlowSec: 0,
       killFlowCount: 0,
+      pierceFlowSec: 0,
+      pierceFlowCount: 0,
       pickupFlowSec: 0,
       pickupFlowCount: 0,
       pickupLeadSec: 0,
@@ -2047,6 +2053,7 @@ export class RunEngine {
     const normalizedY = hasInput ? moveY / magnitude : 0;
     const moveSpeed = this.getPlayerMoveSpeed();
     const tempoMoveMultiplier = 1 + Math.min(0.12, battle.tempoPulseSec * 0.28);
+    const pierceFlowRatio = this.getPierceFlowRatio(battle);
     const controlFactor = battle.playerImpactSec > 0 ? 0.52 : 1;
     const currentVelocitySpeed = Math.hypot(battle.playerVelocityX, battle.playerVelocityY);
     const currentVelocityDirX = currentVelocitySpeed > 0.01 ? battle.playerVelocityX / currentVelocitySpeed : 0;
@@ -2054,8 +2061,8 @@ export class RunEngine {
     const directionDot =
       hasInput && currentVelocitySpeed > 14 ? currentVelocityDirX * normalizedX + currentVelocityDirY * normalizedY : 1;
 
-    if (hasInput && currentVelocitySpeed <= moveSpeed * 0.16 && battle.playerMoveBoostSec <= 0.01) {
-      battle.playerMoveBoostSec = 0.16;
+    if (hasInput && currentVelocitySpeed <= moveSpeed * 0.18 && battle.playerMoveBoostSec <= 0.01) {
+      battle.playerMoveBoostSec = 0.18;
       this.createCombatPulse(battle, {
         x: battle.playerX,
         y: battle.playerY,
@@ -2071,23 +2078,23 @@ export class RunEngine {
       });
     }
 
-    if (hasInput && currentVelocitySpeed > moveSpeed * 0.18 && directionDot < -0.18) {
-      battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.12);
-      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.08);
+    if (hasInput && currentVelocitySpeed > moveSpeed * 0.16 && directionDot < -0.16) {
+      battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.14 + pierceFlowRatio * 0.03);
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.09 + pierceFlowRatio * 0.03);
     }
 
-    const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.16) : 0;
-    const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.12) : 0;
+    const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.18) : 0;
+    const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.14) : 0;
     const targetSpeed =
       moveSpeed *
       controlFactor *
       tempoMoveMultiplier *
-      (1 + moveBoostRatio * 0.13 + turnBurstRatio * 0.06 + (battle.dashDriveSec > 0 ? 0.08 : 0));
+      (1 + moveBoostRatio * 0.13 + turnBurstRatio * 0.06 + pierceFlowRatio * 0.035 + (battle.dashDriveSec > 0 ? 0.08 : 0));
     const desiredVelocityX = normalizedX * targetSpeed;
     const desiredVelocityY = normalizedY * targetSpeed;
     const velocityBlend = hasInput
-      ? Math.min(1, dt * (battle.dashDriveSec > 0 ? 18 : turnBurstRatio > 0.08 ? 16 : 13))
-      : Math.min(1, dt * 11);
+      ? Math.min(1, dt * (battle.dashDriveSec > 0 ? 18 : turnBurstRatio > 0.08 ? 16.5 : pierceFlowRatio > 0.1 ? 14 : 13))
+      : Math.min(1, dt * 12);
     battle.playerVelocityX += (desiredVelocityX - battle.playerVelocityX) * velocityBlend;
     battle.playerVelocityY += (desiredVelocityY - battle.playerVelocityY) * velocityBlend;
     if (!hasInput) {
@@ -2569,6 +2576,50 @@ export class RunEngine {
       battle.killFlowSec /
         (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72),
     );
+  }
+
+  private registerPierceFlow(
+    battle: BattleState,
+    options: {
+      laneScore?: number;
+      hitCount?: number;
+      echoCount?: number;
+      eliteCrackRatio?: number;
+      pickupCarry?: number;
+    } = {},
+  ): number {
+    if (battle.pierceFlowSec > 0) {
+      battle.pierceFlowCount = Math.min(5, battle.pierceFlowCount + 1);
+    } else {
+      battle.pierceFlowCount = 1;
+    }
+
+    const laneScore = options.laneScore ?? 0;
+    const hitCount = options.hitCount ?? 1;
+    const echoCount = options.echoCount ?? 0;
+    const eliteCrackRatio = options.eliteCrackRatio ?? 0;
+    const pickupCarry = options.pickupCarry ?? 0;
+    const flowWeight =
+      battle.pierceFlowCount * 0.04 +
+      Math.min(0.14, Math.max(0, laneScore - 1) * 0.05) +
+      Math.min(0.1, Math.max(0, hitCount - 1) * 0.035) +
+      Math.min(0.1, echoCount * 0.04) +
+      Math.min(0.12, eliteCrackRatio * 0.16) +
+      Math.min(0.08, pickupCarry * 0.012);
+
+    battle.pierceFlowSec = Math.max(battle.pierceFlowSec, 0.46 + flowWeight);
+    battle.playerMoveBoostSec = Math.max(battle.playerMoveBoostSec, 0.1 + Math.min(0.12, flowWeight * 0.65));
+    battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.055 + Math.min(0.08, flowWeight * 0.48));
+    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.16 + Math.min(0.18, flowWeight * 0.72));
+    return battle.pierceFlowCount;
+  }
+
+  private getPierceFlowRatio(battle: BattleState): number {
+    if (battle.pierceFlowSec <= 0 || battle.pierceFlowCount <= 0) {
+      return 0;
+    }
+
+    return Math.min(1, battle.pierceFlowSec / (0.46 + Math.min(0.28, battle.pierceFlowCount * 0.06)));
   }
 
   private getPickupLeadRatio(battle: BattleState): number {
@@ -3151,6 +3202,7 @@ export class RunEngine {
     const dashStage = this.getRouteBuildStage('dash');
     const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
     const pickupLeadRatio = this.getPickupLeadRatio(battle);
+    const pierceFlowRatio = this.getPierceFlowRatio(battle);
     const effectiveFireRate = this.getEffectiveFireRate(battle);
     battle.fireCooldownSec = 1 / effectiveFireRate;
     const fallbackAngle =
@@ -3213,12 +3265,13 @@ export class RunEngine {
       }
     } else if (focusRoute === 'pierce') {
       spreadStep = shotCount > 1 ? 0.11 : 0.04;
-      projectileSpeed *= 1.08;
-      bulletLifeSec = 2.06;
+      projectileSpeed *= 1.08 + pierceFlowRatio * 0.035;
+      bulletLifeSec = 2.06 + pierceFlowRatio * 0.08;
       muzzleColor = 0x8fdcff;
       if (pierceLaneScore >= 1.25) {
         projectileSpeed *= 1.05;
         bulletLifeSec += 0.12;
+        this.registerPierceFlow(battle, { laneScore: pierceLaneScore });
       }
       if (target?.elite && eliteCrackRatio > 0.08) {
         spreadStep = shotCount > 1 ? Math.max(0.05, spreadStep - (0.016 + eliteCrackRatio * 0.022)) : 0.02;
@@ -3226,6 +3279,7 @@ export class RunEngine {
         bulletLifeSec += 0.12 + eliteCrackRatio * 0.14;
         battle.playerMoveBoostSec = Math.max(battle.playerMoveBoostSec, 0.08 + eliteCrackRatio * 0.12);
         battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + eliteCrackRatio * 0.08);
+        this.registerPierceFlow(battle, { laneScore: pierceLaneScore, eliteCrackRatio });
       }
     } else if (focusRoute === 'dash') {
       if (battle.dashDriveSec > 0 && shotCount < 2) {
@@ -3520,9 +3574,15 @@ export class RunEngine {
         if (bullet.routeFocus === 'pierce') {
           const laneScore = this.getPierceLaneScore(battle, enemy);
           if (laneScore >= 1.2 || bullet.hitCount >= 2) {
+            const pierceChain = this.registerPierceFlow(battle, {
+              laneScore,
+              hitCount: bullet.hitCount,
+              eliteCrackRatio,
+            });
             const refund = Math.min(0.028, 0.01 + laneScore * 0.005 + Math.max(0, bullet.hitCount - 1) * 0.004);
             battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - refund);
-            battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
+            battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + Math.min(0.08, pierceChain * 0.014));
+            battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.08 + Math.min(0.04, pierceChain * 0.008));
             this.createCombatPulse(battle, {
               x: enemy.x,
               y: enemy.y,
@@ -3535,6 +3595,10 @@ export class RunEngine {
               strokeWidth: 2,
               growthPerSec: 182,
               innerRadiusRatio: 0.66,
+              spokeCount: Math.min(5, 2 + pierceChain),
+              spokeLength: 10 + Math.min(12, laneScore * 3),
+              angle: Math.atan2(bullet.vy, bullet.vx),
+              spinRate: 5.2,
             });
           }
         }
@@ -4920,6 +4984,15 @@ export class RunEngine {
           battle.playerTurnBurstSec,
           0.08 + Math.min(0.08, pickupChain * 0.016 + pickupChainCarry * 0.02),
         );
+        if (this.getLiveCombatFocusRoute(battle) === 'pierce') {
+          this.registerPierceFlow(battle, {
+            pickupCarry: pickupChainCarry + flowCarry,
+          });
+          battle.fireCooldownSec = Math.max(
+            0.035,
+            battle.fireCooldownSec - Math.min(0.018, 0.004 + pickupChainCarry * 0.0018 + flowCarry * 0.0014),
+          );
+        }
         this.feedBattleFlow(battle, 'pickup', orb.value + flowCarry * 2.4 + pickupChainCarry * 2);
         if (this.state.status === 'battle') {
           battle.fireCooldownSec = Math.max(
@@ -5250,6 +5323,11 @@ export class RunEngine {
     }
 
     const echoTargets = nearbyTargets.slice(0, this.getPierceEchoCount());
+    const echoFlowCount = this.registerPierceFlow(battle, {
+      hitCount: bullet.hitCount,
+      echoCount: echoTargets.length,
+      laneScore: this.getPierceLaneScore(battle, currentEnemy),
+    });
     this.createCombatPulse(battle, {
       x: currentEnemy.x,
       y: currentEnemy.y,
@@ -5262,6 +5340,10 @@ export class RunEngine {
       strokeWidth: 2,
       growthPerSec: 160,
       innerRadiusRatio: 0.66,
+      spokeCount: Math.min(6, 2 + echoFlowCount),
+      spokeLength: 12 + echoTargets.length * 3,
+      angle: Math.atan2(bullet.vy, bullet.vx),
+      spinRate: 5.6,
     });
     for (const target of echoTargets) {
       const angle = Math.atan2(target.y - currentEnemy.y, target.x - currentEnemy.x);
@@ -5914,6 +5996,9 @@ export class RunEngine {
     if (battle.critOverdriveSec > 0 && this.getRouteBuildStage('crit') !== 'unformed') {
       return 'crit';
     }
+    if (battle.pierceFlowSec > 0 && this.getRouteBuildStage('pierce') !== 'unformed') {
+      return 'pierce';
+    }
     return this.state.maturedRoute ?? this.state.committedRoute ?? this.getDominantRoute();
   }
 
@@ -6539,6 +6624,12 @@ export class RunEngine {
       const behavior = this.getActiveEliteBehavior(battle, BATTLE_TEMPLATES[battle.templateId]);
       const escortLimit = laneScore >= 1.2 || breachRatio > 0.66 ? 2 : 1;
       const escorts = this.getEliteNearbyEscorts(battle, enemy, 218).slice(0, escortLimit);
+      const pierceFlowCount = this.registerPierceFlow(battle, {
+        laneScore,
+        hitCount: 1,
+        echoCount: escorts.length,
+        eliteCrackRatio: breachRatio,
+      });
       escorts.forEach((escort, index) => {
         this.pushEnemyRecovery(
           escort,
@@ -6581,7 +6672,7 @@ export class RunEngine {
       );
       battle.tempoPulseSec = Math.max(
         battle.tempoPulseSec,
-        0.22 + breachRatio * 0.08 + Math.min(0.06, laneScore * 0.016),
+        0.22 + breachRatio * 0.08 + Math.min(0.06, laneScore * 0.016) + Math.min(0.04, pierceFlowCount * 0.008),
       );
       this.createCombatPulse(battle, {
         x: enemy.x,
@@ -6595,6 +6686,10 @@ export class RunEngine {
         strokeWidth: 2,
         growthPerSec: 186,
         innerRadiusRatio: 0.7,
+        spokeCount: Math.min(6, 3 + pierceFlowCount),
+        spokeLength: 16 + breachRatio * 8 + escorts.length * 3,
+        angle: Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX),
+        spinRate: 5.9,
       });
     }
 
