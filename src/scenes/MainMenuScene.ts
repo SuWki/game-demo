@@ -8,6 +8,7 @@ export class MainMenuScene extends Phaser.Scene {
 
   public create(): void {
     const services = this.game.registry.get('services') as Services;
+    this.cameras.main.fadeIn(180, 4, 10, 16);
     services.audio.setMusic('menu');
     services.overlay.showMenu(
       services.meta.getSummary(),
@@ -15,15 +16,18 @@ export class MainMenuScene extends Phaser.Scene {
         services.audio.unlock();
         services.audio.play('start');
         services.metrics.beginRunFromMenu();
-        services.overlay.pushToast('试飞开始', 'accent');
-        this.scene.start('GameScene');
+        services.overlay.pushToast('行动开始，先拿到第一条主路线信号。', 'accent');
+        this.cameras.main.fadeOut(140, 4, 10, 16);
+        this.time.delayedCall(150, () => {
+          this.scene.start('GameScene');
+        });
       },
       () => {
         services.audio.unlock();
         services.audio.play('click');
         const content = window.__exportPilotMetrics();
         navigator.clipboard.writeText(content).catch(() => undefined);
-        services.overlay.pushToast('埋点已导出到剪贴板', 'success');
+        services.overlay.pushToast('记录已复制到剪贴板。', 'success');
       },
     );
   }

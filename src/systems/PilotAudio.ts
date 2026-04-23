@@ -35,6 +35,12 @@ export interface PilotAudioDebugSnapshot {
   cueCounts: Partial<Record<AudioCue, number>>;
 }
 
+interface CombatCueContext {
+  routeFocus: 'crit' | 'pierce' | 'dash' | null;
+  encounter: 'ordinary' | 'elite' | 'boss' | 'survive' | 'flow';
+  intensity: number;
+}
+
 const SCHEDULE_AHEAD_SEC = 0.42;
 const RMS_AUDIBLE_THRESHOLD = 0.0035;
 
@@ -240,6 +246,12 @@ export class PilotAudio {
 
   private resumePromise: Promise<void> | null = null;
 
+  private cueContext: CombatCueContext = {
+    routeFocus: null,
+    encounter: 'ordinary',
+    intensity: 0,
+  };
+
   public unlock(): void {
     this.ensureAudioGraph();
     if (!this.context) {
@@ -273,6 +285,10 @@ export class PilotAudio {
   public setMusic(mode: MusicMode): void {
     this.desiredMusicMode = mode;
     this.syncMusicMode(false);
+  }
+
+  public setCombatContext(context: CombatCueContext): void {
+    this.cueContext = context;
   }
 
   public play(cue: AudioCue): void {
@@ -572,6 +588,27 @@ export class PilotAudio {
     gain.connect(destination);
     source.start(startAt);
     source.stop(stopAt);
+  }
+
+  private getRouteFrequencyShift(scale = 1): number {
+    switch (this.cueContext.routeFocus) {
+      case 'crit':
+        return 24 * scale;
+      case 'pierce':
+        return 12 * scale;
+      case 'dash':
+        return -16 * scale;
+      default:
+        return 0;
+    }
+  }
+
+  private getEncounterIntensity(): number {
+    return Math.max(0, Math.min(1, this.cueContext.intensity));
+  }
+
+  private isHighPressureEncounter(): boolean {
+    return this.cueContext.encounter === 'elite' || this.cueContext.encounter === 'boss';
   }
 
   private getCueVariant(cue: AudioCue, range: number): number {
@@ -911,28 +948,71 @@ export class PilotAudio {
           cooldownMs: 70,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('shoot', 28);
+            const routeShift = this.getRouteFrequencyShift();
+            const encounterLift = this.isHighPressureEncounter() ? 0.008 + this.getEncounterIntensity() * 0.01 : 0;
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 240 + variant,
-              peak: 0.042,
-              duration: 0.045,
-              sweepTo: 170 + variant * 0.28,
+              frequency: 240 + variant + routeShift,
+              peak: 0.042 + encounterLift,
+              duration: 0.045 + encounterLift * 0.24,
+              sweepTo: 170 + variant * 0.28 + routeShift * 0.2,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 640 + variant * 1.6,
-              peak: 0.022,
+              frequency: 640 + variant * 1.6 + routeShift * 0.5,
+              peak: 0.022 + encounterLift * 0.46,
               duration: 0.05,
               delay: 0.006,
-              sweepTo: 460 + variant,
+              sweepTo: 460 + variant + routeShift * 0.24,
             });
             this.createNoiseBurst(context, destination, now, {
-              peak: 0.026,
-              duration: 0.036,
-              frequency: 2200 + variant * 8,
-              q: 1.1,
+              peak: 0.026 + encounterLift * 0.5,
+              duration: this.cueContext.routeFocus === 'pierce' ? 0.046 : 0.036,
+              frequency:
+                this.cueContext.routeFocus === 'crit'
+                  ? 2460 + variant * 8
+                  : this.cueContext.routeFocus === 'pierce'
+                    ? 2640 + variant * 10
+                    : 2200 + variant * 8,
+              q: this.cueContext.routeFocus === 'pierce' ? 1.38 : 1.1,
               pan: variant * 0.006,
             });
+            if (this.cueContext.routeFocus === 'crit') {
+              createVoice(context, destination, now, {
+                type: 'sine',
+                frequency: 940 + variant * 1.4,
+                peak: 0.016 + encounterLift * 0.28,
+                duration: 0.042,
+                delay: 0.01,
+                sweepTo: 1180 + variant * 1.8,
+              });
+            } else if (this.cueContext.routeFocus === 'pierce') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 980 + variant * 1.8,
+                peak: 0.018 + encounterLift * 0.22,
+                duration: 0.064,
+                delay: 0.008,
+                sweepTo: 760 + variant * 1.1,
+              });
+            } else if (this.cueContext.routeFocus === 'dash') {
+              createImpactThump(context, destination, now, {
+                peak: 0.024 + encounterLift * 0.24,
+                duration: 0.068,
+                frequency: 94 + variant * 0.18,
+                sweepTo: 58 + variant * 0.05,
+                pan: variant * 0.003,
+                type: 'triangle',
+              });
+              createVoice(context, destination, now, {
+                type: 'square',
+                frequency: 420 + variant * 0.8,
+                peak: 0.012 + encounterLift * 0.14,
+                duration: 0.048,
+                delay: 0.014,
+                sweepTo: 310 + variant * 0.5,
+              });
+            }
           },
         };
       case 'dash':
@@ -940,35 +1020,44 @@ export class PilotAudio {
           cooldownMs: 140,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('dash', 32);
+            const encounterLift = this.isHighPressureEncounter() ? 0.008 + this.getEncounterIntensity() * 0.012 : 0;
             createVoice(context, destination, now, {
               type: 'sawtooth',
               frequency: 180 + variant,
-              peak: 0.04,
-              duration: 0.08,
+              peak: 0.046 + encounterLift,
+              duration: 0.088,
               sweepTo: 320 + variant * 0.7,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 520 + variant * 1.3,
-              peak: 0.026,
-              duration: 0.1,
+              peak: 0.028 + encounterLift * 0.32,
+              duration: 0.104,
               delay: 0.02,
               sweepTo: 760 + variant * 1.8,
             });
             this.createNoiseBurst(context, destination, now, {
-              peak: 0.024,
-              duration: 0.06,
-              frequency: 1480 + variant * 7,
-              q: 0.9,
+              peak: 0.028 + encounterLift * 0.36,
+              duration: 0.072,
+              frequency: 1640 + variant * 8,
+              q: 1.05,
               pan: variant * 0.007,
             });
             createImpactThump(context, destination, now, {
-              peak: 0.03,
-              duration: 0.09,
-              frequency: 96 + variant * 0.2,
-              sweepTo: 60 + variant * 0.06,
+              peak: 0.042 + encounterLift * 0.8,
+              duration: 0.11 + encounterLift * 0.4,
+              frequency: 108 + variant * 0.24,
+              sweepTo: 64 + variant * 0.08,
               pan: variant * 0.004,
               type: 'triangle',
+            });
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 740 + variant * 1.1,
+              peak: 0.014 + encounterLift * 0.18,
+              duration: 0.06,
+              delay: 0.016,
+              sweepTo: 520 + variant * 0.7,
             });
           },
         };
@@ -977,35 +1066,61 @@ export class PilotAudio {
           cooldownMs: 100,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('hit', 22);
+            const routeShift = this.getRouteFrequencyShift(0.8);
+            const encounterThump = this.isHighPressureEncounter() ? 0.006 + this.getEncounterIntensity() * 0.01 : 0;
             createVoice(context, destination, now, {
               type: 'square',
-              frequency: 190 + variant,
-              peak: 0.054,
+              frequency: 190 + variant + routeShift,
+              peak: 0.054 + encounterThump,
               duration: 0.04,
-              sweepTo: 138 + variant * 0.22,
+              sweepTo: 138 + variant * 0.22 + routeShift * 0.18,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 360 + variant,
-              peak: 0.027,
+              frequency: 360 + variant + routeShift * 0.45,
+              peak: 0.027 + encounterThump * 0.4,
               duration: 0.05,
               delay: 0.008,
-              sweepTo: 250 + variant * 0.4,
+              sweepTo: 250 + variant * 0.4 + routeShift * 0.24,
             });
             this.createNoiseBurst(context, destination, now, {
-              peak: 0.03,
+              peak: 0.03 + encounterThump * 0.5,
               duration: 0.042,
-              frequency: 1240 + variant * 5,
-              q: 1.4,
+              frequency:
+                this.cueContext.routeFocus === 'crit'
+                  ? 1480 + variant * 6
+                  : this.cueContext.routeFocus === 'pierce'
+                    ? 1760 + variant * 7
+                    : 1240 + variant * 5,
+              q: this.cueContext.routeFocus === 'pierce' ? 1.55 : 1.4,
               pan: variant * 0.008,
             });
             createImpactThump(context, destination, now, {
-              peak: 0.028,
-              duration: 0.06,
-              frequency: 104 + variant * 0.24,
-              sweepTo: 68 + variant * 0.08,
+              peak: 0.028 + encounterThump * 0.8,
+              duration: 0.06 + encounterThump * 0.45,
+              frequency: 104 + variant * 0.24 - (this.cueContext.routeFocus === 'dash' ? 8 : 0),
+              sweepTo: 68 + variant * 0.08 - (this.cueContext.routeFocus === 'dash' ? 6 : 0),
               pan: variant * 0.006,
             });
+            if (this.cueContext.routeFocus === 'crit') {
+              createVoice(context, destination, now, {
+                type: 'sine',
+                frequency: 880 + variant * 1.2,
+                peak: 0.014 + encounterThump * 0.22,
+                duration: 0.05,
+                delay: 0.01,
+                sweepTo: 1180 + variant * 1.6,
+              });
+            } else if (this.cueContext.routeFocus === 'pierce') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 820 + variant * 1.3,
+                peak: 0.014 + encounterThump * 0.18,
+                duration: 0.06,
+                delay: 0.008,
+                sweepTo: 610 + variant * 0.8,
+              });
+            }
           },
         };
       case 'hurt':
@@ -1035,11 +1150,19 @@ export class PilotAudio {
               q: 0.85,
             });
             createImpactThump(context, destination, now, {
-              peak: 0.036,
-              duration: 0.12,
+              peak: 0.042,
+              duration: 0.14,
               frequency: 90 + variant * 0.18,
               sweepTo: 48 + variant * 0.05,
               type: 'triangle',
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 210 + variant * 0.36,
+              peak: 0.016,
+              duration: 0.1,
+              delay: 0.014,
+              sweepTo: 132 + variant * 0.18,
             });
           },
         };
@@ -1048,20 +1171,22 @@ export class PilotAudio {
           cooldownMs: 90,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('kill', 26);
+            const routeShift = this.getRouteFrequencyShift();
+            const encounterLift = this.isHighPressureEncounter() ? 0.01 + this.getEncounterIntensity() * 0.012 : 0;
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 280 + variant,
-              peak: 0.066,
+              frequency: 280 + variant + routeShift * 0.4,
+              peak: 0.066 + encounterLift,
               duration: 0.075,
-              sweepTo: 450 + variant * 1.4,
+              sweepTo: 450 + variant * 1.4 + routeShift * 0.5,
             });
             createVoice(context, destination, now, {
               type: 'sine',
-              frequency: 640 + variant * 1.8,
-              peak: 0.042,
+              frequency: 640 + variant * 1.8 + routeShift,
+              peak: 0.042 + encounterLift * 0.46,
               duration: 0.09,
               delay: 0.014,
-              sweepTo: 920 + variant * 2.1,
+              sweepTo: 920 + variant * 2.1 + routeShift * 1.2,
             });
             createVoice(context, destination, now, {
               type: 'square',
@@ -1072,19 +1197,43 @@ export class PilotAudio {
               sweepTo: 170 + variant * 0.4,
             });
             this.createNoiseBurst(context, destination, now, {
-              peak: 0.032,
+              peak: 0.032 + encounterLift * 0.42,
               duration: 0.06,
-              frequency: 1760 + variant * 6,
-              q: 1.1,
+              frequency:
+                this.cueContext.routeFocus === 'crit'
+                  ? 2060 + variant * 7
+                  : this.cueContext.routeFocus === 'pierce'
+                    ? 2280 + variant * 7
+                    : 1760 + variant * 6,
+              q: this.cueContext.routeFocus === 'pierce' ? 1.28 : 1.1,
               pan: variant * 0.007,
             });
             createImpactThump(context, destination, now, {
-              peak: 0.026,
-              duration: 0.074,
-              frequency: 116 + variant * 0.16,
-              sweepTo: 72 + variant * 0.05,
+              peak: 0.026 + encounterLift * 0.56,
+              duration: 0.074 + encounterLift * 0.5,
+              frequency: 116 + variant * 0.16 - (this.cueContext.routeFocus === 'dash' ? 6 : 0),
+              sweepTo: 72 + variant * 0.05 - (this.cueContext.routeFocus === 'dash' ? 5 : 0),
               pan: variant * 0.005,
             });
+            if (this.cueContext.routeFocus === 'crit') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 1120 + variant * 2,
+                peak: 0.02 + encounterLift * 0.22,
+                duration: 0.08,
+                delay: 0.028,
+                sweepTo: 1480 + variant * 2.4,
+              });
+            } else if (this.cueContext.routeFocus === 'pierce') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 760 + variant * 1.4,
+                peak: 0.016 + encounterLift * 0.16,
+                duration: 0.1,
+                delay: 0.02,
+                sweepTo: 560 + variant,
+              });
+            }
           },
         };
       case 'pickup':
@@ -1092,28 +1241,29 @@ export class PilotAudio {
           cooldownMs: 90,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('pickup', 18);
+            const routeShift = this.getRouteFrequencyShift(0.7);
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 520 + variant,
+              frequency: 520 + variant + routeShift * 0.4,
               peak: 0.042,
               duration: 0.09,
-              sweepTo: 760 + variant * 1.2,
+              sweepTo: 760 + variant * 1.2 + routeShift * 0.8,
             });
             createVoice(context, destination, now, {
               type: 'sine',
-              frequency: 820 + variant * 1.4,
+              frequency: 820 + variant * 1.4 + routeShift,
               peak: 0.032,
               duration: 0.1,
               delay: 0.014,
-              sweepTo: 1060 + variant * 1.6,
+              sweepTo: 1060 + variant * 1.6 + routeShift * 1.2,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 1120 + variant * 1.8,
+              frequency: 1120 + variant * 1.8 + routeShift * 0.6,
               peak: 0.019,
               duration: 0.05,
               delay: 0.028,
-              sweepTo: 1320 + variant * 2,
+              sweepTo: 1320 + variant * 2 + routeShift * 0.8,
             });
             this.createNoiseBurst(context, destination, now, {
               peak: 0.014,
@@ -1122,6 +1272,24 @@ export class PilotAudio {
               q: 1.5,
               pan: variant * 0.008,
             });
+            if (this.cueContext.routeFocus === 'pierce') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 680 + variant * 1.2,
+                peak: 0.012,
+                duration: 0.08,
+                delay: 0.01,
+                sweepTo: 980 + variant * 1.6,
+              });
+            } else if (this.cueContext.routeFocus === 'dash') {
+              createImpactThump(context, destination, now, {
+                peak: 0.012,
+                duration: 0.05,
+                frequency: 96 + variant * 0.14,
+                sweepTo: 68 + variant * 0.05,
+                type: 'triangle',
+              });
+            }
           },
         };
       case 'crit':
@@ -1173,28 +1341,39 @@ export class PilotAudio {
           cooldownMs: 90,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('enemyShot', 20);
+            const encounterBoost = this.isHighPressureEncounter() ? 0.008 + this.getEncounterIntensity() * 0.014 : 0;
             createVoice(context, destination, now, {
               type: 'square',
               frequency: 300 + variant,
-              peak: 0.042,
-              duration: 0.055,
+              peak: 0.042 + encounterBoost,
+              duration: 0.055 + encounterBoost * 0.3,
               sweepTo: 214 + variant * 0.36,
             });
             createVoice(context, destination, now, {
               type: 'triangle',
               frequency: 720 + variant * 1.2,
-              peak: 0.026,
+              peak: 0.026 + encounterBoost * 0.4,
               duration: 0.065,
               delay: 0.004,
               sweepTo: 560 + variant,
             });
             this.createNoiseBurst(context, destination, now, {
-              peak: 0.022,
-              duration: 0.042,
-              frequency: 1880 + variant * 5,
-              q: 1.2,
+              peak: 0.022 + encounterBoost * 0.42,
+              duration: this.isHighPressureEncounter() ? 0.052 : 0.042,
+              frequency: this.isHighPressureEncounter() ? 1620 + variant * 5 : 1880 + variant * 5,
+              q: this.isHighPressureEncounter() ? 1.04 : 1.2,
               pan: variant * 0.009,
             });
+            if (this.isHighPressureEncounter()) {
+              createImpactThump(context, destination, now, {
+                peak: 0.018 + encounterBoost * 0.3,
+                duration: 0.07,
+                frequency: 98 + variant * 0.12,
+                sweepTo: 64 + variant * 0.04,
+                pan: variant * 0.004,
+                type: 'triangle',
+              });
+            }
           },
         };
       case 'nearMiss':
@@ -1232,6 +1411,14 @@ export class PilotAudio {
               q: 1.3,
               pan: variant * 0.008,
             });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 1360 + variant * 1.4,
+              peak: 0.01,
+              duration: 0.032,
+              delay: 0.012,
+              sweepTo: 1720 + variant * 1.8,
+            });
           },
         };
       case 'relayStandard':
@@ -1247,32 +1434,33 @@ export class PilotAudio {
           cooldownMs: 220,
           play: (context, destination, now) => {
             const variant = this.getCueVariant('pressure', 16);
+            const encounterBoost = this.isHighPressureEncounter() ? 0.01 + this.getEncounterIntensity() * 0.016 : 0;
             createVoice(context, destination, now, {
               type: 'sawtooth',
-              frequency: 150 + variant,
-              peak: 0.06,
-              duration: 0.18,
-              sweepTo: 100 + variant * 0.2,
+              frequency: 150 + variant - (this.cueContext.encounter === 'boss' ? 14 : 0),
+              peak: 0.06 + encounterBoost,
+              duration: 0.18 + encounterBoost * 0.5,
+              sweepTo: 100 + variant * 0.2 - (this.cueContext.encounter === 'boss' ? 10 : 0),
             });
             createVoice(context, destination, now, {
               type: 'triangle',
-              frequency: 235 + variant,
-              peak: 0.03,
+              frequency: 235 + variant - (this.cueContext.encounter === 'boss' ? 12 : 0),
+              peak: 0.03 + encounterBoost * 0.48,
               duration: 0.14,
               delay: 0.02,
-              sweepTo: 152 + variant * 0.3,
+              sweepTo: 152 + variant * 0.3 - (this.cueContext.encounter === 'boss' ? 10 : 0),
             });
             this.createNoiseBurst(context, destination, now, {
-              peak: 0.03,
-              duration: 0.08,
-              frequency: 1080 + variant * 4,
-              q: 0.88,
+              peak: 0.03 + encounterBoost * 0.45,
+              duration: this.isHighPressureEncounter() ? 0.09 : 0.08,
+              frequency: this.cueContext.encounter === 'boss' ? 920 + variant * 4 : 1080 + variant * 4,
+              q: this.cueContext.encounter === 'boss' ? 0.74 : 0.88,
             });
             createImpactThump(context, destination, now, {
-              peak: 0.03,
-              duration: 0.14,
-              frequency: 82 + variant * 0.14,
-              sweepTo: 44 + variant * 0.03,
+              peak: 0.03 + encounterBoost * 0.78,
+              duration: 0.14 + encounterBoost * 0.8,
+              frequency: 82 + variant * 0.14 - (this.cueContext.encounter === 'boss' ? 8 : 0),
+              sweepTo: 44 + variant * 0.03 - (this.cueContext.encounter === 'boss' ? 6 : 0),
               type: 'triangle',
             });
           },

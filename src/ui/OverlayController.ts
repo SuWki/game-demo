@@ -17,10 +17,12 @@ import type {
 interface ResultActions {
   onRestart: () => void;
   onBackToMenu: () => void;
-  onExport: () => void;
 }
 
-type PanelProgress = Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'>;
+type PanelProgress = Pick<
+  OverlayHudSnapshot,
+  'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary'
+>;
 
 const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
   battle: '战斗',
@@ -39,7 +41,7 @@ const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
 const TOAST_BADGES: Record<ToastTone, string> = {
   neutral: '信息',
   accent: '阶段',
-  route: '流派',
+  route: '路线',
   danger: '危险',
   success: '完成',
 };
@@ -81,31 +83,40 @@ export class OverlayController {
     this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
-      <section class="screen-minimal menu-screen">
+      <section class="screen-minimal menu-screen commercial-start-screen">
         <div class="screen-gridline" aria-hidden="true"></div>
-        <div class="screen-center-glyph" aria-hidden="true">
-          <span class="screen-ring ring-a"></span>
-          <span class="screen-ring ring-b"></span>
-          <span class="screen-ring ring-c"></span>
-        </div>
-        <div class="screen-anchor screen-anchor-bottom">
-          <p class="screen-kicker">NODE RUN</p>
-          <h1 class="screen-title">节点作战</h1>
-          <p class="screen-subtitle">移动 / 清场 / 成线</p>
-          <div class="screen-meta-strip">
-            <span>${summary.totalRuns} 局</span>
-            <span>${summary.wins} 胜</span>
-            <span>${summary.lastRouteName}</span>
+        <div class="commercial-corner-label">01 START SCREEN</div>
+        <div class="commercial-screen-layout">
+          <div class="commercial-screen-copy">
+            <p class="screen-kicker">AUTONOMOUS COMBAT DRONE PROGRAM</p>
+            <h1 class="screen-title">PROJECT<br />ORBITAL</h1>
+            <p class="screen-subtitle">节点推进 / 自动射击 / 模组构筑</p>
+            <p class="screen-brief">Deploy. Adapt. Survive.<br />Every run is a new simulation.</p>
+            <div class="screen-meta-strip">
+              <span>RUNS ${summary.totalRuns}</span>
+              <span>WINS ${summary.wins}</span>
+              <span>${summary.lastRouteName || 'NO ROUTE'}</span>
+            </div>
+            <div class="screen-actions commercial-screen-actions">
+              <button class="text-action text-action-primary" data-action="start">
+                <span>开始作战</span>
+                <small>DEPLOY DRONE</small>
+              </button>
+              <button class="text-action" data-action="export">
+                <span>战斗记录</span>
+                <small>SYSTEMS LOG</small>
+              </button>
+            </div>
           </div>
-          <div class="screen-actions">
-            <button class="text-action text-action-primary" data-action="start">
-              <span>开始</span>
-              <small>ENTER</small>
-            </button>
-            <button class="text-action" data-action="export">
-              <span>记录</span>
-              <small>LOG</small>
-            </button>
+          <div class="commercial-visual-anchor" aria-hidden="true">
+            <span class="screen-ring ring-a"></span>
+            <span class="screen-ring ring-b"></span>
+            <span class="screen-ring ring-c"></span>
+            <span class="commercial-core"></span>
+            <span class="commercial-core-wing commercial-core-wing-a"></span>
+            <span class="commercial-core-wing commercial-core-wing-b"></span>
+            <span class="commercial-core-wing commercial-core-wing-c"></span>
+            <span class="commercial-core-wing commercial-core-wing-d"></span>
           </div>
         </div>
       </section>
@@ -118,26 +129,31 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
-      <div class="hud-shell-minimal">
-        <section class="hud-block hud-block-left">
-          <div class="hud-stat-stack">
-            <span class="hud-stat-value">${snapshot.hpText}</span>
-            <div class="hud-bar hud-bar-hp ${this.getMeterStateClass(snapshot.hpRatio)}">
+      <div class="game-hud-fixed">
+        <section class="game-hud-fixed__left">
+          <div class="hud-meter-card is-hp">
+            <div class="hud-meter-card__head">
+              <span>HP</span>
+              <strong>${snapshot.hpText}</strong>
+            </div>
+            <div class="hud-meter-card__bar ${this.getMeterStateClass(snapshot.hpRatio)}">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.hpRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
-          <div class="hud-stat-stack">
-            <span class="hud-stat-value">${snapshot.experienceText}</span>
-            <div class="hud-bar hud-bar-xp">
+          <div class="hud-meter-card is-exp">
+            <div class="hud-meter-card__head">
+              <span>EXP</span>
+              <strong>${snapshot.experienceText}</strong>
+            </div>
+            <div class="hud-meter-card__bar is-exp">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
+            <span class="hud-meter-card__level">${snapshot.levelText}</span>
           </div>
         </section>
-        <section class="hud-block hud-block-center">
-          <span class="hud-wave-text">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
-        </section>
-        <section class="hud-block hud-block-right">
-          <span class="hud-goal-text">${this.getHudObjectiveText(snapshot)}</span>
+        <section class="game-hud-fixed__center">
+          <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
+          <span class="game-hud-fixed__mode">${snapshot.statusText}</span>
         </section>
       </div>
     `;
@@ -153,11 +169,11 @@ export class OverlayController {
       panelClassName: 'panel-node-choice panel-route-choice',
       panelLayerClassName: 'panel-layer-center',
       modeLabel: '路线选择',
-      modeHint: '下一站',
-      title: `${phaseLabel}路线`,
+      eyebrow: 'ROUTE SELECT',
+      title: '选择下一站',
+      contextHtml: this.renderRouteChoiceContext(phaseLabel, options.length, progress),
       items: options.map((node) => this.renderNodeChoiceCard(node)),
       progress,
-      alertText: '选择 1 条路线',
     });
     for (const node of options) {
       this.bindClick(`[data-choice="${node.id}"]`, () => onChoose(node.id));
@@ -171,17 +187,16 @@ export class OverlayController {
     choices: UpgradeDefinition[],
     onChoose: (upgradeId: string) => void,
   ): void {
-    const isLevelUp = title.includes('等级提升');
     const isFinalPrep = title.includes('最终整备');
     this.showPanel({
       panelClassName: 'panel-upgrade-choice',
       panelLayerClassName: 'panel-layer-center',
       modeLabel: isFinalPrep ? '最终整备' : '强化选择',
-      modeHint: isLevelUp ? '拿一项' : isFinalPrep ? 'Boss 前' : '补一拍',
-      title,
+      eyebrow: isFinalPrep ? 'FINAL LOADOUT' : 'LOADOUT UPGRADE',
+      title: isFinalPrep ? '最终整备' : '机体强化',
+      contextHtml: this.renderUpgradeChoiceContext(progress),
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade)),
       progress,
-      alertText: isFinalPrep ? '选择 1 项最终强化' : '请选择 1 项强化',
     });
     for (const upgrade of choices) {
       this.bindClick(`[data-choice="${upgrade.id}"]`, () => onChoose(upgrade.id));
@@ -198,11 +213,11 @@ export class OverlayController {
       panelClassName: `panel-event-choice${isAnomaly ? ' panel-event-choice-anomaly' : ''}`,
       panelLayerClassName: isAnomaly ? 'panel-layer-center' : undefined,
       modeLabel: isAnomaly ? '异常处理' : '事件选择',
-      modeHint: isAnomaly ? '处理方式' : '执行',
-      title: eventDef.name,
+      eyebrow: isAnomaly ? 'ANOMALY EVENT' : 'FIELD EVENT',
+      title: isAnomaly ? '异常接入' : eventDef.name,
+      contextHtml: isAnomaly ? this.renderAnomalyChoiceContext(eventDef, progress) : undefined,
       items: eventDef.options.map((option) => this.renderEventChoiceCard(eventDef, option)),
       progress,
-      alertText: isAnomaly ? '异常节点：选择 1 项处理' : '选择 1 项事件处理',
     });
     for (const option of eventDef.options) {
       this.bindClick(`[data-choice="${option.id}"]`, () => onChoose(option.id));
@@ -216,41 +231,60 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
     this.screenLayer.innerHTML = `
-      <section class="screen-minimal result-screen ${result.outcome === 'victory' ? 'is-victory' : 'is-defeat'}">
+      <section class="screen-minimal result-screen commercial-result-screen ${result.outcome === 'victory' ? 'is-victory' : 'is-defeat'}">
         <div class="screen-gridline" aria-hidden="true"></div>
-        <div class="screen-center-glyph" aria-hidden="true">
-          <span class="screen-ring ring-a"></span>
-          <span class="screen-ring ring-b"></span>
-        </div>
-        <div class="screen-anchor screen-anchor-center">
-          <p class="screen-kicker">${result.outcome === 'victory' ? 'RUN CLEAR' : 'RUN END'}</p>
-          <h1 class="screen-title">${result.outcome === 'victory' ? '完成' : '失败'}</h1>
-          <div class="screen-meta-strip">
-            <span>${routeLabel}</span>
-            <span>${result.buildLabel}</span>
-            <span>${result.endingLabel}</span>
+        <div class="commercial-corner-label">04 RESULT SCREEN</div>
+        <div class="commercial-screen-layout">
+          <div class="commercial-screen-copy commercial-result-copy">
+            <p class="screen-kicker">${result.outcome === 'victory' ? 'MISSION COMPLETE' : 'MISSION FAILED'}</p>
+            <h1 class="screen-title">${result.outcome === 'victory' ? '任务完成' : '任务失败'}</h1>
+            <p class="screen-subtitle">Simulation Terminated</p>
+            <div class="screen-summary-grid commercial-result-report">
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">路线</span>
+                <strong>${routeLabel}</strong>
+              </article>
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">生存时间</span>
+                <strong>${this.formatDuration(result.runDurationSec)}</strong>
+              </article>
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">等级</span>
+                <strong>Lv.${result.levelReached}</strong>
+              </article>
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">节点</span>
+                <strong>${result.nodesCleared}</strong>
+              </article>
+            </div>
+            <p class="screen-meta-line">${result.summary}</p>
+            <div class="screen-actions commercial-screen-actions commercial-result-actions">
+              <button class="text-action text-action-primary" data-action="restart">
+                <span>再来一局</span>
+                <small>DEPLOY AGAIN</small>
+              </button>
+              <button class="text-action" data-action="menu">
+                <span>返回机库</span>
+                <small>RETURN TO HANGAR</small>
+              </button>
+            </div>
           </div>
-          <p class="screen-meta-line">Lv.${result.levelReached} / ${result.battleWins} 战 / ${result.nodesCleared} 节点</p>
-          <div class="screen-actions">
-            <button class="text-action text-action-primary" data-action="restart">
-              <span>再来一局</span>
-              <small>RERUN</small>
-            </button>
-            <button class="text-action" data-action="menu">
-              <span>开始页</span>
-              <small>MENU</small>
-            </button>
-            <button class="text-action" data-action="export">
-              <span>记录</span>
-              <small>LOG</small>
-            </button>
+          <div class="commercial-visual-anchor commercial-result-anchor" aria-hidden="true">
+            <span class="screen-ring ring-a"></span>
+            <span class="screen-ring ring-b"></span>
+            <span class="screen-ring ring-c"></span>
+            <span class="commercial-core"></span>
+            <div class="commercial-debrief-panel">
+              <span>DEBRIEF</span>
+              <strong>${result.outcome === 'victory' ? 'OPTIMAL' : 'RECOVER'}</strong>
+              <small>${result.buildLabel}</small>
+            </div>
           </div>
         </div>
       </section>
     `;
     this.bindClick('[data-action="restart"]', actions.onRestart);
     this.bindClick('[data-action="menu"]', actions.onBackToMenu);
-    this.bindClick('[data-action="export"]', actions.onExport);
   }
 
   public pushToast(message: string, tone: ToastTone = 'neutral'): void {
@@ -267,7 +301,7 @@ export class OverlayController {
   }
 
   public hidePanel(): void {
-    this.panelLayer.className = 'panel-layer hidden';
+    this.panelLayer.className = 'panel-layer';
     this.panelLayer.classList.add('hidden');
     this.panelLayer.innerHTML = '';
   }
@@ -286,7 +320,9 @@ export class OverlayController {
     panelLayerClassName?: string;
     modeLabel: string;
     modeHint?: string;
+    eyebrow?: string;
     title: string;
+    contextHtml?: string;
     items: string[];
     progress?: PanelProgress;
     alertText?: string;
@@ -297,28 +333,68 @@ export class OverlayController {
     const itemCountClass =
       config.items.length === 1 ? 'is-single-choice' : config.items.length === 2 ? 'is-two-choice' : '';
     this.panelLayer.innerHTML = `
-      <section class="floating-panel dock-panel ${config.panelClassName}">
+      <section class="floating-panel dock-panel commercial-choice-panel ${config.panelClassName}">
         ${config.alertText ? `<div class="panel-alert">${config.alertText}</div>` : ''}
         <div class="tray-header">
           <div class="tray-title-group">
-            <p class="eyebrow">${config.modeLabel}</p>
+            ${config.eyebrow ? `<span class="panel-eyebrow">${config.eyebrow}</span>` : ''}
             <h2 class="panel-title">${config.title}</h2>
           </div>
-          <div class="tray-header-side">
-            ${config.progress ? `<span class="tray-progress">${this.getCompactProgressLabel(config.progress.progressLabel)}</span>` : ''}
-            ${config.modeHint ? `<span class="tray-mode-hint">${config.modeHint}</span>` : ''}
-          </div>
         </div>
+        ${config.contextHtml ?? ''}
         <div class="choice-grid choice-grid-tray ${itemCountClass}">${config.items.join('')}</div>
       </section>
     `;
   }
 
-  private bindClick(selector: string, handler: () => void): void {
-    const target = this.root.querySelector<HTMLElement>(selector);
-    if (target) {
-      target.onclick = handler;
-    }
+  private renderRouteChoiceContext(phaseLabel: string, optionCount: number, progress: PanelProgress): string {
+    return `
+      <aside class="choice-context choice-context-route" aria-label="路线推进信息">
+        <div class="route-context-node is-origin"></div>
+        <div class="route-context-lines" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="route-context-copy">
+          <span>当前段位</span>
+          <strong>${phaseLabel || progress.progressLabel}</strong>
+          <small>${optionCount} 条候选路线 · 选择 1 条作战路线</small>
+        </div>
+      </aside>
+    `;
+  }
+
+  private renderUpgradeChoiceContext(progress: PanelProgress): string {
+    const stats = progress.statSummary.slice(0, 10);
+    const statItems = stats
+      .map((stat) => `<span class="upgrade-stat-item tone-${stat.tone}"><small>${stat.label}</small><strong>${stat.value}</strong></span>`)
+      .join('');
+    return `
+      <aside class="choice-context choice-context-upgrade" aria-label="当前机体属性">
+        <div class="upgrade-context-head">
+          <span>当前机体</span>
+          <strong>${progress.levelText}</strong>
+        </div>
+        <div class="upgrade-context-route">${progress.routeStatusText}</div>
+        <div class="upgrade-stat-grid">${statItems}</div>
+      </aside>
+    `;
+  }
+
+  private renderAnomalyChoiceContext(eventDef: EventDefinition, progress: PanelProgress): string {
+    return `
+      <aside class="choice-context choice-context-anomaly" aria-label="异常风险摘要">
+        <span class="anomaly-warning-label">RISK AUTHORIZATION</span>
+        <strong>${eventDef.name}</strong>
+        <p>${eventDef.description}</p>
+        <div class="anomaly-risk-grid">
+          <span><small>风险类型</small><b>${this.getEventClassLabel(eventDef)}</b></span>
+          <span><small>当前进度</small><b>${progress.progressLabel}</b></span>
+        </div>
+        <div class="anomaly-warning-strip">收益与代价同级显示，确认前请看清处理结果</div>
+      </aside>
+    `;
   }
 
   private renderNodeChoiceCard(node: NodeOption): string {
@@ -386,10 +462,12 @@ export class OverlayController {
     const effectText = this.getEventOptionDescription(eventDef, option);
     const actionLabel = this.getEventChoiceActionLabel(eventDef, option);
     const detailTags = this.getEventChoiceTags(eventDef, option);
+    const anomalyGain = isAnomaly ? this.getAnomalyGainLabel(option) : '';
+    const anomalyCost = isAnomaly ? this.getAnomalyCostLabel(option) : '';
     return `
       <button class="choice-strip choice-strip-event${anomalyClass}" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
         <div class="choice-strip-head">
-          <span class="choice-type">${isAnomaly ? '异常' : '事件'}</span>
+          <span class="choice-type">${isAnomaly ? '处理方案' : '事件'}</span>
           ${isAnomaly ? `<span class="choice-mode-badge choice-event-class">${this.getEventClassLabel(eventDef)}</span>` : ''}
           <span class="choice-mode-badge choice-event-route ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
         </div>
@@ -397,6 +475,14 @@ export class OverlayController {
           <strong>${option.label}</strong>
           <small>${effectText}</small>
         </div>
+        ${
+          isAnomaly
+            ? `<div class="choice-anomaly-breakdown">
+                <span><small>获得</small><strong>${anomalyGain}</strong></span>
+                <span class="${anomalyCost.includes('-') || anomalyCost.includes('损失') ? 'is-cost' : ''}"><small>代价</small><strong>${anomalyCost}</strong></span>
+              </div>`
+            : ''
+        }
         ${
           detailTags.length > 0
             ? `<div class="choice-strip-event-meta">${detailTags
@@ -413,6 +499,51 @@ export class OverlayController {
         </div>
       </button>
     `;
+  }
+
+  private getAnomalyGainLabel(option: EventDefinition['options'][number]): string {
+    const positiveEffects = option.effects?.filter((effect) => effect.type !== 'heal' || effect.amount > 0) ?? [];
+    return this.getChoiceEffectSummary(positiveEffects, { maxSegments: 2 }) || option.description;
+  }
+
+  private getAnomalyCostLabel(option: EventDefinition['options'][number]): string {
+    const costs: string[] = [];
+    for (const effect of option.effects ?? []) {
+      if (effect.type === 'heal' && effect.amount < 0) {
+        costs.push(`耐久 ${effect.amount}`);
+      }
+      if (effect.type === 'stats') {
+        for (const [key, value] of Object.entries(effect.modifiers)) {
+          if (typeof value === 'number' && value < 0) {
+            costs.push(`${this.getStatLabel(key)} ${this.formatSignedValue(value)}`);
+          }
+        }
+      }
+    }
+    return costs.slice(0, 2).join(' / ') || '无直接损失';
+  }
+
+  private getStatLabel(statKey: string): string {
+    const labelMap: Record<string, string> = {
+      damage: '伤害',
+      fireRate: '射速',
+      projectileSpeed: '弹速',
+      critChance: '暴击率',
+      critMultiplier: '暴伤',
+      pierce: '穿透',
+      multishot: '多重',
+      maxHp: '生命上限',
+      moveSpeed: '移速',
+      dashInterval: '冲刺间隔',
+      dashPulseDamage: '冲刺伤害',
+      dashInvulnerability: '无敌窗',
+      regeneration: '再生',
+    };
+    return labelMap[statKey] ?? statKey;
+  }
+
+  private formatSignedValue(value: number): string {
+    return value > 0 ? `+${value}` : `${value}`;
   }
 
   private getNodeCardDescription(node: NodeOption): string {
@@ -705,12 +836,12 @@ export class OverlayController {
 
   private getMeterStateClass(ratio: number): string {
     if (ratio <= 0.35) {
-      return 'danger';
+      return 'is-danger';
     }
     if (ratio <= 0.68) {
-      return 'warn';
+      return 'is-warn';
     }
-    return 'stable';
+    return 'is-stable';
   }
 
   private getCompactProgressLabel(progressLabel: string): string {
@@ -719,45 +850,23 @@ export class OverlayController {
   }
 
   private getHudWaveLabel(progressLabel: string): string {
-    const compactWave = progressLabel.match(/(\d+\s*\/\s*\d+)/);
-    return compactWave ? `波次 ${compactWave[1]}` : progressLabel;
+    const match = progressLabel.match(/(\d+)/);
+    if (!match) {
+      return progressLabel;
+    }
+    return `第${match[1]}波`;
   }
 
-  private getHudObjectiveText(snapshot: OverlayHudSnapshot): string {
-    if (snapshot.objectiveTone === 'survive') {
-      const surviveValue = snapshot.objectiveProgressText.match(/(\d+\s*s?)/);
-      return surviveValue ? `生存: ${surviveValue[1]}` : '生存';
-    }
+  private formatDuration(durationSec: number): string {
+    const minutes = Math.floor(durationSec / 60);
+    const seconds = Math.max(0, Math.floor(durationSec % 60));
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
 
-    if (snapshot.objectiveTone === 'battle') {
-      const killValue = snapshot.objectiveProgressText.match(/(\d+\s*\/\s*\d+)/);
-      return killValue ? `歼灭: ${killValue[1]}` : '歼灭';
+  private bindClick(selector: string, handler: () => void): void {
+    const target = this.root.querySelector<HTMLElement>(selector);
+    if (target) {
+      target.onclick = handler;
     }
-
-    if (snapshot.objectiveTone === 'elite') {
-      return snapshot.objectiveProgressText.includes('已') ? '精英: 已出现' : '精英: 即将出现';
-    }
-
-    if (snapshot.objectiveTone === 'boss') {
-      return snapshot.objectiveProgressText.includes('即将') ? '首领: 即将出现' : '首领: 终结';
-    }
-
-    if (snapshot.objectiveText.includes('强化选择')) {
-      return '目标: 强化';
-    }
-
-    if (snapshot.objectiveText.includes('最终整备')) {
-      return '目标: 整备';
-    }
-
-    if (snapshot.objectiveText.includes('路线')) {
-      return '目标: 选路';
-    }
-
-    if (snapshot.objectiveText.includes('异常')) {
-      return '目标: 处理';
-    }
-
-    return `目标: ${snapshot.objectiveText}`;
   }
 }

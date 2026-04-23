@@ -25,6 +25,8 @@ export class MetaProgression {
       totalRuns: this.state.totalRuns,
       wins: this.state.wins,
       lastRouteName: this.state.lastRoute ? ROUTE_NAME_MAP[this.state.lastRoute] : '未成型',
+      lastRouteId: this.state.lastRoute,
+      lastDurationSec: this.state.lastDurationSec,
     };
   }
 

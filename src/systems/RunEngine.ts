@@ -51,8 +51,11 @@ import { UPGRADE_ARCHETYPES } from '../data/upgrades';
 import type {
   BattlePressurePhaseDefinition,
   BattleState,
+  BattleDebugRuntimeConfig,
+  BattleTemplateId,
   ContentEffect,
   ContentTier,
+  DebugBattlePhaseId,
   EnemyArchetypeId,
   PressurePocketShiftModeId,
   PressurePatternModeId,
@@ -92,6 +95,10 @@ const CENTER_X = ARENA_WIDTH / 2;
 const CENTER_Y = ARENA_HEIGHT / 2;
 const ROUTE_COMMIT_THRESHOLD = 3;
 const ROUTE_MATURE_THRESHOLD = 5;
+const BOSS_SAFE_WINDOW_REACTION_SEC = 1.5;
+const BASE_PLAYER_MOVE_SPEED = createBaseStats().moveSpeed;
+const BOSS_SAFE_WINDOW_EDGE_MARGIN_X = 12;
+const BOSS_SAFE_WINDOW_EDGE_MARGIN_Y = 10;
 
 function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
@@ -137,6 +144,14 @@ export class RunEngine {
     down: false,
     left: false,
     right: false,
+  };
+
+  private debugConfig: BattleDebugRuntimeConfig = {
+    freezeEnemyMovement: false,
+    freezeEnemyProjectiles: false,
+    freezeEnemySpawning: false,
+    freezePlayerAutoFire: false,
+    invulnerablePlayer: false,
   };
 
   private firstUpgradeRecorded = false;
@@ -189,6 +204,38 @@ export class RunEngine {
     this.inputState.down = nextInput.down;
     this.inputState.left = nextInput.left;
     this.inputState.right = nextInput.right;
+  }
+
+  public setDebugConfig(nextConfig: BattleDebugRuntimeConfig): void {
+    this.debugConfig = { ...nextConfig };
+  }
+
+  public restartDebugBattle(templateId: BattleTemplateId, phase: DebugBattlePhaseId): void {
+    const template = BATTLE_TEMPLATES[templateId];
+    const battlePhase = template.encounterType === 'boss' ? 'finalBattle' : phase;
+    const nodeType: NodeType = template.encounterType === 'boss' ? 'boss' : 'battle';
+    const debugNode: NodeOption = {
+      id: `debug-${templateId}-${battlePhase}`,
+      type: nodeType,
+      title: `[DEBUG] ${template.name}`,
+      description: `Debug restart for ${template.id}`,
+      templateId,
+      phase: battlePhase,
+      difficultyScale: 1,
+    };
+
+    this.state.status = 'battle';
+    this.state.phase = battlePhase;
+    this.state.round = this.getDebugRoundForPhase(battlePhase);
+    this.state.currentEvent = null;
+    this.state.currentNode = debugNode;
+    this.state.nodeOptions = [];
+    this.state.upgradeChoices = [];
+    this.state.upgradeSource = null;
+    this.state.result = null;
+    this.state.queuedLevelUps = 0;
+    this.state.stats.hp = this.state.stats.maxHp;
+    this.enterBattle(debugNode);
   }
 
   public drainAnnouncements(): EngineAnnouncement[] {
@@ -385,6 +432,8 @@ export class RunEngine {
     battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - simulationDt);
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - simulationDt);
     battle.eliteCrackWindowSec = Math.max(0, battle.eliteCrackWindowSec - simulationDt);
+    battle.eliteBreachFlashSec = Math.max(0, battle.eliteBreachFlashSec - simulationDt);
+    battle.eliteBreachCalloutCooldownSec = Math.max(0, battle.eliteBreachCalloutCooldownSec - simulationDt);
     battle.invulnerableSec = Math.max(0, battle.invulnerableSec - simulationDt);
     battle.playerImpactSec = Math.max(0, battle.playerImpactSec - dt);
     battle.playerRecoverySec = Math.max(0, battle.playerRecoverySec - dt);
@@ -500,6 +549,21 @@ export class RunEngine {
     return Math.max(1, this.state.round + 1);
   }
 
+  private getDebugRoundForPhase(phase: DebugBattlePhaseId): number {
+    switch (phase) {
+      case 'opening':
+        return 0;
+      case 'mid':
+        return 1;
+      case 'late':
+        return 2;
+      case 'finalBattle':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
   private getRouteBuildStage(routeId: RouteId): RouteBuildStage {
     if (this.state.maturedRoute === routeId) {
       return 'matured';
@@ -603,6 +667,8 @@ export class RunEngine {
       eliteSpawned: false,
       eliteCrackWindowSec: 0,
       eliteCrackEscortCount: 0,
+      eliteBreachFlashSec: 0,
+      eliteBreachCalloutCooldownSec: 0,
       critOverdriveSec: 0,
       critChain: 0,
       dashCharge: 0,
@@ -944,6 +1010,9 @@ export class RunEngine {
     const laneRatios = axis === 'vertical' ? [0.32, 0.68, 0.5, 0.36, 0.64] : [0.3, 0.7, 0.5, 0.38, 0.62];
     const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1) % laneRatios.length;
     const anchoredLane = viewStart + dimension * laneRatios[pulseIndex];
+    if (battle.encounterType === 'boss') {
+      return this.chooseBossPressureSafeWindowCenter(battle, axis, span, anchoredLane);
+    }
     const blendedCenter = anchoredLane * 0.72 + playerCoord * 0.28;
     const margin = axis === 'vertical' ? 72 : 58;
     return clamp(
@@ -967,6 +1036,9 @@ export class RunEngine {
     const anchor = shiftProfile.anchors[shiftCycleIndex % shiftProfile.anchors.length];
     const anchorX = view.left + view.width * anchor.x;
     const anchorY = view.top + view.height * anchor.y;
+    if (battle.encounterType === 'boss') {
+      return this.chooseBossPressureSafePocketCenter(battle, spanX, spanY, shiftType, anchorX, anchorY);
+    }
     const playerBlend = shiftProfile.playerBlend;
     const blendedX = anchorX * (1 - playerBlend) + battle.playerX * playerBlend;
     const blendedY = anchorY * (1 - playerBlend) + battle.playerY * playerBlend;
@@ -974,6 +1046,110 @@ export class RunEngine {
       x: clamp(blendedX, view.left + 84 + spanX * 0.5, view.right - 84 - spanX * 0.5),
       y: clamp(blendedY, view.top + 74 + spanY * 0.5, view.bottom - 74 - spanY * 0.5),
     };
+  }
+
+  private getBossSafeWindowTargetDistance(): number {
+    return BASE_PLAYER_MOVE_SPEED * BOSS_SAFE_WINDOW_REACTION_SEC;
+  }
+
+  private chooseBossPressureSafeWindowCenter(
+    battle: BattleState,
+    axis: PressureSafeWindowAxis,
+    span: number,
+    anchoredLane: number,
+  ): number {
+    const view = this.getBattleViewportBounds(battle);
+    const dimension = axis === 'vertical' ? view.width : view.height;
+    const viewStart = axis === 'vertical' ? view.left : view.top;
+    const viewEnd = viewStart + dimension;
+    const playerCoord = axis === 'vertical' ? battle.playerX : battle.playerY;
+    const margin = axis === 'vertical' ? BOSS_SAFE_WINDOW_EDGE_MARGIN_X : BOSS_SAFE_WINDOW_EDGE_MARGIN_Y;
+    const minCenter = viewStart + margin + span * 0.5;
+    const maxCenter = viewEnd - margin - span * 0.5;
+    const targetDistance = this.getBossSafeWindowTargetDistance();
+    const positiveTravelMax = Math.max(0, maxCenter - playerCoord);
+    const negativeTravelMax = Math.max(0, playerCoord - minCenter);
+    const preferredSign = anchoredLane >= playerCoord ? 1 : -1;
+    const preferredTravelMax = preferredSign > 0 ? positiveTravelMax : negativeTravelMax;
+    const alternateTravelMax = preferredSign > 0 ? negativeTravelMax : positiveTravelMax;
+    const travelSign =
+      preferredTravelMax >= Math.min(targetDistance, 48) || preferredTravelMax >= alternateTravelMax - 16
+        ? preferredSign
+        : -preferredSign;
+    const resolvedTravelMax = travelSign > 0 ? positiveTravelMax : negativeTravelMax;
+    const resolvedTravelDistance = Math.min(targetDistance, resolvedTravelMax);
+    const center = playerCoord + travelSign * resolvedTravelDistance;
+    return clamp(center, minCenter, maxCenter);
+  }
+
+  private chooseBossPressureSafePocketCenter(
+    battle: BattleState,
+    spanX: number,
+    spanY: number,
+    shiftType: PressurePocketShiftModeId,
+    anchorX: number,
+    anchorY: number,
+  ): { x: number; y: number } {
+    const view = this.getBattleViewportBounds(battle);
+    const halfX = spanX * 0.5;
+    const halfY = spanY * 0.5;
+    const minX = view.left + BOSS_SAFE_WINDOW_EDGE_MARGIN_X + halfX;
+    const maxX = view.right - BOSS_SAFE_WINDOW_EDGE_MARGIN_X - halfX;
+    const minY = view.top + BOSS_SAFE_WINDOW_EDGE_MARGIN_Y + halfY;
+    const maxY = view.bottom - BOSS_SAFE_WINDOW_EDGE_MARGIN_Y - halfY;
+    const targetDistance = this.getBossSafeWindowTargetDistance();
+    const directionX = anchorX - battle.playerX;
+    const directionY = anchorY - battle.playerY;
+    const directionLength = Math.hypot(directionX, directionY);
+    const fallbackAngle = this.getBossPressurePocketFallbackAngle(battle, shiftType);
+    const baseAngle = directionLength > 1 ? Math.atan2(directionY, directionX) : fallbackAngle;
+    const lateralSign = battle.pressurePatternPulseCount % 2 === 0 ? 1 : -1;
+    const angleOffsets = [0, 0.42 * lateralSign, -0.42 * lateralSign, 0.82 * lateralSign, -0.82 * lateralSign];
+    const radialOffsets = [0, -48, 44];
+    let bestCandidate = {
+      x: clamp(anchorX, minX, maxX),
+      y: clamp(anchorY, minY, maxY),
+    };
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (const angleOffset of angleOffsets) {
+      const angle = baseAngle + angleOffset;
+      const dirX = Math.cos(angle);
+      const dirY = Math.sin(angle);
+      for (const radialOffset of radialOffsets) {
+        const rawX = battle.playerX + dirX * (targetDistance + radialOffset);
+        const rawY = battle.playerY + dirY * (targetDistance + radialOffset);
+        const candidateX = clamp(rawX, minX, maxX);
+        const candidateY = clamp(rawY, minY, maxY);
+        const centerDistance = Math.hypot(candidateX - battle.playerX, candidateY - battle.playerY);
+        const anchorDrift = Math.hypot(candidateX - anchorX, candidateY - anchorY);
+        const clampLoss = Math.hypot(candidateX - rawX, candidateY - rawY);
+        const score =
+          Math.abs(centerDistance - targetDistance) +
+          anchorDrift * 0.24 +
+          clampLoss * 0.42;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestCandidate = { x: candidateX, y: candidateY };
+        }
+      }
+    }
+
+    return bestCandidate;
+  }
+
+  private getBossPressurePocketFallbackAngle(
+    battle: BattleState,
+    shiftType: PressurePocketShiftModeId,
+  ): number {
+    const baseAngle =
+      shiftType === 'edgeBounce'
+        ? Math.PI * 0.18
+        : shiftType === 'centerReset'
+          ? -Math.PI * 0.5
+          : -Math.PI * 0.28;
+    return baseAngle + Math.max(0, battle.pressurePatternPulseCount - 1) * 0.46;
   }
 
   private getPressurePocketShiftType(
@@ -2037,6 +2213,9 @@ export class RunEngine {
 
   private spawnEnemies(battle: BattleState, dt: number): void {
     const template = BATTLE_TEMPLATES[battle.templateId];
+    if (this.debugConfig.freezeEnemySpawning) {
+      return;
+    }
     battle.enemySpawnTimerSec -= dt;
     battle.eliteSupportCooldownSec = Math.max(0, battle.eliteSupportCooldownSec - dt);
     const regularEnemyCap = this.getRegularEnemyCap(battle);
@@ -2092,6 +2271,8 @@ export class RunEngine {
         tacticCooldownSec: 0,
         hitOffsetX: 0,
         hitOffsetY: 0,
+        debugMoveVX: 0,
+        debugMoveVY: 0,
       });
       this.createCombatPulse(battle, {
         x: view.left + view.width * 0.5,
@@ -2874,6 +3055,8 @@ export class RunEngine {
       tacticCooldownSec: 0,
       hitOffsetX: 0,
       hitOffsetY: 0,
+      debugMoveVX: 0,
+      debugMoveVY: 0,
     };
   }
 
@@ -2990,6 +3173,10 @@ export class RunEngine {
     const pierceLaneScore = focusRoute === 'pierce' && target ? this.getPierceLaneScore(battle, target) : 0;
     battle.playerAimDirX = Math.cos(baseAngle);
     battle.playerAimDirY = Math.sin(baseAngle);
+    if (this.debugConfig.freezePlayerAutoFire) {
+      battle.fireCooldownSec = 0;
+      return;
+    }
     let shotCount = Math.max(1, this.state.stats.multishot);
     if (battle.critOverdriveSec > 0 && this.state.committedRoute === 'crit') {
       shotCount += 1;
@@ -3382,6 +3569,8 @@ export class RunEngine {
     const survivors = [];
     const template = BATTLE_TEMPLATES[battle.templateId];
     for (const enemy of battle.enemies) {
+      const previousX = enemy.x;
+      const previousY = enemy.y;
       const hadPressurePulse = enemy.pressurePulseSec > 0;
       enemy.guardSec = Math.max(0, enemy.guardSec - dt);
       if (enemy.elite && enemy.guardSec <= 0) {
@@ -3417,6 +3606,16 @@ export class RunEngine {
         this.resolveElitePressurePulse(enemy, battle, template);
       }
 
+      if (this.debugConfig.freezeEnemyMovement) {
+        enemy.x = previousX;
+        enemy.y = previousY;
+        enemy.hitOffsetX = 0;
+        enemy.hitOffsetY = 0;
+      }
+
+      enemy.debugMoveVX = dt > 0 ? (enemy.x - previousX) / dt : 0;
+      enemy.debugMoveVY = dt > 0 ? (enemy.y - previousY) / dt : 0;
+
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
       const dashStage = this.getRouteBuildStage('dash');
       if (
@@ -3449,7 +3648,7 @@ export class RunEngine {
       }
 
       if (distance <= enemy.radius + PLAYER_COLLISION_RADIUS) {
-        if (battle.invulnerableSec <= 0) {
+        if (battle.invulnerableSec <= 0 && !this.debugConfig.invulnerablePlayer) {
           let damage = enemy.contactDamage;
           damage *= this.getDashDamageMultiplier(dashStage, battle.dashDriveSec);
           this.state.stats.hp = clamp(this.state.stats.hp - damage, 0, this.state.stats.maxHp);
@@ -3503,6 +3702,14 @@ export class RunEngine {
           growthPerSec: 140,
           innerRadiusRatio: 0.72,
         });
+        if (this.debugConfig.freezeEnemyMovement) {
+          enemy.x = previousX;
+          enemy.y = previousY;
+          enemy.hitOffsetX = 0;
+          enemy.hitOffsetY = 0;
+        }
+        enemy.debugMoveVX = dt > 0 ? (enemy.x - previousX) / dt : 0;
+        enemy.debugMoveVY = dt > 0 ? (enemy.y - previousY) / dt : 0;
         survivors.push(enemy);
         continue;
       }
@@ -4385,9 +4592,11 @@ export class RunEngine {
     const survivors = [];
 
     for (const projectile of battle.enemyProjectiles) {
-      projectile.x += projectile.vx * dt;
-      projectile.y += projectile.vy * dt;
-      projectile.lifeSec -= dt;
+      if (!this.debugConfig.freezeEnemyProjectiles) {
+        projectile.x += projectile.vx * dt;
+        projectile.y += projectile.vy * dt;
+        projectile.lifeSec -= dt;
+      }
 
       if (
         projectile.lifeSec <= 0 ||
@@ -4408,8 +4617,8 @@ export class RunEngine {
       }
 
       const distance = Math.hypot(projectile.x - battle.playerX, projectile.y - battle.playerY);
-      if (distance <= projectile.radius + PLAYER_COLLISION_RADIUS) {
-        if (battle.invulnerableSec <= 0) {
+      if (!this.debugConfig.freezeEnemyProjectiles && distance <= projectile.radius + PLAYER_COLLISION_RADIUS) {
+        if (battle.invulnerableSec <= 0 && !this.debugConfig.invulnerablePlayer) {
           this.state.stats.hp = clamp(this.state.stats.hp - projectile.damage, 0, this.state.stats.maxHp);
           battle.invulnerableSec = 0.32;
           battle.playerImpactSec = Math.max(battle.playerImpactSec, 0.3);
@@ -4444,6 +4653,7 @@ export class RunEngine {
       }
 
       if (
+        !this.debugConfig.freezeEnemyProjectiles &&
         battle.playerNearMissCooldownSec <= 0 &&
         distance <= projectile.radius + PLAYER_COLLISION_RADIUS + 24
       ) {
@@ -6803,6 +7013,23 @@ export class RunEngine {
     }
 
     if (crackedEscorts > 0) {
+      battle.eliteBreachFlashSec = Math.max(
+        battle.eliteBreachFlashSec,
+        0.3 + Math.min(0.2, crackedEscorts * 0.08),
+      );
+      if (battle.eliteBreachCalloutCooldownSec <= 0) {
+        const focusRoute = this.getLiveCombatFocusRoute(battle);
+        const breachTip =
+          focusRoute === 'pierce'
+            ? '绮捐嫳瑁傚彛宸插紑锛氭部杩ㄩ亾绌胯繘鍘?'
+            : focusRoute === 'crit'
+              ? '绮捐嫳瑁傚彛宸插紑锛氬帇涓婃湰浣撴敹鍙?'
+              : focusRoute === 'dash'
+                ? '绮捐嫳瑁傚彛宸插紑锛氬埄鐢ㄧ獥鍙ｈ拷鍑?'
+                : '绮捐嫳瑁傚彛宸插紑锛氳拷杩涘幓鎵撴湰浣?';
+        this.enqueueTip(breachTip);
+        battle.eliteBreachCalloutCooldownSec = 1.4;
+      }
       this.createCombatPulse(battle, {
         x: enemy.x,
         y: enemy.y,

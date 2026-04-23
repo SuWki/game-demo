@@ -64,6 +64,7 @@ export type EnemyArchetypeId = 'standard' | 'brute' | 'skirmisher' | 'ranged';
 export type PressurePatternModeId = 'laneCrush' | 'sideClamp' | 'crossfireWave';
 export type PressureSafeWindowAxis = 'vertical' | 'horizontal' | 'pocket';
 export type PressurePocketShiftModeId = 'sweep' | 'centerReset' | 'edgeBounce';
+export type DebugBattlePhaseId = 'opening' | 'mid' | 'late' | 'finalBattle';
 
 export interface EnemyArchetypeDefinition {
   id: EnemyArchetypeId;
@@ -338,6 +339,8 @@ export interface EnemyState {
   tacticCooldownSec: number;
   hitOffsetX: number;
   hitOffsetY: number;
+  debugMoveVX: number;
+  debugMoveVY: number;
 }
 
 export interface BulletState {
@@ -465,6 +468,8 @@ export interface BattleState {
   eliteSpawned: boolean;
   eliteCrackWindowSec: number;
   eliteCrackEscortCount: number;
+  eliteBreachFlashSec: number;
+  eliteBreachCalloutCooldownSec: number;
   critOverdriveSec: number;
   critChain: number;
   dashCharge: number;
@@ -546,10 +551,98 @@ export interface RunState {
   result: RunResult | null;
 }
 
+export interface BattleDebugConfig {
+  panelOpen: boolean;
+  paused: boolean;
+  timeScale: number;
+  freezeEnemyMovement: boolean;
+  freezeEnemyProjectiles: boolean;
+  freezeEnemySpawning: boolean;
+  freezePlayerAutoFire: boolean;
+  invulnerablePlayer: boolean;
+  showEnemyVectors: boolean;
+  showProjectileVectors: boolean;
+  showCollisionRadii: boolean;
+  phase: DebugBattlePhaseId;
+  templateId: BattleTemplateId;
+}
+
+export interface BattleDebugRuntimeConfig {
+  freezeEnemyMovement: boolean;
+  freezeEnemyProjectiles: boolean;
+  freezeEnemySpawning: boolean;
+  freezePlayerAutoFire: boolean;
+  invulnerablePlayer: boolean;
+}
+
+export interface BattleDebugEnemySnapshot {
+  id: number;
+  archetype: EnemyArchetypeId;
+  role: EnemyRole;
+  elite: boolean;
+  hp: number;
+  maxHp: number;
+  x: number;
+  y: number;
+  recoverySec: number;
+  pressurePulseSec: number;
+  rangedCooldownSec: number;
+  moveVX: number;
+  moveVY: number;
+}
+
+export interface BattleDebugProjectileSnapshot {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  damage: number;
+  lifeSec: number;
+  radius: number;
+}
+
+export interface BattleDebugSnapshot {
+  status: RunStatus;
+  phase: PhaseId;
+  templateId: BattleTemplateId | null;
+  encounterType: BattleEncounterType | null;
+  playerX: number;
+  playerY: number;
+  playerHp: number;
+  playerMaxHp: number;
+  enemyCount: number;
+  projectileCount: number;
+  bulletCount: number;
+  orbCount: number;
+  eliteAlive: boolean;
+  eliteRecoverySec: number;
+  elitePressureSec: number;
+  eliteCrackWindowSec: number;
+  escortCount: number;
+  escortRecoveryCount: number;
+  escortCrackCount: number;
+  enemyProjectileCount: number;
+  breachProjectileCount: number;
+  breachSuppressionRatio: number;
+  pressureSafeWindowAxis: PressureSafeWindowAxis | null;
+  pressureSafeWindowCenter: number;
+  pressureSafeWindowSpan: number;
+  pressureSafeWindowSecondaryCenter: number;
+  pressureSafeWindowSecondarySpan: number;
+  pressureSafeWindowSec: number;
+  pressureSafeWindowCenterDistance: number;
+  pressureSafeWindowTravelDistance: number;
+  enemies: BattleDebugEnemySnapshot[];
+  enemyProjectiles: BattleDebugProjectileSnapshot[];
+}
+
 export interface OverlayMetaSummary {
   totalRuns: number;
   wins: number;
   lastRouteName: string;
+  lastRouteId: RouteId | null;
+  lastDurationSec: number;
 }
 
 export interface OverlayHudSnapshot {
@@ -568,6 +661,11 @@ export interface OverlayHudSnapshot {
     color: string;
     active: boolean;
   }>;
+  statSummary: Array<{
+    label: string;
+    value: string;
+    tone: 'offense' | 'survival' | 'mobility' | 'utility';
+  }>;
   statusText: string;
   statusSubtext?: string;
   progressLabel: string;
@@ -585,6 +683,7 @@ export interface OverlayHudSnapshot {
 
 export interface Services {
   overlay: import('../ui/OverlayController').OverlayController;
+  debugPanel: import('../ui/BattleDebugPanel').BattleDebugPanel;
   metrics: import('../systems/MetricsTracker').MetricsTracker;
   meta: import('../systems/MetaProgression').MetaProgression;
   audio: import('../systems/PilotAudio').PilotAudio;

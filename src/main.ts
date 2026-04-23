@@ -8,12 +8,20 @@ import { ResultScene } from './scenes/ResultScene';
 import { MetaProgression } from './systems/MetaProgression';
 import { MetricsTracker } from './systems/MetricsTracker';
 import { PilotAudio } from './systems/PilotAudio';
+import { BattleDebugPanel } from './ui/BattleDebugPanel';
 import { OverlayController } from './ui/OverlayController';
 
 declare global {
   interface Window {
     __pilotAudioDebug?: () => ReturnType<PilotAudio['getDebugSnapshot']>;
     __pilotBattleDebug?: () => ReturnType<GameScene['getBattleDebugSnapshot']> | null;
+    __pilotDebug?: {
+      getConfig: () => ReturnType<GameScene['getDebugConfig']> | null;
+      getSnapshot: () => ReturnType<GameScene['getBattleDebugSnapshot']> | null;
+      setConfig: (patch: Partial<ReturnType<GameScene['getDebugConfig']>>) => void;
+      restartBattle: (options?: Partial<Pick<ReturnType<GameScene['getDebugConfig']>, 'templateId' | 'phase'>>) => void;
+      togglePanel: () => void;
+    };
   }
 }
 
@@ -25,11 +33,13 @@ if (!uiRoot || !phaserRoot) {
 }
 
 const overlay = new OverlayController(uiRoot);
+const debugPanel = new BattleDebugPanel(uiRoot);
 const metrics = new MetricsTracker(window.localStorage);
 metrics.attachToWindow(window);
 
 const services: Services = {
   overlay,
+  debugPanel,
   metrics,
   meta: new MetaProgression(window.localStorage),
   audio: new PilotAudio(),
@@ -69,4 +79,53 @@ window.__pilotBattleDebug = () => {
   } catch {
     return null;
   }
+};
+window.__pilotDebug = {
+  getConfig: () => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      return scene instanceof GameScene ? scene.getDebugConfig() : null;
+    } catch {
+      return null;
+    }
+  },
+  getSnapshot: () => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      return scene instanceof GameScene ? scene.getBattleDebugSnapshot() : null;
+    } catch {
+      return null;
+    }
+  },
+  setConfig: (patch) => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        scene.updateDebugConfig(patch);
+      }
+    } catch {
+      // Ignore when GameScene is not active.
+    }
+  },
+  restartBattle: (options) => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        const config = scene.getDebugConfig();
+        scene.restartDebugBattle(options?.templateId ?? config.templateId, options?.phase ?? config.phase);
+      }
+    } catch {
+      // Ignore when GameScene is not active.
+    }
+  },
+  togglePanel: () => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        scene.toggleDebugPanel();
+      }
+    } catch {
+      // Ignore when GameScene is not active.
+    }
+  },
 };

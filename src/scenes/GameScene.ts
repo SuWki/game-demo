@@ -3,15 +3,49 @@ import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/ba
 import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
-import type { BattleState, OverlayHudSnapshot, Services, ToastTone } from '../game/types';
+import type {
+  BattleDebugConfig,
+  BattleDebugRuntimeConfig,
+  BattleDebugSnapshot,
+  BattleState,
+  DebugBattlePhaseId,
+  OverlayHudSnapshot,
+  PlayerStats,
+  Services,
+  ToastTone,
+} from '../game/types';
 import { RunEngine } from '../systems/RunEngine';
+import type { BattleDebugTemplateOption } from '../ui/BattleDebugPanel';
 
 const XP_ORB_FILL = 0x67f08b;
 const XP_ORB_STROKE = 0xcfffd7;
 const ENEMY_PROJECTILE_FILL = 0xff5b63;
 const ENEMY_PROJECTILE_TRAIL = 0xff8e95;
 const ENEMY_PROJECTILE_STROKE = 0xffd0d4;
+const ENEMY_ESCORT_FILL = 0xa57df0;
+const ENEMY_ESCORT_STROKE = 0xd5bfff;
+const ELITE_FILL = 0xffb56a;
+const ELITE_STROKE = 0xffddb0;
+const BOSS_FILL = 0xff9462;
+const BOSS_STROKE = 0xffd4b8;
+const SAFE_WINDOW_TINT = 0x82ffca;
+const SAFE_WINDOW_DANGER = 0xff6d62;
 const TERRAIN_TILE_SIZE = 112;
+
+function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSummary'] {
+  return [
+    { label: '伤害', value: stats.damage.toFixed(0), tone: 'offense' },
+    { label: '射速', value: stats.fireRate.toFixed(2), tone: 'offense' },
+    { label: '弹速', value: stats.projectileSpeed.toFixed(0), tone: 'offense' },
+    { label: '暴击率', value: `${Math.round(stats.critChance * 100)}%`, tone: 'offense' },
+    { label: '暴伤', value: `${stats.critMultiplier.toFixed(1)}x`, tone: 'offense' },
+    { label: '穿透', value: stats.pierce.toFixed(0), tone: 'utility' },
+    { label: '多重', value: stats.multishot.toFixed(0), tone: 'utility' },
+    { label: '生命', value: `${Math.ceil(stats.hp)} / ${stats.maxHp}`, tone: 'survival' },
+    { label: '移速', value: stats.moveSpeed.toFixed(0), tone: 'mobility' },
+    { label: '再生', value: stats.regeneration.toFixed(2), tone: 'survival' },
+  ];
+}
 const TERRAIN_BLOT_SIZE = 280;
 /*
 const PHASE_TRACK = [
@@ -29,6 +63,8 @@ const PHASE_TRACK = [
   { phase: 'finalPrep', label: '整备' },
   { phase: 'finalBattle', label: 'Boss' },
 ] as const;
+
+const DEBUG_SYNC_INTERVAL_MS = 120;
 
 export class GameScene extends Phaser.Scene {
   private services!: Services;
@@ -52,6 +88,24 @@ export class GameScene extends Phaser.Scene {
 
   private lastPanelKey = '';
 
+  private debugSyncElapsedMs = DEBUG_SYNC_INTERVAL_MS;
+
+  private readonly debugConfig: BattleDebugConfig = {
+    panelOpen: false,
+    paused: false,
+    timeScale: 1,
+    freezeEnemyMovement: false,
+    freezeEnemyProjectiles: false,
+    freezeEnemySpawning: false,
+    freezePlayerAutoFire: false,
+    invulnerablePlayer: false,
+    showEnemyVectors: false,
+    showProjectileVectors: false,
+    showCollisionRadii: false,
+    phase: 'opening',
+    templateId: 'elimination',
+  };
+
   public constructor() {
     super('GameScene');
   }
@@ -61,6 +115,7 @@ export class GameScene extends Phaser.Scene {
     this.services.audio.unlock();
     this.services.audio.setMusic('battle');
     this.engine = new RunEngine(this.services);
+    this.engine.setDebugConfig(this.getRuntimeDebugConfig());
     this.graphics = this.add.graphics();
     this.moveKeys = this.input.keyboard!.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -72,8 +127,21 @@ export class GameScene extends Phaser.Scene {
     this.resultHandled = false;
     this.lastHudKey = '';
     this.lastPanelKey = '';
+    this.debugSyncElapsedMs = DEBUG_SYNC_INTERVAL_MS;
+    this.services.debugPanel.bind(this.getDebugTemplateOptions(), {
+      onConfigChange: (patch) => this.updateDebugConfig(patch),
+      onRestartBattle: (templateId, phase) => this.restartDebugBattle(templateId, phase),
+      onUiSound: (cue) => {
+        this.services.audio.play(cue);
+      },
+    });
+    this.services.debugPanel.setVisible(this.debugConfig.panelOpen);
+    this.input.keyboard!.on('keydown-F3', this.handleDebugPanelToggle, this);
+    this.input.keyboard!.on('keydown-F4', this.handleDebugPauseToggle, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
     this.syncOverlay();
     this.processAnnouncements();
+    this.syncDebugPanel(true);
   }
 
   public update(_: number, delta: number): void {
@@ -83,12 +151,16 @@ export class GameScene extends Phaser.Scene {
       left: this.moveKeys.left.isDown || this.arrowKeys.left.isDown,
       right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown,
     });
-    this.engine.tick(delta);
+    const scaledDelta = this.debugConfig.paused ? 0 : delta * this.debugConfig.timeScale;
+    if (scaledDelta > 0) {
+      this.engine.tick(scaledDelta);
+    }
     const state = this.engine.getState();
     this.syncAudioState(state);
     this.processAnnouncements();
     this.syncOverlay();
     this.renderBattle();
+    this.syncDebugPanel();
     if (!this.resultHandled && state.status === 'result' && state.result) {
       this.resultHandled = true;
       this.services.meta.recordRun(state.result);
@@ -98,24 +170,43 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  public getBattleDebugSnapshot():
-    | {
-        status: string;
-        phase: string;
-        templateId: string | null;
-        encounterType: string | null;
-        eliteAlive: boolean;
-        eliteRecoverySec: number;
-        elitePressureSec: number;
-        eliteCrackWindowSec: number;
-        escortCount: number;
-        escortRecoveryCount: number;
-        escortCrackCount: number;
-        enemyProjectileCount: number;
-        breachProjectileCount: number;
-        breachSuppressionRatio: number;
-      }
-    | null {
+  public getDebugConfig(): BattleDebugConfig {
+    return { ...this.debugConfig };
+  }
+
+  public updateDebugConfig(patch: Partial<BattleDebugConfig>): void {
+    Object.assign(this.debugConfig, patch);
+    if (patch.templateId && BATTLE_TEMPLATES[patch.templateId].encounterType === 'boss') {
+      this.debugConfig.phase = 'finalBattle';
+    }
+    this.debugConfig.timeScale = Phaser.Math.Clamp(this.debugConfig.timeScale, 0.1, 2);
+    this.services.debugPanel.setVisible(this.debugConfig.panelOpen);
+    this.engine.setDebugConfig(this.getRuntimeDebugConfig());
+    this.syncDebugPanel(true);
+  }
+
+  public restartDebugBattle(templateId: BattleDebugConfig['templateId'], phase: DebugBattlePhaseId): void {
+    const normalizedPhase = BATTLE_TEMPLATES[templateId].encounterType === 'boss' ? 'finalBattle' : phase;
+    this.debugConfig.templateId = templateId;
+    this.debugConfig.phase = normalizedPhase;
+    this.debugConfig.paused = false;
+    this.resultHandled = false;
+    this.lastHudKey = '';
+    this.lastPanelKey = '';
+    this.engine.restartDebugBattle(templateId, normalizedPhase);
+    this.engine.setDebugConfig(this.getRuntimeDebugConfig());
+    this.processAnnouncements();
+    this.syncOverlay();
+    this.syncDebugPanel(true);
+  }
+
+  public toggleDebugPanel(): void {
+    this.updateDebugConfig({
+      panelOpen: !this.debugConfig.panelOpen,
+    });
+  }
+
+  public getBattleDebugSnapshot(): BattleDebugSnapshot {
     const state = this.engine.getState();
     const battle = state.battle;
     if (!battle) {
@@ -124,6 +215,14 @@ export class GameScene extends Phaser.Scene {
         phase: state.phase,
         templateId: null,
         encounterType: null,
+        playerX: 0,
+        playerY: 0,
+        playerHp: state.stats.hp,
+        playerMaxHp: state.stats.maxHp,
+        enemyCount: 0,
+        projectileCount: 0,
+        bulletCount: 0,
+        orbCount: 0,
         eliteAlive: false,
         eliteRecoverySec: 0,
         elitePressureSec: 0,
@@ -134,6 +233,16 @@ export class GameScene extends Phaser.Scene {
         enemyProjectileCount: 0,
         breachProjectileCount: 0,
         breachSuppressionRatio: 0,
+        pressureSafeWindowAxis: null,
+        pressureSafeWindowCenter: 0,
+        pressureSafeWindowSpan: 0,
+        pressureSafeWindowSecondaryCenter: 0,
+        pressureSafeWindowSecondarySpan: 0,
+        pressureSafeWindowSec: 0,
+        pressureSafeWindowCenterDistance: 0,
+        pressureSafeWindowTravelDistance: 0,
+        enemies: [],
+        enemyProjectiles: [],
       };
     }
 
@@ -149,6 +258,14 @@ export class GameScene extends Phaser.Scene {
       phase: state.phase,
       templateId: battle.templateId,
       encounterType: battle.encounterType,
+      playerX: battle.playerX,
+      playerY: battle.playerY,
+      playerHp: state.stats.hp,
+      playerMaxHp: state.stats.maxHp,
+      enemyCount: battle.enemies.length,
+      projectileCount: battle.enemyProjectiles.length,
+      bulletCount: battle.bullets.length,
+      orbCount: battle.experienceOrbs.length,
       eliteAlive: battle.eliteAlive,
       eliteRecoverySec: elite?.recoverySec ?? 0,
       elitePressureSec: elite?.pressurePulseSec ?? 0,
@@ -159,7 +276,139 @@ export class GameScene extends Phaser.Scene {
       enemyProjectileCount: battle.enemyProjectiles.length,
       breachProjectileCount,
       breachSuppressionRatio,
+      pressureSafeWindowAxis: battle.pressureSafeWindowAxis ?? null,
+      pressureSafeWindowCenter: battle.pressureSafeWindowCenter,
+      pressureSafeWindowSpan: battle.pressureSafeWindowSpan,
+      pressureSafeWindowSecondaryCenter: battle.pressureSafeWindowSecondaryCenter,
+      pressureSafeWindowSecondarySpan: battle.pressureSafeWindowSecondarySpan,
+      pressureSafeWindowSec: battle.pressureSafeWindowSec,
+      pressureSafeWindowCenterDistance: this.getPressureSafeWindowCenterDistance(battle),
+      pressureSafeWindowTravelDistance: this.getPressureSafeWindowTravelDistance(battle),
+      enemies: [...battle.enemies]
+        .sort((left, right) => {
+          if (left.elite !== right.elite) {
+            return left.elite ? -1 : 1;
+          }
+          return left.id - right.id;
+        })
+        .slice(0, 8)
+        .map((enemy) => ({
+          id: enemy.id,
+          archetype: enemy.archetype,
+          role: enemy.role,
+          elite: enemy.elite,
+          hp: enemy.hp,
+          maxHp: enemy.maxHp,
+          x: enemy.x,
+          y: enemy.y,
+          recoverySec: enemy.recoverySec,
+          pressurePulseSec: enemy.pressurePulseSec,
+          rangedCooldownSec: enemy.rangedCooldownSec,
+          moveVX: enemy.debugMoveVX,
+          moveVY: enemy.debugMoveVY,
+        })),
+      enemyProjectiles: battle.enemyProjectiles.slice(0, 10).map((projectile) => ({
+        id: projectile.id,
+        x: projectile.x,
+        y: projectile.y,
+        vx: projectile.vx,
+        vy: projectile.vy,
+        damage: projectile.damage,
+        lifeSec: projectile.lifeSec,
+        radius: projectile.radius,
+      })),
     };
+  }
+
+  private getPressureSafeWindowCenterDistance(battle: BattleState): number {
+    if (!battle.pressureSafeWindowAxis || battle.pressureSafeWindowSpan <= 0 || battle.pressureSafeWindowSec <= 0) {
+      return 0;
+    }
+
+    if (battle.pressureSafeWindowAxis === 'vertical') {
+      return Math.abs(battle.playerX - battle.pressureSafeWindowCenter);
+    }
+    if (battle.pressureSafeWindowAxis === 'horizontal') {
+      return Math.abs(battle.playerY - battle.pressureSafeWindowCenter);
+    }
+
+    return Math.hypot(
+      battle.playerX - battle.pressureSafeWindowCenter,
+      battle.playerY - battle.pressureSafeWindowSecondaryCenter,
+    );
+  }
+
+  private getPressureSafeWindowTravelDistance(battle: BattleState): number {
+    if (!battle.pressureSafeWindowAxis || battle.pressureSafeWindowSpan <= 0 || battle.pressureSafeWindowSec <= 0) {
+      return 0;
+    }
+
+    const halfX = battle.pressureSafeWindowSpan * 0.5;
+    if (battle.pressureSafeWindowAxis === 'vertical') {
+      return Math.max(Math.abs(battle.playerX - battle.pressureSafeWindowCenter) - halfX, 0);
+    }
+    if (battle.pressureSafeWindowAxis === 'horizontal') {
+      return Math.max(Math.abs(battle.playerY - battle.pressureSafeWindowCenter) - halfX, 0);
+    }
+
+    const halfY = battle.pressureSafeWindowSecondarySpan * 0.5;
+    const dx = Math.max(Math.abs(battle.playerX - battle.pressureSafeWindowCenter) - halfX, 0);
+    const dy = Math.max(Math.abs(battle.playerY - battle.pressureSafeWindowSecondaryCenter) - halfY, 0);
+    return Math.hypot(dx, dy);
+  }
+
+  private handleDebugPanelToggle(event: KeyboardEvent): void {
+    event.preventDefault();
+    this.services.audio.play('click');
+    this.toggleDebugPanel();
+  }
+
+  private handleDebugPauseToggle(event: KeyboardEvent): void {
+    event.preventDefault();
+    this.services.audio.play('click');
+    this.updateDebugConfig({
+      paused: !this.debugConfig.paused,
+    });
+  }
+
+  private handleSceneShutdown(): void {
+    this.input.keyboard?.off('keydown-F3', this.handleDebugPanelToggle, this);
+    this.input.keyboard?.off('keydown-F4', this.handleDebugPauseToggle, this);
+    this.services.debugPanel.unbind();
+  }
+
+  private getRuntimeDebugConfig(): BattleDebugRuntimeConfig {
+    return {
+      freezeEnemyMovement: this.debugConfig.freezeEnemyMovement,
+      freezeEnemyProjectiles: this.debugConfig.freezeEnemyProjectiles,
+      freezeEnemySpawning: this.debugConfig.freezeEnemySpawning,
+      freezePlayerAutoFire: this.debugConfig.freezePlayerAutoFire,
+      invulnerablePlayer: this.debugConfig.invulnerablePlayer,
+    };
+  }
+
+  private getDebugTemplateOptions(): BattleDebugTemplateOption[] {
+    return Object.values(BATTLE_TEMPLATES).map((template) => ({
+      id: template.id,
+      label: template.name,
+      group:
+        template.encounterType === 'boss'
+          ? 'Boss'
+          : template.winCondition.type === 'elite'
+            ? 'Elite'
+            : template.winCondition.type === 'survive'
+              ? 'Survival'
+              : 'Battle',
+    }));
+  }
+
+  private syncDebugPanel(force = false): void {
+    this.debugSyncElapsedMs += force ? DEBUG_SYNC_INTERVAL_MS : this.game.loop.delta;
+    if (!force && this.debugSyncElapsedMs < DEBUG_SYNC_INTERVAL_MS) {
+      return;
+    }
+    this.debugSyncElapsedMs = 0;
+    this.services.debugPanel.sync(this.getDebugConfig(), this.getBattleDebugSnapshot());
   }
 
   /*
@@ -217,6 +466,7 @@ export class GameScene extends Phaser.Scene {
           this.getPanelProgressSnapshot(),
           state.upgradeChoices,
           (upgradeId) => {
+            this.services.audio.play(state.upgradeSource === 'levelUp' ? 'upgrade' : 'confirm');
             this.engine.chooseUpgrade(upgradeId);
             this.processAnnouncements();
             this.syncOverlay();
@@ -232,6 +482,7 @@ export class GameScene extends Phaser.Scene {
       if (panelKey !== this.lastPanelKey) {
         this.services.audio.play(state.currentEvent.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
         this.services.overlay.showEventPanel(state.currentEvent, this.getPanelProgressSnapshot(), (optionId) => {
+          this.services.audio.play(state.currentEvent?.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
           this.engine.chooseEventOption(optionId);
           this.processAnnouncements();
           this.syncOverlay();
@@ -251,7 +502,10 @@ export class GameScene extends Phaser.Scene {
     for (const item of this.engine.drainAnnouncements()) {
       if (item.kind === 'tip' && item.text) {
         const tone = this.getToastTone(item.text);
-        const forceBattleToast = item.text.includes('Boss 已进场') || item.text.includes('首领已进场');
+      const forceBattleToast =
+        item.text.includes('Boss 已进场') ||
+        item.text.includes('首领已进场') ||
+        item.text.includes('精英裂口已开');
         if (this.shouldDisplayToast(tone) || forceBattleToast) {
           this.services.overlay.pushToast(item.text, tone);
         }
@@ -264,6 +518,38 @@ export class GameScene extends Phaser.Scene {
   }
 
   private syncAudioState(state: ReturnType<RunEngine['getState']>): void {
+    const battle = state.battle;
+    const routeFocus =
+      battle ? this.getLiveCombatFocusRoute(battle) : state.maturedRoute ?? state.committedRoute ?? this.engine.getDominantRoute();
+    const encounter =
+      state.phase === 'finalBattle' || (state.status === 'battle' && battle?.encounterType === 'boss')
+        ? 'boss'
+        : state.status === 'battle' && battle?.encounterType === 'battle' && battle.eliteAlive
+          ? 'elite'
+          : state.status === 'battle' && battle && BATTLE_TEMPLATES[battle.templateId].winCondition.type === 'survive'
+            ? 'survive'
+            : state.status === 'battle'
+              ? 'ordinary'
+              : 'flow';
+    const intensity = battle
+      ? Phaser.Math.Clamp(
+          Math.max(
+            battle.tempoPulseSec / 0.3,
+            battle.killFlowSec / 0.9,
+            battle.pickupFlowSec / 0.8,
+            battle.eliteCrackWindowSec / 0.82,
+            battle.playerImpactSec / 0.34,
+          ),
+          0,
+          1,
+        )
+      : 0;
+    this.services.audio.setCombatContext({
+      routeFocus,
+      encounter,
+      intensity,
+    });
+
     if (state.phase === 'finalBattle' || (state.status === 'battle' && state.battle?.encounterType === 'boss')) {
       this.services.audio.setMusic('boss');
       return;
@@ -301,6 +587,7 @@ export class GameScene extends Phaser.Scene {
         color: route.color,
         active: this.engine.getDominantRoute() === route.id,
       })).filter((route) => route.value > 0 || route.active),
+      statSummary: createPanelStatSummary(state.stats),
       statusText,
       statusSubtext:
         state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : progressSnapshot.progressDetail,
@@ -363,12 +650,19 @@ export class GameScene extends Phaser.Scene {
     return parts.join(' · ') || BATTLE_TEMPLATES[battle.templateId].description;
   }
 
-  private getPanelProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
+  private getPanelProgressSnapshot(): Pick<
+    OverlayHudSnapshot,
+    'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary'
+  > {
+    const state = this.engine.getState();
     const progress = this.getRunProgressSnapshot();
     return {
       progressLabel: progress.progressLabel,
       progressDetail: progress.progressDetail,
       phaseTrack: progress.phaseTrack,
+      levelText: `Lv.${state.level}`,
+      routeStatusText: this.getRouteStatusText(),
+      statSummary: createPanelStatSummary(state.stats),
     };
   }
 
@@ -515,13 +809,7 @@ export class GameScene extends Phaser.Scene {
 
       const winCondition = BATTLE_TEMPLATES[battle.templateId].winCondition.type;
       if (winCondition === 'elite') {
-        return {
-          objectiveLabel: '当前目标',
-          objectiveText: '击败精英',
-          objectiveDetail: '先拆护卫，再打本体。',
-          objectiveProgressText: battle.eliteAlive ? '精英已进场' : '精英即将进场',
-          objectiveTone: 'elite',
-        };
+        return this.getEliteObjectiveSnapshot(battle);
       }
 
       if (winCondition === 'survive') {
@@ -619,13 +907,7 @@ export class GameScene extends Phaser.Scene {
 
       const winCondition = BATTLE_TEMPLATES[battle.templateId].winCondition.type;
       if (winCondition === 'elite') {
-        return {
-          objectiveLabel: '当前目标',
-          objectiveText: '击败精英',
-          objectiveDetail: '精英进场后，拆护卫并击破本体即可过关。',
-          objectiveProgressText: battle.eliteAlive ? '精英已进场 · 击破本体即可过关' : '精英即将进场 · 先稳住战场节奏',
-          objectiveTone: 'elite',
-        };
+        return this.getEliteObjectiveSnapshot(battle);
       }
 
       if (winCondition === 'survive') {
@@ -804,6 +1086,7 @@ export class GameScene extends Phaser.Scene {
           this.getPanelProgressSnapshot(),
           state.upgradeChoices,
           (upgradeId) => {
+            this.services.audio.play(state.upgradeSource === 'levelUp' ? 'upgrade' : 'confirm');
             this.engine.chooseUpgrade(upgradeId);
             this.processAnnouncements();
             this.syncOverlay();
@@ -819,6 +1102,7 @@ export class GameScene extends Phaser.Scene {
       if (panelKey !== this.lastPanelKey) {
         this.services.audio.play(state.currentEvent.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
         this.services.overlay.showEventPanel(state.currentEvent, this.getPanelProgressSnapshot(), (optionId) => {
+          this.services.audio.play(state.currentEvent?.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
           this.engine.chooseEventOption(optionId);
           this.processAnnouncements();
           this.syncOverlay();
@@ -838,7 +1122,10 @@ export class GameScene extends Phaser.Scene {
     for (const item of this.engine.drainAnnouncements()) {
       if (item.kind === 'tip' && item.text) {
         const tone = this.getToastTone(item.text);
-        const forceBattleToast = item.text.includes('Boss 已进场') || item.text.includes('首领已进场');
+      const forceBattleToast =
+        item.text.includes('Boss 已进场') ||
+        item.text.includes('首领已进场') ||
+        item.text.includes('精英裂口已开');
         if (this.shouldDisplayToast(tone) || forceBattleToast) {
           this.services.overlay.pushToast(item.text, tone);
         }
@@ -851,6 +1138,38 @@ export class GameScene extends Phaser.Scene {
   }
 
   private syncAudioState(state: ReturnType<RunEngine['getState']>): void {
+    const battle = state.battle;
+    const routeFocus =
+      battle ? this.getLiveCombatFocusRoute(battle) : state.maturedRoute ?? state.committedRoute ?? this.engine.getDominantRoute();
+    const encounter =
+      state.phase === 'finalBattle' || (state.status === 'battle' && battle?.encounterType === 'boss')
+        ? 'boss'
+        : state.status === 'battle' && battle?.encounterType === 'battle' && battle.eliteAlive
+          ? 'elite'
+          : state.status === 'battle' && battle && BATTLE_TEMPLATES[battle.templateId].winCondition.type === 'survive'
+            ? 'survive'
+            : state.status === 'battle'
+              ? 'ordinary'
+              : 'flow';
+    const intensity = battle
+      ? Phaser.Math.Clamp(
+          Math.max(
+            battle.tempoPulseSec / 0.3,
+            battle.killFlowSec / 0.9,
+            battle.pickupFlowSec / 0.8,
+            battle.eliteCrackWindowSec / 0.82,
+            battle.playerImpactSec / 0.34,
+          ),
+          0,
+          1,
+        )
+      : 0;
+    this.services.audio.setCombatContext({
+      routeFocus,
+      encounter,
+      intensity,
+    });
+
     if (state.phase === 'finalBattle' || (state.status === 'battle' && state.battle?.encounterType === 'boss')) {
       this.services.audio.setMusic('boss');
       return;
@@ -869,8 +1188,7 @@ export class GameScene extends Phaser.Scene {
     const routeStatusText = this.getRouteStatusText();
     const progressSnapshot = this.getRunProgressSnapshot();
     const objectiveSnapshot = this.getObjectiveSnapshot();
-    const statusText =
-      state.status === 'battle' && state.battle ? this.getBattleStatusText(state.battle) : routeStatusText;
+    const statusText = this.getHudModeText(state);
 
     return {
       phaseLabel: getPhaseLabel(state.phase),
@@ -888,6 +1206,7 @@ export class GameScene extends Phaser.Scene {
         color: route.color,
         active: this.engine.getDominantRoute() === route.id,
       })).filter((route) => route.value > 0 || route.active),
+      statSummary: createPanelStatSummary(state.stats),
       statusText,
       statusSubtext:
         state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : progressSnapshot.progressDetail,
@@ -904,6 +1223,43 @@ export class GameScene extends Phaser.Scene {
 
   private getBattleStatusText(battle: BattleState): string {
     return `${getBattleEncounterLabel(battle.templateId, battle.encounterType)} · ${this.getBattleIdentityLabel(battle)}`;
+  }
+
+  private getHudModeText(state: ReturnType<RunEngine['getState']>): string {
+    if (state.status === 'battle' && state.battle) {
+      if (state.battle.encounterType === 'boss') {
+        return 'Boss战';
+      }
+      const winCondition = BATTLE_TEMPLATES[state.battle.templateId].winCondition.type;
+      if (winCondition === 'kills') {
+        return '歼灭';
+      }
+      if (winCondition === 'survive') {
+        return '生存';
+      }
+      if (winCondition === 'elite') {
+        return '精英';
+      }
+      return getBattleEncounterLabel(state.battle.templateId, state.battle.encounterType);
+    }
+
+    if (state.status === 'upgradeChoice') {
+      return state.currentNode?.isFinalPrep ? '最终整备' : '选择强化';
+    }
+
+    if (state.status === 'eventChoice') {
+      return state.currentEvent?.contentKind === 'anomaly' ? '异常处理' : '选择事件';
+    }
+
+    if (state.status === 'nodeChoice') {
+      return '选择路线';
+    }
+
+    if (state.status === 'result') {
+      return '本局结算';
+    }
+
+    return this.getRouteStatusText();
   }
 
   private getBattleIdentityLabel(battle: BattleState): string {
@@ -931,12 +1287,19 @@ export class GameScene extends Phaser.Scene {
     return summaryParts.join(' / ') || BATTLE_TEMPLATES[battle.templateId].description;
   }
 
-  private getPanelProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
+  private getPanelProgressSnapshot(): Pick<
+    OverlayHudSnapshot,
+    'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary'
+  > {
+    const state = this.engine.getState();
     const progress = this.getRunProgressSnapshot();
     return {
       progressLabel: progress.progressLabel,
       progressDetail: progress.progressDetail,
       phaseTrack: progress.phaseTrack,
+      levelText: `Lv.${state.level}`,
+      routeStatusText: this.getRouteStatusText(),
+      statSummary: createPanelStatSummary(state.stats),
     };
   }
 
@@ -1028,13 +1391,7 @@ export class GameScene extends Phaser.Scene {
 
       const winCondition = BATTLE_TEMPLATES[battle.templateId].winCondition.type;
       if (winCondition === 'elite') {
-        return {
-          objectiveLabel: '当前目标',
-          objectiveText: '拆掉精英本体',
-          objectiveDetail: '先稳住身位，再清护卫。',
-          objectiveProgressText: battle.eliteAlive ? '精英已进场' : '精英即将进场',
-          objectiveTone: 'elite',
-        };
+        return this.getEliteObjectiveSnapshot(battle);
       }
 
       if (winCondition === 'survive') {
@@ -1115,6 +1472,53 @@ export class GameScene extends Phaser.Scene {
       objectiveDetail: '把一条路线收成型。',
       objectiveProgressText: bossDistanceText,
       objectiveTone: 'flow',
+    };
+  }
+
+  private getEliteObjectiveSnapshot(
+    battle: BattleState,
+  ): Pick<OverlayHudSnapshot, 'objectiveLabel' | 'objectiveText' | 'objectiveDetail' | 'objectiveProgressText' | 'objectiveTone'> {
+    const escortCount = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
+    const crackRatio = battle.eliteCrackWindowSec > 0 ? Math.min(1, battle.eliteCrackWindowSec / 0.82) : 0;
+    const breachFlashRatio = battle.eliteBreachFlashSec > 0 ? Math.min(1, battle.eliteBreachFlashSec / 0.48) : 0;
+    const displayedCrackRatio = Math.max(crackRatio, breachFlashRatio * 0.92);
+
+    if (!battle.eliteAlive) {
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: '稳住第一轮压力',
+        objectiveDetail: '精英还没进场，先把站位和血量稳住。',
+        objectiveProgressText: '精英即将进场',
+        objectiveTone: 'elite',
+      };
+    }
+
+    if (displayedCrackRatio > 0.1) {
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: '裂口已开，压上本体',
+        objectiveDetail: '沿楔形追进去，别把火力再丢回护卫。',
+        objectiveProgressText: `窗口 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
+        objectiveTone: 'elite',
+      };
+    }
+
+    if (escortCount > 0) {
+      return {
+        objectiveLabel: '当前目标',
+        objectiveText: '先拆护卫，等裂口',
+        objectiveDetail: '护卫还在成屏，别硬顶本体，等破口再追。',
+        objectiveProgressText: `护卫 ${escortCount} · 本体在后`,
+        objectiveTone: 'elite',
+      };
+    }
+
+    return {
+      objectiveLabel: '当前目标',
+      objectiveText: '盯住精英本体',
+      objectiveDetail: '屏障已经变薄，继续压本体就能过关。',
+      objectiveProgressText: `${BATTLE_TEMPLATES[battle.templateId].name} · 击破本体`,
+      objectiveTone: 'elite',
     };
   }
 
@@ -1239,7 +1643,7 @@ export class GameScene extends Phaser.Scene {
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
     accentColor: number,
   ): void {
-    this.graphics.fillGradientStyle(0x252b33, 0x1d2630, 0x0f1319, 0x090b10, 1);
+    this.graphics.fillGradientStyle(0x0b1721, 0x0f2030, 0x060a0f, 0x04070b, 1);
     this.graphics.fillRect(0, 0, camera.width, camera.height);
 
     const blotStartX = Math.floor(camera.left / TERRAIN_BLOT_SIZE) - 1;
@@ -1269,7 +1673,7 @@ export class GameScene extends Phaser.Scene {
         const worldX = tileX * TERRAIN_TILE_SIZE;
         const worldY = tileY * TERRAIN_TILE_SIZE;
         const screen = this.worldToScreen(camera, worldX, worldY);
-        const tileColor = noise > 0.62 ? 0x39434c : noise > 0.3 ? 0x2c353e : 0x1d252d;
+        const tileColor = noise > 0.62 ? 0x213244 : noise > 0.3 ? 0x182634 : 0x101922;
         this.graphics.fillStyle(tileColor, 0.18 + noise * 0.08);
         this.graphics.fillRoundedRect(screen.x, screen.y, TERRAIN_TILE_SIZE - 8, TERRAIN_TILE_SIZE - 8, 20);
 
@@ -1484,6 +1888,9 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillCircle(screen.x, screen.y, 5);
       this.graphics.lineStyle(1.5, XP_ORB_STROKE, 0.3 + pulse * 0.2 + orbSpeedRatio * 0.12);
       this.graphics.strokeCircle(screen.x, screen.y, 8 + pulse * 2 + orbSpeedRatio * 2);
+      this.graphics.lineStyle(1.2, XP_ORB_STROKE, 0.14 + pulse * 0.12);
+      this.graphics.lineBetween(screen.x - 4, screen.y, screen.x + 4, screen.y);
+      this.graphics.lineBetween(screen.x, screen.y - 4, screen.x, screen.y + 4);
     }
 
     for (const pulse of battle.pulses) {
@@ -1734,10 +2141,23 @@ export class GameScene extends Phaser.Scene {
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
       const pressureRatio = this.getEnemyPressureRatio(enemy);
       const leadFocusRatio = battle.pickupLeadEnemyId === enemy.id ? pickupLeadRatio : 0;
-      const enemyFill = this.mixColor(this.getEnemyFillColor(enemy), 0xffffff, flashRatio * 0.55 + recoveryRatio * 0.1);
-      const enemyStroke = this.mixColor(this.getEnemyStrokeColor(enemy), 0xffffff, flashRatio * 0.4 + recoveryRatio * 0.16);
       const onScreen = this.isVisibleInCamera(camera, enemy.x, enemy.y, enemy.radius + 30);
       const screen = this.worldToScreen(camera, enemy.x + enemy.hitOffsetX, enemy.y + enemy.hitOffsetY);
+      const faceAngle = Math.atan2(playerScreen.y - screen.y, playerScreen.x - screen.x);
+      const bodyBaseFill =
+        enemy.elite && battle.encounterType === 'boss'
+          ? BOSS_FILL
+          : enemy.elite
+            ? ELITE_FILL
+            : this.getEnemyFillColor(enemy);
+      const bodyBaseStroke =
+        enemy.elite && battle.encounterType === 'boss'
+          ? BOSS_STROKE
+          : enemy.elite
+            ? ELITE_STROKE
+            : this.getEnemyStrokeColor(enemy);
+      const enemyFill = this.mixColor(bodyBaseFill, 0xffffff, flashRatio * 0.55 + recoveryRatio * 0.1);
+      const enemyStroke = this.mixColor(bodyBaseStroke, 0xffffff, flashRatio * 0.4 + recoveryRatio * 0.16);
 
       if (enemy.elite && !onScreen) {
         const hpRatio = enemy.hp / Math.max(1, enemy.maxHp);
@@ -2021,8 +2441,18 @@ export class GameScene extends Phaser.Scene {
 
       if (enemy.elite) {
         this.graphics.fillCircle(screen.x, screen.y, enemy.radius);
+        this.graphics.fillStyle(this.mixColor(enemyFill, 0xffffff, 0.12), 0.22);
+        this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.56);
         this.graphics.lineStyle(2, enemyStroke, 0.32);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 5);
+        if (battle.encounterType === 'boss') {
+          const bossBracketReach = enemy.radius + 14;
+          this.graphics.lineStyle(2.2, enemyStroke, 0.34);
+          this.graphics.lineBetween(screen.x - bossBracketReach, screen.y, screen.x - enemy.radius - 4, screen.y);
+          this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + bossBracketReach, screen.y);
+          this.graphics.lineBetween(screen.x, screen.y - bossBracketReach, screen.x, screen.y - enemy.radius - 4);
+          this.graphics.lineBetween(screen.x, screen.y + enemy.radius + 4, screen.x, screen.y + bossBracketReach);
+        }
         if (battle.pressureTransitionSec > 0) {
           const pulseAlpha = Math.min(0.44, 0.14 + battle.pressureTransitionSec * 0.2);
           const pulseRadius = enemy.radius + 12 + (1.15 - battle.pressureTransitionSec) * 7;
@@ -2055,10 +2485,51 @@ export class GameScene extends Phaser.Scene {
           enemy.radius * 2 + 4,
           10,
         );
+      } else if (enemy.archetype === 'brute') {
+        this.graphics.fillEllipse(screen.x, screen.y, enemy.radius * 2.16, enemy.radius * 1.84);
+        this.graphics.fillStyle(this.mixColor(enemyFill, 0xffffff, 0.08), 0.16);
+        this.graphics.fillEllipse(screen.x, screen.y, enemy.radius * 1.2, enemy.radius * 1.02);
+        this.graphics.lineStyle(2.4, enemyStroke, 0.32);
+        this.graphics.strokeEllipse(screen.x, screen.y, enemy.radius * 2.32, enemy.radius * 2);
+      } else if (enemy.archetype === 'skirmisher') {
+        const tipReach = enemy.radius + 8;
+        const wingReach = enemy.radius + 4;
+        this.graphics.fillTriangle(
+          screen.x + Math.cos(faceAngle) * tipReach,
+          screen.y + Math.sin(faceAngle) * tipReach,
+          screen.x + Math.cos(faceAngle + 2.32) * wingReach,
+          screen.y + Math.sin(faceAngle + 2.32) * wingReach,
+          screen.x + Math.cos(faceAngle - 2.32) * wingReach,
+          screen.y + Math.sin(faceAngle - 2.32) * wingReach,
+        );
+        this.graphics.fillStyle(this.mixColor(enemyFill, 0xffffff, 0.12), 0.16);
+        this.graphics.fillCircle(screen.x, screen.y, Math.max(3.2, enemy.radius * 0.32));
+        this.graphics.lineStyle(2, enemyStroke, 0.34);
+        this.graphics.strokeTriangle(
+          screen.x + Math.cos(faceAngle) * (tipReach + 2),
+          screen.y + Math.sin(faceAngle) * (tipReach + 2),
+          screen.x + Math.cos(faceAngle + 2.34) * (wingReach + 2),
+          screen.y + Math.sin(faceAngle + 2.34) * (wingReach + 2),
+          screen.x + Math.cos(faceAngle - 2.34) * (wingReach + 2),
+          screen.y + Math.sin(faceAngle - 2.34) * (wingReach + 2),
+        );
       } else {
         this.graphics.fillCircle(screen.x, screen.y, enemy.radius);
+        this.graphics.fillStyle(this.mixColor(enemyFill, 0xffffff, 0.08), 0.14);
+        this.graphics.fillCircle(screen.x, screen.y, Math.max(3.6, enemy.radius * 0.36));
         this.graphics.lineStyle(2, enemyStroke, 0.26);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 4);
+      }
+
+      if (!enemy.elite && enemy.role === 'escort') {
+        const escortFill = this.mixColor(ENEMY_ESCORT_FILL, enemyFill, 0.24);
+        const escortStroke = this.mixColor(ENEMY_ESCORT_STROKE, enemyStroke, 0.26);
+        this.graphics.lineStyle(1.6, escortStroke, 0.22 + recoveryRatio * 0.18 + pressureRatio * 0.08);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10 + recoveryRatio * 4);
+        this.graphics.lineBetween(screen.x - enemy.radius - 12, screen.y, screen.x - enemy.radius - 4, screen.y);
+        this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + enemy.radius + 12, screen.y);
+        this.graphics.fillStyle(escortFill, 0.08 + pressureRatio * 0.1);
+        this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 3);
       }
 
       if (!enemy.elite && enemy.archetype === 'skirmisher') {
@@ -2542,6 +3013,8 @@ export class GameScene extends Phaser.Scene {
         );
         const guideDirX = (guideTargetScreen.x - bodyX) / guideDistance;
         const guideDirY = (guideTargetScreen.y - bodyY) / guideDistance;
+        const guideOrthoX = -guideDirY;
+        const guideOrthoY = guideDirX;
         this.graphics.lineStyle(1.6, pickupGuideColor, 0.08 + pickupFlowRatio * 0.2);
         this.graphics.lineBetween(
           bodyX + guideDirX * 18,
@@ -2549,6 +3022,32 @@ export class GameScene extends Phaser.Scene {
           guideTargetScreen.x - guideDirX * (pickupGuideEnemy.radius + 10),
           guideTargetScreen.y - guideDirY * (pickupGuideEnemy.radius + 10),
         );
+        if (liveFocusRoute === 'pierce') {
+          const railOffset = pickupGuideEnemy.radius + 10 + pickupFlowRatio * 8;
+          const railAlpha = 0.08 + pickupFlowRatio * 0.18 + pierceReadRatio * 0.12;
+          this.graphics.lineStyle(1.2, this.mixColor(pickupGuideColor, 0xeaf9ff, 0.22), railAlpha);
+          this.graphics.lineBetween(
+            bodyX + guideDirX * 14 + guideOrthoX * 10,
+            bodyY + guideDirY * 14 + guideOrthoY * 10,
+            guideTargetScreen.x - guideDirX * railOffset + guideOrthoX * 10,
+            guideTargetScreen.y - guideDirY * railOffset + guideOrthoY * 10,
+          );
+          this.graphics.lineBetween(
+            bodyX + guideDirX * 14 - guideOrthoX * 10,
+            bodyY + guideDirY * 14 - guideOrthoY * 10,
+            guideTargetScreen.x - guideDirX * railOffset - guideOrthoX * 10,
+            guideTargetScreen.y - guideDirY * railOffset - guideOrthoY * 10,
+          );
+          for (let marker = 0; marker < 3; marker += 1) {
+            const railRatio = ((battle.elapsedSec * 2.2) + marker * 0.24) % 1;
+            const railDistance = guideDistance * (0.22 + railRatio * 0.58);
+            const railCoreX = bodyX + guideDirX * railDistance;
+            const railCoreY = bodyY + guideDirY * railDistance;
+            this.graphics.fillStyle(this.mixColor(pickupGuideColor, 0xffffff, 0.24), 0.08 + pickupFlowRatio * 0.1 - marker * 0.014);
+            this.graphics.fillCircle(railCoreX + guideOrthoX * 10, railCoreY + guideOrthoY * 10, 2.4 + pickupFlowRatio * 1.4);
+            this.graphics.fillCircle(railCoreX - guideOrthoX * 10, railCoreY - guideOrthoY * 10, 2.4 + pickupFlowRatio * 1.4);
+          }
+        }
         this.graphics.lineStyle(1.2, pickupGuideColor, 0.08 + pickupFlowRatio * 0.16);
         this.graphics.strokeCircle(
           guideTargetScreen.x,
@@ -2769,6 +3268,28 @@ export class GameScene extends Phaser.Scene {
         playerScreen.x - trailDirX * 8,
         playerScreen.y - trailDirY * 8,
       );
+      this.graphics.lineStyle(1.4, this.mixColor(accentColor, 0xdffff4, 0.32), 0.12 + dashDriveRatio * 0.16);
+      this.graphics.lineBetween(
+        playerScreen.x - trailDirX * (trailLength + 2) + trailOrthoX * 10,
+        playerScreen.y - trailDirY * (trailLength + 2) + trailOrthoY * 10,
+        playerScreen.x - trailDirX * 4 + trailOrthoX * 10,
+        playerScreen.y - trailDirY * 4 + trailOrthoY * 10,
+      );
+      this.graphics.lineBetween(
+        playerScreen.x - trailDirX * (trailLength + 2) - trailOrthoX * 10,
+        playerScreen.y - trailDirY * (trailLength + 2) - trailOrthoY * 10,
+        playerScreen.x - trailDirX * 4 - trailOrthoX * 10,
+        playerScreen.y - trailDirY * 4 - trailOrthoY * 10,
+      );
+      this.graphics.fillStyle(this.mixColor(accentColor, 0xffffff, 0.2), 0.08 + dashDriveRatio * 0.14);
+      this.graphics.fillTriangle(
+        playerScreen.x + trailDirX * 24,
+        playerScreen.y + trailDirY * 24,
+        playerScreen.x + trailDirX * 8 + trailOrthoX * 7,
+        playerScreen.y + trailDirY * 8 + trailOrthoY * 7,
+        playerScreen.x + trailDirX * 8 - trailOrthoX * 7,
+        playerScreen.y + trailDirY * 8 - trailOrthoY * 7,
+      );
     }
     if (lowHpRatio > 0) {
       const dangerColor = this.mixColor(0xff5d58, accentColor, 0.16);
@@ -2872,6 +3393,18 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.graphics.fillCircle(bodyX, bodyY, 10 + velocityRatio * 0.8);
+    const playerBarWidth = 40;
+    const playerBarHeight = 6;
+    const playerBarX = playerScreen.x - playerBarWidth * 0.5;
+    const playerBarY = playerScreen.y - 30;
+    const playerBarColor =
+      hpRatio <= 0.35 ? 0xff6d62 : hpRatio <= 0.68 ? 0xffc65a : 0x59da78;
+    this.graphics.fillStyle(0x22160f, 0.82);
+    this.graphics.fillRoundedRect(playerBarX, playerBarY, playerBarWidth, playerBarHeight, 3);
+    this.graphics.fillStyle(playerBarColor, 1);
+    this.graphics.fillRoundedRect(playerBarX, playerBarY, playerBarWidth * hpRatio, playerBarHeight, 3);
+    this.graphics.lineStyle(1.2, 0xf4f0e6, 0.36);
+    this.graphics.strokeRoundedRect(playerBarX, playerBarY, playerBarWidth, playerBarHeight, 3);
 
     this.graphics.fillGradientStyle(
       0x000000,
@@ -3061,7 +3594,8 @@ export class GameScene extends Phaser.Scene {
     const elitePressure = this.getEnemyPressureRatio(elite);
     const eliteRecovery = this.getEnemyRecoveryRatio(elite);
     const eliteCrackRatio = battle.eliteCrackWindowSec > 0 ? Math.min(1, battle.eliteCrackWindowSec / 0.82) : 0;
-    const displayedRecovery = Math.max(eliteRecovery, eliteCrackRatio * 0.88);
+    const eliteBreachFlashRatio = battle.eliteBreachFlashSec > 0 ? Math.min(1, battle.eliteBreachFlashSec / 0.48) : 0;
+    const displayedRecovery = Math.max(eliteRecovery, eliteCrackRatio * 0.88, eliteBreachFlashRatio * 0.9);
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     const escorts = battle.enemies
       .filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0)
@@ -3086,8 +3620,12 @@ export class GameScene extends Phaser.Scene {
     const pulseColor = this.mixColor(BATTLE_TEMPLATES[battle.templateId].accent, 0xffefbf, 0.34);
     const crackColor = this.mixColor(0xfff0c4, 0xf5fbff, 0.42);
 
-    if (escorts.length > 0 && (elitePressure > 0.04 || eliteCrackRatio > 0.08)) {
-      const fieldAlpha = Math.max(0.06 + elitePressure * 0.18, 0.08 + eliteCrackRatio * 0.16);
+    if (escorts.length > 0 && (elitePressure > 0.04 || eliteCrackRatio > 0.08 || eliteBreachFlashRatio > 0.08)) {
+      const fieldAlpha = Math.max(
+        0.06 + elitePressure * 0.18,
+        0.08 + eliteCrackRatio * 0.16,
+        0.1 + eliteBreachFlashRatio * 0.14,
+      );
       this.graphics.lineStyle(1.8, pulseColor, fieldAlpha);
       for (const entry of escorts) {
         const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
@@ -3099,6 +3637,12 @@ export class GameScene extends Phaser.Scene {
         );
       }
       if (escorts.length >= 2) {
+        for (let index = 0; index < escorts.length - 1; index += 1) {
+          const from = this.worldToScreen(camera, escorts[index].enemy.x, escorts[index].enemy.y);
+          const to = this.worldToScreen(camera, escorts[index + 1].enemy.x, escorts[index + 1].enemy.y);
+          this.graphics.fillStyle(pulseColor, 0.018 + elitePressure * 0.04 + eliteBreachFlashRatio * 0.04);
+          this.graphics.fillTriangle(eliteScreen.x, eliteScreen.y, from.x, from.y, to.x, to.y);
+        }
         this.graphics.lineStyle(1.3, pulseColor, Math.max(0.04 + elitePressure * 0.14, 0.06 + eliteCrackRatio * 0.12));
         for (let index = 0; index < escorts.length - 1; index += 1) {
           const from = this.worldToScreen(camera, escorts[index].enemy.x, escorts[index].enemy.y);
@@ -3127,6 +3671,12 @@ export class GameScene extends Phaser.Scene {
       const breachRightY = eliteScreen.y - chaseOrthoY * breachWidth;
       const breachTipX = eliteScreen.x + chaseDirX * breachLength;
       const breachTipY = eliteScreen.y + chaseDirY * breachLength;
+      const playerProjection = chaseDx * chaseDirX + chaseDy * chaseDirY;
+      const playerLateral = Math.abs(chaseDx * chaseOrthoX + chaseDy * chaseOrthoY);
+      const playerInBreachCorridor =
+        playerProjection >= elite.radius - 14 &&
+        playerProjection <= breachLength + 12 &&
+        playerLateral <= breachWidth * 1.1;
       this.graphics.fillStyle(crackColor, 0.03 + displayedRecovery * 0.06);
       this.graphics.fillTriangle(breachLeftX, breachLeftY, breachTipX, breachTipY, breachRightX, breachRightY);
       this.graphics.lineStyle(1.6, crackColor, 0.08 + displayedRecovery * 0.18);
@@ -3151,6 +3701,21 @@ export class GameScene extends Phaser.Scene {
       const chaseGuideAlpha = 0.04 + displayedRecovery * 0.14 + eliteCrackRatio * 0.08;
       this.graphics.lineStyle(1.6, chaseGuideColor, chaseGuideAlpha);
       this.graphics.lineBetween(playerScreen.x, playerScreen.y, breachTipX, breachTipY);
+      const flowLead = (battle.elapsedSec * 2.4) % 1;
+      for (let marker = 0; marker < 4; marker += 1) {
+        const flowRatio = (flowLead + marker * 0.19) % 1;
+        const markerDistance = breachLength * (0.18 + flowRatio * 0.7);
+        const markerX = eliteScreen.x + chaseDirX * markerDistance;
+        const markerY = eliteScreen.y + chaseDirY * markerDistance;
+        const markerWidth = 8 + displayedRecovery * 4 - marker * 0.8;
+        this.graphics.lineStyle(1.4, chaseGuideColor, chaseGuideAlpha * (0.92 - marker * 0.12));
+        this.graphics.lineBetween(
+          markerX - chaseOrthoX * markerWidth,
+          markerY - chaseOrthoY * markerWidth,
+          markerX + chaseOrthoX * markerWidth,
+          markerY + chaseOrthoY * markerWidth,
+        );
+      }
       for (let marker = 0; marker < 3; marker += 1) {
         const markerDistance = breachLength * (0.32 + marker * 0.18);
         const markerX = eliteScreen.x + chaseDirX * markerDistance;
@@ -3169,6 +3734,12 @@ export class GameScene extends Phaser.Scene {
           markerX,
           markerY,
         );
+      }
+      if (playerInBreachCorridor) {
+        this.graphics.lineStyle(2.1, chaseGuideColor, chaseGuideAlpha + 0.12 + eliteBreachFlashRatio * 0.06);
+        this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 18 + displayedRecovery * 6);
+        this.graphics.lineStyle(1.4, chaseGuideColor, chaseGuideAlpha + 0.08);
+        this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 28 + displayedRecovery * 8);
       }
       for (const entry of escorts) {
         const escortRecovery = this.getEnemyRecoveryRatio(entry.enemy);
@@ -3290,6 +3861,23 @@ export class GameScene extends Phaser.Scene {
               eliteScreen.x + chaseDirX * (throughLength - 10) - chaseOrthoX * railOffset,
               eliteScreen.y + chaseDirY * (throughLength - 10) - chaseOrthoY * railOffset,
             );
+            for (let marker = 0; marker < 3; marker += 1) {
+              const railRatio = ((battle.elapsedSec * 1.9) + marker * 0.24) % 1;
+              const railDistance = throughLength * (0.18 + railRatio * 0.68);
+              const railCoreX = eliteScreen.x + chaseDirX * railDistance;
+              const railCoreY = eliteScreen.y + chaseDirY * railDistance;
+              this.graphics.fillStyle(focusColor, focusAlpha * (0.44 - marker * 0.08));
+              this.graphics.fillCircle(
+                railCoreX + chaseOrthoX * railOffset,
+                railCoreY + chaseOrthoY * railOffset,
+                2.2 + eliteCrackRatio * 1.4,
+              );
+              this.graphics.fillCircle(
+                railCoreX - chaseOrthoX * railOffset,
+                railCoreY - chaseOrthoY * railOffset,
+                2.2 + eliteCrackRatio * 1.4,
+              );
+            }
             for (const entry of escorts.slice(0, 2)) {
               const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
               this.graphics.lineStyle(1.2, focusColor, focusAlpha * 0.52);
@@ -3307,6 +3895,93 @@ export class GameScene extends Phaser.Scene {
               );
             }
           }
+        }
+      }
+    }
+
+    this.renderDebugBattleOverlay(battle, camera);
+  }
+
+  private renderDebugBattleOverlay(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    if (
+      !this.debugConfig.showEnemyVectors &&
+      !this.debugConfig.showProjectileVectors &&
+      !this.debugConfig.showCollisionRadii
+    ) {
+      return;
+    }
+
+    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
+    if (this.debugConfig.showCollisionRadii) {
+      this.graphics.lineStyle(1.2, 0x8ff7ff, 0.85);
+      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 12);
+    }
+
+    for (const enemy of battle.enemies) {
+      if (!this.isVisibleInCamera(camera, enemy.x, enemy.y, enemy.radius + 48)) {
+        continue;
+      }
+
+      const screen = this.worldToScreen(camera, enemy.x, enemy.y);
+      if (this.debugConfig.showCollisionRadii) {
+        this.graphics.lineStyle(1, enemy.elite ? 0xffd39a : 0xff9ea4, enemy.elite ? 0.95 : 0.68);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius);
+      }
+
+      if (this.debugConfig.showEnemyVectors) {
+        const moveSpeed = Math.hypot(enemy.debugMoveVX, enemy.debugMoveVY);
+        if (moveSpeed > 0.5) {
+          const vectorScale = 0.07;
+          const endX = screen.x + enemy.debugMoveVX * vectorScale;
+          const endY = screen.y + enemy.debugMoveVY * vectorScale;
+          this.graphics.lineStyle(1.6, enemy.elite ? 0xffe6aa : 0xffc48d, 0.92);
+          this.graphics.lineBetween(screen.x, screen.y, endX, endY);
+          this.renderDirectionalChevron(
+            endX,
+            endY,
+            Math.atan2(enemy.debugMoveVY, enemy.debugMoveVX),
+            8,
+            5,
+            2,
+            enemy.elite ? 0xfff3c9 : 0xffd7af,
+            0.9,
+            0,
+          );
+        }
+      }
+    }
+
+    if (this.debugConfig.showProjectileVectors || this.debugConfig.showCollisionRadii) {
+      for (const projectile of battle.enemyProjectiles) {
+        if (!this.isVisibleInCamera(camera, projectile.x, projectile.y, projectile.radius + 48)) {
+          continue;
+        }
+
+        const screen = this.worldToScreen(camera, projectile.x, projectile.y);
+        if (this.debugConfig.showCollisionRadii) {
+          this.graphics.lineStyle(1, 0xff7b82, 0.92);
+          this.graphics.strokeCircle(screen.x, screen.y, projectile.radius);
+        }
+        if (this.debugConfig.showProjectileVectors) {
+          const vectorScale = 0.065;
+          const endX = screen.x + projectile.vx * vectorScale;
+          const endY = screen.y + projectile.vy * vectorScale;
+          this.graphics.lineStyle(1.4, 0xffd4d8, 0.88);
+          this.graphics.lineBetween(screen.x, screen.y, endX, endY);
+          this.renderDirectionalChevron(
+            endX,
+            endY,
+            Math.atan2(projectile.vy, projectile.vx),
+            7,
+            4,
+            2,
+            0xfff0f2,
+            0.9,
+            0,
+          );
         }
       }
     }
@@ -3479,8 +4154,8 @@ export class GameScene extends Phaser.Scene {
     const contentHeight = camera.height - topInset - bottomInset;
     const safeWindowAlpha = Math.min(0.18, 0.05 + battle.pressureSafeWindowSec * 0.08 + flashAlpha * 0.7);
     const dangerAlpha = Math.min(0.16, 0.05 + battle.pressureSafeWindowSec * 0.06 + flashAlpha * 0.95);
-    const safeTint = 0x82ffca;
-    const dangerTint = 0xff6d62;
+    const safeTint = SAFE_WINDOW_TINT;
+    const dangerTint = SAFE_WINDOW_DANGER;
 
     if (battle.pressureSafeWindowAxis === 'pocket') {
       if (battle.pressureSafeWindowSecondarySpan <= 0) {
@@ -3531,6 +4206,7 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillRect(safeStartX, safeStartY, safeWidth, safeHeight);
       this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.36);
       this.graphics.strokeRect(safeStartX, safeStartY, safeWidth, safeHeight);
+      this.renderSafeWindowBrackets(safeStartX, safeStartY, safeWidth, safeHeight, safeTint, accentColor, safeWindowAlpha, flashAlpha);
       this.graphics.lineStyle(2, accentColor, flashAlpha * 1.3);
       this.graphics.lineBetween(safeStartX, safeStartY, safeStartX, safeEndY);
       this.graphics.lineBetween(safeEndX, safeStartY, safeEndX, safeEndY);
@@ -3565,6 +4241,7 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillRect(safeStart, topInset - 4, safeWidth, contentHeight + 8);
       this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
       this.graphics.strokeRect(safeStart, topInset - 4, safeWidth, contentHeight + 8);
+      this.renderSafeWindowBrackets(safeStart, topInset - 4, safeWidth, contentHeight + 8, safeTint, accentColor, safeWindowAlpha, flashAlpha);
       this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
       this.graphics.lineBetween(safeStart, topInset - 8, safeStart, camera.height - bottomInset + 8);
       this.graphics.lineBetween(safeEnd, topInset - 8, safeEnd, camera.height - bottomInset + 8);
@@ -3596,10 +4273,37 @@ export class GameScene extends Phaser.Scene {
     this.graphics.fillRect(leftInset - 4, safeStart, contentWidth + 8, safeHeight);
     this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
     this.graphics.strokeRect(leftInset - 4, safeStart, contentWidth + 8, safeHeight);
+    this.renderSafeWindowBrackets(leftInset - 4, safeStart, contentWidth + 8, safeHeight, safeTint, accentColor, safeWindowAlpha, flashAlpha);
     this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
     this.graphics.lineBetween(leftInset - 8, safeStart, camera.width - rightInset + 8, safeStart);
     this.graphics.lineBetween(leftInset - 8, safeEnd, camera.width - rightInset + 8, safeEnd);
     return true;
+  }
+
+  private renderSafeWindowBrackets(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    safeTint: number,
+    accentColor: number,
+    safeWindowAlpha: number,
+    flashAlpha: number,
+  ): void {
+    const corner = Math.min(18, Math.max(10, Math.min(width, height) * 0.22));
+    this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.18);
+    this.graphics.lineBetween(x, y, x + corner, y);
+    this.graphics.lineBetween(x, y, x, y + corner);
+    this.graphics.lineBetween(x + width - corner, y, x + width, y);
+    this.graphics.lineBetween(x + width, y, x + width, y + corner);
+    this.graphics.lineBetween(x, y + height - corner, x, y + height);
+    this.graphics.lineBetween(x, y + height, x + corner, y + height);
+    this.graphics.lineBetween(x + width - corner, y + height, x + width, y + height);
+    this.graphics.lineBetween(x + width, y + height - corner, x + width, y + height);
+    this.graphics.lineStyle(1.2, accentColor, flashAlpha * 0.9 + safeWindowAlpha * 0.34);
+    this.graphics.lineBetween(x + width * 0.5, y + 8, x + width * 0.5, y + Math.min(height - 8, 22));
+    this.graphics.lineBetween(x + 8, y + height * 0.5, x + Math.min(width - 8, 22), y + height * 0.5);
+    this.graphics.lineBetween(x + width - 8, y + height * 0.5, x + Math.max(8, width - 22), y + height * 0.5);
   }
 
   private getEnemyRecoveryRatio(enemy: BattleState['enemies'][number]): number {
@@ -3699,37 +4403,45 @@ export class GameScene extends Phaser.Scene {
 
   private getEnemyFillColor(enemy: BattleState['enemies'][number]): number {
     if (enemy.elite) {
-      return 0xffb347;
+      return ELITE_FILL;
     }
 
+    const baseColor =
+      enemy.role === 'escort'
+        ? ENEMY_ESCORT_FILL
+        : enemy.archetype === 'brute'
+          ? 0xc7555c
+          : enemy.archetype === 'skirmisher'
+            ? 0xff5f95
+            : enemy.archetype === 'ranged'
+              ? 0xb878ff
+              : 0xd94f7a;
+
     switch (enemy.archetype) {
-      case 'brute':
-        return 0xff7b63;
-      case 'skirmisher':
-        return 0xff4f86;
-      case 'ranged':
-        return 0xc98eff;
-      case 'standard':
       default:
-        return 0xff6578;
+        return baseColor;
     }
   }
 
   private getEnemyStrokeColor(enemy: BattleState['enemies'][number]): number {
     if (enemy.elite) {
-      return 0xffe2a8;
+      return ELITE_STROKE;
     }
 
+    const baseColor =
+      enemy.role === 'escort'
+        ? ENEMY_ESCORT_STROKE
+        : enemy.archetype === 'brute'
+          ? 0xffd1bf
+          : enemy.archetype === 'skirmisher'
+            ? 0xffd5e3
+            : enemy.archetype === 'ranged'
+              ? 0xe7d7ff
+              : 0xffb0c2;
+
     switch (enemy.archetype) {
-      case 'brute':
-        return 0xffcfb8;
-      case 'skirmisher':
-        return 0xffb4d1;
-      case 'ranged':
-        return 0xe2ccff;
-      case 'standard':
       default:
-        return 0xff9eb0;
+        return baseColor;
     }
   }
 

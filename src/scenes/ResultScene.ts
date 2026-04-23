@@ -8,6 +8,7 @@ export class ResultScene extends Phaser.Scene {
 
   public create(data: { result: RunResult }): void {
     const services = this.game.registry.get('services') as Services;
+    this.cameras.main.fadeIn(220, 6, 12, 18);
     services.audio.unlock();
     services.audio.setMusic('result');
     services.audio.play('result');
@@ -16,19 +17,18 @@ export class ResultScene extends Phaser.Scene {
         services.audio.unlock();
         services.audio.play('start');
         services.metrics.beginRunFromRestart();
-        this.scene.start('GameScene');
+        this.cameras.main.fadeOut(160, 6, 12, 18);
+        this.time.delayedCall(170, () => {
+          this.scene.start('GameScene');
+        });
       },
       onBackToMenu: () => {
         services.audio.unlock();
         services.audio.play('click');
-        this.scene.start('MainMenuScene');
-      },
-      onExport: () => {
-        services.audio.unlock();
-        services.audio.play('click');
-        const content = window.__exportPilotMetrics();
-        navigator.clipboard.writeText(content).catch(() => undefined);
-        services.overlay.pushToast('埋点已导出到剪贴板', 'success');
+        this.cameras.main.fadeOut(140, 6, 12, 18);
+        this.time.delayedCall(150, () => {
+          this.scene.start('MainMenuScene');
+        });
       },
     });
   }
