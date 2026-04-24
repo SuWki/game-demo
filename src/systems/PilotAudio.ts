@@ -1148,6 +1148,31 @@ export class PilotAudio {
                 q: 1.9,
                 pan: variant * 0.006,
               });
+            } else if (this.cueContext.routeFocus === 'dash') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 560 + variant * 1.2,
+                peak: 0.02 + encounterThump * 0.24,
+                duration: 0.072,
+                delay: 0.006,
+                sweepTo: 410 + variant * 0.8,
+              });
+              createVoice(context, destination, now, {
+                type: 'square',
+                frequency: 880 + variant * 1.4,
+                peak: 0.012 + encounterThump * 0.16,
+                duration: 0.046,
+                delay: 0.016,
+                sweepTo: 620 + variant,
+              });
+              this.createNoiseBurst(context, destination, now, {
+                peak: 0.012 + encounterThump * 0.16,
+                duration: 0.036,
+                delay: 0.014,
+                frequency: 2140 + variant * 7,
+                q: 1.48,
+                pan: variant * 0.007,
+              });
             }
           },
         };
@@ -1268,6 +1293,31 @@ export class PilotAudio {
                 duration: 0.095,
                 delay: 0.035,
                 sweepTo: 1040 + variant * 1.1,
+              });
+            } else if (this.cueContext.routeFocus === 'dash') {
+              createVoice(context, destination, now, {
+                type: 'triangle',
+                frequency: 520 + variant * 1.1,
+                peak: 0.022 + encounterLift * 0.22,
+                duration: 0.12,
+                delay: 0.012,
+                sweepTo: 340 + variant * 0.72,
+              });
+              createVoice(context, destination, now, {
+                type: 'sine',
+                frequency: 980 + variant * 1.7,
+                peak: 0.016 + encounterLift * 0.16,
+                duration: 0.085,
+                delay: 0.02,
+                sweepTo: 720 + variant * 1.1,
+              });
+              this.createNoiseBurst(context, destination, now, {
+                peak: 0.012 + encounterLift * 0.12,
+                duration: 0.05,
+                delay: 0.018,
+                frequency: 1880 + variant * 6,
+                q: 1.22,
+                pan: variant * 0.007,
               });
             }
           },

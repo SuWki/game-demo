@@ -618,6 +618,8 @@ export interface BattleDebugSnapshot {
   bulletCount: number;
   orbCount: number;
   eliteAlive: boolean;
+  dashDriveSec: number;
+  playerTurnBurstSec: number;
   eliteRecoverySec: number;
   elitePressureSec: number;
   eliteCrackWindowSec: number;

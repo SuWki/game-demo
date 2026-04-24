@@ -852,7 +852,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           routeBonuses: {
             crit: 0.38,
             pierce: 0.5,
-            dash: 0.34,
+            dash: 0.58,
           },
         },
       },

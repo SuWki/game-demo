@@ -224,6 +224,8 @@ export class GameScene extends Phaser.Scene {
         bulletCount: 0,
         orbCount: 0,
         eliteAlive: false,
+        dashDriveSec: 0,
+        playerTurnBurstSec: 0,
         eliteRecoverySec: 0,
         elitePressureSec: 0,
         eliteCrackWindowSec: 0,
@@ -267,6 +269,8 @@ export class GameScene extends Phaser.Scene {
       bulletCount: battle.bullets.length,
       orbCount: battle.experienceOrbs.length,
       eliteAlive: battle.eliteAlive,
+      dashDriveSec: battle.dashDriveSec,
+      playerTurnBurstSec: battle.playerTurnBurstSec,
       eliteRecoverySec: elite?.recoverySec ?? 0,
       elitePressureSec: elite?.pressurePulseSec ?? 0,
       eliteCrackWindowSec: battle.eliteCrackWindowSec,
@@ -532,12 +536,14 @@ export class GameScene extends Phaser.Scene {
               ? 'ordinary'
               : 'flow';
     const intensity = battle
-      ? Phaser.Math.Clamp(
+        ? Phaser.Math.Clamp(
           Math.max(
             battle.tempoPulseSec / 0.3,
             battle.killFlowSec / 0.9,
+            battle.dashDriveSec / 1.15,
             battle.pierceFlowSec / 0.74,
             battle.pickupFlowSec / 0.8,
+            battle.playerTurnBurstSec / 0.18,
             battle.eliteCrackWindowSec / 0.82,
             battle.playerImpactSec / 0.34,
           ),
@@ -3057,6 +3063,76 @@ export class GameScene extends Phaser.Scene {
         );
       }
     }
+    if (dominantRoute === 'dash' && dashDriveRatio > 0.08) {
+      const dashWindowDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
+      const dashWindowDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
+      const dashWindowOrthoX = -dashWindowDirY;
+      const dashWindowOrthoY = dashWindowDirX;
+      const dashWindowRatio = Math.max(
+        dashDriveRatio,
+        turnBurstRatio * 0.82,
+        Math.min(1, shotFlashRatio * 0.9 + killFlowRatio * 0.45),
+      );
+      const dashWindowColor = this.mixColor(accentColor, 0xebfff7, 0.36);
+      const foldReach = 26 + dashWindowRatio * 24;
+      const foldSide = 14 + dashWindowRatio * 8;
+      const returnLead = 0.24 + ((battle.elapsedSec * 2.7) % 0.58);
+      this.graphics.lineStyle(2, dashWindowColor, 0.14 + dashWindowRatio * 0.2);
+      this.graphics.lineBetween(
+        bodyX - dashWindowDirX * 6 + dashWindowOrthoX * foldSide,
+        bodyY - dashWindowDirY * 6 + dashWindowOrthoY * foldSide,
+        bodyX + dashWindowDirX * foldReach,
+        bodyY + dashWindowDirY * foldReach,
+      );
+      this.graphics.lineBetween(
+        bodyX - dashWindowDirX * 6 - dashWindowOrthoX * foldSide,
+        bodyY - dashWindowDirY * 6 - dashWindowOrthoY * foldSide,
+        bodyX + dashWindowDirX * foldReach,
+        bodyY + dashWindowDirY * foldReach,
+      );
+      this.graphics.lineStyle(1.4, dashWindowColor, 0.1 + dashWindowRatio * 0.16);
+      this.graphics.lineBetween(
+        bodyX - dashWindowDirX * (16 + dashWindowRatio * 8) + dashWindowOrthoX * (foldSide + 4),
+        bodyY - dashWindowDirY * (16 + dashWindowRatio * 8) + dashWindowOrthoY * (foldSide + 4),
+        bodyX - dashWindowDirX * 2 + dashWindowOrthoX * (foldSide - 2),
+        bodyY - dashWindowDirY * 2 + dashWindowOrthoY * (foldSide - 2),
+      );
+      this.graphics.lineBetween(
+        bodyX - dashWindowDirX * (16 + dashWindowRatio * 8) - dashWindowOrthoX * (foldSide + 4),
+        bodyY - dashWindowDirY * (16 + dashWindowRatio * 8) - dashWindowOrthoY * (foldSide + 4),
+        bodyX - dashWindowDirX * 2 - dashWindowOrthoX * (foldSide - 2),
+        bodyY - dashWindowDirY * 2 - dashWindowOrthoY * (foldSide - 2),
+      );
+      this.graphics.fillStyle(dashWindowColor, 0.06 + dashWindowRatio * 0.08);
+      this.graphics.fillTriangle(
+        bodyX + dashWindowDirX * (foldReach + 8),
+        bodyY + dashWindowDirY * (foldReach + 8),
+        bodyX + dashWindowDirX * (foldReach - 8) + dashWindowOrthoX * (7 + dashWindowRatio * 4),
+        bodyY + dashWindowDirY * (foldReach - 8) + dashWindowOrthoY * (7 + dashWindowRatio * 4),
+        bodyX + dashWindowDirX * (foldReach - 8) - dashWindowOrthoX * (7 + dashWindowRatio * 4),
+        bodyY + dashWindowDirY * (foldReach - 8) - dashWindowOrthoY * (7 + dashWindowRatio * 4),
+      );
+      for (let marker = 0; marker < 2; marker += 1) {
+        const markerRatio = (returnLead + marker * 0.24) % 0.9;
+        const markerDistance = foldReach * (0.26 + markerRatio * 0.54);
+        const markerX = bodyX + dashWindowDirX * markerDistance;
+        const markerY = bodyY + dashWindowDirY * markerDistance;
+        const markerWidth = 6 + dashWindowRatio * 4 + marker * 1.5;
+        this.graphics.lineStyle(1.2, dashWindowColor, 0.08 + dashWindowRatio * 0.16 - marker * 0.02);
+        this.graphics.lineBetween(
+          markerX - dashWindowDirX * 8 + dashWindowOrthoX * markerWidth,
+          markerY - dashWindowDirY * 8 + dashWindowOrthoY * markerWidth,
+          markerX,
+          markerY,
+        );
+        this.graphics.lineBetween(
+          markerX - dashWindowDirX * 8 - dashWindowOrthoX * markerWidth,
+          markerY - dashWindowDirY * 8 - dashWindowOrthoY * markerWidth,
+          markerX,
+          markerY,
+        );
+      }
+    }
     if (pickupFlowRatio > 0) {
       for (let streak = 0; streak < Math.min(4, Math.max(1, battle.pickupFlowCount)); streak += 1) {
         const offset = 10 + streak * 9 + pickupFlowRatio * 7;
@@ -3900,6 +3976,35 @@ export class GameScene extends Phaser.Scene {
             eliteScreen.x + chaseOrthoX * (elite.radius + 10),
             eliteScreen.y + chaseOrthoY * (elite.radius + 10),
           );
+        } else if (liveFocusRoute === 'dash') {
+          const foldReach = elite.radius + 24 + eliteCrackRatio * 16;
+          const foldSide = elite.radius + 14 + eliteCrackRatio * 8;
+          this.graphics.lineStyle(2.1, focusColor, focusAlpha + 0.03);
+          this.graphics.lineBetween(
+            eliteScreen.x - chaseDirX * 10 + chaseOrthoX * foldSide,
+            eliteScreen.y - chaseDirY * 10 + chaseOrthoY * foldSide,
+            eliteScreen.x + chaseDirX * foldReach,
+            eliteScreen.y + chaseDirY * foldReach,
+          );
+          this.graphics.lineBetween(
+            eliteScreen.x - chaseDirX * 10 - chaseOrthoX * foldSide,
+            eliteScreen.y - chaseDirY * 10 - chaseOrthoY * foldSide,
+            eliteScreen.x + chaseDirX * foldReach,
+            eliteScreen.y + chaseDirY * foldReach,
+          );
+          this.graphics.lineStyle(1.4, focusColor, focusAlpha * 0.88);
+          this.graphics.lineBetween(
+            playerScreen.x + chaseDirX * 20 + chaseOrthoX * 14,
+            playerScreen.y + chaseDirY * 20 + chaseOrthoY * 14,
+            playerScreen.x + chaseDirX * 56,
+            playerScreen.y + chaseDirY * 56,
+          );
+          this.graphics.lineBetween(
+            playerScreen.x + chaseDirX * 20 - chaseOrthoX * 14,
+            playerScreen.y + chaseDirY * 20 - chaseOrthoY * 14,
+            playerScreen.x + chaseDirX * 56,
+            playerScreen.y + chaseDirY * 56,
+          );
         }
 
         if (battle.encounterType === 'battle') {
@@ -3979,6 +4084,44 @@ export class GameScene extends Phaser.Scene {
                 escortScreen.y + chaseOrthoY * (10 + eliteCrackRatio * 4),
               );
             }
+          } else if (liveFocusRoute === 'dash') {
+            const returnDepth = elite.radius + 34 + eliteCrackRatio * 20;
+            const returnOffset = elite.radius + 16 + eliteCrackRatio * 8;
+            this.graphics.lineStyle(1.8, focusColor, focusAlpha * 0.86);
+            this.graphics.lineBetween(
+              eliteScreen.x - chaseDirX * 10 + chaseOrthoX * returnOffset,
+              eliteScreen.y - chaseDirY * 10 + chaseOrthoY * returnOffset,
+              eliteScreen.x + chaseDirX * returnDepth,
+              eliteScreen.y + chaseDirY * returnDepth,
+            );
+            this.graphics.lineBetween(
+              eliteScreen.x - chaseDirX * 10 - chaseOrthoX * returnOffset,
+              eliteScreen.y - chaseDirY * 10 - chaseOrthoY * returnOffset,
+              eliteScreen.x + chaseDirX * returnDepth,
+              eliteScreen.y + chaseDirY * returnDepth,
+            );
+            for (let marker = 0; marker < 3; marker += 1) {
+              const returnRatio = ((battle.elapsedSec * 2.4) + marker * 0.22) % 1;
+              const returnDistance = returnDepth * (0.18 + returnRatio * 0.66);
+              const markerX = eliteScreen.x + chaseDirX * returnDistance;
+              const markerY = eliteScreen.y + chaseDirY * returnDistance;
+              const markerSize = 6 + eliteCrackRatio * 4 + marker * 1.4;
+              this.graphics.lineStyle(1.2, focusColor, focusAlpha * (0.72 - marker * 0.1));
+              this.graphics.lineBetween(
+                markerX - chaseDirX * markerSize + chaseOrthoX * markerSize * 0.8,
+                markerY - chaseDirY * markerSize + chaseOrthoY * markerSize * 0.8,
+                markerX,
+                markerY,
+              );
+              this.graphics.lineBetween(
+                markerX - chaseDirX * markerSize - chaseOrthoX * markerSize * 0.8,
+                markerY - chaseDirY * markerSize - chaseOrthoY * markerSize * 0.8,
+                markerX,
+                markerY,
+              );
+            }
+            this.graphics.lineStyle(1.4, focusColor, focusAlpha * 0.72);
+            this.graphics.strokeCircle(eliteScreen.x, eliteScreen.y, elite.radius + 12 + eliteCrackRatio * 8);
           }
         }
       }

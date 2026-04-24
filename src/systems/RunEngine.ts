@@ -3603,10 +3603,16 @@ export class RunEngine {
           }
         }
 
+        this.applyDashDriveHitFollowThrough(
+          battle,
+          enemy,
+          bullet.routeFocus,
+          critical,
+          recoveryRatio,
+          eliteCrackRatio,
+          dashStage,
+        );
         this.trySpawnPierceEchoShots(battle, bullet, enemy);
-        if (dashStage !== 'unformed' && battle.dashDriveSec > 0) {
-          battle.dashDriveSec = Math.min(1.45, battle.dashDriveSec + (enemy.elite ? 0.08 : 0.04));
-        }
 
         if (bullet.pierceRemaining > 0) {
           bullet.pierceRemaining -= 1;
@@ -3627,6 +3633,83 @@ export class RunEngine {
         bullet.y <= ARENA_HEIGHT + 40 &&
         bullet.lifeSec > 0,
     );
+  }
+
+  private applyDashDriveHitFollowThrough(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    bulletRouteFocus: BattleState['bullets'][number]['routeFocus'],
+    critical: boolean,
+    recoveryRatio: number,
+    eliteCrackRatio: number,
+    dashStage: RouteBuildStage,
+  ): void {
+    if (bulletRouteFocus !== 'dash' || dashStage === 'unformed' || battle.dashDriveSec <= 0) {
+      return;
+    }
+
+    const distanceToEnemy = Math.max(1, Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY));
+    const closeRatio = Phaser.Math.Clamp(1 - Math.max(0, distanceToEnemy - enemy.radius - 28) / 132, 0, 1);
+    const driveRatio = Phaser.Math.Clamp(
+      battle.dashDriveSec / (dashStage === 'matured' ? 1.18 : dashStage === 'committed' ? 0.94 : 0.72),
+      0,
+      1,
+    );
+    const cadenceRefund = Math.min(
+      0.042,
+      (dashStage === 'matured' ? 0.012 : 0.008) +
+        closeRatio * 0.014 +
+        driveRatio * 0.008 +
+        Math.max(0, recoveryRatio - 0.12) * 0.026 +
+        (enemy.elite ? eliteCrackRatio * 0.014 : 0) +
+        (critical ? 0.004 : 0),
+    );
+    battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - cadenceRefund);
+    battle.playerMoveBoostSec = Math.max(
+      battle.playerMoveBoostSec,
+      0.12 + closeRatio * 0.1 + driveRatio * 0.05 + (enemy.elite ? 0.03 : 0),
+    );
+    battle.playerTurnBurstSec = Math.max(
+      battle.playerTurnBurstSec,
+      0.1 + closeRatio * 0.08 + driveRatio * 0.04 + (enemy.elite ? 0.02 : 0),
+    );
+    battle.playerRecoverySec = Math.max(
+      battle.playerRecoverySec,
+      0.08 + closeRatio * 0.06 + Math.max(0, recoveryRatio - 0.1) * 0.12,
+    );
+    battle.tempoPulseSec = Math.max(
+      battle.tempoPulseSec,
+      0.22 + closeRatio * 0.08 + driveRatio * 0.06 + (enemy.elite ? eliteCrackRatio * 0.04 : 0),
+    );
+    battle.playerShotFlashSec = Math.max(
+      battle.playerShotFlashSec,
+      0.078 + closeRatio * 0.018 + (enemy.elite ? eliteCrackRatio * 0.014 : 0),
+    );
+    battle.dashDriveSec = Math.min(
+      dashStage === 'matured' ? 1.72 : 1.52,
+      battle.dashDriveSec + (enemy.elite ? 0.1 : 0.06) + closeRatio * 0.04 + eliteCrackRatio * 0.04,
+    );
+
+    if (closeRatio > 0.12 || enemy.elite) {
+      const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 14 + closeRatio * 10 + (enemy.elite ? eliteCrackRatio * 8 : 0),
+        lifeSec: 0.1 + closeRatio * 0.03,
+        color: 0x8ef7d5,
+        secondaryColor: 0xffffff,
+        fillAlpha: 0.04,
+        strokeAlpha: 0.34 + closeRatio * 0.16 + (enemy.elite ? eliteCrackRatio * 0.08 : 0),
+        strokeWidth: 1.8,
+        growthPerSec: 176 + closeRatio * 18,
+        innerRadiusRatio: 0.72,
+        spokeCount: enemy.elite ? 4 : 3,
+        spokeLength: 12 + closeRatio * 10 + (enemy.elite ? eliteCrackRatio * 6 : 0),
+        angle,
+        spinRate: 6.4,
+      });
+    }
   }
 
   private updateEnemies(battle: BattleState, dt: number): void {
@@ -6696,10 +6779,42 @@ export class RunEngine {
     if (bulletRouteFocus === 'dash' && (dashStage === 'committed' || dashStage === 'matured')) {
       battle.dashDriveSec = Math.max(
         battle.dashDriveSec,
-        (dashStage === 'matured' ? 0.82 : 0.64) + breachRatio * 0.14 + (critical ? 0.06 : 0),
+        (dashStage === 'matured' ? 1.02 : 0.82) + breachRatio * 0.2 + (critical ? 0.08 : 0),
       );
-      battle.playerMoveBoostSec = Math.max(battle.playerMoveBoostSec, 0.12 + breachRatio * 0.12);
-      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + breachRatio * 0.08);
+      battle.fireCooldownSec = Math.max(
+        0.035,
+        battle.fireCooldownSec - (dashStage === 'matured' ? 0.016 : 0.011) - breachRatio * 0.012 - (critical ? 0.004 : 0),
+      );
+      battle.playerMoveBoostSec = Math.max(
+        battle.playerMoveBoostSec,
+        0.14 + breachRatio * 0.14 + (critical ? 0.03 : 0),
+      );
+      battle.playerTurnBurstSec = Math.max(
+        battle.playerTurnBurstSec,
+        0.12 + breachRatio * 0.1 + (critical ? 0.03 : 0),
+      );
+      battle.playerRecoverySec = Math.max(
+        battle.playerRecoverySec,
+        0.1 + breachRatio * 0.12 + (recoveryRatio > 0.16 ? 0.04 : 0),
+      );
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.24 + breachRatio * 0.12 + (critical ? 0.03 : 0));
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: enemy.radius + 18 + breachRatio * 12,
+        lifeSec: 0.13,
+        color: 0x92f7d9,
+        secondaryColor: 0xffffff,
+        fillAlpha: 0.04,
+        strokeAlpha: 0.42 + breachRatio * 0.14,
+        strokeWidth: 2,
+        growthPerSec: 188,
+        innerRadiusRatio: 0.68,
+        spokeCount: 4,
+        spokeLength: 16 + breachRatio * 10,
+        angle: Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX),
+        spinRate: 6.3,
+      });
     }
   }
 

@@ -3204,8 +3204,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           dashInterval: -0.16,
           dashInvulnerability: 0.04,
-          regeneration: 0.08,
-          moveSpeed: 10,
+          dashPulseDamage: 4,
+          fireRate: 0.08,
+          regeneration: 0.06,
+          moveSpeed: 12,
         },
       },
       {
@@ -3536,7 +3538,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashInterval: -0.36,
           dashInvulnerability: 0.12,
           dashPulseDamage: 10,
-          regeneration: 0.14,
+          fireRate: 0.16,
+          regeneration: 0.1,
+          moveSpeed: 14,
         },
       },
       {
