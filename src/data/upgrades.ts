@@ -1100,6 +1100,39 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-last-lock',
+    name: '终段封板',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['payoff', 'rare'],
+    selection: {
+      baseWeight: 0.92,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.56,
+        finalPrep: 2.36,
+        finalBattle: 1.08,
+      },
+      finalPrepBonus: 2.45,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 10,
+          damage: 3,
+          regeneration: 0.1,
+          projectileSpeed: 16,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 8,
+      },
+    ],
+  },
+  {
     id: 'crit-aim',
     name: '聚焦瞄准',
     category: 'route',
@@ -2336,7 +2369,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
     selection: {
-      baseWeight: 3.1,
+      baseWeight: 3.34,
       minRound: 2,
       phaseBonuses: {
         mid: 1.2,
@@ -2832,13 +2865,47 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'dash-lanebreak',
+    name: '换边破窗',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['starter'],
+    selection: {
+      baseWeight: 5.68,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 1.56,
+        mid: 0.54,
+      },
+      noDominantRouteBonus: 7.8,
+      hintedRouteBonus: 1.92,
+      dominantRouteBonus: 2.72,
+      offRouteMultiplier: 0.22,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          moveSpeed: 14,
+          dashInterval: -0.42,
+          fireRate: 0.08,
+          dashPulseDamage: 4,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
     id: 'dash-slipstream',
     name: '换位余程',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
     selection: {
-      baseWeight: 3.7,
+      baseWeight: 4.02,
       minRound: 2,
       maxRound: 3,
       phaseBonuses: {

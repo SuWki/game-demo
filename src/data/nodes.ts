@@ -278,9 +278,31 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
             pierce: 0.45,
-            dash: 0.65,
+            dash: 0.82,
           },
           battleCatchupBonus: 1.6,
+        },
+      },
+      {
+        id: 'round-2-battle-dash-cutback',
+        type: 'battle',
+        phase: 'mid',
+        title: '回切压线',
+        description: '中段更强调换边、回切和借窗反打的首领战，适合把 dash build 的主动权拉出来。',
+        templateCandidates: [
+          { templateId: 'elite-lockdown', weight: 1.8 },
+          { templateId: 'elite-vice', weight: 1.35 },
+          { templateId: 'elite-screen', weight: 0.95 },
+        ],
+        difficultyScale: 1.19,
+        selection: {
+          baseWeight: 2.96,
+          soloMultiplier: 1.02,
+          repeatTypeMultiplier: 0.76,
+          routeBonuses: {
+            dash: 1.34,
+          },
+          battleCatchupBonus: 1.3,
         },
       },
       {
@@ -296,7 +318,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.2,
         selection: {
-          baseWeight: 1.4,
+          baseWeight: 1.78,
           soloMultiplier: 0.82,
           repeatTypeMultiplier: 0.74,
           routeBonuses: {
@@ -376,6 +398,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           routeBonuses: {
             crit: 0.4,
             pierce: 0.74,
+            dash: 0.66,
           },
         },
       },
@@ -432,6 +455,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           routeBonuses: {
             crit: 0.4,
             pierce: 0.72,
+            dash: 0.72,
           },
         },
       },
@@ -563,7 +587,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.24,
         selection: {
-          baseWeight: 5.3,
+          baseWeight: 4.95,
           soloMultiplier: 1.18,
           repeatTypeMultiplier: 0.8,
           battleCatchupBonus: 1.3,
@@ -627,11 +651,11 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.29,
         selection: {
-          baseWeight: 1.1,
+          baseWeight: 1.68,
           soloMultiplier: 0.82,
           repeatTypeMultiplier: 0.78,
           routeBonuses: {
-            dash: 0.75,
+            dash: 1.05,
           },
           battleCatchupBonus: 0.9,
         },
@@ -828,7 +852,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           routeBonuses: {
             crit: 0.38,
             pierce: 0.5,
-            dash: 0.18,
+            dash: 0.34,
           },
         },
       },
@@ -875,7 +899,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '旁路归并',
         description: '给一次低频并轨整备，适合把改道后的 build 真正压成另一种结尾。',
         selection: {
-          baseWeight: 1.85,
+          baseWeight: 1.48,
           repeatTypeMultiplier: 0.8,
           lowHpBonus: 1.1,
         },
@@ -900,7 +924,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '尾段押注',
         description: '沿着{focusLabel}再压一次，但这一拍更像失稳押注，不只是普通加码。',
         selection: {
-          baseWeight: 2.8,
+          baseWeight: 3.02,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.5,
@@ -952,7 +976,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '余辉偏折',
         description: '后段异常会把稀有收益、混搭机会和改道诱惑摊得更开，但不保证白拿。',
         selection: {
-          baseWeight: 1.85,
+          baseWeight: 1.5,
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.18,
@@ -965,7 +989,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '并线残响',
         description: '低频残响会把混搭收束和首领预读一起抬上来，更像这一局最后一次偏航。',
         selection: {
-          baseWeight: 1.55,
+          baseWeight: 1.34,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.56,
           noFocusBonus: 0.12,
@@ -991,7 +1015,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '终段偏航',
         description: '低频偏航会把混搭收尾、稀有收益和首领预读拧成最后一次重判。',
         selection: {
-          baseWeight: 1.68,
+          baseWeight: 1.88,
           soloMultiplier: 0.28,
           repeatTypeMultiplier: 0.56,
           noFocusBonus: 0.16,

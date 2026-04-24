@@ -1936,6 +1936,72 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'dash-sidewake-memory',
+    name: '回切借窗',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '换边节奏已经成形，但后段还没决定是继续把反打压紧，还是把借窗与喘息空间再留宽半拍。',
+    routeAffinity: 'dash',
+    selection: {
+      baseWeight: 1.04,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.54,
+        late: 1.24,
+        finalPrep: 0.36,
+      },
+      hintedRouteBonus: 0.58,
+      dominantRouteBonus: 1.86,
+      committedRouteBonus: 1.16,
+      maturedRouteBonus: 0.52,
+      offRouteMultiplier: 0.08,
+    },
+    options: [
+      {
+        id: 'dash-sidewake-memory-push',
+        label: '把回切窗口压实',
+        description: '补一拍换边后的反打强度，让中后段更敢靠借窗夺回主动。',
+        routeId: 'dash',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashInterval: -0.16,
+              dashPulseDamage: 5,
+              fireRate: 0.08,
+              moveSpeed: 12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'dash-sidewake-memory-breath',
+        label: '先把喘息拍留宽',
+        description: '不急着把每次换边都压成进攻，先把无敌与再生撑住，给回切 build 更多容错。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashInvulnerability: 0.08,
+              regeneration: 0.1,
+              moveSpeed: 14,
+              projectileSpeed: 18,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'escort-overread',
     name: '屏卫预读',
     contentKind: 'anomaly',
