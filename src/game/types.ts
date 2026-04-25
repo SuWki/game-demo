@@ -499,6 +499,17 @@ export interface BattleState {
   playerNearMissSec: number;
   playerNearMissAngle: number;
   playerNearMissCooldownSec: number;
+  lateDashWindowMoments: number;
+  dashCounterMoments: number;
+  eliteCrackSeen: boolean;
+  eliteCrackFollowThroughMoments: number;
+  bossFirelineCoverage: number;
+  bossSafeWindowMoments: number;
+  killPickupContinueMoments: number;
+  monitorDashLateMomentCooldownSec: number;
+  monitorDashCounterCooldownSec: number;
+  monitorEliteCrackFollowThroughCooldownSec: number;
+  monitorKillPickupContinueCooldownSec: number;
 }
 
 export interface NodeRecord {
@@ -637,6 +648,13 @@ export interface BattleDebugSnapshot {
   pressureSafeWindowSec: number;
   pressureSafeWindowCenterDistance: number;
   pressureSafeWindowTravelDistance: number;
+  lateDashWindowMoments: number;
+  dashCounterMoments: number;
+  eliteCrackSeen: boolean;
+  eliteCrackFollowThroughMoments: number;
+  bossFirelineCoverage: number;
+  bossSafeWindowMoments: number;
+  killPickupContinueMoments: number;
   enemies: BattleDebugEnemySnapshot[];
   enemyProjectiles: BattleDebugProjectileSnapshot[];
 }

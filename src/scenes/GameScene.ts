@@ -200,6 +200,14 @@ export class GameScene extends Phaser.Scene {
     this.syncDebugPanel(true);
   }
 
+  public setDebugBattlePressureState(options: {
+    eliteHpRatio?: number;
+    remainingSec?: number;
+    pressurePhaseElapsedSec?: number;
+  }): boolean {
+    return this.engine.setDebugBattlePressureState(options);
+  }
+
   public toggleDebugPanel(): void {
     this.updateDebugConfig({
       panelOpen: !this.debugConfig.panelOpen,
@@ -243,6 +251,13 @@ export class GameScene extends Phaser.Scene {
         pressureSafeWindowSec: 0,
         pressureSafeWindowCenterDistance: 0,
         pressureSafeWindowTravelDistance: 0,
+        lateDashWindowMoments: 0,
+        dashCounterMoments: 0,
+        eliteCrackSeen: false,
+        eliteCrackFollowThroughMoments: 0,
+        bossFirelineCoverage: 0,
+        bossSafeWindowMoments: 0,
+        killPickupContinueMoments: 0,
         enemies: [],
         enemyProjectiles: [],
       };
@@ -288,6 +303,13 @@ export class GameScene extends Phaser.Scene {
       pressureSafeWindowSec: battle.pressureSafeWindowSec,
       pressureSafeWindowCenterDistance: this.getPressureSafeWindowCenterDistance(battle),
       pressureSafeWindowTravelDistance: this.getPressureSafeWindowTravelDistance(battle),
+      lateDashWindowMoments: battle.lateDashWindowMoments,
+      dashCounterMoments: battle.dashCounterMoments,
+      eliteCrackSeen: battle.eliteCrackSeen,
+      eliteCrackFollowThroughMoments: battle.eliteCrackFollowThroughMoments,
+      bossFirelineCoverage: battle.bossFirelineCoverage,
+      bossSafeWindowMoments: battle.bossSafeWindowMoments,
+      killPickupContinueMoments: battle.killPickupContinueMoments,
       enemies: [...battle.enemies]
         .sort((left, right) => {
           if (left.elite !== right.elite) {

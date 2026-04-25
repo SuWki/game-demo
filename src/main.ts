@@ -20,6 +20,11 @@ declare global {
       getSnapshot: () => ReturnType<GameScene['getBattleDebugSnapshot']> | null;
       setConfig: (patch: Partial<ReturnType<GameScene['getDebugConfig']>>) => void;
       restartBattle: (options?: Partial<Pick<ReturnType<GameScene['getDebugConfig']>, 'templateId' | 'phase'>>) => void;
+      setPressureState: (options: {
+        eliteHpRatio?: number;
+        remainingSec?: number;
+        pressurePhaseElapsedSec?: number;
+      }) => boolean;
       togglePanel: () => void;
     };
   }
@@ -116,6 +121,14 @@ window.__pilotDebug = {
       }
     } catch {
       // Ignore when GameScene is not active.
+    }
+  },
+  setPressureState: (options) => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      return scene instanceof GameScene ? scene.setDebugBattlePressureState(options) : false;
+    } catch {
+      return false;
     }
   },
   togglePanel: () => {

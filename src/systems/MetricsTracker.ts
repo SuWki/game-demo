@@ -59,9 +59,26 @@ interface MetricRunSummary {
   anomalySeenCount?: number;
   anomalyClassCounts?: Partial<Record<AnomalyClassId, number>>;
   bossEchoSeenCount?: number;
+  lateDashWindowMoments?: number;
+  dashCounterMoments?: number;
+  eliteCrackSeen?: boolean;
+  eliteCrackFollowThroughMoments?: number;
+  bossFirelineCoverage?: number;
+  bossSafeWindowMoments?: number;
+  killPickupContinueMoments?: number;
   redirectOfferSeenCount?: number;
   redirectPickCount?: number;
   redirectPickStage?: PhaseId;
+}
+
+interface BattleMonitoringSummary {
+  lateDashWindowMoments?: number;
+  dashCounterMoments?: number;
+  eliteCrackSeen?: boolean;
+  eliteCrackFollowThroughMoments?: number;
+  bossFirelineCoverage?: number;
+  bossSafeWindowMoments?: number;
+  killPickupContinueMoments?: number;
 }
 
 interface ContentMetricMeta {
@@ -150,6 +167,20 @@ export class MetricsTracker {
   private anomalyClassCountsInRun: Partial<Record<AnomalyClassId, number>> = {};
 
   private bossEchoSeenCountInRun = 0;
+
+  private lateDashWindowMomentsInRun = 0;
+
+  private dashCounterMomentsInRun = 0;
+
+  private eliteCrackSeenInRun = false;
+
+  private eliteCrackFollowThroughMomentsInRun = 0;
+
+  private bossFirelineCoverageInRun = 0;
+
+  private bossSafeWindowMomentsInRun = 0;
+
+  private killPickupContinueMomentsInRun = 0;
 
   private redirectOfferSeenCountInRun = 0;
 
@@ -381,8 +412,25 @@ export class MetricsTracker {
     this.trackContentCounters(contentTier, meta);
   }
 
-  public recordBattleCompleted(templateId: BattleTemplateId, outcome: 'win' | 'loss', contentTier?: ContentTier): void {
-    this.record('battle_template_completed', { templateId, outcome, contentTier });
+  public recordBattleCompleted(
+    templateId: BattleTemplateId,
+    outcome: 'win' | 'loss',
+    contentTier?: ContentTier,
+    monitoring?: BattleMonitoringSummary,
+  ): void {
+    this.lateDashWindowMomentsInRun += monitoring?.lateDashWindowMoments ?? 0;
+    this.dashCounterMomentsInRun += monitoring?.dashCounterMoments ?? 0;
+    this.eliteCrackSeenInRun = this.eliteCrackSeenInRun || Boolean(monitoring?.eliteCrackSeen);
+    this.eliteCrackFollowThroughMomentsInRun += monitoring?.eliteCrackFollowThroughMoments ?? 0;
+    this.bossFirelineCoverageInRun = Math.max(this.bossFirelineCoverageInRun, monitoring?.bossFirelineCoverage ?? 0);
+    this.bossSafeWindowMomentsInRun += monitoring?.bossSafeWindowMoments ?? 0;
+    this.killPickupContinueMomentsInRun += monitoring?.killPickupContinueMoments ?? 0;
+    this.record('battle_template_completed', {
+      templateId,
+      outcome,
+      contentTier,
+      monitoring,
+    });
   }
 
   public recordBossPhaseEntered(templateId: BattleTemplateId, phaseId: string, phaseLabel: string): void {
@@ -561,6 +609,13 @@ export class MetricsTracker {
     currentRun.anomalySeenCount = this.anomalySeenCountInRun;
     currentRun.anomalyClassCounts = this.anomalyClassCountsInRun;
     currentRun.bossEchoSeenCount = this.bossEchoSeenCountInRun;
+    currentRun.lateDashWindowMoments = this.lateDashWindowMomentsInRun;
+    currentRun.dashCounterMoments = this.dashCounterMomentsInRun;
+    currentRun.eliteCrackSeen = this.eliteCrackSeenInRun;
+    currentRun.eliteCrackFollowThroughMoments = this.eliteCrackFollowThroughMomentsInRun;
+    currentRun.bossFirelineCoverage = Number(this.bossFirelineCoverageInRun.toFixed(2));
+    currentRun.bossSafeWindowMoments = this.bossSafeWindowMomentsInRun;
+    currentRun.killPickupContinueMoments = this.killPickupContinueMomentsInRun;
     currentRun.redirectOfferSeenCount = this.redirectOfferSeenCountInRun;
     currentRun.redirectPickCount = this.redirectPickCountInRun;
     currentRun.redirectPickStage = this.redirectPickStageInRun ?? undefined;
@@ -594,6 +649,13 @@ export class MetricsTracker {
       anomalySeenCount: this.anomalySeenCountInRun,
       anomalyClassCounts: this.anomalyClassCountsInRun,
       bossEchoSeenCount: this.bossEchoSeenCountInRun,
+      lateDashWindowMoments: this.lateDashWindowMomentsInRun,
+      dashCounterMoments: this.dashCounterMomentsInRun,
+      eliteCrackSeen: this.eliteCrackSeenInRun,
+      eliteCrackFollowThroughMoments: this.eliteCrackFollowThroughMomentsInRun,
+      bossFirelineCoverage: Number(this.bossFirelineCoverageInRun.toFixed(2)),
+      bossSafeWindowMoments: this.bossSafeWindowMomentsInRun,
+      killPickupContinueMoments: this.killPickupContinueMomentsInRun,
       redirectOfferSeenCount: this.redirectOfferSeenCountInRun,
       redirectPickCount: this.redirectPickCountInRun,
       redirectPickStage: this.redirectPickStageInRun,
@@ -635,6 +697,13 @@ export class MetricsTracker {
     this.anomalySeenCountInRun = 0;
     this.anomalyClassCountsInRun = {};
     this.bossEchoSeenCountInRun = 0;
+    this.lateDashWindowMomentsInRun = 0;
+    this.dashCounterMomentsInRun = 0;
+    this.eliteCrackSeenInRun = false;
+    this.eliteCrackFollowThroughMomentsInRun = 0;
+    this.bossFirelineCoverageInRun = 0;
+    this.bossSafeWindowMomentsInRun = 0;
+    this.killPickupContinueMomentsInRun = 0;
     this.redirectOfferSeenCountInRun = 0;
     this.redirectPickCountInRun = 0;
     this.redirectPickStageInRun = null;

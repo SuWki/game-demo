@@ -238,6 +238,41 @@ export class RunEngine {
     this.enterBattle(debugNode);
   }
 
+  public setDebugBattlePressureState(options: {
+    eliteHpRatio?: number;
+    remainingSec?: number;
+    pressurePhaseElapsedSec?: number;
+  }): boolean {
+    const battle = this.state.battle;
+    if (!battle || !battle.eliteAlive) {
+      return false;
+    }
+
+    const eliteEnemy = this.getEliteEnemy(battle);
+    if (!eliteEnemy) {
+      return false;
+    }
+
+    if (typeof options.eliteHpRatio === 'number' && Number.isFinite(options.eliteHpRatio)) {
+      const ratio = clamp(options.eliteHpRatio, 0.05, 1);
+      eliteEnemy.hp = clamp(eliteEnemy.maxHp * ratio, 1, eliteEnemy.maxHp);
+    }
+
+    if (typeof options.remainingSec === 'number' && Number.isFinite(options.remainingSec)) {
+      battle.remainingSec = clamp(options.remainingSec, 1, BATTLE_TEMPLATES[battle.templateId].durationSec);
+    }
+
+    if (
+      typeof options.pressurePhaseElapsedSec === 'number' &&
+      Number.isFinite(options.pressurePhaseElapsedSec) &&
+      battle.pressurePhaseIndex >= 0
+    ) {
+      battle.pressurePhaseElapsedSec = Math.max(0, options.pressurePhaseElapsedSec);
+    }
+
+    return true;
+  }
+
   public drainAnnouncements(): EngineAnnouncement[] {
     return this.announcements.splice(0, this.announcements.length);
   }
@@ -450,6 +485,16 @@ export class RunEngine {
     battle.playerTurnBurstSec = Math.max(0, battle.playerTurnBurstSec - dt);
     battle.playerNearMissSec = Math.max(0, battle.playerNearMissSec - dt);
     battle.playerNearMissCooldownSec = Math.max(0, battle.playerNearMissCooldownSec - dt);
+    battle.monitorDashLateMomentCooldownSec = Math.max(0, battle.monitorDashLateMomentCooldownSec - dt);
+    battle.monitorDashCounterCooldownSec = Math.max(0, battle.monitorDashCounterCooldownSec - dt);
+    battle.monitorEliteCrackFollowThroughCooldownSec = Math.max(
+      0,
+      battle.monitorEliteCrackFollowThroughCooldownSec - dt,
+    );
+    battle.monitorKillPickupContinueCooldownSec = Math.max(
+      0,
+      battle.monitorKillPickupContinueCooldownSec - dt,
+    );
     if (battle.pickupFlowSec <= 0) {
       battle.pickupFlowCount = 0;
     }
@@ -495,6 +540,7 @@ export class RunEngine {
     }
     this.updatePulses(battle, dt);
     this.updateExperienceOrbs(battle, simulationDt);
+    this.updateBossFirelineMonitoring(battle);
 
     if (this.state.stats.regeneration > 0) {
       this.state.stats.hp = clamp(
@@ -515,7 +561,12 @@ export class RunEngine {
 
     if (battle.remainingSec <= 0) {
       this.finalizeBossPressureMetrics(battle);
-      this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
+      this.services.metrics.recordBattleCompleted(
+        battle.templateId,
+        'loss',
+        BATTLE_TEMPLATES[battle.templateId].contentTier,
+        this.getBattleMonitoringSummary(battle),
+      );
       this.finishRun('defeat', 'timeOut');
     }
   }
@@ -702,6 +753,17 @@ export class RunEngine {
       playerNearMissSec: 0,
       playerNearMissAngle: -Math.PI / 2,
       playerNearMissCooldownSec: 0,
+      lateDashWindowMoments: 0,
+      dashCounterMoments: 0,
+      eliteCrackSeen: false,
+      eliteCrackFollowThroughMoments: 0,
+      bossFirelineCoverage: 0,
+      bossSafeWindowMoments: 0,
+      killPickupContinueMoments: 0,
+      monitorDashLateMomentCooldownSec: 0,
+      monitorDashCounterCooldownSec: 0,
+      monitorEliteCrackFollowThroughCooldownSec: 0,
+      monitorKillPickupContinueCooldownSec: 0,
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
@@ -917,6 +979,45 @@ export class RunEngine {
     };
   }
 
+  private updateBossFirelineMonitoring(battle: BattleState): void {
+    if (battle.encounterType !== 'boss' || battle.templateId !== 'boss-bastion') {
+      return;
+    }
+
+    const phase = this.getActivePressurePhase(battle);
+    if (!phase || phase.id !== 'fireline') {
+      return;
+    }
+
+    const view = this.getBattleViewportBounds(battle);
+    const visibleProjectiles = battle.enemyProjectiles.filter(
+      (projectile) =>
+        projectile.x >= view.left - 18 &&
+        projectile.x <= view.right + 18 &&
+        projectile.y >= view.top - 18 &&
+        projectile.y <= view.bottom + 18,
+    ).length;
+    const activeEscorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.hp > 0).length;
+    const safeAreaRatio =
+      battle.pressureSafeWindowAxis === 'pocket' &&
+      battle.pressureSafeWindowSpan > 0 &&
+      battle.pressureSafeWindowSecondarySpan > 0
+        ? (battle.pressureSafeWindowSpan * battle.pressureSafeWindowSecondarySpan) / Math.max(1, view.width * view.height)
+        : battle.pressureSafeWindowAxis && battle.pressureSafeWindowSpan > 0
+          ? battle.pressureSafeWindowSpan / Math.max(1, battle.pressureSafeWindowAxis === 'vertical' ? view.width : view.height)
+          : 0;
+    const dangerCoverage = clamp(1 - safeAreaRatio, 0, 1);
+    const projectileCoverage = clamp(visibleProjectiles / 18, 0, 1);
+    const escortCoverage = clamp(activeEscorts / 5, 0, 1);
+    const phasePulseCoverage = clamp(battle.pressurePatternPulseCount / 4, 0, 1);
+    const coverage =
+      dangerCoverage * 0.5 +
+      projectileCoverage * 0.26 +
+      escortCoverage * 0.12 +
+      phasePulseCoverage * 0.12;
+    battle.bossFirelineCoverage = Math.max(battle.bossFirelineCoverage, Number(coverage.toFixed(3)));
+  }
+
   private openPressureSafeWindow(
     battle: BattleState,
     phase: BattlePressurePhaseDefinition,
@@ -949,6 +1050,9 @@ export class RunEngine {
       battle.pressureSafeWindowSecondaryCenter = safeWindowCenter.y;
       battle.pressureSafeWindowSecondarySpan = safeWindowSecondarySpan;
       battle.pressureSafeWindowSec = safeWindowSec;
+      if (battle.encounterType === 'boss') {
+        battle.bossSafeWindowMoments += 1;
+      }
 
       if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
         this.services.metrics.recordBossSafeWindowSeen(
@@ -990,6 +1094,9 @@ export class RunEngine {
       axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
     battle.pressureSafeWindowSecondarySpan = 0;
     battle.pressureSafeWindowSec = safeWindowSec;
+    if (battle.encounterType === 'boss') {
+      battle.bossSafeWindowMoments += 1;
+    }
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
       this.services.metrics.recordBossSafeWindowSeen(
@@ -1423,7 +1530,12 @@ export class RunEngine {
     }
 
     this.finalizeBossPressureMetrics(battle);
-    this.services.metrics.recordBattleCompleted(battle.templateId, 'loss', BATTLE_TEMPLATES[battle.templateId].contentTier);
+    this.services.metrics.recordBattleCompleted(
+      battle.templateId,
+      'loss',
+      BATTLE_TEMPLATES[battle.templateId].contentTier,
+      this.getBattleMonitoringSummary(battle),
+    );
     this.finishRun('defeat', 'hpDepleted');
     return true;
   }
@@ -1461,6 +1573,66 @@ export class RunEngine {
     }
 
     this.recordBossPhaseMetrics(battle, activePhase, battle.pressurePhaseElapsedSec);
+  }
+
+  private getBattleMonitoringSummary(battle: BattleState): {
+    lateDashWindowMoments: number;
+    dashCounterMoments: number;
+    eliteCrackSeen: boolean;
+    eliteCrackFollowThroughMoments: number;
+    bossFirelineCoverage: number;
+    bossSafeWindowMoments: number;
+    killPickupContinueMoments: number;
+  } {
+    return {
+      lateDashWindowMoments: battle.lateDashWindowMoments,
+      dashCounterMoments: battle.dashCounterMoments,
+      eliteCrackSeen: battle.eliteCrackSeen,
+      eliteCrackFollowThroughMoments: battle.eliteCrackFollowThroughMoments,
+      bossFirelineCoverage: battle.bossFirelineCoverage,
+      bossSafeWindowMoments: battle.bossSafeWindowMoments,
+      killPickupContinueMoments: battle.killPickupContinueMoments,
+    };
+  }
+
+  private isLateDashMonitoringPhase(): boolean {
+    return this.state.phase === 'late' || this.state.phase === 'finalPrep' || this.state.phase === 'finalBattle';
+  }
+
+  private markLateDashWindowMoment(battle: BattleState, strength: number): void {
+    if (!this.isLateDashMonitoringPhase() || strength < 0.28 || battle.monitorDashLateMomentCooldownSec > 0) {
+      return;
+    }
+
+    battle.lateDashWindowMoments += 1;
+    battle.monitorDashLateMomentCooldownSec = 0.34;
+  }
+
+  private markDashCounterMoment(battle: BattleState, strength: number): void {
+    if (strength < 0.24 || battle.monitorDashCounterCooldownSec > 0) {
+      return;
+    }
+
+    battle.dashCounterMoments += 1;
+    battle.monitorDashCounterCooldownSec = 0.42;
+  }
+
+  private markEliteCrackFollowThroughMoment(battle: BattleState, strength: number): void {
+    if (strength < 0.18 || battle.monitorEliteCrackFollowThroughCooldownSec > 0) {
+      return;
+    }
+
+    battle.eliteCrackFollowThroughMoments += 1;
+    battle.monitorEliteCrackFollowThroughCooldownSec = 0.28;
+  }
+
+  private markKillPickupContinueMoment(battle: BattleState, strength: number): void {
+    if (strength < 0.22 || battle.monitorKillPickupContinueCooldownSec > 0) {
+      return;
+    }
+
+    battle.killPickupContinueMoments += 1;
+    battle.monitorKillPickupContinueCooldownSec = 0.46;
   }
 
   private updatePressurePhase(battle: BattleState): void {
@@ -1536,7 +1708,12 @@ export class RunEngine {
 
     this.state.battleWins += 1;
     this.finalizeBossPressureMetrics(battle);
-    this.services.metrics.recordBattleCompleted(battle.templateId, 'win', BATTLE_TEMPLATES[battle.templateId].contentTier);
+    this.services.metrics.recordBattleCompleted(
+      battle.templateId,
+      'win',
+      BATTLE_TEMPLATES[battle.templateId].contentTier,
+      this.getBattleMonitoringSummary(battle),
+    );
     const completionExp = getBattleCompletionExperience(
       BATTLE_TEMPLATES[battle.templateId],
       this.getCurrentBattleIndex(),
@@ -2780,8 +2957,19 @@ export class RunEngine {
     }
 
     const pickupFlowRatio = this.getPickupFlowRatio(battle);
+    const killFlowRatio = this.getKillFlowRatio(battle);
     const chainRatio = Math.min(1, chainCount / 4);
     const pickupIntensity = Math.min(1, orbValue * 0.04 + chainRatio * 0.58 + pickupFlowRatio * 0.44);
+    const continueFiringRatio =
+      battle.bullets.length > 0
+        ? Math.min(1, battle.bullets.length / 3)
+        : battle.fireCooldownSec < 0.18
+          ? 1 - battle.fireCooldownSec / 0.18
+          : 0;
+    this.markKillPickupContinueMoment(
+      battle,
+      killFlowRatio * 0.44 + pickupFlowRatio * 0.34 + chainRatio * 0.2 + continueFiringRatio * 0.36,
+    );
     battle.pickupLeadEnemyId = target.id;
     battle.pickupLeadSec = Math.max(
       battle.pickupLeadSec,
@@ -3612,6 +3800,12 @@ export class RunEngine {
           eliteCrackRatio,
           dashStage,
         );
+        if (enemy.elite && eliteCrackRatio > 0.08) {
+          this.markEliteCrackFollowThroughMoment(
+            battle,
+            eliteCrackRatio * 0.68 + recoveryRatio * 0.22 + (critical ? 0.1 : 0),
+          );
+        }
         this.trySpawnPierceEchoShots(battle, bullet, enemy);
 
         if (bullet.pierceRemaining > 0) {
@@ -3689,6 +3883,27 @@ export class RunEngine {
       dashStage === 'matured' ? 1.72 : 1.52,
       battle.dashDriveSec + (enemy.elite ? 0.1 : 0.06) + closeRatio * 0.04 + eliteCrackRatio * 0.04,
     );
+    const payoffStrength =
+      closeRatio * 0.44 +
+      driveRatio * 0.24 +
+      Math.max(0, recoveryRatio - 0.1) * 0.78 +
+      eliteCrackRatio * 0.36 +
+      (enemy.elite ? 0.18 : 0) +
+      (critical ? 0.08 : 0);
+    this.markLateDashWindowMoment(battle, payoffStrength);
+    this.markDashCounterMoment(
+      battle,
+      Math.max(
+        payoffStrength,
+        Math.max(0, recoveryRatio - 0.12) * 0.92 + eliteCrackRatio * 0.42 + (enemy.elite ? 0.12 : 0),
+      ),
+    );
+    if (enemy.elite && eliteCrackRatio > 0.08) {
+      this.markEliteCrackFollowThroughMoment(
+        battle,
+        eliteCrackRatio * 0.72 + closeRatio * 0.28 + (critical ? 0.08 : 0),
+      );
+    }
 
     if (closeRatio > 0.12 || enemy.elite) {
       const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
@@ -6846,6 +7061,9 @@ export class RunEngine {
 
     battle.eliteCrackWindowSec = Math.max(battle.eliteCrackWindowSec, Math.min(0.82, windowSec));
     battle.eliteCrackEscortCount = Math.max(battle.eliteCrackEscortCount, crackedEscorts);
+    if (crackedEscorts > 0 || windowSec > 0.32) {
+      battle.eliteCrackSeen = true;
+    }
     battle.playerTurnBurstSec = Math.max(
       battle.playerTurnBurstSec,
       0.08 + Math.min(0.08, crackedEscorts * 0.02 + (focusRoute === 'crit' ? 0.03 : focusRoute === 'pierce' ? 0.02 : 0)),
