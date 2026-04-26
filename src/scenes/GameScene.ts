@@ -30,7 +30,7 @@ const BOSS_FILL = 0xff9462;
 const BOSS_STROKE = 0xffd4b8;
 const SAFE_WINDOW_TINT = 0x82ffca;
 const SAFE_WINDOW_DANGER = 0xff6d62;
-const TERRAIN_TILE_SIZE = 112;
+const TERRAIN_TILE_SIZE = 160;
 
 function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSummary'] {
   return [
@@ -46,7 +46,7 @@ function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSum
     { label: '再生', value: stats.regeneration.toFixed(2), tone: 'survival' },
   ];
 }
-const TERRAIN_BLOT_SIZE = 280;
+const TERRAIN_BLOT_SIZE = 384;
 /*
 const PHASE_TRACK = [
   { phase: 'opening', label: '前段' },
@@ -88,6 +88,10 @@ export class GameScene extends Phaser.Scene {
 
   private lastPanelKey = '';
 
+  private lastPauseKey = '';
+
+  private gamePaused = false;
+
   private debugSyncElapsedMs = DEBUG_SYNC_INTERVAL_MS;
 
   private readonly debugConfig: BattleDebugConfig = {
@@ -127,6 +131,7 @@ export class GameScene extends Phaser.Scene {
     this.resultHandled = false;
     this.lastHudKey = '';
     this.lastPanelKey = '';
+    this.lastPauseKey = '';
     this.debugSyncElapsedMs = DEBUG_SYNC_INTERVAL_MS;
     this.services.debugPanel.bind(this.getDebugTemplateOptions(), {
       onConfigChange: (patch) => this.updateDebugConfig(patch),
@@ -138,6 +143,7 @@ export class GameScene extends Phaser.Scene {
     this.services.debugPanel.setVisible(this.debugConfig.panelOpen);
     this.input.keyboard!.on('keydown-F3', this.handleDebugPanelToggle, this);
     this.input.keyboard!.on('keydown-F4', this.handleDebugPauseToggle, this);
+    this.input.keyboard!.on('keydown-ESC', this.handlePauseToggle, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
     this.syncOverlay();
     this.processAnnouncements();
@@ -151,7 +157,7 @@ export class GameScene extends Phaser.Scene {
       left: this.moveKeys.left.isDown || this.arrowKeys.left.isDown,
       right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown,
     });
-    const scaledDelta = this.debugConfig.paused ? 0 : delta * this.debugConfig.timeScale;
+    const scaledDelta = this.isSimulationPaused() ? 0 : delta * this.debugConfig.timeScale;
     if (scaledDelta > 0) {
       this.engine.tick(scaledDelta);
     }
@@ -190,9 +196,11 @@ export class GameScene extends Phaser.Scene {
     this.debugConfig.templateId = templateId;
     this.debugConfig.phase = normalizedPhase;
     this.debugConfig.paused = false;
+    this.gamePaused = false;
     this.resultHandled = false;
     this.lastHudKey = '';
     this.lastPanelKey = '';
+    this.lastPauseKey = '';
     this.engine.restartDebugBattle(templateId, normalizedPhase);
     this.engine.setDebugConfig(this.getRuntimeDebugConfig());
     this.processAnnouncements();
@@ -397,10 +405,33 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private handlePauseToggle(event: KeyboardEvent): void {
+    event.preventDefault();
+    this.toggleGamePause();
+  }
+
   private handleSceneShutdown(): void {
     this.input.keyboard?.off('keydown-F3', this.handleDebugPanelToggle, this);
     this.input.keyboard?.off('keydown-F4', this.handleDebugPauseToggle, this);
+    this.input.keyboard?.off('keydown-ESC', this.handlePauseToggle, this);
     this.services.debugPanel.unbind();
+  }
+
+  private isSimulationPaused(): boolean {
+    return this.debugConfig.paused || this.gamePaused;
+  }
+
+  private toggleGamePause(): void {
+    const state = this.engine.getState();
+    if (state.status !== 'battle' || !state.battle) {
+      return;
+    }
+
+    this.gamePaused = !this.gamePaused;
+    this.lastHudKey = '';
+    this.lastPauseKey = '';
+    this.services.audio.play('click');
+    this.syncOverlay();
   }
 
   private getRuntimeDebugConfig(): BattleDebugRuntimeConfig {
@@ -443,11 +474,62 @@ export class GameScene extends Phaser.Scene {
     const hudSnapshot = this.createHudSnapshot();
     const hudKey = JSON.stringify(hudSnapshot);
     if (hudKey !== this.lastHudKey) {
-      this.services.overlay.showHud(hudSnapshot);
+      this.services.overlay.showHud(hudSnapshot, () => this.toggleGamePause());
       this.lastHudKey = hudKey;
     }
 
     if (state.status === 'battle') {
+      if (this.gamePaused) {
+        const pauseKey = `pause:${state.phase}:${state.currentNode?.id ?? 'battle'}:${state.battle?.templateId ?? 'none'}`;
+        if (pauseKey !== this.lastPauseKey) {
+          this.services.overlay.showPausePanel(hudSnapshot, {
+            onResume: () => this.toggleGamePause(),
+            onRestart: () => {
+              this.services.audio.play('start');
+              this.services.metrics.beginRunFromRestart();
+              this.gamePaused = false;
+              this.lastPauseKey = '';
+              this.services.overlay.hidePanel();
+              this.scene.start('GameScene');
+            },
+            onBackToMenu: () => {
+              this.services.audio.play('click');
+              this.gamePaused = false;
+              this.lastPauseKey = '';
+              this.services.overlay.hidePanel();
+              this.scene.start('MainMenuScene');
+            },
+            onVolume: () => {
+              this.services.audio.play('click');
+              this.services.overlay.showVolumePanel(
+                '音量设置',
+                '调整整体播放音量。',
+                this.services.audio.getVolume(),
+                (volume) => {
+                  this.services.audio.setVolume(volume);
+                  window.localStorage.setItem('pilot-audio-volume', String(volume));
+                },
+                () => {
+                  this.services.audio.play('click');
+                  this.lastPauseKey = '';
+                  this.syncOverlay();
+                },
+              );
+            },
+          });
+          this.lastPauseKey = pauseKey;
+        }
+        if (this.lastPanelKey) {
+          this.services.overlay.hidePanel();
+          this.lastPanelKey = '';
+        }
+        return;
+      }
+
+      if (this.lastPauseKey) {
+        this.services.overlay.hidePanel();
+        this.lastPauseKey = '';
+      }
       this.services.overlay.clearToasts();
       if (this.lastPanelKey) {
         this.services.overlay.hidePanel();
@@ -531,7 +613,10 @@ export class GameScene extends Phaser.Scene {
       const forceBattleToast =
         item.text.includes('Boss 已进场') ||
         item.text.includes('首领已进场') ||
-        item.text.includes('精英裂口已开');
+        item.text.includes('精英裂口打开') ||
+        item.text.includes('裂口出现') ||
+        item.text.includes('安全窗打开') ||
+        item.text.includes('压力上升');
         if (this.shouldDisplayToast(tone) || forceBattleToast) {
           this.services.overlay.pushToast(item.text, tone);
         }
@@ -1066,11 +1151,64 @@ export class GameScene extends Phaser.Scene {
     const hudSnapshot = this.createHudSnapshot();
     const hudKey = JSON.stringify(hudSnapshot);
     if (hudKey !== this.lastHudKey) {
-      this.services.overlay.showHud(hudSnapshot);
+      this.services.overlay.showHud(hudSnapshot, () => this.toggleGamePause());
       this.lastHudKey = hudKey;
     }
 
     if (state.status === 'battle') {
+      if (this.gamePaused) {
+        const pauseKey = `pause:${state.phase}:${state.currentNode?.id ?? 'battle'}:${state.battle?.templateId ?? 'none'}`;
+        if (pauseKey !== this.lastPauseKey) {
+          this.services.overlay.showPausePanel(hudSnapshot, {
+            onResume: () => this.toggleGamePause(),
+            onRestart: () => {
+              this.services.audio.play('start');
+              this.services.metrics.beginRunFromRestart();
+              this.gamePaused = false;
+              this.lastHudKey = '';
+              this.lastPauseKey = '';
+              this.services.overlay.hidePanel();
+              this.scene.start('GameScene');
+            },
+            onBackToMenu: () => {
+              this.services.audio.play('click');
+              this.gamePaused = false;
+              this.lastHudKey = '';
+              this.lastPauseKey = '';
+              this.services.overlay.hidePanel();
+              this.scene.start('MainMenuScene');
+            },
+            onVolume: () => {
+              this.services.audio.play('click');
+              this.services.overlay.showVolumePanel(
+                '音量设置',
+                '调整整体播放音量。',
+                this.services.audio.getVolume(),
+                (volume) => {
+                  this.services.audio.setVolume(volume);
+                  window.localStorage.setItem('pilot-audio-volume', String(volume));
+                },
+                () => {
+                  this.services.audio.play('click');
+                  this.lastPauseKey = '';
+                  this.syncOverlay();
+                },
+              );
+            },
+          });
+          this.lastPauseKey = pauseKey;
+        }
+        if (this.lastPanelKey) {
+          this.services.overlay.hidePanel();
+          this.lastPanelKey = '';
+        }
+        return;
+      }
+
+      if (this.lastPauseKey) {
+        this.services.overlay.hidePanel();
+        this.lastPauseKey = '';
+      }
       this.services.overlay.clearToasts();
       if (this.lastPanelKey) {
         this.services.overlay.hidePanel();
@@ -1154,7 +1292,10 @@ export class GameScene extends Phaser.Scene {
       const forceBattleToast =
         item.text.includes('Boss 已进场') ||
         item.text.includes('首领已进场') ||
-        item.text.includes('精英裂口已开');
+        item.text.includes('精英裂口打开') ||
+        item.text.includes('裂口出现') ||
+        item.text.includes('安全窗打开') ||
+        item.text.includes('压力上升');
         if (this.shouldDisplayToast(tone) || forceBattleToast) {
           this.services.overlay.pushToast(item.text, tone);
         }
@@ -1621,14 +1762,16 @@ export class GameScene extends Phaser.Scene {
     const maxTop = Math.max(0, ARENA_HEIGHT - height);
     const baseLeft = clamp(battle.playerX - width * 0.5, 0, maxLeft);
     const baseTop = clamp(battle.playerY - height * 0.5, 0, maxTop);
-    const shakeStrength = Math.min(1.2, battle.cameraShakeStrength);
+    const shakeWindow = battle.cameraShakeSec > 0 ? Phaser.Math.Clamp(battle.cameraShakeSec / 0.18, 0, 1) : 0;
+    const shakeStrength = Math.min(1, battle.cameraShakeStrength) * shakeWindow * (0.34 + shakeWindow * 0.46);
+    const shakePhase = battle.elapsedSec * 18 + battle.kills * 0.11;
     const shakeX =
       battle.cameraShakeSec > 0
-        ? Math.sin(battle.elapsedSec * 58 + battle.kills * 0.41) * 12 * shakeStrength
+        ? Math.sin(shakePhase) * 2.1 * shakeStrength
         : 0;
     const shakeY =
       battle.cameraShakeSec > 0
-        ? Math.cos(battle.elapsedSec * 73 + battle.kills * 0.29) * 8 * shakeStrength
+        ? Math.cos(shakePhase * 0.87 + 0.42) * 1.5 * shakeStrength
         : 0;
     const left = clamp(baseLeft + shakeX, 0, maxLeft);
     const top = clamp(baseTop + shakeY, 0, maxTop);
@@ -1716,29 +1859,18 @@ export class GameScene extends Phaser.Scene {
           8 + detailNoise * 16,
         );
 
-        if (detailNoise > 0.36) {
-          const pebbleCount = 1 + Math.floor(detailNoise * 3);
+        if (detailNoise > 0.42) {
+          const pebbleCount = detailNoise > 0.72 ? 2 : 1;
           for (let pebble = 0; pebble < pebbleCount; pebble += 1) {
             const px = screen.x + 18 + this.getTerrainNoise(tileX, tileY, 20 + pebble) * (TERRAIN_TILE_SIZE - 36);
             const py = screen.y + 18 + this.getTerrainNoise(tileX, tileY, 30 + pebble) * (TERRAIN_TILE_SIZE - 36);
             this.graphics.fillStyle(0x0d1116, 0.18);
             this.graphics.fillCircle(px, py, 2 + this.getTerrainNoise(tileX, tileY, 40 + pebble) * 3);
-            this.graphics.lineStyle(1, 0x7c93a9, 0.14);
-            this.graphics.strokeCircle(px, py, 4 + this.getTerrainNoise(tileX, tileY, 50 + pebble) * 3);
           }
         }
       }
     }
 
-    this.graphics.lineStyle(1, 0x87a9c3, 0.035);
-    for (let tileX = tileStartX; tileX <= tileEndX; tileX += 1) {
-      const screenX = tileX * TERRAIN_TILE_SIZE - camera.left;
-      this.graphics.lineBetween(screenX, 0, screenX, camera.height);
-    }
-    for (let tileY = tileStartY; tileY <= tileEndY; tileY += 1) {
-      const screenY = tileY * TERRAIN_TILE_SIZE - camera.top;
-      this.graphics.lineBetween(0, screenY, camera.width, screenY);
-    }
     this.renderEncounterBackdrop(battle, camera, accentColor);
   }
 
@@ -1761,21 +1893,21 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillStyle(encounterGlow, edgeAlpha);
       this.graphics.fillRect(0, 0, camera.width, 26);
       this.graphics.fillRect(0, camera.height - 26, camera.width, 26);
-      this.graphics.lineStyle(2, encounterGlow, 0.08 + pulse * 0.12);
+      this.graphics.lineStyle(2, encounterGlow, 0.035 + pulse * 0.05);
       this.graphics.lineBetween(0, 34, camera.width, 34);
       this.graphics.lineBetween(0, camera.height - 34, camera.width, camera.height - 34);
     } else if (template.winCondition.type === 'elite') {
       const topBeaconY = this.worldToScreen(camera, ARENA_WIDTH * 0.5, 116).y;
       const centerBeacon = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
-      this.graphics.lineStyle(2, encounterGlow, 0.08 + pulse * 0.12);
+      this.graphics.lineStyle(2, encounterGlow, 0.035 + pulse * 0.05);
       this.graphics.lineBetween(camera.width * 0.5, topBeaconY, centerBeacon.x, centerBeacon.y - 64);
-      this.graphics.lineStyle(1.5, encounterGlow, 0.08 + pulse * 0.08);
+      this.graphics.lineStyle(1.5, encounterGlow, 0.035 + pulse * 0.04);
       this.graphics.lineBetween(centerBeacon.x - 56, centerBeacon.y, centerBeacon.x - 20, centerBeacon.y);
       this.graphics.lineBetween(centerBeacon.x + 20, centerBeacon.y, centerBeacon.x + 56, centerBeacon.y);
       this.graphics.lineBetween(centerBeacon.x, centerBeacon.y - 56, centerBeacon.x, centerBeacon.y - 22);
     } else {
       const center = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
-      this.graphics.lineStyle(1.5, encounterGlow, 0.06 + pulse * 0.08);
+      this.graphics.lineStyle(1.5, encounterGlow, 0.025 + pulse * 0.035);
       this.graphics.lineBetween(center.x - 132, center.y, center.x - 78, center.y);
       this.graphics.lineBetween(center.x + 78, center.y, center.x + 132, center.y);
       this.graphics.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
@@ -1793,7 +1925,7 @@ export class GameScene extends Phaser.Scene {
         }
         this.graphics.fillStyle(encounterGlow, 0.032 + pulse * 0.026);
         this.graphics.fillRect(screenX - 18, 0, 36, camera.height);
-        this.graphics.lineStyle(1.5, encounterGlow, 0.08 + pulse * 0.1);
+        this.graphics.lineStyle(1.5, encounterGlow, 0.03 + pulse * 0.04);
         this.graphics.lineBetween(screenX, 0, screenX, camera.height);
       }
       return;
@@ -1807,7 +1939,7 @@ export class GameScene extends Phaser.Scene {
         }
         this.graphics.fillStyle(encounterGlow, 0.03 + pulse * 0.024);
         this.graphics.fillRect(0, screenY - 16, camera.width, 32);
-        this.graphics.lineStyle(1.5, encounterGlow, 0.08 + pulse * 0.1);
+        this.graphics.lineStyle(1.5, encounterGlow, 0.03 + pulse * 0.04);
         this.graphics.lineBetween(0, screenY, camera.width, screenY);
       }
       return;
@@ -1832,7 +1964,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const center = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
-    this.graphics.lineStyle(1.5, encounterGlow, 0.06 + pulse * 0.08);
+    this.graphics.lineStyle(1.5, encounterGlow, 0.025 + pulse * 0.035);
     this.graphics.lineBetween(center.x - 148, center.y - 74, center.x - 96, center.y - 46);
     this.graphics.lineBetween(center.x - 148, center.y + 74, center.x - 96, center.y + 46);
     this.graphics.lineBetween(center.x + 96, center.y - 46, center.x + 148, center.y - 74);
@@ -1890,53 +2022,24 @@ export class GameScene extends Phaser.Scene {
       const pulse = 0.5 + Math.sin(battle.elapsedSec * 5.6 + orb.id * 0.77) * 0.5;
       if (orbSpeedRatio > 0.06) {
         const tail = this.worldToScreen(camera, orb.x - orb.velocityX * 0.05, orb.y - orb.velocityY * 0.05);
-        this.graphics.lineStyle(2.4, XP_ORB_FILL, 0.12 + orbSpeedRatio * 0.18);
-        this.graphics.lineBetween(tail.x, tail.y, screen.x, screen.y);
-        this.graphics.lineStyle(1.2, XP_ORB_STROKE, 0.1 + orbSpeedRatio * 0.16);
-        this.graphics.lineBetween(
-          tail.x - (screen.y - tail.y) * 0.12,
-          tail.y + (screen.x - tail.x) * 0.12,
-          screen.x - (screen.y - tail.y) * 0.08,
-          screen.y + (screen.x - tail.x) * 0.08,
-        );
-        this.graphics.lineBetween(
-          tail.x + (screen.y - tail.y) * 0.12,
-          tail.y - (screen.x - tail.x) * 0.12,
-          screen.x + (screen.y - tail.y) * 0.08,
-          screen.y - (screen.x - tail.x) * 0.08,
-        );
+        this.graphics.fillStyle(XP_ORB_STROKE, 0.03 + orbSpeedRatio * 0.05);
+        this.graphics.fillCircle(tail.x, tail.y, 1.2 + orbSpeedRatio * 0.7);
       }
       if (distanceToPlayer <= 180) {
-        const linkAlpha = 0.04 + (1 - distanceToPlayer / 180) * 0.14;
-        this.graphics.lineStyle(1.2, XP_ORB_STROKE, linkAlpha);
-        this.graphics.lineBetween(screen.x, screen.y, playerScreen.x, playerScreen.y);
+        const linkAlpha = 0.03 + (1 - distanceToPlayer / 180) * 0.08;
+        this.graphics.fillStyle(XP_ORB_STROKE, linkAlpha);
+        this.graphics.fillCircle(screen.x, screen.y, 11 + (1 - distanceToPlayer / 180) * 3);
       }
       if (flowChainRatio > 0.12 && distanceToPlayer <= 210 + battle.killFlowCount * 16) {
         const flowLinkAlpha =
-          0.03 + flowChainRatio * (0.08 + Math.max(0, 1 - distanceToPlayer / (210 + battle.killFlowCount * 16)) * 0.08);
-        this.graphics.lineStyle(1.5, flowGuideColor, flowLinkAlpha);
-        this.graphics.lineBetween(screen.x, screen.y, playerScreen.x, playerScreen.y);
+          0.025 + flowChainRatio * (0.06 + Math.max(0, 1 - distanceToPlayer / (210 + battle.killFlowCount * 16)) * 0.06);
+        this.graphics.lineStyle(1.2, flowGuideColor, flowLinkAlpha);
+        this.graphics.strokeCircle(screen.x, screen.y, 12 + flowChainRatio * 4);
       }
       if (pierceSignatureRatio > 0.12 && distanceToPlayer <= 230) {
-        const railAlpha = 0.025 + pierceSignatureRatio * Math.max(0, 1 - distanceToPlayer / 230) * 0.12;
-        const railDx = screen.x - playerScreen.x;
-        const railDy = screen.y - playerScreen.y;
-        const railDistance = Math.max(1, Math.hypot(railDx, railDy));
-        const railOrthoX = -(railDy / railDistance);
-        const railOrthoY = railDx / railDistance;
+        const railAlpha = 0.04 + pierceSignatureRatio * Math.max(0, 1 - distanceToPlayer / 230) * 0.12;
         this.graphics.lineStyle(1.1, this.mixColor(0x8fdcff, 0xffffff, 0.16), railAlpha);
-        this.graphics.lineBetween(
-          screen.x + railOrthoX * 4,
-          screen.y + railOrthoY * 4,
-          playerScreen.x + railOrthoX * 4,
-          playerScreen.y + railOrthoY * 4,
-        );
-        this.graphics.lineBetween(
-          screen.x - railOrthoX * 4,
-          screen.y - railOrthoY * 4,
-          playerScreen.x - railOrthoX * 4,
-          playerScreen.y - railOrthoY * 4,
-        );
+        this.graphics.strokeCircle(screen.x, screen.y, 11 + pierceSignatureRatio * 4);
       }
       this.graphics.fillStyle(XP_ORB_FILL, 0.12 + pulse * 0.14 + orbSpeedRatio * 0.08);
       this.graphics.fillCircle(screen.x, screen.y, 9 + pulse * 2);
@@ -2006,7 +2109,7 @@ export class GameScene extends Phaser.Scene {
           : bullet.routeFocus === 'crit'
             ? 0.04
             : bullet.routeFocus === 'pierce'
-              ? 0.05 + pierceSignatureRatio * 0.018
+              ? 0.044 + pierceSignatureRatio * 0.006
               : 0.035;
       const tail = this.worldToScreen(camera, bullet.x - bullet.vx * tailDistance, bullet.y - bullet.vy * tailDistance);
       const bulletSpeedRatio = Phaser.Math.Clamp(Math.hypot(bullet.vx, bullet.vy) / 520, 0.35, 1);
@@ -2058,37 +2161,20 @@ export class GameScene extends Phaser.Scene {
         );
       } else if (bullet.routeFocus === 'pierce') {
         this.graphics.lineStyle(
-          1.5 + bulletHitRatio * 0.8 + pierceFlowRatio * 0.45,
+          1.3 + bulletHitRatio * 0.6 + pierceFlowRatio * 0.25,
           bulletTint,
-          0.18 + bulletSpeedRatio * 0.14 + bulletHitRatio * 0.08 + pierceFlowRatio * 0.1,
+          0.16 + bulletSpeedRatio * 0.1 + bulletHitRatio * 0.08 + pierceFlowRatio * 0.06,
         );
+        const tickReach = 5 + bulletHitRatio * 2 + pierceSignatureRatio * 2;
         this.graphics.lineBetween(
-          tail.x + bulletOrthoX * 5,
-          tail.y + bulletOrthoY * 5,
-          screen.x + bulletOrthoX * 5,
-          screen.y + bulletOrthoY * 5,
-        );
-        this.graphics.lineBetween(
-          tail.x - bulletOrthoX * 5,
-          tail.y - bulletOrthoY * 5,
-          screen.x - bulletOrthoX * 5,
-          screen.y - bulletOrthoY * 5,
+          screen.x - bulletOrthoX * tickReach,
+          screen.y - bulletOrthoY * tickReach,
+          screen.x + bulletOrthoX * tickReach,
+          screen.y + bulletOrthoY * tickReach,
         );
         if (pierceSignatureRatio > 0.12) {
-          const railReach = 12 + pierceSignatureRatio * 22 + bulletHitRatio * 8;
-          this.graphics.lineStyle(1.1, this.mixColor(bulletTint, 0xffffff, 0.32), 0.1 + pierceSignatureRatio * 0.18);
-          this.graphics.lineBetween(
-            tail.x - bulletDirX * railReach + bulletOrthoX * 8,
-            tail.y - bulletDirY * railReach + bulletOrthoY * 8,
-            screen.x + bulletDirX * (railReach * 0.52) + bulletOrthoX * 8,
-            screen.y + bulletDirY * (railReach * 0.52) + bulletOrthoY * 8,
-          );
-          this.graphics.lineBetween(
-            tail.x - bulletDirX * railReach - bulletOrthoX * 8,
-            tail.y - bulletDirY * railReach - bulletOrthoY * 8,
-            screen.x + bulletDirX * (railReach * 0.52) - bulletOrthoX * 8,
-            screen.y + bulletDirY * (railReach * 0.52) - bulletOrthoY * 8,
-          );
+          this.graphics.lineStyle(1.1, this.mixColor(bulletTint, 0xffffff, 0.32), 0.1 + pierceSignatureRatio * 0.12);
+          this.graphics.strokeCircle(screen.x, screen.y, 7 + pierceSignatureRatio * 2 + bulletHitRatio * 2);
         }
         if (bulletHitRatio > 0) {
           this.graphics.lineStyle(1.4, this.mixColor(bulletTint, 0xffffff, 0.24), 0.14 + bulletHitRatio * 0.16);
@@ -2822,20 +2908,11 @@ export class GameScene extends Phaser.Scene {
         const dy = enemy.y - battle.playerY;
         const distance = Math.max(1, Math.hypot(dx, dy));
         const dashMoveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
-        const dashMoveDirX = dashMoveMagnitude > 0.01 ? battle.playerMoveDirX / dashMoveMagnitude : 0;
-        const dashMoveDirY = dashMoveMagnitude > 0.01 ? battle.playerMoveDirY / dashMoveMagnitude : 0;
         const alignment =
           dashMoveMagnitude > 0.05 ? ((dx / distance) * battle.playerMoveDirX) + ((dy / distance) * battle.playerMoveDirY) : 0;
         if (alignment > 0.7 && distance <= 180) {
           const pursuitColor = this.mixColor(0x8effdc, accentColor, 0.26);
-          const pursuitAlpha = 0.16 + alignment * 0.18 + (battle.dashDriveSec > 0 ? 0.1 : 0);
-          this.graphics.lineStyle(2, pursuitColor, pursuitAlpha);
-          this.graphics.lineBetween(
-            playerScreen.x + dashMoveDirX * 18,
-            playerScreen.y + dashMoveDirY * 18,
-            screen.x - (dx / distance) * (enemy.radius + 8),
-            screen.y - (dy / distance) * (enemy.radius + 8),
-          );
+          const pursuitAlpha = 0.08 + alignment * 0.12 + (battle.dashDriveSec > 0 ? 0.05 : 0);
           this.graphics.lineStyle(1.5, pursuitColor, pursuitAlpha * 0.9);
           this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 12);
         }
@@ -3096,10 +3173,9 @@ export class GameScene extends Phaser.Scene {
         Math.min(1, shotFlashRatio * 0.9 + killFlowRatio * 0.45),
       );
       const dashWindowColor = this.mixColor(accentColor, 0xebfff7, 0.36);
-      const foldReach = 26 + dashWindowRatio * 24;
-      const foldSide = 14 + dashWindowRatio * 8;
-      const returnLead = 0.24 + ((battle.elapsedSec * 2.7) % 0.58);
-      this.graphics.lineStyle(2, dashWindowColor, 0.14 + dashWindowRatio * 0.2);
+      const foldReach = 20 + dashWindowRatio * 14;
+      const foldSide = 10 + dashWindowRatio * 5;
+      this.graphics.lineStyle(1.6, dashWindowColor, 0.08 + dashWindowRatio * 0.12);
       this.graphics.lineBetween(
         bodyX - dashWindowDirX * 6 + dashWindowOrthoX * foldSide,
         bodyY - dashWindowDirY * 6 + dashWindowOrthoY * foldSide,
@@ -3112,20 +3188,7 @@ export class GameScene extends Phaser.Scene {
         bodyX + dashWindowDirX * foldReach,
         bodyY + dashWindowDirY * foldReach,
       );
-      this.graphics.lineStyle(1.4, dashWindowColor, 0.1 + dashWindowRatio * 0.16);
-      this.graphics.lineBetween(
-        bodyX - dashWindowDirX * (16 + dashWindowRatio * 8) + dashWindowOrthoX * (foldSide + 4),
-        bodyY - dashWindowDirY * (16 + dashWindowRatio * 8) + dashWindowOrthoY * (foldSide + 4),
-        bodyX - dashWindowDirX * 2 + dashWindowOrthoX * (foldSide - 2),
-        bodyY - dashWindowDirY * 2 + dashWindowOrthoY * (foldSide - 2),
-      );
-      this.graphics.lineBetween(
-        bodyX - dashWindowDirX * (16 + dashWindowRatio * 8) - dashWindowOrthoX * (foldSide + 4),
-        bodyY - dashWindowDirY * (16 + dashWindowRatio * 8) - dashWindowOrthoY * (foldSide + 4),
-        bodyX - dashWindowDirX * 2 - dashWindowOrthoX * (foldSide - 2),
-        bodyY - dashWindowDirY * 2 - dashWindowOrthoY * (foldSide - 2),
-      );
-      this.graphics.fillStyle(dashWindowColor, 0.06 + dashWindowRatio * 0.08);
+      this.graphics.fillStyle(dashWindowColor, 0.045 + dashWindowRatio * 0.055);
       this.graphics.fillTriangle(
         bodyX + dashWindowDirX * (foldReach + 8),
         bodyY + dashWindowDirY * (foldReach + 8),
@@ -3134,26 +3197,6 @@ export class GameScene extends Phaser.Scene {
         bodyX + dashWindowDirX * (foldReach - 8) - dashWindowOrthoX * (7 + dashWindowRatio * 4),
         bodyY + dashWindowDirY * (foldReach - 8) - dashWindowOrthoY * (7 + dashWindowRatio * 4),
       );
-      for (let marker = 0; marker < 2; marker += 1) {
-        const markerRatio = (returnLead + marker * 0.24) % 0.9;
-        const markerDistance = foldReach * (0.26 + markerRatio * 0.54);
-        const markerX = bodyX + dashWindowDirX * markerDistance;
-        const markerY = bodyY + dashWindowDirY * markerDistance;
-        const markerWidth = 6 + dashWindowRatio * 4 + marker * 1.5;
-        this.graphics.lineStyle(1.2, dashWindowColor, 0.08 + dashWindowRatio * 0.16 - marker * 0.02);
-        this.graphics.lineBetween(
-          markerX - dashWindowDirX * 8 + dashWindowOrthoX * markerWidth,
-          markerY - dashWindowDirY * 8 + dashWindowOrthoY * markerWidth,
-          markerX,
-          markerY,
-        );
-        this.graphics.lineBetween(
-          markerX - dashWindowDirX * 8 - dashWindowOrthoX * markerWidth,
-          markerY - dashWindowDirY * 8 - dashWindowOrthoY * markerWidth,
-          markerX,
-          markerY,
-        );
-      }
     }
     if (pickupFlowRatio > 0) {
       for (let streak = 0; streak < Math.min(4, Math.max(1, battle.pickupFlowCount)); streak += 1) {
@@ -3193,40 +3236,14 @@ export class GameScene extends Phaser.Scene {
         );
         const guideDirX = (guideTargetScreen.x - bodyX) / guideDistance;
         const guideDirY = (guideTargetScreen.y - bodyY) / guideDistance;
-        const guideOrthoX = -guideDirY;
-        const guideOrthoY = guideDirX;
-        this.graphics.lineStyle(1.6, pickupGuideColor, 0.08 + pickupFlowRatio * 0.2);
-        this.graphics.lineBetween(
-          bodyX + guideDirX * 18,
-          bodyY + guideDirY * 18,
-          guideTargetScreen.x - guideDirX * (pickupGuideEnemy.radius + 10),
-          guideTargetScreen.y - guideDirY * (pickupGuideEnemy.radius + 10),
-        );
         if (liveFocusRoute === 'pierce') {
-          const railOffset = pickupGuideEnemy.radius + 10 + pickupFlowRatio * 8;
-          const railAlpha = 0.08 + pickupFlowRatio * 0.18 + pierceReadRatio * 0.12;
-          this.graphics.lineStyle(1.2, this.mixColor(pickupGuideColor, 0xeaf9ff, 0.22), railAlpha);
-          this.graphics.lineBetween(
-            bodyX + guideDirX * 14 + guideOrthoX * 10,
-            bodyY + guideDirY * 14 + guideOrthoY * 10,
-            guideTargetScreen.x - guideDirX * railOffset + guideOrthoX * 10,
-            guideTargetScreen.y - guideDirY * railOffset + guideOrthoY * 10,
+          const railColor = this.mixColor(pickupGuideColor, 0xeaf9ff, 0.2);
+          this.graphics.fillStyle(railColor, 0.06 + pickupFlowRatio * 0.08);
+          this.graphics.fillCircle(
+            bodyX + guideDirX * (guideDistance * 0.44),
+            bodyY + guideDirY * (guideDistance * 0.44),
+            2.8 + pickupFlowRatio * 1.2,
           );
-          this.graphics.lineBetween(
-            bodyX + guideDirX * 14 - guideOrthoX * 10,
-            bodyY + guideDirY * 14 - guideOrthoY * 10,
-            guideTargetScreen.x - guideDirX * railOffset - guideOrthoX * 10,
-            guideTargetScreen.y - guideDirY * railOffset - guideOrthoY * 10,
-          );
-          for (let marker = 0; marker < 3; marker += 1) {
-            const railRatio = ((battle.elapsedSec * 2.2) + marker * 0.24) % 1;
-            const railDistance = guideDistance * (0.22 + railRatio * 0.58);
-            const railCoreX = bodyX + guideDirX * railDistance;
-            const railCoreY = bodyY + guideDirY * railDistance;
-            this.graphics.fillStyle(this.mixColor(pickupGuideColor, 0xffffff, 0.24), 0.08 + pickupFlowRatio * 0.1 - marker * 0.014);
-            this.graphics.fillCircle(railCoreX + guideOrthoX * 10, railCoreY + guideOrthoY * 10, 2.4 + pickupFlowRatio * 1.4);
-            this.graphics.fillCircle(railCoreX - guideOrthoX * 10, railCoreY - guideOrthoY * 10, 2.4 + pickupFlowRatio * 1.4);
-          }
         }
         this.graphics.lineStyle(1.2, pickupGuideColor, 0.08 + pickupFlowRatio * 0.16);
         this.graphics.strokeCircle(
@@ -3392,39 +3409,39 @@ export class GameScene extends Phaser.Scene {
     }
     if (pierceReadRatio > 0) {
       const laneColor = this.mixColor(accentColor, 0xe7f7ff, 0.34);
-      this.graphics.lineStyle(2, laneColor, 0.08 + pierceReadRatio * 0.14);
+      this.graphics.lineStyle(1.6, laneColor, 0.08 + pierceReadRatio * 0.1);
       this.graphics.lineBetween(
-        playerScreen.x - aimDirX * 32 - aimOrthoX * 14,
-        playerScreen.y - aimDirY * 32 - aimOrthoY * 14,
-        playerScreen.x + aimDirX * 86 - aimOrthoX * 14,
-        playerScreen.y + aimDirY * 86 - aimOrthoY * 14,
+        playerScreen.x - aimDirX * 30 - aimOrthoX * 8,
+        playerScreen.y - aimDirY * 30 - aimOrthoY * 8,
+        playerScreen.x + aimDirX * 86 - aimOrthoX * 8,
+        playerScreen.y + aimDirY * 86 - aimOrthoY * 8,
       );
+      this.graphics.lineStyle(1, laneColor, 0.06 + pierceReadRatio * 0.08);
       this.graphics.lineBetween(
-        playerScreen.x - aimDirX * 28 + aimOrthoX * 14,
-        playerScreen.y - aimDirY * 28 + aimOrthoY * 14,
-        playerScreen.x + aimDirX * 82 + aimOrthoX * 14,
-        playerScreen.y + aimDirY * 82 + aimOrthoY * 14,
-      );
-      this.graphics.lineStyle(1, laneColor, 0.08 + pierceReadRatio * 0.12);
-      this.graphics.lineBetween(
-        playerScreen.x - aimDirX * 22,
-        playerScreen.y - aimDirY * 22,
+        playerScreen.x - aimDirX * 18,
+        playerScreen.y - aimDirY * 18,
         playerScreen.x + aimDirX * 92,
         playerScreen.y + aimDirY * 92,
       );
     }
     if (liveFocusRoute === 'pierce' && combatReadRatio > 0.08) {
       const latticeColor = this.mixColor(accentColor, 0xe7f7ff, 0.34);
-      for (let lane = -1; lane <= 1; lane += 1) {
-        const offset = lane * 18;
-        this.graphics.lineStyle(lane === 0 ? 2.4 : 1.6, latticeColor, 0.12 + combatReadRatio * (lane === 0 ? 0.2 : 0.12));
-        this.graphics.lineBetween(
-          bodyX - aimDirX * 20 + aimOrthoX * offset,
-          bodyY - aimDirY * 20 + aimOrthoY * offset,
-          bodyX + aimDirX * (118 + combatReadRatio * 34) + aimOrthoX * offset,
-          bodyY + aimDirY * (118 + combatReadRatio * 34) + aimOrthoY * offset,
-        );
-      }
+      this.graphics.lineStyle(2, latticeColor, 0.12 + combatReadRatio * 0.16);
+      this.graphics.lineBetween(
+        bodyX - aimDirX * 18,
+        bodyY - aimDirY * 18,
+        bodyX + aimDirX * (112 + combatReadRatio * 26),
+        bodyY + aimDirY * (112 + combatReadRatio * 26),
+      );
+      this.graphics.fillStyle(latticeColor, 0.06 + combatReadRatio * 0.08);
+      this.graphics.fillTriangle(
+        bodyX + aimDirX * (32 + combatReadRatio * 14),
+        bodyY + aimDirY * (32 + combatReadRatio * 14),
+        bodyX + aimOrthoX * 10,
+        bodyY + aimOrthoY * 10,
+        bodyX - aimOrthoX * 10,
+        bodyY - aimOrthoY * 10,
+      );
     }
     if (dominantRoute === 'dash' && (dashDriveRatio > 0 || moveMagnitude > 0.08)) {
       const trailDirX = moveMagnitude > 0.08 ? moveDirX : -aimDirX;
@@ -3634,12 +3651,7 @@ export class GameScene extends Phaser.Scene {
     battle: BattleState,
     camera: { left: number; top: number },
   ): { x: number; y: number } {
-    const template = BATTLE_TEMPLATES[battle.templateId];
-    const pattern = template.spawnRule?.pattern ?? 'surround';
-    const leadSec = pattern === 'lanes' ? 0.24 : 0.18;
-    const predictedX = battle.playerX + battle.playerMoveDirX * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
-    const predictedY = battle.playerY + battle.playerMoveDirY * getPlayerMoveSpeed(this.engine.getState().stats) * leadSec;
-    return this.worldToScreen(camera, predictedX, predictedY);
+    return this.worldToScreen(camera, battle.playerX, battle.playerY);
   }
 
   private getIncomingThreatMarkers(
@@ -3930,19 +3942,8 @@ export class GameScene extends Phaser.Scene {
           continue;
         }
         const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
-        const dx = escortScreen.x - eliteScreen.x;
-        const dy = escortScreen.y - eliteScreen.y;
-        const distance = Math.max(1, Math.hypot(dx, dy));
-        const dirX = dx / distance;
-        const dirY = dy / distance;
-        const linkAlpha = 0.06 + Math.max(eliteRecovery, escortRecovery) * 0.18;
-        this.graphics.lineStyle(1.8, crackColor, linkAlpha);
-        this.graphics.lineBetween(
-          eliteScreen.x + dirX * (elite.radius + 6),
-          eliteScreen.y + dirY * (elite.radius + 6),
-          escortScreen.x - dirX * (entry.enemy.radius + 6),
-          escortScreen.y - dirY * (entry.enemy.radius + 6),
-        );
+        const linkAlpha = 0.05 + Math.max(eliteRecovery, escortRecovery) * 0.12;
+        this.graphics.lineStyle(1.3, crackColor, linkAlpha);
         this.graphics.strokeCircle(
           escortScreen.x,
           escortScreen.y,
@@ -3983,14 +3984,6 @@ export class GameScene extends Phaser.Scene {
           this.graphics.lineBetween(eliteScreen.x + bracketReach, eliteScreen.y + bracketReach * 0.66, eliteScreen.x + elite.radius + 6, eliteScreen.y + bracketReach * 0.66);
           this.graphics.lineBetween(eliteScreen.x + bracketReach, eliteScreen.y + bracketReach * 0.66, eliteScreen.x + bracketReach, eliteScreen.y + elite.radius + 6);
         } else if (liveFocusRoute === 'pierce') {
-          const chaseLineLength = elite.radius + 28 + battle.eliteCrackEscortCount * 7;
-          this.graphics.lineStyle(2.2, focusColor, focusAlpha + 0.02);
-          this.graphics.lineBetween(
-            playerScreen.x + chaseDirX * 24,
-            playerScreen.y + chaseDirY * 24,
-            eliteScreen.x + chaseDirX * chaseLineLength,
-            eliteScreen.y + chaseDirY * chaseLineLength,
-          );
           this.graphics.lineStyle(1.4, focusColor, focusAlpha * 0.9);
           this.graphics.lineBetween(
             eliteScreen.x - chaseOrthoX * (elite.radius + 10),
@@ -4013,19 +4006,6 @@ export class GameScene extends Phaser.Scene {
             eliteScreen.y - chaseDirY * 10 - chaseOrthoY * foldSide,
             eliteScreen.x + chaseDirX * foldReach,
             eliteScreen.y + chaseDirY * foldReach,
-          );
-          this.graphics.lineStyle(1.4, focusColor, focusAlpha * 0.88);
-          this.graphics.lineBetween(
-            playerScreen.x + chaseDirX * 20 + chaseOrthoX * 14,
-            playerScreen.y + chaseDirY * 20 + chaseOrthoY * 14,
-            playerScreen.x + chaseDirX * 56,
-            playerScreen.y + chaseDirY * 56,
-          );
-          this.graphics.lineBetween(
-            playerScreen.x + chaseDirX * 20 - chaseOrthoX * 14,
-            playerScreen.y + chaseDirY * 20 - chaseOrthoY * 14,
-            playerScreen.x + chaseDirX * 56,
-            playerScreen.y + chaseDirY * 56,
           );
         }
 

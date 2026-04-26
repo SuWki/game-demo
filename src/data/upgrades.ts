@@ -2,7 +2,65 @@ import { estimateUpgradeValue, getUpgradeRarityMultiplier, getUpgradeValueBucket
 import { ROUTE_NAME_MAP } from './routes';
 import type { ContentEffect, StatModifiers, UpgradeArchetype, UpgradeDefinition, UpgradeRarity } from '../game/types';
 
-function roundModifier(key: keyof StatModifiers, value: number): number {
+const RARITY_LIMIT_SCALE: Record<UpgradeRarity, number> = {
+  common: 1,
+  uncommon: 1.18,
+  rare: 1.38,
+  epic: 1.62,
+  legendary: 1.9,
+};
+
+const RARITY_RANK: Record<UpgradeRarity, number> = {
+  common: 0,
+  uncommon: 1,
+  rare: 2,
+  epic: 3,
+  legendary: 4,
+};
+
+const COUNT_RARITY_BONUS: Record<UpgradeRarity, number> = {
+  common: 0,
+  uncommon: 0.28,
+  rare: 0.56,
+  epic: 0.88,
+  legendary: 1.24,
+};
+
+const CONTINUOUS_RARITY_BONUS: Record<UpgradeRarity, number> = {
+  common: 0,
+  uncommon: 0.04,
+  rare: 0.08,
+  epic: 0.13,
+  legendary: 0.19,
+};
+
+const FINE_RARITY_BONUS: Record<UpgradeRarity, number> = {
+  common: 0,
+  uncommon: 0.01,
+  rare: 0.02,
+  epic: 0.03,
+  legendary: 0.04,
+};
+
+const CONTINUOUS_STAT_KEYS = new Set<keyof StatModifiers>([
+  'maxHp',
+  'damage',
+  'projectileSpeed',
+  'moveSpeed',
+  'dashPulseDamage',
+]);
+
+const COUNT_STAT_KEYS = new Set<keyof StatModifiers>(['pierce', 'multishot']);
+
+function quantizeModifier(key: keyof StatModifiers, value: number, rarity: UpgradeRarity = 'common'): number {
+  if (COUNT_STAT_KEYS.has(key)) {
+    return Math.max(0, Math.round(value + COUNT_RARITY_BONUS[rarity]));
+  }
+
+  if (CONTINUOUS_STAT_KEYS.has(key)) {
+    return Number((value + CONTINUOUS_RARITY_BONUS[rarity]).toFixed(1));
+  }
+
   switch (key) {
     case 'critChance':
     case 'fireRate':
@@ -10,9 +68,9 @@ function roundModifier(key: keyof StatModifiers, value: number): number {
     case 'dashInterval':
     case 'dashInvulnerability':
     case 'regeneration':
-      return Number(value.toFixed(2));
+      return Number((value + FINE_RARITY_BONUS[rarity]).toFixed(2));
     default:
-      return Math.round(value);
+      return Math.round(value + RARITY_RANK[rarity] * 0.06);
   }
 }
 
@@ -24,7 +82,7 @@ function scaleEffects(effects: ContentEffect[], rarity: UpgradeRarity): ContentE
         if (typeof rawValue !== 'number') {
           return result;
         }
-        const value = roundModifier(key as keyof StatModifiers, rawValue * multiplier);
+        const value = quantizeModifier(key as keyof StatModifiers, rawValue * multiplier, rarity);
         if (value !== 0) {
           result[key as keyof StatModifiers] = value;
         }
@@ -90,8 +148,8 @@ const SINGLE_PRIMARY_MODIFIER_LIMITS: Partial<Record<keyof StatModifiers, number
   projectileSpeed: 120,
   critChance: 0.12,
   critMultiplier: 0.85,
-  pierce: 2,
-  multishot: 2,
+  pierce: 3,
+  multishot: 3,
   moveSpeed: 56,
   dashInterval: 0.78,
   dashPulseDamage: 12,
@@ -148,7 +206,12 @@ function pickRoutePriorityModifier(
   return null;
 }
 
-function fitSingleModifierToValue(key: keyof StatModifiers, seedValue: number, targetValue: number): number {
+function fitSingleModifierToValue(
+  key: keyof StatModifiers,
+  seedValue: number,
+  targetValue: number,
+  rarity: UpgradeRarity,
+): number {
   if (targetValue <= 0 || seedValue === 0) {
     return seedValue;
   }
@@ -156,7 +219,7 @@ function fitSingleModifierToValue(key: keyof StatModifiers, seedValue: number, t
   const direction = seedValue < 0 ? -1 : 1;
   const evaluate = (magnitude: number): number =>
     estimateStatsOnlyValue({
-      [key]: roundModifier(key, direction * magnitude),
+      [key]: quantizeModifier(key, direction * magnitude, rarity),
     } as StatModifiers);
 
   let low = 0;
@@ -179,27 +242,28 @@ function fitSingleModifierToValue(key: keyof StatModifiers, seedValue: number, t
     }
   }
 
-  const lowModifier = roundModifier(key, direction * low);
-  const highModifier = roundModifier(key, direction * high);
+  const lowModifier = quantizeModifier(key, direction * low, rarity);
+  const highModifier = quantizeModifier(key, direction * high, rarity);
   const lowDiff = Math.abs(estimateStatsOnlyValue({ [key]: lowModifier } as StatModifiers) - targetValue);
   const highDiff = Math.abs(estimateStatsOnlyValue({ [key]: highModifier } as StatModifiers) - targetValue);
   const pickedModifier = lowDiff <= highDiff ? lowModifier : highModifier;
 
   if (pickedModifier === 0) {
-    return roundModifier(key, seedValue);
+    return quantizeModifier(key, seedValue, rarity);
   }
   return pickedModifier;
 }
 
-function capSingleModifierValue(key: keyof StatModifiers, value: number): number {
+function capSingleModifierValue(key: keyof StatModifiers, value: number, rarity: UpgradeRarity): number {
   const limit = SINGLE_PRIMARY_MODIFIER_LIMITS[key];
   if (typeof limit !== 'number') {
     return value;
   }
+  const scaledLimit = limit * RARITY_LIMIT_SCALE[rarity];
   if (value < 0) {
-    return roundModifier(key, Math.max(value, -limit));
+    return quantizeModifier(key, Math.max(value, -scaledLimit));
   }
-  return roundModifier(key, Math.min(value, limit));
+  return quantizeModifier(key, Math.min(value, scaledLimit));
 }
 
 function collectStatModifiers(effects: ContentEffect[]): StatModifiers {
@@ -223,6 +287,7 @@ export function normalizeEffectsToSingleStat(
   sourceId: string,
   effects: ContentEffect[],
   routeId?: UpgradeArchetype['routeId'] | 'dominant',
+  rarity: UpgradeRarity = 'common',
 ): ContentEffect[] {
   const modifiers = collectStatModifiers(effects);
   const modifierEntries = Object.entries(modifiers).filter(([, rawValue]) => typeof rawValue === 'number' && rawValue !== 0);
@@ -242,7 +307,11 @@ export function normalizeEffectsToSingleStat(
 
   const statsOnlyEffects = effects.filter((effect): effect is Extract<ContentEffect, { type: 'stats' }> => effect.type === 'stats');
   const targetValue = estimateUpgradeValue(statsOnlyEffects).total;
-  const fittedValue = capSingleModifierValue(primaryKey, fitSingleModifierToValue(primaryKey, seedValue, targetValue));
+  const fittedValue = capSingleModifierValue(
+    primaryKey,
+    fitSingleModifierToValue(primaryKey, seedValue, targetValue, rarity),
+    rarity,
+  );
   const normalizedStatsEffect: Extract<ContentEffect, { type: 'stats' }> = {
     type: 'stats',
     modifiers: {
@@ -3553,7 +3622,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
 
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
   const scaledEffects = scaleEffects(archetype.effects, rarity);
-  const effects = normalizeEffectsToSingleStat(archetype.id, scaledEffects, archetype.routeId);
+  const effects = normalizeEffectsToSingleStat(archetype.id, scaledEffects, archetype.routeId, rarity);
   const valueBreakdown = estimateUpgradeValue(effects);
   const valueBucket = getUpgradeValueBucket(valueBreakdown.total);
   return {
