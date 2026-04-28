@@ -19,6 +19,13 @@ interface ResultActions {
   onBackToMenu: () => void;
 }
 
+interface PauseActions {
+  onResume: () => void;
+  onRestart: () => void;
+  onBackToMenu: () => void;
+  onVolume: () => void;
+}
+
 type PanelProgress = Pick<
   OverlayHudSnapshot,
   'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary'
@@ -57,6 +64,10 @@ export class OverlayController {
 
   private readonly toastLayer: HTMLDivElement;
 
+  private readonly tooltipLayer: HTMLDivElement;
+
+  private activeTooltipTarget: HTMLElement | null = null;
+
   public constructor(root: HTMLElement) {
     this.root = root;
     this.root.innerHTML = '';
@@ -74,10 +85,18 @@ export class OverlayController {
     this.toastLayer = document.createElement('div');
     this.toastLayer.className = 'toast-layer';
 
-    this.root.append(this.screenLayer, this.hudLayer, this.panelLayer, this.toastLayer);
+    this.tooltipLayer = document.createElement('div');
+    this.tooltipLayer.className = 'choice-tooltip-floating';
+
+    this.root.append(this.screenLayer, this.hudLayer, this.panelLayer, this.toastLayer, this.tooltipLayer);
+    this.root.addEventListener('mouseover', (event) => this.handleTooltipEnter(event));
+    this.root.addEventListener('focusin', (event) => this.handleTooltipEnter(event));
+    this.root.addEventListener('mouseout', (event) => this.handleTooltipLeave(event));
+    this.root.addEventListener('focusout', (event) => this.handleTooltipLeave(event));
+    window.addEventListener('resize', () => this.hideTooltip());
   }
 
-  public showMenu(summary: OverlayMetaSummary, onStart: () => void, onExport: () => void): void {
+  public showMenu(summary: OverlayMetaSummary, onStart: () => void, onExport: () => void, onVolume: () => void): void {
     this.hideHud();
     this.hidePanel();
     this.clearToasts();
@@ -91,20 +110,25 @@ export class OverlayController {
             <p class="screen-kicker">AUTONOMOUS COMBAT DRONE PROGRAM</p>
             <h1 class="screen-title">PROJECT<br />ORBITAL</h1>
             <p class="screen-subtitle">节点推进 / 自动射击 / 模组构筑</p>
-            <p class="screen-brief">Deploy. Adapt. Survive.<br />Every run is a new simulation.</p>
+            <p class="screen-brief">移动躲弹，自动开火。<br />打倒敌人，拾取能量，撑到 Boss。</p>
             <div class="screen-meta-strip">
               <span>RUNS ${summary.totalRuns}</span>
               <span>WINS ${summary.wins}</span>
+              <span>${summary.lastDurationSec > 0 ? `LAST ${this.formatDuration(summary.lastDurationSec)}` : 'NO RUN'}</span>
               <span>${summary.lastRouteName || 'NO ROUTE'}</span>
             </div>
             <div class="screen-actions commercial-screen-actions">
               <button class="text-action text-action-primary" data-action="start">
                 <span>开始作战</span>
-                <small>DEPLOY DRONE</small>
+                <small>移动躲弹，自动开火</small>
               </button>
               <button class="text-action" data-action="export">
                 <span>战斗记录</span>
-                <small>SYSTEMS LOG</small>
+                <small>查看本地记录</small>
+              </button>
+              <button class="text-action" data-action="volume">
+                <span>音量</span>
+                <small>调整背景与音效</small>
               </button>
             </div>
           </div>
@@ -123,9 +147,125 @@ export class OverlayController {
     `;
     this.bindClick('[data-action="start"]', onStart);
     this.bindClick('[data-action="export"]', onExport);
+    this.bindClick('[data-action="volume"]', onVolume);
   }
 
-  public showHud(snapshot: OverlayHudSnapshot): void {
+  public showPausePanel(snapshot: OverlayHudSnapshot, actions: PauseActions): void {
+    this.hideHud();
+    this.hidePanel();
+    this.clearToasts();
+    this.screenLayer.classList.add('hidden');
+    this.panelLayer.className = 'panel-layer panel-layer-center';
+    this.panelLayer.classList.remove('hidden');
+    this.panelLayer.innerHTML = `
+      <section class="floating-panel dock-panel commercial-choice-panel commercial-pause-panel">
+        <div class="tray-header">
+          <div class="tray-title-group">
+            <span class="panel-eyebrow">RUN PAUSED</span>
+            <h2 class="panel-title">暂停中</h2>
+          </div>
+        </div>
+        <div class="pause-panel-layout">
+          <aside class="pause-panel-summary" aria-label="当前局面">
+            <div class="pause-panel-status">
+              <span>${snapshot.phaseLabel}</span>
+              <strong>${snapshot.statusText}</strong>
+              <small>${snapshot.statusSubtext ?? snapshot.progressDetail}</small>
+            </div>
+            <div class="screen-summary-grid pause-panel-grid">
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">路线</span>
+                <strong>${snapshot.routeStatusText}</strong>
+              </article>
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">阶段</span>
+                <strong>${snapshot.progressLabel}</strong>
+              </article>
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">目标</span>
+                <strong>${snapshot.objectiveLabel}</strong>
+              </article>
+              <article class="screen-summary-card">
+                <span class="screen-summary-label">进度</span>
+                <strong>${snapshot.objectiveProgressText}</strong>
+              </article>
+            </div>
+          </aside>
+          <div class="pause-panel-actions">
+            <button class="text-action text-action-primary" data-action="resume">
+              <span>继续作战</span>
+              <small>回到刚才那一拍</small>
+            </button>
+            <button class="text-action" data-action="restart">
+              <span>重新开始</span>
+              <small>重开当前流程</small>
+            </button>
+            <button class="text-action" data-action="menu">
+              <span>返回主页面</span>
+              <small>回到开始页</small>
+            </button>
+            <button class="text-action" data-action="volume">
+              <span>音量</span>
+              <small>打开音量调节</small>
+            </button>
+          </div>
+        </div>
+      </section>
+    `;
+    this.bindClick('[data-action="resume"]', actions.onResume);
+    this.bindClick('[data-action="restart"]', actions.onRestart);
+    this.bindClick('[data-action="menu"]', actions.onBackToMenu);
+    this.bindClick('[data-action="volume"]', actions.onVolume);
+  }
+
+  public showVolumePanel(
+    title: string,
+    subtitle: string,
+    volume: number,
+    onChange: (volume: number) => void,
+    onClose: () => void,
+  ): void {
+    this.hidePanel();
+    this.hideTooltip();
+    this.panelLayer.className = 'panel-layer panel-layer-center';
+    this.panelLayer.classList.remove('hidden');
+    const volumePercent = Math.round(volume * 100);
+    this.panelLayer.innerHTML = `
+      <section class="floating-panel dock-panel commercial-choice-panel commercial-volume-panel">
+        <div class="tray-header">
+          <div class="tray-title-group">
+            <span class="panel-eyebrow">AUDIO</span>
+            <h2 class="panel-title">${title}</h2>
+          </div>
+        </div>
+        <div class="volume-panel-copy">
+          <p>${subtitle}</p>
+          <strong data-volume-readout>${volumePercent}%</strong>
+        </div>
+        <div class="volume-panel-slider">
+          <input data-volume-slider type="range" min="0" max="150" step="1" value="${volumePercent}" />
+        </div>
+        <div class="volume-panel-actions">
+          <button class="text-action text-action-primary" data-action="close">
+            <span>完成</span>
+            <small>返回上一层</small>
+          </button>
+        </div>
+      </section>
+    `;
+    const slider = this.panelLayer.querySelector<HTMLInputElement>('[data-volume-slider]');
+    const readout = this.panelLayer.querySelector<HTMLElement>('[data-volume-readout]');
+    if (slider && readout) {
+      slider.addEventListener('input', () => {
+        const nextVolume = Number(slider.value) / 100;
+        readout.textContent = `${Math.round(nextVolume * 100)}%`;
+        onChange(nextVolume);
+      });
+    }
+    this.bindClick('[data-action="close"]', onClose);
+  }
+
+  public showHud(snapshot: OverlayHudSnapshot, onPause?: () => void): void {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
     this.hudLayer.innerHTML = `
@@ -155,8 +295,14 @@ export class OverlayController {
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
           <span class="game-hud-fixed__mode">${snapshot.statusText}</span>
         </section>
+        <section class="game-hud-fixed__right">
+          <button class="hud-pause-button" data-action="pause">暂停</button>
+        </section>
       </div>
     `;
+    if (onPause) {
+      this.bindClick('[data-action="pause"]', onPause);
+    }
   }
 
   public showNodePanel(
@@ -169,7 +315,7 @@ export class OverlayController {
       panelClassName: 'panel-node-choice panel-route-choice',
       panelLayerClassName: 'panel-layer-center',
       modeLabel: '路线选择',
-      eyebrow: 'ROUTE SELECT',
+      eyebrow: '下一站',
       title: '选择下一站',
       contextHtml: this.renderRouteChoiceContext(phaseLabel, options.length, progress),
       items: options.map((node) => this.renderNodeChoiceCard(node)),
@@ -192,7 +338,7 @@ export class OverlayController {
       panelClassName: 'panel-upgrade-choice',
       panelLayerClassName: 'panel-layer-center',
       modeLabel: isFinalPrep ? '最终整备' : '强化选择',
-      eyebrow: isFinalPrep ? 'FINAL LOADOUT' : 'LOADOUT UPGRADE',
+      eyebrow: isFinalPrep ? '最后补强' : '选择强化',
       title: isFinalPrep ? '最终整备' : '机体强化',
       contextHtml: this.renderUpgradeChoiceContext(progress),
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade)),
@@ -230,15 +376,24 @@ export class OverlayController {
     this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
+    const routeTrace = result.routeTrace.slice(-4);
+    const buildStageLabel =
+      result.buildStage === 'unformed'
+        ? '未站稳'
+        : result.buildStage === 'hinted'
+          ? '已出倾向'
+          : result.buildStage === 'committed'
+            ? '开始站稳'
+            : '已经成型';
     this.screenLayer.innerHTML = `
       <section class="screen-minimal result-screen commercial-result-screen ${result.outcome === 'victory' ? 'is-victory' : 'is-defeat'}">
         <div class="screen-gridline" aria-hidden="true"></div>
         <div class="commercial-corner-label">04 RESULT SCREEN</div>
         <div class="commercial-screen-layout">
           <div class="commercial-screen-copy commercial-result-copy">
-            <p class="screen-kicker">${result.outcome === 'victory' ? 'MISSION COMPLETE' : 'MISSION FAILED'}</p>
+            <p class="screen-kicker">${result.outcome === 'victory' ? '本局完成' : '本局失败'}</p>
             <h1 class="screen-title">${result.outcome === 'victory' ? '任务完成' : '任务失败'}</h1>
-            <p class="screen-subtitle">Simulation Terminated</p>
+            <p class="screen-subtitle">看看这局怎么收场</p>
             <div class="screen-summary-grid commercial-result-report">
               <article class="screen-summary-card">
                 <span class="screen-summary-label">路线</span>
@@ -261,25 +416,57 @@ export class OverlayController {
             <div class="screen-actions commercial-screen-actions commercial-result-actions">
               <button class="text-action text-action-primary" data-action="restart">
                 <span>再来一局</span>
-                <small>DEPLOY AGAIN</small>
+                <small>立刻重开</small>
               </button>
               <button class="text-action" data-action="menu">
                 <span>返回机库</span>
-                <small>RETURN TO HANGAR</small>
+                <small>回到开始页</small>
               </button>
             </div>
           </div>
-          <div class="commercial-visual-anchor commercial-result-anchor" aria-hidden="true">
-            <span class="screen-ring ring-a"></span>
-            <span class="screen-ring ring-b"></span>
-            <span class="screen-ring ring-c"></span>
-            <span class="commercial-core"></span>
-            <div class="commercial-debrief-panel">
-              <span>DEBRIEF</span>
-              <strong>${result.outcome === 'victory' ? 'OPTIMAL' : 'RECOVER'}</strong>
-              <small>${result.buildLabel}</small>
+          <aside class="commercial-result-aside" aria-label="对局数据">
+            <div class="commercial-visual-anchor commercial-result-anchor" aria-hidden="true">
+              <span class="screen-ring ring-a"></span>
+              <span class="screen-ring ring-b"></span>
+              <span class="screen-ring ring-c"></span>
+              <span class="commercial-core"></span>
+              <div class="commercial-debrief-panel">
+                <span>本局小结</span>
+                <strong>${result.outcome === 'victory' ? '可以收工' : '调整再来'}</strong>
+                <small>${result.buildLabel}</small>
+              </div>
             </div>
-          </div>
+            <div class="commercial-result-stack">
+              <article class="commercial-result-card">
+                <span>构筑摘要</span>
+                <strong>${result.buildSummary}</strong>
+              </article>
+              <article class="commercial-result-card">
+                <span>结束原因</span>
+                <strong>${result.endingReason}</strong>
+              </article>
+              <article class="commercial-result-card">
+                <span>终点节点</span>
+                <strong>${result.finalNodeTitle}</strong>
+              </article>
+              <article class="commercial-result-card is-row">
+                <span>战斗胜场</span>
+                <strong>${result.battleWins}</strong>
+                <span>推进节点</span>
+                <strong>${result.nodesCleared}</strong>
+              </article>
+              <article class="commercial-result-card is-row">
+                <span>路线阶段</span>
+                <strong>${buildStageLabel}</strong>
+                <span>结局类型</span>
+                <strong>${result.endingLabel}</strong>
+              </article>
+              <article class="commercial-result-card">
+                <span>最近轨迹</span>
+                <strong>${routeTrace.length > 0 ? routeTrace.map((node) => node.title).join(' / ') : '暂无轨迹'}</strong>
+              </article>
+            </div>
+          </aside>
         </div>
       </section>
     `;
@@ -304,6 +491,7 @@ export class OverlayController {
     this.panelLayer.className = 'panel-layer';
     this.panelLayer.classList.add('hidden');
     this.panelLayer.innerHTML = '';
+    this.hideTooltip();
   }
 
   public hideHud(): void {
@@ -424,6 +612,10 @@ export class OverlayController {
     const effectText = this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 2 }) || upgrade.description;
     const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
     const focusLabel = this.getEffectFocusLabel(upgrade.effects);
+    const routeLabelHtml = this.renderTooltipTerm(routeLabel, this.getRouteTooltip(upgrade.routeId));
+    const focusLabelHtml = this.renderTooltipTerm(focusLabel, this.getFocusTooltip(focusLabel));
+    const nameHtml = this.decorateTooltipTerms(upgrade.name);
+    const effectTextHtml = this.decorateTooltipTerms(effectText);
     return `
       <button
         class="choice-strip choice-strip-upgrade ${upgrade.routeId ? 'is-route-upgrade' : 'is-generic-upgrade'}"
@@ -435,13 +627,13 @@ export class OverlayController {
           <span class="choice-rarity">${upgrade.rarityLabel}</span>
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
-          <strong>${upgrade.name}</strong>
-          <small>${effectText}</small>
+          <strong>${nameHtml}</strong>
+          <small>${effectTextHtml}</small>
         </div>
         <div class="choice-strip-foot">
-          <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
+          <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabelHtml}</span>
           <div class="choice-foot-trail">
-            <span class="choice-effect-tag">${focusLabel}</span>
+            <span class="choice-effect-tag">${focusLabelHtml}</span>
             <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
           </div>
         </div>
@@ -515,7 +707,7 @@ export class OverlayController {
       if (effect.type === 'stats') {
         for (const [key, value] of Object.entries(effect.modifiers)) {
           if (typeof value === 'number' && value < 0) {
-            costs.push(`${this.getStatLabel(key)} ${this.formatSignedValue(value)}`);
+            costs.push(`${this.getStatLabel(key)} ${this.formatStatModifierValue(key, value)}`);
           }
         }
       }
@@ -542,8 +734,22 @@ export class OverlayController {
     return labelMap[statKey] ?? statKey;
   }
 
-  private formatSignedValue(value: number): string {
-    return value > 0 ? `+${value}` : `${value}`;
+  private formatStatModifierValue(statKey: string, value: number): string {
+    const sign = value > 0 ? '+' : '';
+    switch (statKey) {
+      case 'critChance':
+      case 'critMultiplier':
+        return `${sign}${Math.round(value * 100)}%`;
+      case 'dashInterval':
+      case 'dashInvulnerability':
+        return `${sign}${Math.round(value * 1000)}ms`;
+      case 'regeneration':
+        return `${sign}${Math.round(value * 10)}/10秒`;
+      case 'fireRate':
+        return `${sign}${Math.round(value * 60)}/分`;
+      default:
+        return `${sign}${Math.round(value)}`;
+    }
   }
 
   private getNodeCardDescription(node: NodeOption): string {
@@ -767,6 +973,91 @@ export class OverlayController {
     return labelMap[statKey] ?? '强化';
   }
 
+  private renderTooltipTerm(label: string, tooltip: string): string {
+    if (!tooltip) {
+      return this.escapeHtml(label);
+    }
+    const safeTooltip = this.escapeHtml(tooltip);
+    const safeLabel = this.escapeHtml(label);
+    return `<span class="choice-tooltip-term" tabindex="0" data-tooltip="${safeTooltip}" title="${safeTooltip}">${safeLabel}</span>`;
+  }
+
+  private decorateTooltipTerms(text: string): string {
+    const tooltipTerms: Array<[string, string]> = [
+      ['穿梭冷却', this.getFocusTooltip('穿梭')],
+      ['冲刺间隔', this.getFocusTooltip('穿梭')],
+      ['暴击率', this.getFocusTooltip('暴击')],
+      ['暴击', this.getFocusTooltip('暴击')],
+      ['爆伤', this.getFocusTooltip('爆伤')],
+      ['穿透', this.getFocusTooltip('穿透')],
+      ['穿梭', this.getFocusTooltip('穿梭')],
+      ['脉冲', this.getFocusTooltip('脉冲')],
+      ['无伤', this.getFocusTooltip('无伤')],
+      ['射速', this.getFocusTooltip('射速')],
+    ];
+    const pieces: string[] = [];
+    let cursor = 0;
+
+    while (cursor < text.length) {
+      const match = tooltipTerms.find(([term]) => text.startsWith(term, cursor));
+      if (match) {
+        pieces.push(this.renderTooltipTerm(match[0], match[1]));
+        cursor += match[0].length;
+      } else {
+        pieces.push(this.escapeHtml(text[cursor]));
+        cursor += 1;
+      }
+    }
+
+    return pieces.join('');
+  }
+
+  private getRouteTooltip(routeId?: RouteReference): string {
+    switch (routeId) {
+      case 'crit':
+        return '暴击路线：提高爆发和击杀收割。';
+      case 'pierce':
+        return '穿透路线：子弹穿过敌人，适合清线回收。';
+      case 'dash':
+        return '穿梭路线：换位、借窗、回切反打。';
+      default:
+        return '';
+    }
+  }
+
+  private getFocusTooltip(label: string): string {
+    const tooltipMap: Record<string, string> = {
+      暴击: '提高打出高伤害的概率。',
+      爆伤: '提高暴击时的伤害倍率。',
+      穿透: '子弹命中后继续穿过敌人。',
+      穿梭: '缩短穿梭间隔，更容易换位反打。',
+      脉冲: '穿梭后释放短促范围伤害。',
+      无伤: '延长穿梭后的短暂无伤窗口。',
+      扩面: '增加弹幕覆盖，适合清小怪。',
+      射速: '更快开火，回报链更连续。',
+    };
+    return tooltipMap[label] ?? '';
+  }
+
+  private escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, (char) => {
+      switch (char) {
+        case '&':
+          return '&amp;';
+        case '<':
+          return '&lt;';
+        case '>':
+          return '&gt;';
+        case '"':
+          return '&quot;';
+        case "'":
+          return '&#39;';
+        default:
+          return char;
+      }
+    });
+  }
+
   private getEventClassLabel(eventDef: EventDefinition): string {
     switch (eventDef.anomalyClass) {
       case 'routeWindow':
@@ -864,9 +1155,61 @@ export class OverlayController {
   }
 
   private bindClick(selector: string, handler: () => void): void {
-    const target = this.root.querySelector<HTMLElement>(selector);
+    const targets = this.root.querySelectorAll<HTMLElement>(selector);
+    const target = targets.length > 0 ? targets[targets.length - 1] : null;
     if (target) {
       target.onclick = handler;
     }
+  }
+
+  private handleTooltipEnter(event: Event): void {
+    const target = event.target instanceof HTMLElement ? event.target.closest<HTMLElement>('.choice-tooltip-term') : null;
+    if (!target || !this.root.contains(target)) {
+      return;
+    }
+    const tooltip = target.dataset.tooltip;
+    if (!tooltip) {
+      return;
+    }
+    this.activeTooltipTarget = target;
+    this.tooltipLayer.textContent = tooltip;
+    this.tooltipLayer.classList.add('visible');
+    this.positionTooltip(target);
+  }
+
+  private handleTooltipLeave(event: Event): void {
+    if (!this.activeTooltipTarget) {
+      return;
+    }
+    const relatedTarget = event instanceof MouseEvent ? event.relatedTarget : null;
+    if (relatedTarget instanceof Node && this.activeTooltipTarget.contains(relatedTarget)) {
+      return;
+    }
+    this.hideTooltip();
+  }
+
+  private hideTooltip(): void {
+    this.activeTooltipTarget = null;
+    this.tooltipLayer.classList.remove('visible');
+    this.tooltipLayer.textContent = '';
+  }
+
+  private positionTooltip(target: HTMLElement): void {
+    const targetRect = target.getBoundingClientRect();
+    const tooltipRect = this.tooltipLayer.getBoundingClientRect();
+    const viewportPadding = 14;
+    const targetCenter = targetRect.left + targetRect.width * 0.5;
+    const left = Math.min(
+      window.innerWidth - tooltipRect.width - viewportPadding,
+      Math.max(viewportPadding, targetCenter - tooltipRect.width * 0.5),
+    );
+    const belowTop = targetRect.bottom + 10;
+    const top =
+      belowTop + tooltipRect.height + viewportPadding <= window.innerHeight
+        ? belowTop
+        : Math.max(viewportPadding, targetRect.top - tooltipRect.height - 10);
+
+    this.tooltipLayer.style.left = `${left}px`;
+    this.tooltipLayer.style.top = `${top}px`;
   }
 }

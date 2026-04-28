@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#f7fbff" stop-opacity="0.95"/>
+      <stop offset="46%" stop-color="#6ee7ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cyanHull" x1="20%" y1="5%" x2="80%" y2="95%">
+      <stop offset="0%" stop-color="#e9fbff"/>
+      <stop offset="45%" stop-color="#50d7ff"/>
+      <stop offset="100%" stop-color="#11609a"/>
+    </linearGradient>
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <ellipse cx="128" cy="136" rx="68" ry="78" fill="url(#coreGlow)" opacity="0.58"/>
+  <path d="M128 34 L172 178 L128 154 L84 178 Z" fill="#081522" stroke="#b8f7ff" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M128 46 L158 162 L128 143 L98 162 Z" fill="url(#cyanHull)" stroke="#07111f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M128 74 L142 132 L128 124 L114 132 Z" fill="#f8fdff" opacity="0.9"/>
+  <path d="M91 158 L57 197 L111 178 Z" fill="#163b62" stroke="#59e0ff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M165 158 L199 197 L145 178 Z" fill="#163b62" stroke="#59e0ff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M113 175 L128 220 L143 175 Z" fill="#ffb14b" filter="url(#softGlow)"/>
+  <path d="M121 178 L128 204 L135 178 Z" fill="#fff3a7"/>
+  <circle cx="128" cy="118" r="7" fill="#07111f" stroke="#dffbff" stroke-width="3"/>
+  <path d="M128 20 L118 38 H138 Z" fill="#dffbff"/>
+</svg>

@@ -347,35 +347,36 @@ export function normalizeEffectsToSingleStat(
 }
 
 function formatModifierLabel(key: keyof StatModifiers, value: number): string {
+  const sign = value > 0 ? '+' : '';
   switch (key) {
     case 'maxHp':
-      return `生命上限 ${value > 0 ? '+' : ''}${value}`;
+      return `生命上限 ${sign}${Math.round(value)}`;
     case 'damage':
-      return `伤害 ${value > 0 ? '+' : ''}${value}`;
+      return `伤害 ${sign}${Math.round(value)}`;
     case 'fireRate':
-      return `射速 ${value > 0 ? '+' : ''}${value}`;
+      return `射速 ${sign}${Math.round(value * 60)}/分`;
     case 'projectileSpeed':
-      return `弹速 ${value > 0 ? '+' : ''}${value}`;
+      return `弹速 ${sign}${Math.round(value)}`;
     case 'critChance':
-      return `暴击率 ${value > 0 ? '+' : ''}${Math.round(value * 100)}%`;
+      return `暴击率 ${sign}${Math.round(value * 100)}%`;
     case 'critMultiplier':
-      return `爆伤 ${value > 0 ? '+' : ''}${value.toFixed(2)}x`;
+      return `暴击伤害 ${sign}${Math.round(value * 100)}%`;
     case 'pierce':
-      return `穿透 ${value > 0 ? '+' : ''}${value}`;
+      return `穿透 ${sign}${Math.round(value)}`;
     case 'multishot':
-      return `额外弹道 ${value > 0 ? '+' : ''}${value}`;
+      return `额外弹道 ${sign}${Math.round(value)}`;
     case 'moveSpeed':
-      return `移速 ${value > 0 ? '+' : ''}${value}`;
+      return `移速 ${sign}${Math.round(value)}`;
     case 'dashInterval':
-      return `穿梭冷却 ${value > 0 ? '+' : ''}${value.toFixed(2)}s`;
+      return `穿梭冷却 ${sign}${Math.round(value * 1000)}ms`;
     case 'dashPulseDamage':
-      return `脉冲伤害 ${value > 0 ? '+' : ''}${value}`;
+      return `脉冲伤害 ${sign}${Math.round(value)}`;
     case 'dashInvulnerability':
-      return `无伤窗口 ${value > 0 ? '+' : ''}${value.toFixed(2)}s`;
+      return `无伤窗口 ${sign}${Math.round(value * 1000)}ms`;
     case 'regeneration':
-      return `每秒回复 ${value > 0 ? '+' : ''}${value.toFixed(2)}`;
+      return `每10秒回复 ${sign}${Math.round(value * 10)}`;
     default:
-      return `${key} ${value > 0 ? '+' : ''}${value}`;
+      return `${key} ${sign}${Math.round(value)}`;
   }
 }
 

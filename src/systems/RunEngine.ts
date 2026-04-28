@@ -527,6 +527,7 @@ export class RunEngine {
     this.updatePressureSignature(battle, simulationDt);
     this.updatePressurePattern(battle, simulationDt);
     this.updatePlayerMovement(battle, simulationDt);
+    this.applyBossSafeWindowPenalty(battle, simulationDt);
     this.spawnEnemies(battle, simulationDt);
     this.updateShooting(battle, simulationDt);
     this.updateBullets(battle, simulationDt);
@@ -1052,6 +1053,7 @@ export class RunEngine {
       battle.pressureSafeWindowSec = safeWindowSec;
       if (battle.encounterType === 'boss') {
         battle.bossSafeWindowMoments += 1;
+        this.clearBossSafeWindowBlockers(battle);
       }
 
       if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
@@ -1096,6 +1098,7 @@ export class RunEngine {
     battle.pressureSafeWindowSec = safeWindowSec;
     if (battle.encounterType === 'boss') {
       battle.bossSafeWindowMoments += 1;
+      this.clearBossSafeWindowBlockers(battle);
     }
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
@@ -1179,6 +1182,9 @@ export class RunEngine {
     const margin = axis === 'vertical' ? BOSS_SAFE_WINDOW_EDGE_MARGIN_X : BOSS_SAFE_WINDOW_EDGE_MARGIN_Y;
     const minCenter = viewStart + margin + span * 0.5;
     const maxCenter = viewEnd - margin - span * 0.5;
+    if (battle.bossSafeWindowMoments <= 0) {
+      return clamp(playerCoord, minCenter, maxCenter);
+    }
     const targetDistance = this.getBossSafeWindowTargetDistance();
     const positiveTravelMax = Math.max(0, maxCenter - playerCoord);
     const negativeTravelMax = Math.max(0, playerCoord - minCenter);
@@ -1210,6 +1216,12 @@ export class RunEngine {
     const maxX = view.right - BOSS_SAFE_WINDOW_EDGE_MARGIN_X - halfX;
     const minY = view.top + BOSS_SAFE_WINDOW_EDGE_MARGIN_Y + halfY;
     const maxY = view.bottom - BOSS_SAFE_WINDOW_EDGE_MARGIN_Y - halfY;
+    if (battle.bossSafeWindowMoments <= 0) {
+      return {
+        x: clamp(battle.playerX, minX, maxX),
+        y: clamp(battle.playerY, minY, maxY),
+      };
+    }
     const targetDistance = this.getBossSafeWindowTargetDistance();
     const directionX = anchorX - battle.playerX;
     const directionY = anchorY - battle.playerY;
@@ -1387,6 +1399,50 @@ export class RunEngine {
     const safeStartY = battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5 - padding;
     const safeEndY = battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
     return x >= safeStartX && x <= safeEndX && y >= safeStartY && y <= safeEndY;
+  }
+
+  private applyBossSafeWindowPenalty(battle: BattleState, dt: number): void {
+    if (battle.encounterType !== 'boss' || battle.pressureSafeWindowSec <= 0) {
+      return;
+    }
+    if (this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 8)) {
+      return;
+    }
+
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const damagePerSec = Math.max(
+      5.5,
+      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.34),
+    );
+    this.state.stats.hp = clamp(this.state.stats.hp - damagePerSec * dt, 0, this.state.stats.maxHp);
+    battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.13);
+    battle.playerImpactSec = Math.max(battle.playerImpactSec, 0.08);
+    this.registerPlayerThreatDirection(battle, battle.pressureSafeWindowCenter, battle.pressureSafeWindowSecondaryCenter, 0.13);
+  }
+
+  private clearBossSafeWindowBlockers(battle: BattleState): void {
+    if (battle.encounterType !== 'boss' || !battle.pressureSafeWindowAxis) {
+      return;
+    }
+
+    for (const enemy of battle.enemies) {
+      if (enemy.elite) {
+        continue;
+      }
+
+      const blocksWindow = this.isPointInsidePressureSafeWindow(battle, enemy.x, enemy.y, enemy.radius + 44);
+      const blocksPlayer = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY) <= enemy.radius + 72;
+      if (!blocksWindow && !blocksPlayer) {
+        continue;
+      }
+
+      const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
+      const pushDistance = 104 + enemy.radius * 1.6;
+      enemy.x = clamp(enemy.x + Math.cos(angle) * pushDistance, 24, ARENA_WIDTH - 24);
+      enemy.y = clamp(enemy.y + Math.sin(angle) * pushDistance, 24, ARENA_HEIGHT - 24);
+      enemy.recoverySec = Math.max(enemy.recoverySec, 0.28);
+      enemy.rangedCooldownSec = Math.max(enemy.rangedCooldownSec, 0.38);
+    }
   }
 
   private getPressureProjectileStats(
@@ -2239,12 +2295,12 @@ export class RunEngine {
       hasInput && currentVelocitySpeed > 14 ? currentVelocityDirX * normalizedX + currentVelocityDirY * normalizedY : 1;
 
     if (hasInput && currentVelocitySpeed <= moveSpeed * 0.18 && battle.playerMoveBoostSec <= 0.01) {
-      battle.playerMoveBoostSec = 0.18;
+      battle.playerMoveBoostSec = 0.2;
       this.createCombatPulse(battle, {
         x: battle.playerX,
         y: battle.playerY,
-        radius: 22,
-        lifeSec: 0.1,
+        radius: 24,
+        lifeSec: 0.11,
         color: 0x96ecff,
         secondaryColor: 0xffffff,
         fillAlpha: 0.04,
@@ -2255,27 +2311,27 @@ export class RunEngine {
       });
     }
 
-    if (hasInput && currentVelocitySpeed > moveSpeed * 0.16 && directionDot < -0.16) {
-      battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.14 + pierceFlowRatio * 0.03);
+    if (hasInput && currentVelocitySpeed > moveSpeed * 0.16 && directionDot < -0.08) {
+      battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.16 + pierceFlowRatio * 0.03);
       battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.09 + pierceFlowRatio * 0.03);
     }
 
-    const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.18) : 0;
-    const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.14) : 0;
+    const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.2) : 0;
+    const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.16) : 0;
     const targetSpeed =
       moveSpeed *
       controlFactor *
       tempoMoveMultiplier *
-      (1 + moveBoostRatio * 0.13 + turnBurstRatio * 0.06 + pierceFlowRatio * 0.035 + (battle.dashDriveSec > 0 ? 0.08 : 0));
+      (1 + moveBoostRatio * 0.15 + turnBurstRatio * 0.075 + pierceFlowRatio * 0.035 + (battle.dashDriveSec > 0 ? 0.09 : 0));
     const desiredVelocityX = normalizedX * targetSpeed;
     const desiredVelocityY = normalizedY * targetSpeed;
     const velocityBlend = hasInput
-      ? Math.min(1, dt * (battle.dashDriveSec > 0 ? 18 : turnBurstRatio > 0.08 ? 16.5 : pierceFlowRatio > 0.1 ? 14 : 13))
-      : Math.min(1, dt * 12);
+      ? Math.min(1, dt * (battle.dashDriveSec > 0 ? 19 : turnBurstRatio > 0.08 ? 17.5 : pierceFlowRatio > 0.1 ? 14.5 : 14))
+      : Math.min(1, dt * 13.5);
     battle.playerVelocityX += (desiredVelocityX - battle.playerVelocityX) * velocityBlend;
     battle.playerVelocityY += (desiredVelocityY - battle.playerVelocityY) * velocityBlend;
     if (!hasInput) {
-      const coastDamping = Math.max(0, 1 - dt * (battle.dashDriveSec > 0 ? 3.4 : 7.8));
+      const coastDamping = Math.max(0, 1 - dt * (battle.dashDriveSec > 0 ? 4.2 : 9.2));
       battle.playerVelocityX *= coastDamping;
       battle.playerVelocityY *= coastDamping;
     }
@@ -2333,6 +2389,7 @@ export class RunEngine {
     const dashCharge = battle.dashCharge;
     const pulseRadius = this.getDashPulseRadius(dashCharge, dashStage);
     const pulseDamage = this.getDashPulseDamage(dashCharge, dashStage);
+    let dashPulseHits = 0;
 
     battle.dashCooldownSec = this.getDashCooldownAfterPulse(dashStage);
     battle.invulnerableSec = this.state.stats.dashInvulnerability + (dashStage === 'matured' ? 0.12 : 0);
@@ -2365,6 +2422,7 @@ export class RunEngine {
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
       if (distance <= pulseRadius) {
         enemy.hp -= pulseDamage;
+        dashPulseHits += 1;
         this.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
           flashSec: 0.18,
           kick: 12,
@@ -2379,6 +2437,9 @@ export class RunEngine {
           enemy.y += Math.sin(angle) * knockback;
         }
       }
+    }
+    if (dashPulseHits > 0) {
+      this.enqueueAudio('dashPulse');
     }
 
     const dashHeal = this.getDashPulseHeal(dashCharge, dashStage);
@@ -2630,6 +2691,10 @@ export class RunEngine {
           },
         ),
       );
+    }
+
+    if (battle.encounterType === 'boss' && battle.pressureSafeWindowSec > 0) {
+      this.clearBossSafeWindowBlockers(battle);
     }
   }
 
@@ -2973,10 +3038,10 @@ export class RunEngine {
     battle.pickupLeadEnemyId = target.id;
     battle.pickupLeadSec = Math.max(
       battle.pickupLeadSec,
-      0.2 + Math.min(0.24, chainRatio * 0.16 + pickupFlowRatio * 0.12),
+      0.24 + Math.min(0.28, chainRatio * 0.18 + pickupFlowRatio * 0.14),
     );
     target.spawnFlashSec = Math.max(target.spawnFlashSec, 0.08 + pickupIntensity * 0.08);
-    target.hitFlashSec = Math.max(target.hitFlashSec, 0.04 + pickupFlowRatio * 0.05);
+    target.hitFlashSec = Math.max(target.hitFlashSec, 0.05 + pickupFlowRatio * 0.06);
 
     this.createCombatPulse(battle, {
       x: target.x,
@@ -3614,7 +3679,9 @@ export class RunEngine {
         }
         enemy.hp -= damage;
         bullet.hitCount += 1;
-        this.enqueueAudio(critical ? 'crit' : 'hit');
+        const impactCue: AudioCue =
+          critical ? 'crit' : bullet.routeFocus === 'pierce' ? 'pierceHit' : bullet.routeFocus === 'dash' ? 'dashHit' : 'hit';
+        this.enqueueAudio(impactCue);
         this.registerEnemyImpact(battle, enemy, bullet.x, bullet.y, {
           flashSec: critical ? 0.22 : 0.14,
           kick: critical ? 11 : 6,
@@ -3622,11 +3689,6 @@ export class RunEngine {
           pulseColor: critical ? 0xffcf74 : 0xff7d86,
           secondaryColor: critical ? 0xfff8d4 : 0xffffff,
         });
-        if (critical) {
-          this.queueImpactFreeze(battle, enemy.elite ? 0.064 : 0.048, enemy.elite ? 0.12 : 0.16);
-        } else if (enemy.elite) {
-          this.queueImpactFreeze(battle, 0.03, 0.42);
-        }
         this.kickBattleShake(battle, critical ? 0.14 : 0.08, critical ? 0.34 : 0.14);
         battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, critical ? 0.095 : 0.072);
         battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, critical ? 0.11 : 0.09);
@@ -4792,21 +4854,7 @@ export class RunEngine {
     const projectileSpeed =
       (archetype.projectileSpeed ?? 220) * (pressurePhase?.rangedProjectileSpeedMultiplier ?? 1);
     const projectileDamageMultiplier = archetype.projectileDamageMultiplier ?? 0.76;
-    const leadSec = pattern === 'lanes' ? 0.24 : 0.18;
-    const predictedX = battle.playerX + battle.playerMoveDirX * this.getPlayerMoveSpeed() * leadSec;
-    const predictedY = battle.playerY + battle.playerMoveDirY * this.getPlayerMoveSpeed() * leadSec;
-    const laneSideSign =
-      laneBias === 'vertical'
-        ? enemy.x < battle.playerX
-          ? -1
-          : 1
-        : enemy.y < battle.playerY
-          ? -1
-          : 1;
-    const targetX = predictedX + (pattern === 'lanes' && laneBias === 'vertical' ? laneSideSign * (rangedHeavy ? 18 : 10) : 0);
-    const targetY =
-      predictedY + (pattern === 'lanes' && laneBias === 'horizontal' ? laneSideSign * (rangedHeavy ? 18 : 10) : 0);
-    const baseAngle = Math.atan2(targetY - enemy.y, targetX - enemy.x);
+    const baseAngle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
     const shotsPerVolley = pattern === 'lanes' || rangedHeavy || screenedByAnchor ? 2 : 1;
     const spreadRad = shotsPerVolley > 1 ? (pattern === 'lanes' ? (rangedHeavy ? 0.15 : 0.12) : 0.09) : 0;
     const centerIndex = (shotsPerVolley - 1) / 2;
@@ -5064,10 +5112,17 @@ export class RunEngine {
     const activeBehavior = this.getActiveEliteBehavior(battle, template);
     const cycle = this.getElitePressureCycle(activeBehavior);
     const escortCount = this.getActiveEscortCount(battle);
+    const transitionMobilityRatio = clamp(battle.pressureTransitionSec / 1.15, 0, 1);
     const preferredDistance =
       (eliteRule.preferredDistance ?? 170) + (pressurePhase?.preferredDistanceDelta ?? 0);
-    const strafeStrength = (eliteRule.strafeStrength ?? 0.2) + (pressurePhase?.strafeStrengthBonus ?? 0);
-    const movementSpeed = enemy.speed * (pressurePhase?.eliteSpeedMultiplier ?? 1);
+    const strafeStrength =
+      (eliteRule.strafeStrength ?? 0.2) +
+      (pressurePhase?.strafeStrengthBonus ?? 0) +
+      transitionMobilityRatio * (battle.encounterType === 'boss' ? 0.14 : 0.08);
+    const movementSpeed =
+      enemy.speed *
+      (pressurePhase?.eliteSpeedMultiplier ?? 1) *
+      (1 + transitionMobilityRatio * (battle.encounterType === 'boss' ? 0.12 : 0.06));
     const dx = battle.playerX - enemy.x;
     const dy = battle.playerY - enemy.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -5244,8 +5299,8 @@ export class RunEngine {
     const pickupCarry = pickupFlowRatio > 0 ? battle.pickupFlowCount * 0.34 + pickupFlowRatio * 0.9 : 0;
     const effectiveMagnetRadius =
       magnetRadius +
-      (flowRatio > 0 ? 30 + battle.killFlowCount * 10 : 0) +
-      (pickupFlowRatio > 0 ? 18 + battle.pickupFlowCount * 8 : 0);
+      (flowRatio > 0 ? 38 + battle.killFlowCount * 12 : 0) +
+      (pickupFlowRatio > 0 ? 24 + battle.pickupFlowCount * 9 : 0);
     const survivors = [];
 
     for (const orb of battle.experienceOrbs) {
@@ -5271,7 +5326,7 @@ export class RunEngine {
           );
           battle.playerMoveBoostSec = Math.max(
             battle.playerMoveBoostSec,
-            0.14 + Math.min(0.16, battle.killFlowCount * 0.03 + flowCarry * 0.018 + pickupChainCarry * 0.024),
+            0.16 + Math.min(0.18, battle.killFlowCount * 0.032 + flowCarry * 0.02 + pickupChainCarry * 0.026),
           );
           battle.tempoPulseSec = Math.max(
             battle.tempoPulseSec,
@@ -5296,7 +5351,7 @@ export class RunEngine {
           battle.fireCooldownSec = Math.max(
             0.035,
             battle.fireCooldownSec -
-              Math.min(0.03, 0.006 + orb.value * 0.0007 + flowCarry * 0.0024 + pickupChainCarry * 0.002),
+              Math.min(0.036, 0.008 + orb.value * 0.0008 + flowCarry * 0.0026 + pickupChainCarry * 0.0022),
           );
         }
         this.triggerPickupFollowThrough(battle, orb.value, pickupChain);
@@ -5354,13 +5409,13 @@ export class RunEngine {
       if (distance <= effectiveMagnetRadius) {
         const angle = Math.atan2(battle.playerY - orb.y, battle.playerX - orb.x);
         const attraction =
-          (220 +
+          (235 +
             Math.max(0, effectiveMagnetRadius - distance) * 3.1 +
             Math.min(90, battle.tempoPulseSec * 420) +
-            flowCarry * 28 +
-            pickupCarry * 22) *
+            flowCarry * 32 +
+            pickupCarry * 26) *
           (distance <= effectiveMagnetRadius * 0.42 ? 1.24 : 1);
-        const pullBlend = Math.min(1, 0.22 + dt * (8.5 + flowCarry * 0.9 + pickupCarry * 0.7));
+        const pullBlend = Math.min(1, 0.25 + dt * (9.4 + flowCarry * 1 + pickupCarry * 0.82));
         const targetVX = Math.cos(angle) * attraction;
         const targetVY = Math.sin(angle) * attraction;
         orb.velocityX += (targetVX - orb.velocityX) * pullBlend;
@@ -5504,8 +5559,10 @@ export class RunEngine {
   }
 
   private kickBattleShake(battle: BattleState, durationSec: number, strength: number): void {
-    battle.cameraShakeSec = Math.max(battle.cameraShakeSec, durationSec);
-    battle.cameraShakeStrength = Math.max(battle.cameraShakeStrength, strength);
+    const softenedDuration = durationSec * 0.62;
+    const softenedStrength = Math.min(0.5, strength * 0.36);
+    battle.cameraShakeSec = Math.max(battle.cameraShakeSec, softenedDuration);
+    battle.cameraShakeStrength = Math.max(battle.cameraShakeStrength, softenedStrength);
   }
 
   private queueImpactFreeze(battle: BattleState, durationSec: number, factor: number): void {
@@ -5676,6 +5733,7 @@ export class RunEngine {
 
     bullet.canEcho = false;
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.16);
+    this.enqueueAudio('pierceEcho');
     if (!this.routeMomentShown.pierce) {
       this.routeMomentShown.pierce = true;
       this.enqueueTip('穿透火力开始扇裂');
@@ -5725,6 +5783,7 @@ export class RunEngine {
         spinRate: 5.4,
       });
     }
+    let critSplashHits = 0;
     if (critSplashRatio > 0) {
       for (const target of battle.enemies) {
         if (target.id === enemy.id || target.hp <= 0) {
@@ -5733,8 +5792,12 @@ export class RunEngine {
         const distance = Math.hypot(target.x - enemy.x, target.y - enemy.y);
         if (distance <= 72) {
           target.hp -= this.state.stats.damage * critSplashRatio;
+          critSplashHits += 1;
         }
       }
+    }
+    if (critSplashHits > 0) {
+      this.enqueueAudio('critSplash');
     }
 
     const pierceRefund = this.getPierceCooldownRefund();
@@ -7449,12 +7512,12 @@ export class RunEngine {
         const focusRoute = this.getLiveCombatFocusRoute(battle);
         const breachTip =
           focusRoute === 'pierce'
-            ? '绮捐嫳瑁傚彛宸插紑锛氭部杩ㄩ亾绌胯繘鍘?'
+            ? '裂口出现，穿过火线'
             : focusRoute === 'crit'
-              ? '绮捐嫳瑁傚彛宸插紑锛氬帇涓婃湰浣撴敹鍙?'
+              ? '精英裂口打开，贴近反打'
               : focusRoute === 'dash'
-                ? '绮捐嫳瑁傚彛宸插紑锛氬埄鐢ㄧ獥鍙ｈ拷鍑?'
-                : '绮捐嫳瑁傚彛宸插紑锛氳拷杩涘幓鎵撴湰浣?';
+                ? '安全窗打开，追回一拍'
+                : '精英裂口打开，追击本体';
         this.enqueueTip(breachTip);
         battle.eliteBreachCalloutCooldownSec = 1.4;
       }
