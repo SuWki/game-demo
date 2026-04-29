@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import './style.css';
-import type { Services } from './game/types';
+import type { BattleTemplateId, Services } from './game/types';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
@@ -27,6 +27,7 @@ declare global {
       }) => boolean;
       togglePanel: () => void;
     };
+    __pilotQaForceBoss?: (templateId: BattleTemplateId) => void;
   }
 }
 
@@ -144,4 +145,36 @@ window.__pilotDebug = {
       // Ignore when GameScene is not active.
     }
   },
+};
+
+window.__pilotQaForceBoss = (templateId) => {
+  const validBossTemplates = ['boss-bastion', 'boss-hunt', 'boss-lockdown'];
+  if (!validBossTemplates.includes(templateId)) {
+    // eslint-disable-next-line no-console
+    console.warn(`[QA] Invalid boss template: ${templateId}. Valid: ${validBossTemplates.join(', ')}`);
+    return;
+  }
+  window.localStorage.setItem('pilot-qa-force-boss', templateId);
+  const menuScene = game.scene.getScene('MainMenuScene');
+  if (menuScene) {
+    menuScene.scene.start('GameScene');
+    // eslint-disable-next-line no-console
+    console.log(`[QA] Starting GameScene with forced boss: ${templateId}`);
+    return;
+  }
+  const gameScene = game.scene.getScene('GameScene');
+  if (gameScene instanceof GameScene) {
+    try {
+      gameScene.restartDebugBattle(templateId, 'finalBattle');
+      // eslint-disable-next-line no-console
+      console.log(`[QA] Forced boss battle restarted: ${templateId}`);
+    } catch {
+      // Scene exists but may not be fully created yet; rely on create() auto-trigger
+      // eslint-disable-next-line no-console
+      console.log(`[QA] GameScene not ready yet; will auto-trigger on create: ${templateId}`);
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(`[QA] Stored forced boss template. Start the game to trigger: ${templateId}`);
+  }
 };

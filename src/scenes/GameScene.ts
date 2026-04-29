@@ -162,6 +162,19 @@ export class GameScene extends Phaser.Scene {
     this.syncOverlay();
     this.processAnnouncements();
     this.syncDebugPanel(true);
+
+    const forcedBossTemplate = window.localStorage.getItem('pilot-qa-force-boss');
+    if (forcedBossTemplate) {
+      window.localStorage.removeItem('pilot-qa-force-boss');
+      const validBossTemplates = ['boss-bastion', 'boss-hunt', 'boss-lockdown'];
+      if (validBossTemplates.includes(forcedBossTemplate)) {
+        this.time.delayedCall(400, () => {
+          this.restartDebugBattle(forcedBossTemplate as BattleDebugConfig['templateId'], 'finalBattle');
+          // eslint-disable-next-line no-console
+          console.log(`[QA] Auto-triggered forced boss battle: ${forcedBossTemplate}`);
+        });
+      }
+    }
   }
 
   public update(_: number, delta: number): void {
