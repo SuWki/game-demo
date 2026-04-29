@@ -1,0 +1,12 @@
+{
+  "consoleErrors": [],
+  "bossSnapshots": [],
+  "screenshots": [],
+  "audioSnapshots": [],
+  "bossTemplates": [
+    "boss-hunt",
+    "boss-bastion",
+    "boss-lockdown"
+  ],
+  "foundBossTemplates": []
+}
