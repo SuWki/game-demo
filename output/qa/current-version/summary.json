@@ -1,7 +1,7 @@
 {
-  "url": "http://127.0.0.1:5174",
+  "url": "http://127.0.0.1:5178",
   "consoleErrors": [],
-  "panelsSeen": 13,
+  "panelsSeen": 8,
   "resultSeen": true,
   "replaySeen": true,
   "pauseSeen": true,
@@ -9,5 +9,5 @@
   "initialVolume": 0,
   "volumeAfterAdjust": 0.78,
   "volumePersisted": "0.78",
-  "finalScreenText": "04 RESULT SCREEN 本局失败 任务失败 看看这局怎么收场 路线 穿透 生存时间 0:49 等级 Lv.6 节点 5 穿透路线已经起势，但这局还是在收尾前被打断了。 再来一局 立刻重开 返回机库 回到开始页 本局小结 调整再来 开始站稳 构筑摘要 穿透路线已经开始站稳 结束原因 屏卫首领阶段中机体耐久归零 终点节点 屏卫首领 战斗胜场 2 推进节点 5 路线阶段 开始站稳 结局类型 耐久归零 最近轨迹 中段异常 / 稀有读数 / Boss 预整备 / 屏卫首领 AUDIO 音量设置 调整整体播放音量。 78% 完成 返回上一层 DEBUG MODE Combat sandbox F"
+  "finalScreenText": "04 RESULT SCREEN 本局失败 任务失败 看看这局怎么收场 路线 未成线 生存时间 0:49 等级 Lv.6 节点 2 这局还没站稳路线，就先被打断了。 再来一局 立刻重开 返回机库 回到开始页 本局小结 调整再来 未站稳 构筑摘要 本局还没有站稳主路线 结束原因 封锁突破阶段中机体耐久归零 终点节点 封锁突破 战斗胜场 1 推进节点 2 路线阶段 未站稳 结局类型 耐久归零 最近轨迹 试飞异常 / 封锁突破 AUDIO 音量设置 调整整体播放音量。 78% 完成 返回上一层 DEBUG MODE Combat sandbox F3 toggle panel / F4 pause "
 }

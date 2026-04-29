@@ -15,7 +15,13 @@
       "Bash(curl -s http://localhost:5173/)",
       "Bash(set PILOT_QA_URL=http://127.0.0.1:5174)",
       "Bash(PILOT_QA_URL=http://127.0.0.1:5174 node tools/qa-current-version.mjs)",
-      "Bash(pkill -f \"npm run dev\")"
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(PILOT_QA_URL=http://127.0.0.1:5178 node tools/qa-current-version.mjs)",
+      "Bash(PILOT_QA_URL=http://127.0.0.1:5178 PILOT_QA_BOSS=boss-bastion node tools/qa-boss-directed-v2.mjs)",
+      "Bash(PILOT_QA_URL=http://127.0.0.1:5178 PILOT_QA_BOSS=boss-hunt node tools/qa-boss-directed-v2.mjs)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Logs:'\\); [print\\(l\\) for l in d.get\\('consoleLogs', []\\)[:20]]\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   }
 }

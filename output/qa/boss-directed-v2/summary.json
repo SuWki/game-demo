@@ -1,0 +1,601 @@
+{
+  "url": "http://127.0.0.1:5178",
+  "bossTemplate": "boss-bastion",
+  "consoleErrors": [],
+  "bossSnapshots": [
+    {
+      "step": 1,
+      "templateId": "boss-bastion",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 2,
+      "templateId": "boss-bastion",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 3,
+      "templateId": "boss-bastion",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 4,
+      "templateId": "boss-bastion",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 5,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 6,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 7,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 8,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 9,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 10,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 11,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 12,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 13,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 14,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 15,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 16,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 17,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 18,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 19,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 20,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 21,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 22,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 23,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 24,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 25,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 26,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 27,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 28,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 29,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 30,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 31,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 32,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 33,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 34,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 35,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 36,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 37,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 38,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 39,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 40,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 41,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 42,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 43,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 44,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 45,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 46,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 47,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 48,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 49,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 50,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 51,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 52,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 53,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 54,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 55,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 56,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 57,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 58,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 59,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 60,
+      "templateId": "boss-bastion",
+      "eliteAlive": true,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    }
+  ],
+  "screenshots": [
+    "boss-boss-bastion-05.png",
+    "boss-boss-bastion-06.png",
+    "boss-boss-bastion-07.png",
+    "boss-boss-bastion-08.png",
+    "boss-boss-bastion-09.png",
+    "boss-boss-bastion-10.png",
+    "boss-boss-bastion-11.png",
+    "boss-boss-bastion-12.png",
+    "boss-boss-bastion-13.png",
+    "boss-boss-bastion-14.png",
+    "boss-boss-bastion-15.png",
+    "boss-boss-bastion-16.png",
+    "boss-boss-bastion-17.png",
+    "boss-boss-bastion-18.png",
+    "boss-boss-bastion-19.png",
+    "boss-boss-bastion-20.png",
+    "boss-boss-bastion-21.png",
+    "boss-boss-bastion-22.png",
+    "boss-boss-bastion-23.png",
+    "boss-boss-bastion-24.png",
+    "boss-boss-bastion-25.png",
+    "boss-boss-bastion-26.png",
+    "boss-boss-bastion-27.png",
+    "boss-boss-bastion-28.png",
+    "boss-boss-bastion-29.png",
+    "boss-boss-bastion-30.png",
+    "boss-boss-bastion-31.png",
+    "boss-boss-bastion-32.png",
+    "boss-boss-bastion-33.png",
+    "boss-boss-bastion-34.png",
+    "boss-boss-bastion-35.png",
+    "boss-boss-bastion-36.png",
+    "boss-boss-bastion-37.png",
+    "boss-boss-bastion-38.png",
+    "boss-boss-bastion-39.png",
+    "boss-boss-bastion-40.png",
+    "boss-boss-bastion-41.png",
+    "boss-boss-bastion-42.png",
+    "boss-boss-bastion-43.png",
+    "boss-boss-bastion-44.png",
+    "boss-boss-bastion-45.png",
+    "boss-boss-bastion-46.png",
+    "boss-boss-bastion-47.png",
+    "boss-boss-bastion-48.png",
+    "boss-boss-bastion-49.png",
+    "boss-boss-bastion-50.png",
+    "boss-boss-bastion-51.png",
+    "boss-boss-bastion-52.png",
+    "boss-boss-bastion-53.png",
+    "boss-boss-bastion-54.png",
+    "boss-boss-bastion-55.png",
+    "boss-boss-bastion-56.png",
+    "boss-boss-bastion-57.png",
+    "boss-boss-bastion-58.png",
+    "boss-boss-bastion-59.png",
+    "boss-boss-bastion-60.png"
+  ],
+  "audioSnapshots": [
+    {
+      "step": 15,
+      "masterVolume": 0,
+      "currentMusicMode": "boss",
+      "cueCounts": {
+        "pressure": 3,
+        "shoot": 16,
+        "boss": 1,
+        "enemyShot": 9,
+        "hit": 10,
+        "nearMiss": 18,
+        "relayRanged": 1,
+        "crit": 1,
+        "kill": 1,
+        "pickup": 1,
+        "upgrade": 1
+      }
+    },
+    {
+      "step": 30,
+      "masterVolume": 0,
+      "currentMusicMode": "boss",
+      "cueCounts": {
+        "pressure": 3,
+        "shoot": 16,
+        "boss": 1,
+        "enemyShot": 9,
+        "hit": 10,
+        "nearMiss": 18,
+        "relayRanged": 1,
+        "crit": 1,
+        "kill": 1,
+        "pickup": 1,
+        "upgrade": 1
+      }
+    },
+    {
+      "step": 45,
+      "masterVolume": 0,
+      "currentMusicMode": "boss",
+      "cueCounts": {
+        "pressure": 3,
+        "shoot": 16,
+        "boss": 1,
+        "enemyShot": 9,
+        "hit": 10,
+        "nearMiss": 18,
+        "relayRanged": 1,
+        "crit": 1,
+        "kill": 1,
+        "pickup": 1,
+        "upgrade": 1
+      }
+    },
+    {
+      "step": 60,
+      "masterVolume": 0,
+      "currentMusicMode": "boss",
+      "cueCounts": {
+        "pressure": 3,
+        "shoot": 16,
+        "boss": 1,
+        "enemyShot": 9,
+        "hit": 10,
+        "nearMiss": 18,
+        "relayRanged": 1,
+        "crit": 1,
+        "kill": 1,
+        "pickup": 1,
+        "upgrade": 1
+      }
+    }
+  ],
+  "consoleLogs": [
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.7, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.7, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.7, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.6, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.6, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.6, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.5, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.5, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.5, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.4, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.4, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.4, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.3, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.3, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.3, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.2, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.2, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.2, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.1, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.1, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.1, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.0, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.0, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=36.0, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.9, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.9, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.9, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.8, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.8, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.8, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.7, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.7, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.7, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.6, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.6, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.6, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.5, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.5, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.5, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false",
+    "[DEBUG] updatePressurePhase: template=boss-bastion, remainingSec=35.4, eliteHpRatio=1.00, triggerHp=0.88, triggerTime=30, hpTriggered=false, timeTriggered=false"
+  ]
+}
