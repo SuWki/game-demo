@@ -1,0 +1,17 @@
+{
+  "contextState": "running",
+  "desiredMusicMode": "battle",
+  "currentMusicMode": "battle",
+  "pendingCueCount": 0,
+  "lastAudibleRms": 0.00009,
+  "peakRms": 0.08297,
+  "audibleMoments": 18,
+  "scheduledMusicSteps": 17,
+  "cueCounts": {
+    "start": 1,
+    "pressure": 1,
+    "shoot": 10,
+    "hit": 3,
+    "kill": 3
+  }
+}

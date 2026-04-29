@@ -2170,12 +2170,12 @@ export class GameScene extends Phaser.Scene {
       const screen = this.worldToScreen(camera, bullet.x, bullet.y);
       const tailDistance =
         bullet.routeFocus === 'dash'
-          ? 0.028
+          ? 0.018
           : bullet.routeFocus === 'crit'
-            ? 0.026
+            ? 0.016
             : bullet.routeFocus === 'pierce'
-              ? 0.032 + pierceSignatureRatio * 0.004
-              : 0.024;
+              ? 0.022 + pierceSignatureRatio * 0.003
+              : 0.015;
       const tail = this.worldToScreen(camera, bullet.x - bullet.vx * tailDistance, bullet.y - bullet.vy * tailDistance);
       const bulletSpeedRatio = Phaser.Math.Clamp(Math.hypot(bullet.vx, bullet.vy) / 520, 0.35, 1);
       const bulletHitRatio = Phaser.Math.Clamp(bullet.hitCount / 3, 0, 1);
@@ -2192,9 +2192,9 @@ export class GameScene extends Phaser.Scene {
         bulletTint = this.mixColor(0x8cffdf, accentColor, 0.26);
       }
       this.graphics.lineStyle(
-        (bullet.pierceRemaining > 0 ? 2.4 : 1.8) + bulletHitRatio * 0.7,
+        (bullet.pierceRemaining > 0 ? 1.8 : 1.2) + bulletHitRatio * 0.5,
         bulletTint,
-        (bullet.canEcho ? 0.16 : 0.08) + bulletHitRatio * 0.04,
+        (bullet.canEcho ? 0.12 : 0.06) + bulletHitRatio * 0.03,
       );
       this.graphics.lineBetween(
         tail.x - bulletDirX * (5 + bulletSpeedRatio * 4),
@@ -2203,9 +2203,9 @@ export class GameScene extends Phaser.Scene {
         screen.y,
       );
       this.graphics.lineStyle(
-        (bullet.pierceRemaining > 0 ? 2 : 1.35) + bulletHitRatio * 0.55,
+        (bullet.pierceRemaining > 0 ? 1.4 : 0.95) + bulletHitRatio * 0.4,
         bulletTint,
-        (bullet.canEcho ? 0.36 : 0.24) + bulletHitRatio * 0.08,
+        (bullet.canEcho ? 0.28 : 0.18) + bulletHitRatio * 0.06,
       );
       this.graphics.lineBetween(tail.x, tail.y, screen.x, screen.y);
       this.graphics.fillStyle(bulletTint, (bullet.canEcho ? 0.24 : 0.14) + bulletHitRatio * 0.06);

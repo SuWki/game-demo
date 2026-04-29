@@ -1,0 +1,84 @@
+[
+  {
+    "startRoute": "crit",
+    "targetRoute": "pierce",
+    "branchSwitchSeen": false,
+    "branchSwitchEvents": [],
+    "lastRun": {
+      "runIndex": 1,
+      "startedAt": "2026-04-04T17:37:40.726Z",
+      "finishedAt": "2026-04-04T17:40:54.901Z",
+      "outcome": "defeat",
+      "routeId": "crit",
+      "buildStage": "hinted",
+      "buildSummary": "暴击倾向已经出现",
+      "endingKind": "timeOut",
+      "endingReason": "最终战阶段的压力没能顶住",
+      "finalNodeTitle": "最终战",
+      "durationSec": 194.04,
+      "battleWins": 1,
+      "nodesCleared": 5,
+      "branchSwitchCount": 0,
+      "rareSeenCount": 1,
+      "hybridPickCount": 0,
+      "latePayoffSeenCount": 2,
+      "redirectOfferSeenCount": 0,
+      "redirectPickCount": 0
+    },
+    "panelTitle": ""
+  },
+  {
+    "startRoute": "pierce",
+    "targetRoute": "dash",
+    "branchSwitchSeen": true,
+    "branchSwitchEvents": [
+      {
+        "name": "branch_switch",
+        "at": "2026-04-04T17:42:50.075Z",
+        "runIndex": 1,
+        "payload": {
+          "fromRoute": "pierce",
+          "toRoute": "dash",
+          "phase": "late",
+          "pickId": "event:relay-splice:relay-splice-dash",
+          "branchSwitchCount": 1
+        }
+      }
+    ],
+    "lastRun": {
+      "runIndex": 1,
+      "startedAt": "2026-04-04T17:42:09.487Z"
+    },
+    "panelTitle": "最终整备节点选择"
+  },
+  {
+    "startRoute": "dash",
+    "targetRoute": "crit",
+    "branchSwitchSeen": false,
+    "branchSwitchEvents": [],
+    "lastRun": {
+      "runIndex": 1,
+      "startedAt": "2026-04-04T17:42:56.669Z",
+      "finishedAt": "2026-04-04T17:44:37.416Z",
+      "outcome": "defeat",
+      "routeId": "dash",
+      "buildStage": "matured",
+      "buildSummary": "穿梭路线已经成型",
+      "endingKind": "timeOut",
+      "endingReason": "最终战阶段的压力没能顶住",
+      "finalNodeTitle": "最终战",
+      "durationSec": 100.72,
+      "battleWins": 3,
+      "nodesCleared": 5,
+      "firstCommitStage": "mid",
+      "firstCommitPick": "upgrade:dash-slipstream",
+      "branchSwitchCount": 0,
+      "rareSeenCount": 2,
+      "hybridPickCount": 1,
+      "latePayoffSeenCount": 5,
+      "redirectOfferSeenCount": 0,
+      "redirectPickCount": 0
+    },
+    "panelTitle": ""
+  }
+]

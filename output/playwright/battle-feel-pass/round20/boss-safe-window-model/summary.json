@@ -1,0 +1,45 @@
+{
+  "consoleErrors": [],
+  "targetDistance": 372,
+  "samples": [
+    {
+      "t": 11.7,
+      "axis": "pocket",
+      "centerDistance": 372,
+      "travelDistance": 234,
+      "span": 228,
+      "secondarySpan": 168,
+      "playerX": 1200,
+      "playerY": 780,
+      "center": 866.2,
+      "secondaryCenter": 615.7,
+      "sec": 1.2
+    },
+    {
+      "t": 13.5,
+      "axis": "pocket",
+      "centerDistance": 361,
+      "travelDistance": 222.5,
+      "span": 246.2,
+      "secondarySpan": 178.1,
+      "playerX": 1200,
+      "playerY": 780,
+      "center": 1544.9,
+      "secondaryCenter": 673.3,
+      "sec": 1.3
+    },
+    {
+      "t": 15.3,
+      "axis": "pocket",
+      "centerDistance": 372,
+      "travelDistance": 234,
+      "span": 228,
+      "secondarySpan": 168,
+      "playerX": 1200,
+      "playerY": 780,
+      "center": 1533.8,
+      "secondaryCenter": 615.7,
+      "sec": 1.2
+    }
+  ]
+}

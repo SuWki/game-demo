@@ -1,0 +1,489 @@
+{
+  "consoleErrors": [],
+  "audioSnapshots": [
+    {
+      "step": 0,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 1,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 2,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 3,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 4,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 3
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 5,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 3
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 6,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 4
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 7,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 5,
+        "hit": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 8,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 5,
+        "hit": 3,
+        "kill": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 9,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 6,
+        "hit": 3,
+        "kill": 1,
+        "pickup": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 10,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 7,
+        "hit": 4,
+        "kill": 1,
+        "pickup": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 11,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 8,
+        "hit": 5,
+        "kill": 2,
+        "pickup": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 12,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 9,
+        "hit": 7,
+        "kill": 2,
+        "pickup": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 13,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 10,
+        "hit": 8,
+        "kill": 3,
+        "pickup": 3,
+        "relayBrute": 1,
+        "upgrade": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 14,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 11,
+        "hit": 8,
+        "kill": 3,
+        "pickup": 3,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 15,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 12,
+        "hit": 10,
+        "kill": 3,
+        "pickup": 3,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 16,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 13,
+        "hit": 10,
+        "kill": 3,
+        "pickup": 3,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 17,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 13,
+        "hit": 11,
+        "kill": 4,
+        "pickup": 4,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 18,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 14,
+        "hit": 12,
+        "kill": 4,
+        "pickup": 4,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 19,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 15,
+        "hit": 13,
+        "kill": 4,
+        "pickup": 4,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 20,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 16,
+        "hit": 14,
+        "kill": 4,
+        "pickup": 4,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 21,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 17,
+        "hit": 15,
+        "kill": 4,
+        "pickup": 4,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 22,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 18,
+        "hit": 15,
+        "kill": 4,
+        "pickup": 4,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 23,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 19,
+        "hit": 16,
+        "kill": 5,
+        "pickup": 5,
+        "relayBrute": 1,
+        "upgrade": 2
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 24,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 20,
+        "hit": 17,
+        "kill": 6,
+        "pickup": 5,
+        "relayBrute": 1,
+        "upgrade": 2,
+        "relayStandard": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 25,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 21,
+        "hit": 18,
+        "kill": 6,
+        "pickup": 6,
+        "relayBrute": 1,
+        "upgrade": 2,
+        "relayStandard": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 26,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 22,
+        "hit": 19,
+        "kill": 6,
+        "pickup": 6,
+        "relayBrute": 1,
+        "upgrade": 2,
+        "relayStandard": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 27,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 22,
+        "hit": 20,
+        "kill": 7,
+        "pickup": 7,
+        "relayBrute": 1,
+        "upgrade": 2,
+        "relayStandard": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 28,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 23,
+        "hit": 20,
+        "kill": 7,
+        "pickup": 7,
+        "relayBrute": 1,
+        "upgrade": 2,
+        "relayStandard": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    },
+    {
+      "step": 29,
+      "masterVolume": 0,
+      "currentMusicMode": "battle",
+      "cueCounts": {
+        "start": 1,
+        "pressure": 1,
+        "shoot": 24,
+        "hit": 21,
+        "kill": 8,
+        "pickup": 7,
+        "relayBrute": 1,
+        "upgrade": 2,
+        "relayStandard": 1
+      },
+      "pendingCueCount": 0,
+      "audibleMoments": 0
+    }
+  ],
+  "cueCounts": {
+    "start": 30,
+    "pressure": 30,
+    "shoot": 346,
+    "hit": 271,
+    "kill": 88,
+    "pickup": 85,
+    "relayBrute": 17,
+    "upgrade": 33,
+    "relayStandard": 6
+  },
+  "listenCheck": {
+    "killVsHurt": "kill:88, hurt:0 - ducking配置正确，需人工确认听感",
+    "killVsPressure": "kill:88, pressure:30 - ducking配置正确，需人工确认听感",
+    "shootHitKillPickup": "shoot:346, hit:271, kill:88, pickup:85",
+    "hurtNearMissPressureEnemyShot": "hurt:0, pressure:30, enemyShot:0",
+    "bossPressureAudio": "需定向Boss样本确认"
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "panels": [
+    {
+      "tag": "panel-10",
+      "title": "前段节点选择",
+      "choices": [
+        {
+          "id": "round-1-upgrade",
+          "text": "强化 稳定整备 低风险补强，适合把第一条倾向扶起来。",
+          "type": "强化",
+          "rarity": ""
+        },
+        {
+          "id": "round-1-upgrade-fireline",
+          "text": "强化 火线整备 直接补火控，把前两拍读数尽快拉清。",
+          "type": "强化",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-11",
+      "title": "前段强化",
+      "choices": [
+        {
+          "id": "crit-aim:uncommon:uvg2ub",
+          "text": "暴击 绿 聚焦瞄准 暴击率 +8%，伤害 +2，暴击路线推进 +1",
+          "type": "暴击",
+          "rarity": "绿"
+        },
+        {
+          "id": "pierce-core:epic:ul883a",
+          "text": "穿透 紫 穿甲校正 穿透 +2，伤害 +4，弹速 +46，穿透路线推进 +1",
+          "type": "穿透",
+          "rarity": "紫"
+        },
+        {
+          "id": "dash-feint:rare:e1wfny",
+          "text": "穿梭 蓝 侧滑取样 移速 +23，无伤窗口 +0.12s，穿梭冷却 -0.49s，穿梭路线推进 +1",
+          "type": "穿梭",
+          "rarity": "蓝"
+        }
+      ]
+    },
+    {
+      "tag": "panel-12",
+      "title": "中段节点选择",
+      "choices": [
+        {
+          "id": "round-2-event-shift",
+          "text": "异常 偏航窗口 可以顺着当前读法微调，也能顺手把转向窗口留住。",
+          "type": "异常",
+          "rarity": ""
+        },
+        {
+          "id": "round-2-upgrade-lock",
+          "text": "强化 方向定标 更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。",
+          "type": "强化",
+          "rarity": ""
+        },
+        {
+          "id": "round-2-upgrade-bridge",
+          "text": "强化 过渡整备 补一段过渡读数，让方向更清楚，但还留得住转向余地。",
+          "type": "强化",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-13",
+      "title": "异常 · 高压试飞",
+      "choices": [
+        {
+          "id": "risky-protocol-crit",
+          "text": "暴击 追求爆发 向暴击方向推进，并承受 8 点压力伤害。",
+          "type": "暴击",
+          "rarity": ""
+        },
+        {
+          "id": "risky-protocol-pierce",
+          "text": "穿透 追求贯穿 向穿透方向推进，并承受 8 点压力伤害。",
+          "type": "穿透",
+          "rarity": ""
+        },
+        {
+          "id": "risky-protocol-dash",
+          "text": "穿梭 追求穿梭 向穿梭方向推进，并承受 8 点压力伤害。",
+          "type": "穿梭",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-14",
+      "title": "后段节点选择",
+      "choices": [
+        {
+          "id": "round-3-battle",
+          "text": "战斗 生存压制 后段高压段，测试你的收尾能力。",
+          "type": "战斗",
+          "rarity": ""
+        },
+        {
+          "id": "round-3-event-last-bet",
+          "text": "异常 尾段押注 沿着当前方向再压一次，争取把收尾气质做实。",
+          "type": "异常",
+          "rarity": ""
+        },
+        {
+          "id": "round-3-battle-gauntlet",
+          "text": "战斗 夹道求生 夹道式高压更容易暴露后段 build 的换位短板。",
+          "type": "战斗",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-18",
+      "title": "等级提升 Lv.2",
+      "choices": [
+        {
+          "id": "crit-cascade:legendary:l1jqk2",
+          "text": "暴击 金 爆链灼流 伤害 +6，射速 +0.3，爆伤 +0.60x，暴击路线推进 +1",
+          "type": "暴击",
+          "rarity": "金"
+        },
+        {
+          "id": "generic-open-loop:uncommon:577xw5",
+          "text": "通用 绿 开环余量 生命上限 +10，每秒回复 +0.12，移速 +12，恢复 10 点耐久",
+          "type": "通用",
+          "rarity": "绿"
+        },
+        {
+          "id": "dash-sidechannel:rare:q8q8pq",
+          "text": "穿梭 蓝 错位取样 移速 +20，穿梭冷却 -0.41s，无伤窗口 +0.07s，脉冲伤害 +6，恢复 12 点耐久，穿梭路线推进 +1，穿梭路线推进 +1",
+          "type": "穿梭",
+          "rarity": "蓝"
+        }
+      ]
+    }
+  ],
+  "anomalyPanelTitle": null,
+  "resultVisible": true,
+  "replayStarted": true,
+  "consoleErrors": [],
+  "metrics": {
+    "runCount": 1,
+    "lastRun": {
+      "runIndex": 1,
+      "startedAt": "2026-04-05T07:06:58.013Z",
+      "finishedAt": "2026-04-05T07:07:32.537Z",
+      "outcome": "defeat",
+      "routeId": "crit",
+      "buildStage": "committed",
+      "buildSummary": "暴击路线已经开始站稳",
+      "endingKind": "hpDepleted",
+      "endingReason": "生存压制阶段中机体耐久归零",
+      "finalNodeTitle": "生存压制",
+      "finalNodeType": "battle",
+      "durationSec": 34.52,
+      "battleWins": 1,
+      "nodesCleared": 3,
+      "firstCommitStage": "late",
+      "firstCommitPick": "upgrade:crit-cascade",
+      "branchSwitchCount": 0,
+      "rareSeenCount": 0,
+      "hybridPickCount": 0,
+      "latePayoffSeenCount": 1,
+      "redirectOfferSeenCount": 2,
+      "redirectPickCount": 0
+    },
+    "anomalyEvents": [
+      {
+        "name": "event_selected",
+        "at": "2026-04-05T07:07:20.886Z",
+        "runIndex": 1,
+        "payload": {
+          "eventId": "risky-protocol",
+          "optionId": "risky-protocol-crit",
+          "routeId": "crit",
+          "phase": "mid",
+          "contentKind": "anomaly"
+        }
+      }
+    ],
+    "bossBattles": [],
+    "finishedRuns": 1
+  }
+}

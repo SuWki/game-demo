@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pilot Survivor Asset Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07101d;
+      --panel: #101d31;
+      --line: #2d4468;
+      --text: #f1f8ff;
+      --muted: #8fa8c9;
+      --accent: #65e6ff;
+    }
+    body {
+      margin: 0;
+      padding: 36px;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(101, 230, 255, 0.14), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(255, 96, 82, 0.12), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      font-family: "Bahnschrift", "Segoe UI", sans-serif;
+    }
+    h1, h2 { margin: 0 0 14px; letter-spacing: 0.04em; }
+    p { color: var(--muted); line-height: 1.6; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin: 20px 0 40px;
+    }
+    .card {
+      background: color-mix(in srgb, var(--panel) 86%, black);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+    }
+    .card img {
+      width: 100%;
+      min-height: 160px;
+      object-fit: contain;
+      background: #08111f;
+      border-radius: 14px;
+      border: 1px solid rgba(101, 230, 255, 0.18);
+    }
+    strong { display: block; margin-top: 12px; font-family: Consolas, monospace; color: var(--accent); }
+    audio { width: 100%; margin-top: 12px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <h1>首批视觉与音效预览</h1>
+  <p>这些文件是预览样张，不直接替换实机资源。先用于 A/B 观察：是否清楚、是否混淆、是否适合作品集视频。</p>
+  <p><a href="./visual-contact-sheet.svg">打开视觉总览板</a> / <a href="./battle-readability-composite.svg">打开战斗合成检查板</a></p>
+  <h2>视觉预览</h2>
+  <section class="grid">
+      <article class="card">
+        <img src="./visual/unit-player-core.svg" alt="unit-player-core.svg" />
+        <strong>unit-player-core.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/enemy-standard-a.svg" alt="enemy-standard-a.svg" />
+        <strong>enemy-standard-a.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/fx-xp-orb.svg" alt="fx-xp-orb.svg" />
+        <strong>fx-xp-orb.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/elite-core-main.svg" alt="elite-core-main.svg" />
+        <strong>elite-core-main.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/elite-escort-unit.svg" alt="elite-escort-unit.svg" />
+        <strong>elite-escort-unit.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/elite-core-crack.svg" alt="elite-core-crack.svg" />
+        <strong>elite-core-crack.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/boss-bastion-main.svg" alt="boss-bastion-main.svg" />
+        <strong>boss-bastion-main.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/fx-boss-bastion-fireline.svg" alt="fx-boss-bastion-fireline.svg" />
+        <strong>fx-boss-bastion-fireline.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/player-projectile-core.svg" alt="player-projectile-core.svg" />
+        <strong>player-projectile-core.svg</strong>
+      </article>
+
+      <article class="card">
+        <img src="./visual/enemy-projectile-core.svg" alt="enemy-projectile-core.svg" />
+        <strong>enemy-projectile-core.svg</strong>
+      </article></section>
+  <h2>音效预览</h2>
+  <section class="grid">
+      <article class="card">
+        <strong>player_shoot_core.wav</strong>
+        <p>short cyan pew, frequent but soft</p>
+        <audio controls src="./audio/player_shoot_core.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>player_hit_regular.wav</strong>
+        <p>compact metal tick plus body thump</p>
+        <audio controls src="./audio/player_hit_regular.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>player_kill_regular.wav</strong>
+        <p>reward pop, stronger than hit</p>
+        <audio controls src="./audio/player_kill_regular.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>player_pickup_single.wav</strong>
+        <p>light upward XP chirp</p>
+        <audio controls src="./audio/player_pickup_single.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>player_hurt_core.wav</strong>
+        <p>heavy low hit, highest danger priority</p>
+        <audio controls src="./audio/player_hurt_core.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>player_near_miss.wav</strong>
+        <p>sharp air slice, not damage</p>
+        <audio controls src="./audio/player_near_miss.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>state_pressure_regular.wav</strong>
+        <p>low pressure swell, not a hit</p>
+        <audio controls src="./audio/state_pressure_regular.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>enemy_shot_regular.wav</strong>
+        <p>warm hostile launch, separated from player shoot</p>
+        <audio controls src="./audio/enemy_shot_regular.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>route_crit_signature.wav</strong>
+        <p>bright burst signature</p>
+        <audio controls src="./audio/route_crit_signature.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>route_pierce_signature.wav</strong>
+        <p>descending rail-through signature</p>
+        <audio controls src="./audio/route_pierce_signature.wav"></audio>
+      </article>
+
+      <article class="card">
+        <strong>route_dash_signature.wav</strong>
+        <p>close pass, turn-back thump</p>
+        <audio controls src="./audio/route_dash_signature.wav"></audio>
+      </article></section>
+</body>
+</html>

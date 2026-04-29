@@ -1,0 +1,113 @@
+{
+  "consoleErrors": [],
+  "panels": 5,
+  "resultSeen": true,
+  "routeFocusSeen": [],
+  "maxDashDriveSec": 0,
+  "maxPlayerTurnBurstSec": 0.1949059012345679,
+  "maxTempoIntensity": 1,
+  "lateDashWindowMoments": 0,
+  "dashCounterMoments": 0,
+  "choices": [
+    {
+      "panel": 1,
+      "id": "generic-frame:common:kgyfzt",
+      "text": "强化 白 强化骨架 生命上限 +16，恢复 12 点耐久 通用 耐久 补属性",
+      "score": 0
+    },
+    {
+      "panel": 2,
+      "id": "generic-cadence:common:a1ik2z",
+      "text": "强化 白 压缩射频 射速 +0.3 通用 射速 补属性",
+      "score": 0
+    },
+    {
+      "panel": 3,
+      "id": "generic-thrusters:common:j501xh",
+      "text": "强化 白 矢量喷口 移速 +20 通用 移速 补属性",
+      "score": 0
+    },
+    {
+      "panel": 4,
+      "id": "round-1-battle-crossline",
+      "text": "战斗 下一步 火线试压 打一场普通战，继续推进。 普通战 进入",
+      "score": 10
+    },
+    {
+      "panel": 5,
+      "id": "generic-ballistics:common:zfake0",
+      "text": "强化 白 弹道校正 弹速 +120 通用 弹速 补属性",
+      "score": 0
+    }
+  ],
+  "finalSnapshot": {
+    "status": "result",
+    "phase": "ended",
+    "templateId": null,
+    "encounterType": null,
+    "playerX": 0,
+    "playerY": 0,
+    "playerHp": 0,
+    "playerMaxHp": 126,
+    "enemyCount": 0,
+    "projectileCount": 0,
+    "bulletCount": 0,
+    "orbCount": 0,
+    "eliteAlive": false,
+    "dashDriveSec": 0,
+    "playerTurnBurstSec": 0,
+    "eliteRecoverySec": 0,
+    "elitePressureSec": 0,
+    "eliteCrackWindowSec": 0,
+    "escortCount": 0,
+    "escortRecoveryCount": 0,
+    "escortCrackCount": 0,
+    "enemyProjectileCount": 0,
+    "breachProjectileCount": 0,
+    "breachSuppressionRatio": 0,
+    "pressureSafeWindowAxis": null,
+    "pressureSafeWindowCenter": 0,
+    "pressureSafeWindowSpan": 0,
+    "pressureSafeWindowSecondaryCenter": 0,
+    "pressureSafeWindowSecondarySpan": 0,
+    "pressureSafeWindowSec": 0,
+    "pressureSafeWindowCenterDistance": 0,
+    "pressureSafeWindowTravelDistance": 0,
+    "enemies": [],
+    "enemyProjectiles": []
+  },
+  "finalAudio": {
+    "contextState": "running",
+    "desiredMusicMode": "result",
+    "currentMusicMode": "result",
+    "routeFocus": null,
+    "encounter": "flow",
+    "intensity": 0,
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.00005,
+    "peakRms": 0.14683,
+    "audibleMoments": 276,
+    "scheduledMusicSteps": 160,
+    "cueCounts": {
+      "start": 1,
+      "pressure": 2,
+      "shoot": 88,
+      "hit": 54,
+      "relayStandard": 1,
+      "kill": 42,
+      "crit": 2,
+      "relayRanged": 4,
+      "relaySkirmisher": 13,
+      "pickup": 39,
+      "upgrade": 8,
+      "enemyShot": 78,
+      "nearMiss": 73,
+      "hurt": 26,
+      "relayBrute": 1,
+      "click": 1,
+      "confirm": 1,
+      "defeat": 1,
+      "result": 1
+    }
+  }
+}

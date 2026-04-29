@@ -225,7 +225,9 @@ export class OverlayController {
     onChange: (volume: number) => void,
     onClose: () => void,
   ): void {
+    this.hideHud();
     this.hidePanel();
+    this.hideScreen();
     this.hideTooltip();
     this.panelLayer.className = 'panel-layer panel-layer-center';
     this.panelLayer.classList.remove('hidden');
@@ -497,6 +499,10 @@ export class OverlayController {
   public hideHud(): void {
     this.hudLayer.classList.add('hidden');
     this.hudLayer.innerHTML = '';
+  }
+
+  public hideScreen(): void {
+    this.screenLayer.classList.add('hidden');
   }
 
   public clearToasts(): void {

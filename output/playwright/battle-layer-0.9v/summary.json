@@ -1,0 +1,424 @@
+{
+  "panels": [
+    {
+      "tag": "panel-3",
+      "title": "强化选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "generic-cadence:uncommon:52mz0d",
+          "text": "强化 绿 压缩射频 射速 +0.36 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-optics:uncommon:gi4g46",
+          "text": "强化 绿 精密镜组 暴击率 +8% 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "dash-brush:uncommon:hilqcn",
+          "text": "强化 绿 擦身推进 穿梭冷却 -0.78s 穿梭加成 偏流派",
+          "type": "强化"
+        }
+      ]
+    },
+    {
+      "tag": "panel-6",
+      "title": "强化选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "generic-ballistics:uncommon:mxxxl2",
+          "text": "强化 绿 弹道校正 弹速 +120 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-firepower:uncommon:jzzehs",
+          "text": "强化 绿 火控强化 伤害 +5 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "pierce-seamline:uncommon:w4uq16",
+          "text": "强化 绿 拆线起幅 穿透 +2 穿透加成 偏流派",
+          "type": "强化"
+        }
+      ]
+    },
+    {
+      "tag": "panel-8",
+      "title": "路线选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "round-1-battle-flank",
+          "text": "战斗 下一步 侧压试飞 打一场普通战，继续推进。 普通战 进入",
+          "type": ""
+        },
+        {
+          "id": "round-1-event",
+          "text": "异常 下一步 试飞异常 做一次异常处理，拿当前这拍的变化。 处理异常 进入",
+          "type": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-11",
+      "title": "强化选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "generic-frame:common:pmsn8n",
+          "text": "强化 白 强化骨架 生命上限 +16 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-vector-buffer:common:lw3qe3",
+          "text": "强化 白 矢量缓冲 移速 +43 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "dash-feint:uncommon:h6zwqu",
+          "text": "强化 绿 侧滑取样 穿梭冷却 -0.78s 穿梭加成 偏流派",
+          "type": "强化"
+        }
+      ]
+    },
+    {
+      "tag": "panel-15",
+      "title": "强化选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "generic-thrusters:common:gmrz8k",
+          "text": "强化 白 矢量喷口 移速 +20 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-optics:rare:idup2j",
+          "text": "强化 蓝 精密镜组 暴击率 +10% 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "dash-feint:uncommon:bggd7g",
+          "text": "强化 绿 侧滑取样 穿梭冷却 -0.78s 穿梭加成 偏流派",
+          "type": "强化"
+        }
+      ]
+    },
+    {
+      "tag": "panel-17",
+      "title": "路线选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "round-2-upgrade-bridge",
+          "text": "强化 下一步 过渡整备 补 1 项强化再继续推进。 补 1 项强化 进入",
+          "type": ""
+        },
+        {
+          "id": "round-2-upgrade-turn",
+          "text": "强化 下一步 转折校准 补 1 项强化再继续推进。 补 1 项强化 进入",
+          "type": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-18",
+      "title": "强化选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "generic-crossfeed:uncommon:266rwj",
+          "text": "强化 绿 交叉回授 射速 +0.25 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-reroute-buffer:epic:qdobla",
+          "text": "强化 紫 改道缓冲 移速 +56 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "crit-aim:legendary:kpfx68",
+          "text": "强化 金 聚焦瞄准 暴击率 +12% 暴击加成 偏流派",
+          "type": "强化"
+        }
+      ]
+    },
+    {
+      "tag": "panel-19",
+      "title": "路线选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "round-3-battle-gauntlet",
+          "text": "战斗 下一步 夹道求生 打一场生存战，继续推进。 生存战 进入",
+          "type": ""
+        },
+        {
+          "id": "round-3-battle-crit-closeout",
+          "text": "战斗 下一步 爆点追收 打一场生存战，继续推进。 生存战 进入",
+          "type": ""
+        },
+        {
+          "id": "round-3-anomaly-pivot",
+          "text": "异常 下一步 余辉偏折 做一次异常处理，拿当前这拍的变化。 处理异常 进入",
+          "type": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-22",
+      "title": "强化选择",
+      "description": "",
+      "choices": [
+        {
+          "id": "generic-firepower:uncommon:8j8ygg",
+          "text": "强化 绿 火控强化 伤害 +5 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-overclock:common:dxo2dv",
+          "text": "强化 白 循环稳态 每秒回复 +0.24 通用 补属性",
+          "type": "强化"
+        },
+        {
+          "id": "generic-open-loop:epic:ciqymt",
+          "text": "强化 紫 开环余量 生命上限 +36 通用 补属性",
+          "type": "强化"
+        }
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "panel": "强化选择",
+      "choice": "强化 绿 压缩射频 射速 +0.36 通用 补属性"
+    },
+    {
+      "panel": "强化选择",
+      "choice": "强化 绿 弹道校正 弹速 +120 通用 补属性"
+    },
+    {
+      "panel": "路线选择",
+      "choice": "战斗 下一步 侧压试飞 打一场普通战，继续推进。 普通战 进入"
+    },
+    {
+      "panel": "强化选择",
+      "choice": "强化 白 强化骨架 生命上限 +16 通用 补属性"
+    },
+    {
+      "panel": "强化选择",
+      "choice": "强化 白 矢量喷口 移速 +20 通用 补属性"
+    },
+    {
+      "panel": "路线选择",
+      "choice": "强化 下一步 过渡整备 补 1 项强化再继续推进。 补 1 项强化 进入"
+    },
+    {
+      "panel": "强化选择",
+      "choice": "强化 绿 交叉回授 射速 +0.25 通用 补属性"
+    },
+    {
+      "panel": "路线选择",
+      "choice": "战斗 下一步 夹道求生 打一场生存战，继续推进。 生存战 进入"
+    },
+    {
+      "panel": "强化选择",
+      "choice": "强化 绿 火控强化 伤害 +5 通用 补属性"
+    }
+  ],
+  "anomalyPanelSeen": false,
+  "bossNodeSeen": false,
+  "bossBattleSeen": false,
+  "bossBattleShot": false,
+  "replayStarted": false,
+  "consoleErrors": [],
+  "metrics": {
+    "runCount": 2,
+    "bossEvents": [],
+    "anomalyEvents": [],
+    "finalRun": {
+      "runIndex": 2,
+      "startedAt": "2026-04-18T10:08:52.384Z"
+    },
+    "lastEvents": [
+      {
+        "name": "node_selected",
+        "at": "2026-04-18T10:07:41.785Z",
+        "runIndex": 1,
+        "payload": {
+          "nodeType": "battle",
+          "title": "夹道求生",
+          "phase": "late"
+        }
+      },
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-18T10:07:41.786Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "survival-gauntlet",
+          "title": "夹道求生",
+          "phase": "late",
+          "nodeType": "battle",
+          "encounterType": "battle"
+        }
+      },
+      {
+        "name": "upgrade_offer_seen",
+        "at": "2026-04-18T10:07:48.390Z",
+        "runIndex": 1,
+        "payload": {
+          "phase": "late",
+          "source": "levelUp",
+          "optionIds": [
+            "generic-firepower",
+            "generic-overclock",
+            "generic-open-loop"
+          ],
+          "routeOptionCount": 0,
+          "redirectOptionCount": 0,
+          "hybridOptionCount": 1,
+          "rarityCounts": {
+            "uncommon": 1,
+            "common": 1,
+            "epic": 1
+          },
+          "valueBuckets": {
+            "low": 3
+          }
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-18T10:08:19.353Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-firepower",
+          "phase": "late",
+          "source": "levelUp",
+          "rarity": "uncommon",
+          "category": "generic",
+          "valueScore": 61.1,
+          "valueBucket": "low",
+          "tags": [
+            "stabilizer"
+          ]
+        }
+      },
+      {
+        "name": "battle_template_completed",
+        "at": "2026-04-18T10:08:20.687Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "survival-gauntlet",
+          "outcome": "loss"
+        }
+      },
+      {
+        "name": "run_duration",
+        "at": "2026-04-18T10:08:20.688Z",
+        "runIndex": 1,
+        "payload": {
+          "durationSec": 319.18
+        }
+      },
+      {
+        "name": "death_time",
+        "at": "2026-04-18T10:08:20.688Z",
+        "runIndex": 1,
+        "payload": {
+          "durationSec": 319.18
+        }
+      },
+      {
+        "name": "run_finished",
+        "at": "2026-04-18T10:08:20.688Z",
+        "runIndex": 1,
+        "payload": {
+          "outcome": "defeat",
+          "routeId": null,
+          "buildStage": "unformed",
+          "buildSummary": "本局还没有站稳主路线",
+          "endingKind": "hpDepleted",
+          "endingReason": "夹道求生阶段中机体耐久归零",
+          "finalNodeTitle": "夹道求生",
+          "finalNodeType": "battle",
+          "durationSec": 319.17,
+          "battleWins": 2,
+          "nodesCleared": 3,
+          "firstCommitStage": null,
+          "firstCommitPick": null,
+          "branchSwitchCount": 0,
+          "branchSwitchPhaseCounts": {},
+          "rareSeenCount": 0,
+          "rarePayoffPickCount": 0,
+          "hybridPickCount": 1,
+          "hybridOfferSeenCount": 2,
+          "latePayoffSeenCount": 0,
+          "routeUpgradeOfferSeenCount": 5,
+          "routeUpgradePickCount": 0,
+          "upgradeOfferRarityCounts": {
+            "uncommon": 10,
+            "common": 4,
+            "rare": 1,
+            "epic": 2,
+            "legendary": 1
+          },
+          "upgradeOfferValueBuckets": {
+            "low": 18
+          },
+          "nodeTypeCounts": {
+            "battle": 2,
+            "upgrade": 1
+          },
+          "anomalySeenCount": 0,
+          "anomalyClassCounts": {},
+          "bossEchoSeenCount": 0,
+          "redirectOfferSeenCount": 0,
+          "redirectPickCount": 0,
+          "redirectPickStage": null
+        }
+      },
+      {
+        "name": "first_run_end",
+        "at": "2026-04-18T10:08:20.689Z",
+        "runIndex": 1,
+        "payload": {
+          "outcome": "defeat",
+          "routeId": null,
+          "buildStage": "unformed",
+          "endingKind": "hpDepleted",
+          "durationSec": 319.17
+        }
+      },
+      {
+        "name": "restart_after_first_run",
+        "at": "2026-04-18T10:08:52.384Z",
+        "runIndex": 1,
+        "payload": {
+          "source": "result"
+        }
+      },
+      {
+        "name": "second_run_start",
+        "at": "2026-04-18T10:08:52.384Z",
+        "runIndex": 2
+      },
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-18T10:08:52.386Z",
+        "runIndex": 2,
+        "payload": {
+          "templateId": "elimination",
+          "title": "起始歼灭",
+          "phase": "opening",
+          "nodeType": "battle",
+          "encounterType": "battle"
+        }
+      }
+    ]
+  },
+  "battleHudSeen": false,
+  "result": ""
+}

@@ -1,0 +1,28 @@
+{
+  "contextState": "running",
+  "desiredMusicMode": "result",
+  "currentMusicMode": "result",
+  "pendingCueCount": 0,
+  "lastAudibleRms": 0.00128,
+  "peakRms": 0.12344,
+  "audibleMoments": 117,
+  "scheduledMusicSteps": 96,
+  "cueCounts": {
+    "start": 1,
+    "pressure": 2,
+    "shoot": 55,
+    "hit": 39,
+    "kill": 30,
+    "pickup": 30,
+    "upgrade": 9,
+    "hurt": 9,
+    "crit": 3,
+    "enemyShot": 5,
+    "nearMiss": 4,
+    "click": 3,
+    "confirm": 5,
+    "anomaly": 2,
+    "defeat": 1,
+    "result": 1
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "consoleErrors": [],
+  "battleDebug": {
+    "contextState": "running",
+    "desiredMusicMode": "battle",
+    "currentMusicMode": "battle",
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.02565,
+    "peakRms": 0.04718,
+    "audibleMoments": 12,
+    "scheduledMusicSteps": 10,
+    "cueCounts": {
+      "start": 1,
+      "pressure": 1,
+      "shoot": 5,
+      "hit": 1
+    }
+  },
+  "dangerDebug": {
+    "contextState": "running",
+    "desiredMusicMode": "battle",
+    "currentMusicMode": "battle",
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.01955,
+    "peakRms": 0.08876,
+    "audibleMoments": 143,
+    "scheduledMusicSteps": 92,
+    "cueCounts": {
+      "start": 1,
+      "pressure": 1,
+      "shoot": 55,
+      "hit": 34,
+      "kill": 15,
+      "relayStandard": 3,
+      "pickup": 10,
+      "upgrade": 4,
+      "crit": 3,
+      "relayBrute": 4,
+      "enemyShot": 3,
+      "nearMiss": 3,
+      "hurt": 1
+    }
+  },
+  "resultSeen": true
+}

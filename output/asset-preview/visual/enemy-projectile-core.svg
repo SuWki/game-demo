@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#f7fbff" stop-opacity="0.98"/>
+      <stop offset="42%" stop-color="#6ee7ff" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#0b1428" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cyanHull" x1="20%" y1="5%" x2="80%" y2="95%">
+      <stop offset="0%" stop-color="#e9fbff"/>
+      <stop offset="45%" stop-color="#50d7ff"/>
+      <stop offset="100%" stop-color="#11609a"/>
+    </linearGradient>
+    <linearGradient id="dangerHot" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#ffd58a"/>
+      <stop offset="45%" stop-color="#ff5b49"/>
+      <stop offset="100%" stop-color="#6b1224"/>
+    </linearGradient>
+    <linearGradient id="eliteViolet" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#fff1ff"/>
+      <stop offset="35%" stop-color="#d36cff"/>
+      <stop offset="100%" stop-color="#3d176e"/>
+    </linearGradient>
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#263654" stroke-width="1" opacity="0.32"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" rx="24" fill="#08111f"/>
+  <rect width="100%" height="100%" rx="24" fill="url(#grid)"/>
+  
+  <circle cx="128" cy="128" r="48" fill="#ff493f" opacity="0.32" filter="url(#softGlow)"/>
+  <circle cx="128" cy="128" r="30" fill="#ff6b48" stroke="#ffd08c" stroke-width="5"/>
+  <circle cx="118" cy="118" r="9" fill="#fff1b8"/>
+  <path d="M128 72 V44 M128 184 V212 M72 128 H44 M184 128 H212" stroke="#ff6b48" stroke-width="5" stroke-linecap="round"/>
+  <text x="18" y="224" fill="#dceaff" font-family="Consolas, monospace" font-size="13" font-weight="700">enemy-projectile-core v1</text>
+  <text x="18" y="241" fill="#88a4c6" font-family="Consolas, monospace" font-size="10">warm bead / hostile fire</text>
+</svg>

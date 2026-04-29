@@ -1,0 +1,113 @@
+{
+  "consoleErrors": [],
+  "panels": [
+    {
+      "tag": "panel-2",
+      "title": "",
+      "choices": [
+        {
+          "id": "generic-vector-buffer:common:f3baon",
+          "text": "强化 白 矢量缓冲 移速 +43 通用 移速 补属性"
+        },
+        {
+          "id": "generic-optics:common:ybb18m",
+          "text": "强化 白 精密镜组 暴击率 +7% 通用 暴击 补属性"
+        },
+        {
+          "id": "pierce-seamline:uncommon:kvwq33",
+          "text": "强化 绿 拆线起幅 穿透 +2 穿透加成 穿透 偏流派"
+        }
+      ]
+    },
+    {
+      "tag": "panel-4",
+      "title": "",
+      "choices": [
+        {
+          "id": "generic-salvo-cache:rare:pj2iix",
+          "text": "强化 蓝 齐射缓存 伤害 +6 通用 伤害 补属性"
+        },
+        {
+          "id": "generic-frame:common:okk4lh",
+          "text": "强化 白 强化骨架 生命上限 +16，恢复 12 点耐久 通用 耐久 补属性"
+        },
+        {
+          "id": "pierce-seamline:uncommon:j22jq3",
+          "text": "强化 绿 拆线起幅 穿透 +2 穿透加成 穿透 偏流派"
+        }
+      ]
+    },
+    {
+      "tag": "panel-6",
+      "title": "",
+      "choices": [
+        {
+          "id": "generic-ballistics:common:n66lvq",
+          "text": "强化 白 弹道校正 弹速 +120 通用 弹速 补属性"
+        },
+        {
+          "id": "generic-frame:common:q9u4wz",
+          "text": "强化 白 强化骨架 生命上限 +16，恢复 12 点耐久 通用 耐久 补属性"
+        },
+        {
+          "id": "pierce-core:uncommon:ipxue6",
+          "text": "强化 绿 穿甲校正 穿透 +2 穿透加成 穿透 偏流派"
+        }
+      ]
+    },
+    {
+      "tag": "panel-8",
+      "title": "",
+      "choices": [
+        {
+          "id": "round-1-upgrade",
+          "text": "强化 下一步 稳定整备 补 1 项强化再继续推进。 补 1 项强化 进入"
+        },
+        {
+          "id": "round-1-battle-crossline",
+          "text": "战斗 下一步 火线试压 打一场普通战，继续推进。 普通战 进入"
+        }
+      ]
+    },
+    {
+      "tag": "panel-9",
+      "title": "",
+      "choices": [
+        {
+          "id": "generic-cadence:legendary:3wrcc6",
+          "text": "强化 金 压缩射频 射速 +0.64 通用 射速 补属性"
+        },
+        {
+          "id": "generic-optics:uncommon:1dx0ud",
+          "text": "强化 绿 精密镜组 暴击率 +8% 通用 暴击 补属性"
+        },
+        {
+          "id": "generic-thrusters:uncommon:iir78n",
+          "text": "强化 绿 矢量喷口 移速 +24 通用 移速 补属性"
+        }
+      ]
+    },
+    {
+      "tag": "panel-10",
+      "title": "",
+      "choices": [
+        {
+          "id": "round-2-battle",
+          "text": "战斗 下一步 精英压制 打一场精英战，继续推进。 精英战 进入"
+        },
+        {
+          "id": "round-2-upgrade-turn",
+          "text": "强化 下一步 转折校准 补 1 项强化再继续推进。 补 1 项强化 进入"
+        }
+      ]
+    }
+  ],
+  "eliteRouteChosen": false,
+  "eliteBattleSeen": false,
+  "eliteTemplateSeen": false,
+  "eliteScreensCaptured": 0,
+  "resultSeen": true,
+  "replaySeen": false,
+  "hudText": "",
+  "battleDebug": null
+}

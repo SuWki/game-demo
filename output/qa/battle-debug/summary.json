@@ -1,0 +1,285 @@
+{
+  "consoleErrors": [],
+  "battleDebugSnapshots": [
+    {
+      "step": 0,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 1,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 2,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 3,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 4,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 5,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 6,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 7,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 8,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 9,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 10,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 11,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 12,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 13,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 14,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 15,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 16,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 17,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 18,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 19,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 20,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 21,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 22,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 23,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 24,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 25,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 26,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 27,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 28,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 29,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 30,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 31,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 32,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 33,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 34,
+      "templateId": "elimination",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 35,
+      "templateId": null,
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 36,
+      "templateId": null,
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 37,
+      "templateId": null,
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 38,
+      "templateId": "elite-lockdown",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    },
+    {
+      "step": 39,
+      "templateId": "elite-lockdown",
+      "eliteAlive": false,
+      "bossFirelineCoverage": 0,
+      "bossSafeWindowMoments": 0
+    }
+  ]
+}

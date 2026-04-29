@@ -1176,6 +1176,25 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
     weight += selection.lowHpBonus ?? 0;
   }
 
+  if (round <= 3) {
+    if (blueprint.type === 'battle') {
+      weight *= 1.18 + round * 0.05;
+      if (offerContext.lastNodeType && offerContext.lastNodeType !== 'battle') {
+        weight += 2.2 + Math.max(0, round - offerContext.battleWins) * 0.55;
+      }
+    } else if (blueprint.type === 'upgrade') {
+      weight *= 0.78;
+      if (offerContext.lastNodeType === 'anomaly') {
+        weight *= 0.72;
+      }
+    } else if (blueprint.type === 'anomaly') {
+      weight *= round === 1 ? 0.42 : round === 2 ? 0.5 : 0.46;
+      if (offerContext.lastNodeType === 'upgrade') {
+        weight *= 0.35;
+      }
+    }
+  }
+
   return Math.max(0.1, weight);
 }
 
@@ -1198,18 +1217,26 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
   const picks: NodeBlueprint[] = [];
 
   while (pool.length > 0 && picks.length < choiceCount) {
-    const totalWeight = pool.reduce((sum, entry) => sum + entry.weight, 0);
-    let roll = Math.random() * totalWeight;
-    let selectedIndex = 0;
+    const anomalyPicked = picks.some((blueprint) => blueprint.type === 'anomaly');
+    const eligiblePool = anomalyPicked ? pool.filter((entry) => entry.blueprint.type !== 'anomaly') : pool;
 
-    for (let index = 0; index < pool.length; index += 1) {
-      roll -= pool[index].weight;
+    if (eligiblePool.length <= 0) {
+      break;
+    }
+
+    const totalWeight = eligiblePool.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = Math.random() * totalWeight;
+    let selectedEntry = eligiblePool[eligiblePool.length - 1];
+
+    for (let index = 0; index < eligiblePool.length; index += 1) {
+      roll -= eligiblePool[index].weight;
       if (roll <= 0) {
-        selectedIndex = index;
+        selectedEntry = eligiblePool[index];
         break;
       }
     }
 
+    const selectedIndex = pool.indexOf(selectedEntry);
     picks.push(pool[selectedIndex].blueprint);
     pool.splice(selectedIndex, 1);
   }

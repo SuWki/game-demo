@@ -174,11 +174,11 @@ export function getPlayerMoveSpeed(stats: PlayerStats): number {
 }
 
 export function getPickupRadius(stats: PlayerStats): number {
-  return 28 + stats.moveSpeed * 0.04;
+  return 34 + stats.moveSpeed * 0.045;
 }
 
 export function getMagnetRadius(stats: PlayerStats): number {
-  return 120 + stats.moveSpeed * 0.12;
+  return 132 + stats.moveSpeed * 0.14;
 }
 
 export function getProjectileSpeed(stats: PlayerStats): number {

@@ -1,0 +1,122 @@
+{
+  "aggregate": {
+    "totalRuns": 4,
+    "branchSwitchNonZeroRuns": 0,
+    "redirectOfferRuns": 4,
+    "redirectPickRuns": 0,
+    "averageBranchSwitchCount": 0,
+    "averageRedirectOfferSeenCount": 1,
+    "averageRedirectPickCount": 0,
+    "consoleErrorRuns": 0
+  },
+  "runs": [
+    {
+      "runIndex": 1,
+      "consoleErrors": [],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T17:00:28.909Z",
+        "finishedAt": "2026-04-04T17:01:34.468Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 65.53,
+        "battleWins": 4,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-burst",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 4,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      }
+    },
+    {
+      "runIndex": 2,
+      "consoleErrors": [],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T17:01:36.741Z",
+        "finishedAt": "2026-04-04T17:02:13.437Z",
+        "outcome": "defeat",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "hpDepleted",
+        "endingReason": "生存压制阶段中机体耐久归零",
+        "finalNodeTitle": "生存压制",
+        "durationSec": 36.68,
+        "battleWins": 1,
+        "nodesCleared": 3,
+        "firstCommitStage": "late",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 1,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      }
+    },
+    {
+      "runIndex": 3,
+      "consoleErrors": [],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T17:02:15.530Z",
+        "finishedAt": "2026-04-04T17:03:47.896Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 92.35,
+        "battleWins": 4,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-burst",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 3,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      }
+    },
+    {
+      "runIndex": 4,
+      "consoleErrors": [],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T17:03:50.133Z",
+        "finishedAt": "2026-04-04T17:04:49.061Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 58.92,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "event:route-handoff:route-handoff-crit",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 3,
+        "latePayoffSeenCount": 4,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      }
+    }
+  ]
+}

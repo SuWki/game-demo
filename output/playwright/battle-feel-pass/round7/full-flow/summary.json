@@ -1,0 +1,132 @@
+{
+  "consoleErrors": [],
+  "panels": 15,
+  "resultSeen": true,
+  "replaySeen": true,
+  "metricsTail": {
+    "runs": 2,
+    "lastEvents": [
+      {
+        "name": "boss_phase_duration",
+        "at": "2026-04-14T13:59:09.007Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "boss-hunt",
+          "phaseId": "kill-window",
+          "phaseLabel": "收束",
+          "durationSec": 4.15
+        }
+      },
+      {
+        "name": "battle_template_completed",
+        "at": "2026-04-14T13:59:09.008Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "boss-hunt",
+          "outcome": "win"
+        }
+      },
+      {
+        "name": "run_duration",
+        "at": "2026-04-14T13:59:09.009Z",
+        "runIndex": 1,
+        "payload": {
+          "durationSec": 56.17
+        }
+      },
+      {
+        "name": "run_finished",
+        "at": "2026-04-14T13:59:09.009Z",
+        "runIndex": 1,
+        "payload": {
+          "outcome": "victory",
+          "routeId": "crit",
+          "buildStage": "hinted",
+          "buildSummary": "暴击倾向已经出现",
+          "endingKind": "victory",
+          "endingReason": "追猎首领已完成收束",
+          "finalNodeTitle": "追猎首领",
+          "finalNodeType": "boss",
+          "durationSec": 56.16,
+          "battleWins": 2,
+          "nodesCleared": 5,
+          "firstCommitStage": null,
+          "firstCommitPick": null,
+          "branchSwitchCount": 0,
+          "branchSwitchPhaseCounts": {},
+          "rareSeenCount": 1,
+          "rarePayoffPickCount": 1,
+          "hybridPickCount": 0,
+          "hybridOfferSeenCount": 3,
+          "latePayoffSeenCount": 1,
+          "routeUpgradeOfferSeenCount": 3,
+          "routeUpgradePickCount": 0,
+          "upgradeOfferRarityCounts": {
+            "common": 8,
+            "uncommon": 7,
+            "epic": 3,
+            "legendary": 2,
+            "rare": 1
+          },
+          "upgradeOfferValueBuckets": {
+            "low": 17,
+            "mid": 2,
+            "high": 2
+          },
+          "nodeTypeCounts": {
+            "anomaly": 3,
+            "upgrade": 1,
+            "boss": 1
+          },
+          "anomalySeenCount": 3,
+          "anomalyClassCounts": {
+            "routeWindow": 1,
+            "hybrid": 1,
+            "bossEcho": 1
+          },
+          "bossEchoSeenCount": 1,
+          "redirectOfferSeenCount": 0,
+          "redirectPickCount": 0,
+          "redirectPickStage": null
+        }
+      },
+      {
+        "name": "first_run_end",
+        "at": "2026-04-14T13:59:09.010Z",
+        "runIndex": 1,
+        "payload": {
+          "outcome": "victory",
+          "routeId": "crit",
+          "buildStage": "hinted",
+          "endingKind": "victory",
+          "durationSec": 56.16
+        }
+      },
+      {
+        "name": "restart_after_first_run",
+        "at": "2026-04-14T13:59:10.722Z",
+        "runIndex": 1,
+        "payload": {
+          "source": "result"
+        }
+      },
+      {
+        "name": "second_run_start",
+        "at": "2026-04-14T13:59:10.722Z",
+        "runIndex": 2
+      },
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-14T13:59:10.725Z",
+        "runIndex": 2,
+        "payload": {
+          "templateId": "elimination-sweep",
+          "title": "起始歼灭",
+          "phase": "opening",
+          "nodeType": "battle",
+          "encounterType": "battle"
+        }
+      }
+    ]
+  }
+}

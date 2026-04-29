@@ -1,0 +1,1210 @@
+[
+  {
+    "route": "crit",
+    "phaseStop": "result",
+    "metrics": {
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-12T13:03:03.055Z",
+        "finishedAt": "2026-04-12T13:03:51.544Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "屏卫首领已完成收束",
+        "finalNodeTitle": "屏卫首领",
+        "finalNodeType": "boss",
+        "durationSec": 48.48,
+        "battleWins": 2,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "branchSwitchPhaseCounts": {},
+        "rareSeenCount": 1,
+        "rarePayoffPickCount": 1,
+        "hybridPickCount": 0,
+        "hybridOfferSeenCount": 1,
+        "latePayoffSeenCount": 4,
+        "routeUpgradeOfferSeenCount": 6,
+        "routeUpgradePickCount": 5,
+        "upgradeOfferRarityCounts": {
+          "uncommon": 15,
+          "common": 2,
+          "rare": 6,
+          "legendary": 3,
+          "epic": 1
+        },
+        "upgradeOfferValueBuckets": {
+          "low": 21,
+          "mid": 2,
+          "spike": 3,
+          "high": 1
+        },
+        "nodeTypeCounts": {
+          "anomaly": 2,
+          "upgrade": 2,
+          "boss": 1
+        },
+        "anomalySeenCount": 2,
+        "anomalyClassCounts": {
+          "routeWindow": 1,
+          "bossEcho": 1
+        },
+        "bossEchoSeenCount": 1,
+        "redirectOfferSeenCount": 0,
+        "redirectPickCount": 0
+      },
+      "eventNames": [
+        "session_start",
+        "click_start_game",
+        "first_run_start",
+        "battle_template_entered",
+        "battle_template_completed",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "first_upgrade_time",
+        "node_selected",
+        "route_hint_time",
+        "first_route_hint_time",
+        "event_selected",
+        "node_selected",
+        "upgrade_offer_seen",
+        "route_lock_time",
+        "route_committed",
+        "build_mature_time",
+        "route_matured",
+        "upgrade_selected",
+        "crit_selected_count",
+        "node_selected",
+        "event_selected",
+        "node_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "node_selected",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "boss_safe_window_seen",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "battle_template_completed",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "run_duration",
+        "run_finished",
+        "first_run_end"
+      ],
+      "lastEvents": [
+        {
+          "name": "boss_safe_window_seen",
+          "at": "2026-04-12T13:03:45.080Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "axis": "pocket",
+            "span": 155,
+            "secondarySpan": 105,
+            "shiftType": "edgeBounce",
+            "durationSec": 0.92
+          }
+        },
+        {
+          "name": "upgrade_offer_seen",
+          "at": "2026-04-12T13:03:45.679Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "optionIds": [
+              "generic-cadence",
+              "generic-thrusters",
+              "crit-redline"
+            ],
+            "routeOptionCount": 1,
+            "redirectOptionCount": 0,
+            "hybridOptionCount": 0,
+            "rarityCounts": {
+              "uncommon": 1,
+              "rare": 1,
+              "legendary": 1
+            },
+            "valueBuckets": {
+              "low": 2,
+              "high": 1
+            }
+          }
+        },
+        {
+          "name": "upgrade_selected",
+          "at": "2026-04-12T13:03:46.061Z",
+          "runIndex": 1,
+          "payload": {
+            "upgradeId": "crit-redline",
+            "routeId": "crit",
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "rarity": "legendary",
+            "category": "route",
+            "valueScore": 142.4,
+            "valueBucket": "high",
+            "tags": [
+              "bridge",
+              "payoff"
+            ]
+          }
+        },
+        {
+          "name": "crit_selected_count",
+          "at": "2026-04-12T13:03:46.061Z",
+          "runIndex": 1,
+          "payload": {
+            "increment": 1
+          }
+        },
+        {
+          "name": "boss_phase_duration",
+          "at": "2026-04-12T13:03:51.204Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "durationSec": 6.34
+          }
+        },
+        {
+          "name": "boss_phase_pattern_duration",
+          "at": "2026-04-12T13:03:51.205Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "durationSec": 6.34
+          }
+        },
+        {
+          "name": "battle_template_completed",
+          "at": "2026-04-12T13:03:51.205Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "outcome": "win"
+          }
+        },
+        {
+          "name": "upgrade_offer_seen",
+          "at": "2026-04-12T13:03:51.205Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "optionIds": [
+              "generic-overclock",
+              "generic-borrowed-tail",
+              "generic-cadence"
+            ],
+            "routeOptionCount": 0,
+            "redirectOptionCount": 0,
+            "hybridOptionCount": 1,
+            "rarityCounts": {
+              "uncommon": 2,
+              "legendary": 1
+            },
+            "valueBuckets": {
+              "low": 2,
+              "spike": 1
+            }
+          }
+        },
+        {
+          "name": "upgrade_selected",
+          "at": "2026-04-12T13:03:51.543Z",
+          "runIndex": 1,
+          "payload": {
+            "upgradeId": "generic-overclock",
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "rarity": "uncommon",
+            "category": "generic",
+            "valueScore": 33.7,
+            "valueBucket": "low",
+            "tags": [
+              "stabilizer",
+              "bridge"
+            ]
+          }
+        },
+        {
+          "name": "run_duration",
+          "at": "2026-04-12T13:03:51.544Z",
+          "runIndex": 1,
+          "payload": {
+            "durationSec": 48.49
+          }
+        },
+        {
+          "name": "run_finished",
+          "at": "2026-04-12T13:03:51.545Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "victory",
+            "routeId": "crit",
+            "buildStage": "matured",
+            "buildSummary": "暴击路线已经成型",
+            "endingKind": "victory",
+            "endingReason": "屏卫首领已完成收束",
+            "finalNodeTitle": "屏卫首领",
+            "finalNodeType": "boss",
+            "durationSec": 48.48,
+            "battleWins": 2,
+            "nodesCleared": 5,
+            "firstCommitStage": "mid",
+            "firstCommitPick": "upgrade:crit-afterglow",
+            "branchSwitchCount": 0,
+            "branchSwitchPhaseCounts": {},
+            "rareSeenCount": 1,
+            "rarePayoffPickCount": 1,
+            "hybridPickCount": 0,
+            "hybridOfferSeenCount": 1,
+            "latePayoffSeenCount": 4,
+            "routeUpgradeOfferSeenCount": 6,
+            "routeUpgradePickCount": 5,
+            "upgradeOfferRarityCounts": {
+              "uncommon": 15,
+              "common": 2,
+              "rare": 6,
+              "legendary": 3,
+              "epic": 1
+            },
+            "upgradeOfferValueBuckets": {
+              "low": 21,
+              "mid": 2,
+              "spike": 3,
+              "high": 1
+            },
+            "nodeTypeCounts": {
+              "anomaly": 2,
+              "upgrade": 2,
+              "boss": 1
+            },
+            "anomalySeenCount": 2,
+            "anomalyClassCounts": {
+              "routeWindow": 1,
+              "bossEcho": 1
+            },
+            "bossEchoSeenCount": 1,
+            "redirectOfferSeenCount": 0,
+            "redirectPickCount": 0,
+            "redirectPickStage": null
+          }
+        },
+        {
+          "name": "first_run_end",
+          "at": "2026-04-12T13:03:51.545Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "victory",
+            "routeId": "crit",
+            "buildStage": "matured",
+            "endingKind": "victory",
+            "durationSec": 48.48
+          }
+        }
+      ]
+    },
+    "replayMetrics": {
+      "lastRun": {
+        "runIndex": 2,
+        "startedAt": "2026-04-12T13:03:52.157Z"
+      },
+      "eventNames": [
+        "session_start",
+        "click_start_game",
+        "first_run_start",
+        "battle_template_entered",
+        "battle_template_completed",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "first_upgrade_time",
+        "node_selected",
+        "route_hint_time",
+        "first_route_hint_time",
+        "event_selected",
+        "node_selected",
+        "upgrade_offer_seen",
+        "route_lock_time",
+        "route_committed",
+        "build_mature_time",
+        "route_matured",
+        "upgrade_selected",
+        "crit_selected_count",
+        "node_selected",
+        "event_selected",
+        "node_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "node_selected",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "boss_safe_window_seen",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "crit_selected_count",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "battle_template_completed",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "run_duration",
+        "run_finished",
+        "first_run_end",
+        "restart_after_first_run",
+        "second_run_start",
+        "battle_template_entered"
+      ],
+      "lastEvents": [
+        {
+          "name": "crit_selected_count",
+          "at": "2026-04-12T13:03:46.061Z",
+          "runIndex": 1,
+          "payload": {
+            "increment": 1
+          }
+        },
+        {
+          "name": "boss_phase_duration",
+          "at": "2026-04-12T13:03:51.204Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "durationSec": 6.34
+          }
+        },
+        {
+          "name": "boss_phase_pattern_duration",
+          "at": "2026-04-12T13:03:51.205Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "durationSec": 6.34
+          }
+        },
+        {
+          "name": "battle_template_completed",
+          "at": "2026-04-12T13:03:51.205Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "outcome": "win"
+          }
+        },
+        {
+          "name": "upgrade_offer_seen",
+          "at": "2026-04-12T13:03:51.205Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "optionIds": [
+              "generic-overclock",
+              "generic-borrowed-tail",
+              "generic-cadence"
+            ],
+            "routeOptionCount": 0,
+            "redirectOptionCount": 0,
+            "hybridOptionCount": 1,
+            "rarityCounts": {
+              "uncommon": 2,
+              "legendary": 1
+            },
+            "valueBuckets": {
+              "low": 2,
+              "spike": 1
+            }
+          }
+        },
+        {
+          "name": "upgrade_selected",
+          "at": "2026-04-12T13:03:51.543Z",
+          "runIndex": 1,
+          "payload": {
+            "upgradeId": "generic-overclock",
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "rarity": "uncommon",
+            "category": "generic",
+            "valueScore": 33.7,
+            "valueBucket": "low",
+            "tags": [
+              "stabilizer",
+              "bridge"
+            ]
+          }
+        },
+        {
+          "name": "run_duration",
+          "at": "2026-04-12T13:03:51.544Z",
+          "runIndex": 1,
+          "payload": {
+            "durationSec": 48.49
+          }
+        },
+        {
+          "name": "run_finished",
+          "at": "2026-04-12T13:03:51.545Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "victory",
+            "routeId": "crit",
+            "buildStage": "matured",
+            "buildSummary": "暴击路线已经成型",
+            "endingKind": "victory",
+            "endingReason": "屏卫首领已完成收束",
+            "finalNodeTitle": "屏卫首领",
+            "finalNodeType": "boss",
+            "durationSec": 48.48,
+            "battleWins": 2,
+            "nodesCleared": 5,
+            "firstCommitStage": "mid",
+            "firstCommitPick": "upgrade:crit-afterglow",
+            "branchSwitchCount": 0,
+            "branchSwitchPhaseCounts": {},
+            "rareSeenCount": 1,
+            "rarePayoffPickCount": 1,
+            "hybridPickCount": 0,
+            "hybridOfferSeenCount": 1,
+            "latePayoffSeenCount": 4,
+            "routeUpgradeOfferSeenCount": 6,
+            "routeUpgradePickCount": 5,
+            "upgradeOfferRarityCounts": {
+              "uncommon": 15,
+              "common": 2,
+              "rare": 6,
+              "legendary": 3,
+              "epic": 1
+            },
+            "upgradeOfferValueBuckets": {
+              "low": 21,
+              "mid": 2,
+              "spike": 3,
+              "high": 1
+            },
+            "nodeTypeCounts": {
+              "anomaly": 2,
+              "upgrade": 2,
+              "boss": 1
+            },
+            "anomalySeenCount": 2,
+            "anomalyClassCounts": {
+              "routeWindow": 1,
+              "bossEcho": 1
+            },
+            "bossEchoSeenCount": 1,
+            "redirectOfferSeenCount": 0,
+            "redirectPickCount": 0,
+            "redirectPickStage": null
+          }
+        },
+        {
+          "name": "first_run_end",
+          "at": "2026-04-12T13:03:51.545Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "victory",
+            "routeId": "crit",
+            "buildStage": "matured",
+            "endingKind": "victory",
+            "durationSec": 48.48
+          }
+        },
+        {
+          "name": "restart_after_first_run",
+          "at": "2026-04-12T13:03:52.157Z",
+          "runIndex": 1,
+          "payload": {
+            "source": "result"
+          }
+        },
+        {
+          "name": "second_run_start",
+          "at": "2026-04-12T13:03:52.157Z",
+          "runIndex": 2
+        },
+        {
+          "name": "battle_template_entered",
+          "at": "2026-04-12T13:03:52.176Z",
+          "runIndex": 2,
+          "payload": {
+            "templateId": "elimination-sweep",
+            "title": "起始歼灭",
+            "phase": "opening",
+            "nodeType": "battle",
+            "encounterType": "battle"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "route": "pierce",
+    "phaseStop": "result",
+    "metrics": {
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-12T13:03:54.220Z",
+        "finishedAt": "2026-04-12T13:04:56.226Z",
+        "outcome": "victory",
+        "routeId": "pierce",
+        "buildStage": "matured",
+        "buildSummary": "穿透路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "屏卫首领已完成收束",
+        "finalNodeTitle": "屏卫首领",
+        "finalNodeType": "boss",
+        "durationSec": 61.99,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:pierce-fan",
+        "branchSwitchCount": 0,
+        "branchSwitchPhaseCounts": {},
+        "rareSeenCount": 0,
+        "rarePayoffPickCount": 0,
+        "hybridPickCount": 3,
+        "hybridOfferSeenCount": 6,
+        "latePayoffSeenCount": 3,
+        "routeUpgradeOfferSeenCount": 7,
+        "routeUpgradePickCount": 7,
+        "upgradeOfferRarityCounts": {
+          "common": 3,
+          "uncommon": 19,
+          "rare": 11,
+          "legendary": 1,
+          "epic": 2
+        },
+        "upgradeOfferValueBuckets": {
+          "low": 28,
+          "mid": 7,
+          "high": 1
+        },
+        "nodeTypeCounts": {
+          "upgrade": 3,
+          "battle": 1,
+          "boss": 1
+        },
+        "anomalySeenCount": 0,
+        "anomalyClassCounts": {},
+        "bossEchoSeenCount": 0,
+        "redirectOfferSeenCount": 0,
+        "redirectPickCount": 0
+      },
+      "eventNames": [
+        "session_start",
+        "click_start_game",
+        "first_run_start",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "route_hint_time",
+        "first_route_hint_time",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "first_upgrade_time",
+        "battle_template_completed",
+        "node_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "node_selected",
+        "upgrade_offer_seen",
+        "route_lock_time",
+        "route_committed",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "node_selected",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "build_mature_time",
+        "route_matured",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "battle_template_completed",
+        "node_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "node_selected",
+        "battle_template_entered",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "boss_safe_window_seen",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "pierce_selected_count",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "battle_template_completed",
+        "run_duration",
+        "run_finished",
+        "first_run_end"
+      ],
+      "lastEvents": [
+        {
+          "name": "boss_phase_entered",
+          "at": "2026-04-12T13:04:51.737Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束"
+          }
+        },
+        {
+          "name": "boss_safe_window_seen",
+          "at": "2026-04-12T13:04:52.208Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "axis": "pocket",
+            "span": 155,
+            "secondarySpan": 105,
+            "shiftType": "edgeBounce",
+            "durationSec": 0.92
+          }
+        },
+        {
+          "name": "boss_safe_window_seen",
+          "at": "2026-04-12T13:04:53.372Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "axis": "pocket",
+            "span": 181,
+            "secondarySpan": 119,
+            "shiftType": "centerReset",
+            "durationSec": 1.1
+          }
+        },
+        {
+          "name": "upgrade_offer_seen",
+          "at": "2026-04-12T13:04:53.373Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "optionIds": [
+              "generic-frame",
+              "generic-terminal-baffle",
+              "pierce-seam-ledger"
+            ],
+            "routeOptionCount": 1,
+            "redirectOptionCount": 0,
+            "hybridOptionCount": 0,
+            "rarityCounts": {
+              "rare": 1,
+              "uncommon": 2
+            },
+            "valueBuckets": {
+              "low": 1,
+              "mid": 2
+            }
+          }
+        },
+        {
+          "name": "upgrade_selected",
+          "at": "2026-04-12T13:04:53.500Z",
+          "runIndex": 1,
+          "payload": {
+            "upgradeId": "pierce-seam-ledger",
+            "routeId": "pierce",
+            "phase": "finalBattle",
+            "source": "levelUp",
+            "rarity": "uncommon",
+            "category": "route",
+            "valueScore": 90.2,
+            "valueBucket": "mid",
+            "tags": [
+              "bridge",
+              "payoff"
+            ]
+          }
+        },
+        {
+          "name": "pierce_selected_count",
+          "at": "2026-04-12T13:04:53.500Z",
+          "runIndex": 1,
+          "payload": {
+            "increment": 1
+          }
+        },
+        {
+          "name": "boss_phase_duration",
+          "at": "2026-04-12T13:04:56.223Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "durationSec": 4.34
+          }
+        },
+        {
+          "name": "boss_phase_pattern_duration",
+          "at": "2026-04-12T13:04:56.224Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "durationSec": 4.34
+          }
+        },
+        {
+          "name": "battle_template_completed",
+          "at": "2026-04-12T13:04:56.224Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "outcome": "win"
+          }
+        },
+        {
+          "name": "run_duration",
+          "at": "2026-04-12T13:04:56.225Z",
+          "runIndex": 1,
+          "payload": {
+            "durationSec": 62
+          }
+        },
+        {
+          "name": "run_finished",
+          "at": "2026-04-12T13:04:56.226Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "victory",
+            "routeId": "pierce",
+            "buildStage": "matured",
+            "buildSummary": "穿透路线已经成型",
+            "endingKind": "victory",
+            "endingReason": "屏卫首领已完成收束",
+            "finalNodeTitle": "屏卫首领",
+            "finalNodeType": "boss",
+            "durationSec": 61.99,
+            "battleWins": 3,
+            "nodesCleared": 5,
+            "firstCommitStage": "mid",
+            "firstCommitPick": "upgrade:pierce-fan",
+            "branchSwitchCount": 0,
+            "branchSwitchPhaseCounts": {},
+            "rareSeenCount": 0,
+            "rarePayoffPickCount": 0,
+            "hybridPickCount": 3,
+            "hybridOfferSeenCount": 6,
+            "latePayoffSeenCount": 3,
+            "routeUpgradeOfferSeenCount": 7,
+            "routeUpgradePickCount": 7,
+            "upgradeOfferRarityCounts": {
+              "common": 3,
+              "uncommon": 19,
+              "rare": 11,
+              "legendary": 1,
+              "epic": 2
+            },
+            "upgradeOfferValueBuckets": {
+              "low": 28,
+              "mid": 7,
+              "high": 1
+            },
+            "nodeTypeCounts": {
+              "upgrade": 3,
+              "battle": 1,
+              "boss": 1
+            },
+            "anomalySeenCount": 0,
+            "anomalyClassCounts": {},
+            "bossEchoSeenCount": 0,
+            "redirectOfferSeenCount": 0,
+            "redirectPickCount": 0,
+            "redirectPickStage": null
+          }
+        },
+        {
+          "name": "first_run_end",
+          "at": "2026-04-12T13:04:56.226Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "victory",
+            "routeId": "pierce",
+            "buildStage": "matured",
+            "endingKind": "victory",
+            "durationSec": 61.99
+          }
+        }
+      ]
+    }
+  },
+  {
+    "route": "dash",
+    "phaseStop": "result",
+    "metrics": {
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-12T13:04:58.002Z",
+        "finishedAt": "2026-04-12T13:06:30.360Z",
+        "outcome": "defeat",
+        "routeId": "dash",
+        "buildStage": "hinted",
+        "buildSummary": "穿梭倾向已经出现",
+        "endingKind": "timeOut",
+        "endingReason": "屏卫首领阶段的压力没能顶住",
+        "finalNodeTitle": "屏卫首领",
+        "finalNodeType": "boss",
+        "durationSec": 92.34,
+        "battleWins": 2,
+        "nodesCleared": 5,
+        "branchSwitchCount": 0,
+        "branchSwitchPhaseCounts": {},
+        "rareSeenCount": 1,
+        "rarePayoffPickCount": 1,
+        "hybridPickCount": 1,
+        "hybridOfferSeenCount": 4,
+        "latePayoffSeenCount": 1,
+        "routeUpgradeOfferSeenCount": 3,
+        "routeUpgradePickCount": 2,
+        "upgradeOfferRarityCounts": {
+          "common": 4,
+          "uncommon": 10,
+          "epic": 2,
+          "rare": 3,
+          "legendary": 2
+        },
+        "upgradeOfferValueBuckets": {
+          "low": 17,
+          "mid": 3,
+          "spike": 1
+        },
+        "nodeTypeCounts": {
+          "upgrade": 3,
+          "battle": 1,
+          "boss": 1
+        },
+        "anomalySeenCount": 0,
+        "anomalyClassCounts": {},
+        "bossEchoSeenCount": 0,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      },
+      "eventNames": [
+        "session_start",
+        "click_start_game",
+        "first_run_start",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "route_hint_time",
+        "first_route_hint_time",
+        "upgrade_selected",
+        "dash_selected_count",
+        "first_upgrade_time",
+        "battle_template_completed",
+        "node_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "dash_selected_count",
+        "node_selected",
+        "upgrade_offer_seen",
+        "redirect_offer_seen",
+        "upgrade_selected",
+        "node_selected",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "battle_template_completed",
+        "node_selected",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "node_selected",
+        "battle_template_entered",
+        "upgrade_offer_seen",
+        "upgrade_selected",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "boss_safe_window_seen",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "boss_signature_seen",
+        "boss_phase_pattern_seen",
+        "boss_phase_entered",
+        "boss_safe_window_seen",
+        "boss_phase_duration",
+        "boss_phase_pattern_duration",
+        "battle_template_completed",
+        "run_duration",
+        "run_finished",
+        "first_run_end"
+      ],
+      "lastEvents": [
+        {
+          "name": "boss_phase_duration",
+          "at": "2026-04-12T13:06:09.331Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "crossfire",
+            "phaseLabel": "交火",
+            "durationSec": 9.01
+          }
+        },
+        {
+          "name": "boss_phase_pattern_duration",
+          "at": "2026-04-12T13:06:09.332Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "crossfire",
+            "phaseLabel": "交火",
+            "patternLabel": "交叉火线",
+            "durationSec": 9.01
+          }
+        },
+        {
+          "name": "boss_signature_seen",
+          "at": "2026-04-12T13:06:09.332Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "signatureLabel": "压边迁火",
+            "durationSec": 2.8
+          }
+        },
+        {
+          "name": "boss_phase_pattern_seen",
+          "at": "2026-04-12T13:06:09.333Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火"
+          }
+        },
+        {
+          "name": "boss_phase_entered",
+          "at": "2026-04-12T13:06:09.333Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束"
+          }
+        },
+        {
+          "name": "boss_safe_window_seen",
+          "at": "2026-04-12T13:06:09.811Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "axis": "pocket",
+            "span": 155,
+            "secondarySpan": 105,
+            "shiftType": "edgeBounce",
+            "durationSec": 0.92
+          }
+        },
+        {
+          "name": "boss_phase_duration",
+          "at": "2026-04-12T13:06:30.358Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "durationSec": 21.03
+          }
+        },
+        {
+          "name": "boss_phase_pattern_duration",
+          "at": "2026-04-12T13:06:30.358Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "phaseId": "fireline",
+            "phaseLabel": "火线收束",
+            "patternLabel": "压边迁火",
+            "durationSec": 21.03
+          }
+        },
+        {
+          "name": "battle_template_completed",
+          "at": "2026-04-12T13:06:30.359Z",
+          "runIndex": 1,
+          "payload": {
+            "templateId": "boss-bastion",
+            "outcome": "loss"
+          }
+        },
+        {
+          "name": "run_duration",
+          "at": "2026-04-12T13:06:30.360Z",
+          "runIndex": 1,
+          "payload": {
+            "durationSec": 92.35
+          }
+        },
+        {
+          "name": "run_finished",
+          "at": "2026-04-12T13:06:30.360Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "defeat",
+            "routeId": "dash",
+            "buildStage": "hinted",
+            "buildSummary": "穿梭倾向已经出现",
+            "endingKind": "timeOut",
+            "endingReason": "屏卫首领阶段的压力没能顶住",
+            "finalNodeTitle": "屏卫首领",
+            "finalNodeType": "boss",
+            "durationSec": 92.34,
+            "battleWins": 2,
+            "nodesCleared": 5,
+            "firstCommitStage": null,
+            "firstCommitPick": null,
+            "branchSwitchCount": 0,
+            "branchSwitchPhaseCounts": {},
+            "rareSeenCount": 1,
+            "rarePayoffPickCount": 1,
+            "hybridPickCount": 1,
+            "hybridOfferSeenCount": 4,
+            "latePayoffSeenCount": 1,
+            "routeUpgradeOfferSeenCount": 3,
+            "routeUpgradePickCount": 2,
+            "upgradeOfferRarityCounts": {
+              "common": 4,
+              "uncommon": 10,
+              "epic": 2,
+              "rare": 3,
+              "legendary": 2
+            },
+            "upgradeOfferValueBuckets": {
+              "low": 17,
+              "mid": 3,
+              "spike": 1
+            },
+            "nodeTypeCounts": {
+              "upgrade": 3,
+              "battle": 1,
+              "boss": 1
+            },
+            "anomalySeenCount": 0,
+            "anomalyClassCounts": {},
+            "bossEchoSeenCount": 0,
+            "redirectOfferSeenCount": 1,
+            "redirectPickCount": 0,
+            "redirectPickStage": null
+          }
+        },
+        {
+          "name": "first_run_end",
+          "at": "2026-04-12T13:06:30.361Z",
+          "runIndex": 1,
+          "payload": {
+            "outcome": "defeat",
+            "routeId": "dash",
+            "buildStage": "hinted",
+            "endingKind": "timeOut",
+            "durationSec": 92.34
+          }
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "anomalyPanelSeen": false,
+  "bossNodeSeen": true,
+  "bossBattleSeen": false,
+  "replayStarted": true,
+  "battleHudSeen": false,
+  "bossReadouts": [],
+  "consoleErrors": [],
+  "metrics": {
+    "bossEvents": [
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-05T17:51:31.754Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "boss-hunt",
+          "title": "追猎主核",
+          "phase": "finalBattle",
+          "nodeType": "boss",
+          "encounterType": "boss"
+        }
+      }
+    ],
+    "anomalyEvents": [],
+    "finalRun": {
+      "runIndex": 2,
+      "startedAt": "2026-04-05T17:52:13.555Z"
+    }
+  }
+}

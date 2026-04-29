@@ -50,6 +50,9 @@ const services: Services = {
   audio: new PilotAudio(),
 };
 
+const savedAudioVolume = Number(window.localStorage.getItem('pilot-audio-volume'));
+services.audio.setVolume(Number.isFinite(savedAudioVolume) ? savedAudioVolume : 1);
+
 window.__pilotAudioDebug = () => services.audio.getDebugSnapshot();
 
 const unlockAudio = () => {

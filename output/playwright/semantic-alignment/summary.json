@@ -1,0 +1,415 @@
+{
+  "panels": [
+    {
+      "tag": "panel-8",
+      "title": "等级提升 Lv.2",
+      "choices": [
+        {
+          "id": "crit-aim:uncommon:70dadg",
+          "text": "暴击 绿 聚焦瞄准 暴击率 +8%，伤害 +2，暴击路线推进 +1",
+          "type": "暴击",
+          "rarity": "绿"
+        },
+        {
+          "id": "pierce-core:rare:83e1ep",
+          "text": "穿透 蓝 穿甲校正 穿透 +1，伤害 +3，弹速 +38，穿透路线推进 +1",
+          "type": "穿透",
+          "rarity": "蓝"
+        },
+        {
+          "id": "dash-brush:uncommon:soulla",
+          "text": "穿梭 绿 擦身推进 脉冲伤害 +12，移速 +22，穿梭冷却 -0.66s，穿梭路线推进 +1",
+          "type": "穿梭",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-10",
+      "title": "前段节点选择",
+      "choices": [
+        {
+          "id": "round-1-upgrade-fireline",
+          "text": "强化 火线整备 直接补火控，把前两拍读数尽快拉清。",
+          "type": "强化",
+          "rarity": ""
+        },
+        {
+          "id": "round-1-battle",
+          "text": "战斗 歼灭推进 继续搏成长，提前拉高推进速度。",
+          "type": "战斗",
+          "rarity": ""
+        },
+        {
+          "id": "round-1-event",
+          "text": "异常 试飞事件 中风险拐方向，可能更快形成路线。",
+          "type": "异常",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-11",
+      "title": "异常 · 高压试飞",
+      "choices": [
+        {
+          "id": "risky-protocol-crit",
+          "text": "暴击 追求爆发 向暴击方向推进，并承受 8 点压力伤害。",
+          "type": "暴击",
+          "rarity": ""
+        },
+        {
+          "id": "risky-protocol-pierce",
+          "text": "穿透 追求贯穿 向穿透方向推进，并承受 8 点压力伤害。",
+          "type": "穿透",
+          "rarity": ""
+        },
+        {
+          "id": "risky-protocol-dash",
+          "text": "穿梭 追求穿梭 向穿梭方向推进，并承受 8 点压力伤害。",
+          "type": "穿梭",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-12",
+      "title": "中段节点选择",
+      "choices": [
+        {
+          "id": "round-2-upgrade",
+          "text": "强化 中段强化 稳住当前方向，先把 starter 接成更顺的 bridge。",
+          "type": "强化",
+          "rarity": ""
+        },
+        {
+          "id": "round-2-battle",
+          "text": "战斗 精英压制 中段压力点，适合检验当前路线是否站稳。",
+          "type": "战斗",
+          "rarity": ""
+        },
+        {
+          "id": "round-2-upgrade-bridge",
+          "text": "强化 过渡整备 补一段过渡读数，让方向更清楚，但还留得住转向余地。",
+          "type": "强化",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-15",
+      "title": "等级提升 Lv.3",
+      "choices": [
+        {
+          "id": "crit-afterglow:rare:fw6k3d",
+          "text": "暴击 蓝 余热描边 射速 +0.23，暴击率 +4%，弹速 +23，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1",
+          "type": "暴击",
+          "rarity": "蓝"
+        },
+        {
+          "id": "generic-relay-throttle:common:431gpt",
+          "text": "通用 白 并线节流 伤害 +3，射速 +0.14，弹速 +16，移速 +8",
+          "type": "通用",
+          "rarity": "白"
+        },
+        {
+          "id": "dash-sidechannel:rare:3wxrwa",
+          "text": "穿梭 蓝 错位取样 移速 +20，穿梭冷却 -0.41s，无伤窗口 +0.07s，脉冲伤害 +6，恢复 12 点耐久，穿梭路线推进 +1，穿梭路线推进 +1",
+          "type": "穿梭",
+          "rarity": "蓝"
+        }
+      ]
+    },
+    {
+      "tag": "panel-18",
+      "title": "等级提升 Lv.4",
+      "choices": [
+        {
+          "id": "crit-burst:uncommon:6iehoq",
+          "text": "暴击 绿 连发校准 射速 +0.38，暴击率 +6%，暴击路线推进 +1",
+          "type": "暴击",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-open-loop:common:igbdbc",
+          "text": "通用 白 开环余量 生命上限 +8，每秒回复 +0.10，移速 +10，恢复 8 点耐久",
+          "type": "通用",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-frame:uncommon:n940ru",
+          "text": "通用 绿 强化骨架 生命上限 +19，恢复 14 点耐久",
+          "type": "通用",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-21",
+      "title": "等级提升 Lv.5",
+      "choices": [
+        {
+          "id": "generic-open-loop:common:5tanhb",
+          "text": "通用 白 开环余量 生命上限 +8，每秒回复 +0.10，移速 +10，恢复 8 点耐久",
+          "type": "通用",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-vector-buffer:rare:f54xel",
+          "text": "通用 蓝 矢量缓冲 射速 +0.23，移速 +23，弹速 +26",
+          "type": "通用",
+          "rarity": "蓝"
+        },
+        {
+          "id": "generic-thrusters:common:brjs15",
+          "text": "通用 白 矢量喷口 移速 +20",
+          "type": "通用",
+          "rarity": "白"
+        }
+      ]
+    },
+    {
+      "tag": "panel-28",
+      "title": "等级提升 Lv.6",
+      "choices": [
+        {
+          "id": "generic-reroute-buffer:rare:r4kkxp",
+          "text": "通用 蓝 改道缓冲 生命上限 +9，每秒回复 +0.12，移速 +17，弹速 +23，恢复 15 点耐久",
+          "type": "通用",
+          "rarity": "蓝"
+        },
+        {
+          "id": "generic-frame:uncommon:z0pa53",
+          "text": "通用 绿 强化骨架 生命上限 +19，恢复 14 点耐久",
+          "type": "通用",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-reactor:uncommon:7zlrgp",
+          "text": "通用 绿 爆伤蓄能 爆伤 +0.50x",
+          "type": "通用",
+          "rarity": "绿"
+        }
+      ]
+    }
+  ],
+  "nodeTypeSeen": [
+    "暴击",
+    "穿透",
+    "穿梭",
+    "强化",
+    "战斗",
+    "异常",
+    "通用"
+  ],
+  "battleSnapshots": [
+    {
+      "tag": "battle-opening",
+      "encounterType": null,
+      "templateId": null,
+      "nodeType": null,
+      "enemyArchetypes": [],
+      "enemyProjectileCount": null
+    },
+    {
+      "tag": "battle-route-2",
+      "encounterType": null,
+      "templateId": null,
+      "nodeType": null,
+      "enemyArchetypes": [],
+      "enemyProjectileCount": null
+    }
+  ],
+  "battleStates": [],
+  "resultVisible": true,
+  "replayStarted": true,
+  "consoleErrors": [],
+  "metrics": {
+    "runCount": 2,
+    "eventCount": 33,
+    "lastRun": {
+      "runIndex": 2,
+      "startedAt": "2026-04-05T07:03:24.065Z"
+    },
+    "lastEvents": [
+      {
+        "name": "route_committed",
+        "at": "2026-04-05T07:02:53.386Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "crit",
+          "phase": "mid",
+          "pickId": "upgrade:crit-afterglow"
+        }
+      },
+      {
+        "name": "build_mature_time",
+        "at": "2026-04-05T07:02:53.386Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "crit",
+          "durationSec": 30.59
+        }
+      },
+      {
+        "name": "route_matured",
+        "at": "2026-04-05T07:02:53.386Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "crit"
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T07:02:53.386Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "crit-afterglow:rare",
+          "routeId": "crit",
+          "phase": "mid",
+          "tags": [
+            "bridge"
+          ]
+        }
+      },
+      {
+        "name": "crit_selected_count",
+        "at": "2026-04-05T07:02:53.387Z",
+        "runIndex": 1,
+        "payload": {
+          "increment": 1
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T07:02:59.188Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "crit-burst:uncommon",
+          "routeId": "crit",
+          "phase": "mid",
+          "tags": [
+            "bridge"
+          ]
+        }
+      },
+      {
+        "name": "crit_selected_count",
+        "at": "2026-04-05T07:02:59.188Z",
+        "runIndex": 1,
+        "payload": {
+          "increment": 1
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T07:03:04.465Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-open-loop:common",
+          "phase": "mid",
+          "tags": [
+            "stabilizer",
+            "bridge",
+            "hybrid"
+          ]
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T07:03:18.534Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-reroute-buffer:rare",
+          "phase": "mid",
+          "tags": [
+            "stabilizer",
+            "bridge",
+            "hybrid"
+          ]
+        }
+      },
+      {
+        "name": "battle_template_completed",
+        "at": "2026-04-05T07:03:22.082Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "elite-screen",
+          "outcome": "loss"
+        }
+      },
+      {
+        "name": "run_duration",
+        "at": "2026-04-05T07:03:22.084Z",
+        "runIndex": 1,
+        "payload": {
+          "durationSec": 59.29
+        }
+      },
+      {
+        "name": "run_finished",
+        "at": "2026-04-05T07:03:22.088Z",
+        "runIndex": 1,
+        "payload": {
+          "outcome": "defeat",
+          "routeId": "crit",
+          "buildStage": "matured",
+          "buildSummary": "暴击路线已经成型",
+          "endingKind": "timeOut",
+          "endingReason": "精英压制阶段的压力没能顶住",
+          "finalNodeTitle": "精英压制",
+          "finalNodeType": "battle",
+          "durationSec": 59.28,
+          "battleWins": 1,
+          "nodesCleared": 2,
+          "firstCommitStage": "mid",
+          "firstCommitPick": "upgrade:crit-afterglow",
+          "branchSwitchCount": 0,
+          "rareSeenCount": 0,
+          "hybridPickCount": 2,
+          "latePayoffSeenCount": 0,
+          "redirectOfferSeenCount": 2,
+          "redirectPickCount": 0,
+          "redirectPickStage": null
+        }
+      },
+      {
+        "name": "first_run_end",
+        "at": "2026-04-05T07:03:22.088Z",
+        "runIndex": 1,
+        "payload": {
+          "outcome": "defeat",
+          "routeId": "crit",
+          "buildStage": "matured",
+          "endingKind": "timeOut",
+          "durationSec": 59.28
+        }
+      },
+      {
+        "name": "restart_after_first_run",
+        "at": "2026-04-05T07:03:24.065Z",
+        "runIndex": 1,
+        "payload": {
+          "source": "result"
+        }
+      },
+      {
+        "name": "second_run_start",
+        "at": "2026-04-05T07:03:24.065Z",
+        "runIndex": 2
+      },
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-05T07:03:24.083Z",
+        "runIndex": 2,
+        "payload": {
+          "templateId": "elimination",
+          "title": "起始歼灭",
+          "phase": "opening",
+          "nodeType": "battle",
+          "encounterType": "battle"
+        }
+      }
+    ]
+  }
+}

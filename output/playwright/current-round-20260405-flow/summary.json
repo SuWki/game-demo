@@ -1,0 +1,419 @@
+{
+  "panels": [
+    {
+      "title": "等级提升 Lv.2",
+      "description": "选择 1 项强化，立即生效。",
+      "choices": [
+        {
+          "id": "generic-vector-buffer:common:mpu1k4",
+          "type": "通用",
+          "text": "通用 白 矢量缓冲 射速 +0.16，移速 +16，弹速 +18",
+          "detail": "射速 +0.16，移速 +16，弹速 +18"
+        },
+        {
+          "id": "generic-firepower:common:v1ufeo",
+          "type": "通用",
+          "text": "通用 白 火控强化 伤害 +4",
+          "detail": "伤害 +4"
+        },
+        {
+          "id": "generic-optics:common:vvcsws",
+          "type": "通用",
+          "text": "通用 白 精密镜组 暴击率 +7%",
+          "detail": "暴击率 +7%"
+        }
+      ]
+    },
+    {
+      "title": "前段节点选择",
+      "description": "选择下一站。",
+      "choices": [
+        {
+          "id": "round-1-battle-flank",
+          "type": "战斗",
+          "text": "战斗 侧压试飞 普通战 · 获取经验并推进。",
+          "detail": "普通战 · 获取经验并推进。"
+        },
+        {
+          "id": "round-1-upgrade-fireline",
+          "type": "强化",
+          "text": "强化 火线整备 获得一次强化三选一。",
+          "detail": "获得一次强化三选一。"
+        },
+        {
+          "id": "round-1-upgrade",
+          "type": "强化",
+          "text": "强化 稳定整备 获得一次强化三选一。",
+          "detail": "获得一次强化三选一。"
+        }
+      ]
+    },
+    {
+      "title": "等级提升 Lv.3",
+      "description": "选择 1 项强化，立即生效。",
+      "choices": [
+        {
+          "id": "generic-ballistics:common:wa1pmw",
+          "type": "通用",
+          "text": "通用 白 弹道校正 弹速 +34，伤害 +2",
+          "detail": "弹速 +34，伤害 +2"
+        },
+        {
+          "id": "generic-thrusters:common:2p1pua",
+          "type": "通用",
+          "text": "通用 白 矢量喷口 移速 +20",
+          "detail": "移速 +20"
+        },
+        {
+          "id": "crit-primer:uncommon:ffin3p",
+          "type": "暴击",
+          "text": "暴击 绿 升温预热 射速 +0.29，暴击率 +6%，暴击路线推进 +1",
+          "detail": "射速 +0.29，暴击率 +6%，暴击路线推进 +1"
+        }
+      ]
+    },
+    {
+      "title": "中段节点选择",
+      "description": "选择下一站。",
+      "choices": [
+        {
+          "id": "round-2-anomaly-fracture",
+          "type": "异常",
+          "text": "异常 相位裂缝 进入异常窗口，选择额外收益或代价。",
+          "detail": "进入异常窗口，选择额外收益或代价。"
+        },
+        {
+          "id": "round-2-event-shift",
+          "type": "异常",
+          "text": "异常 偏航窗口 进入异常窗口，选择额外收益或代价。",
+          "detail": "进入异常窗口，选择额外收益或代价。"
+        },
+        {
+          "id": "round-2-upgrade",
+          "type": "强化",
+          "text": "强化 中段强化 获得一次强化三选一。",
+          "detail": "获得一次强化三选一。"
+        }
+      ]
+    },
+    {
+      "title": "异常 · 暴击转接窗",
+      "description": "异常窗口已打开，选择一项处理方案。",
+      "choices": [
+        {
+          "id": "crit-reroute-window-pierce",
+          "type": "穿透",
+          "text": "穿透 改道穿透清线 伤害 +2，弹速 +18，穿透 +1，恢复 8 点耐久，穿透路线推进 +1，穿透路线推进 +1，穿透路线推进 +1",
+          "detail": "伤害 +2，弹速 +18，穿透 +1，恢复 8 点耐久，穿透路线推进 +1，穿透路线推进 +1，穿透路线推进 +1"
+        },
+        {
+          "id": "crit-reroute-window-dash",
+          "type": "穿梭",
+          "text": "穿梭 改道穿梭反打 移速 +12，穿梭冷却 -0.20s，脉冲伤害 +4，恢复 8 点耐久，穿梭路线推进 +1，穿梭路线推进 +1，穿梭路线推进 +1",
+          "detail": "移速 +12，穿梭冷却 -0.20s，脉冲伤害 +4，恢复 8 点耐久，穿梭路线推进 +1，穿梭路线推进 +1，穿梭路线推进 +1"
+        },
+        {
+          "id": "crit-reroute-window-hold",
+          "type": "异常",
+          "text": "异常 先稳当前火力 伤害 +4，射速 +0.1，恢复 10 点耐久",
+          "detail": "伤害 +4，射速 +0.1，恢复 10 点耐久"
+        }
+      ]
+    },
+    {
+      "title": "后段节点选择",
+      "description": "选择下一站。",
+      "choices": [
+        {
+          "id": "round-3-battle-crossfire",
+          "type": "战斗",
+          "text": "战斗 交火夹层 生存战 · 获取经验并推进。",
+          "detail": "生存战 · 获取经验并推进。"
+        }
+      ]
+    },
+    {
+      "title": "等级提升 Lv.4",
+      "description": "选择 1 项强化，立即生效。",
+      "choices": [
+        {
+          "id": "generic-optics:rare:sifs39",
+          "type": "通用",
+          "text": "通用 蓝 精密镜组 暴击率 +10%",
+          "detail": "暴击率 +10%"
+        },
+        {
+          "id": "generic-cadence:uncommon:zuznzr",
+          "type": "通用",
+          "text": "通用 绿 压缩射频 射速 +0.36",
+          "detail": "射速 +0.36"
+        },
+        {
+          "id": "generic-thrusters:common:idbzro",
+          "type": "通用",
+          "text": "通用 白 矢量喷口 移速 +20",
+          "detail": "移速 +20"
+        }
+      ]
+    },
+    {
+      "title": "等级提升 Lv.5",
+      "description": "选择 1 项强化，立即生效。",
+      "choices": [
+        {
+          "id": "generic-reactor:epic:t6rt77",
+          "type": "通用",
+          "text": "通用 紫 爆伤蓄能 爆伤 +0.73x",
+          "detail": "爆伤 +0.73x"
+        },
+        {
+          "id": "generic-relay-throttle:common:yy2su6",
+          "type": "通用",
+          "text": "通用 白 并线节流 伤害 +3，射速 +0.14，弹速 +16，移速 +8",
+          "detail": "伤害 +3，射速 +0.14，弹速 +16，移速 +8"
+        },
+        {
+          "id": "generic-frame:legendary:wq4pis",
+          "type": "通用",
+          "text": "通用 金 强化骨架 生命上限 +34，恢复 26 点耐久",
+          "detail": "生命上限 +34，恢复 26 点耐久"
+        }
+      ]
+    },
+    {
+      "title": "等级提升 Lv.6",
+      "description": "选择 1 项强化，立即生效。",
+      "choices": [
+        {
+          "id": "generic-open-loop:common:yfeivg",
+          "type": "通用",
+          "text": "通用 白 开环余量 生命上限 +8，每秒回复 +0.10，移速 +10，恢复 8 点耐久",
+          "detail": "生命上限 +8，每秒回复 +0.10，移速 +10，恢复 8 点耐久"
+        },
+        {
+          "id": "generic-pressure-bypass:epic:z3flsx",
+          "type": "通用",
+          "text": "通用 紫 压差旁路 生命上限 +18，每秒回复 +0.21，移速 +18，恢复 18 点耐久",
+          "detail": "生命上限 +18，每秒回复 +0.21，移速 +18，恢复 18 点耐久"
+        },
+        {
+          "id": "generic-cadence:rare:ne1qd7",
+          "type": "通用",
+          "text": "通用 蓝 压缩射频 射速 +0.43",
+          "detail": "射速 +0.43"
+        }
+      ]
+    }
+  ],
+  "anomalySeen": false,
+  "eliteHudSeen": false,
+  "bossHudSeen": false,
+  "maxBattleToastCount": 1,
+  "internalTextLeaks": [],
+  "encounterDurations": {
+    "eliteSec": null,
+    "bossSec": null
+  },
+  "resultReached": false,
+  "replayStarted": false,
+  "consoleErrors": [],
+  "metrics": {
+    "run": {
+      "runIndex": 1,
+      "startedAt": "2026-04-05T14:05:15.897Z"
+    },
+    "lastEvents": [
+      {
+        "name": "battle_template_completed",
+        "at": "2026-04-05T14:05:35.997Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "elimination",
+          "outcome": "win"
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T14:05:36.765Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-vector-buffer:common",
+          "phase": "opening",
+          "tags": [
+            "stabilizer",
+            "bridge"
+          ]
+        }
+      },
+      {
+        "name": "first_upgrade_time",
+        "at": "2026-04-05T14:05:36.765Z",
+        "runIndex": 1,
+        "payload": {
+          "durationSec": 20.87
+        }
+      },
+      {
+        "name": "node_selected",
+        "at": "2026-04-05T14:05:37.291Z",
+        "runIndex": 1,
+        "payload": {
+          "nodeType": "battle",
+          "title": "侧压试飞"
+        }
+      },
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-05T14:05:37.291Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "elimination-pincer",
+          "title": "侧压试飞",
+          "phase": "opening",
+          "nodeType": "battle",
+          "encounterType": "battle"
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T14:05:55.191Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-ballistics:common",
+          "phase": "opening",
+          "tags": [
+            "stabilizer"
+          ]
+        }
+      },
+      {
+        "name": "battle_template_completed",
+        "at": "2026-04-05T14:05:58.483Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "elimination-pincer",
+          "outcome": "win"
+        }
+      },
+      {
+        "name": "node_selected",
+        "at": "2026-04-05T14:05:58.929Z",
+        "runIndex": 1,
+        "payload": {
+          "nodeType": "anomaly",
+          "title": "相位裂缝"
+        }
+      },
+      {
+        "name": "route_hint_time",
+        "at": "2026-04-05T14:05:59.515Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "pierce",
+          "durationSec": 43.62
+        }
+      },
+      {
+        "name": "first_route_hint_time",
+        "at": "2026-04-05T14:05:59.515Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "pierce",
+          "durationSec": 43.62
+        }
+      },
+      {
+        "name": "route_lock_time",
+        "at": "2026-04-05T14:05:59.516Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "pierce",
+          "phase": "mid",
+          "pickId": "event:crit-reroute-window:crit-reroute-window-pierce",
+          "durationSec": 43.62
+        }
+      },
+      {
+        "name": "route_committed",
+        "at": "2026-04-05T14:05:59.516Z",
+        "runIndex": 1,
+        "payload": {
+          "routeId": "pierce",
+          "phase": "mid",
+          "pickId": "event:crit-reroute-window:crit-reroute-window-pierce"
+        }
+      },
+      {
+        "name": "event_selected",
+        "at": "2026-04-05T14:05:59.516Z",
+        "runIndex": 1,
+        "payload": {
+          "eventId": "crit-reroute-window",
+          "optionId": "crit-reroute-window-pierce",
+          "routeId": "pierce",
+          "phase": "mid",
+          "contentKind": "anomaly"
+        }
+      },
+      {
+        "name": "node_selected",
+        "at": "2026-04-05T14:06:00.111Z",
+        "runIndex": 1,
+        "payload": {
+          "nodeType": "battle",
+          "title": "交火夹层"
+        }
+      },
+      {
+        "name": "battle_template_entered",
+        "at": "2026-04-05T14:06:00.111Z",
+        "runIndex": 1,
+        "payload": {
+          "templateId": "survival-gauntlet",
+          "title": "交火夹层",
+          "phase": "late",
+          "nodeType": "battle",
+          "encounterType": "battle"
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T14:06:05.835Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-optics:rare",
+          "phase": "late",
+          "tags": [
+            "stabilizer"
+          ]
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T14:06:08.979Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-reactor:epic",
+          "phase": "late",
+          "tags": [
+            "stabilizer"
+          ]
+        }
+      },
+      {
+        "name": "upgrade_selected",
+        "at": "2026-04-05T14:06:14.162Z",
+        "runIndex": 1,
+        "payload": {
+          "upgradeId": "generic-open-loop:common",
+          "phase": "late",
+          "tags": [
+            "stabilizer",
+            "bridge",
+            "hybrid"
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,1056 @@
+{
+  "aggregate": {
+    "totalRuns": 6,
+    "branchSwitchNonZeroRuns": 0,
+    "redirectOfferRuns": 4,
+    "redirectPickRuns": 0,
+    "rareSeenRuns": 3,
+    "averageBranchSwitchCount": 0,
+    "averageRedirectOfferSeenCount": 1,
+    "averageRedirectPickCount": 0,
+    "averageRareSeenCount": 0.5,
+    "averageHybridPickCount": 0.83,
+    "averageLatePayoffSeenCount": 2.83,
+    "consoleErrorRuns": 0
+  },
+  "runs": [
+    {
+      "runIndex": 1,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 蓝 升温预热 射速 +0.35，暴击率 +7%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "强化 稳定整备 低风险补强，适合把第一条倾向扶起来。"
+        },
+        {
+          "panelTitle": "前段强化",
+          "choice": "暴击 绿 聚焦瞄准 暴击率 +8%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "战斗 封锁突破 护卫拉扯更明显的中段压力点，更看换位与拆线能力。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 白 余热描边 射速 +0.16，暴击率 +3%，弹速 +16，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 白 旁路升温 伤害 +2，射速 +0.14，暴击率 +4%，恢复 8 点耐久，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "强化 尾段稳压 给一次更偏收尾的修正窗口，适合把最后短板补平。"
+        },
+        {
+          "panelTitle": "后段强化",
+          "choice": "暴击 绿 爆链灼流 伤害 +4，射速 +0.17，爆伤 +0.34x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 绿 热区追击 伤害 +4，射速 +0.22，爆伤 +0.26x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 绿 终端爆发 暴击率 +8%，爆伤 +0.50x，暴击路线推进 +1"
+        }
+      ],
+      "rarePanelsSeen": 0,
+      "redirectPanelsSeen": 0,
+      "replayStarted": true,
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:45:02.736Z",
+        "finishedAt": "2026-04-04T16:45:44.779Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 42.04,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 0,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 3,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": [],
+      "redirectOfferEvents": [
+        {
+          "name": "redirect_offer_seen",
+          "at": "2026-04-04T16:45:31.714Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "mid",
+            "source": "upgrade",
+            "optionIds": [
+              "pierce-sidechannel"
+            ],
+            "redirectOfferSeenCount": 1
+          }
+        }
+      ],
+      "metricsAfterReplay": {
+        "version": "v1",
+        "updatedAt": "2026-04-04T16:45:46.226Z",
+        "sessions": [
+          {
+            "id": "session_1775321101702",
+            "startedAt": "2026-04-04T16:45:01.702Z",
+            "events": [
+              {
+                "name": "session_start",
+                "at": "2026-04-04T16:45:01.702Z",
+                "runIndex": null
+              },
+              {
+                "name": "click_start_game",
+                "at": "2026-04-04T16:45:02.735Z",
+                "runIndex": null
+              },
+              {
+                "name": "first_run_start",
+                "at": "2026-04-04T16:45:02.736Z",
+                "runIndex": 1
+              },
+              {
+                "name": "battle_template_entered",
+                "at": "2026-04-04T16:45:02.741Z",
+                "runIndex": 1,
+                "payload": {
+                  "templateId": "elimination-sweep",
+                  "title": "起始歼灭",
+                  "phase": "opening"
+                }
+              },
+              {
+                "name": "battle_template_completed",
+                "at": "2026-04-04T16:45:23.329Z",
+                "runIndex": 1,
+                "payload": {
+                  "templateId": "elimination-sweep",
+                  "outcome": "win"
+                }
+              },
+              {
+                "name": "route_hint_time",
+                "at": "2026-04-04T16:45:23.686Z",
+                "runIndex": 1,
+                "payload": {
+                  "routeId": "crit",
+                  "durationSec": 20.95
+                }
+              },
+              {
+                "name": "first_route_hint_time",
+                "at": "2026-04-04T16:45:23.686Z",
+                "runIndex": 1,
+                "payload": {
+                  "routeId": "crit",
+                  "durationSec": 20.95
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:23.686Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-primer:rare",
+                  "routeId": "crit",
+                  "phase": "opening",
+                  "tags": [
+                    "starter"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:23.686Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "first_upgrade_time",
+                "at": "2026-04-04T16:45:23.686Z",
+                "runIndex": 1,
+                "payload": {
+                  "durationSec": 20.95
+                }
+              },
+              {
+                "name": "node_selected",
+                "at": "2026-04-04T16:45:24.126Z",
+                "runIndex": 1,
+                "payload": {
+                  "nodeType": "upgrade",
+                  "title": "稳定整备"
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:24.562Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-aim:uncommon",
+                  "routeId": "crit",
+                  "phase": "opening",
+                  "tags": [
+                    "starter"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:24.562Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "node_selected",
+                "at": "2026-04-04T16:45:25.003Z",
+                "runIndex": 1,
+                "payload": {
+                  "nodeType": "battle",
+                  "title": "封锁突破"
+                }
+              },
+              {
+                "name": "battle_template_entered",
+                "at": "2026-04-04T16:45:25.003Z",
+                "runIndex": 1,
+                "payload": {
+                  "templateId": "elite-lockdown",
+                  "title": "封锁突破",
+                  "phase": "mid"
+                }
+              },
+              {
+                "name": "redirect_offer_seen",
+                "at": "2026-04-04T16:45:31.714Z",
+                "runIndex": 1,
+                "payload": {
+                  "phase": "mid",
+                  "source": "upgrade",
+                  "optionIds": [
+                    "pierce-sidechannel"
+                  ],
+                  "redirectOfferSeenCount": 1
+                }
+              },
+              {
+                "name": "route_lock_time",
+                "at": "2026-04-04T16:45:31.941Z",
+                "runIndex": 1,
+                "payload": {
+                  "routeId": "crit",
+                  "phase": "mid",
+                  "pickId": "upgrade:crit-afterglow",
+                  "durationSec": 29.21
+                }
+              },
+              {
+                "name": "route_committed",
+                "at": "2026-04-04T16:45:31.941Z",
+                "runIndex": 1,
+                "payload": {
+                  "routeId": "crit",
+                  "phase": "mid",
+                  "pickId": "upgrade:crit-afterglow"
+                }
+              },
+              {
+                "name": "build_mature_time",
+                "at": "2026-04-04T16:45:31.941Z",
+                "runIndex": 1,
+                "payload": {
+                  "routeId": "crit",
+                  "durationSec": 29.21
+                }
+              },
+              {
+                "name": "route_matured",
+                "at": "2026-04-04T16:45:31.941Z",
+                "runIndex": 1,
+                "payload": {
+                  "routeId": "crit"
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:31.941Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-afterglow:common",
+                  "routeId": "crit",
+                  "phase": "mid",
+                  "tags": [
+                    "bridge"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:31.942Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:35.618Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-sidechannel:common",
+                  "routeId": "crit",
+                  "phase": "mid",
+                  "tags": [
+                    "bridge",
+                    "redirect"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:35.619Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "battle_template_completed",
+                "at": "2026-04-04T16:45:36.414Z",
+                "runIndex": 1,
+                "payload": {
+                  "templateId": "elite-lockdown",
+                  "outcome": "win"
+                }
+              },
+              {
+                "name": "node_selected",
+                "at": "2026-04-04T16:45:36.705Z",
+                "runIndex": 1,
+                "payload": {
+                  "nodeType": "upgrade",
+                  "title": "尾段稳压"
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:37.176Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-cascade:uncommon",
+                  "routeId": "crit",
+                  "phase": "late",
+                  "tags": [
+                    "bridge",
+                    "payoff"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:37.177Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "node_selected",
+                "at": "2026-04-04T16:45:37.634Z",
+                "runIndex": 1,
+                "payload": {
+                  "nodeType": "upgrade",
+                  "title": "最终整备"
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:38.093Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-heat:uncommon",
+                  "routeId": "crit",
+                  "phase": "finalPrep",
+                  "tags": [
+                    "bridge",
+                    "payoff"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:38.093Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "node_selected",
+                "at": "2026-04-04T16:45:38.534Z",
+                "runIndex": 1,
+                "payload": {
+                  "nodeType": "battle",
+                  "title": "最终战"
+                }
+              },
+              {
+                "name": "battle_template_entered",
+                "at": "2026-04-04T16:45:38.534Z",
+                "runIndex": 1,
+                "payload": {
+                  "templateId": "elite",
+                  "title": "最终战",
+                  "phase": "finalBattle"
+                }
+              },
+              {
+                "name": "battle_template_completed",
+                "at": "2026-04-04T16:45:44.485Z",
+                "runIndex": 1,
+                "payload": {
+                  "templateId": "elite",
+                  "outcome": "win"
+                }
+              },
+              {
+                "name": "upgrade_selected",
+                "at": "2026-04-04T16:45:44.778Z",
+                "runIndex": 1,
+                "payload": {
+                  "upgradeId": "crit-finish:uncommon",
+                  "routeId": "crit",
+                  "phase": "finalBattle",
+                  "tags": [
+                    "finisher"
+                  ]
+                }
+              },
+              {
+                "name": "crit_selected_count",
+                "at": "2026-04-04T16:45:44.778Z",
+                "runIndex": 1,
+                "payload": {
+                  "increment": 1
+                }
+              },
+              {
+                "name": "run_duration",
+                "at": "2026-04-04T16:45:44.779Z",
+                "runIndex": 1,
+                "payload": {
+                  "durationSec": 42.04
+                }
+              },
+              {
+                "name": "run_finished",
+                "at": "2026-04-04T16:45:44.779Z",
+                "runIndex": 1,
+                "payload": {
+                  "outcome": "victory",
+                  "routeId": "crit",
+                  "buildStage": "matured",
+                  "buildSummary": "暴击路线已经成型",
+                  "endingKind": "victory",
+                  "endingReason": "最终战已完成收束",
+                  "finalNodeTitle": "最终战",
+                  "durationSec": 42.04,
+                  "battleWins": 3,
+                  "nodesCleared": 5,
+                  "firstCommitStage": "mid",
+                  "firstCommitPick": "upgrade:crit-afterglow",
+                  "branchSwitchCount": 0,
+                  "rareSeenCount": 0,
+                  "hybridPickCount": 1,
+                  "latePayoffSeenCount": 3,
+                  "redirectOfferSeenCount": 1,
+                  "redirectPickCount": 0,
+                  "redirectPickStage": null
+                }
+              },
+              {
+                "name": "first_run_end",
+                "at": "2026-04-04T16:45:44.779Z",
+                "runIndex": 1,
+                "payload": {
+                  "outcome": "victory",
+                  "routeId": "crit",
+                  "buildStage": "matured",
+                  "endingKind": "victory",
+                  "durationSec": 42.04
+                }
+              },
+              {
+                "name": "restart_after_first_run",
+                "at": "2026-04-04T16:45:46.211Z",
+                "runIndex": 1,
+                "payload": {
+                  "source": "result"
+                }
+              },
+              {
+                "name": "second_run_start",
+                "at": "2026-04-04T16:45:46.211Z",
+                "runIndex": 2
+              },
+              {
+                "name": "battle_template_entered",
+                "at": "2026-04-04T16:45:46.226Z",
+                "runIndex": 2,
+                "payload": {
+                  "templateId": "elimination",
+                  "title": "起始歼灭",
+                  "phase": "opening"
+                }
+              }
+            ],
+            "runs": [
+              {
+                "runIndex": 1,
+                "startedAt": "2026-04-04T16:45:02.736Z",
+                "finishedAt": "2026-04-04T16:45:44.779Z",
+                "outcome": "victory",
+                "routeId": "crit",
+                "buildStage": "matured",
+                "buildSummary": "暴击路线已经成型",
+                "endingKind": "victory",
+                "endingReason": "最终战已完成收束",
+                "finalNodeTitle": "最终战",
+                "durationSec": 42.04,
+                "battleWins": 3,
+                "nodesCleared": 5,
+                "firstCommitStage": "mid",
+                "firstCommitPick": "upgrade:crit-afterglow",
+                "branchSwitchCount": 0,
+                "rareSeenCount": 0,
+                "hybridPickCount": 1,
+                "latePayoffSeenCount": 3,
+                "redirectOfferSeenCount": 1,
+                "redirectPickCount": 0
+              },
+              {
+                "runIndex": 2,
+                "startedAt": "2026-04-04T16:45:46.211Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "runIndex": 2,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 白 聚焦瞄准 暴击率 +7%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "战斗 歼灭推进 继续搏成长，提前拉高推进速度。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 白 升温预热 射速 +0.24，暴击率 +5%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "通用 白 矢量缓冲 射速 +0.16，移速 +16，弹速 +18"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "强化 中段强化 稳住当前方向，先把 starter 接成更顺的 bridge。"
+        },
+        {
+          "panelTitle": "中段强化",
+          "choice": "暴击 紫 连发校准 射速 +0.56，暴击率 +9%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "战斗 生存压制 后段高压段，测试你的收尾能力。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 白 爆链灼流 伤害 +3，射速 +0.14，爆伤 +0.28x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.6",
+          "choice": "暴击 金 热区追击 伤害 +6，射速 +0.39，爆伤 +0.47x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.7",
+          "choice": "暴击 紫 终端爆发 暴击率 +12%，爆伤 +0.73x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.8",
+          "choice": "暴击 白 灼区归档 伤害 +5，射速 +0.16，暴击率 +5%，爆伤 +0.34x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.9",
+          "choice": "暴击 蓝 余热描边 射速 +0.23，暴击率 +4%，弹速 +23，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.10",
+          "choice": "暴击 绿 旁路升温 伤害 +2，射速 +0.17，暴击率 +5%，恢复 10 点耐久，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "通用 白 并线节流 伤害 +3，射速 +0.14，弹速 +16，移速 +8"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        }
+      ],
+      "rarePanelsSeen": 0,
+      "redirectPanelsSeen": 0,
+      "replayStarted": false,
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:45:48.393Z",
+        "finishedAt": "2026-04-04T16:47:05.767Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 77.36,
+        "battleWins": 4,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-burst",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 2,
+        "latePayoffSeenCount": 4,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": [],
+      "redirectOfferEvents": [
+        {
+          "name": "redirect_offer_seen",
+          "at": "2026-04-04T16:46:32.609Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "opening",
+            "source": "upgrade",
+            "optionIds": [
+              "dash-sidechannel"
+            ],
+            "redirectOfferSeenCount": 1
+          }
+        }
+      ]
+    },
+    {
+      "runIndex": 3,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 白 升温预热 射速 +0.24，暴击率 +5%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "事件 试飞事件 中风险拐方向，可能更快形成路线。"
+        },
+        {
+          "panelTitle": "临时整备",
+          "choice": "事件 补强外甲 恢复 22 点耐久，并提高 8 点上限。"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "战斗 精英压制 中段压力点，适合检验当前路线是否站稳。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 白 连发校准 射速 +0.32，暴击率 +5%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 蓝 旁路升温 伤害 +3，射速 +0.2，暴击率 +6%，恢复 12 点耐久，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 金 余热描边 射速 +0.34，暴击率 +6%，弹速 +34，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        }
+      ],
+      "rarePanelsSeen": 0,
+      "redirectPanelsSeen": 0,
+      "replayStarted": false,
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:47:08.260Z",
+        "finishedAt": "2026-04-04T16:48:03.186Z",
+        "outcome": "defeat",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "timeOut",
+        "endingReason": "精英压制阶段的压力没能顶住",
+        "finalNodeTitle": "精英压制",
+        "durationSec": 54.92,
+        "battleWins": 1,
+        "nodesCleared": 2,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-sidechannel",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 0,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 0,
+        "redirectOfferSeenCount": 2,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": [],
+      "redirectOfferEvents": [
+        {
+          "name": "redirect_offer_seen",
+          "at": "2026-04-04T16:47:44.787Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "mid",
+            "source": "upgrade",
+            "optionIds": [
+              "dash-sidechannel"
+            ],
+            "redirectOfferSeenCount": 1
+          }
+        },
+        {
+          "name": "redirect_offer_seen",
+          "at": "2026-04-04T16:47:48.066Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "mid",
+            "source": "upgrade",
+            "optionIds": [
+              "pierce-sidechannel"
+            ],
+            "redirectOfferSeenCount": 2
+          }
+        }
+      ]
+    },
+    {
+      "runIndex": 4,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 白 聚焦瞄准 暴击率 +7%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "事件 试飞事件 中风险拐方向，可能更快形成路线。"
+        },
+        {
+          "panelTitle": "回收舱段",
+          "choice": "事件 拆成火控件 基础伤害上升，并补一点射速。"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "强化 过渡整备 补一段过渡读数，让方向更清楚，但还留得住转向余地。"
+        },
+        {
+          "panelTitle": "中段强化",
+          "choice": "暴击 绿 连发校准 射速 +0.38，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "强化 尾段稳压 给一次更偏收尾的修正窗口，适合把最后短板补平。"
+        },
+        {
+          "panelTitle": "后段强化",
+          "choice": "暴击 蓝 热区追击 伤害 +4，射速 +0.26，爆伤 +0.32x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 白 灼区归档 伤害 +5，射速 +0.16，暴击率 +5%，爆伤 +0.34x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 蓝 爆链灼流 伤害 +4，射速 +0.2，爆伤 +0.41x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 金 终端爆发 暴击率 +15%，爆伤 +0.90x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "通用 绿 压差旁路 生命上限 +12，每秒回复 +0.14，移速 +12，恢复 12 点耐久"
+        }
+      ],
+      "rarePanelsSeen": 0,
+      "redirectPanelsSeen": 0,
+      "replayStarted": false,
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:48:05.582Z",
+        "finishedAt": "2026-04-04T16:48:40.336Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 34.74,
+        "battleWins": 2,
+        "nodesCleared": 5,
+        "firstCommitStage": "late",
+        "firstCommitPick": "upgrade:crit-heat",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 0,
+        "latePayoffSeenCount": 4,
+        "redirectOfferSeenCount": 0,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": [],
+      "redirectOfferEvents": []
+    },
+    {
+      "runIndex": 5,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 白 升温预热 射速 +0.24，暴击率 +5%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 白 聚焦瞄准 暴击率 +7%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "战斗 歼灭推进 继续搏成长，提前拉高推进速度。"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "强化 方向定标 更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。"
+        },
+        {
+          "panelTitle": "中段强化",
+          "choice": "暴击 蓝 余热描边 射速 +0.23，暴击率 +4%，弹速 +23，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "事件 后段事件 沿着当前方向冒险加码，可能直接站稳路线。"
+        },
+        {
+          "panelTitle": "冷却绕行",
+          "choice": "事件 换节奏窗口 射速和弹速上升，帮助把中段衔接得更顺。"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 蓝 热区追击 伤害 +4，射速 +0.26，爆伤 +0.32x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 蓝 爆链灼流 伤害 +4，射速 +0.2，爆伤 +0.41x，暴击路线推进 +1"
+        }
+      ],
+      "rarePanelsSeen": 0,
+      "redirectPanelsSeen": 0,
+      "replayStarted": false,
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:48:42.517Z",
+        "finishedAt": "2026-04-04T16:49:30.363Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 47.83,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 0,
+        "hybridPickCount": 0,
+        "latePayoffSeenCount": 2,
+        "redirectOfferSeenCount": 0,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": [],
+      "redirectOfferEvents": []
+    },
+    {
+      "runIndex": 6,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 绿 聚焦瞄准 暴击率 +8%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "事件 试飞事件 中风险拐方向，可能更快形成路线。"
+        },
+        {
+          "panelTitle": "回收舱段",
+          "choice": "事件 拆成火控件 基础伤害上升，并补一点射速。"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "战斗 精英压制 中段压力点，适合检验当前路线是否站稳。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 绿 余热描边 射速 +0.19，暴击率 +4%，弹速 +19，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 白 旁路升温 伤害 +2，射速 +0.14，暴击率 +4%，恢复 8 点耐久，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 绿 连发校准 射速 +0.38，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "强化 后段修正 补掉短板，避免后段突然失速。"
+        },
+        {
+          "panelTitle": "后段强化",
+          "choice": "暴击 蓝 灼区归档 伤害 +7，射速 +0.23，暴击率 +7%，爆伤 +0.49x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 白 爆链灼流 伤害 +3，射速 +0.14，爆伤 +0.28x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.6",
+          "choice": "暴击 蓝 热区追击 伤害 +4，射速 +0.26，爆伤 +0.32x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.7",
+          "choice": "暴击 金 终端爆发 暴击率 +15%，爆伤 +0.90x，暴击路线推进 +1"
+        }
+      ],
+      "rarePanelsSeen": 0,
+      "redirectPanelsSeen": 0,
+      "replayStarted": false,
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:49:32.744Z",
+        "finishedAt": "2026-04-04T16:50:23.797Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 51.05,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 4,
+        "redirectOfferSeenCount": 2,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": [],
+      "redirectOfferEvents": [
+        {
+          "name": "redirect_offer_seen",
+          "at": "2026-04-04T16:50:00.981Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "mid",
+            "source": "upgrade",
+            "optionIds": [
+              "dash-sidechannel"
+            ],
+            "redirectOfferSeenCount": 1
+          }
+        },
+        {
+          "name": "redirect_offer_seen",
+          "at": "2026-04-04T16:50:04.555Z",
+          "runIndex": 1,
+          "payload": {
+            "phase": "mid",
+            "source": "upgrade",
+            "optionIds": [
+              "pierce-sidechannel"
+            ],
+            "redirectOfferSeenCount": 2
+          }
+        }
+      ]
+    }
+  ]
+}

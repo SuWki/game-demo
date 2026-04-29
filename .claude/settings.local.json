@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(npx *)",
+      "Bash(vite *)",
+      "Bash(git *)",
+      "Bash(tsc *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(sleep *)",
+      "Bash(cd *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(set PILOT_QA_URL=http://127.0.0.1:5174)",
+      "Bash(PILOT_QA_URL=http://127.0.0.1:5174 node tools/qa-current-version.mjs)",
+      "Bash(pkill -f \"npm run dev\")"
+    ]
+  }
+}

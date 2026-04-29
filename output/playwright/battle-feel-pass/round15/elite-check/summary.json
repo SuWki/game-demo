@@ -1,0 +1,220 @@
+{
+  "consoleErrors": [],
+  "eliteSeen": false,
+  "panels": [
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-thrusters:uncommon:kddsex",
+          "text": "强化选择 绿 属性强化 通用强化 矢量喷口 移速 +24"
+        },
+        {
+          "id": "generic-optics:uncommon:rkbbra",
+          "text": "强化选择 绿 属性强化 通用强化 精密镜组 暴击率 +8%"
+        },
+        {
+          "id": "crit-aim:uncommon:a7s7ru",
+          "text": "强化选择 绿 流派强化 暴击加成 聚焦瞄准 暴击率 +8%，伤害 +2，暴击路线推进 +1"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-frame:common:lpjljn",
+          "text": "强化选择 白 属性强化 通用强化 强化骨架 生命上限 +16，恢复 12 点耐久"
+        },
+        {
+          "id": "generic-vector-buffer:common:ouv5qm",
+          "text": "强化选择 白 属性强化 通用强化 矢量缓冲 射速 +0.16，移速 +16，弹速 +18"
+        },
+        {
+          "id": "pierce-core:uncommon:30r8r9",
+          "text": "强化选择 绿 流派强化 穿透加成 穿甲校正 穿透 +1，伤害 +2，弹速 +31，穿透路线推进 +1"
+        }
+      ]
+    },
+    {
+      "title": "关卡路线选择",
+      "choices": [
+        {
+          "id": "round-1-battle",
+          "text": "关卡路线 战斗 下一站 普通战 歼灭推进 基础清线战，优先把经验和推进节奏立起来。"
+        },
+        {
+          "id": "round-1-battle-breach",
+          "text": "关卡路线 战斗 下一站 普通战 厚线突围 厚体敌群沿线推进，更考清线节奏和正面站位。"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-vector-buffer:uncommon:729cpr",
+          "text": "强化选择 绿 属性强化 通用强化 矢量缓冲 射速 +0.19，移速 +19，弹速 +22"
+        },
+        {
+          "id": "generic-optics:uncommon:4c32n6",
+          "text": "强化选择 绿 属性强化 通用强化 精密镜组 暴击率 +8%"
+        },
+        {
+          "id": "dash-brush:uncommon:lc21mw",
+          "text": "强化选择 绿 流派强化 穿梭加成 擦身推进 脉冲伤害 +12，移速 +22，穿梭冷却 -0.66s，穿梭路线推进 +1"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-salvo-cache:rare:prgemk",
+          "text": "强化选择 蓝 属性强化 通用强化 齐射缓存 伤害 +4，射速 +0.17，弹速 +26"
+        },
+        {
+          "id": "generic-firepower:common:oux20l",
+          "text": "强化选择 白 属性强化 通用强化 火控强化 伤害 +4"
+        },
+        {
+          "id": "pierce-core:rare:cmlrvc",
+          "text": "强化选择 蓝 流派强化 穿透加成 穿甲校正 穿透 +1，伤害 +3，弹速 +38，穿透路线推进 +1"
+        }
+      ]
+    },
+    {
+      "title": "关卡路线选择",
+      "choices": [
+        {
+          "id": "round-2-upgrade",
+          "text": "关卡路线 强化 下一站 拿一项强化 中段强化 补强当前打法，再继续推进。"
+        },
+        {
+          "id": "round-2-battle-crit-hold",
+          "text": "关卡路线 战斗 下一站 精英战 压线续热 中段敌潮会反复挤你的站位，逼你一边续热一边把短窗留到后面。"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-pressure-bypass:uncommon:koz0ro",
+          "text": "强化选择 绿 属性强化 通用强化 压差旁路 生命上限 +12，每秒回复 +0.14，移速 +12，恢复 12 点耐久"
+        },
+        {
+          "id": "generic-sideband-cache:rare:k7p9xh",
+          "text": "强化选择 蓝 属性强化 通用强化 侧频缓存 射速 +0.2，弹速 +35，移速 +17"
+        },
+        {
+          "id": "generic-relay-throttle:rare:848e6u",
+          "text": "强化选择 蓝 属性强化 通用强化 并线节流 伤害 +4，射速 +0.2，弹速 +23，移速 +12"
+        }
+      ]
+    },
+    {
+      "title": "关卡路线选择",
+      "choices": [
+        {
+          "id": "round-3-battle",
+          "text": "关卡路线 战斗 下一站 生存战 生存压制 基础后段求生段，重点看你能否在持续压力里把手感收住。"
+        },
+        {
+          "id": "round-3-anomaly-residue",
+          "text": "关卡路线 异常 下一站 处理异常 首领残响 后段开始提前泄出 Boss 味道，这一拍更像收尾前的预读与押注。"
+        },
+        {
+          "id": "round-3-battle-pierce-soft-closeout",
+          "text": "关卡路线 战斗 下一站 生存战 拆线回收 厚线和漏火会一层层压来，更考你先拆干净，再把回收节奏接回本体。"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-optics:uncommon:po3xm8",
+          "text": "强化选择 绿 属性强化 通用强化 精密镜组 暴击率 +8%"
+        },
+        {
+          "id": "generic-branch-buffer:uncommon:5w4x71",
+          "text": "强化选择 绿 属性强化 通用强化 支路缓冲 伤害 +2，弹速 +24，移速 +14"
+        },
+        {
+          "id": "generic-mirror-lattice:uncommon:2e3vax",
+          "text": "强化选择 绿 属性强化 通用强化 镜格并流 伤害 +2，暴击率 +6%，弹速 +22，移速 +12"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-firepower:rare:bu7wr7",
+          "text": "强化选择 蓝 属性强化 通用强化 火控强化 伤害 +6"
+        },
+        {
+          "id": "generic-cadence:rare:0wqver",
+          "text": "强化选择 蓝 属性强化 通用强化 压缩射频 射速 +0.43"
+        },
+        {
+          "id": "generic-sideband-cache:rare:82fuyk",
+          "text": "强化选择 蓝 属性强化 通用强化 侧频缓存 射速 +0.2，弹速 +35，移速 +17"
+        }
+      ]
+    },
+    {
+      "title": "关卡路线选择",
+      "choices": [
+        {
+          "id": "final-prep",
+          "text": "关卡路线 强化 下一站 Boss 前补强 最终整备 最后补一手，随后直接进 Boss。"
+        }
+      ]
+    },
+    {
+      "title": "最终整备",
+      "choices": [
+        {
+          "id": "generic-last-mile:common:jz8vtv",
+          "text": "强化选择 白 属性强化 通用强化 终段余量 生命上限 +10，伤害 +4，射速 +0.1，每秒回复 +0.14，恢复 8 点耐久"
+        },
+        {
+          "id": "generic-sideband-cache:uncommon:uy74uh",
+          "text": "强化选择 绿 属性强化 通用强化 侧频缓存 射速 +0.17，弹速 +29，移速 +14"
+        },
+        {
+          "id": "pierce-relay-spine:uncommon:5b639r",
+          "text": "强化选择 绿 流派强化 穿透加成 并轨穿脊 伤害 +2，穿透 +1，弹速 +24，穿透路线推进 +1，穿透路线推进 +1"
+        }
+      ]
+    },
+    {
+      "title": "关卡路线选择",
+      "choices": [
+        {
+          "id": "final-boss-bastion",
+          "text": "关卡路线 Boss 下一站 进入首领战 屏卫首领 最终 Boss 会借屏卫与远程火线拖长对局，更适合用贯穿清线后再找收束窗口。"
+        }
+      ]
+    },
+    {
+      "title": "强化属性选择",
+      "choices": [
+        {
+          "id": "generic-cadence:uncommon:2fopk6",
+          "text": "强化选择 绿 属性强化 通用强化 压缩射频 射速 +0.36"
+        },
+        {
+          "id": "generic-ballistics:rare:1ozhey",
+          "text": "强化选择 蓝 属性强化 通用强化 弹道校正 弹速 +49，伤害 +3"
+        },
+        {
+          "id": "generic-reactor:uncommon:2kc04u",
+          "text": "强化选择 绿 属性强化 通用强化 爆伤蓄能 爆伤 +0.50x"
+        }
+      ]
+    }
+  ]
+}

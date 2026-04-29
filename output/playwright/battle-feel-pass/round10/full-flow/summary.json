@@ -1,0 +1,421 @@
+{
+  "consoleErrors": [],
+  "panels": [
+    {
+      "tag": "panel-3",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.2",
+      "choices": [
+        {
+          "id": "generic-salvo-cache:common:uchdp1",
+          "text": "强化选择 白 属性强化 通用强化 齐射缓存 伤害 +3，射速 +0.12，弹速 +18",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-optics:common:2wc3e2",
+          "text": "强化选择 白 属性强化 通用强化 精密镜组 暴击率 +7%",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-cadence:common:jiv1v0",
+          "text": "强化选择 白 属性强化 通用强化 压缩射频 射速 +0.3",
+          "type": "强化选择",
+          "rarity": "白"
+        }
+      ]
+    },
+    {
+      "tag": "panel-6",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.3",
+      "choices": [
+        {
+          "id": "generic-optics:common:nv2dx4",
+          "text": "强化选择 白 属性强化 通用强化 精密镜组 暴击率 +7%",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-thrusters:common:11yvhl",
+          "text": "强化选择 白 属性强化 通用强化 矢量喷口 移速 +20",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "pierce-rail:uncommon:v1glpu",
+          "text": "强化选择 绿 流派强化 穿透加成 贯穿轨校 穿透 +1，弹速 +26，射速 +0.12，穿透路线推进 +1",
+          "type": "强化选择",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-9",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.4",
+      "choices": [
+        {
+          "id": "generic-frame:common:hh4lua",
+          "text": "强化选择 白 属性强化 通用强化 强化骨架 生命上限 +16，恢复 12 点耐久",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-vector-buffer:rare:3p34tg",
+          "text": "强化选择 蓝 属性强化 通用强化 矢量缓冲 射速 +0.23，移速 +23，弹速 +26",
+          "type": "强化选择",
+          "rarity": "蓝"
+        },
+        {
+          "id": "dash-brush:uncommon:rq0t7k",
+          "text": "强化选择 绿 流派强化 穿梭加成 擦身推进 脉冲伤害 +12，移速 +22，穿梭冷却 -0.66s，穿梭路线推进 +1",
+          "type": "强化选择",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-10",
+      "eyebrow": "关卡路线选择",
+      "title": "前段路线",
+      "choices": [
+        {
+          "id": "round-1-battle-crossline",
+          "text": "关卡路线 战斗 下一站 普通战 火线试压 早段就会被远程线打断直跑，更看基础换位和补线判断。",
+          "type": "关卡路线",
+          "rarity": ""
+        },
+        {
+          "id": "round-1-battle",
+          "text": "关卡路线 战斗 下一站 普通战 歼灭推进 基础清线战，优先把经验和推进节奏立起来。",
+          "type": "关卡路线",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-16",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.5",
+      "choices": [
+        {
+          "id": "generic-firepower:uncommon:6o5st8",
+          "text": "强化选择 绿 属性强化 通用强化 火控强化 伤害 +5",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-vector-buffer:common:y4uv2h",
+          "text": "强化选择 白 属性强化 通用强化 矢量缓冲 射速 +0.16，移速 +16，弹速 +18",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "dash-feint:uncommon:vzhrmn",
+          "text": "强化选择 绿 流派强化 穿梭加成 侧滑取样 移速 +19，无伤窗口 +0.10s，穿梭冷却 -0.41s，穿梭路线推进 +1",
+          "type": "强化选择",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-20",
+      "eyebrow": "关卡路线选择",
+      "title": "中段路线",
+      "choices": [
+        {
+          "id": "round-2-upgrade-bridge",
+          "text": "关卡路线 强化 下一站 拿一项强化 过渡整备 补强当前打法，再继续推进。",
+          "type": "关卡路线",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-21",
+      "eyebrow": "强化属性选择",
+      "title": "中段强化",
+      "choices": [
+        {
+          "id": "generic-pressure-bypass:uncommon:bp5iqt",
+          "text": "强化选择 绿 属性强化 通用强化 压差旁路 生命上限 +12，每秒回复 +0.14，移速 +12，恢复 12 点耐久",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-sideband-cache:uncommon:dyws7b",
+          "text": "强化选择 绿 属性强化 通用强化 侧频缓存 射速 +0.17，弹速 +29，移速 +14",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "pierce-seamline:epic:k58pkw",
+          "text": "强化选择 紫 流派强化 穿透加成 拆线起幅 穿透 +2，弹速 +32，移速 +18，每秒回复 +0.07，穿透路线推进 +1",
+          "type": "强化选择",
+          "rarity": "紫"
+        }
+      ]
+    },
+    {
+      "tag": "panel-22",
+      "eyebrow": "关卡路线选择",
+      "title": "后段路线",
+      "choices": [
+        {
+          "id": "round-3-upgrade-rareline",
+          "text": "关卡路线 强化 下一站 拿一项强化 稀有读数 补强当前打法，再继续推进。",
+          "type": "关卡路线",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-23",
+      "eyebrow": "强化属性选择",
+      "title": "后段强化",
+      "choices": [
+        {
+          "id": "generic-crossfeed:uncommon:4ghl4d",
+          "text": "强化选择 绿 属性强化 通用强化 交叉回授 射速 +0.14，弹速 +24，移速 +14，恢复 7 点耐久",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-sideband-cache:uncommon:y9cnzc",
+          "text": "强化选择 绿 属性强化 通用强化 侧频缓存 射速 +0.17，弹速 +29，移速 +14",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-cadence:uncommon:p3mqg3",
+          "text": "强化选择 绿 属性强化 通用强化 压缩射频 射速 +0.36",
+          "type": "强化选择",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-24",
+      "eyebrow": "关卡路线选择",
+      "title": "最终整备路线",
+      "choices": [
+        {
+          "id": "final-prep-shadow",
+          "text": "关卡路线 强化 下一站 Boss 前补强 Boss 预整备 最后补一手，随后直接进 Boss。",
+          "type": "关卡路线",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-25",
+      "eyebrow": "最终整备",
+      "title": "最终整备",
+      "choices": [
+        {
+          "id": "generic-reactor:epic:a8bx87",
+          "text": "强化选择 紫 属性强化 通用强化 爆伤蓄能 爆伤 +0.73x",
+          "type": "强化选择",
+          "rarity": "紫"
+        },
+        {
+          "id": "generic-mirror-lattice:uncommon:1hek8j",
+          "text": "强化选择 绿 属性强化 通用强化 镜格并流 伤害 +2，暴击率 +6%，弹速 +22，移速 +12",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-branch-buffer:uncommon:91xi1j",
+          "text": "强化选择 绿 属性强化 通用强化 支路缓冲 伤害 +2，弹速 +24，移速 +14",
+          "type": "强化选择",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-26",
+      "eyebrow": "关卡路线选择",
+      "title": "最终战路线",
+      "choices": [
+        {
+          "id": "final-boss-lockdown",
+          "text": "关卡路线 Boss 下一站 进入首领战 锁域首领 最终 Boss 会用更早的护卫和封位把场地压紧，更考验换位、回线和反打节奏。",
+          "type": "关卡路线",
+          "rarity": ""
+        }
+      ]
+    },
+    {
+      "tag": "panel-30",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.6",
+      "choices": [
+        {
+          "id": "generic-cadence:epic:osp20v",
+          "text": "强化选择 紫 属性强化 通用强化 压缩射频 射速 +0.53",
+          "type": "强化选择",
+          "rarity": "紫"
+        },
+        {
+          "id": "generic-thrusters:rare:5f12mp",
+          "text": "强化选择 蓝 属性强化 通用强化 矢量喷口 移速 +29",
+          "type": "强化选择",
+          "rarity": "蓝"
+        },
+        {
+          "id": "generic-terminal-weave:uncommon:p22kas",
+          "text": "强化选择 绿 属性强化 通用强化 终段并轨 伤害 +4，射速 +0.19，弹速 +29，移速 +17，每秒回复 +0.14",
+          "type": "强化选择",
+          "rarity": "绿"
+        }
+      ]
+    },
+    {
+      "tag": "panel-35",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.7",
+      "choices": [
+        {
+          "id": "generic-thrusters:uncommon:rrbfv9",
+          "text": "强化选择 绿 属性强化 通用强化 矢量喷口 移速 +24",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-overclock:uncommon:tawscr",
+          "text": "强化选择 绿 属性强化 通用强化 循环稳态 每秒回复 +0.19，射速 +0.14",
+          "type": "强化选择",
+          "rarity": "绿"
+        },
+        {
+          "id": "generic-ballistics:epic:rnjqad",
+          "text": "强化选择 紫 属性强化 通用强化 弹道校正 弹速 +60，伤害 +4",
+          "type": "强化选择",
+          "rarity": "紫"
+        }
+      ]
+    },
+    {
+      "tag": "panel-40",
+      "eyebrow": "强化属性选择",
+      "title": "等级提升 Lv.8",
+      "choices": [
+        {
+          "id": "generic-ballistics:rare:wphjiz",
+          "text": "强化选择 蓝 属性强化 通用强化 弹道校正 弹速 +49，伤害 +3",
+          "type": "强化选择",
+          "rarity": "蓝"
+        },
+        {
+          "id": "generic-borrowed-tail:common:eoa6k8",
+          "text": "强化选择 白 属性强化 通用强化 借尾并幅 伤害 +4，射速 +0.14，额外弹道 +1，移速 +10",
+          "type": "强化选择",
+          "rarity": "白"
+        },
+        {
+          "id": "generic-echo-stow:common:445btn",
+          "text": "强化选择 白 属性强化 通用强化 余响备压 生命上限 +8，每秒回复 +0.16，弹速 +20，移速 +10，恢复 8 点耐久",
+          "type": "强化选择",
+          "rarity": "白"
+        }
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "panel": "等级提升 Lv.2",
+      "choice": "强化选择 白 属性强化 通用强化 齐射缓存 伤害 +3，射速 +0.12，弹速 +18",
+      "type": "强化选择",
+      "rarity": "白"
+    },
+    {
+      "panel": "等级提升 Lv.3",
+      "choice": "强化选择 白 属性强化 通用强化 精密镜组 暴击率 +7%",
+      "type": "强化选择",
+      "rarity": "白"
+    },
+    {
+      "panel": "等级提升 Lv.4",
+      "choice": "强化选择 白 属性强化 通用强化 强化骨架 生命上限 +16，恢复 12 点耐久",
+      "type": "强化选择",
+      "rarity": "白"
+    },
+    {
+      "panel": "前段路线",
+      "choice": "关卡路线 战斗 下一站 普通战 火线试压 早段就会被远程线打断直跑，更看基础换位和补线判断。",
+      "type": "关卡路线",
+      "rarity": ""
+    },
+    {
+      "panel": "等级提升 Lv.5",
+      "choice": "强化选择 绿 属性强化 通用强化 火控强化 伤害 +5",
+      "type": "强化选择",
+      "rarity": "绿"
+    },
+    {
+      "panel": "中段路线",
+      "choice": "关卡路线 强化 下一站 拿一项强化 过渡整备 补强当前打法，再继续推进。",
+      "type": "关卡路线",
+      "rarity": ""
+    },
+    {
+      "panel": "中段强化",
+      "choice": "强化选择 绿 属性强化 通用强化 压差旁路 生命上限 +12，每秒回复 +0.14，移速 +12，恢复 12 点耐久",
+      "type": "强化选择",
+      "rarity": "绿"
+    },
+    {
+      "panel": "后段路线",
+      "choice": "关卡路线 强化 下一站 拿一项强化 稀有读数 补强当前打法，再继续推进。",
+      "type": "关卡路线",
+      "rarity": ""
+    },
+    {
+      "panel": "后段强化",
+      "choice": "强化选择 绿 属性强化 通用强化 交叉回授 射速 +0.14，弹速 +24，移速 +14，恢复 7 点耐久",
+      "type": "强化选择",
+      "rarity": "绿"
+    },
+    {
+      "panel": "最终整备路线",
+      "choice": "关卡路线 强化 下一站 Boss 前补强 Boss 预整备 最后补一手，随后直接进 Boss。",
+      "type": "关卡路线",
+      "rarity": ""
+    },
+    {
+      "panel": "最终整备",
+      "choice": "强化选择 紫 属性强化 通用强化 爆伤蓄能 爆伤 +0.73x",
+      "type": "强化选择",
+      "rarity": "紫"
+    },
+    {
+      "panel": "最终战路线",
+      "choice": "关卡路线 Boss 下一站 进入首领战 锁域首领 最终 Boss 会用更早的护卫和封位把场地压紧，更考验换位、回线和反打节奏。",
+      "type": "关卡路线",
+      "rarity": ""
+    },
+    {
+      "panel": "等级提升 Lv.6",
+      "choice": "强化选择 紫 属性强化 通用强化 压缩射频 射速 +0.53",
+      "type": "强化选择",
+      "rarity": "紫"
+    },
+    {
+      "panel": "等级提升 Lv.7",
+      "choice": "强化选择 绿 属性强化 通用强化 矢量喷口 移速 +24",
+      "type": "强化选择",
+      "rarity": "绿"
+    },
+    {
+      "panel": "等级提升 Lv.8",
+      "choice": "强化选择 蓝 属性强化 通用强化 弹道校正 弹速 +49，伤害 +3",
+      "type": "强化选择",
+      "rarity": "蓝"
+    }
+  ],
+  "resultSeen": true,
+  "replaySeen": true,
+  "battleSeen": true
+}

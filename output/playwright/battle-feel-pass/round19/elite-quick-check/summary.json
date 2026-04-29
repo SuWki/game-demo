@@ -1,0 +1,45 @@
+{
+  "consoleErrors": [],
+  "eliteSeen": true,
+  "crackSeen": true,
+  "resultSeen": true,
+  "replaySeen": false,
+  "eliteSnapshots": [
+    {
+      "templateId": "elite-screen",
+      "eliteRecoverySec": 0,
+      "escortCount": 3,
+      "escortRecoveryCount": 0
+    },
+    {
+      "templateId": "elite-screen",
+      "eliteRecoverySec": 0,
+      "escortCount": 2,
+      "escortRecoveryCount": 2
+    },
+    {
+      "templateId": "elite-screen",
+      "eliteRecoverySec": 0,
+      "escortCount": 2,
+      "escortRecoveryCount": 1
+    },
+    {
+      "templateId": "elite-screen",
+      "eliteRecoverySec": 0,
+      "escortCount": 2,
+      "escortRecoveryCount": 0
+    },
+    {
+      "templateId": "elite-screen",
+      "eliteRecoverySec": 0,
+      "escortCount": 2,
+      "escortRecoveryCount": 0
+    },
+    {
+      "templateId": "elite-screen",
+      "eliteRecoverySec": 0.10161999999999902,
+      "escortCount": 2,
+      "escortRecoveryCount": 2
+    }
+  ]
+}

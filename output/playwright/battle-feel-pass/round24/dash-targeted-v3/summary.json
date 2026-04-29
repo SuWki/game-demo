@@ -1,0 +1,125 @@
+{
+  "consoleErrors": [],
+  "attempts": [
+    {
+      "attempt": 1,
+      "panels": 9,
+      "dashPicks": 4,
+      "routeFocusSeen": [
+        "dash"
+      ],
+      "maxDashDriveSec": 0.9556184178707029,
+      "maxPlayerTurnBurstSec": 0.23332888888888886,
+      "lateDashWindowMoments": 8,
+      "dashCounterMoments": 3,
+      "resultSeen": true,
+      "choices": [
+        {
+          "panel": 1,
+          "id": "generic-thrusters:common:jdtb1g",
+          "score": 0
+        },
+        {
+          "panel": 2,
+          "id": "dash-lanebreak:uncommon:nrjnym",
+          "score": 200
+        },
+        {
+          "panel": 3,
+          "id": "dash-feint:uncommon:s4kjdh",
+          "score": 200
+        },
+        {
+          "panel": 4,
+          "id": "round-1-battle-flank",
+          "score": 12
+        },
+        {
+          "panel": 5,
+          "id": "generic-cadence:common:m009pq",
+          "score": 0
+        },
+        {
+          "panel": 6,
+          "id": "generic-optics:common:f0c3lu",
+          "score": 0
+        },
+        {
+          "panel": 7,
+          "id": "round-2-event",
+          "score": -10
+        },
+        {
+          "panel": 8,
+          "id": "dash-return-trace-counter",
+          "score": 200
+        },
+        {
+          "panel": 9,
+          "id": "round-3-battle-dash-soft-closeout",
+          "score": 292
+        }
+      ]
+    }
+  ],
+  "successAttempt": {
+    "attempt": 1,
+    "panels": 9,
+    "dashPicks": 4,
+    "routeFocusSeen": [
+      "dash"
+    ],
+    "maxDashDriveSec": 0.9556184178707029,
+    "maxPlayerTurnBurstSec": 0.23332888888888886,
+    "lateDashWindowMoments": 8,
+    "dashCounterMoments": 3,
+    "resultSeen": true,
+    "choices": [
+      {
+        "panel": 1,
+        "id": "generic-thrusters:common:jdtb1g",
+        "score": 0
+      },
+      {
+        "panel": 2,
+        "id": "dash-lanebreak:uncommon:nrjnym",
+        "score": 200
+      },
+      {
+        "panel": 3,
+        "id": "dash-feint:uncommon:s4kjdh",
+        "score": 200
+      },
+      {
+        "panel": 4,
+        "id": "round-1-battle-flank",
+        "score": 12
+      },
+      {
+        "panel": 5,
+        "id": "generic-cadence:common:m009pq",
+        "score": 0
+      },
+      {
+        "panel": 6,
+        "id": "generic-optics:common:f0c3lu",
+        "score": 0
+      },
+      {
+        "panel": 7,
+        "id": "round-2-event",
+        "score": -10
+      },
+      {
+        "panel": 8,
+        "id": "dash-return-trace-counter",
+        "score": 200
+      },
+      {
+        "panel": 9,
+        "id": "round-3-battle-dash-soft-closeout",
+        "score": 292
+      }
+    ]
+  }
+}

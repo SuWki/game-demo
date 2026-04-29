@@ -1,0 +1,75 @@
+{
+  "url": "http://127.0.0.1:4187",
+  "allAssetsOk": true,
+  "assetStatuses": [
+    {
+      "asset": "/assets/preview-runtime/visual/unit-player-core.svg",
+      "status": 200,
+      "ok": true,
+      "contentType": "image/svg+xml",
+      "bytes": 1807
+    },
+    {
+      "asset": "/assets/preview-runtime/visual/enemy-standard-a.svg",
+      "status": 200,
+      "ok": true,
+      "contentType": "image/svg+xml",
+      "bytes": 1554
+    },
+    {
+      "asset": "/assets/preview-runtime/visual/fx-xp-orb.svg",
+      "status": 200,
+      "ok": true,
+      "contentType": "image/svg+xml",
+      "bytes": 1184
+    },
+    {
+      "asset": "/assets/preview-runtime/audio/player_shoot_core.wav",
+      "status": 200,
+      "ok": true,
+      "contentType": "audio/wav",
+      "bytes": 11510
+    },
+    {
+      "asset": "/assets/preview-runtime/audio/player_hit_regular.wav",
+      "status": 200,
+      "ok": true,
+      "contentType": "audio/wav",
+      "bytes": 13274
+    },
+    {
+      "asset": "/assets/preview-runtime/audio/player_kill_regular.wav",
+      "status": 200,
+      "ok": true,
+      "contentType": "audio/wav",
+      "bytes": 21212
+    },
+    {
+      "asset": "/assets/preview-runtime/audio/player_pickup_single.wav",
+      "status": 200,
+      "ok": true,
+      "contentType": "audio/wav",
+      "bytes": 17684
+    },
+    {
+      "asset": "/assets/preview-runtime/audio/player_hurt_core.wav",
+      "status": 200,
+      "ok": true,
+      "contentType": "audio/wav",
+      "bytes": 30032
+    }
+  ],
+  "browserCheck": "completed",
+  "consoleErrors": [],
+  "previewAudioEnabled": true,
+  "previewAudioReady": 5,
+  "previewAudioCueCounts": {
+    "shoot": 3
+  },
+  "cueCounts": {
+    "start": 1,
+    "pressure": 1,
+    "shoot": 3
+  },
+  "screenshot": "output\\qa\\runtime-preview-assets\\battle-preview-runtime.png"
+}

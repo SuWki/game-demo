@@ -1,0 +1,92 @@
+{
+  "consoleErrors": [],
+  "panels": 7,
+  "resultSeen": true,
+  "routeScores": {
+    "crit": 1,
+    "pierce": 0,
+    "dash": 1
+  },
+  "lastRun": {
+    "runIndex": 1,
+    "startedAt": "2026-04-25T16:09:21.374Z",
+    "finishedAt": "2026-04-25T16:10:26.137Z",
+    "outcome": "defeat",
+    "routeId": "crit",
+    "buildStage": "hinted",
+    "buildSummary": "暴击倾向已经出现",
+    "endingKind": "hpDepleted",
+    "endingReason": "回切压线阶段中机体耐久归零",
+    "finalNodeTitle": "回切压线",
+    "finalNodeType": "battle",
+    "durationSec": 64.35,
+    "battleWins": 2,
+    "nodesCleared": 2,
+    "branchSwitchCount": 0,
+    "branchSwitchPhaseCounts": {},
+    "rareSeenCount": 0,
+    "rarePayoffPickCount": 0,
+    "hybridPickCount": 1,
+    "hybridOfferSeenCount": 1,
+    "latePayoffSeenCount": 0,
+    "routeUpgradeOfferSeenCount": 1,
+    "routeUpgradePickCount": 1,
+    "upgradeOfferRarityCounts": {
+      "uncommon": 5,
+      "common": 9,
+      "rare": 1
+    },
+    "upgradeOfferValueBuckets": {
+      "low": 15
+    },
+    "nodeTypeCounts": {
+      "battle": 2
+    },
+    "anomalySeenCount": 0,
+    "anomalyClassCounts": {},
+    "bossEchoSeenCount": 0,
+    "lateDashWindowMoments": 0,
+    "dashCounterMoments": 0,
+    "eliteCrackSeen": true,
+    "eliteCrackFollowThroughMoments": 0,
+    "bossFirelineCoverage": 0,
+    "bossSafeWindowMoments": 0,
+    "killPickupContinueMoments": 25,
+    "redirectOfferSeenCount": 0,
+    "redirectPickCount": 0
+  },
+  "audioDebug": {
+    "contextState": "running",
+    "desiredMusicMode": "result",
+    "currentMusicMode": "result",
+    "routeFocus": "crit",
+    "encounter": "flow",
+    "intensity": 0,
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.0019,
+    "peakRms": 0.11882,
+    "audibleMoments": 348,
+    "scheduledMusicSteps": 236,
+    "cueCounts": {
+      "start": 1,
+      "pressure": 7,
+      "shoot": 129,
+      "hit": 94,
+      "crit": 9,
+      "kill": 50,
+      "pickup": 44,
+      "relayBrute": 5,
+      "upgrade": 10,
+      "relaySkirmisher": 12,
+      "click": 2,
+      "confirm": 3,
+      "relayStandard": 7,
+      "hurt": 11,
+      "relayRanged": 1,
+      "enemyShot": 4,
+      "nearMiss": 9,
+      "defeat": 1,
+      "result": 1
+    }
+  }
+}

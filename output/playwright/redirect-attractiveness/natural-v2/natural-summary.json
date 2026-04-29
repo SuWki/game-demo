@@ -1,0 +1,358 @@
+{
+  "aggregate": {
+    "totalRuns": 4,
+    "branchSwitchNonZeroRuns": 0,
+    "redirectOfferRuns": 3,
+    "redirectPickRuns": 0,
+    "averageBranchSwitchCount": 0,
+    "averageRedirectOfferSeenCount": 1,
+    "averageRedirectPickCount": 0,
+    "consoleErrorRuns": 0
+  },
+  "runs": [
+    {
+      "runIndex": 1,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 绿 升温预热 射速 +0.29，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "强化 稳定整备 低风险补强，适合把第一条倾向扶起来。"
+        },
+        {
+          "panelTitle": "前段强化",
+          "choice": "暴击 绿 聚焦瞄准 暴击率 +8%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "事件 中段事件 高波动拐点，会放大方向差异，但不一定立刻定型。"
+        },
+        {
+          "panelTitle": "侧频接驳",
+          "choice": "暴击 接暴击侧频 补一段升温火力，并把读法更明确地拉向暴击。"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "强化 尾段稳压 给一次更偏收尾的修正窗口，适合把最后短板补平。"
+        },
+        {
+          "panelTitle": "后段强化",
+          "choice": "暴击 绿 热区追击 伤害 +4，射速 +0.22，爆伤 +0.26x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 绿 灼区归档 伤害 +6，射速 +0.19，暴击率 +6%，爆伤 +0.41x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 绿 爆链灼流 伤害 +4，射速 +0.17，爆伤 +0.34x，暴击路线推进 +1"
+        }
+      ],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:55:17.455Z",
+        "finishedAt": "2026-04-04T16:55:49.093Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 31.63,
+        "battleWins": 2,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "event:route-handoff:route-handoff-crit",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 3,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": []
+    },
+    {
+      "runIndex": 2,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 白 升温预热 射速 +0.24，暴击率 +5%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "事件 试飞事件 中风险拐方向，可能更快形成路线。"
+        },
+        {
+          "panelTitle": "临时整备",
+          "choice": "事件 补强外甲 恢复 22 点耐久，并提高 8 点上限。"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "强化 方向定标 更偏方向定向的一次整备，用来把中段差异扶稳，而不是直接锁死。"
+        },
+        {
+          "panelTitle": "中段强化",
+          "choice": "暴击 白 余热描边 射速 +0.16，暴击率 +3%，弹速 +16，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "战斗 交火夹层 低频高压模板，会把尾段走位压得更像一次独立记忆点。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 绿 爆链灼流 伤害 +4，射速 +0.17，爆伤 +0.34x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 绿 灼区归档 伤害 +6，射速 +0.19，暴击率 +6%，爆伤 +0.41x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 绿 终端爆发 暴击率 +8%，爆伤 +0.50x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.6",
+          "choice": "暴击 蓝 热区追击 伤害 +4，射速 +0.26，爆伤 +0.32x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.7",
+          "choice": "暴击 绿 连发校准 射速 +0.38，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.8",
+          "choice": "暴击 绿 旁路升温 伤害 +2，射速 +0.17，暴击率 +5%，恢复 10 点耐久，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.9",
+          "choice": "通用 蓝 侧频缓存 射速 +0.2，弹速 +35，移速 +17"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "通用 紫 压差旁路 生命上限 +18，每秒回复 +0.21，移速 +18，恢复 18 点耐久"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        }
+      ],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:55:51.460Z",
+        "finishedAt": "2026-04-04T16:56:48.780Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 57.31,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 2,
+        "latePayoffSeenCount": 4,
+        "redirectOfferSeenCount": 0,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": []
+    },
+    {
+      "runIndex": 3,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 绿 升温预热 射速 +0.29，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "强化 稳定整备 低风险补强，适合把第一条倾向扶起来。"
+        },
+        {
+          "panelTitle": "前段强化",
+          "choice": "暴击 白 聚焦瞄准 暴击率 +7%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "事件 中段事件 高波动拐点，会放大方向差异，但不一定立刻定型。"
+        },
+        {
+          "panelTitle": "高压试飞",
+          "choice": "暴击 追求爆发 向暴击方向推进，并承受 8 点压力伤害。"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "事件 后段事件 沿着当前方向冒险加码，可能直接站稳路线。"
+        },
+        {
+          "panelTitle": "定向遥测",
+          "choice": "暴击 追当前窗口 把当前路线继续往前压一小步，并补一点基础火力。"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 绿 灼区归档 伤害 +6，射速 +0.19，暴击率 +6%，爆伤 +0.41x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 绿 爆链灼流 伤害 +4，射速 +0.17，爆伤 +0.34x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 蓝 热区追击 伤害 +4，射速 +0.26，爆伤 +0.32x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 蓝 终端爆发 暴击率 +10%，爆伤 +0.61x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.6",
+          "choice": "暴击 绿 连发校准 射速 +0.38，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.7",
+          "choice": "通用 蓝 终段并轨 伤害 +4，射速 +0.23，弹速 +35，移速 +20，每秒回复 +0.17"
+        },
+        {
+          "panelTitle": "等级提升 Lv.8",
+          "choice": "通用 绿 火控强化 伤害 +5"
+        }
+      ],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:56:51.118Z",
+        "finishedAt": "2026-04-04T16:57:46.293Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 55.16,
+        "battleWins": 2,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "event:risky-protocol:risky-protocol-crit",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 2,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 5,
+        "redirectOfferSeenCount": 1,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": []
+    },
+    {
+      "runIndex": 4,
+      "consoleErrors": [],
+      "choices": [
+        {
+          "panelTitle": "等级提升 Lv.2",
+          "choice": "暴击 白 聚焦瞄准 暴击率 +7%，伤害 +2，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "前段节点选择",
+          "choice": "强化 稳定整备 低风险补强，适合把第一条倾向扶起来。"
+        },
+        {
+          "panelTitle": "前段强化",
+          "choice": "暴击 蓝 升温预热 射速 +0.35，暴击率 +7%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "中段节点选择",
+          "choice": "战斗 精英压制 中段压力点，适合检验当前路线是否站稳。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.3",
+          "choice": "暴击 绿 余热描边 射速 +0.19，暴击率 +4%，弹速 +19，暴击路线推进 +1，暴击路线推进 +1，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "等级提升 Lv.4",
+          "choice": "暴击 绿 连发校准 射速 +0.38，暴击率 +6%，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "后段节点选择",
+          "choice": "事件 后段事件 沿着当前方向冒险加码，可能直接站稳路线。"
+        },
+        {
+          "panelTitle": "侧频接驳",
+          "choice": "暴击 接暴击侧频 补一段升温火力，并把读法更明确地拉向暴击。"
+        },
+        {
+          "panelTitle": "最终整备节点选择",
+          "choice": "强化 最终整备 最后一次整备，准备进入最终战。"
+        },
+        {
+          "panelTitle": "最终整备",
+          "choice": "暴击 白 热区追击 伤害 +3，射速 +0.18，爆伤 +0.22x，暴击路线推进 +1"
+        },
+        {
+          "panelTitle": "最终战节点选择",
+          "choice": "战斗 最终战 用一场更高压的精英压制完成整局收束。"
+        },
+        {
+          "panelTitle": "等级提升 Lv.5",
+          "choice": "暴击 蓝 灼区归档 伤害 +7，射速 +0.23，暴击率 +7%，爆伤 +0.49x，暴击路线推进 +1"
+        }
+      ],
+      "lastRun": {
+        "runIndex": 1,
+        "startedAt": "2026-04-04T16:57:48.742Z",
+        "finishedAt": "2026-04-04T16:58:35.444Z",
+        "outcome": "victory",
+        "routeId": "crit",
+        "buildStage": "matured",
+        "buildSummary": "暴击路线已经成型",
+        "endingKind": "victory",
+        "endingReason": "最终战已完成收束",
+        "finalNodeTitle": "最终战",
+        "durationSec": 46.69,
+        "battleWins": 3,
+        "nodesCleared": 5,
+        "firstCommitStage": "mid",
+        "firstCommitPick": "upgrade:crit-afterglow",
+        "branchSwitchCount": 0,
+        "rareSeenCount": 1,
+        "hybridPickCount": 1,
+        "latePayoffSeenCount": 2,
+        "redirectOfferSeenCount": 2,
+        "redirectPickCount": 0
+      },
+      "branchSwitchEvents": [],
+      "redirectPickEvents": []
+    }
+  ]
+}

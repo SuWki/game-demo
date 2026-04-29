@@ -1,0 +1,89 @@
+{
+  "consoleErrors": [],
+  "menuAudio": {
+    "contextState": "running",
+    "desiredMusicMode": "menu",
+    "currentMusicMode": "menu",
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.00518,
+    "peakRms": 0.00518,
+    "audibleMoments": 1,
+    "scheduledMusicSteps": 1,
+    "cueCounts": {}
+  },
+  "battleAudio": {
+    "contextState": "running",
+    "desiredMusicMode": "battle",
+    "currentMusicMode": "battle",
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.00401,
+    "peakRms": 0.01012,
+    "audibleMoments": 5,
+    "scheduledMusicSteps": 8,
+    "cueCounts": {
+      "start": 1,
+      "pressure": 1
+    }
+  },
+  "bossAudio": null,
+  "resultAudio": {
+    "contextState": "running",
+    "desiredMusicMode": "result",
+    "currentMusicMode": "result",
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.00006,
+    "peakRms": 0.02457,
+    "audibleMoments": 128,
+    "scheduledMusicSteps": 204,
+    "cueCounts": {
+      "start": 1,
+      "pressure": 12,
+      "hit": 82,
+      "crit": 12,
+      "upgrade": 9,
+      "confirm": 3,
+      "defeat": 1,
+      "result": 1
+    }
+  },
+  "replayAudio": {
+    "contextState": "running",
+    "desiredMusicMode": "battle",
+    "currentMusicMode": "battle",
+    "pendingCueCount": 0,
+    "lastAudibleRms": 0.00899,
+    "peakRms": 0.02457,
+    "audibleMoments": 137,
+    "scheduledMusicSteps": 214,
+    "cueCounts": {
+      "start": 2,
+      "pressure": 13,
+      "hit": 82,
+      "crit": 12,
+      "upgrade": 9,
+      "confirm": 3,
+      "defeat": 1,
+      "result": 1,
+      "click": 1
+    }
+  },
+  "cueChecks": {
+    "menuAudible": false,
+    "battleAudible": true,
+    "bossAudible": null,
+    "resultAudible": true,
+    "replayTriggered": true,
+    "uiClicksHeard": true,
+    "combatCuesHeard": true,
+    "noCueSpam": false
+  },
+  "panelsSeen": [
+    "等级提升 Lv.2",
+    "前段节点选择",
+    "前段强化",
+    "中段节点选择",
+    "等级提升 Lv.3",
+    "等级提升 Lv.4",
+    "等级提升 Lv.5"
+  ]
+}

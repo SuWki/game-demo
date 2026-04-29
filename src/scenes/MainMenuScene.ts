@@ -29,6 +29,23 @@ export class MainMenuScene extends Phaser.Scene {
         navigator.clipboard.writeText(content).catch(() => undefined);
         services.overlay.pushToast('记录已复制到剪贴板。', 'success');
       },
+      () => {
+        services.audio.unlock();
+        services.audio.play('click');
+        services.overlay.showVolumePanel(
+          '音量设置',
+          '调整整体播放音量。',
+          services.audio.getVolume(),
+          (volume) => {
+            services.audio.setVolume(volume);
+            window.localStorage.setItem('pilot-audio-volume', String(volume));
+          },
+          () => {
+            services.audio.play('click');
+            services.overlay.hidePanel();
+          },
+        );
+      },
     );
   }
 }
