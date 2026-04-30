@@ -95,7 +95,8 @@ const CENTER_X = ARENA_WIDTH / 2;
 const CENTER_Y = ARENA_HEIGHT / 2;
 const ROUTE_COMMIT_THRESHOLD = 3;
 const ROUTE_MATURE_THRESHOLD = 5;
-const BOSS_SAFE_WINDOW_REACTION_SEC = 1.5;
+const BOSS_SAFE_WINDOW_REACTION_SEC = 0.82;
+const BOSS_SAFE_WINDOW_POCKET_REACTION_SEC = 0.64;
 const BASE_PLAYER_MOVE_SPEED = createBaseStats().moveSpeed;
 const BOSS_SAFE_WINDOW_EDGE_MARGIN_X = 12;
 const BOSS_SAFE_WINDOW_EDGE_MARGIN_Y = 10;
@@ -1042,7 +1043,11 @@ export class RunEngine {
         view.height * 0.42,
       );
       const safeWindowCenter = this.choosePressureSafePocketCenter(battle, safeWindowSpan, safeWindowSecondarySpan, shiftType);
-      const safeWindowSec = clamp((phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale, 0.72, 1.72);
+      const baseSafeWindowSec = (phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale;
+      const safeWindowSec =
+        battle.encounterType === 'boss'
+          ? this.getBossSafeWindowLingerSec(baseSafeWindowSec, phase.patternPulseIntervalSec)
+          : clamp(baseSafeWindowSec, 0.72, 1.72);
 
       battle.pressureSafeWindowAxis = axis;
       battle.pressureSafeWindowShiftType = shiftType;
@@ -1082,11 +1087,11 @@ export class RunEngine {
       maximumSpan,
     );
     const safeWindowCenter = this.choosePressureSafeWindowCenter(battle, axis, safeWindowSpan);
-    const safeWindowSec = clamp(
-      phase.patternSafeWindowLingerSec ?? (axis === 'vertical' ? 1.28 : 1.18),
-      0.82,
-      1.9,
-    );
+    const baseSafeWindowSec = phase.patternSafeWindowLingerSec ?? (axis === 'vertical' ? 1.28 : 1.18);
+    const safeWindowSec =
+      battle.encounterType === 'boss'
+        ? this.getBossSafeWindowLingerSec(baseSafeWindowSec, phase.patternPulseIntervalSec)
+        : clamp(baseSafeWindowSec, 0.82, 1.9);
 
     battle.pressureSafeWindowAxis = axis;
     battle.pressureSafeWindowShiftType = undefined;
@@ -1164,8 +1169,15 @@ export class RunEngine {
     };
   }
 
-  private getBossSafeWindowTargetDistance(): number {
-    return BASE_PLAYER_MOVE_SPEED * BOSS_SAFE_WINDOW_REACTION_SEC;
+  private getBossSafeWindowLingerSec(baseLingerSec: number, pulseIntervalSec: number | undefined): number {
+    const minimumReadableSec = Math.max(baseLingerSec, (pulseIntervalSec ?? baseLingerSec) + 0.12);
+    return clamp(minimumReadableSec, 1.12, 2.34);
+  }
+
+  private getBossSafeWindowTargetDistance(axis: PressureSafeWindowAxis): number {
+    const reactionSec = axis === 'pocket' ? BOSS_SAFE_WINDOW_POCKET_REACTION_SEC : BOSS_SAFE_WINDOW_REACTION_SEC;
+    const targetDistance = BASE_PLAYER_MOVE_SPEED * reactionSec;
+    return axis === 'pocket' ? clamp(targetDistance, 118, 172) : clamp(targetDistance, 132, 204);
   }
 
   private chooseBossPressureSafeWindowCenter(
@@ -1185,7 +1197,7 @@ export class RunEngine {
     if (battle.bossSafeWindowMoments <= 0) {
       return clamp(playerCoord, minCenter, maxCenter);
     }
-    const targetDistance = this.getBossSafeWindowTargetDistance();
+    const targetDistance = this.getBossSafeWindowTargetDistance(axis);
     const positiveTravelMax = Math.max(0, maxCenter - playerCoord);
     const negativeTravelMax = Math.max(0, playerCoord - minCenter);
     const preferredSign = anchoredLane >= playerCoord ? 1 : -1;
@@ -1222,7 +1234,7 @@ export class RunEngine {
         y: clamp(battle.playerY, minY, maxY),
       };
     }
-    const targetDistance = this.getBossSafeWindowTargetDistance();
+    const targetDistance = this.getBossSafeWindowTargetDistance('pocket');
     const directionX = anchorX - battle.playerX;
     const directionY = anchorY - battle.playerY;
     const directionLength = Math.hypot(directionX, directionY);
@@ -1230,7 +1242,7 @@ export class RunEngine {
     const baseAngle = directionLength > 1 ? Math.atan2(directionY, directionX) : fallbackAngle;
     const lateralSign = battle.pressurePatternPulseCount % 2 === 0 ? 1 : -1;
     const angleOffsets = [0, 0.42 * lateralSign, -0.42 * lateralSign, 0.82 * lateralSign, -0.82 * lateralSign];
-    const radialOffsets = [0, -48, 44];
+    const radialOffsets = [0, -28, 26];
     let bestCandidate = {
       x: clamp(anchorX, minX, maxX),
       y: clamp(anchorY, minY, maxY),
@@ -1251,8 +1263,8 @@ export class RunEngine {
         const clampLoss = Math.hypot(candidateX - rawX, candidateY - rawY);
         const score =
           Math.abs(centerDistance - targetDistance) +
-          anchorDrift * 0.24 +
-          clampLoss * 0.42;
+          anchorDrift * 0.18 +
+          clampLoss * 0.52;
 
         if (score < bestScore) {
           bestScore = score;
