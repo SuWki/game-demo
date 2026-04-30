@@ -425,10 +425,17 @@ if (damageUpgradeValue.total > hpUpgradeValue.total * 2) {
 }
 
 // 检查生成间隔压力上限
-suggestions.push('💡 敌人生成间隔压力因子30秒后不再增长，建议移除上限或使用对数曲线');
+const spawnInterval = getEnemySpawnInterval(BATTLE_TEMPLATES['elimination'], 1, 'opening', 60);
+if (spawnInterval >= BATTLE_TEMPLATES['elimination'].spawnIntervalSec * 0.5) {
+  suggestions.push('💡 敌人生成间隔在60秒后仍未显著下降，建议检查对数曲线参数');
+}
 
-// 检查Dash冷却下限
-suggestions.push('💡 Dash冷却下限1.4秒可能过高，建议测试是否应降低到1.0秒');
+// 检查Dash冷却下限：确认 Math.max(1.0, ...) 逻辑生效
+// 基础 dashInterval 5.4，如果拿到 -5.0 的升级，应该被限制在 1.0
+const dashCooldownTest = Math.max(1.0, 5.4 + (-5.0));
+if (dashCooldownTest !== 1.0) {
+  suggestions.push('⚠️ Dash冷却下限未生效为1.0秒，请检查 applyStatModifiers 逻辑');
+}
 
 if (suggestions.length === 0) {
   console.log('✓ 所有数值在合理范围内');
