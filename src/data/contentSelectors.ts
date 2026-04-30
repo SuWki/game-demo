@@ -393,9 +393,15 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
     ),
   );
 
-  appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
-  appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
-  appendUniquePicks(picks, flexPool.length > 0 ? flexPool : genericPool, 1);
+  if (context.dominantRoute && routeWindowPool.length > 0) {
+    appendUniquePicks(picks, routeWindowPool, hasCommittedRoute ? 2 : 1);
+    appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
+    appendUniquePicks(picks, flexPool.length > 0 ? flexPool : routeWindowPool, 3 - picks.length);
+  } else {
+    appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
+    appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
+    appendUniquePicks(picks, flexPool.length > 0 ? flexPool : genericPool, 1);
+  }
 
   if (picks.length < 3) {
     appendUniquePicks(picks, genericPool, 3 - picks.length);

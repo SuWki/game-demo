@@ -1190,13 +1190,13 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
         weight *= 0.72;
       }
     } else if (blueprint.type === 'anomaly') {
-      weight *= 0.32 + round * 0.12;
+      weight *= 0.14 + round * 0.06;
       if (offerContext.lastNodeType === 'upgrade') {
-        weight *= 0.35;
+        weight *= 0.22;
       }
     }
   } else if (blueprint.type === 'anomaly') {
-    weight *= Math.min(1.0, 0.32 + round * 0.12);
+    weight *= Math.min(0.46, 0.14 + round * 0.06);
   }
 
   return Math.max(0.1, weight);

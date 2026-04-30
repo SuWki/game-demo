@@ -174,11 +174,11 @@ export function getPlayerMoveSpeed(stats: PlayerStats): number {
 }
 
 export function getPickupRadius(stats: PlayerStats): number {
-  return 28 + stats.moveSpeed * 0.048;
+  return 24 + stats.moveSpeed * 0.04;
 }
 
 export function getMagnetRadius(stats: PlayerStats): number {
-  return 108 + stats.moveSpeed * 0.14;
+  return 88 + stats.moveSpeed * 0.11;
 }
 
 export function getProjectileSpeed(stats: PlayerStats): number {
@@ -373,20 +373,20 @@ function cloneStats(stats: PlayerStats): PlayerStats {
 
 function applyStatModifiers(target: PlayerStats, modifiers: StatModifiers): void {
   target.maxHp += modifiers.maxHp ?? 0;
-  target.hp = clamp(target.hp + (modifiers.maxHp ?? 0), 0, target.maxHp);
+  target.hp = clamp(target.hp, 0, target.maxHp);
   target.damage += modifiers.damage ?? 0;
   target.fireRate += modifiers.fireRate ?? 0;
   target.projectileSpeed += modifiers.projectileSpeed ?? 0;
   target.critChance = clamp(target.critChance + (modifiers.critChance ?? 0), 0, 0.95);
   target.critMultiplier += modifiers.critMultiplier ?? 0;
-  target.pierce += modifiers.pierce ?? 0;
-  target.multishot += modifiers.multishot ?? 0;
+  target.pierce = clamp(target.pierce + (modifiers.pierce ?? 0), 0, 3);
+  target.multishot = clamp(target.multishot + (modifiers.multishot ?? 0), 1, 4);
   target.moveSpeed += modifiers.moveSpeed ?? 0;
   // 降低Dash冷却下限，提升Dash流派上限
-  target.dashInterval = Math.max(1.0, target.dashInterval + (modifiers.dashInterval ?? 0));
+  target.dashInterval = Math.max(1.8, target.dashInterval + (modifiers.dashInterval ?? 0));
   target.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
   target.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
-  target.regeneration += modifiers.regeneration ?? 0;
+  target.regeneration += (modifiers.regeneration ?? 0) * 0.38;
 }
 
 function getExpectedSingleTargetDps(stats: PlayerStats): number {
@@ -491,7 +491,7 @@ export function getDashPulseHeal(dashCharge: number, buildStage: RouteBuildStage
   if (buildStage === 'unformed') {
     return 0;
   }
-  const baseHeal = buildStage === 'matured' ? 2.2 : 1.1;
+  const baseHeal = buildStage === 'matured' ? 0.85 : 0.38;
   return dashCharge * baseHeal;
 }
 
@@ -570,9 +570,9 @@ export function getPierceEchoCount(multishot: number, buildStage: RouteBuildStag
 }
 
 export function getPierceEchoDamageRatio(buildStage: RouteBuildStage): number {
-  return buildStage === 'committed' || buildStage === 'matured' ? 0.72 : 0.58;
+  return buildStage === 'committed' || buildStage === 'matured' ? 0.46 : 0.34;
 }
 
 export function getPierceCooldownRefund(buildStage: RouteBuildStage): number {
-  return buildStage === 'committed' || buildStage === 'matured' ? 0.06 : 0;
+  return buildStage === 'committed' || buildStage === 'matured' ? 0.025 : 0;
 }

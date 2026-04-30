@@ -45,7 +45,7 @@ function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSum
     { label: '暴伤', value: `${Math.round(stats.critMultiplier * 100)}%`, tone: 'offense' },
     { label: '穿透', value: stats.pierce.toFixed(0), tone: 'utility' },
     { label: '多重', value: stats.multishot.toFixed(0), tone: 'utility' },
-    { label: '生命', value: `${Math.ceil(stats.hp)} / ${stats.maxHp}`, tone: 'survival' },
+    { label: '生命', value: `${Math.ceil(stats.hp)} / ${Math.round(stats.maxHp)}`, tone: 'survival' },
     { label: '移速', value: stats.moveSpeed.toFixed(0), tone: 'mobility' },
     { label: '再生', value: `${Math.round(stats.regeneration * 10)}/10秒`, tone: 'survival' },
   ];
@@ -721,10 +721,10 @@ export class GameScene extends Phaser.Scene {
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
-      hpText: `${Math.ceil(state.stats.hp)} / ${state.stats.maxHp}`,
+      hpText: `${Math.ceil(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
       hpRatio: state.stats.hp / Math.max(1, state.stats.maxHp),
       levelText: `Lv.${state.level}`,
-      experienceText: `${Math.floor(state.experience)} / ${state.experienceToNext}`,
+      experienceText: `${Math.floor(state.experience)} / ${Math.round(state.experienceToNext)}`,
       experienceRatio: state.experience / Math.max(1, state.experienceToNext),
       routeStatusText,
       routeProgress: ROUTES.map((route) => ({
@@ -1397,10 +1397,10 @@ export class GameScene extends Phaser.Scene {
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
-      hpText: `${Math.ceil(state.stats.hp)} / ${state.stats.maxHp}`,
+      hpText: `${Math.ceil(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
       hpRatio: state.stats.hp / Math.max(1, state.stats.maxHp),
       levelText: `Lv.${state.level}`,
-      experienceText: `${Math.floor(state.experience)} / ${state.experienceToNext}`,
+      experienceText: `${Math.floor(state.experience)} / ${Math.round(state.experienceToNext)}`,
       experienceRatio: state.experience / Math.max(1, state.experienceToNext),
       routeStatusText,
       routeProgress: ROUTES.map((route) => ({
@@ -1432,14 +1432,14 @@ export class GameScene extends Phaser.Scene {
   private getHudModeText(state: ReturnType<RunEngine['getState']>): string {
     if (state.status === 'battle' && state.battle) {
       if (state.battle.encounterType === 'boss') {
-        return 'Boss战';
+        return state.battle.eliteAlive ? 'Boss战 击败首领' : 'Boss战 首领进场中';
       }
       const winCondition = BATTLE_TEMPLATES[state.battle.templateId].winCondition.type;
       if (winCondition === 'kills') {
-        return '歼灭';
+        return `歼灭 ${state.battle.kills}/${state.battle.targetKills}`;
       }
       if (winCondition === 'survive') {
-        return '生存';
+        return `生存 ${Math.ceil(state.battle.remainingSec)}秒`;
       }
       if (winCondition === 'elite') {
         return '精英';
@@ -1757,7 +1757,11 @@ export class GameScene extends Phaser.Scene {
 
   private shouldDisplayToast(tone: ToastTone): boolean {
     const status = this.engine.getState().status;
-    if (status === 'battle' || status === 'upgradeChoice' || status === 'eventChoice' || status === 'nodeChoice') {
+    if (status === 'battle') {
+      return tone === 'danger' || tone === 'route';
+    }
+
+    if (status === 'upgradeChoice' || status === 'eventChoice' || status === 'nodeChoice') {
       return false;
     }
 

@@ -348,6 +348,7 @@ export function normalizeEffectsToSingleStat(
 
 function formatModifierLabel(key: keyof StatModifiers, value: number): string {
   const sign = value > 0 ? '+' : '';
+  const seconds = (amount: number) => `${sign}${amount.toFixed(1)}秒`;
   switch (key) {
     case 'maxHp':
       return `生命上限 ${sign}${Math.round(value)}`;
@@ -368,11 +369,11 @@ function formatModifierLabel(key: keyof StatModifiers, value: number): string {
     case 'moveSpeed':
       return `移速 ${sign}${Math.round(value)}`;
     case 'dashInterval':
-      return `穿梭冷却 ${sign}${Math.round(value * 1000)}ms`;
+      return `穿梭冷却 ${seconds(value)}`;
     case 'dashPulseDamage':
       return `脉冲伤害 ${sign}${Math.round(value)}`;
     case 'dashInvulnerability':
-      return `无伤窗口 ${sign}${Math.round(value * 1000)}ms`;
+      return `无伤窗口 ${seconds(value)}`;
     case 'regeneration':
       return `每10秒回复 ${sign}${Math.round(value * 10)}`;
     default:
@@ -3715,7 +3716,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
 
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
   const scaledEffects = scaleEffects(archetype.effects, rarity);
-  const effects = normalizeEffectsToSingleStat(archetype.id, scaledEffects, archetype.routeId, rarity);
+  const effectsWithoutInstantHeal = scaledEffects.filter((effect) => effect.type !== 'heal');
+  const effects =
+    archetype.category === 'generic'
+      ? normalizeEffectsToSingleStat(archetype.id, effectsWithoutInstantHeal, archetype.routeId, rarity)
+      : effectsWithoutInstantHeal;
   const valueBreakdown = estimateUpgradeValue(effects);
   const valueBucket = getUpgradeValueBucket(valueBreakdown.total);
   return {

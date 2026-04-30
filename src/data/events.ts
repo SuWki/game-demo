@@ -743,11 +743,14 @@ function normalizeEventOptionEffects(
     return option;
   }
 
-  const normalizedEffects = normalizeEffectsToSingleStat(
-    `${eventId}:${option.id}`,
-    option.effects,
-    option.routeId && option.routeId !== 'dominant' ? option.routeId : undefined,
-  );
+  const normalizedEffects =
+    (eventDef.contentKind ?? 'event') === 'anomaly'
+      ? option.effects
+      : normalizeEffectsToSingleStat(
+          `${eventId}:${option.id}`,
+          option.effects,
+          option.routeId && option.routeId !== 'dominant' ? option.routeId : undefined,
+        );
 
   return {
     ...option,

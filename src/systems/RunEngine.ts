@@ -1423,12 +1423,12 @@ export class RunEngine {
 
     const template = BATTLE_TEMPLATES[battle.templateId];
     const damagePerSec = Math.max(
-      5.5,
-      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.34),
+      10,
+      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.56),
     );
     this.state.stats.hp = clamp(this.state.stats.hp - damagePerSec * dt, 0, this.state.stats.maxHp);
-    battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.13);
-    battle.playerImpactSec = Math.max(battle.playerImpactSec, 0.08);
+    battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.16);
+    battle.playerNearMissSec = Math.max(battle.playerNearMissSec, 0.12);
     this.registerPlayerThreatDirection(battle, battle.pressureSafeWindowCenter, battle.pressureSafeWindowSecondaryCenter, 0.13);
   }
 
@@ -2180,19 +2180,19 @@ export class RunEngine {
 
   private applyModifiers(modifiers: Partial<PlayerStats>): void {
     this.state.stats.maxHp += modifiers.maxHp ?? 0;
-    this.state.stats.hp = clamp(this.state.stats.hp + (modifiers.maxHp ?? 0), 0, this.state.stats.maxHp);
+    this.state.stats.hp = clamp(this.state.stats.hp, 0, this.state.stats.maxHp);
     this.state.stats.damage += modifiers.damage ?? 0;
     this.state.stats.fireRate += modifiers.fireRate ?? 0;
     this.state.stats.projectileSpeed += modifiers.projectileSpeed ?? 0;
     this.state.stats.critChance = clamp(this.state.stats.critChance + (modifiers.critChance ?? 0), 0, 0.85);
     this.state.stats.critMultiplier += modifiers.critMultiplier ?? 0;
-    this.state.stats.pierce += modifiers.pierce ?? 0;
-    this.state.stats.multishot += modifiers.multishot ?? 0;
+    this.state.stats.pierce = clamp(this.state.stats.pierce + (modifiers.pierce ?? 0), 0, 3);
+    this.state.stats.multishot = clamp(this.state.stats.multishot + (modifiers.multishot ?? 0), 1, 4);
     this.state.stats.moveSpeed += modifiers.moveSpeed ?? 0;
-    this.state.stats.dashInterval = Math.max(1.6, this.state.stats.dashInterval + (modifiers.dashInterval ?? 0));
+    this.state.stats.dashInterval = Math.max(1.8, this.state.stats.dashInterval + (modifiers.dashInterval ?? 0));
     this.state.stats.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
     this.state.stats.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
-    this.state.stats.regeneration += modifiers.regeneration ?? 0;
+    this.state.stats.regeneration += (modifiers.regeneration ?? 0) * 0.38;
   }
 
   private applyEffects(effects: ContentEffect[], meta?: RouteAdvanceMeta): void {
@@ -2452,6 +2452,9 @@ export class RunEngine {
     }
     if (dashPulseHits > 0) {
       this.enqueueAudio('dashPulse');
+      this.enqueueTip(`穿梭触发：脉冲命中 ${dashPulseHits} 个敌人`);
+    } else {
+      this.enqueueTip('穿梭触发：获得短暂无伤窗口');
     }
 
     const dashHeal = this.getDashPulseHeal(dashCharge, dashStage);
@@ -3693,6 +3696,9 @@ export class RunEngine {
 
         const critical = Math.random() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
+        if (bullet.routeFocus === 'pierce' || bullet.hitCount > 0) {
+          damage *= Math.max(0.38, 1 - bullet.hitCount * 0.24);
+        }
         const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
         const eliteCrackRatio = enemy.elite ? this.getEliteCrackWindowRatio(battle) : 0;
         const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
@@ -4107,7 +4113,7 @@ export class RunEngine {
         if (dashStage === 'committed' || dashStage === 'matured') {
           battle.dashDriveSec = Math.max(battle.dashDriveSec, 0.7);
           battle.dashCooldownSec = Math.max(0.75, battle.dashCooldownSec - 0.35);
-          this.state.stats.hp = clamp(this.state.stats.hp + 0.9, 0, this.state.stats.maxHp);
+          this.state.stats.hp = clamp(this.state.stats.hp + 0.22, 0, this.state.stats.maxHp);
           battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.12);
         }
       }
@@ -5055,6 +5061,13 @@ export class RunEngine {
         projectile.x > ARENA_WIDTH + 48 ||
         projectile.y < -48 ||
         projectile.y > ARENA_HEIGHT + 48
+      ) {
+        continue;
+      }
+
+      if (
+        battle.encounterType === 'boss' &&
+        this.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 18)
       ) {
         continue;
       }
