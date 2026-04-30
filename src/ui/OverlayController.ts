@@ -747,12 +747,13 @@ export class OverlayController {
       case 'critMultiplier':
         return `${sign}${Math.round(value * 100)}%`;
       case 'dashInterval':
+        return `${sign}${(value * 10).toFixed(1)}`;
       case 'dashInvulnerability':
-        return `${sign}${Math.round(value * 1000)}ms`;
+        return `${sign}${(value * 10).toFixed(1)}`;
       case 'regeneration':
-        return `${sign}${Math.round(value * 10)}/10秒`;
+        return `${sign}${(value * 10).toFixed(1)}`;
       case 'fireRate':
-        return `${sign}${Math.round(value * 60)}/分`;
+        return `${sign}${(value * 10).toFixed(1)}`;
       default:
         return `${sign}${Math.round(value)}`;
     }

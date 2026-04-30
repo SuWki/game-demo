@@ -3278,8 +3278,37 @@ export class RunEngine {
       };
     }
 
-    const side = (cursor + burstIndex) % 4;
+    let side = (cursor + burstIndex) % 4;
     const t = (((cursor * 53) + burstIndex * 17) % 100) / 100;
+
+    if (pattern === 'surround') {
+      const playerNormalizedX = battle.playerX / ARENA_WIDTH;
+      const playerNormalizedY = battle.playerY / ARENA_HEIGHT;
+
+      const topWeight = Math.max(0.2, playerNormalizedY);
+      const bottomWeight = Math.max(0.2, 1 - playerNormalizedY);
+      const leftWeight = Math.max(0.2, playerNormalizedX);
+      const rightWeight = Math.max(0.2, 1 - playerNormalizedX);
+
+      const totalWeight = topWeight + rightWeight + bottomWeight + leftWeight;
+      const normalizedWeights = [
+        topWeight / totalWeight,
+        rightWeight / totalWeight,
+        bottomWeight / totalWeight,
+        leftWeight / totalWeight,
+      ];
+
+      const randomValue = (((cursor * 73) + burstIndex * 29) % 100) / 100;
+      let cumulativeWeight = 0;
+      for (let i = 0; i < 4; i += 1) {
+        cumulativeWeight += normalizedWeights[i];
+        if (randomValue < cumulativeWeight) {
+          side = i;
+          break;
+        }
+      }
+    }
+
     if (side === 0) {
       return {
         x: view.left + margin + t * (view.width - margin * 2),

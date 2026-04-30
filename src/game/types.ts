@@ -227,6 +227,7 @@ export type ContentEffect =
 export interface UpgradeArchetype {
   id: string;
   name: string;
+  description?: string;
   category: UpgradeCategory;
   contentTier?: ContentTier;
   routeId?: RouteId;

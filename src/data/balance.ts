@@ -174,11 +174,11 @@ export function getPlayerMoveSpeed(stats: PlayerStats): number {
 }
 
 export function getPickupRadius(stats: PlayerStats): number {
-  return 38 + stats.moveSpeed * 0.055;
+  return 28 + stats.moveSpeed * 0.048;
 }
 
 export function getMagnetRadius(stats: PlayerStats): number {
-  return 148 + stats.moveSpeed * 0.16;
+  return 108 + stats.moveSpeed * 0.14;
 }
 
 export function getProjectileSpeed(stats: PlayerStats): number {
@@ -225,7 +225,9 @@ export function getEnemySpawnInterval(
   elapsedSec: number,
 ): number {
   const depthFactor = 1 + (round - 1) * 0.08 + getPhaseTier(phase) * 0.05;
-  const pressureFactor = 1 + Math.min(elapsedSec, 30) * 0.015;
+  // 使用对数曲线替代线性增长，避免30秒上限
+  // 对数曲线特点：前期增长快，后期增长慢但持续增长
+  const pressureFactor = 1 + Math.log(1 + elapsedSec / 10) * 0.35;
   const interval = template.spawnIntervalSec / (depthFactor * pressureFactor);
   return clamp(interval, template.spawnIntervalSec * 0.38, template.spawnIntervalSec);
 }
@@ -236,7 +238,8 @@ export function getRegularEnemyCap(
   phase: PhaseId,
   capMultiplier = 1,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.08 + getPhaseTier(phase) * 0.06;
+  // 提高增长系数以增强后期压迫感
+  const depthFactor = 1 + (round - 1) * 0.12 + getPhaseTier(phase) * 0.09;
   return Math.max(4, Math.round(template.regularEnemyCap * depthFactor * capMultiplier));
 }
 
@@ -251,7 +254,7 @@ export function getEnemyExperienceValue(
   isElite: boolean,
 ): number {
   const phaseTier = getPhaseTier(phase);
-  const baseValue = 5 + round * 2.5 + phaseTier * 2.5 + template.enemyHp * 0.09;
+  const baseValue = 4 + round * 2.5 + phaseTier * 2.5 + template.enemyHp * 0.09;
   return Math.round(isElite ? baseValue * 4.5 : baseValue);
 }
 
@@ -302,15 +305,16 @@ export function getPressureSnapshot(
   const hpFactor = enemyHp / template.enemyHp;
   const frequencyFactor = template.spawnIntervalSec / spawnIntervalSec;
   const crowdFactor = regularEnemyCap / template.regularEnemyCap;
+  // 平衡压力指数权重：降低伤害权重，提高其他维度
   const regularPressureIndex = Number(
     (
       template.pressureMultiplier *
       (
-        damageFactor * 0.34 +
-        speedFactor * 0.18 +
-        frequencyFactor * 0.24 +
-        crowdFactor * 0.16 +
-        hpFactor * 0.08
+        damageFactor * 0.26 +      // 0.34 → 0.26 (-24%)
+        speedFactor * 0.22 +        // 0.18 → 0.22 (+22%)
+        frequencyFactor * 0.26 +    // 0.24 → 0.26 (+8%)
+        crowdFactor * 0.18 +        // 0.16 → 0.18 (+13%)
+        hpFactor * 0.08             // 保持不变
       )
     ).toFixed(2),
   );
@@ -378,7 +382,8 @@ function applyStatModifiers(target: PlayerStats, modifiers: StatModifiers): void
   target.pierce += modifiers.pierce ?? 0;
   target.multishot += modifiers.multishot ?? 0;
   target.moveSpeed += modifiers.moveSpeed ?? 0;
-  target.dashInterval = Math.max(1.4, target.dashInterval + (modifiers.dashInterval ?? 0));
+  // 降低Dash冷却下限，提升Dash流派上限
+  target.dashInterval = Math.max(1.0, target.dashInterval + (modifiers.dashInterval ?? 0));
   target.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
   target.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
   target.regeneration += modifiers.regeneration ?? 0;
@@ -435,20 +440,22 @@ export function estimateUpgradeValue(
     multishotDelta * (34 + Math.max(0, before.pierce) * 8) +
     critComboBonus +
     pierceComboBonus;
+  // 提升生存价值权重，平衡DPS与生存的选择
   const survival =
-    Math.max(0, ((after.maxHp - before.maxHp) / before.maxHp) * 110) +
-    Math.max(0, after.regeneration - before.regeneration) * 115 +
-    Math.max(0, healAmount) * 1.4;
+    Math.max(0, ((after.maxHp - before.maxHp) / before.maxHp) * 160) +  // 110 → 160 (+45%)
+    Math.max(0, after.regeneration - before.regeneration) * 150 +        // 115 → 150 (+30%)
+    Math.max(0, healAmount) * 2.0;                                       // 1.4 → 2.0 (+43%)
   const dashStatCount =
     Number(after.moveSpeed > before.moveSpeed) +
     Number(after.dashInterval < before.dashInterval) +
     Number(after.dashInvulnerability > before.dashInvulnerability) +
     Number(after.dashPulseDamage > before.dashPulseDamage);
+  // 提升机动价值权重，增强移速和Dash的吸引力
   const mobility =
-    Math.max(0, ((after.moveSpeed - before.moveSpeed) / before.moveSpeed) * 140) +
-    Math.max(0, ((before.dashInterval - after.dashInterval) / before.dashInterval) * 96) +
-    Math.max(0, ((after.dashInvulnerability - before.dashInvulnerability) / before.dashInvulnerability) * 42) +
-    Math.max(0, ((after.dashPulseDamage - before.dashPulseDamage) / Math.max(10, before.damage * 0.75)) * 32);
+    Math.max(0, ((after.moveSpeed - before.moveSpeed) / before.moveSpeed) * 200) +  // 140 → 200 (+43%)
+    Math.max(0, ((before.dashInterval - after.dashInterval) / before.dashInterval) * 130) +  // 96 → 130 (+35%)
+    Math.max(0, ((after.dashInvulnerability - before.dashInvulnerability) / before.dashInvulnerability) * 55) +  // 42 → 55 (+31%)
+    Math.max(0, ((after.dashPulseDamage - before.dashPulseDamage) / Math.max(10, before.damage * 0.75)) * 42);  // 32 → 42 (+31%)
   const routeSynergy = routeEffects * 14 + (dashStatCount >= 2 ? 8 : 0);
   const total = directDps + utility + survival + mobility + routeSynergy;
 

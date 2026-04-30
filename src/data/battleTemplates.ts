@@ -174,7 +174,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 4,
-      hpMultiplier: 11.6,
+      hpMultiplier: 9.8,  // 11.6 → 9.8 (-15%)
       speedMultiplier: 1.02,
       damageMultiplier: 2.35,
       guardSec: 4.6,
@@ -237,7 +237,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 3,
-      hpMultiplier: 11.2,
+      hpMultiplier: 9.5,  // 11.2 → 9.5 (-15%)
       speedMultiplier: 1.04,
       damageMultiplier: 2.4,
       guardSec: 4.2,
@@ -301,7 +301,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 2.8,
-      hpMultiplier: 10.6,
+      hpMultiplier: 9.0,  // 10.6 → 9.0 (-15%)
       speedMultiplier: 1.04,
       damageMultiplier: 2.42,
       guardSec: 4.1,
@@ -366,7 +366,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 3.4,
-      hpMultiplier: 10.4,
+      hpMultiplier: 8.8,  // 10.4 → 8.8 (-15%)
       speedMultiplier: 0.98,
       damageMultiplier: 2.2,
       guardSec: 4.3,
@@ -430,7 +430,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 3.2,
-      hpMultiplier: 11.3,
+      hpMultiplier: 9.6,  // 11.3 → 9.6 (-15%)
       speedMultiplier: 0.98,
       damageMultiplier: 2.34,
       guardSec: 4.4,
@@ -495,7 +495,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 2,
-      hpMultiplier: 14.2,
+      hpMultiplier: 12.1,  // 14.2 → 12.1 (-15%)
       speedMultiplier: 0.98,
       damageMultiplier: 2.42,
       guardSec: 4.9,
@@ -595,7 +595,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 1.9,
-      hpMultiplier: 13.6,
+      hpMultiplier: 11.6,  // 13.6 → 11.6 (-15%)
       speedMultiplier: 1,
       damageMultiplier: 2.38,
       guardSec: 4.8,
@@ -697,7 +697,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
     },
     eliteRule: {
       spawnAtSec: 2.2,
-      hpMultiplier: 14,
+      hpMultiplier: 11.9,  // 14.0 → 11.9 (-15%)
       speedMultiplier: 1,
       damageMultiplier: 2.34,
       guardSec: 5,
