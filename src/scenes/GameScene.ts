@@ -2382,7 +2382,7 @@ export class GameScene extends Phaser.Scene {
         : 0;
 
     for (const enemy of battle.enemies) {
-      const flashRatio = Math.min(1, enemy.hitFlashSec / 0.22);
+      const flashRatio = Math.min(1, enemy.hitFlashSec / 0.18);
       const spawnRatio = Math.min(1, enemy.spawnFlashSec / (enemy.elite ? 0.46 : 0.28));
       const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
       const pressureRatio = this.getEnemyPressureRatio(enemy);
