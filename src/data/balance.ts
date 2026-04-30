@@ -174,11 +174,11 @@ export function getPlayerMoveSpeed(stats: PlayerStats): number {
 }
 
 export function getPickupRadius(stats: PlayerStats): number {
-  return 34 + stats.moveSpeed * 0.045;
+  return 38 + stats.moveSpeed * 0.055;
 }
 
 export function getMagnetRadius(stats: PlayerStats): number {
-  return 132 + stats.moveSpeed * 0.14;
+  return 148 + stats.moveSpeed * 0.16;
 }
 
 export function getProjectileSpeed(stats: PlayerStats): number {
@@ -251,7 +251,7 @@ export function getEnemyExperienceValue(
   isElite: boolean,
 ): number {
   const phaseTier = getPhaseTier(phase);
-  const baseValue = 4 + round * 2 + phaseTier * 2 + template.enemyHp * 0.08;
+  const baseValue = 5 + round * 2.5 + phaseTier * 2.5 + template.enemyHp * 0.09;
   return Math.round(isElite ? baseValue * 4.5 : baseValue);
 }
 

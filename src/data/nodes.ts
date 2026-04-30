@@ -210,9 +210,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   2: {
     phase: 'mid',
     countWeights: [
-      { count: 1, weight: 8 },
-      { count: 2, weight: 44 },
-      { count: 3, weight: 48 },
+      { count: 1, weight: 5 },
+      { count: 2, weight: 55 },
+      { count: 3, weight: 40 },
     ],
     blueprints: [
       {
@@ -222,19 +222,21 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '精英压制',
         description: '偏首领正压的中段检定，适合看当前 build 能不能正面站稳。',
         templateCandidates: [
-          { templateId: 'elite', weight: 2.1 },
-          { templateId: 'elite-lockdown', weight: 1.3 },
-          { templateId: 'elite-screen', weight: 1.2 },
+          { templateId: 'elite', weight: 2.4 },
+          { templateId: 'elite-lockdown', weight: 1.5 },
+          { templateId: 'elite-screen', weight: 1.4 },
         ],
         difficultyScale: 1.15,
         selection: {
-          baseWeight: 5.1,
-          soloMultiplier: 1.12,
-          repeatTypeMultiplier: 0.76,
+          baseWeight: 5.8,
+          soloMultiplier: 1.15,
+          repeatTypeMultiplier: 0.72,
           routeBonuses: {
-            crit: 0.9,
+            crit: 1.1,
+            pierce: 1.1,
+            dash: 1.1,
           },
-          battleCatchupBonus: 1.8,
+          battleCatchupBonus: 2.0,
         },
       },
       {
@@ -568,9 +570,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   3: {
     phase: 'late',
     countWeights: [
-      { count: 1, weight: 12 },
-      { count: 2, weight: 46 },
-      { count: 3, weight: 42 },
+      { count: 1, weight: 8 },
+      { count: 2, weight: 52 },
+      { count: 3, weight: 40 },
     ],
     blueprints: [
       {
