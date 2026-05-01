@@ -700,11 +700,17 @@ export class OverlayController {
   }
 
   private getAnomalyGainLabel(option: EventDefinition['options'][number]): string {
+    if (option.gainLabel) {
+      return option.gainLabel;
+    }
     const positiveEffects = option.effects?.filter((effect) => effect.type !== 'heal' || effect.amount > 0) ?? [];
     return this.getChoiceEffectSummary(positiveEffects, { maxSegments: 2 }) || option.description;
   }
 
   private getAnomalyCostLabel(option: EventDefinition['options'][number]): string {
+    if (option.costLabel) {
+      return option.costLabel;
+    }
     const costs: string[] = [];
     for (const effect of option.effects ?? []) {
       if (effect.type === 'heal' && effect.amount < 0) {
@@ -747,13 +753,13 @@ export class OverlayController {
       case 'critMultiplier':
         return `${sign}${Math.round(value * 100)}%`;
       case 'dashInterval':
-        return `${sign}${(value * 10).toFixed(1)}`;
+        return `${sign}${value.toFixed(2)}秒`;
       case 'dashInvulnerability':
-        return `${sign}${(value * 10).toFixed(1)}`;
+        return `${sign}${value.toFixed(2)}秒`;
       case 'regeneration':
-        return `${sign}${(value * 10).toFixed(1)}`;
+        return `${sign}${value.toFixed(1)}/秒`;
       case 'fireRate':
-        return `${sign}${(value * 10).toFixed(1)}`;
+        return `${sign}${value.toFixed(1)}/秒`;
       default:
         return `${sign}${Math.round(value)}`;
     }
@@ -808,9 +814,12 @@ export class OverlayController {
   }
 
   private getEventOptionDescription(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
+    if (eventDef.contentKind === 'anomaly') {
+      return option.gameplayLabel ? `${option.gameplayLabel}：${option.description}` : option.description;
+    }
+
     const summary = this.getChoiceEffectSummary(option.effects, {
-      includeRoute: eventDef.contentKind === 'anomaly',
-      maxSegments: eventDef.contentKind === 'anomaly' ? 3 : 2,
+      maxSegments: 2,
     });
     return summary || option.description;
   }

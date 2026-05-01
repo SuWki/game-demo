@@ -734,6 +734,491 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
 ];
 
+const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
+  {
+    id: 'fixed-turret-protocol',
+    name: '固定炮台协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '异常火控锁定机体姿态。你可以牺牲机动，把这一局改成更偏架枪的打法。',
+    selection: {
+      baseWeight: 1.1,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.8,
+      },
+      noDominantRouteBonus: 0.8,
+    },
+    options: [
+      {
+        id: 'fixed-turret-rapid',
+        label: '接入速射炮台',
+        gameplayLabel: '炮台化',
+        gainLabel: '射速大幅提高，适合找位置架枪',
+        costLabel: '移速大幅降低',
+        description: '移动变慢，但持续火力明显抬升。适合把战斗从游走改成架点输出。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: -45,
+              fireRate: 0.55,
+              projectileSpeed: 12,
+            },
+          },
+        ],
+      },
+      {
+        id: 'fixed-turret-cannon',
+        label: '接入重炮炮台',
+        gameplayLabel: '慢速重炮',
+        gainLabel: '单发伤害大幅提高',
+        costLabel: '移速降低，射速降低',
+        description: '把机动和频率压低，换成更重的单发命中。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: -35,
+              fireRate: -0.18,
+              damage: 9,
+              projectileSpeed: -12,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'redline-light-armor',
+    name: '红线轻甲协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '拆掉部分装甲，把重量换成速度和火力。容错会下降，但主动权会上升。',
+    selection: {
+      baseWeight: 1,
+      minRound: 1,
+      phaseBonuses: {
+        opening: 0.35,
+        mid: 1.05,
+        late: 0.9,
+      },
+      noDominantRouteBonus: 0.9,
+    },
+    options: [
+      {
+        id: 'redline-light-armor-burst',
+        label: '拆甲提火力',
+        gameplayLabel: '玻璃大炮',
+        gainLabel: '伤害与移速提高',
+        costLabel: '生命上限降低',
+        description: '更快、更痛，但更不耐打。适合愿意主动拉扯的局。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: -18,
+              damage: 6,
+              moveSpeed: 18,
+            },
+          },
+        ],
+      },
+      {
+        id: 'redline-light-armor-tempo',
+        label: '拆甲提节奏',
+        gameplayLabel: '轻甲快攻',
+        gainLabel: '移速和射速提高',
+        costLabel: '生命上限降低',
+        description: '放弃一截耐久，换更快的走位和开火节奏。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: -16,
+              moveSpeed: 16,
+              fireRate: 0.28,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'heavy-buffer-protocol',
+    name: '重装缓冲协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '把火控和机动空间让给防护层。你会变慢，但更能顶住高压场面。',
+    selection: {
+      baseWeight: 0.9,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.85,
+        late: 1.1,
+      },
+      noDominantRouteBonus: 0.65,
+    },
+    options: [
+      {
+        id: 'heavy-buffer-armor',
+        label: '接入重装外甲',
+        gameplayLabel: '抗压推进',
+        gainLabel: '生命上限明显提高',
+        costLabel: '移速和射速降低',
+        description: '牺牲灵活度，换更厚的容错。适合想顶着压力推进的局。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 24,
+              moveSpeed: -18,
+              fireRate: -0.2,
+            },
+          },
+        ],
+      },
+      {
+        id: 'heavy-buffer-stabilizer',
+        label: '接入缓冲核心',
+        gameplayLabel: '稳态续航',
+        gainLabel: '生命上限和再生提高',
+        costLabel: '伤害和弹速降低',
+        description: '放慢击杀速度，换更稳的持续作战空间。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 16,
+              regeneration: 0.12,
+              damage: -3,
+              projectileSpeed: -16,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'rapid-light-rounds',
+    name: '高频轻弹协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '降低单发威力，把输出改成更密集的轻弹循环。',
+    selection: {
+      baseWeight: 1.05,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.75,
+      },
+      hintedRouteBonus: 0.4,
+    },
+    options: [
+      {
+        id: 'rapid-light-rounds-trigger',
+        label: '切换轻弹循环',
+        gameplayLabel: '高频触发',
+        gainLabel: '射速大幅提高，更容易打出路线反馈',
+        costLabel: '单发伤害降低',
+        description: '不靠单发爆点，改靠高频命中把路线效果打出来。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: -4,
+              fireRate: 0.65,
+              critChance: 0.03,
+            },
+          },
+        ],
+      },
+      {
+        id: 'rapid-light-rounds-fan',
+        label: '切换散射轻弹',
+        gameplayLabel: '多弹压制',
+        gainLabel: '多重提高，射速提高',
+        costLabel: '单发伤害降低，弹速降低',
+        description: '把火力铺开，适合清杂，但单发处理强敌会变慢。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: -5,
+              fireRate: 0.24,
+              multishot: 1,
+              projectileSpeed: -18,
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'heavy-cannon-overload',
+    name: '重炮过载协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '压低开火频率，把能量集中到每一次命中。',
+    selection: {
+      baseWeight: 0.98,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.95,
+        late: 1.15,
+      },
+      committedRouteBonus: 0.25,
+    },
+    options: [
+      {
+        id: 'heavy-cannon-overload-impact',
+        label: '接入重炮核心',
+        gameplayLabel: '慢速重炮',
+        gainLabel: '单发伤害大幅提高',
+        costLabel: '射速降低，弹速降低',
+        description: '开火变慢，但每一发更适合抓窗口打穿强敌。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 10,
+              fireRate: -0.35,
+              projectileSpeed: -20,
+            },
+          },
+        ],
+      },
+      {
+        id: 'heavy-cannon-overload-crit',
+        label: '接入要害重炮',
+        gameplayLabel: '强敌锁定',
+        gainLabel: '伤害与暴击伤害提高',
+        costLabel: '射速降低，移速降低',
+        routeId: 'crit',
+        description: '把火力集中到少数命中，适合打精英和 Boss。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 5,
+              critMultiplier: 0.32,
+              fireRate: -0.26,
+              moveSpeed: -10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pickup-drive-protocol',
+    name: '回收驱动协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'hybrid',
+    description: '基础火力被压低，但经验回收和路线推进会成为这一局的节奏核心。',
+    selection: {
+      baseWeight: 0.92,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.1,
+        late: 0.9,
+      },
+      dominantRouteBonus: 0.3,
+    },
+    options: [
+      {
+        id: 'pickup-drive-tempo',
+        label: '接入回收驱动',
+        gameplayLabel: '拾取驱动',
+        gainLabel: '移速提高，并推进当前路线',
+        costLabel: '基础伤害降低',
+        routeId: 'dominant',
+        description: '伤害变低，但更鼓励主动回收经验、维持追击节奏。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: -3,
+              moveSpeed: 12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+      {
+        id: 'pickup-drive-magnet',
+        label: '接入磁轨回收',
+        gameplayLabel: '回收拉扯',
+        gainLabel: '弹速和移速提高，并推进当前路线',
+        costLabel: '射速降低',
+        routeId: 'dominant',
+        description: '把输出节奏让给回收路线，适合边捡边重新找输出角度。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: -0.18,
+              projectileSpeed: 24,
+              moveSpeed: 10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dominant',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'dash-charge-protocol',
+    name: '穿梭蓄能协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'routeWindow',
+    routeAffinity: 'dash',
+    description: '普通射击变弱，把爆发压进穿梭后的短窗口。',
+    selection: {
+      baseWeight: 0.95,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.95,
+        late: 1.1,
+      },
+      hintedRouteBonus: 0.6,
+      dominantRouteBonus: 1.2,
+      offRouteMultiplier: 0.42,
+    },
+    options: [
+      {
+        id: 'dash-charge-pulse',
+        label: '接入穿梭脉冲',
+        gameplayLabel: '换位爆发',
+        gainLabel: '穿梭脉冲伤害提高，穿梭路线推进',
+        costLabel: '基础伤害降低',
+        routeId: 'dash',
+        description: '普通射击变弱，穿梭后的反打窗口更重要。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: -3,
+              dashPulseDamage: 10,
+              dashInterval: -0.22,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'dash-charge-graze',
+        label: '接入擦身蓄能',
+        gameplayLabel: '擦身反打',
+        gainLabel: '移速和穿梭窗口提高',
+        costLabel: '生命上限降低',
+        routeId: 'dash',
+        description: '容错下降，但换位和擦身后的反打更有价值。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: -12,
+              moveSpeed: 16,
+              dashInvulnerability: 0.12,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'crit-lock-protocol',
+    name: '暴击锁定协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'routeWindow',
+    routeAffinity: 'crit',
+    description: '降低清杂频率，把火控集中到强敌锁定和要害爆发。',
+    selection: {
+      baseWeight: 0.9,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.9,
+        late: 1.15,
+      },
+      hintedRouteBonus: 0.6,
+      dominantRouteBonus: 1.15,
+      offRouteMultiplier: 0.45,
+    },
+    options: [
+      {
+        id: 'crit-lock-focus',
+        label: '接入暴击锁定',
+        gameplayLabel: '单体爆发',
+        gainLabel: '暴击率和暴击伤害提高',
+        costLabel: '射速降低',
+        routeId: 'crit',
+        description: '清杂速度下降，但强敌窗口内的爆发更明确。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: -0.22,
+              critChance: 0.08,
+              critMultiplier: 0.35,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'crit-lock-redline',
+        label: '接入红线锁定',
+        gameplayLabel: '低容错爆发',
+        gainLabel: '伤害和暴击伤害提高',
+        costLabel: '生命上限降低，射速降低',
+        routeId: 'crit',
+        description: '把耐久和频率压低，换更清晰的短窗爆点。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: -14,
+              damage: 4,
+              fireRate: -0.16,
+              critMultiplier: 0.42,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+    ],
+  },
+];
+
 function normalizeEventOptionEffects(
   eventDef: EventDefinition,
   eventId: string,
@@ -758,14 +1243,19 @@ function normalizeEventOptionEffects(
   };
 }
 
-export const EVENT_CATALOG: EventDefinition[] = RAW_EVENT_CATALOG.map((eventDef) => ({
+export const EVENT_CATALOG: EventDefinition[] = RAW_EVENT_CATALOG.filter(
+  (eventDef) => (eventDef.contentKind ?? 'event') === 'event',
+).map((eventDef) => ({
   ...eventDef,
   options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef, eventDef.id, option)),
 }));
 
-export const STANDARD_EVENT_CATALOG = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'event');
+export const STANDARD_EVENT_CATALOG = EVENT_CATALOG;
 
-export const ANOMALY_EVENT_CATALOG = EVENT_CATALOG.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'anomaly');
+export const ANOMALY_EVENT_CATALOG: EventDefinition[] = RAW_ANOMALY_EVENT_CATALOG.map((eventDef) => ({
+  ...eventDef,
+  options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef, eventDef.id, option)),
+}));
 
 export function getEventCatalogByKind(contentKind: EventContentKind): EventDefinition[] {
   if (contentKind === 'anomaly') {

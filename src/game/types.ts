@@ -266,6 +266,9 @@ export interface EventOption {
   id: string;
   label: string;
   description: string;
+  gameplayLabel?: string;
+  gainLabel?: string;
+  costLabel?: string;
   routeId?: RouteReference;
   effects?: ContentEffect[];
 }
