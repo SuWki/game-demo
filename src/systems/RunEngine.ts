@@ -527,7 +527,7 @@ export class RunEngine {
     this.updatePressurePhase(battle);
     this.updatePressureSignature(battle, simulationDt);
     this.updatePressurePattern(battle, simulationDt);
-    this.updatePlayerMovement(battle, simulationDt);
+    this.updatePlayerMovement(battle, dt);
     this.applyBossSafeWindowPenalty(battle, simulationDt);
     this.spawnEnemies(battle, simulationDt);
     this.updateShooting(battle, simulationDt);
@@ -1417,14 +1417,16 @@ export class RunEngine {
     if (battle.encounterType !== 'boss' || battle.pressureSafeWindowSec <= 0) {
       return;
     }
-    if (this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 8)) {
+    if (this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)) {
+      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.08);
+      this.clearBossSafeWindowBlockers(battle);
       return;
     }
 
     const template = BATTLE_TEMPLATES[battle.templateId];
     const damagePerSec = Math.max(
-      10,
-      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.56),
+      18,
+      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.82),
     );
     this.state.stats.hp = clamp(this.state.stats.hp - damagePerSec * dt, 0, this.state.stats.maxHp);
     battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.16);
@@ -2393,7 +2395,7 @@ export class RunEngine {
     battle.playerY = nextPlayerY;
 
     battle.dashCooldownSec -= dt;
-    if (this.state.stats.dashPulseDamage <= 0 || battle.dashCooldownSec > 0) {
+    if ((this.state.stats.dashPulseDamage <= 0 && this.state.routeCounts.dash <= 0) || battle.dashCooldownSec > 0) {
       return;
     }
 
@@ -4120,6 +4122,17 @@ export class RunEngine {
 
       if (distance <= enemy.radius + PLAYER_COLLISION_RADIUS) {
         if (battle.invulnerableSec <= 0 && !this.debugConfig.invulnerablePlayer) {
+          if (
+            battle.encounterType === 'boss' &&
+            this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)
+          ) {
+            battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.12);
+            const bounceAngle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
+            enemy.x = clamp(enemy.x + Math.cos(bounceAngle) * 34, -48, ARENA_WIDTH + 48);
+            enemy.y = clamp(enemy.y + Math.sin(bounceAngle) * 34, -48, ARENA_HEIGHT + 48);
+            enemy.hitFlashSec = Math.max(enemy.hitFlashSec, 0.12);
+            continue;
+          }
           let damage = enemy.contactDamage;
           damage *= this.getDashDamageMultiplier(dashStage, battle.dashDriveSec);
           this.state.stats.hp = clamp(this.state.stats.hp - damage, 0, this.state.stats.maxHp);

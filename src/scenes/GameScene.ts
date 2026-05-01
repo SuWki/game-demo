@@ -721,10 +721,10 @@ export class GameScene extends Phaser.Scene {
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
-      hpText: `${Math.ceil(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
+      hpText: `${Math.round(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
       hpRatio: state.stats.hp / Math.max(1, state.stats.maxHp),
       levelText: `Lv.${state.level}`,
-      experienceText: `${Math.floor(state.experience)} / ${Math.round(state.experienceToNext)}`,
+      experienceText: `${Math.round(state.experience)} / ${Math.round(state.experienceToNext)}`,
       experienceRatio: state.experience / Math.max(1, state.experienceToNext),
       routeStatusText,
       routeProgress: ROUTES.map((route) => ({
@@ -1397,10 +1397,10 @@ export class GameScene extends Phaser.Scene {
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
-      hpText: `${Math.ceil(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
+      hpText: `${Math.round(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
       hpRatio: state.stats.hp / Math.max(1, state.stats.maxHp),
       levelText: `Lv.${state.level}`,
-      experienceText: `${Math.floor(state.experience)} / ${Math.round(state.experienceToNext)}`,
+      experienceText: `${Math.round(state.experience)} / ${Math.round(state.experienceToNext)}`,
       experienceRatio: state.experience / Math.max(1, state.experienceToNext),
       routeStatusText,
       routeProgress: ROUTES.map((route) => ({

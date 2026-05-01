@@ -2944,7 +2944,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-brush',
     name: '擦身推进',
-    description: '冲刺伤害与机动的初步强化',
+    description: '穿梭脉冲与机动的初步强化',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -3262,7 +3262,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-loop',
     name: '净帧循环',
-    description: '冲刺伤害、频率与无敌的大幅提升',
+    description: '穿梭脉冲、频率与无敌的大幅提升',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3373,7 +3373,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-afterimage',
     name: '残影回切',
-    description: '冲刺伤害、无敌、机动与生存的终极强化',
+    description: '穿梭脉冲、无敌、机动与生存的终极强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3450,7 +3450,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-counterline',
     name: '回切反打',
-    description: '冲刺伤害、射速与机动的强力爆发',
+    description: '穿梭脉冲、射速与机动的强力爆发',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3606,7 +3606,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reentry',
     name: '回环汲能',
-    description: '冲刺伤害、射速、生存与机动的强力组合',
+    description: '穿梭脉冲、射速、生存与机动的强力组合',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3641,7 +3641,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-anchor',
     name: '穿梭定标',
-    description: '冲刺伤害、生存与机动的终极封板',
+    description: '穿梭脉冲、生存与机动的终极封板',
     category: 'route',
     routeId: 'dash',
     tags: ['finisher'],

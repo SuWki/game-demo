@@ -615,7 +615,7 @@ export class OverlayController {
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
-    const effectText = this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 2 }) || upgrade.description;
+    const effectText = this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
     const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
     const focusLabel = this.getEffectFocusLabel(upgrade.effects);
     const routeLabelHtml = this.renderTooltipTerm(routeLabel, this.getRouteTooltip(upgrade.routeId));
@@ -738,8 +738,8 @@ export class OverlayController {
       multishot: '多重',
       maxHp: '生命上限',
       moveSpeed: '移速',
-      dashInterval: '冲刺间隔',
-      dashPulseDamage: '冲刺伤害',
+      dashInterval: '穿梭冷却',
+      dashPulseDamage: '穿梭脉冲',
       dashInvulnerability: '无敌窗',
       regeneration: '再生',
     };
@@ -1001,7 +1001,7 @@ export class OverlayController {
   private decorateTooltipTerms(text: string): string {
     const tooltipTerms: Array<[string, string]> = [
       ['穿梭冷却', this.getFocusTooltip('穿梭')],
-      ['冲刺间隔', this.getFocusTooltip('穿梭')],
+      ['穿梭冷却', this.getFocusTooltip('穿梭')],
       ['暴击率', this.getFocusTooltip('暴击')],
       ['暴击', this.getFocusTooltip('暴击')],
       ['爆伤', this.getFocusTooltip('爆伤')],

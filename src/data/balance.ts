@@ -379,14 +379,14 @@ function applyStatModifiers(target: PlayerStats, modifiers: StatModifiers): void
   target.projectileSpeed += modifiers.projectileSpeed ?? 0;
   target.critChance = clamp(target.critChance + (modifiers.critChance ?? 0), 0, 0.95);
   target.critMultiplier += modifiers.critMultiplier ?? 0;
-  target.pierce = clamp(target.pierce + (modifiers.pierce ?? 0), 0, 3);
+  target.pierce = clamp(target.pierce + (modifiers.pierce ?? 0), 0, 2);
   target.multishot = clamp(target.multishot + (modifiers.multishot ?? 0), 1, 4);
   target.moveSpeed += modifiers.moveSpeed ?? 0;
   // 降低Dash冷却下限，提升Dash流派上限
   target.dashInterval = Math.max(1.8, target.dashInterval + (modifiers.dashInterval ?? 0));
   target.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
   target.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
-  target.regeneration += (modifiers.regeneration ?? 0) * 0.38;
+  target.regeneration += (modifiers.regeneration ?? 0) * 0.22;
 }
 
 function getExpectedSingleTargetDps(stats: PlayerStats): number {
@@ -484,14 +484,15 @@ export function getDashPulseRadius(stats: PlayerStats, dashCharge: number, build
 
 export function getDashPulseDamage(stats: PlayerStats, dashCharge: number, buildStage: RouteBuildStage): number {
   const stageBonus = buildStage === 'matured' ? 8 : buildStage === 'committed' ? 4 : 2;
-  return stats.dashPulseDamage + dashCharge * stageBonus;
+  const routeBaseline = buildStage === 'unformed' ? 0 : buildStage === 'matured' ? 6 : buildStage === 'committed' ? 4 : 2;
+  return Math.max(routeBaseline, stats.dashPulseDamage) + dashCharge * stageBonus;
 }
 
 export function getDashPulseHeal(dashCharge: number, buildStage: RouteBuildStage): number {
   if (buildStage === 'unformed') {
     return 0;
   }
-  const baseHeal = buildStage === 'matured' ? 0.85 : 0.38;
+  const baseHeal = buildStage === 'matured' ? 0.42 : 0.18;
   return dashCharge * baseHeal;
 }
 
@@ -560,7 +561,7 @@ export function getCritSplashRatio(buildStage: RouteBuildStage, critOverdriveSec
 
 export function getPierceEchoCount(multishot: number, buildStage: RouteBuildStage): number {
   let count = 1;
-  if (multishot > 1) {
+  if (multishot > 1 && buildStage === 'matured') {
     count += 1;
   }
   if (buildStage === 'matured') {
@@ -570,9 +571,9 @@ export function getPierceEchoCount(multishot: number, buildStage: RouteBuildStag
 }
 
 export function getPierceEchoDamageRatio(buildStage: RouteBuildStage): number {
-  return buildStage === 'committed' || buildStage === 'matured' ? 0.46 : 0.34;
+  return buildStage === 'matured' ? 0.34 : buildStage === 'committed' ? 0.28 : 0.22;
 }
 
 export function getPierceCooldownRefund(buildStage: RouteBuildStage): number {
-  return buildStage === 'committed' || buildStage === 'matured' ? 0.025 : 0;
+  return buildStage === 'matured' ? 0.012 : buildStage === 'committed' ? 0.008 : 0;
 }
