@@ -57,6 +57,12 @@ const PREVIEW_CUE_URLS: Partial<Record<AudioCue, string>> = {
   kill: 'assets/preview-runtime/audio/player_kill_regular.wav',
   pickup: 'assets/preview-runtime/audio/player_pickup_single.wav',
   hurt: 'assets/preview-runtime/audio/player_hurt_core.wav',
+  enemyShot: 'assets/preview-runtime/audio/enemy_shot_regular.wav',
+  nearMiss: 'assets/preview-runtime/audio/player_near_miss.wav',
+  pressure: 'assets/preview-runtime/audio/state_pressure_regular.wav',
+  crit: 'assets/preview-runtime/audio/route_crit_signature.wav',
+  pierceEcho: 'assets/preview-runtime/audio/route_pierce_signature.wav',
+  dashPulse: 'assets/preview-runtime/audio/route_dash_signature.wav',
 };
 
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
@@ -472,6 +478,18 @@ export class PilotAudio {
         return 0.7;
       case 'hurt':
         return 0.94;
+      case 'enemyShot':
+        return 0.72;
+      case 'nearMiss':
+        return 0.78;
+      case 'pressure':
+        return 0.88;
+      case 'crit':
+        return 0.76;
+      case 'pierceEcho':
+        return 0.76;
+      case 'dashPulse':
+        return 0.76;
       default:
         return 0.72;
     }

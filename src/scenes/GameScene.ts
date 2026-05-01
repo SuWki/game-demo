@@ -32,9 +32,18 @@ const SAFE_WINDOW_TINT = 0x82ffca;
 const SAFE_WINDOW_DANGER = 0xff6d62;
 const TERRAIN_TILE_SIZE = 160;
 const RUNTIME_VISUAL_PREVIEW_STORAGE_KEY = 'pilot-runtime-preview-assets';
+
+// Preview texture keys
 const PREVIEW_PLAYER_TEXTURE = 'preview-unit-player-core';
 const PREVIEW_STANDARD_ENEMY_TEXTURE = 'preview-enemy-standard-a';
 const PREVIEW_XP_ORB_TEXTURE = 'preview-fx-xp-orb';
+const PREVIEW_ELITE_CORE_TEXTURE = 'preview-elite-core-main';
+const PREVIEW_ELITE_CRACK_TEXTURE = 'preview-elite-core-crack';
+const PREVIEW_ELITE_ESCORT_TEXTURE = 'preview-elite-escort-unit';
+const PREVIEW_BOSS_BASTION_TEXTURE = 'preview-boss-bastion-main';
+const PREVIEW_PLAYER_PROJECTILE_TEXTURE = 'preview-player-projectile-core';
+const PREVIEW_ENEMY_PROJECTILE_TEXTURE = 'preview-enemy-projectile-core';
+const PREVIEW_BOSS_FIRELINE_TEXTURE = 'preview-fx-boss-bastion-fireline';
 
 function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSummary'] {
   return [
@@ -2690,11 +2699,37 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillStyle(enemyFill, enemy.elite ? 0.98 : 0.95);
 
       if (enemy.elite) {
-        this.graphics.fillCircle(screen.x, screen.y, enemy.radius);
-        this.graphics.fillStyle(this.mixColor(enemyFill, 0xffffff, 0.12), 0.22);
-        this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.56);
+        // Determine which elite texture to use based on state
+        let eliteTexture = PREVIEW_ELITE_CORE_TEXTURE;
+        let eliteSize = enemy.radius * 3.2;
+
+        if (battle.encounterType === 'boss') {
+          eliteTexture = PREVIEW_BOSS_BASTION_TEXTURE;
+          eliteSize = enemy.radius * 3.6;
+        } else if (battle.eliteCrackWindowSec > 0.08) {
+          eliteTexture = PREVIEW_ELITE_CRACK_TEXTURE;
+        }
+
+        // Try to render preview image, fallback to procedural if not available
+        const previewRendered = this.renderRuntimePreviewImage(
+          eliteTexture,
+          screen.x,
+          screen.y,
+          eliteSize,
+          faceAngle + Math.PI / 2,
+          0.82,
+        );
+
+        if (!previewRendered) {
+          // Procedural fallback
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius);
+          this.graphics.fillStyle(this.mixColor(enemyFill, 0xffffff, 0.12), 0.22);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.56);
+        }
+
         this.graphics.lineStyle(2, enemyStroke, 0.32);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 5);
+
         if (battle.encounterType === 'boss') {
           const bossBracketReach = enemy.radius + 14;
           this.graphics.lineStyle(2.2, enemyStroke, 0.34);
@@ -2782,14 +2817,27 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (!enemy.elite && enemy.role === 'escort') {
-        const escortFill = this.mixColor(ENEMY_ESCORT_FILL, enemyFill, 0.24);
-        const escortStroke = this.mixColor(ENEMY_ESCORT_STROKE, enemyStroke, 0.26);
-        this.graphics.lineStyle(1.6, escortStroke, 0.22 + recoveryRatio * 0.18 + pressureRatio * 0.08);
-        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10 + recoveryRatio * 4);
-        this.graphics.lineBetween(screen.x - enemy.radius - 12, screen.y, screen.x - enemy.radius - 4, screen.y);
-        this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + enemy.radius + 12, screen.y);
-        this.graphics.fillStyle(escortFill, 0.08 + pressureRatio * 0.1);
-        this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 3);
+        // Try to render escort preview image
+        const escortRendered = this.renderRuntimePreviewImage(
+          PREVIEW_ELITE_ESCORT_TEXTURE,
+          screen.x,
+          screen.y,
+          enemy.radius * 3.4,
+          faceAngle + Math.PI / 2,
+          0.76,
+        );
+
+        if (!escortRendered) {
+          // Procedural fallback
+          const escortFill = this.mixColor(ENEMY_ESCORT_FILL, enemyFill, 0.24);
+          const escortStroke = this.mixColor(ENEMY_ESCORT_STROKE, enemyStroke, 0.26);
+          this.graphics.lineStyle(1.6, escortStroke, 0.22 + recoveryRatio * 0.18 + pressureRatio * 0.08);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10 + recoveryRatio * 4);
+          this.graphics.lineBetween(screen.x - enemy.radius - 12, screen.y, screen.x - enemy.radius - 4, screen.y);
+          this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + enemy.radius + 12, screen.y);
+          this.graphics.fillStyle(escortFill, 0.08 + pressureRatio * 0.1);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 3);
+        }
       }
 
       if (!enemy.elite && enemy.archetype === 'skirmisher') {
