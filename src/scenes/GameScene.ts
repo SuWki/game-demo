@@ -2068,6 +2068,20 @@ export class GameScene extends Phaser.Scene {
   ): void {
     this.renderEncounterFlowOverlay(battle, camera, accentColor);
     this.renderPressurePatternOverlay(battle, camera, accentColor);
+
+    // Render Boss fireline texture overlay during Boss fireline phases
+    if (battle.encounterType === 'boss' && battle.bossFirelineCoverage > 0.08) {
+      const firelineAlpha = Math.min(0.55, battle.bossFirelineCoverage * 0.8);
+      this.renderRuntimePreviewImage(
+        PREVIEW_BOSS_FIRELINE_TEXTURE,
+        camera.width * 0.5,
+        camera.height * 0.5,
+        Math.max(camera.width, camera.height) * 0.85,
+        0,
+        firelineAlpha,
+      );
+    }
+
     const tempoRatio = Math.min(1, battle.tempoPulseSec / 0.3);
     const dominantRoute = this.engine.getDominantRoute();
     const state = this.engine.getState();
@@ -2194,6 +2208,19 @@ export class GameScene extends Phaser.Scene {
       }
 
       const screen = this.worldToScreen(camera, bullet.x, bullet.y);
+
+      // Try to render preview image for bullet core
+      const bulletCoreSize = 10 + (bullet.canEcho ? 2 : 0);
+      const bulletRotation = Math.atan2(bullet.vy, bullet.vx);
+      const previewRendered = this.renderRuntimePreviewImage(
+        PREVIEW_PLAYER_PROJECTILE_TEXTURE,
+        screen.x,
+        screen.y,
+        bulletCoreSize,
+        bulletRotation,
+        0.75,
+      );
+
       const tailDistance =
         bullet.routeFocus === 'dash'
           ? 0.018
@@ -2330,6 +2357,19 @@ export class GameScene extends Phaser.Scene {
             )
           : ENEMY_PROJECTILE_STROKE;
       const screen = this.worldToScreen(camera, projectile.x, projectile.y);
+
+      // Try to render preview image for enemy projectile core
+      const projectileCoreSize = Math.max(10, projectile.radius * 2.2);
+      const projectileRotation = Math.atan2(projectile.vy, projectile.vx);
+      this.renderRuntimePreviewImage(
+        PREVIEW_ENEMY_PROJECTILE_TEXTURE,
+        screen.x,
+        screen.y,
+        projectileCoreSize,
+        projectileRotation,
+        0.7,
+      );
+
       const tail = this.worldToScreen(
         camera,
         projectile.x - projectile.vx * (0.046 - breachCorridorRatio * 0.01),
