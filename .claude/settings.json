@@ -1,7 +1,13 @@
 {
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
-      "Bash(python -m http.server 8765)"
+      "Bash(python -m http.server 8765)",
+      "Bash(npm list *)",
+      "Bash(node tools/qa-*)",
+      "Bash(netstat *)",
+      "Bash(curl *)",
+      "Bash(npx playwright install *)"
     ]
   }
 }

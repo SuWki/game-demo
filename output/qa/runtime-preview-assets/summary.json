@@ -62,14 +62,19 @@
   "browserCheck": "completed",
   "consoleErrors": [],
   "previewAudioEnabled": true,
-  "previewAudioReady": 5,
+  "previewAudioReady": 11,
   "previewAudioCueCounts": {
-    "shoot": 3
+    "pressure": 1,
+    "shoot": 6,
+    "hit": 2,
+    "kill": 2
   },
   "cueCounts": {
     "start": 1,
     "pressure": 1,
-    "shoot": 3
+    "shoot": 6,
+    "hit": 2,
+    "kill": 2
   },
   "screenshot": "output\\qa\\runtime-preview-assets\\battle-preview-runtime.png"
 }

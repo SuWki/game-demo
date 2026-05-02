@@ -2081,19 +2081,8 @@ export class GameScene extends Phaser.Scene {
     this.renderEncounterFlowOverlay(battle, camera, accentColor);
     this.renderPressurePatternOverlay(battle, camera, accentColor);
 
-    // Render Boss fireline texture overlay during Boss fireline phases
-    // Enhanced visibility: very low threshold (0.02), higher base alpha, brighter max
-    if (battle.encounterType === 'boss' && battle.bossFirelineCoverage > 0.02) {
-      const firelineAlpha = Math.min(0.85, 0.45 + battle.bossFirelineCoverage * 0.75);
-      this.renderRuntimePreviewImage(
-        PREVIEW_BOSS_FIRELINE_TEXTURE,
-        camera.width * 0.5,
-        camera.height * 0.5,
-        Math.max(camera.width, camera.height) * 0.85,
-        0,
-        firelineAlpha,
-      );
-    }
+    // Boss fireline texture overlay disabled - it was blocking the gameplay view
+    // Only programmatic indicators (safe zones, danger indicators) are shown now
 
     const tempoRatio = Math.min(1, battle.tempoPulseSec / 0.3);
     const dominantRoute = this.engine.getDominantRoute();

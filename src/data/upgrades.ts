@@ -1986,7 +1986,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-core',
     name: '穿甲校正',
-    description: '开启穿透路线，提升火力与弹道',
+    description: '开启穿透路线，提升弹道性能',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2007,8 +2007,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          damage: 1.5,
-          projectileSpeed: 26,
+          projectileSpeed: 28,
         },
       },
       {
@@ -2088,7 +2087,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-vector',
     name: '折线导程',
-    description: '穿透与弹道的精准强化',
+    description: '穿透与弹道精准强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2110,8 +2109,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 22,
-          damage: 1.5,
+          projectileSpeed: 24,
         },
       },
       {
@@ -2153,8 +2151,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 18,
-          multishot: 1,
+          projectileSpeed: 22,
         },
       },
       {
@@ -2174,7 +2171,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-shearline',
     name: '切层折返',
-    description: '穿透与弹道强力组合',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2198,8 +2195,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 20,
-          multishot: 1,
+          projectileSpeed: 24,
         },
       },
       {
@@ -2211,7 +2207,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidechannel',
     name: '侧轨借线',
-    description: '穿透、火力、弹道与自我修复',
+    description: '穿透与弹道强化，附带自我修复',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2233,8 +2229,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          projectileSpeed: 24,
-          damage: 1.5,
+          projectileSpeed: 26,
           pierce: 1,
         },
       },
@@ -2255,7 +2250,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-seam',
     name: '借线破层',
-    description: '穿透、火力、弹道与自我修复',
+    description: '穿透与弹道强化，附带自我修复',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2277,9 +2272,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 1.5,
           pierce: 1,
-          projectileSpeed: 18,
+          projectileSpeed: 22,
         },
       },
       {
@@ -2299,7 +2293,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-ledger',
     name: '借层回收',
-    description: '穿透、火力、弹道、机动与自我修复',
+    description: '穿透与弹道强化，附带自我修复',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2321,10 +2315,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 1.5,
           pierce: 1,
-          projectileSpeed: 18,
-          moveSpeed: 8,
+          projectileSpeed: 22,
         },
       },
       {
@@ -2344,7 +2336,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidestitch',
     name: '借层并轨',
-    description: '穿透、火力、弹道、机动与自我修复',
+    description: '穿透与弹道强化，附带自我修复',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2366,10 +2358,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 1.5,
           pierce: 1,
-          projectileSpeed: 20,
-          moveSpeed: 8,
+          projectileSpeed: 24,
         },
       },
       {
@@ -2389,7 +2379,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-riftbloom',
     name: '裂面回响',
-    description: '多重射击、穿透、火力、弹道与射速的终极组合',
+    description: '穿透与弹道的终极强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2412,10 +2402,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          multishot: 1,
           pierce: 1,
-          damage: 1.5,
-          projectileSpeed: 22,
+          projectileSpeed: 28,
         },
       },
       {
@@ -2537,7 +2525,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-relay-spine',
     name: '并轨穿脊',
-    description: '穿透、火力与弹道的核心强化',
+    description: '穿透与弹道的核心强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2558,9 +2546,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 1.5,
           pierce: 1,
-          projectileSpeed: 20,
+          projectileSpeed: 24,
         },
       },
       {
@@ -2576,7 +2563,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ledger-fanout',
     name: '拆账铺面',
-    description: '穿透与弹道、弹道的平衡提升',
+    description: '穿透与弹道平衡提升',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2601,8 +2588,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 16,
-          multishot: 1,
+          projectileSpeed: 20,
         },
       },
       {
@@ -2650,7 +2636,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seam-ledger',
     name: '裂幕归账',
-    description: '穿透、火力、弹道与射速的强力组合',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2673,9 +2659,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          multishot: 1,
           pierce: 1,
-          projectileSpeed: 20,
+          projectileSpeed: 24,
         },
       },
       {
@@ -2724,7 +2709,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-echo',
     name: '贯层回响',
-    description: '多重射击与穿透强力提升',
+    description: '穿透强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2747,7 +2732,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          multishot: 1,
           pierce: 1,
         },
       },
@@ -2760,7 +2744,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ripple',
     name: '回响切层',
-    description: '多重射击、穿透与火力的强力组合',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2781,9 +2765,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 1.5,
-          multishot: 1,
           pierce: 1,
+          projectileSpeed: 26,
         },
       },
       {
@@ -2820,8 +2803,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 20,
-          multishot: 1,
+          projectileSpeed: 24,
         },
       },
       {
@@ -2833,7 +2815,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-bloom',
     name: '扇裂扩面',
-    description: '多重射击与穿透的强力爆发',
+    description: '穿透强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2854,7 +2836,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          multishot: 1,
           pierce: 1,
         },
       },
@@ -2888,8 +2869,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 30,
-          multishot: 1,
+          projectileSpeed: 38,
         },
       },
       {
@@ -3178,7 +3158,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-prism',
     name: '棱镜破轨',
-    description: '多重射击、穿透、弹道与火力的终极组合',
+    description: '穿透与弹道的终极强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -3201,10 +3181,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          multishot: 1,
           pierce: 1,
-          projectileSpeed: 24,
-          damage: 2.3,
+          projectileSpeed: 32,
         },
       },
       {

@@ -255,28 +255,28 @@
     },
     {
       "step": 36,
-      "templateId": null,
+      "templateId": "elimination",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
       "bossSafeWindowMoments": 0
     },
     {
       "step": 37,
-      "templateId": null,
+      "templateId": "elimination",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
       "bossSafeWindowMoments": 0
     },
     {
       "step": 38,
-      "templateId": "elite-lockdown",
+      "templateId": "elimination",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
       "bossSafeWindowMoments": 0
     },
     {
       "step": 39,
-      "templateId": "elite-lockdown",
+      "templateId": "elimination",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
       "bossSafeWindowMoments": 0

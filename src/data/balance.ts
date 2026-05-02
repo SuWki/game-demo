@@ -174,11 +174,11 @@ export function getPlayerMoveSpeed(stats: PlayerStats): number {
 }
 
 export function getPickupRadius(stats: PlayerStats): number {
-  return 24 + stats.moveSpeed * 0.04;
+  return 18 + stats.moveSpeed * 0.035;
 }
 
 export function getMagnetRadius(stats: PlayerStats): number {
-  return 88 + stats.moveSpeed * 0.11;
+  return 68 + stats.moveSpeed * 0.09;
 }
 
 export function getProjectileSpeed(stats: PlayerStats): number {
@@ -386,7 +386,8 @@ function applyStatModifiers(target: PlayerStats, modifiers: StatModifiers): void
   target.dashInterval = Math.max(1.8, target.dashInterval + (modifiers.dashInterval ?? 0));
   target.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
   target.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
-  target.regeneration += (modifiers.regeneration ?? 0) * 0.22;
+  // 生命回复系数再下调，避免回复过强抹掉战斗压力
+  target.regeneration += (modifiers.regeneration ?? 0) * 0.12;
 }
 
 function getExpectedSingleTargetDps(stats: PlayerStats): number {

@@ -1,13 +1,13 @@
 {
   "url": "http://127.0.0.1:4187",
   "consoleErrors": [],
-  "panelsSeen": 8,
+  "panelsSeen": 6,
   "resultSeen": true,
   "replaySeen": true,
   "pauseSeen": true,
   "volumePanelSeen": true,
-  "initialVolume": 0,
+  "initialVolume": 0.4,
   "volumeAfterAdjust": 0.78,
   "volumePersisted": "0.78",
-  "finalScreenText": "04 RESULT SCREEN 本局失败 任务失败 看看这局怎么收场 路线 未成线 生存时间 0:53 等级 Lv.7 节点 2 这局还没站稳路线，就先被打断了。 再来一局 立刻重开 返回机库 回到开始页 本局小结 调整再来 未站稳 构筑摘要 本局还没有站稳主路线 结束原因 压线续热阶段中机体耐久归零 终点节点 压线续热 战斗胜场 2 推进节点 2 路线阶段 未站稳 结局类型 耐久归零 最近轨迹 侧压试飞 / 压线续热 AUDIO 音量设置 调整整体播放音量。 78% 完成 返回上一层 DEBUG MODE Combat sandbox F3 toggle panel / F4 pause "
+  "finalScreenText": "04 RESULT SCREEN 本局失败 任务失败 看看这局怎么收场 路线 未成线 生存时间 0:29 等级 Lv.4 节点 2 这局还没站稳路线，就先被打断了。 再来一局 立刻重开 返回机库 回到开始页 本局小结 调整再来 未站稳 构筑摘要 本局还没有站稳主路线 结束原因 回切压线阶段中机体耐久归零 终点节点 回切压线 战斗胜场 1 推进节点 2 路线阶段 未站稳 结局类型 耐久归零 最近轨迹 火线整备 / 回切压线 AUDIO 音量设置 调整整体播放音量。 78% 完成 返回上一层 DEBUG MODE Combat sandbox F3 toggle panel / F4 pause "
 }

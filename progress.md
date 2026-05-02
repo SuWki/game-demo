@@ -1544,3 +1544,10 @@ TODO
 - Reduced battle rendering cost in `src/scenes/GameScene.ts` by widening terrain tiles, thinning pebble strokes, and softening camera shake so hit feedback reads as impact instead of hitching.
 - Removed the visible XP pickup trail line and trimmed the pickup-follow-through line work.
 - Verified with `npm run build`, `npx tsx` upgrade sampling, and browser screenshots captured from the local preview server.
+
+2026-05-01
+- Followed the web-game iteration loop for the player 15-point feedback pass.
+- Confirmed the only available runtime image assets are currently player core, standard enemy, and XP orb; all three are already connected in the runtime.
+- Tightened gameplay feel issues in code: movement no longer uses impact-freeze simulationDt, dash route gets a baseline pulse once the route has appeared, regen/dash heal/pierce cap/pierce echo/pierce refund were reduced, boss safe zones now protect inside and punish outside more clearly, and boss ranged density/wall shots were reduced again.
+- Updated player-facing wording from old dash/冲刺 terms to 穿梭 wording and kept HP/EXP integer display.
+- Verified with npm run build, full-flow QA, and boss-bastion directed QA.

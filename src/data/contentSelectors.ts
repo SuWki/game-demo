@@ -394,7 +394,8 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   );
 
   if (context.dominantRoute && routeWindowPool.length > 0) {
-    appendUniquePicks(picks, routeWindowPool, hasCommittedRoute ? 2 : 1);
+    // 路线强化一次最多出现1张，避免堆叠超模
+    appendUniquePicks(picks, routeWindowPool, 1);
     appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
     appendUniquePicks(picks, flexPool.length > 0 ? flexPool : routeWindowPool, 3 - picks.length);
   } else {
@@ -795,6 +796,27 @@ export function rollUpgradeChoices(
       3 - picks.length,
     );
     picks.push(...fallback);
+  }
+
+  // 确保升级面板中路线牌最多1张
+  const routePicks = picks.filter((p) => p.category === 'route');
+  if (routePicks.length > 1) {
+    // 保留第一张路线牌，其余替换为通用强化
+    const firstRouteIndex = picks.findIndex((p) => p.category === 'route');
+    const genericFallback = genericPool.filter(
+      (g) => !picks.some((p) => p.id === g.item.id) && canOfferUpgrade(g.item, context)
+    );
+    for (let i = picks.length - 1; i > firstRouteIndex; i--) {
+      if (picks[i].category === 'route') {
+        // 替换为通用强化
+        const fallback = genericFallback.find((g) => !picks.slice(0, i).some((p) => p.id === g.item.id));
+        if (fallback) {
+          picks[i] = fallback.item;
+        } else {
+          picks.splice(i, 1);
+        }
+      }
+    }
   }
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
