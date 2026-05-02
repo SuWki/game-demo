@@ -514,6 +514,8 @@ export interface BattleState {
   eliteCrackFollowThroughMoments: number;
   bossFirelineCoverage: number;
   bossSafeWindowMoments: number;
+  outsideSafeDamageTicks: number;
+  insideSafeProjectileClears: number;
   killPickupContinueMoments: number;
   monitorDashLateMomentCooldownSec: number;
   monitorDashCounterCooldownSec: number;
@@ -663,6 +665,8 @@ export interface BattleDebugSnapshot {
   eliteCrackFollowThroughMoments: number;
   bossFirelineCoverage: number;
   bossSafeWindowMoments: number;
+  outsideSafeDamageTicks: number;
+  insideSafeProjectileClears: number;
   killPickupContinueMoments: number;
   enemies: BattleDebugEnemySnapshot[];
   enemyProjectiles: BattleDebugProjectileSnapshot[];

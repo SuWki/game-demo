@@ -597,6 +597,9 @@ export function rollUpgradeChoices(
         );
       }
 
+      // 所有升级路径都必须执行路线牌最多1张的兜底
+      limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+
       return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
     }
 

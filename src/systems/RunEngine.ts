@@ -761,6 +761,8 @@ export class RunEngine {
       eliteCrackFollowThroughMoments: 0,
       bossFirelineCoverage: 0,
       bossSafeWindowMoments: 0,
+      outsideSafeDamageTicks: 0,
+      insideSafeProjectileClears: 0,
       killPickupContinueMoments: 0,
       monitorDashLateMomentCooldownSec: 0,
       monitorDashCounterCooldownSec: 0,
@@ -1030,11 +1032,12 @@ export class RunEngine {
     if (axis === 'pocket') {
       const shiftType = this.getPressurePocketShiftType(battle, phase);
       const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
-      const baseSafeWindowSpan = clamp(phase.patternSafeWindowSize ?? 184, 152, view.width * 0.42);
+      // 安全区尺寸收窄 20%（原值 * 0.8）
+      const baseSafeWindowSpan = clamp((phase.patternSafeWindowSize ?? 184) * 0.8, 122, view.width * 0.34);
       const baseSafeWindowSecondarySpan = clamp(
-        phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.68,
-        108,
-        view.height * 0.4,
+        (phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.68) * 0.8,
+        86,
+        view.height * 0.32,
       );
       const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 144, view.width * 0.44);
       const safeWindowSecondarySpan = clamp(
@@ -1079,10 +1082,10 @@ export class RunEngine {
     }
 
     const dimension = axis === 'vertical' ? view.width : view.height;
-    const minimumSpan = axis === 'vertical' ? 164 : 132;
-    const maximumSpan = dimension * 0.48;
+    const minimumSpan = axis === 'vertical' ? 134 : 108; // 原164/132收窄18-20%
+    const maximumSpan = dimension * 0.38; // 原0.48收窄20%
     const safeWindowSpan = clamp(
-      phase.patternSafeWindowSize ?? (axis === 'vertical' ? 212 : 156),
+      (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 212 : 156)) * 0.8,
       minimumSpan,
       maximumSpan,
     );
@@ -1417,21 +1420,48 @@ export class RunEngine {
     if (battle.encounterType !== 'boss' || battle.pressureSafeWindowSec <= 0) {
       return;
     }
-    if (this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)) {
+
+    const inside = this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12);
+
+    if (inside) {
+      // 安全区内：极短保护 + 清理贴脸敌人
       battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.08);
       this.clearBossSafeWindowBlockers(battle);
       return;
     }
 
-    const template = BATTLE_TEMPLATES[battle.templateId];
-    const damagePerSec = Math.max(
-      28,
-      this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.82),
-    );
-    this.state.stats.hp = clamp(this.state.stats.hp - damagePerSec * dt, 0, this.state.stats.maxHp);
-    battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.16);
-    battle.playerNearMissSec = Math.max(battle.playerNearMissSec, 0.12);
-    this.registerPlayerThreatDirection(battle, battle.pressureSafeWindowCenter, battle.pressureSafeWindowSecondaryCenter, 0.13);
+    // 安全区外：可感知 tick 伤害
+    // 用冷却控制每 0.35s 左右触发一次
+    const tickInterval = 0.35;
+    battle.outsideSafeDamageTicks = (battle.outsideSafeDamageTicks || 0) + dt;
+
+    if (battle.outsideSafeDamageTicks >= tickInterval) {
+      battle.outsideSafeDamageTicks = 0;
+
+      const template = BATTLE_TEMPLATES[battle.templateId];
+      const damagePerTick = Math.max(
+        8,
+        this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.35),
+      );
+
+      // 扣除伤害
+      this.state.stats.hp = clamp(this.state.stats.hp - damagePerTick, 0, this.state.stats.maxHp);
+
+      // 视觉反馈：玩家伤害闪烁 + 近失提示 + 威胁方向
+      battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.22);
+      battle.playerNearMissSec = Math.max(battle.playerNearMissSec, 0.18);
+
+      // 威胁方向指向安全区中心
+      this.registerPlayerThreatDirection(
+        battle,
+        battle.pressureSafeWindowCenter,
+        battle.pressureSafeWindowSecondaryCenter,
+        0.18,
+      );
+
+      // 音频反馈：pressure 音效
+      this.services.audio.play('pressure');
+    }
   }
 
   private clearBossSafeWindowBlockers(battle: BattleState): void {
@@ -5082,6 +5112,8 @@ export class RunEngine {
         battle.encounterType === 'boss' &&
         this.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 18)
       ) {
+        // 安全区内清理弹体，记录清弹数据
+        battle.insideSafeProjectileClears += 1;
         continue;
       }
 

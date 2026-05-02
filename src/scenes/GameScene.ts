@@ -312,6 +312,8 @@ export class GameScene extends Phaser.Scene {
         eliteCrackFollowThroughMoments: 0,
         bossFirelineCoverage: 0,
         bossSafeWindowMoments: 0,
+        outsideSafeDamageTicks: 0,
+        insideSafeProjectileClears: 0,
         killPickupContinueMoments: 0,
         enemies: [],
         enemyProjectiles: [],
@@ -364,6 +366,8 @@ export class GameScene extends Phaser.Scene {
       eliteCrackFollowThroughMoments: battle.eliteCrackFollowThroughMoments,
       bossFirelineCoverage: battle.bossFirelineCoverage,
       bossSafeWindowMoments: battle.bossSafeWindowMoments,
+      outsideSafeDamageTicks: battle.outsideSafeDamageTicks ?? 0,
+      insideSafeProjectileClears: battle.insideSafeProjectileClears ?? 0,
       killPickupContinueMoments: battle.killPickupContinueMoments,
       enemies: [...battle.enemies]
         .sort((left, right) => {
@@ -2033,6 +2037,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (pattern === 'lanes' && laneBias === 'horizontal') {
+      // 横向车道背景层已删除 - 避免三条半透明条纹残留
+      // 如需调试显示，请取消下方注释
+      /*
       for (const worldY of [ARENA_HEIGHT * 0.24, ARENA_HEIGHT * 0.5, ARENA_HEIGHT * 0.76]) {
         const screenY = worldY - camera.top;
         if (screenY < -40 || screenY > camera.height + 40) {
@@ -2043,6 +2050,7 @@ export class GameScene extends Phaser.Scene {
         this.graphics.lineStyle(1.5, encounterGlow, 0.03 + pulse * 0.04);
         this.graphics.lineBetween(0, screenY, camera.width, screenY);
       }
+      */
       return;
     }
 
@@ -4353,6 +4361,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (pattern === 'lanes' && laneBias === 'horizontal') {
+      // 横向车道流向overlay已删除 - 避免三条半透明条纹残留
+      // 如需调试显示，请取消下方注释
+      /*
       const laneHeight = camera.height / 4;
       const sweep = (battle.elapsedSec * 104) % Math.max(96, camera.width - 156);
       for (let lane = 1; lane <= 3; lane += 1) {
@@ -4365,6 +4376,7 @@ export class GameScene extends Phaser.Scene {
         this.graphics.fillRoundedRect(24 + sweep * 0.48, y - 12, 18, 24, 6);
         this.graphics.fillRoundedRect(camera.width - 42 - sweep * 0.48, y - 12, 18, 24, 6);
       }
+      */
       return;
     }
 

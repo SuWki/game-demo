@@ -359,21 +359,21 @@ function formatModifierLabel(key: keyof StatModifiers, value: number): string {
     case 'projectileSpeed':
       return `弹速 ${sign}${Math.round(value)}`;
     case 'critChance':
-      return `暴击率 ${sign}${Math.round(value * 100)}%`;
+      return `暴击率 ${sign}${Math.round(value * 100)}%（每次命中概率触发更高伤害）`;
     case 'critMultiplier':
       return `暴击伤害 ${sign}${Math.round(value * 100)}%`;
     case 'pierce':
-      return `穿透 ${sign}${Math.round(value)}`;
+      return `穿透 ${sign}${Math.round(value)}（命中后继续打击后方敌人）`;
     case 'multishot':
       return `额外弹道 ${sign}${Math.round(value)}`;
     case 'moveSpeed':
       return `移速 ${sign}${Math.round(value)}`;
     case 'dashInterval':
-      return `穿梭冷却 ${seconds(value)}`;
+      return `穿梭冷却 ${seconds(value)}（缩短下一次自动脉冲的等待时间）`;
     case 'dashPulseDamage':
       return `脉冲伤害 ${sign}${Math.round(value)}`;
     case 'dashInvulnerability':
-      return `无伤窗口 ${seconds(value)}`;
+      return `无伤窗口 ${seconds(value)}（穿梭触发后短时间不受伤害）`;
     case 'regeneration':
       return `每10秒回复 ${sign}${Math.round(value * 10)}`;
     default:
@@ -1255,7 +1255,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           critChance: 0.05,
-          damage: 1.5,
+          critMultiplier: 0.15,
         },
       },
       {
@@ -3565,10 +3565,13 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          regeneration: 0.22,
-          dashPulseDamage: 8,
-          moveSpeed: 16,
+          dashPulseDamage: 6,
+          dashInvulnerability: 0.12,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
       {
         type: 'route',

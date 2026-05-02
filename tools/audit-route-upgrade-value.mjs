@@ -3,10 +3,17 @@
  * 路线强化价值审计脚本
  * 审计所有 route category (crit/pierce/dash) 的强化牌价值
  * 输出价值评估报告，标记超出预算的牌
+ *
+ * 运行方式: node tools/audit-route-upgrade-value.mjs
  */
 
-import { UPGRADE_ARCHETYPES, estimateUpgradeValue } from '../src/data/upgrades.js';
-import { getUpgradeRarityMultiplier } from '../src/data/balance.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const upgradesPath = path.join(__dirname, '../src/data/upgrades.ts');
+const balancePath = path.join(__dirname, '../src/data/balance.ts');
 
 // 价值评估基准（按任务给定）
 const VALUE_REFERENCE = {
@@ -18,7 +25,7 @@ const VALUE_REFERENCE = {
   multishot: 4,           // multishot +1 = 4点（机制属性，高价值）
   dashInterval: 1 / 0.18,  // dashInterval -0.18s = 1点（注意是负值）
   dashInvulnerability: 1 / 0.08, // dashInvulnerability +0.08s = 1点
-  dashPulseDamage: 1,     // dashPulseDamage +3 ≈ 1点
+  dashPulseDamage: 0.33,  // dashPulseDamage +3 ≈ 1点
   moveSpeed: 1 / 10,      // moveSpeed +10 = 1点
   regeneration: 8,        // regeneration 按高价值处理（每0.1约8点）
   maxHp: 1 / 8,           // maxHp +8 = 1点
@@ -34,12 +41,77 @@ const RARITY_BUDGET = {
   legendary: 20,
 };
 
-// 路线优先级定义
-const ROUTE_PRIORITY = {
-  crit: ['critChance', 'critMultiplier', 'fireRate', 'damage', 'projectileSpeed'],
-  pierce: ['pierce', 'projectileSpeed', 'multishot', 'damage'],
-  dash: ['dashInterval', 'dashInvulnerability', 'dashPulseDamage', 'moveSpeed'],
+// 路线核心属性定义（只保留这些）
+const ROUTE_CORE_STATS = {
+  crit: ['critChance', 'critMultiplier'],
+  pierce: ['pierce', 'projectileSpeed'], // projectileSpeed 作为穿透的辅助
+  dash: ['dashInterval', 'dashInvulnerability', 'dashPulseDamage'],
 };
+
+// 不应该出现在路线牌中的属性
+const ROUTE_EXCLUDED_STATS = {
+  crit: ['damage', 'fireRate', 'multishot', 'regeneration'],
+  pierce: ['damage', 'critChance', 'critMultiplier', 'multishot', 'regeneration'],
+  dash: ['damage', 'fireRate', 'critChance', 'critMultiplier', 'multishot', 'regeneration'],
+};
+
+function parseTypeScriptFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf-8');
+
+  // 简单解析：提取 UPGRADE_ARCHETYPES 数组
+  const match = content.match(/export\s+const\s+UPGRADE_ARCHETYPES:\s*UpgradeArchetype\[\]\s*=\s*(\[[\s\S]*?\]);/);
+  if (!match) {
+    // 尝试另一种匹配方式
+    const altMatch = content.match(/export\s+const\s+UPGRADE_ARCHETYPES\s*=\s*(\[[\s\S]*?\])\s+as\s+const/);
+    if (!altMatch) {
+      throw new Error(`无法解析 ${filePath} 中的 UPGRADE_ARCHETYPES`);
+    }
+  }
+
+  // 手动提取对象定义
+  const archetypes = [];
+  const objectPattern = /\{\s*id:\s*['"]([^'"]+)['"][\s\S]*?\n\s*\}(?=,\s*\{|\s*\];)/g;
+  let objectMatch;
+
+  while ((objectMatch = objectPattern.exec(content)) !== null) {
+    const objText = objectMatch[0];
+    const id = objectMatch[1];
+
+    // 提取基本属性
+    const nameMatch = objText.match(/name:\s*['"]([^'"]+)['"]/);
+    const categoryMatch = objText.match(/category:\s*['"]([^'"]+)['"]/);
+    const routeIdMatch = objText.match(/routeId:\s*['"]([^'"]+)['"]/);
+    const contentTierMatch = objText.match(/contentTier:\s*['"]([^'"]+)['"]/);
+    const tagsMatch = objText.match(/tags:\s*\[([^\]]*)\]/);
+
+    // 提取 effects
+    const effects = [];
+    const effectPattern = /\{\s*type:\s*['"]stats['"][\s\S]*?modifiers:\s*\{([^}]+)\}[\s\S]*?\}/g;
+    let effectMatch;
+    while ((effectMatch = effectPattern.exec(objText)) !== null) {
+      const modifiersText = effectMatch[1];
+      const modifiers = {};
+      const modifierPattern = /(\w+):\s*([\d.]+)/g;
+      let modMatch;
+      while ((modMatch = modifierPattern.exec(modifiersText)) !== null) {
+        modifiers[modMatch[1]] = parseFloat(modMatch[2]);
+      }
+      effects.push({ type: 'stats', modifiers });
+    }
+
+    archetypes.push({
+      id,
+      name: nameMatch ? nameMatch[1] : id,
+      category: categoryMatch ? categoryMatch[1] : 'generic',
+      routeId: routeIdMatch ? routeIdMatch[1] : undefined,
+      contentTier: contentTierMatch ? contentTierMatch[1] : 'common',
+      tags: tagsMatch ? tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, '')).filter(Boolean) : [],
+      effects,
+    });
+  }
+
+  return archetypes;
+}
 
 function calculateManualValue(modifiers) {
   let total = 0;
@@ -75,14 +147,20 @@ function checkViolations(archetype, modifiers, manualValue, budget) {
   const violations = [];
   const routeId = archetype.routeId;
 
-  // 检查是否堆叠多个高价值属性
-  const highValueStats = ['pierce', 'multishot', 'critChance', 'critMultiplier', 'dashInterval'];
-  const hasHighValue = highValueStats.filter(k => modifiers[k] && modifiers[k] !== 0);
+  if (!routeId) return violations;
+
+  // 检查是否包含不应该出现的属性
+  const excludedStats = ROUTE_EXCLUDED_STATS[routeId] || [];
+  for (const stat of excludedStats) {
+    if (modifiers[stat] && modifiers[stat] !== 0) {
+      violations.push(`${routeId}牌不应包含 '${stat}'（混入泛属性）`);
+    }
+  }
 
   // 检查pierce牌是否同时有高额伤害和弹速
   if (routeId === 'pierce' && modifiers.pierce > 0) {
     const hasHighDamage = modifiers.damage && modifiers.damage >= 1.5;
-    const hasHighSpeed = modifiers.projectileSpeed && modifiers.projectileSpeed >= 20;
+    const hasHighSpeed = modifiers.projectileSpeed && modifiers.projectileSpeed >= 25;
     if (hasHighDamage && hasHighSpeed) {
       violations.push('pierce牌不应同时有高额伤害和高额弹速');
     }
@@ -118,7 +196,9 @@ function checkViolations(archetype, modifiers, manualValue, budget) {
 
   // 检查是否超出预算
   if (parseFloat(manualValue.total) > budget * 1.3) {
-    violations.push(`价值${manualValue.total}点，超出预算${budget}点`);
+    violations.push(`价值${manualValue.total}点，超出预算${budget}点 30%以上`);
+  } else if (parseFloat(manualValue.total) > budget * 1.15) {
+    violations.push(`价值${manualValue.total}点，超出预算${budget}点 15%以上`);
   }
 
   return violations;
@@ -130,8 +210,24 @@ function auditRouteUpgrades() {
   console.log('='.repeat(100));
   console.log();
 
+  let archetypes;
+  try {
+    archetypes = parseTypeScriptFile(upgradesPath);
+  } catch (error) {
+    console.error('解析 upgrades.ts 失败:', error.message);
+    process.exit(1);
+  }
+
   // 筛选所有路线强化
-  const routeUpgrades = UPGRADE_ARCHETYPES.filter(a => a.category === 'route');
+  const routeUpgrades = archetypes.filter(a => a.category === 'route');
+
+  if (routeUpgrades.length === 0) {
+    console.log('未找到任何路线强化牌，请检查解析逻辑');
+    return;
+  }
+
+  console.log(`成功解析 ${archetypes.length} 张牌，其中路线牌 ${routeUpgrades.length} 张`);
+  console.log();
 
   // 按路线分组
   const byRoute = { crit: [], pierce: [], dash: [] };
@@ -167,9 +263,6 @@ function auditRouteUpgrades() {
       // 检查违规
       const violations = checkViolations(upgrade, modifiers, manualValue, budget);
 
-      // 使用系统estimateUpgradeValue计算
-      const systemValue = estimateUpgradeValue(upgrade.effects);
-
       const overBudget = parseFloat(manualValue.total) > budget;
       if (overBudget) totalOverBudget++;
       if (violations.length > 0) totalViolations++;
@@ -179,7 +272,6 @@ function auditRouteUpgrades() {
       console.log(`  标签: ${(upgrade.tags || []).join(', ')}`);
       console.log(`  属性: ${Object.entries(modifiers).map(([k, v]) => `${k}: ${v}`).join(', ')}`);
       console.log(`  估算价值: ${manualValue.total}点 (预算: ${budget}点) ${overBudget ? '【超预算】' : ''}`);
-      console.log(`  系统评分: ${systemValue.total} (DPS:${systemValue.directDps} 实用:${systemValue.utility} 生存:${systemValue.survival} 机动:${systemValue.mobility})`);
 
       if (violations.length > 0) {
         console.log(`  ⚠️ 问题:`);
