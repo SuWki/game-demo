@@ -1805,7 +1805,6 @@ export class GameScene extends Phaser.Scene {
     const camera = this.getBattleCameraRect(battle);
     this.renderBattleTerrain(battle, camera, accentColor);
     this.renderBattleEntities(battle, camera, accentColor);
-    this.renderRouteFeedbackTexts(battle, camera);
     this.endRuntimePreviewImageFrame();
   }
 
@@ -3344,42 +3343,6 @@ export class GameScene extends Phaser.Scene {
         );
       }
     }
-    if (dominantRoute === 'dash' && dashDriveRatio > 0.08) {
-      const dashWindowDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
-      const dashWindowDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
-      const dashWindowOrthoX = -dashWindowDirY;
-      const dashWindowOrthoY = dashWindowDirX;
-      const dashWindowRatio = Math.max(
-        dashDriveRatio,
-        turnBurstRatio * 0.82,
-        Math.min(1, shotFlashRatio * 0.9 + killFlowRatio * 0.45),
-      );
-      const dashWindowColor = this.mixColor(accentColor, 0xebfff7, 0.36);
-      const foldReach = 20 + dashWindowRatio * 14;
-      const foldSide = 10 + dashWindowRatio * 5;
-      this.graphics.lineStyle(1.6, dashWindowColor, 0.08 + dashWindowRatio * 0.12);
-      this.graphics.lineBetween(
-        bodyX - dashWindowDirX * 6 + dashWindowOrthoX * foldSide,
-        bodyY - dashWindowDirY * 6 + dashWindowOrthoY * foldSide,
-        bodyX + dashWindowDirX * foldReach,
-        bodyY + dashWindowDirY * foldReach,
-      );
-      this.graphics.lineBetween(
-        bodyX - dashWindowDirX * 6 - dashWindowOrthoX * foldSide,
-        bodyY - dashWindowDirY * 6 - dashWindowOrthoY * foldSide,
-        bodyX + dashWindowDirX * foldReach,
-        bodyY + dashWindowDirY * foldReach,
-      );
-      this.graphics.fillStyle(dashWindowColor, 0.045 + dashWindowRatio * 0.055);
-      this.graphics.fillTriangle(
-        bodyX + dashWindowDirX * (foldReach + 8),
-        bodyY + dashWindowDirY * (foldReach + 8),
-        bodyX + dashWindowDirX * (foldReach - 8) + dashWindowOrthoX * (7 + dashWindowRatio * 4),
-        bodyY + dashWindowDirY * (foldReach - 8) + dashWindowOrthoY * (7 + dashWindowRatio * 4),
-        bodyX + dashWindowDirX * (foldReach - 8) - dashWindowOrthoX * (7 + dashWindowRatio * 4),
-        bodyY + dashWindowDirY * (foldReach - 8) - dashWindowOrthoY * (7 + dashWindowRatio * 4),
-      );
-    }
     if (pickupFlowRatio > 0) {
       for (let streak = 0; streak < Math.min(4, Math.max(1, battle.pickupFlowCount)); streak += 1) {
         const offset = 10 + streak * 9 + pickupFlowRatio * 7;
@@ -3612,51 +3575,6 @@ export class GameScene extends Phaser.Scene {
         bodyY - aimOrthoY * 9,
       );
       this.graphics.strokeCircle(playerScreen.x + aimDirX * 24, playerScreen.y + aimDirY * 24, 8 + combatReadRatio * 2);
-    }
-    if (dominantRoute === 'dash' && (dashDriveRatio > 0 || moveMagnitude > 0.08)) {
-      const trailDirX = moveMagnitude > 0.08 ? moveDirX : -aimDirX;
-      const trailDirY = moveMagnitude > 0.08 ? moveDirY : -aimDirY;
-      const trailOrthoX = -trailDirY;
-      const trailOrthoY = trailDirX;
-      const trailLength = 22 + dashDriveRatio * 24;
-      this.graphics.fillStyle(this.mixColor(accentColor, 0xc9fff1, 0.3), 0.08 + dashDriveRatio * 0.12);
-      this.graphics.fillTriangle(
-        playerScreen.x - trailDirX * trailLength,
-        playerScreen.y - trailDirY * trailLength,
-        playerScreen.x - trailDirX * 6 + trailOrthoX * 12,
-        playerScreen.y - trailDirY * 6 + trailOrthoY * 12,
-        playerScreen.x - trailDirX * 6 - trailOrthoX * 12,
-        playerScreen.y - trailDirY * 6 - trailOrthoY * 12,
-      );
-      this.graphics.lineStyle(2, this.mixColor(accentColor, 0xffffff, 0.2), 0.16 + dashDriveRatio * 0.18);
-      this.graphics.lineBetween(
-        playerScreen.x - trailDirX * (trailLength + 8),
-        playerScreen.y - trailDirY * (trailLength + 8),
-        playerScreen.x - trailDirX * 8,
-        playerScreen.y - trailDirY * 8,
-      );
-      this.graphics.lineStyle(1.4, this.mixColor(accentColor, 0xdffff4, 0.32), 0.12 + dashDriveRatio * 0.16);
-      this.graphics.lineBetween(
-        playerScreen.x - trailDirX * (trailLength + 2) + trailOrthoX * 10,
-        playerScreen.y - trailDirY * (trailLength + 2) + trailOrthoY * 10,
-        playerScreen.x - trailDirX * 4 + trailOrthoX * 10,
-        playerScreen.y - trailDirY * 4 + trailOrthoY * 10,
-      );
-      this.graphics.lineBetween(
-        playerScreen.x - trailDirX * (trailLength + 2) - trailOrthoX * 10,
-        playerScreen.y - trailDirY * (trailLength + 2) - trailOrthoY * 10,
-        playerScreen.x - trailDirX * 4 - trailOrthoX * 10,
-        playerScreen.y - trailDirY * 4 - trailOrthoY * 10,
-      );
-      this.graphics.fillStyle(this.mixColor(accentColor, 0xffffff, 0.2), 0.08 + dashDriveRatio * 0.14);
-      this.graphics.fillTriangle(
-        playerScreen.x + trailDirX * 24,
-        playerScreen.y + trailDirY * 24,
-        playerScreen.x + trailDirX * 8 + trailOrthoX * 7,
-        playerScreen.y + trailDirY * 8 + trailOrthoY * 7,
-        playerScreen.x + trailDirX * 8 - trailOrthoX * 7,
-        playerScreen.y + trailDirY * 8 - trailOrthoY * 7,
-      );
     }
     if (lowHpRatio > 0) {
       const dangerColor = this.mixColor(0xff5d58, accentColor, 0.16);

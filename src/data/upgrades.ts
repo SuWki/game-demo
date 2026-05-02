@@ -1234,7 +1234,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-aim',
     name: '聚焦瞄准',
-    description: '提升暴击率与火力',
+    description: '命中时概率触发高伤，适合抓短窗爆发',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -1267,7 +1267,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-primer',
     name: '升温预热',
-    description: '暴击率与暴伤双重提升',
+    description: '命中时概率触发高伤，适合抓短窗爆发',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -1986,18 +1986,18 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-core',
     name: '穿甲校正',
-    description: '开启穿透路线，提升弹道性能',
+    description: '弹体穿过多个目标时获得拆线收益，依赖站位和敌线',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
     selection: {
-      baseWeight: 6.56,
+      baseWeight: 4.8,
       maxRound: 2,
       phaseBonuses: {
         opening: 1.62,
         mid: 0.5,
       },
-      noDominantRouteBonus: 8.82,
+      noDominantRouteBonus: 6.5,
       hintedRouteBonus: 1.98,
       dominantRouteBonus: 2.94,
       offRouteMultiplier: 0.22,
@@ -2007,7 +2007,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 28,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2019,18 +2019,18 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-rail',
     name: '贯穿轨校',
-    description: '穿透与弹道双重提升',
+    description: '弹体穿过多个目标时获得拆线收益，依赖站位和敌线',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
     selection: {
-      baseWeight: 5.96,
+      baseWeight: 4.4,
       maxRound: 2,
       phaseBonuses: {
         opening: 1.62,
         mid: 0.6,
       },
-      noDominantRouteBonus: 8.42,
+      noDominantRouteBonus: 6.2,
       hintedRouteBonus: 2.08,
       dominantRouteBonus: 2.76,
       offRouteMultiplier: 0.22,
@@ -2040,7 +2040,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 22,
+          projectileSpeed: 14,
         },
       },
       {
@@ -2052,18 +2052,18 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamline',
     name: '拆线起幅',
-    description: '穿透、弹道、机动与生存能力提升',
+    description: '弹体穿过多个目标时获得拆线收益，依赖站位和敌线',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
     selection: {
-      baseWeight: 5.78,
+      baseWeight: 4.2,
       maxRound: 2,
       phaseBonuses: {
         opening: 1.74,
         mid: 0.62,
       },
-      noDominantRouteBonus: 8.72,
+      noDominantRouteBonus: 6.4,
       hintedRouteBonus: 2.12,
       dominantRouteBonus: 2.94,
       offRouteMultiplier: 0.22,
@@ -2073,9 +2073,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 18,
-          moveSpeed: 10,
-          regeneration: 0.04,
+          projectileSpeed: 12,
         },
       },
       {
@@ -2109,7 +2107,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 24,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2151,7 +2149,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 22,
+          projectileSpeed: 14,
         },
       },
       {
@@ -2195,7 +2193,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 24,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2207,7 +2205,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidechannel',
     name: '侧轨借线',
-    description: '穿透与弹道强化，附带自我修复',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2229,13 +2227,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          projectileSpeed: 26,
+          projectileSpeed: 16,
           pierce: 1,
         },
-      },
-      {
-        type: 'heal',
-        amount: 8,
       },
       {
         type: 'route',
@@ -2250,7 +2244,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-seam',
     name: '借线破层',
-    description: '穿透与弹道强化，附带自我修复',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2273,12 +2267,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 22,
+          projectileSpeed: 14,
         },
-      },
-      {
-        type: 'heal',
-        amount: 6,
       },
       {
         type: 'route',
@@ -2293,7 +2283,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-ledger',
     name: '借层回收',
-    description: '穿透与弹道强化，附带自我修复',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2316,12 +2306,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 22,
+          projectileSpeed: 14,
         },
-      },
-      {
-        type: 'heal',
-        amount: 6,
       },
       {
         type: 'route',
@@ -2336,7 +2322,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidestitch',
     name: '借层并轨',
-    description: '穿透与弹道强化，附带自我修复',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2359,12 +2345,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 24,
+          projectileSpeed: 16,
         },
-      },
-      {
-        type: 'heal',
-        amount: 6,
       },
       {
         type: 'route',
@@ -2403,7 +2385,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 28,
+          projectileSpeed: 18,
         },
       },
       {
@@ -2547,7 +2529,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 24,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2588,7 +2570,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 20,
+          projectileSpeed: 14,
         },
       },
       {
@@ -2660,7 +2642,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 24,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2766,7 +2748,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 26,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2803,7 +2785,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 24,
+          projectileSpeed: 16,
         },
       },
       {
@@ -2869,7 +2851,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 38,
+          projectileSpeed: 22,
         },
       },
       {
@@ -2881,7 +2863,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-brush',
     name: '擦身推进',
-    description: '穿梭脉冲与机动的初步强化',
+    description: '快速换位、擦身或回切时触发短暂脉冲收益',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2915,7 +2897,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-feint',
     name: '侧滑取样',
-    description: '冲刺无敌与机动的初步强化',
+    description: '快速换位、擦身或回切时触发短暂脉冲收益',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2949,7 +2931,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-lanebreak',
     name: '换边破窗',
-    description: '穿梭冷却与脉冲伤害提升',
+    description: '快速换位、擦身或回切时触发短暂脉冲收益',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -3182,7 +3164,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          projectileSpeed: 32,
+          projectileSpeed: 20,
         },
       },
       {

@@ -490,13 +490,15 @@
       "currentMusicMode": "boss",
       "cueCounts": {
         "pressure": 3,
-        "shoot": 11,
+        "shoot": 16,
         "boss": 1,
-        "enemyShot": 6,
-        "hit": 7,
+        "hit": 10,
+        "enemyShot": 12,
+        "nearMiss": 19,
         "kill": 2,
-        "nearMiss": 13,
         "pickup": 2,
+        "relayRanged": 1,
+        "relayBrute": 1,
         "upgrade": 1
       }
     },
@@ -506,13 +508,15 @@
       "currentMusicMode": "boss",
       "cueCounts": {
         "pressure": 3,
-        "shoot": 11,
+        "shoot": 16,
         "boss": 1,
-        "enemyShot": 6,
-        "hit": 7,
+        "hit": 10,
+        "enemyShot": 12,
+        "nearMiss": 19,
         "kill": 2,
-        "nearMiss": 13,
         "pickup": 2,
+        "relayRanged": 1,
+        "relayBrute": 1,
         "upgrade": 1
       }
     },
@@ -522,13 +526,15 @@
       "currentMusicMode": "boss",
       "cueCounts": {
         "pressure": 3,
-        "shoot": 11,
+        "shoot": 16,
         "boss": 1,
-        "enemyShot": 6,
-        "hit": 7,
+        "hit": 10,
+        "enemyShot": 12,
+        "nearMiss": 19,
         "kill": 2,
-        "nearMiss": 13,
         "pickup": 2,
+        "relayRanged": 1,
+        "relayBrute": 1,
         "upgrade": 1
       }
     },
@@ -538,13 +544,15 @@
       "currentMusicMode": "boss",
       "cueCounts": {
         "pressure": 3,
-        "shoot": 11,
+        "shoot": 16,
         "boss": 1,
-        "enemyShot": 6,
-        "hit": 7,
+        "hit": 10,
+        "enemyShot": 12,
+        "nearMiss": 19,
         "kill": 2,
-        "nearMiss": 13,
         "pickup": 2,
+        "relayRanged": 1,
+        "relayBrute": 1,
         "upgrade": 1
       }
     }

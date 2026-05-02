@@ -1425,7 +1425,7 @@ export class RunEngine {
 
     const template = BATTLE_TEMPLATES[battle.templateId];
     const damagePerSec = Math.max(
-      18,
+      28,
       this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.82),
     );
     this.state.stats.hp = clamp(this.state.stats.hp - damagePerSec * dt, 0, this.state.stats.maxHp);
@@ -5501,19 +5501,25 @@ export class RunEngine {
   }
 
   private gainExperience(amount: number): void {
-    if (amount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return;
     }
 
     this.state.experience += amount;
     let leveled = false;
 
-    while (this.state.experience >= this.state.experienceToNext) {
+    // Guard against infinite loops from NaN/Infinity values
+    let guard = 0;
+    while (this.state.experience >= this.state.experienceToNext && guard < 100) {
+      if (!Number.isFinite(this.state.experience) || !Number.isFinite(this.state.experienceToNext)) {
+        break;
+      }
       this.state.experience -= this.state.experienceToNext;
       this.state.level += 1;
       this.state.experienceToNext = getExperienceToNextLevel(this.state.level);
       this.state.queuedLevelUps += 1;
       leveled = true;
+      guard += 1;
     }
 
     if (leveled) {

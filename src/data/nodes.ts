@@ -1185,18 +1185,18 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
         weight += 2.2 + Math.max(0, round - offerContext.battleWins) * 0.55;
       }
     } else if (blueprint.type === 'upgrade') {
-      weight *= 0.78;
+      weight *= 0.55;
       if (offerContext.lastNodeType === 'anomaly') {
         weight *= 0.72;
       }
     } else if (blueprint.type === 'anomaly') {
-      weight *= 0.14 + round * 0.06;
+      weight *= 0.08 + round * 0.04;
       if (offerContext.lastNodeType === 'upgrade') {
         weight *= 0.22;
       }
     }
   } else if (blueprint.type === 'anomaly') {
-    weight *= Math.min(0.46, 0.14 + round * 0.06);
+    weight *= Math.min(0.36, 0.08 + round * 0.04);
   }
 
   return Math.max(0.1, weight);
@@ -1222,10 +1222,20 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
 
   while (pool.length > 0 && picks.length < choiceCount) {
     const anomalyPicked = picks.some((blueprint) => blueprint.type === 'anomaly');
-    const eligiblePool = anomalyPicked ? pool.filter((entry) => entry.blueprint.type !== 'anomaly') : pool;
+    const upgradePicked = picks.some((blueprint) => blueprint.type === 'upgrade');
+    let eligiblePool = pool.filter((entry) => {
+      if (anomalyPicked && entry.blueprint.type === 'anomaly') return false;
+      if (upgradePicked && entry.blueprint.type === 'upgrade') return false;
+      return true;
+    });
 
     if (eligiblePool.length <= 0) {
-      break;
+      const battlePool = pool.filter((entry) => entry.blueprint.type === 'battle');
+      if (battlePool.length > 0) {
+        eligiblePool = battlePool;
+      } else {
+        break;
+      }
     }
 
     const totalWeight = eligiblePool.reduce((sum, entry) => sum + entry.weight, 0);

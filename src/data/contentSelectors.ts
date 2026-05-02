@@ -289,6 +289,47 @@ function appendUniquePicks<T extends { id: string }>(
   picks.push(...next);
 }
 
+function limitRouteCardsInUpgradeChoices(
+  picks: UpgradeArchetype[],
+  genericPool: Array<{ item: UpgradeArchetype; weight: number }>,
+  context: ContentContext,
+  maxRouteCards = 1,
+): void {
+  const routeIndices = picks
+    .map((p, i) => (p.category === 'route' ? i : -1))
+    .filter((i) => i >= 0);
+  if (routeIndices.length <= maxRouteCards) {
+    return;
+  }
+
+  const genericFallback = genericPool.filter(
+    (g) => !picks.some((p) => p.id === g.item.id) && canOfferUpgrade(g.item, context),
+  );
+
+  for (let i = routeIndices.length - 1; i > 0; i--) {
+    const idx = routeIndices[i];
+    const fallback = genericFallback.find(
+      (g) => !picks.slice(0, idx).some((p) => p.id === g.item.id),
+    );
+    if (fallback) {
+      picks[idx] = fallback.item;
+    } else {
+      const anyFallback = genericPool.find(
+        (g) => !picks.some((p) => p.id === g.item.id) && canOfferUpgrade(g.item, context),
+      );
+      if (anyFallback) {
+        picks[idx] = anyFallback.item;
+      } else {
+        picks.splice(idx, 1);
+      }
+    }
+  }
+
+  if (picks.length < 3) {
+    appendUniquePicks(picks, genericPool, 3 - picks.length);
+  }
+}
+
 function pickUpgradeRarity(
   context: ContentContext,
   source: UpgradeSource,
@@ -384,17 +425,16 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const flexPool = mergeWeightedPools(
     scaleWeightedPool(
       genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool,
-      hasCommittedRoute ? 1.16 : dominantHintedEarlyMid ? 1.06 : openingLevelUp ? 1.12 : earlyMidLevelUp ? 1.22 : 1.22,
+      hasCommittedRoute ? 1.24 : dominantHintedEarlyMid ? 1.18 : openingLevelUp ? 1.24 : earlyMidLevelUp ? 1.28 : 1.28,
       0.1,
     ),
     scaleWeightedPool(
       routeWindowPool,
-      hasCommittedRoute ? 0.9 : context.dominantRoute ? (earlyMidLevelUp ? 1.28 : 0.88) : openingLevelUp ? 1.34 : earlyMidLevelUp ? 0.98 : 0.72,
+      hasCommittedRoute ? 0.82 : context.dominantRoute ? (earlyMidLevelUp ? 0.92 : 0.78) : openingLevelUp ? 0.88 : earlyMidLevelUp ? 0.82 : 0.68,
     ),
   );
 
   if (context.dominantRoute && routeWindowPool.length > 0) {
-    // 路线强化一次最多出现1张，避免堆叠超模
     appendUniquePicks(picks, routeWindowPool, 1);
     appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
     appendUniquePicks(picks, flexPool.length > 0 ? flexPool : routeWindowPool, 3 - picks.length);
@@ -407,6 +447,8 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   if (picks.length < 3) {
     appendUniquePicks(picks, genericPool, 3 - picks.length);
   }
+
+  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, 'levelUp', archetype)));
 }
@@ -798,26 +840,7 @@ export function rollUpgradeChoices(
     picks.push(...fallback);
   }
 
-  // 确保升级面板中路线牌最多1张
-  const routePicks = picks.filter((p) => p.category === 'route');
-  if (routePicks.length > 1) {
-    // 保留第一张路线牌，其余替换为通用强化
-    const firstRouteIndex = picks.findIndex((p) => p.category === 'route');
-    const genericFallback = genericPool.filter(
-      (g) => !picks.some((p) => p.id === g.item.id) && canOfferUpgrade(g.item, context)
-    );
-    for (let i = picks.length - 1; i > firstRouteIndex; i--) {
-      if (picks[i].category === 'route') {
-        // 替换为通用强化
-        const fallback = genericFallback.find((g) => !picks.slice(0, i).some((p) => p.id === g.item.id));
-        if (fallback) {
-          picks[i] = fallback.item;
-        } else {
-          picks.splice(i, 1);
-        }
-      }
-    }
-  }
+  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
 }
