@@ -84,19 +84,22 @@ function parseTypeScriptFile(filePath) {
     const contentTierMatch = objText.match(/contentTier:\s*['"]([^'"]+)['"]/);
     const tagsMatch = objText.match(/tags:\s*\[([^\]]*)\]/);
 
-    // 提取 effects
+    // 提取 effects - 扫描所有 modifiers 定义
     const effects = [];
-    const effectPattern = /\{\s*type:\s*['"]stats['"][\s\S]*?modifiers:\s*\{([^}]+)\}[\s\S]*?\}/g;
-    let effectMatch;
-    while ((effectMatch = effectPattern.exec(objText)) !== null) {
-      const modifiersText = effectMatch[1];
-      const modifiers = {};
-      const modifierPattern = /(\w+):\s*([\d.]+)/g;
+    const allModifiersPattern = /modifiers:\s*\{([^}]+)\}/g;
+    let allModMatch;
+    const mergedModifiers = {};
+    while ((allModMatch = allModifiersPattern.exec(objText)) !== null) {
+      const modifiersText = allModMatch[1];
+      // 修复：支持负数和小数，如 dashInterval: -0.35
+      const modifierPattern = /(\w+):\s*([-+]?\d*\.?\d+)/g;
       let modMatch;
       while ((modMatch = modifierPattern.exec(modifiersText)) !== null) {
-        modifiers[modMatch[1]] = parseFloat(modMatch[2]);
+        mergedModifiers[modMatch[1]] = parseFloat(modMatch[2]);
       }
-      effects.push({ type: 'stats', modifiers });
+    }
+    if (Object.keys(mergedModifiers).length > 0) {
+      effects.push({ type: 'stats', modifiers: mergedModifiers });
     }
 
     archetypes.push({
@@ -144,16 +147,17 @@ function getRarityFromArchetype(archetype) {
 }
 
 function checkViolations(archetype, modifiers, manualValue, budget) {
-  const violations = [];
+  const hardViolations = []; // 混入泛属性等硬规则违规
+  const budgetViolations = []; // 超预算违规
   const routeId = archetype.routeId;
 
-  if (!routeId) return violations;
+  if (!routeId) return { hardViolations, budgetViolations };
 
   // 检查是否包含不应该出现的属性
   const excludedStats = ROUTE_EXCLUDED_STATS[routeId] || [];
   for (const stat of excludedStats) {
     if (modifiers[stat] && modifiers[stat] !== 0) {
-      violations.push(`${routeId}牌不应包含 '${stat}'（混入泛属性）`);
+      hardViolations.push(`${routeId}牌不应包含 '${stat}'（混入泛属性）`);
     }
   }
 
@@ -162,10 +166,10 @@ function checkViolations(archetype, modifiers, manualValue, budget) {
     const hasHighDamage = modifiers.damage && modifiers.damage >= 1.5;
     const hasHighSpeed = modifiers.projectileSpeed && modifiers.projectileSpeed >= 25;
     if (hasHighDamage && hasHighSpeed) {
-      violations.push('pierce牌不应同时有高额伤害和高额弹速');
+      hardViolations.push('pierce牌不应同时有高额伤害和高额弹速');
     }
     if (hasHighDamage) {
-      violations.push('pierce牌不应有高额伤害（应专注穿透机制）');
+      hardViolations.push('pierce牌不应有高额伤害（应专注穿透机制）');
     }
   }
 
@@ -177,7 +181,7 @@ function checkViolations(archetype, modifiers, manualValue, budget) {
     const hasProjectileSpeed = modifiers.projectileSpeed && modifiers.projectileSpeed > 15;
 
     if (hasDamage && !hasCritChance && !hasCritMultiplier) {
-      violations.push('crit牌不应只有伤害而无暴击属性');
+      hardViolations.push('crit牌不应只有伤害而无暴击属性');
     }
   }
 
@@ -187,21 +191,22 @@ function checkViolations(archetype, modifiers, manualValue, budget) {
     const hasHighDamage = modifiers.damage && modifiers.damage >= 2;
 
     if (hasFireRate) {
-      violations.push('dash牌不应有fireRate（已删除）');
+      hardViolations.push('dash牌不应有fireRate（已删除）');
     }
     if (hasHighDamage) {
-      violations.push('dash牌不应有高额伤害（应专注穿梭机制）');
+      hardViolations.push('dash牌不应有高额伤害（应专注穿梭机制）');
     }
   }
 
-  // 检查是否超出预算
-  if (parseFloat(manualValue.total) > budget * 1.3) {
-    violations.push(`价值${manualValue.total}点，超出预算${budget}点 30%以上`);
-  } else if (parseFloat(manualValue.total) > budget * 1.15) {
-    violations.push(`价值${manualValue.total}点，超出预算${budget}点 15%以上`);
+  // 检查是否超出预算（仅作为信息，不算硬违规）
+  const total = parseFloat(manualValue.total);
+  if (total > budget * 1.3) {
+    budgetViolations.push(`价值${manualValue.total}点，超出预算${budget}点 30%以上`);
+  } else if (total > budget * 1.15) {
+    budgetViolations.push(`价值${manualValue.total}点，超出预算${budget}点 15%以上`);
   }
 
-  return violations;
+  return { hardViolations, budgetViolations };
 }
 
 function auditRouteUpgrades() {
@@ -261,11 +266,12 @@ function auditRouteUpgrades() {
       const manualValue = calculateManualValue(modifiers);
 
       // 检查违规
-      const violations = checkViolations(upgrade, modifiers, manualValue, budget);
+      const { hardViolations, budgetViolations } = checkViolations(upgrade, modifiers, manualValue, budget);
+      const allViolations = [...hardViolations, ...budgetViolations];
 
       const overBudget = parseFloat(manualValue.total) > budget;
       if (overBudget) totalOverBudget++;
-      if (violations.length > 0) totalViolations++;
+      if (hardViolations.length > 0) totalViolations++;
 
       // 输出结果
       console.log(`\n  [${rarity.toUpperCase()}] ${upgrade.name} (${upgrade.id})`);
@@ -273,9 +279,9 @@ function auditRouteUpgrades() {
       console.log(`  属性: ${Object.entries(modifiers).map(([k, v]) => `${k}: ${v}`).join(', ')}`);
       console.log(`  估算价值: ${manualValue.total}点 (预算: ${budget}点) ${overBudget ? '【超预算】' : ''}`);
 
-      if (violations.length > 0) {
+      if (allViolations.length > 0) {
         console.log(`  ⚠️ 问题:`);
-        for (const v of violations) {
+        for (const v of allViolations) {
           console.log(`     - ${v}`);
         }
       }
@@ -287,8 +293,9 @@ function auditRouteUpgrades() {
   console.log('='.repeat(100));
   console.log(`  总路线牌数: ${routeUpgrades.length}`);
   console.log(`  超预算牌数: ${totalOverBudget}`);
-  console.log(`  有违规牌数: ${totalViolations}`);
-  console.log(`  健康度: ${((1 - totalViolations / routeUpgrades.length) * 100).toFixed(1)}%`);
+  console.log(`  硬违规牌数: ${totalViolations}`);
+  console.log(`  硬规则健康度: ${((1 - totalViolations / routeUpgrades.length) * 100).toFixed(1)}%`);
+  console.log(`  预算健康度: ${((1 - Math.min(totalOverBudget, routeUpgrades.length) / routeUpgrades.length) * 100).toFixed(1)}%`);
   console.log();
 
   // 输出需要修正的牌列表
@@ -308,17 +315,18 @@ function auditRouteUpgrades() {
       }
 
       const manualValue = calculateManualValue(modifiers);
-      const violations = checkViolations(upgrade, modifiers, manualValue, budget);
+      const { hardViolations, budgetViolations } = checkViolations(upgrade, modifiers, manualValue, budget);
+      const allViolations = [...hardViolations, ...budgetViolations];
 
-      if (violations.length > 0 || parseFloat(manualValue.total) > budget * 1.2) {
+      if (allViolations.length > 0 || parseFloat(manualValue.total) > budget * 1.2) {
         console.log(`\n  ${upgrade.id} (${upgrade.name})`);
         console.log(`    路线: ${routeId}, 品质: ${rarity}`);
         console.log(`    当前属性:`, JSON.stringify(modifiers));
         console.log(`    问题:`);
-        if (violations.length === 0 && parseFloat(manualValue.total) > budget * 1.2) {
+        if (allViolations.length === 0 && parseFloat(manualValue.total) > budget * 1.2) {
           console.log(`      - 价值${manualValue.total}点，建议压缩到${budget}点以内`);
         }
-        for (const v of violations) {
+        for (const v of allViolations) {
           console.log(`      - ${v}`);
         }
       }

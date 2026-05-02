@@ -24,7 +24,7 @@ export type BattleTemplateId =
   | 'survival-gauntlet'
   | 'survival-sieve';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
-export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'result';
+export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'bossEnding' | 'result';
 export type RunOutcome = 'victory' | 'defeat';
 export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
 export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
@@ -578,6 +578,13 @@ export interface RunState {
   currentEvent: EventDefinition | null;
   battle: BattleState | null;
   result: RunResult | null;
+  // Boss 战结束过渡
+  bossEnding?: {
+    outcome: 'victory' | 'defeat';
+    label: string;
+    elapsedSec: number;
+    durationSec: number;
+  } | null;
 }
 
 export interface BattleDebugConfig {

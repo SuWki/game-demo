@@ -10,6 +10,7 @@ import type {
   OverlayMetaSummary,
   RouteReference,
   RunResult,
+  RunState,
   ToastTone,
   UpgradeDefinition,
 } from '../game/types';
@@ -370,6 +371,32 @@ export class OverlayController {
     for (const option of eventDef.options) {
       this.bindClick(`[data-choice="${option.id}"]`, () => onChoose(option.id));
     }
+  }
+
+  public showBossEnding(bossEnding: NonNullable<RunState['bossEnding']>): void {
+    const { outcome, label } = bossEnding;
+    const labelLines = label.split(' / ');
+    const mainText = labelLines[0] ?? '';
+    const subText = labelLines[1] ?? '';
+    const isVictory = outcome === 'victory';
+
+    this.hideHud();
+    this.screenLayer.classList.remove('hidden');
+    this.screenLayer.innerHTML = `
+      <section class="screen-minimal boss-ending-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
+        <div class="screen-gridline" aria-hidden="true"></div>
+        <div class="commercial-screen-layout">
+          <div class="commercial-screen-copy boss-ending-copy">
+            <div class="boss-ending-icon">
+              <span class="screen-ring ring-a"></span>
+              <span class="screen-ring ring-b"></span>
+            </div>
+            <h1 class="screen-title boss-ending-title">${mainText}</h1>
+            <p class="screen-subtitle boss-ending-subtitle">${subText}</p>
+          </div>
+        </div>
+      </section>
+    `;
   }
 
   public showResult(result: RunResult, actions: ResultActions): void {

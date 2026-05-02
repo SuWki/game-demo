@@ -11,6 +11,7 @@ import type {
   DebugBattlePhaseId,
   OverlayHudSnapshot,
   PlayerStats,
+  RunState,
   Services,
   ToastTone,
 } from '../game/types';
@@ -212,7 +213,14 @@ export class GameScene extends Phaser.Scene {
     this.syncAudioState(state);
     this.processAnnouncements();
     this.syncOverlay();
-    this.renderBattle();
+
+    // Boss 战结束过渡画面
+    if (state.status === 'bossEnding' && state.bossEnding) {
+      this.renderBossEnding(state.bossEnding);
+    } else {
+      this.renderBattle();
+    }
+
     this.syncDebugPanel();
     if (!this.resultHandled && state.status === 'result' && state.result) {
       this.resultHandled = true;
@@ -654,6 +662,16 @@ export class GameScene extends Phaser.Scene {
           this.processAnnouncements();
           this.syncOverlay();
         });
+        this.lastPanelKey = panelKey;
+      }
+      return;
+    }
+
+    // Boss 战结束过渡画面
+    if (state.status === 'bossEnding' && state.bossEnding) {
+      const panelKey = 'bossEnding:' + state.bossEnding.outcome + ':' + state.bossEnding.label;
+      if (panelKey !== this.lastPanelKey) {
+        this.services.overlay.showBossEnding(state.bossEnding);
         this.lastPanelKey = panelKey;
       }
       return;
@@ -1794,6 +1812,63 @@ export class GameScene extends Phaser.Scene {
     return tone === 'danger' || tone === 'success' || tone === 'route';
   }
 
+  private renderBossEnding(bossEnding: NonNullable<RunState['bossEnding']>): void {
+    const { outcome, label, elapsedSec, durationSec } = bossEnding;
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+    const fadeRatio = Math.min(1, elapsedSec / 0.3); // 0.3秒淡入
+    const pulseRatio = Math.min(1, elapsedSec / durationSec); // 整体进度
+
+    this.graphics.clear();
+
+    // 深色背景
+    const bgAlpha = 0.6 + fadeRatio * 0.3;
+    this.graphics.fillStyle(0x0a0806, bgAlpha);
+    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+
+    // 结果颜色
+    const resultColor = outcome === 'victory' ? 0xffd774 : 0xff6b6b; // 金色或红色
+    const glowAlpha = 0.3 + Math.sin(elapsedSec * 8) * 0.15; // 呼吸光效
+
+    // 中心光晕
+    this.graphics.fillStyle(resultColor, glowAlpha * fadeRatio);
+    this.graphics.fillCircle(centerX, centerY, 120 + pulseRatio * 40);
+
+    // 内环
+    this.graphics.lineStyle(3, resultColor, 0.8 * fadeRatio);
+    this.graphics.strokeCircle(centerX, centerY, 80);
+
+    // 外环旋转效果
+    const rotation = elapsedSec * 0.5;
+    this.graphics.lineStyle(2, resultColor, 0.5 * fadeRatio);
+    for (let i = 0; i < 4; i++) {
+      const angle = rotation + (i * Math.PI) / 2;
+      const x1 = centerX + Math.cos(angle) * 100;
+      const y1 = centerY + Math.sin(angle) * 100;
+      const x2 = centerX + Math.cos(angle) * 140;
+      const y2 = centerY + Math.sin(angle) * 140;
+      this.graphics.lineBetween(x1, y1, x2, y2);
+    }
+
+    // 使用 UI 文本样式显示标题
+    const labelLines = label.split(' / ');
+    const mainText = labelLines[0];
+    const subText = labelLines[1] || '';
+
+    // 主标题背景
+    const textBgWidth = 320;
+    const textBgHeight = 100;
+    this.graphics.fillStyle(0x1a1510, 0.85 * fadeRatio);
+    this.graphics.fillRoundedRect(centerX - textBgWidth / 2, centerY - textBgHeight / 2 - 20, textBgWidth, textBgHeight, 8);
+
+    // 标题边框
+    this.graphics.lineStyle(2, resultColor, 0.6 * fadeRatio);
+    this.graphics.strokeRoundedRect(centerX - textBgWidth / 2, centerY - textBgHeight / 2 - 20, textBgWidth, textBgHeight, 8);
+
+    // 注意：实际文本渲染由 DOM overlay 处理
+    // 这里只渲染图形效果，文本通过 syncOverlay 更新
+  }
+
   private renderBattle(): void {
     const dominantRoute = this.engine.getDominantRoute();
     const accentColor = dominantRoute ? parseInt(ROUTE_COLOR_MAP[dominantRoute].slice(1), 16) : 0x61d7ff;
@@ -2747,6 +2822,54 @@ export class GameScene extends Phaser.Scene {
           }
         }
       }
+
+      // 流派构筑第二轮：敌人状态标记可视化
+      // critMark: 橙色破绽环
+      if (enemy.critMarkSec > 0) {
+        const critMarkRatio = Math.min(1, enemy.critMarkSec / 2.5);
+        const critColor = 0xff8c42; // 橙色
+        this.graphics.lineStyle(2.5, critColor, 0.25 + critMarkRatio * 0.55);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 8 + (1 - critMarkRatio) * 4);
+        // 短促爆闪效果
+        if (enemy.hitFlashSec > 0.08) {
+          this.graphics.fillStyle(critColor, 0.12 + critMarkRatio * 0.18);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 5);
+        }
+      }
+      // pierceMark: 蓝色贯穿裂纹
+      if (enemy.pierceMarkSec > 0) {
+        const pierceMarkRatio = Math.min(1, enemy.pierceMarkSec / 1.8);
+        const pierceColor = 0x5cb8ff; // 冷蓝色
+        const crackAlpha = 0.2 + pierceMarkRatio * 0.5;
+        this.graphics.lineStyle(1.5, pierceColor, crackAlpha);
+        // 绘制贯穿裂纹
+        const crackLen = enemy.radius * 0.8;
+        for (let i = 0; i < 3; i++) {
+          const angle = (i * Math.PI * 2) / 3 + pierceMarkRatio * 0.5;
+          this.graphics.lineBetween(
+            screen.x + Math.cos(angle) * enemy.radius * 0.4,
+            screen.y + Math.sin(angle) * enemy.radius * 0.4,
+            screen.x + Math.cos(angle) * (enemy.radius * 0.4 + crackLen),
+            screen.y + Math.sin(angle) * (enemy.radius * 0.4 + crackLen),
+          );
+        }
+      }
+      // dashMark: 绿色脉冲残影
+      if (enemy.dashMarkSec > 0) {
+        const dashMarkRatio = Math.min(1, enemy.dashMarkSec / 1.5);
+        const dashColor = 0x7aff7a; // 脉冲绿
+        const pulseAlpha = 0.15 + dashMarkRatio * 0.4;
+        this.graphics.lineStyle(2, dashColor, pulseAlpha);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 6 + (1 - dashMarkRatio) * 6);
+        // 残影点
+        this.graphics.fillStyle(dashColor, pulseAlpha * 0.6);
+        for (let i = 0; i < 4; i++) {
+          const angle = (i * Math.PI) / 2 + dashMarkRatio;
+          const dist = enemy.radius + 10 + (1 - dashMarkRatio) * 4;
+          this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 2);
+        }
+      }
+
       this.graphics.fillStyle(enemyFill, enemy.elite ? 0.98 : 0.95);
 
       if (enemy.elite) {

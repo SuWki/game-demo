@@ -452,6 +452,23 @@ export class RunEngine {
   }
 
   public tick(deltaMs: number): void {
+    // 处理 Boss 战结束过渡
+    if (this.state.status === 'bossEnding' && this.state.bossEnding) {
+      const dt = deltaMs / 1000;
+      this.state.bossEnding.elapsedSec += dt;
+      if (this.state.bossEnding.elapsedSec >= this.state.bossEnding.durationSec) {
+        // 过渡结束，进入最终结算
+        const outcome = this.state.bossEnding.outcome;
+        this.state.bossEnding = null;
+        if (outcome === 'victory') {
+          this.advanceRound();
+        } else {
+          this.finishRun('defeat', outcome === 'defeat' ? 'hpDepleted' : 'timeOut');
+        }
+      }
+      return;
+    }
+
     if (this.state.status !== 'battle' || !this.state.battle) {
       return;
     }
@@ -569,6 +586,18 @@ export class RunEngine {
         BATTLE_TEMPLATES[battle.templateId].contentTier,
         this.getBattleMonitoringSummary(battle),
       );
+      // Boss 战失败：显示专属收尾画面
+      if (battle.encounterType === 'boss') {
+        this.state.status = 'bossEnding';
+        this.state.bossEnding = {
+          outcome: 'defeat',
+          label: '机体失效 / Boss 未击破',
+          elapsedSec: 0,
+          durationSec: 1.5,
+        };
+        this.enqueueAudio('defeat');
+        return;
+      }
       this.finishRun('defeat', 'timeOut');
     }
   }
@@ -1638,6 +1667,18 @@ export class RunEngine {
       BATTLE_TEMPLATES[battle.templateId].contentTier,
       this.getBattleMonitoringSummary(battle),
     );
+    // Boss 战失败：显示专属收尾画面
+    if (battle.encounterType === 'boss') {
+      this.state.status = 'bossEnding';
+      this.state.bossEnding = {
+        outcome: 'defeat',
+        label: '机体失效 / Boss 未击破',
+        elapsedSec: 0,
+        durationSec: 1.5,
+      };
+      this.enqueueAudio('defeat');
+      return true;
+    }
     this.finishRun('defeat', 'hpDepleted');
     return true;
   }
@@ -1823,6 +1864,19 @@ export class RunEngine {
     );
     this.enqueueTip(`${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`);
     this.gainExperience(completionExp);
+
+    // Boss 战结束：显示专属收尾画面
+    if (battle.encounterType === 'boss') {
+      this.state.status = 'bossEnding';
+      this.state.bossEnding = {
+        outcome: 'victory',
+        label: '首领击破 / 任务完成',
+        elapsedSec: 0,
+        durationSec: 1.5, // 停留 1.5 秒
+      };
+      this.enqueueAudio('victory');
+      return;
+    }
 
     if (this.state.queuedLevelUps > 0 && this.state.status === 'upgradeChoice') {
       this.advanceAfterPendingUpgrades = true;
@@ -3868,9 +3922,10 @@ export class RunEngine {
           battle.critChain += 1;
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
           // 流派构筑第二轮：暴击命中时给敌人添加 critMark
-          enemy.critMarkSec = 2.5;
-          // 如果被标记敌人再次被暴击，给予额外收益
-          if (enemy.critMarkSec > 0 && battle.critChain >= 2) {
+          const hadCritMark = enemy.critMarkSec > 0; // 先读取旧标记状态
+          enemy.critMarkSec = 2.5; // 再刷新新标记
+          // 如果被标记敌人再次被暴击，给予额外收益（只基于旧标记，避免同一次暴击立即受益）
+          if (hadCritMark && battle.critChain >= 2) {
             const bonusDamage = bullet.damage * 0.15;
             enemy.hp -= bonusDamage;
           }
