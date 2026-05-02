@@ -19,7 +19,7 @@ const summary = {
   screenshots: [],
   audioSnapshots: [],
   bossSafeWindowMoments: 0,
-  outsideSafeDamageTicks: 0,
+  outsideSafeDamageTickCount: 0,
   insideSafeProjectileClears: 0,
   bossAliveDurationSec: 0,
 };
@@ -145,7 +145,7 @@ async function main() {
   await page.waitForTimeout(500);
 
   // Boss 战采样阶段：持续观察 60 秒
-  let bossEntered = false;
+  let bossBattleActive = false;
   let bossAliveStartTime = 0;
   const maxSteps = 60;
   for (let step = 1; step <= maxSteps; step += 1) {
@@ -163,19 +163,19 @@ async function main() {
         eliteAlive: debug.eliteAlive,
         bossFirelineCoverage: debug.bossFirelineCoverage,
         bossSafeWindowMoments: debug.bossSafeWindowMoments,
-        outsideSafeDamageTicks: debug.outsideSafeDamageTicks,
+        outsideSafeDamageTickCount: debug.outsideSafeDamageTickCount,
         insideSafeProjectileClears: debug.insideSafeProjectileClears,
       };
       summary.bossSnapshots.push(snap);
 
       // 更新汇总数据
       summary.bossSafeWindowMoments = Math.max(summary.bossSafeWindowMoments, debug.bossSafeWindowMoments || 0);
-      summary.outsideSafeDamageTicks = Math.max(summary.outsideSafeDamageTicks, debug.outsideSafeDamageTicks || 0);
+      summary.outsideSafeDamageTickCount = Math.max(summary.outsideSafeDamageTickCount, debug.outsideSafeDamageTickCount || 0);
       summary.insideSafeProjectileClears = Math.max(summary.insideSafeProjectileClears, debug.insideSafeProjectileClears || 0);
 
       // 检测到目标 Boss 模板时开启无敌，以便完整观察战斗
-      if (debug.templateId === bossTemplate && !bossEntered) {
-        bossEntered = true;
+      if (debug.templateId === bossTemplate && !bossBattleActive) {
+        bossBattleActive = true;
         bossAliveStartTime = Date.now();
         await page.evaluate(() => {
           if (window.__pilotDebug) {
@@ -259,7 +259,7 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`Boss Safe Window Moments: ${summary.bossSafeWindowMoments}`);
   // eslint-disable-next-line no-console
-  console.log(`Outside Safe Damage Ticks: ${summary.outsideSafeDamageTicks}`);
+  console.log(`Outside Safe Damage Tick Count: ${summary.outsideSafeDamageTickCount}`);
   // eslint-disable-next-line no-console
   console.log(`Inside Safe Projectile Clears: ${summary.insideSafeProjectileClears}`);
   // eslint-disable-next-line no-console
@@ -270,9 +270,9 @@ async function main() {
     // eslint-disable-next-line no-console
     console.warn('⚠️ 警告: bossSafeWindowMoments = 0，Boss安全区可能未正确触发');
   }
-  if (summary.outsideSafeDamageTicks === 0) {
+  if (summary.outsideSafeDamageTickCount === 0) {
     // eslint-disable-next-line no-console
-    console.warn('⚠️ 警告: outsideSafeDamageTicks = 0，区外伤害可能未正确记录');
+    console.warn('⚠️ 警告: outsideSafeDamageTickCount = 0，区外伤害可能未正确记录');
   }
   if (summary.consoleErrors.length > 0) {
     // eslint-disable-next-line no-console

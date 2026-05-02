@@ -8,420 +8,540 @@
       "templateId": "boss-bastion",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 2,
       "templateId": "boss-bastion",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 3,
       "templateId": "boss-bastion",
       "eliteAlive": false,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 4,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 5,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 6,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 7,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 8,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 9,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 0,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 0
     },
     {
       "step": 10,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 1,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 11
     },
     {
       "step": 11,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 1,
+      "outsideSafeDamageTickCount": 0,
+      "insideSafeProjectileClears": 17
     },
     {
       "step": 12,
       "templateId": "boss-bastion",
       "eliteAlive": true,
       "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossSafeWindowMoments": 2,
+      "outsideSafeDamageTickCount": 2,
+      "insideSafeProjectileClears": 24
     },
     {
       "step": 13,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 14,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 15,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 16,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 17,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 18,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 19,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 20,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 21,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 22,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 23,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 24,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 25,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 26,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 27,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 28,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 29,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 30,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 31,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 32,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 33,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 34,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 35,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 36,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 37,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 38,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 39,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 40,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 41,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 42,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 43,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 44,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 45,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 46,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 47,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 48,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 49,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 50,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 51,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 52,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 53,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 54,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 55,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 56,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 57,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 58,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 59,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     },
     {
       "step": 60,
       "templateId": "boss-bastion",
       "eliteAlive": true,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
+      "bossFirelineCoverage": 0.88,
+      "bossSafeWindowMoments": 3,
+      "outsideSafeDamageTickCount": 4,
+      "insideSafeProjectileClears": 25
     }
   ],
   "screenshots": [
@@ -489,16 +609,18 @@
       "masterVolume": 0.4,
       "currentMusicMode": "boss",
       "cueCounts": {
-        "pressure": 3,
-        "shoot": 16,
-        "boss": 1,
-        "hit": 10,
-        "enemyShot": 12,
-        "nearMiss": 19,
-        "kill": 2,
+        "pressure": 10,
+        "shoot": 33,
+        "boss": 3,
+        "hit": 27,
+        "enemyShot": 21,
+        "kill": 3,
         "pickup": 2,
-        "relayRanged": 1,
+        "nearMiss": 26,
+        "crit": 3,
         "relayBrute": 1,
+        "relaySkirmisher": 6,
+        "relayRanged": 2,
         "upgrade": 1
       }
     },
@@ -507,16 +629,18 @@
       "masterVolume": 0.4,
       "currentMusicMode": "boss",
       "cueCounts": {
-        "pressure": 3,
-        "shoot": 16,
-        "boss": 1,
-        "hit": 10,
-        "enemyShot": 12,
-        "nearMiss": 19,
-        "kill": 2,
+        "pressure": 10,
+        "shoot": 33,
+        "boss": 3,
+        "hit": 27,
+        "enemyShot": 21,
+        "kill": 3,
         "pickup": 2,
-        "relayRanged": 1,
+        "nearMiss": 26,
+        "crit": 3,
         "relayBrute": 1,
+        "relaySkirmisher": 6,
+        "relayRanged": 2,
         "upgrade": 1
       }
     },
@@ -525,16 +649,18 @@
       "masterVolume": 0.4,
       "currentMusicMode": "boss",
       "cueCounts": {
-        "pressure": 3,
-        "shoot": 16,
-        "boss": 1,
-        "hit": 10,
-        "enemyShot": 12,
-        "nearMiss": 19,
-        "kill": 2,
+        "pressure": 10,
+        "shoot": 33,
+        "boss": 3,
+        "hit": 27,
+        "enemyShot": 21,
+        "kill": 3,
         "pickup": 2,
-        "relayRanged": 1,
+        "nearMiss": 26,
+        "crit": 3,
         "relayBrute": 1,
+        "relaySkirmisher": 6,
+        "relayRanged": 2,
         "upgrade": 1
       }
     },
@@ -543,19 +669,25 @@
       "masterVolume": 0.4,
       "currentMusicMode": "boss",
       "cueCounts": {
-        "pressure": 3,
-        "shoot": 16,
-        "boss": 1,
-        "hit": 10,
-        "enemyShot": 12,
-        "nearMiss": 19,
-        "kill": 2,
+        "pressure": 10,
+        "shoot": 33,
+        "boss": 3,
+        "hit": 27,
+        "enemyShot": 21,
+        "kill": 3,
         "pickup": 2,
-        "relayRanged": 1,
+        "nearMiss": 26,
+        "crit": 3,
         "relayBrute": 1,
+        "relaySkirmisher": 6,
+        "relayRanged": 2,
         "upgrade": 1
       }
     }
   ],
+  "bossSafeWindowMoments": 3,
+  "outsideSafeDamageTickCount": 4,
+  "insideSafeProjectileClears": 25,
+  "bossAliveDurationSec": 78.19,
   "consoleLogs": []
 }

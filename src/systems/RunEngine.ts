@@ -761,7 +761,8 @@ export class RunEngine {
       eliteCrackFollowThroughMoments: 0,
       bossFirelineCoverage: 0,
       bossSafeWindowMoments: 0,
-      outsideSafeDamageTicks: 0,
+      outsideSafeDamageTimerSec: 0,
+      outsideSafeDamageTickCount: 0,
       insideSafeProjectileClears: 0,
       killPickupContinueMoments: 0,
       monitorDashLateMomentCooldownSec: 0,
@@ -1433,10 +1434,11 @@ export class RunEngine {
     // 安全区外：可感知 tick 伤害
     // 用冷却控制每 0.35s 左右触发一次
     const tickInterval = 0.35;
-    battle.outsideSafeDamageTicks = (battle.outsideSafeDamageTicks || 0) + dt;
+    battle.outsideSafeDamageTimerSec = (battle.outsideSafeDamageTimerSec || 0) + dt;
 
-    if (battle.outsideSafeDamageTicks >= tickInterval) {
-      battle.outsideSafeDamageTicks = 0;
+    if (battle.outsideSafeDamageTimerSec >= tickInterval) {
+      battle.outsideSafeDamageTimerSec = 0;
+      battle.outsideSafeDamageTickCount = (battle.outsideSafeDamageTickCount || 0) + 1;
 
       const template = BATTLE_TEMPLATES[battle.templateId];
       const damagePerTick = Math.max(
