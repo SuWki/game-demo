@@ -318,12 +318,12 @@ function auditRouteUpgrades() {
       const { hardViolations, budgetViolations } = checkViolations(upgrade, modifiers, manualValue, budget);
       const allViolations = [...hardViolations, ...budgetViolations];
 
-      if (allViolations.length > 0 || parseFloat(manualValue.total) > budget * 1.2) {
+      if (allViolations.length > 0 || parseFloat(manualValue.total) > budget) {
         console.log(`\n  ${upgrade.id} (${upgrade.name})`);
         console.log(`    路线: ${routeId}, 品质: ${rarity}`);
         console.log(`    当前属性:`, JSON.stringify(modifiers));
         console.log(`    问题:`);
-        if (allViolations.length === 0 && parseFloat(manualValue.total) > budget * 1.2) {
+        if (allViolations.length === 0 && parseFloat(manualValue.total) > budget) {
           console.log(`      - 价值${manualValue.total}点，建议压缩到${budget}点以内`);
         }
         for (const v of allViolations) {

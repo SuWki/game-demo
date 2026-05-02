@@ -1571,7 +1571,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           critChance: 0.065,
           critMultiplier: 0.25,
-          moveSpeed: 12,
         },
       },
       {
@@ -2876,9 +2875,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 10,
-          moveSpeed: 18,
-          dashInterval: -0.55,
+          dashPulseDamage: 6,
+          dashInterval: -0.36,
         },
       },
       {
@@ -3190,9 +3188,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 10,
-          dashInterval: -0.72,
-          dashInvulnerability: 0.14,
+          dashPulseDamage: 6,
+          dashInterval: -0.36,
+          dashInvulnerability: 0.08,
         },
       },
       {
@@ -3488,9 +3486,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.48,
-          dashInvulnerability: 0.10,
-          dashPulseDamage: 6,
+          dashInterval: -0.42,
+          dashInvulnerability: 0.08,
+          dashPulseDamage: 5,
         },
       },
       {
