@@ -2469,6 +2469,8 @@ export class RunEngine {
       if (distance <= pulseRadius) {
         enemy.hp -= pulseDamage;
         dashPulseHits += 1;
+        // 流派构筑第二轮：脉冲命中时给敌人添加 dashMark
+        enemy.dashMarkSec = 1.5;
         this.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
           flashSec: 0.18,
           kick: 12,
@@ -2567,6 +2569,10 @@ export class RunEngine {
         hitOffsetY: 0,
         debugMoveVX: 0,
         debugMoveVY: 0,
+        // 流派构筑第二轮：敌人状态标记
+        critMarkSec: 0,
+        pierceMarkSec: 0,
+        dashMarkSec: 0,
       });
       this.createCombatPulse(battle, {
         x: view.left + view.width * 0.5,
@@ -3439,6 +3445,10 @@ export class RunEngine {
       hitOffsetY: 0,
       debugMoveVX: 0,
       debugMoveVY: 0,
+      // 流派构筑第二轮：敌人状态标记
+      critMarkSec: 0,
+      pierceMarkSec: 0,
+      dashMarkSec: 0,
     };
   }
 
@@ -3857,6 +3867,13 @@ export class RunEngine {
           battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + this.getCritOverdriveDurationGain());
           battle.critChain += 1;
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
+          // 流派构筑第二轮：暴击命中时给敌人添加 critMark
+          enemy.critMarkSec = 2.5;
+          // 如果被标记敌人再次被暴击，给予额外收益
+          if (enemy.critMarkSec > 0 && battle.critChain >= 2) {
+            const bonusDamage = bullet.damage * 0.15;
+            enemy.hp -= bonusDamage;
+          }
           if (critStage === 'committed' || critStage === 'matured') {
             const cadenceRefund = critStage === 'matured' ? 0.05 : 0.032;
             battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - cadenceRefund);
@@ -3904,6 +3921,8 @@ export class RunEngine {
 
         if (bullet.routeFocus === 'pierce') {
           const laneScore = this.getPierceLaneScore(battle, enemy);
+          // 流派构筑第二轮：穿透命中时给敌人添加 pierceMark
+          enemy.pierceMarkSec = 1.8;
           if (laneScore >= 1.2 || bullet.hitCount >= 2) {
             const pierceChain = this.registerPierceFlow(battle, {
               laneScore,
@@ -4087,6 +4106,10 @@ export class RunEngine {
       enemy.spawnFlashSec = Math.max(0, enemy.spawnFlashSec - dt);
       enemy.pressurePulseSec = Math.max(0, enemy.pressurePulseSec - dt);
       enemy.tacticCooldownSec = Math.max(0, enemy.tacticCooldownSec - dt);
+      // 流派构筑第二轮：敌人状态标记递减
+      enemy.critMarkSec = Math.max(0, enemy.critMarkSec - dt);
+      enemy.pierceMarkSec = Math.max(0, enemy.pierceMarkSec - dt);
+      enemy.dashMarkSec = Math.max(0, enemy.dashMarkSec - dt);
       enemy.hitOffsetX *= Math.max(0, 1 - dt * 14);
       enemy.hitOffsetY *= Math.max(0, 1 - dt * 14);
       if (enemy.hp <= 0) {

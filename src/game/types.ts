@@ -350,6 +350,10 @@ export interface EnemyState {
   hitOffsetY: number;
   debugMoveVX: number;
   debugMoveVY: number;
+  // 流派构筑第二轮：敌人状态标记
+  critMarkSec: number;
+  pierceMarkSec: number;
+  dashMarkSec: number;
 }
 
 export interface BulletState {

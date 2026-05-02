@@ -22,14 +22,26 @@ const summary = {
   outsideSafeDamageTickCount: 0,
   insideSafeProjectileClears: 0,
   bossAliveDurationSec: 0,
+  panelBlockedMoments: 0,
+  bossBattleActiveSteps: 0,
+  panelBlockingLog: [],
 };
 
 // 关闭升级面板或覆盖层
 async function closeUpgradeOrOverlayIfPresent(page) {
-  // 检查并关闭升级面板
+  // 检查并关闭通用选择面板 [data-choice]（当前主要使用的选择卡）
+  const genericChoices = await page.locator('[data-choice]').count();
+  if (genericChoices > 0) {
+    const choices = await page.locator('[data-choice]').all();
+    if (choices.length > 0) {
+      await choices[0].click();
+      await page.waitForTimeout(400);
+    }
+  }
+
+  // 检查并关闭升级面板 [data-upgrade-choice]（向后兼容）
   const upgradeChoices = await page.locator('[data-upgrade-choice]').count();
   if (upgradeChoices > 0) {
-    // 随机选择一个升级
     const choices = await page.locator('[data-upgrade-choice]').all();
     if (choices.length > 0) {
       await choices[0].click();
@@ -37,12 +49,22 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     }
   }
 
-  // 检查并关闭事件/异常面板
+  // 检查并关闭事件/异常面板 [data-event-option]（向后兼容）
   const eventOptions = await page.locator('[data-event-option]').count();
   if (eventOptions > 0) {
     const options = await page.locator('[data-event-option]').all();
     if (options.length > 0) {
       await options[0].click();
+      await page.waitForTimeout(400);
+    }
+  }
+
+  // 检查并关闭节点选择面板 [data-node-choice]
+  const nodeChoices = await page.locator('[data-node-choice]').count();
+  if (nodeChoices > 0) {
+    const choices = await page.locator('[data-node-choice]').all();
+    if (choices.length > 0) {
+      await choices[0].click();
       await page.waitForTimeout(400);
     }
   }
@@ -53,6 +75,15 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     await page.locator('[data-action="resume"]').click();
     await page.waitForTimeout(300);
   }
+
+  // 检查结果页/重开按钮（避免提前结束）
+  const restartBtn = await page.locator('[data-action="restart"]').count();
+  if (restartBtn > 0) {
+    // 如果结果页出现，说明战斗已结束，不再关闭
+    return 'result';
+  }
+
+  return 'ok';
 }
 
 // 等待Boss战状态
@@ -147,8 +178,37 @@ async function main() {
   // Boss 战采样阶段：持续观察 60 秒
   let bossBattleActive = false;
   let bossAliveStartTime = 0;
+  let panelWasBlocking = false;
   const maxSteps = 60;
   for (let step = 1; step <= maxSteps; step += 1) {
+    // 每5步检查并关闭面板，同时记录面板遮挡情况
+    if (step % 5 === 0 || step === 1) {
+      const panelStatus = await closeUpgradeOrOverlayIfPresent(page);
+      if (panelStatus === 'result') {
+        // 战斗已结束，记录并跳出
+        summary.panelBlockingLog.push({ step, status: 'battle_ended' });
+        break;
+      }
+
+      // 检查当前是否有面板遮挡
+      const hasPanel = await page.evaluate(() => {
+        const choicePanel = document.querySelector('[data-choice], [data-upgrade-choice], [data-event-option], [data-node-choice]');
+        const overlay = document.querySelector('.upgrade-overlay, .event-overlay, .node-overlay');
+        return !!(choicePanel || overlay);
+      });
+
+      if (hasPanel) {
+        summary.panelBlockedMoments += 1;
+        summary.panelBlockingLog.push({ step, status: 'panel_blocking' });
+        panelWasBlocking = true;
+      } else {
+        if (panelWasBlocking) {
+          summary.panelBlockingLog.push({ step, status: 'panel_cleared' });
+          panelWasBlocking = false;
+        }
+      }
+    }
+
     const debug = await page.evaluate(() => {
       if (typeof window.__pilotBattleDebug === 'function') {
         return window.__pilotBattleDebug();
@@ -165,10 +225,13 @@ async function main() {
         bossSafeWindowMoments: debug.bossSafeWindowMoments,
         outsideSafeDamageTickCount: debug.outsideSafeDamageTickCount,
         insideSafeProjectileClears: debug.insideSafeProjectileClears,
+        outsideSafeDamageTimerSec: debug.outsideSafeDamageTimerSec,
+        playerHp: debug.playerHp,
+        playerMaxHp: debug.playerMaxHp,
       };
       summary.bossSnapshots.push(snap);
 
-      // 更新汇总数据
+      // 更新汇总数据（取最大值）
       summary.bossSafeWindowMoments = Math.max(summary.bossSafeWindowMoments, debug.bossSafeWindowMoments || 0);
       summary.outsideSafeDamageTickCount = Math.max(summary.outsideSafeDamageTickCount, debug.outsideSafeDamageTickCount || 0);
       summary.insideSafeProjectileClears = Math.max(summary.insideSafeProjectileClears, debug.insideSafeProjectileClears || 0);
@@ -176,6 +239,7 @@ async function main() {
       // 检测到目标 Boss 模板时开启无敌，以便完整观察战斗
       if (debug.templateId === bossTemplate && !bossBattleActive) {
         bossBattleActive = true;
+        summary.bossBattleActiveSteps = step;
         bossAliveStartTime = Date.now();
         await page.evaluate(() => {
           if (window.__pilotDebug) {
@@ -224,11 +288,6 @@ async function main() {
       break;
     }
 
-    // 期间持续检查并关闭面板
-    if (step % 5 === 0) {
-      await closeUpgradeOrOverlayIfPresent(page);
-    }
-
     // 简单移动以触发战斗
     await page.keyboard.down('KeyD');
     await page.waitForTimeout(200);
@@ -257,6 +316,10 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`Console errors: ${summary.consoleErrors.length}`);
   // eslint-disable-next-line no-console
+  console.log(`Boss Battle Active Steps: ${summary.bossBattleActiveSteps}`);
+  // eslint-disable-next-line no-console
+  console.log(`Panel Blocked Moments: ${summary.panelBlockedMoments}`);
+  // eslint-disable-next-line no-console
   console.log(`Boss Safe Window Moments: ${summary.bossSafeWindowMoments}`);
   // eslint-disable-next-line no-console
   console.log(`Outside Safe Damage Tick Count: ${summary.outsideSafeDamageTickCount}`);
@@ -266,17 +329,37 @@ async function main() {
   console.log(`Boss Alive Duration: ${summary.bossAliveDurationSec.toFixed(1)}s`);
 
   // 验收检查
+  let passed = true;
+
+  if (summary.panelBlockedMoments > 0) {
+    // eslint-disable-next-line no-console
+    console.warn(`⚠️ 警告: panelBlockedMoments = ${summary.panelBlockedMoments}，Boss战被面板遮挡了 ${summary.panelBlockedMoments} 次采样`);
+    passed = false;
+  }
+
   if (summary.bossSafeWindowMoments === 0) {
     // eslint-disable-next-line no-console
-    console.warn('⚠️ 警告: bossSafeWindowMoments = 0，Boss安全区可能未正确触发');
+    console.warn('⚠️ 警告: bossSafeWindowMoments = 0，Boss安全区可能未正确触发或采样被遮挡');
+    passed = false;
   }
+
   if (summary.outsideSafeDamageTickCount === 0) {
     // eslint-disable-next-line no-console
-    console.warn('⚠️ 警告: outsideSafeDamageTickCount = 0，区外伤害可能未正确记录');
+    console.warn('⚠️ 警告: outsideSafeDamageTickCount = 0，区外伤害可能未正确记录或玩家一直在安全区内');
   }
+
   if (summary.consoleErrors.length > 0) {
     // eslint-disable-next-line no-console
     console.warn(`⚠️ 警告: 存在 ${summary.consoleErrors.length} 个 console error`);
+    passed = false;
+  }
+
+  if (passed && summary.bossSafeWindowMoments > 0) {
+    // eslint-disable-next-line no-console
+    console.log('✅ Boss QA 基础验收通过（安全区已采样，无面板遮挡）');
+  } else {
+    // eslint-disable-next-line no-console
+    console.log('❌ Boss QA 需要复验（检查面板遮挡或安全区触发频率）');
   }
 }
 
