@@ -1267,7 +1267,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-primer',
     name: '升温预热',
-    description: '射速与暴击率双重提升',
+    description: '暴击率与暴伤双重提升',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -1287,8 +1287,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.14,
-          critChance: 0.030,
+          critChance: 0.045,
+          critMultiplier: 0.18,
         },
       },
       {
@@ -1300,7 +1300,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-afterglow',
     name: '余热描边',
-    description: '射速、暴击、弹速与恢复全面强化',
+    description: '暴击与弹速强化',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1321,15 +1321,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.12,
-          critChance: 0.024,
-          projectileSpeed: 12,
-          regeneration: 0.03,
+          critChance: 0.038,
+          projectileSpeed: 18,
         },
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
       },
       {
         type: 'route',
@@ -1348,7 +1342,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-heat-latch',
     name: '续热点火',
-    description: '射速、暴击、弹速、移速与恢复全面提升',
+    description: '暴击与暴伤核心提升',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1369,11 +1363,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.11,
-          critChance: 0.023,
-          projectileSpeed: 12,
-          moveSpeed: 8,
-          regeneration: 0.04,
+          critChance: 0.032,
+          critMultiplier: 0.22,
         },
       },
       {
@@ -1393,7 +1384,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-flare-path',
     name: '灼迹导火',
-    description: '火力、射速、暴击与弹速全面强化',
+    description: '暴击与弹速强化',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
@@ -1416,9 +1407,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 2.3,
-          fireRate: 0.11,
-          critChance: 0.023,
+          critChance: 0.042,
+          critMultiplier: 0.16,
           projectileSpeed: 18,
         },
       },
@@ -1431,7 +1421,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-sidechannel',
     name: '旁路升温',
-    description: '火力、射速与暴击提升，并修复损伤',
+    description: '暴击与弹速提升',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
@@ -1453,14 +1443,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 1.5,
-          fireRate: 0.11,
-          critChance: 0.030,
+          critChance: 0.045,
+          projectileSpeed: 18,
         },
-      },
-      {
-        type: 'heal',
-        amount: 8,
       },
       {
         type: 'route',
@@ -1646,7 +1631,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-burst',
     name: '连发校准',
-    description: '射速与暴击率大幅提升',
+    description: '暴击率与暴伤提升',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1667,8 +1652,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.18,
-          critChance: 0.038,
+          critChance: 0.055,
+          critMultiplier: 0.22,
         },
       },
       {
@@ -1680,7 +1665,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-sparkline',
     name: '火迹预压',
-    description: '暴击率与弹速双重提升',
+    description: '暴击率与暴伤双重提升',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1701,9 +1686,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.11,
-          critChance: 0.023,
-          moveSpeed: 8,
+          critChance: 0.042,
+          critMultiplier: 0.18,
         },
       },
       {
@@ -1715,7 +1699,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-linekeep',
     name: '压线留焰',
-    description: '暴击、射速、弹道与生存能力全面提升',
+    description: '暴击与弹道强化',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1739,11 +1723,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.09,
-          critChance: 0.023,
-          projectileSpeed: 14,
-          regeneration: 0.08,
-          moveSpeed: 8,
+          critChance: 0.042,
+          projectileSpeed: 18,
+          critMultiplier: 0.16,
         },
       },
       {
@@ -1794,7 +1776,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-ember-rail',
     name: '灼链追爆',
-    description: '火力、暴击与射速的强力组合',
+    description: '暴击与暴伤的强力组合',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
@@ -1817,11 +1799,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 2.3,
-          fireRate: 0.12,
-          critChance: 0.030,
-          critMultiplier: 0.12,
-          moveSpeed: 10,
+          critChance: 0.038,
+          critMultiplier: 0.22,
         },
       },
       {
@@ -1870,7 +1849,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-heat-rake',
     name: '续热压线',
-    description: '暴击、射速、弹道与机动全面强化',
+    description: '暴击与弹道强化',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
@@ -1894,10 +1873,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.11,
-          critChance: 0.030,
+          critChance: 0.045,
+          critMultiplier: 0.18,
           projectileSpeed: 18,
-          moveSpeed: 10,
         },
       },
       {
@@ -1909,7 +1887,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-heat',
     name: '热区追击',
-    description: '火力、射速与暴击伤害的强力爆发',
+    description: '暴击伤害的强力爆发',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
@@ -1930,9 +1908,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 2.3,
-          fireRate: 0.14,
-          critMultiplier: 0.17,
+          critMultiplier: 0.32,
         },
       },
       {
@@ -1944,7 +1920,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-cascade',
     name: '爆链灼流',
-    description: '火力、射速与暴击伤害的连锁爆发',
+    description: '暴击伤害的连锁爆发',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
@@ -1965,9 +1941,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 2.3,
-          fireRate: 0.11,
-          critMultiplier: 0.21,
+          critChance: 0.038,
+          critMultiplier: 0.26,
         },
       },
       {
@@ -2046,7 +2021,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-rail',
     name: '贯穿轨校',
-    description: '穿透、弹道与射速三重提升',
+    description: '穿透与弹道双重提升',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2068,7 +2043,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           pierce: 1,
           projectileSpeed: 22,
-          fireRate: 0.08,
         },
       },
       {
@@ -2136,8 +2110,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
+          pierce: 1,
           projectileSpeed: 22,
-          fireRate: 0.09,
           damage: 1.5,
         },
       },
@@ -2158,7 +2132,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamkeep',
     name: '拆缝续程',
-    description: '穿透、弹道、射速、机动与生存全面提升',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2181,9 +2155,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           pierce: 1,
           projectileSpeed: 18,
-          fireRate: 0.06,
-          moveSpeed: 8,
-          regeneration: 0.04,
+          multishot: 1,
         },
       },
       {
@@ -2203,7 +2175,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-shearline',
     name: '切层折返',
-    description: '穿透、火力、射速与弹道的强力组合',
+    description: '穿透与弹道强力组合',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2227,9 +2199,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          damage: 1.5,
-          fireRate: 0.09,
           projectileSpeed: 20,
+          multishot: 1,
         },
       },
       {
@@ -2458,7 +2429,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-superheat',
     name: '灼区归档',
-    description: '暴击与火力的极限爆发',
+    description: '暴击与暴伤的极限爆发',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2481,10 +2452,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 3.8,
-          fireRate: 0.12,
-          critChance: 0.038,
-          critMultiplier: 0.26,
+          critChance: 0.045,
+          critMultiplier: 0.32,
         },
       },
       {
@@ -2496,7 +2465,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-phasebank',
     name: '相位蓄返',
-    description: '冲刺、机动与生存的全面强化',
+    description: '穿梭脉冲与冷却强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -2519,10 +2488,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.22,
-          dashPulseDamage: 3.8,
-          moveSpeed: 12,
-          regeneration: 0.1,
+          dashInterval: -0.28,
+          dashPulseDamage: 5.5,
+          dashInvulnerability: 0.06,
         },
       },
       {
@@ -2610,7 +2578,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ledger-fanout',
     name: '拆账铺面',
-    description: '穿透、弹道、射速与机动的平衡提升',
+    description: '穿透与弹道、弹道的平衡提升',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2636,8 +2604,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           pierce: 1,
           projectileSpeed: 16,
-          fireRate: 0.05,
-          moveSpeed: 8,
+          multishot: 1,
         },
       },
       {
@@ -2649,7 +2616,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-floodgate',
     name: '裂层清账',
-    description: '多重射击、穿透、火力与射速的终极爆发',
+    description: '多重射击与穿透的终极爆发',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2672,10 +2639,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          damage: 2.3,
           multishot: 1,
           pierce: 1,
-          fireRate: 0.08,
         },
       },
       {
@@ -2725,7 +2690,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-cutback',
     name: '回切留影',
-    description: '冲刺系统的终极强化',
+    description: '穿梭系统的终极强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -2748,11 +2713,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.24,
-          dashInvulnerability: 0.08,
-          dashPulseDamage: 6.8,
-          fireRate: 0.08,
-          moveSpeed: 14,
+          dashInterval: -0.28,
+          dashInvulnerability: 0.12,
+          dashPulseDamage: 8.5,
         },
       },
       {
@@ -2764,7 +2727,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-echo',
     name: '贯层回响',
-    description: '多重射击、弹道与射速的强力提升',
+    description: '多重射击与穿透强力提升',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2788,8 +2751,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           multishot: 1,
-          projectileSpeed: 18,
-          fireRate: 0.09,
+          pierce: 1,
         },
       },
       {
@@ -2836,7 +2798,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ledger-line',
     name: '拆线归账',
-    description: '穿透、弹道与机动的平衡强化',
+    description: '穿透与弹道强化',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2862,8 +2824,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           pierce: 1,
           projectileSpeed: 20,
-          fireRate: 0.06,
-          moveSpeed: 8,
+          multishot: 1,
         },
       },
       {
@@ -2875,7 +2836,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-bloom',
     name: '扇裂扩面',
-    description: '多重射击、火力与射速的强力爆发',
+    description: '多重射击与穿透的强力爆发',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2897,8 +2858,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           multishot: 1,
-          damage: 1.5,
-          fireRate: 0.12,
+          pierce: 1,
         },
       },
       {
@@ -2910,7 +2870,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-chain',
     name: '续链增程',
-    description: '穿透、射速与弹道的极限延伸',
+    description: '穿透与弹道的极限延伸',
     category: 'route',
     routeId: 'pierce',
     tags: ['finisher'],
@@ -2931,8 +2891,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierce: 1,
-          fireRate: 0.14,
           projectileSpeed: 30,
+          multishot: 1,
         },
       },
       {
@@ -3012,7 +2972,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-lanebreak',
     name: '换边破窗',
-    description: '机动、冲刺、射速与伤害的平衡提升',
+    description: '穿梭冷却与脉冲伤害提升',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -3032,10 +2992,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 14,
-          dashInterval: -0.42,
-          fireRate: 0.08,
-          dashPulseDamage: 4,
+          dashInterval: -0.48,
+          dashPulseDamage: 5.5,
         },
       },
       {
@@ -3047,7 +3005,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-slipstream',
     name: '换位余程',
-    description: '机动、冲刺与无敌的核心强化',
+    description: '穿梭冷却与无伤窗口强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3068,9 +3026,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 14,
-          dashInterval: -0.24,
-          dashInvulnerability: 0.06,
+          dashInterval: -0.32,
+          dashInvulnerability: 0.08,
+          dashPulseDamage: 4,
         },
       },
       {
@@ -3262,7 +3220,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-loop',
     name: '净帧循环',
-    description: '穿梭脉冲、频率与无敌的大幅提升',
+    description: '穿梭脉冲与冷却强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3283,9 +3241,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 8,
-          dashInterval: -0.68,
-          dashInvulnerability: 0.12,
+          dashPulseDamage: 10,
+          dashInterval: -0.72,
+          dashInvulnerability: 0.14,
         },
       },
       {
@@ -3332,7 +3290,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-return-hold',
     name: '回线留窗',
-    description: '冲刺、射速、生存与机动的全面强化',
+    description: '穿梭冷却与无伤窗口强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3356,12 +3314,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.16,
-          dashInvulnerability: 0.04,
-          dashPulseDamage: 4,
-          fireRate: 0.06,
-          regeneration: 0.06,
-          moveSpeed: 12,
+          dashInterval: -0.22,
+          dashInvulnerability: 0.08,
+          dashPulseDamage: 4.5,
         },
       },
       {
@@ -3373,7 +3328,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-afterimage',
     name: '残影回切',
-    description: '穿梭脉冲、无敌、机动与生存的终极强化',
+    description: '穿梭脉冲与无伤窗口的终极强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3396,10 +3351,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 9,
-          dashInvulnerability: 0.1,
-          moveSpeed: 14,
-          regeneration: 0.08,
+          dashPulseDamage: 12,
+          dashInvulnerability: 0.14,
         },
       },
       {
@@ -3411,7 +3364,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-retrace-beat',
     name: '回线追拍',
-    description: '冲刺、射速与机动的强力组合',
+    description: '穿梭脉冲与无伤窗口强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3434,11 +3387,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.22,
-          dashPulseDamage: 6,
-          dashInvulnerability: 0.06,
-          fireRate: 0.08,
-          moveSpeed: 12,
+          dashInterval: -0.26,
+          dashPulseDamage: 7.5,
+          dashInvulnerability: 0.08,
         },
       },
       {
@@ -3450,7 +3401,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-counterline',
     name: '回切反打',
-    description: '穿梭脉冲、射速与机动的强力爆发',
+    description: '穿梭脉冲与冷却强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3473,9 +3424,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 6,
-          fireRate: 0.14,
-          moveSpeed: 10,
+          dashPulseDamage: 7.5,
+          dashInterval: -0.18,
         },
       },
       {
@@ -3487,7 +3437,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-return-snap',
     name: '回摆取窗',
-    description: '冲刺、无敌、射速与机动的平衡强化',
+    description: '穿梭冷却与无伤窗口强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3511,10 +3461,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.18,
-          dashInvulnerability: 0.06,
-          fireRate: 0.08,
-          moveSpeed: 12,
+          dashInterval: -0.22,
+          dashInvulnerability: 0.08,
         },
       },
       {
@@ -3675,7 +3623,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-zero-window',
     name: '瞬返空档',
-    description: '冲刺系统的全方位终极强化',
+    description: '穿梭系统的全方位终极强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3698,12 +3646,9 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.36,
-          dashInvulnerability: 0.12,
-          dashPulseDamage: 10,
-          fireRate: 0.12,
-          regeneration: 0.1,
-          moveSpeed: 14,
+          dashInterval: -0.42,
+          dashInvulnerability: 0.14,
+          dashPulseDamage: 12,
         },
       },
       {

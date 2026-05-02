@@ -113,6 +113,17 @@ export class GameScene extends Phaser.Scene {
 
   private debugSyncElapsedMs = DEBUG_SYNC_INTERVAL_MS;
 
+  // Floating text system for route feedback
+  private readonly floatingTexts: Phaser.GameObjects.Text[] = [];
+
+  private floatingTextCursor = 0;
+
+  private critTextCooldownSec = 0;
+
+  private pierceTextCooldownSec = 0;
+
+  private dashTextCooldownSec = 0;
+
   private readonly debugConfig: BattleDebugConfig = {
     panelOpen: false,
     paused: false,
@@ -1794,6 +1805,7 @@ export class GameScene extends Phaser.Scene {
     const camera = this.getBattleCameraRect(battle);
     this.renderBattleTerrain(battle, camera, accentColor);
     this.renderBattleEntities(battle, camera, accentColor);
+    this.renderRouteFeedbackTexts(battle, camera);
     this.endRuntimePreviewImageFrame();
   }
 
@@ -2070,8 +2082,9 @@ export class GameScene extends Phaser.Scene {
     this.renderPressurePatternOverlay(battle, camera, accentColor);
 
     // Render Boss fireline texture overlay during Boss fireline phases
-    if (battle.encounterType === 'boss' && battle.bossFirelineCoverage > 0.08) {
-      const firelineAlpha = Math.min(0.55, battle.bossFirelineCoverage * 0.8);
+    // Enhanced visibility: very low threshold (0.02), higher base alpha, brighter max
+    if (battle.encounterType === 'boss' && battle.bossFirelineCoverage > 0.02) {
+      const firelineAlpha = Math.min(0.85, 0.45 + battle.bossFirelineCoverage * 0.75);
       this.renderRuntimePreviewImage(
         PREVIEW_BOSS_FIRELINE_TEXTURE,
         camera.width * 0.5,
@@ -4858,5 +4871,88 @@ export class GameScene extends Phaser.Scene {
     const mixedB = Math.round(baseB + (targetB - baseB) * ratio);
 
     return (mixedR << 16) | (mixedG << 8) | mixedB;
+  }
+
+  // Route feedback floating text system
+  private renderRouteFeedbackTexts(
+    battle: BattleState,
+    camera: { left: number; top: number; width: number; height: number },
+  ): void {
+    const state = this.engine.getState();
+    const dt = 1 / 60; // Assume 60fps for cooldown calculation
+
+    // Update cooldowns
+    this.critTextCooldownSec = Math.max(0, this.critTextCooldownSec - dt);
+    this.pierceTextCooldownSec = Math.max(0, this.pierceTextCooldownSec - dt);
+    this.dashTextCooldownSec = Math.max(0, this.dashTextCooldownSec - dt);
+
+    // Crit feedback: show when crit overdrive is active and just started or periodically
+    if (battle.critOverdriveSec > 0 && state.routeCounts.crit > 0 && this.critTextCooldownSec <= 0) {
+      this.showFloatingText('暴击', camera, 0xffaa44);
+      this.critTextCooldownSec = 0.45; // Cooldown to prevent spam
+    }
+
+    // Pierce feedback: show when pierce flow is active
+    if (battle.pierceFlowSec > 0 && state.routeCounts.pierce > 0 && this.pierceTextCooldownSec <= 0) {
+      const pierceCount = Math.min(battle.pierceFlowCount, 3);
+      this.showFloatingText(`贯穿 ${pierceCount}`, camera, 0x44aaff);
+      this.pierceTextCooldownSec = 0.55;
+    }
+
+    // Dash feedback: show when dash drive is active
+    if (battle.dashDriveSec > 0 && state.routeCounts.dash > 0 && this.dashTextCooldownSec <= 0) {
+      const dashCharge = Math.min(battle.dashCharge + 1, 3);
+      this.showFloatingText(`脉冲 ${dashCharge}`, camera, 0x44ff88);
+      this.dashTextCooldownSec = 0.5;
+    }
+
+    // Update and hide expired floating texts
+    for (const text of this.floatingTexts) {
+      if (text.visible) {
+        const currentY = text.y;
+        const currentAlpha = text.alpha;
+        text.setY(currentY - 0.8);
+        text.setAlpha(currentAlpha - 0.018);
+        if (text.alpha <= 0) {
+          text.setVisible(false);
+        }
+      }
+    }
+  }
+
+  private showFloatingText(
+    content: string,
+    camera: { left: number; top: number; width: number; height: number },
+    color: number,
+  ): void {
+    // Position text near player but not blocking center
+    const offsetX = (Math.random() - 0.5) * 40;
+    const offsetY = -50 - Math.random() * 30;
+    const x = camera.width * 0.5 + offsetX;
+    const y = camera.height * 0.5 + offsetY;
+
+    let text = this.floatingTexts[this.floatingTextCursor];
+    if (!text) {
+      text = this.add.text(0, 0, '', {
+        fontFamily: 'sans-serif',
+        fontSize: '18px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3,
+      });
+      text.setDepth(100);
+      this.floatingTexts.push(text);
+    }
+
+    const colorHex = `#${color.toString(16).padStart(6, '0')}`;
+    text.setText(content);
+    text.setColor(colorHex);
+    text.setPosition(x, y);
+    text.setAlpha(1);
+    text.setVisible(true);
+    text.setScale(1);
+
+    this.floatingTextCursor = (this.floatingTextCursor + 1) % 8; // Max 8 concurrent texts
   }
 }
