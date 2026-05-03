@@ -1403,7 +1403,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-afterglow',
     name: '余热描边',
-    description: '暴击与弹速强化',
+    description: '提高暴击稳定性，更容易连续命中同一目标并叠加破绽',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1424,8 +1424,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.038,
-          projectileSpeed: 18,
+          critChance: 0.042,
+          critMultiplier: 0.12,
         },
       },
       {
@@ -1684,7 +1684,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-embershard',
     name: '余烬爆点',
-    description: '火力、暴击系统与机动的极限强化',
+    description: '强化暴击破绽收束，帮助连续暴击更快打出爆发',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -1707,9 +1707,13 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.045,
-          critMultiplier: 0.28,
+          critChance: 0.035,
+          critMultiplier: 0.18,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
       },
       {
         type: 'route',
@@ -2668,7 +2672,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-floodgate',
     name: '裂层清账',
-    description: '穿透与弹道的终极爆发',
+    description: '强化贯穿节奏，帮助裂纹更稳定累积到扩散清线',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2691,9 +2695,13 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          pierce: 2,
-          projectileSpeed: 25,
+          pierce: 1,
+          projectileSpeed: 18,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
       },
       {
         type: 'route',
@@ -3294,7 +3302,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidestep-bank',
     name: '侧返蓄窗',
-    description: '机动、冲刺与无敌的平衡提升',
+    description: '缩短穿梭冷却并延长无伤窗口，更稳定进入回切反打',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3315,9 +3323,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 14,
-          dashInterval: -0.24,
-          dashInvulnerability: 0.06,
+          dashInterval: -0.32,
+          dashInvulnerability: 0.08,
         },
       },
       {
@@ -3663,7 +3670,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-zero-window',
     name: '瞬返空档',
-    description: '穿梭系统的全方位终极强化',
+    description: '强化脉冲伤害与无伤窗口，帮助三层脉冲后打出回切反击',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3686,10 +3693,14 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.42,
-          dashInvulnerability: 0.14,
-          dashPulseDamage: 12,
+          dashInterval: -0.32,
+          dashInvulnerability: 0.10,
+          dashPulseDamage: 8,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
       {
         type: 'route',

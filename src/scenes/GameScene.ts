@@ -114,17 +114,6 @@ export class GameScene extends Phaser.Scene {
 
   private debugSyncElapsedMs = DEBUG_SYNC_INTERVAL_MS;
 
-  // Floating text system for route feedback
-  private readonly floatingTexts: Phaser.GameObjects.Text[] = [];
-
-  private floatingTextCursor = 0;
-
-  private critTextCooldownSec = 0;
-
-  private pierceTextCooldownSec = 0;
-
-  private dashTextCooldownSec = 0;
-
   private readonly debugConfig: BattleDebugConfig = {
     panelOpen: false,
     paused: false,
@@ -316,6 +305,7 @@ export class GameScene extends Phaser.Scene {
         pressureSafeWindowTravelDistance: 0,
         lateDashWindowMoments: 0,
         dashCounterMoments: 0,
+        dashCounterWindowSec: 0,
         eliteCrackSeen: false,
         eliteCrackFollowThroughMoments: 0,
         bossFirelineCoverage: 0,
@@ -371,6 +361,7 @@ export class GameScene extends Phaser.Scene {
       pressureSafeWindowTravelDistance: this.getPressureSafeWindowTravelDistance(battle),
       lateDashWindowMoments: battle.lateDashWindowMoments,
       dashCounterMoments: battle.dashCounterMoments,
+      dashCounterWindowSec: battle.dashCounterWindowSec,
       eliteCrackSeen: battle.eliteCrackSeen,
       eliteCrackFollowThroughMoments: battle.eliteCrackFollowThroughMoments,
       bossFirelineCoverage: battle.bossFirelineCoverage,
@@ -2879,6 +2870,35 @@ export class GameScene extends Phaser.Scene {
         }
       }
 
+      // 流派构筑第三轮：敌人命中瞬间特效（替代玩家周围常驻线条）
+      if (enemy.routeHitFlashSec && enemy.routeHitFlashSec > 0) {
+        const flashRatio = enemy.routeHitFlashSec / 0.18;
+        if (enemy.routeHitKind === 'crit') {
+          // 暴击：橙色爆闪 + 裂纹环扩散
+          const critFlashColor = 0xff6b2c;
+          this.graphics.fillStyle(critFlashColor, 0.25 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 4 * flashRatio);
+          this.graphics.lineStyle(2, critFlashColor, 0.6 * flashRatio);
+          const ringRadius = enemy.radius + 12 + (1 - flashRatio) * 8;
+          this.graphics.strokeCircle(screen.x, screen.y, ringRadius);
+        } else if (enemy.routeHitKind === 'pierce') {
+          // 穿透：蓝色入射/出射短痕
+          const pierceFlashColor = 0x5cb8ff;
+          this.graphics.lineStyle(2, pierceFlashColor, 0.5 * flashRatio);
+          const slashLen = enemy.radius * 0.6 * flashRatio;
+          this.graphics.lineBetween(screen.x - slashLen, screen.y - slashLen, screen.x + slashLen, screen.y + slashLen);
+          this.graphics.lineBetween(screen.x + slashLen, screen.y - slashLen, screen.x - slashLen, screen.y + slashLen);
+        } else if (enemy.routeHitKind === 'dash') {
+          // 穿梭：绿色相位涟漪
+          const dashFlashColor = 0x7aff7a;
+          this.graphics.lineStyle(1.5, dashFlashColor, 0.4 * flashRatio);
+          const rippleRadius = enemy.radius + 6 + (1 - flashRatio) * 10;
+          this.graphics.strokeCircle(screen.x, screen.y, rippleRadius);
+          this.graphics.fillStyle(dashFlashColor, 0.15 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.5);
+        }
+      }
+
       this.graphics.fillStyle(enemyFill, enemy.elite ? 0.98 : 0.95);
 
       if (enemy.elite) {
@@ -4834,88 +4854,5 @@ export class GameScene extends Phaser.Scene {
     const mixedB = Math.round(baseB + (targetB - baseB) * ratio);
 
     return (mixedR << 16) | (mixedG << 8) | mixedB;
-  }
-
-  // Route feedback floating text system
-  private renderRouteFeedbackTexts(
-    battle: BattleState,
-    camera: { left: number; top: number; width: number; height: number },
-  ): void {
-    const state = this.engine.getState();
-    const dt = 1 / 60; // Assume 60fps for cooldown calculation
-
-    // Update cooldowns
-    this.critTextCooldownSec = Math.max(0, this.critTextCooldownSec - dt);
-    this.pierceTextCooldownSec = Math.max(0, this.pierceTextCooldownSec - dt);
-    this.dashTextCooldownSec = Math.max(0, this.dashTextCooldownSec - dt);
-
-    // Crit feedback: show when crit overdrive is active and just started or periodically
-    if (battle.critOverdriveSec > 0 && state.routeCounts.crit > 0 && this.critTextCooldownSec <= 0) {
-      this.showFloatingText('暴击', camera, 0xffaa44);
-      this.critTextCooldownSec = 0.45; // Cooldown to prevent spam
-    }
-
-    // Pierce feedback: show when pierce flow is active
-    if (battle.pierceFlowSec > 0 && state.routeCounts.pierce > 0 && this.pierceTextCooldownSec <= 0) {
-      const pierceCount = Math.min(battle.pierceFlowCount, 3);
-      this.showFloatingText(`贯穿 ${pierceCount}`, camera, 0x44aaff);
-      this.pierceTextCooldownSec = 0.55;
-    }
-
-    // Dash feedback: show when dash drive is active
-    if (battle.dashDriveSec > 0 && state.routeCounts.dash > 0 && this.dashTextCooldownSec <= 0) {
-      const dashCharge = Math.min(battle.dashCharge + 1, 3);
-      this.showFloatingText(`脉冲 ${dashCharge}`, camera, 0x44ff88);
-      this.dashTextCooldownSec = 0.5;
-    }
-
-    // Update and hide expired floating texts
-    for (const text of this.floatingTexts) {
-      if (text.visible) {
-        const currentY = text.y;
-        const currentAlpha = text.alpha;
-        text.setY(currentY - 0.8);
-        text.setAlpha(currentAlpha - 0.018);
-        if (text.alpha <= 0) {
-          text.setVisible(false);
-        }
-      }
-    }
-  }
-
-  private showFloatingText(
-    content: string,
-    camera: { left: number; top: number; width: number; height: number },
-    color: number,
-  ): void {
-    // Position text near player but not blocking center
-    const offsetX = (Math.random() - 0.5) * 40;
-    const offsetY = -50 - Math.random() * 30;
-    const x = camera.width * 0.5 + offsetX;
-    const y = camera.height * 0.5 + offsetY;
-
-    let text = this.floatingTexts[this.floatingTextCursor];
-    if (!text) {
-      text = this.add.text(0, 0, '', {
-        fontFamily: 'sans-serif',
-        fontSize: '18px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 3,
-      });
-      text.setDepth(100);
-      this.floatingTexts.push(text);
-    }
-
-    const colorHex = `#${color.toString(16).padStart(6, '0')}`;
-    text.setText(content);
-    text.setColor(colorHex);
-    text.setPosition(x, y);
-    text.setAlpha(1);
-    text.setVisible(true);
-    text.setScale(1);
-
-    this.floatingTextCursor = (this.floatingTextCursor + 1) % 8; // Max 8 concurrent texts
   }
 }

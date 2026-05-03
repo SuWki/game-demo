@@ -484,6 +484,7 @@ export class RunEngine {
     battle.remainingSec = Math.max(0, battle.remainingSec - simulationDt);
     battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - simulationDt);
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - simulationDt);
+    battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - simulationDt);
     battle.eliteCrackWindowSec = Math.max(0, battle.eliteCrackWindowSec - simulationDt);
     battle.eliteBreachFlashSec = Math.max(0, battle.eliteBreachFlashSec - simulationDt);
     battle.eliteBreachCalloutCooldownSec = Math.max(0, battle.eliteBreachCalloutCooldownSec - simulationDt);
@@ -786,6 +787,7 @@ export class RunEngine {
       playerNearMissCooldownSec: 0,
       lateDashWindowMoments: 0,
       dashCounterMoments: 0,
+      dashCounterWindowSec: 0,
       eliteCrackSeen: false,
       eliteCrackFollowThroughMoments: 0,
       bossFirelineCoverage: 0,
@@ -2518,13 +2520,43 @@ export class RunEngine {
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
     this.enqueueAudio('dash');
 
+    // 流派构筑第三轮：开启回切反打窗口
+    battle.dashCounterWindowSec = 1.2;
+
     for (const enemy of battle.enemies) {
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
       if (distance <= pulseRadius) {
         enemy.hp -= pulseDamage;
         dashPulseHits += 1;
-        // 流派构筑第二轮：脉冲命中时给敌人添加 dashMark
+        // 流派构筑第三轮：脉冲层数积累与回切标记
+        const oldStacks = enemy.dashPulseStacks ?? 0;
         enemy.dashMarkSec = 1.5;
+        enemy.routeHitFlashSec = 0.16;
+        enemy.routeHitKind = 'dash';
+        enemy.dashPulseStacks = Math.min(3, oldStacks + 1);
+
+        // 3层脉冲触发回切伤害
+        if (enemy.dashPulseStacks >= 3) {
+          const returnDamage = 6;
+          enemy.hp -= returnDamage;
+          enemy.dashPulseStacks = 0;
+          // 视觉反馈
+          this.createCombatPulse(battle, {
+            x: enemy.x,
+            y: enemy.y,
+            radius: enemy.radius + 20,
+            lifeSec: 0.20,
+            color: 0x7aff7a,
+            secondaryColor: 0xc8ffc8,
+            fillAlpha: 0.10,
+            strokeAlpha: 0.82,
+            strokeWidth: 2.5,
+            growthPerSec: 200,
+            innerRadiusRatio: 0.5,
+          });
+          this.enqueueAudio('dashHit');
+        }
+
         this.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
           flashSec: 0.18,
           kick: 12,
@@ -2627,6 +2659,10 @@ export class RunEngine {
         critMarkSec: 0,
         pierceMarkSec: 0,
         dashMarkSec: 0,
+        // 流派构筑第三轮：层数积累初始化
+        critMarkStacks: 0,
+        pierceMarkStacks: 0,
+        dashPulseStacks: 0,
       });
       this.createCombatPulse(battle, {
         x: view.left + view.width * 0.5,
@@ -3503,6 +3539,10 @@ export class RunEngine {
       critMarkSec: 0,
       pierceMarkSec: 0,
       dashMarkSec: 0,
+      // 流派构筑第三轮：层数积累初始化
+      critMarkStacks: 0,
+      pierceMarkStacks: 0,
+      dashPulseStacks: 0,
     };
   }
 
@@ -3921,12 +3961,51 @@ export class RunEngine {
           battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + this.getCritOverdriveDurationGain());
           battle.critChain += 1;
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
-          // 流派构筑第二轮：暴击命中时给敌人添加 critMark
-          const hadCritMark = enemy.critMarkSec > 0; // 先读取旧标记状态
-          enemy.critMarkSec = 2.5; // 再刷新新标记
-          // 如果被标记敌人再次被暴击，给予额外收益（只基于旧标记，避免同一次暴击立即受益）
+          // 流派构筑第三轮：暴击破绽承接机制
+          const hadCritMark = enemy.critMarkSec > 0;
+          const oldStacks = enemy.critMarkStacks ?? 0;
+
+          enemy.critMarkSec = 2.4;
+          enemy.routeHitFlashSec = 0.18;
+          enemy.routeHitKind = 'crit';
+
+          if (hadCritMark) {
+            // 已带破绽：层数+1，给予小收益
+            enemy.critMarkStacks = Math.min(3, oldStacks + 1);
+            const chainBonus = 1 + (enemy.critMarkStacks * 0.08);
+            enemy.hp -= bullet.damage * (chainBonus - 1);
+          } else {
+            // 新破绽：初始化1层
+            enemy.critMarkStacks = 1;
+          }
+
+          // 3层破绽触发爆发
+          if (enemy.critMarkStacks >= 3) {
+            const bossMultiplier = enemy.elite ? 0.45 : 1.0;
+            const ruptureDamage = 8 * bossMultiplier;
+            enemy.hp -= ruptureDamage;
+            enemy.critMarkStacks = 0;
+            enemy.critMarkBurstReady = true;
+            // 视觉和音效反馈
+            this.createCombatPulse(battle, {
+              x: enemy.x,
+              y: enemy.y,
+              radius: enemy.radius + 24,
+              lifeSec: 0.22,
+              color: 0xff6b2c,
+              secondaryColor: 0xffaa5e,
+              fillAlpha: 0.12,
+              strokeAlpha: 0.88,
+              strokeWidth: 3,
+              growthPerSec: 220,
+              innerRadiusRatio: 0.55,
+            });
+            this.enqueueAudio('critSplash');
+          }
+
+          // 原承接收益（低层兼容）
           if (hadCritMark && battle.critChain >= 2) {
-            const bonusDamage = bullet.damage * 0.15;
+            const bonusDamage = bullet.damage * 0.10;
             enemy.hp -= bonusDamage;
           }
           if (critStage === 'committed' || critStage === 'matured') {
@@ -3976,8 +4055,32 @@ export class RunEngine {
 
         if (bullet.routeFocus === 'pierce') {
           const laneScore = this.getPierceLaneScore(battle, enemy);
-          // 流派构筑第二轮：穿透命中时给敌人添加 pierceMark
+          // 流派构筑第三轮：穿透裂纹承接机制
+          const wasMarked = enemy.pierceMarkSec > 0;
+          const oldStacks = enemy.pierceMarkStacks ?? 0;
+
           enemy.pierceMarkSec = 1.8;
+          enemy.routeHitFlashSec = 0.16;
+          enemy.routeHitKind = 'pierce';
+          enemy.pierceChainHits = Math.max(enemy.pierceChainHits ?? 0, bullet.hitCount + 1);
+
+          if (wasMarked && bullet.hitCount >= 1) {
+            // 再次贯穿裂纹敌人：层数+1，获得清线收益
+            enemy.pierceMarkStacks = Math.min(3, oldStacks + 1);
+            const chainBonus = enemy.elite ? 1.08 : 1.16;
+            bullet.damage *= chainBonus;
+
+            // 3层裂纹触发裂纹扩散
+            if (enemy.pierceMarkStacks >= 3) {
+              this.triggerPierceCrack(battle, enemy, bullet);
+              enemy.pierceMarkStacks = 0;
+            }
+          } else if (!wasMarked) {
+            // 新裂纹：初始化1层
+            enemy.pierceMarkStacks = 1;
+          }
+
+          // 原穿透流程
           if (laneScore >= 1.2 || bullet.hitCount >= 2) {
             const pierceChain = this.registerPierceFlow(battle, {
               laneScore,
@@ -4006,6 +4109,27 @@ export class RunEngine {
               spinRate: 5.2,
             });
           }
+        }
+
+        // 流派构筑第三轮：回切反打窗口命中收益
+        if (battle.dashCounterWindowSec > 0 && enemy.dashMarkSec > 0) {
+          const counterBonus = 1.12;
+          enemy.hp -= bullet.damage * (counterBonus - 1);
+          enemy.routeHitFlashSec = 0.14;
+          enemy.routeHitKind = 'dash';
+          this.createCombatPulse(battle, {
+            x: enemy.x,
+            y: enemy.y,
+            radius: enemy.radius + 14,
+            lifeSec: 0.12,
+            color: 0x7aff7a,
+            secondaryColor: 0xc8ffc8,
+            fillAlpha: 0.08,
+            strokeAlpha: 0.72,
+            strokeWidth: 2,
+            growthPerSec: 180,
+            innerRadiusRatio: 0.6,
+          });
         }
 
         this.applyDashDriveHitFollowThrough(
@@ -4165,6 +4289,8 @@ export class RunEngine {
       enemy.critMarkSec = Math.max(0, enemy.critMarkSec - dt);
       enemy.pierceMarkSec = Math.max(0, enemy.pierceMarkSec - dt);
       enemy.dashMarkSec = Math.max(0, enemy.dashMarkSec - dt);
+      // 流派构筑第三轮：命中特效递减
+      enemy.routeHitFlashSec = Math.max(0, (enemy.routeHitFlashSec ?? 0) - dt);
       enemy.hitOffsetX *= Math.max(0, 1 - dt * 14);
       enemy.hitOffsetY *= Math.max(0, 1 - dt * 14);
       if (enemy.hp <= 0) {
@@ -5816,6 +5942,58 @@ export class RunEngine {
       angle: impactAngle,
       spinRate: enemy.elite ? 5.4 : 4.2,
     });
+  }
+
+  // 流派构筑第三轮：穿透裂纹扩散触发
+  private triggerPierceCrack(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    bullet: BattleState['bullets'][number],
+  ): void {
+    const crackDamage = enemy.elite ? 5 : 8;
+    const bulletDirX = bullet.vx / Math.max(1, Math.hypot(bullet.vx, bullet.vy));
+    const bulletDirY = bullet.vy / Math.max(1, Math.hypot(bullet.vx, bullet.vy));
+
+    // 对同一直线附近敌人造成裂纹伤害
+    for (const target of battle.enemies) {
+      if (target.id === enemy.id || target.hp <= 0) {
+        continue;
+      }
+      const dx = target.x - enemy.x;
+      const dy = target.y - enemy.y;
+      const along = dx * bulletDirX + dy * bulletDirY;
+      const lateral = Math.abs(dx * bulletDirY - dy * bulletDirX);
+
+      // 后方扇形区域内的敌人
+      if (along >= 0 && along <= 140 && lateral <= target.radius + 50) {
+        const damage = target.elite ? crackDamage * 0.35 : crackDamage;
+        target.hp -= damage;
+        target.routeHitFlashSec = 0.14;
+        target.routeHitKind = 'pierce';
+        target.pierceMarkSec = 1.2;
+      }
+    }
+
+    // 视觉反馈
+    this.createCombatPulse(battle, {
+      x: enemy.x,
+      y: enemy.y,
+      radius: enemy.radius + 36,
+      lifeSec: 0.24,
+      color: 0x5cb8ff,
+      secondaryColor: 0xccebff,
+      fillAlpha: 0.08,
+      strokeAlpha: 0.72,
+      strokeWidth: 2.5,
+      growthPerSec: 240,
+      innerRadiusRatio: 0.4,
+      spokeCount: 6,
+      spokeLength: 18,
+      angle: Math.atan2(bulletDirY, bulletDirX),
+      spinRate: 3.2,
+    });
+
+    this.enqueueAudio('pierceEcho');
   }
 
   private trySpawnPierceEchoShots(

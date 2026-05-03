@@ -325,6 +325,8 @@ export interface PlayerStats {
   regeneration: number;
 }
 
+export type RouteHitKind = 'crit' | 'pierce' | 'dash';
+
 export interface EnemyState {
   id: number;
   x: number;
@@ -354,6 +356,15 @@ export interface EnemyState {
   critMarkSec: number;
   pierceMarkSec: number;
   dashMarkSec: number;
+  // 流派构筑第三轮：层数积累与命中反馈
+  critMarkStacks?: number;
+  critMarkBurstReady?: boolean;
+  pierceMarkStacks?: number;
+  pierceChainHits?: number;
+  dashPulseStacks?: number;
+  // 命中瞬间特效
+  routeHitFlashSec?: number;
+  routeHitKind?: RouteHitKind;
 }
 
 export interface BulletState {
@@ -514,6 +525,7 @@ export interface BattleState {
   playerNearMissCooldownSec: number;
   lateDashWindowMoments: number;
   dashCounterMoments: number;
+  dashCounterWindowSec: number;
   eliteCrackSeen: boolean;
   eliteCrackFollowThroughMoments: number;
   bossFirelineCoverage: number;
@@ -673,6 +685,7 @@ export interface BattleDebugSnapshot {
   pressureSafeWindowTravelDistance: number;
   lateDashWindowMoments: number;
   dashCounterMoments: number;
+  dashCounterWindowSec: number;
   eliteCrackSeen: boolean;
   eliteCrackFollowThroughMoments: number;
   bossFirelineCoverage: number;
