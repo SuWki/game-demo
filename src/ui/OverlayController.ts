@@ -794,7 +794,7 @@ export class OverlayController {
 
   private getNodeCardDescription(node: NodeOption): string {
     if (node.type === 'battle') {
-      return `打一场${getBattleEncounterLabel(node.templateId ?? 'elimination')}，继续推进。`;
+      return node.description;
     }
     if (node.type === 'upgrade') {
       return node.isFinalPrep ? '拿完直接进 Boss。' : '补 1 项强化再继续推进。';
@@ -1028,8 +1028,10 @@ export class OverlayController {
   private decorateTooltipTerms(text: string): string {
     const tooltipTerms: Array<[string, string]> = [
       ['穿梭冷却', this.getFocusTooltip('穿梭')],
-      ['穿梭冷却', this.getFocusTooltip('穿梭')],
+      ['无伤窗口', this.getFocusTooltip('无伤')],
+      ['脉冲伤害', this.getFocusTooltip('脉冲')],
       ['暴击率', this.getFocusTooltip('暴击')],
+      ['暴击伤害', this.getFocusTooltip('爆伤')],
       ['暴击', this.getFocusTooltip('暴击')],
       ['爆伤', this.getFocusTooltip('爆伤')],
       ['穿透', this.getFocusTooltip('穿透')],
@@ -1070,12 +1072,12 @@ export class OverlayController {
 
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
-      暴击: '提高打出高伤害的概率。',
-      爆伤: '提高暴击时的伤害倍率。',
-      穿透: '子弹命中后继续穿过敌人。',
-      穿梭: '缩短穿梭间隔，更容易换位反打。',
-      脉冲: '穿梭后释放短促范围伤害。',
-      无伤: '延长穿梭后的短暂无伤窗口。',
+      暴击: '每次子弹命中都会独立判定。判定成功时伤害变高，并会在敌人身上留下橙色破绽标记；再次打中破绽才是暴击路线的承接收益。',
+      爆伤: '只影响已经触发暴击的那次命中，不提高触发概率。',
+      穿透: '子弹命中敌人后不会立刻消失，会继续打到后方目标。敌人越站成一线，穿透收益越高；蓝色裂纹表示它刚被穿透命中过。',
+      穿梭: '穿梭是自动触发的相位脉冲，不需要按键。冷却归零时角色会短暂闪动并释放一次近身脉冲；冷却越短，触发越频繁。',
+      脉冲: '穿梭触发时在角色附近释放的短促范围伤害。绿色脉冲标记表示敌人被这次穿梭脉冲擦到。',
+      无伤: '穿梭触发后的极短保护时间，只在自动脉冲刚发生后生效，用来穿过危险窗或回切反打。',
       扩面: '增加弹幕覆盖，适合清小怪。',
       射速: '更快开火，回报链更连续。',
     };

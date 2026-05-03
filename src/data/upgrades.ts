@@ -157,6 +157,72 @@ const SINGLE_PRIMARY_MODIFIER_LIMITS: Partial<Record<keyof StatModifiers, number
   regeneration: 0.24,
 };
 
+const GENERIC_RARITY_BASELINES: Partial<Record<keyof StatModifiers, Record<UpgradeRarity, number>>> = {
+  maxHp: {
+    common: 12,
+    uncommon: 16,
+    rare: 21,
+    epic: 27,
+    legendary: 34,
+  },
+  damage: {
+    common: 3,
+    uncommon: 4,
+    rare: 5,
+    epic: 6,
+    legendary: 7,
+  },
+  fireRate: {
+    common: 0.12,
+    uncommon: 0.16,
+    rare: 0.2,
+    epic: 0.25,
+    legendary: 0.3,
+  },
+  projectileSpeed: {
+    common: 26,
+    uncommon: 34,
+    rare: 44,
+    epic: 56,
+    legendary: 72,
+  },
+  critChance: {
+    common: 0.05,
+    uncommon: 0.07,
+    rare: 0.09,
+    epic: 0.11,
+    legendary: 0.13,
+  },
+  critMultiplier: {
+    common: 0.22,
+    uncommon: 0.3,
+    rare: 0.4,
+    epic: 0.55,
+    legendary: 0.7,
+  },
+  multishot: {
+    common: 1,
+    uncommon: 1,
+    rare: 2,
+    epic: 2,
+    legendary: 3,
+  },
+  moveSpeed: {
+    common: 16,
+    uncommon: 20,
+    rare: 25,
+    epic: 31,
+    legendary: 38,
+  },
+  regeneration: {
+    common: 0.06,
+    uncommon: 0.08,
+    rare: 0.1,
+    epic: 0.13,
+    legendary: 0.16,
+  },
+};
+
 function estimateStatsOnlyValue(modifiers: StatModifiers): number {
   return estimateUpgradeValue([
     {
@@ -187,6 +253,16 @@ function pickGenericPrimaryModifier(sourceId: string, modifiers: StatModifiers):
   }
 
   return bestKey ?? 'damage';
+}
+
+export function getUpgradePrimaryModifierKey(archetype: UpgradeArchetype): keyof StatModifiers | null {
+  const modifiers = collectStatModifiers(archetype.effects);
+  const modifierEntries = Object.entries(modifiers).filter(([, rawValue]) => typeof rawValue === 'number' && rawValue !== 0);
+  if (modifierEntries.length === 0) {
+    return null;
+  }
+
+  return pickRoutePriorityModifier(archetype.routeId, modifiers) ?? pickGenericPrimaryModifier(archetype.id, modifiers);
 }
 
 function pickRoutePriorityModifier(
@@ -264,6 +340,33 @@ function capSingleModifierValue(key: keyof StatModifiers, value: number, rarity:
     return quantizeModifier(key, Math.max(value, -scaledLimit));
   }
   return quantizeModifier(key, Math.min(value, scaledLimit));
+}
+
+function applyGenericRarityBaseline(effects: ContentEffect[], rarity: UpgradeRarity): ContentEffect[] {
+  return effects.map((effect) => {
+    if (effect.type !== 'stats') {
+      return effect;
+    }
+
+    const modifierEntries = Object.entries(effect.modifiers).filter(([, rawValue]) => typeof rawValue === 'number' && rawValue !== 0);
+    if (modifierEntries.length !== 1) {
+      return effect;
+    }
+
+    const [rawKey] = modifierEntries[0];
+    const key = rawKey as keyof StatModifiers;
+    const baseline = GENERIC_RARITY_BASELINES[key]?.[rarity];
+    if (typeof baseline !== 'number') {
+      return effect;
+    }
+
+    return {
+      type: 'stats',
+      modifiers: {
+        [key]: baseline,
+      },
+    };
+  });
 }
 
 function collectStatModifiers(effects: ContentEffect[]): StatModifiers {
@@ -359,21 +462,21 @@ function formatModifierLabel(key: keyof StatModifiers, value: number): string {
     case 'projectileSpeed':
       return `弹速 ${sign}${Math.round(value)}`;
     case 'critChance':
-      return `暴击率 ${sign}${Math.round(value * 100)}%（每次命中概率触发更高伤害）`;
+      return `暴击率 ${sign}${Math.round(value * 100)}%`;
     case 'critMultiplier':
       return `暴击伤害 ${sign}${Math.round(value * 100)}%`;
     case 'pierce':
-      return `穿透 ${sign}${Math.round(value)}（命中后继续打击后方敌人）`;
+      return `穿透 ${sign}${Math.round(value)}`;
     case 'multishot':
       return `额外弹道 ${sign}${Math.round(value)}`;
     case 'moveSpeed':
       return `移速 ${sign}${Math.round(value)}`;
     case 'dashInterval':
-      return `穿梭冷却 ${seconds(value)}（缩短下一次自动脉冲的等待时间）`;
+      return `穿梭冷却 ${seconds(value)}`;
     case 'dashPulseDamage':
       return `脉冲伤害 ${sign}${Math.round(value)}`;
     case 'dashInvulnerability':
-      return `无伤窗口 ${seconds(value)}（穿梭触发后短时间不受伤害）`;
+      return `无伤窗口 ${seconds(value)}`;
     case 'regeneration':
       return `每10秒回复 ${sign}${Math.round(value * 10)}`;
     default:
@@ -3613,7 +3716,10 @@ export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeR
   const effectsWithoutInstantHeal = scaledEffects.filter((effect) => effect.type !== 'heal');
   const effects =
     archetype.category === 'generic'
-      ? normalizeEffectsToSingleStat(archetype.id, effectsWithoutInstantHeal, archetype.routeId, rarity)
+      ? applyGenericRarityBaseline(
+          normalizeEffectsToSingleStat(archetype.id, effectsWithoutInstantHeal, archetype.routeId, rarity),
+          rarity,
+        )
       : effectsWithoutInstantHeal;
   const valueBreakdown = estimateUpgradeValue(effects);
   const valueBucket = getUpgradeValueBucket(valueBreakdown.total);

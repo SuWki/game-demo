@@ -1,7 +1,7 @@
 import { getUpgradeRarityWeights } from './balance';
 import { EVENT_CATALOG, getEventCatalogByKind } from './events';
 import { ROUTES } from './routes';
-import { buildUpgradeChoice, UPGRADE_ARCHETYPES } from './upgrades';
+import { buildUpgradeChoice, getUpgradePrimaryModifierKey, UPGRADE_ARCHETYPES } from './upgrades';
 import type {
   AnomalyClassId,
   ContentEffect,
@@ -330,6 +330,81 @@ function limitRouteCardsInUpgradeChoices(
   }
 }
 
+function limitDuplicateGenericPrimaryStats(
+  picks: UpgradeArchetype[],
+  genericPool: Array<{ item: UpgradeArchetype; weight: number }>,
+  context: ContentContext,
+): void {
+  const seenPrimaryStats = new Set<string>();
+  const pickedIds = () => new Set(picks.map((pick) => pick.id));
+
+  for (let index = 0; index < picks.length; index += 1) {
+    const pick = picks[index];
+    if (pick.category !== 'generic') {
+      continue;
+    }
+
+    const primaryKey = getUpgradePrimaryModifierKey(pick);
+    if (!primaryKey) {
+      continue;
+    }
+
+    if (!seenPrimaryStats.has(primaryKey)) {
+      seenPrimaryStats.add(primaryKey);
+      continue;
+    }
+
+    const replacement = genericPool.find((entry) => {
+      if (pickedIds().has(entry.item.id) || !canOfferUpgrade(entry.item, context)) {
+        return false;
+      }
+      const replacementPrimaryKey = getUpgradePrimaryModifierKey(entry.item);
+      return replacementPrimaryKey !== null && !seenPrimaryStats.has(replacementPrimaryKey);
+    });
+
+    if (replacement) {
+      picks[index] = replacement.item;
+      const replacementPrimaryKey = getUpgradePrimaryModifierKey(replacement.item);
+      if (replacementPrimaryKey) {
+        seenPrimaryStats.add(replacementPrimaryKey);
+      }
+    } else {
+      picks.splice(index, 1);
+      index -= 1;
+    }
+  }
+
+  while (picks.length < 3) {
+    const replacement = genericPool.find((entry) => {
+      if (pickedIds().has(entry.item.id) || !canOfferUpgrade(entry.item, context)) {
+        return false;
+      }
+      const replacementPrimaryKey = getUpgradePrimaryModifierKey(entry.item);
+      return replacementPrimaryKey !== null && !seenPrimaryStats.has(replacementPrimaryKey);
+    });
+
+    if (!replacement) {
+      break;
+    }
+
+    picks.push(replacement.item);
+    const replacementPrimaryKey = getUpgradePrimaryModifierKey(replacement.item);
+    if (replacementPrimaryKey) {
+      seenPrimaryStats.add(replacementPrimaryKey);
+    }
+  }
+}
+
+function stabilizeUpgradeChoicePicks(
+  picks: UpgradeArchetype[],
+  genericPool: Array<{ item: UpgradeArchetype; weight: number }>,
+  context: ContentContext,
+): void {
+  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+  limitDuplicateGenericPrimaryStats(picks, genericPool, context);
+  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+}
+
 function pickUpgradeRarity(
   context: ContentContext,
   source: UpgradeSource,
@@ -448,7 +523,7 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
     appendUniquePicks(picks, genericPool, 3 - picks.length);
   }
 
-  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+  stabilizeUpgradeChoicePicks(picks, genericPool, context);
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, 'levelUp', archetype)));
 }
@@ -597,8 +672,8 @@ export function rollUpgradeChoices(
         );
       }
 
-      // 所有升级路径都必须执行路线牌最多1张的兜底
-      limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+      // 所有升级路径都必须执行路线牌最多1张和同属性不重复的兜底
+      stabilizeUpgradeChoicePicks(picks, genericPool, context);
 
       return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
     }
@@ -702,6 +777,8 @@ export function rollUpgradeChoices(
     if (picks.length < 3) {
       appendUniquePicks(picks, genericPool, 3 - picks.length);
     }
+
+    stabilizeUpgradeChoicePicks(picks, genericPool, context);
 
     return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
   }
@@ -843,7 +920,7 @@ export function rollUpgradeChoices(
     picks.push(...fallback);
   }
 
-  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+  stabilizeUpgradeChoicePicks(picks, genericPool, context);
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
 }
