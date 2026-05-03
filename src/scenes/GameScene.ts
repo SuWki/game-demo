@@ -1225,6 +1225,15 @@ export class GameScene extends Phaser.Scene {
 
   private syncOverlay(): void {
     const state = this.engine.getState();
+    if (state.status === 'bossEnding' && state.bossEnding) {
+      const panelKey = `bossEnding:${state.bossEnding.outcome}:${state.bossEnding.label}`;
+      if (panelKey !== this.lastPanelKey) {
+        this.services.overlay.showBossEnding(state.bossEnding);
+        this.lastPanelKey = panelKey;
+      }
+      return;
+    }
+
     const hudSnapshot = this.createHudSnapshot();
     const hudKey = JSON.stringify(hudSnapshot);
     if (hudKey !== this.lastHudKey) {

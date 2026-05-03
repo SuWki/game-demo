@@ -27,6 +27,7 @@ const summary = {
   bossEndingSeen: false,
   bossEndingText: null,
   bossEndingScreenshot: null,
+  bossEndingDebugSeen: false,
   panelBlocked: false,
   steps: 0,
   maxSteps: 1200,
@@ -49,20 +50,16 @@ async function closeUpgradeOrOverlayIfPresent(page) {
 }
 
 async function waitForBossEnding(page) {
-  // 等待 bossEnding 状态出现
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 10; i++) {
     const debugState = await page.evaluate(() => {
-      const el = document.querySelector('[data-debug-state]');
-      return el ? el.getAttribute('data-debug-state') : null;
+      if (typeof window.__pilotBattleDebug === 'function') {
+        return window.__pilotBattleDebug();
+      }
+      return null;
     });
 
-    if (debugState) {
-      try {
-        const state = JSON.parse(debugState);
-        if (state.status === 'bossEnding' && state.bossEnding) {
-          return state.bossEnding;
-        }
-      } catch {}
+    if (debugState?.status === 'bossEnding') {
+      return debugState.bossEnding ?? { label: 'bossEnding' };
     }
     await page.waitForTimeout(100);
   }
@@ -97,9 +94,9 @@ async function run() {
   fs.mkdirSync(outputDir, { recursive: true });
 
   const browser = await chromium.launch({
-    headless: false,
+    headless: true,
     executablePath,
-    args: ['--window-size=1280,720'],
+    args: ['--window-size=1280,720', '--use-gl=angle', '--use-angle=swiftshader'],
   });
 
   const context = await browser.newContext({
@@ -124,21 +121,18 @@ async function run() {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
 
-  // 点击开始游戏
-  const startBtn = page.locator('button').filter({ hasText: /开始游戏|Start/ }).first();
-  if ((await startBtn.count()) > 0) {
-    await startBtn.click();
-    await page.waitForTimeout(600);
-  }
-
-  // 使用 debug 面板直接启动 Boss 战
   console.log(`启动 Boss 战: ${bossId}`);
-  await page.evaluate((id) => {
-    window.gameScene?.updateDebugConfig({
-      templateId: id,
-      phase: 'finalBattle',
-    });
+  const entryResult = await page.evaluate((id) => {
+    if (typeof window.__pilotQaForceBoss === 'function') {
+      window.__pilotQaForceBoss(id);
+      return { method: '__pilotQaForceBoss', triggered: true };
+    }
+    return { method: 'none', triggered: false };
   }, bossId);
+
+  if (!entryResult.triggered) {
+    throw new Error('__pilotQaForceBoss 不可用，无法启动 Boss QA');
+  }
   await page.waitForTimeout(1000);
 
   // 关闭可能出现的面板
@@ -161,10 +155,11 @@ async function run() {
     // 检查是否进入 bossEnding 状态
     const bossEnding = await waitForBossEnding(page);
     if (bossEnding) {
+      summary.bossEndingDebugSeen = true;
       console.log('检测到 bossEnding 状态:', bossEnding.label);
 
       // 等待 UI 显示
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
 
       // 捕获 Boss 收尾画面
       const capture = await captureBossEnding(page);
