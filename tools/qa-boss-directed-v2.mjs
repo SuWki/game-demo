@@ -35,7 +35,7 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     const choices = await page.locator('[data-choice]').all();
     if (choices.length > 0) {
       await choices[0].click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(600);
     }
   }
 
@@ -45,7 +45,7 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     const choices = await page.locator('[data-upgrade-choice]').all();
     if (choices.length > 0) {
       await choices[0].click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(600);
     }
   }
 
@@ -55,7 +55,7 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     const options = await page.locator('[data-event-option]').all();
     if (options.length > 0) {
       await options[0].click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(600);
     }
   }
 
@@ -65,7 +65,7 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     const choices = await page.locator('[data-node-choice]').all();
     if (choices.length > 0) {
       await choices[0].click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(600);
     }
   }
 
@@ -73,7 +73,7 @@ async function closeUpgradeOrOverlayIfPresent(page) {
   const resumeBtn = await page.locator('[data-action="resume"]').count();
   if (resumeBtn > 0) {
     await page.locator('[data-action="resume"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
   }
 
   // 检查结果页/重开按钮（避免提前结束）
@@ -82,6 +82,9 @@ async function closeUpgradeOrOverlayIfPresent(page) {
     // 如果结果页出现，说明战斗已结束，不再关闭
     return 'result';
   }
+
+  // 额外等待确保 DOM 更新完成
+  await page.waitForTimeout(200);
 
   return 'ok';
 }
@@ -190,17 +193,28 @@ async function main() {
         break;
       }
 
-      // 检查当前是否有面板遮挡
-      const hasPanel = await page.evaluate(() => {
-        const choicePanel = document.querySelector('[data-choice], [data-upgrade-choice], [data-event-option], [data-node-choice]');
-        const overlay = document.querySelector('.upgrade-overlay, .event-overlay, .node-overlay');
-        return !!(choicePanel || overlay);
-      });
+      // 增加额外等待确保 DOM 完全更新
+      await page.waitForTimeout(300);
+
+      // 检查当前是否有面板遮挡 - 使用 page.locator 重新查询以确保准确性
+      const hasPanel = await page.locator('[data-choice], [data-upgrade-choice], [data-event-option], [data-node-choice], .upgrade-overlay, .event-overlay, .node-overlay').count() > 0;
 
       if (hasPanel) {
-        summary.panelBlockedMoments += 1;
-        summary.panelBlockingLog.push({ step, status: 'panel_blocking' });
-        panelWasBlocking = true;
+        // 再次尝试关闭面板
+        await closeUpgradeOrOverlayIfPresent(page);
+        await page.waitForTimeout(300);
+
+        // 再次检查面板是否仍然存在
+        const stillHasPanel = await page.locator('[data-choice], [data-upgrade-choice], [data-event-option], [data-node-choice], .upgrade-overlay, .event-overlay, .node-overlay').count() > 0;
+
+        if (stillHasPanel) {
+          summary.panelBlockedMoments += 1;
+          summary.panelBlockingLog.push({ step, status: 'panel_blocking' });
+          panelWasBlocking = true;
+        } else {
+          summary.panelBlockingLog.push({ step, status: 'panel_cleared_after_retry' });
+          panelWasBlocking = false;
+        }
       } else {
         if (panelWasBlocking) {
           summary.panelBlockingLog.push({ step, status: 'panel_cleared' });
