@@ -1650,39 +1650,30 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-branch-ignite',
     name: '借爆并焰',
-    description: '暴击、射速与机动提升，并修复损伤',
+    description: '暴击命中后概率触发额外破绽标记，为后续连击铺垫',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge', 'redirect'],
+    tags: ['bridge'],
     selection: {
-      baseWeight: 1.88,
+      baseWeight: 2.2,
       minRound: 2,
       maxRound: 4,
       phaseBonuses: {
-        mid: 1.75,
-        late: 1,
+        mid: 1.5,
+        late: 0.8,
       },
-      hintedRouteBonus: 0.04,
-      dominantRouteBonus: 0.12,
-      committedRouteBonus: 0.08,
-      offRouteMultiplier: 2.26,
+      hintedRouteBonus: 1.8,
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.4,
+      offRouteMultiplier: 0.35,
       excludeFromFinalPrep: true,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.065,
-          critMultiplier: 0.25,
+          critChance: 0.055,
         },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
       },
       {
         type: 'route',
@@ -2958,7 +2949,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-brush',
     name: '擦身推进',
-    description: '快速换位、擦身或回切时触发短暂脉冲收益',
+    description: '获得基础脉冲伤害能力，穿梭冷却归零时自动触发',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2978,8 +2969,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 6,
-          dashInterval: -0.36,
+          dashPulseDamage: 5,
         },
       },
       {
@@ -3270,7 +3260,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-loop',
     name: '净帧循环',
-    description: '穿梭脉冲与冷却强化',
+    description: '缩短穿梭冷却并延长无伤窗口，更频繁触发相位脉冲',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3291,9 +3281,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashPulseDamage: 6,
-          dashInterval: -0.36,
-          dashInvulnerability: 0.08,
+          dashInterval: -0.42,
+          dashInvulnerability: 0.06,
         },
       },
       {
@@ -3568,7 +3557,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rethread',
     name: '回线续拍',
-    description: '穿梭频率、脉冲与无伤窗口的强力爆发',
+    description: '穿梭频率与脉冲伤害的短窗爆发组合',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3589,9 +3578,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          dashInterval: -0.42,
-          dashInvulnerability: 0.08,
-          dashPulseDamage: 5,
+          dashInterval: -0.36,
+          dashPulseDamage: 4,
         },
       },
       {
