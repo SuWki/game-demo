@@ -488,6 +488,8 @@ export class RunEngine {
     battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - simulationDt);
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - simulationDt);
     battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - simulationDt);
+    // crit-crownfire: 破绽爆发后短时收益窗口递减
+    battle.critBurstBonusSec = Math.max(0, battle.critBurstBonusSec - simulationDt);
     battle.eliteCrackWindowSec = Math.max(0, battle.eliteCrackWindowSec - simulationDt);
     battle.eliteBreachFlashSec = Math.max(0, battle.eliteBreachFlashSec - simulationDt);
     battle.eliteBreachCalloutCooldownSec = Math.max(0, battle.eliteBreachCalloutCooldownSec - simulationDt);
@@ -812,6 +814,12 @@ export class RunEngine {
       dashSidestepBankActive: this.state.activeRoutePerks?.dashSidestepBank ?? false,
       dashZeroWindowReady: this.state.activeRoutePerks?.dashZeroWindow ?? false,
       dashAfterimageReady: this.state.activeRoutePerks?.dashAfterimage ?? false,
+      // Crit 关键牌战斗状态
+      critAfterglowActive: this.state.activeRoutePerks?.critAfterglow ?? false,
+      critEmbershardActive: this.state.activeRoutePerks?.critEmbershard ?? false,
+      critCrownfireReady: this.state.activeRoutePerks?.critCrownfire ?? false,
+      critBurstBonusSec: 0,
+      critBurstBonusRatio: 0,
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
@@ -2628,13 +2636,27 @@ export class RunEngine {
         enemy.dashMarkSec = 1.5;
         enemy.routeHitFlashSec = 0.16;
         enemy.routeHitKind = 'dash';
-        enemy.dashPulseStacks = Math.min(3, oldStacks + 1);
+
+        // dash-brush: 更容易叠第一层标记（第一层直接给2层）
+        const stackGain = (oldStacks === 0 && battle.dashBrushActive) ? 2 : 1;
+        enemy.dashPulseStacks = Math.min(3, oldStacks + stackGain);
+
+        // dash-sidestep-bank: 回切窗口期间层数收益提高（如果处于窗口期，额外+1层）
+        if (battle.dashSidestepBankActive && battle.dashCounterWindowSec > 0) {
+          enemy.dashPulseStacks = Math.min(3, enemy.dashPulseStacks + 1);
+        }
 
         // 3层脉冲触发回切伤害
         if (enemy.dashPulseStacks >= 3) {
-          const returnDamage = 6;
+          // dash-zero-window: 窗口内命中被 dash 标记敌人获得额外小伤害
+          let returnDamage = 6;
+          if (battle.dashZeroWindowReady && enemy.dashMarkSec > 0) {
+            returnDamage += 4; // 额外伤害
+          }
           enemy.hp -= returnDamage;
           enemy.dashPulseStacks = 0;
+          // 标记敌人可被窗口额外伤害
+          enemy.dashMarkedForBonus = true;
           // 视觉反馈
           this.createCombatPulse(battle, {
             x: enemy.x,
@@ -2650,6 +2672,26 @@ export class RunEngine {
             innerRadiusRatio: 0.5,
           });
           this.enqueueAudio('dashHit');
+        }
+
+        // dash-afterimage: 回切触发后留下短暂残影脉冲
+        if (battle.dashAfterimageReady && enemy.dashPulseStacks === 0) {
+          // 残影脉冲造成小额伤害
+          enemy.hp -= 3;
+          enemy.routeHitFlashSec = 0.12;
+          this.createCombatPulse(battle, {
+            x: enemy.x,
+            y: enemy.y,
+            radius: enemy.radius + 15,
+            lifeSec: 0.15,
+            color: 0x5aff5a,
+            secondaryColor: 0xa0ffa0,
+            fillAlpha: 0.06,
+            strokeAlpha: 0.6,
+            strokeWidth: 1.5,
+            growthPerSec: 150,
+            innerRadiusRatio: 0.6,
+          });
         }
 
         this.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
@@ -2758,6 +2800,10 @@ export class RunEngine {
         critMarkStacks: 0,
         pierceMarkStacks: 0,
         dashPulseStacks: 0,
+        // 第四轮：裂纹扩散和回切窗口状态初始化
+        pierceEchoDamageTaken: false,
+        dashCounterWindowSec: 0,
+        dashMarkedForBonus: false,
       });
       this.createCombatPulse(battle, {
         x: view.left + view.width * 0.5,
@@ -3638,6 +3684,10 @@ export class RunEngine {
       critMarkStacks: 0,
       pierceMarkStacks: 0,
       dashPulseStacks: 0,
+      // 第四轮：裂纹扩散和回切窗口状态初始化
+      pierceEchoDamageTaken: false,
+      dashCounterWindowSec: 0,
+      dashMarkedForBonus: false,
     };
   }
 
@@ -3957,6 +4007,13 @@ export class RunEngine {
         if (enemy.elite && enemy.guardSec > 0) {
           damage *= enemy.guardDamageMultiplier;
         }
+
+        // dash-zero-window: 回切窗口内命中被 dash 标记敌人获得额外伤害
+        if (battle.dashZeroWindowReady && battle.dashCounterWindowSec > 0 && enemy.dashMarkSec > 0) {
+          damage *= 1.25; // 25% 额外伤害
+          enemy.routeHitFlashSec = 0.18;
+        }
+
         enemy.hp -= damage;
         bullet.hitCount += 1;
         const impactCue: AudioCue =
@@ -4060,9 +4117,20 @@ export class RunEngine {
           const hadCritMark = enemy.critMarkSec > 0;
           const oldStacks = enemy.critMarkStacks ?? 0;
 
-          enemy.critMarkSec = 2.4;
+          // crit-afterglow: 破绽持续时间延长（基础2.4秒，激活后3.2秒）
+          const baseMarkDuration = 2.4;
+          const markDuration = battle.critAfterglowActive ? 3.2 : baseMarkDuration;
+          enemy.critMarkSec = markDuration;
           enemy.routeHitFlashSec = 0.18;
           enemy.routeHitKind = 'crit';
+
+          // crit-crownfire: 破绽爆发后短时收益窗口（如果处于窗口期，暴击伤害提升）
+          if (battle.critCrownfireReady && battle.critBurstBonusSec > 0) {
+            const crownfireBonus = battle.critBurstBonusRatio;
+            enemy.hp -= bullet.damage * crownfireBonus;
+            battle.critBurstBonusSec = 0;
+            battle.critBurstBonusRatio = 0;
+          }
 
           if (hadCritMark) {
             // 已带破绽：层数+1，给予小收益
@@ -4081,6 +4149,48 @@ export class RunEngine {
             enemy.hp -= ruptureDamage;
             enemy.critMarkStacks = 0;
             enemy.critMarkBurstReady = true;
+
+            // crit-embershard: 破绽爆发时产生小范围爆点（对精英/Boss降倍率）
+            if (battle.critEmbershardActive) {
+              const emberRadius = 80;
+              const emberBaseDamage = 6;
+              const emberDamage = enemy.elite ? emberBaseDamage * 0.35 : emberBaseDamage;
+              // 对范围内其他敌人造成伤害
+              for (const nearby of battle.enemies) {
+                if (nearby.id === enemy.id || nearby.hp <= 0) {
+                  continue;
+                }
+                const dx = nearby.x - enemy.x;
+                const dy = nearby.y - enemy.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance <= emberRadius + nearby.radius) {
+                  nearby.hp -= emberDamage;
+                  nearby.routeHitFlashSec = 0.14;
+                  nearby.routeHitKind = 'crit';
+                }
+              }
+              // 爆点视觉反馈
+              this.createCombatPulse(battle, {
+                x: enemy.x,
+                y: enemy.y,
+                radius: enemy.radius + 50,
+                lifeSec: 0.28,
+                color: 0xff8c42,
+                secondaryColor: 0xffd4a3,
+                fillAlpha: 0.10,
+                strokeAlpha: 0.75,
+                strokeWidth: 2.8,
+                growthPerSec: 200,
+                innerRadiusRatio: 0.45,
+              });
+            }
+
+            // crit-crownfire: 破绽爆发后短时间提高下一次暴击收益
+            if (battle.critCrownfireReady) {
+              battle.critBurstBonusSec = 2.5; // 2.5秒窗口
+              battle.critBurstBonusRatio = 0.35; // 35%额外伤害
+            }
+
             // 视觉和音效反馈
             this.createCombatPulse(battle, {
               x: enemy.x,
@@ -6045,6 +6155,17 @@ export class RunEngine {
     enemy: BattleState['enemies'][number],
     bullet: BattleState['bullets'][number],
   ): void {
+    // pierce-seamkeep: 裂纹持续时间延长（基础1.2秒，激活后1.8秒）
+    const baseMarkDuration = 1.2;
+    const markDuration = battle.pierceSeamkeepActive ? 1.8 : baseMarkDuration;
+
+    // pierce-riftbloom/prism: 扩散范围增加（基础140，激活后180）
+    const baseRange = 140;
+    const range = battle.pierceRiftbloomActive ? 180 : baseRange;
+
+    // pierce-floodgate: 追加小范围裂纹伤害
+    const floodgateBonus = battle.pierceFloodgateReady ? 4 : 0;
+
     const crackDamage = enemy.elite ? 5 : 8;
     const bulletDirX = bullet.vx / Math.max(1, Math.hypot(bullet.vx, bullet.vy));
     const bulletDirY = bullet.vy / Math.max(1, Math.hypot(bullet.vx, bullet.vy));
@@ -6059,21 +6180,29 @@ export class RunEngine {
       const along = dx * bulletDirX + dy * bulletDirY;
       const lateral = Math.abs(dx * bulletDirY - dy * bulletDirX);
 
-      // 后方扇形区域内的敌人
-      if (along >= 0 && along <= 140 && lateral <= target.radius + 50) {
-        const damage = target.elite ? crackDamage * 0.35 : crackDamage;
+      // 后方扇形区域内的敌人（范围受 riftbloom 影响）
+      if (along >= 0 && along <= range && lateral <= target.radius + 50) {
+        // 精英/Boss 伤害倍率限制
+        const eliteDamageRatio = target.elite ? 0.35 : 1.0;
+        const damage = (crackDamage + floodgateBonus) * eliteDamageRatio;
         target.hp -= damage;
         target.routeHitFlashSec = 0.14;
         target.routeHitKind = 'pierce';
-        target.pierceMarkSec = 1.2;
+        // seamkeep 延长裂纹标记持续时间
+        target.pierceMarkSec = markDuration;
+        // floodgate 标记：记录已受到追加伤害，避免重复触发
+        if (battle.pierceFloodgateReady) {
+          target.pierceEchoDamageTaken = true;
+        }
       }
     }
 
-    // 视觉反馈
+    // 视觉反馈（riftbloom 增加脉冲范围）
+    const pulseRadius = battle.pierceRiftbloomActive ? enemy.radius + 48 : enemy.radius + 36;
     this.createCombatPulse(battle, {
       x: enemy.x,
       y: enemy.y,
-      radius: enemy.radius + 36,
+      radius: pulseRadius,
       lifeSec: 0.24,
       color: 0x5cb8ff,
       secondaryColor: 0xccebff,

@@ -369,6 +369,11 @@ export interface EnemyState {
   pierceSeamkeepActive?: boolean; // pierce-seamkeep: 裂纹持续时间延长
   pierceFloodgateReady?: boolean; // pierce-floodgate: 裂纹扩散触发
   pierceRiftbloomActive?: boolean; // pierce-riftbloom/prism: 裂纹扩散范围增加
+  // 裂纹扩散相关状态
+  pierceEchoDamageTaken?: boolean; // 已受到 floodgate 追加伤害
+  // Dash 回切窗口状态
+  dashCounterWindowSec?: number; // 回切窗口持续时间
+  dashMarkedForBonus?: boolean; // 是否被标记为可接受窗口额外伤害
 }
 
 export interface BulletState {
@@ -551,6 +556,13 @@ export interface BattleState {
   dashSidestepBankActive: boolean;
   dashZeroWindowReady: boolean;
   dashAfterimageReady: boolean;
+  // Crit 关键牌机制状态
+  critAfterglowActive: boolean;
+  critEmbershardActive: boolean;
+  critCrownfireReady: boolean;
+  // Crit 破绽爆发后短收益窗口
+  critBurstBonusSec: number;
+  critBurstBonusRatio: number;
 }
 
 export interface NodeRecord {
