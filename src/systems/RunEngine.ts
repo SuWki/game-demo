@@ -792,6 +792,7 @@ export class RunEngine {
       eliteCrackFollowThroughMoments: 0,
       bossFirelineCoverage: 0,
       bossSafeWindowMoments: 0,
+      bossSafeWindowGraceSec: 0,
       outsideSafeDamageTimerSec: 0,
       outsideSafeDamageTickCount: 0,
       insideSafeProjectileClears: 0,
@@ -859,6 +860,7 @@ export class RunEngine {
     battle.pressureSafeWindowSecondaryCenter = CENTER_Y;
     battle.pressureSafeWindowSecondarySpan = 0;
     battle.pressureSafeWindowSec = 0;
+    battle.bossSafeWindowGraceSec = 0;
   }
 
   private clearPressurePattern(battle: BattleState): void {
@@ -1093,6 +1095,7 @@ export class RunEngine {
       battle.pressureSafeWindowSec = safeWindowSec;
       if (battle.encounterType === 'boss') {
         battle.bossSafeWindowMoments += 1;
+        this.refreshBossSafeWindowGrace(battle);
         this.clearBossSafeWindowBlockers(battle);
       }
 
@@ -1138,6 +1141,7 @@ export class RunEngine {
     battle.pressureSafeWindowSec = safeWindowSec;
     if (battle.encounterType === 'boss') {
       battle.bossSafeWindowMoments += 1;
+      this.refreshBossSafeWindowGrace(battle);
       this.clearBossSafeWindowBlockers(battle);
     }
 
@@ -1448,8 +1452,52 @@ export class RunEngine {
     return x >= safeStartX && x <= safeEndX && y >= safeStartY && y <= safeEndY;
   }
 
+  private getDistanceOutsidePressureSafeWindow(battle: BattleState, x: number, y: number, padding = 0): number {
+    if (!battle.pressureSafeWindowAxis || battle.pressureSafeWindowSec <= 0 || battle.pressureSafeWindowSpan <= 0) {
+      return 0;
+    }
+
+    const halfX = battle.pressureSafeWindowSpan * 0.5 + padding;
+    const dx = Math.max(0, Math.abs(x - battle.pressureSafeWindowCenter) - halfX);
+
+    if (battle.pressureSafeWindowAxis === 'vertical') {
+      return dx;
+    }
+
+    if (battle.pressureSafeWindowAxis === 'horizontal') {
+      return Math.max(0, Math.abs(y - battle.pressureSafeWindowCenter) - halfX);
+    }
+
+    if (battle.pressureSafeWindowSecondarySpan <= 0) {
+      return dx;
+    }
+
+    const halfY = battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
+    const dy = Math.max(0, Math.abs(y - battle.pressureSafeWindowSecondaryCenter) - halfY);
+    return Math.hypot(dx, dy);
+  }
+
+  private refreshBossSafeWindowGrace(battle: BattleState): void {
+    if (battle.encounterType !== 'boss') {
+      return;
+    }
+
+    const distance = this.getDistanceOutsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12);
+    if (distance <= 0) {
+      battle.bossSafeWindowGraceSec = 0;
+      battle.outsideSafeDamageTimerSec = 0;
+      return;
+    }
+
+    const moveSpeed = Math.max(120, getPlayerMoveSpeed(this.state.stats));
+    battle.bossSafeWindowGraceSec = clamp(distance / moveSpeed + 0.28, 0.58, 1.18);
+    battle.outsideSafeDamageTimerSec = 0;
+  }
+
   private applyBossSafeWindowPenalty(battle: BattleState, dt: number): void {
     if (battle.encounterType !== 'boss' || battle.pressureSafeWindowSec <= 0) {
+      battle.bossSafeWindowGraceSec = 0;
+      battle.outsideSafeDamageTimerSec = 0;
       return;
     }
 
@@ -1458,7 +1506,15 @@ export class RunEngine {
     if (inside) {
       // 安全区内：极短保护 + 清理贴脸敌人
       battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.08);
+      battle.bossSafeWindowGraceSec = 0;
+      battle.outsideSafeDamageTimerSec = 0;
       this.clearBossSafeWindowBlockers(battle);
+      return;
+    }
+
+    if (battle.bossSafeWindowGraceSec > 0) {
+      battle.bossSafeWindowGraceSec = Math.max(0, battle.bossSafeWindowGraceSec - dt);
+      battle.outsideSafeDamageTimerSec = 0;
       return;
     }
 

@@ -310,6 +310,7 @@ export class GameScene extends Phaser.Scene {
         eliteCrackFollowThroughMoments: 0,
         bossFirelineCoverage: 0,
         bossSafeWindowMoments: 0,
+        bossSafeWindowGraceSec: 0,
         outsideSafeDamageTimerSec: 0,
         outsideSafeDamageTickCount: 0,
         insideSafeProjectileClears: 0,
@@ -366,6 +367,7 @@ export class GameScene extends Phaser.Scene {
       eliteCrackFollowThroughMoments: battle.eliteCrackFollowThroughMoments,
       bossFirelineCoverage: battle.bossFirelineCoverage,
       bossSafeWindowMoments: battle.bossSafeWindowMoments,
+      bossSafeWindowGraceSec: battle.bossSafeWindowGraceSec,
       outsideSafeDamageTimerSec: battle.outsideSafeDamageTimerSec ?? 0,
       outsideSafeDamageTickCount: battle.outsideSafeDamageTickCount ?? 0,
       insideSafeProjectileClears: battle.insideSafeProjectileClears ?? 0,
@@ -2313,7 +2315,7 @@ export class GameScene extends Phaser.Scene {
           : bullet.routeFocus === 'crit'
             ? 0.016
             : bullet.routeFocus === 'pierce'
-              ? 0.022 + pierceSignatureRatio * 0.003
+              ? 0.012 + pierceSignatureRatio * 0.001
               : 0.015;
       const tail = this.worldToScreen(camera, bullet.x - bullet.vx * tailDistance, bullet.y - bullet.vy * tailDistance);
       const bulletSpeedRatio = Phaser.Math.Clamp(Math.hypot(bullet.vx, bullet.vy) / 520, 0.35, 1);
@@ -2331,9 +2333,9 @@ export class GameScene extends Phaser.Scene {
         bulletTint = this.mixColor(0x8cffdf, accentColor, 0.26);
       }
       this.graphics.lineStyle(
-        (bullet.pierceRemaining > 0 ? 1.8 : 1.2) + bulletHitRatio * 0.5,
+        (bullet.pierceRemaining > 0 ? 1.2 : 1.05) + bulletHitRatio * 0.32,
         bulletTint,
-        (bullet.canEcho ? 0.12 : 0.06) + bulletHitRatio * 0.03,
+        (bullet.canEcho ? 0.08 : 0.04) + bulletHitRatio * 0.02,
       );
       this.graphics.lineBetween(
         tail.x - bulletDirX * (5 + bulletSpeedRatio * 4),
@@ -2342,9 +2344,9 @@ export class GameScene extends Phaser.Scene {
         screen.y,
       );
       this.graphics.lineStyle(
-        (bullet.pierceRemaining > 0 ? 1.4 : 0.95) + bulletHitRatio * 0.4,
+        (bullet.pierceRemaining > 0 ? 1.0 : 0.9) + bulletHitRatio * 0.24,
         bulletTint,
-        (bullet.canEcho ? 0.28 : 0.18) + bulletHitRatio * 0.06,
+        (bullet.canEcho ? 0.16 : 0.1) + bulletHitRatio * 0.04,
       );
       this.graphics.lineBetween(tail.x, tail.y, screen.x, screen.y);
       this.graphics.fillStyle(bulletTint, (bullet.canEcho ? 0.24 : 0.14) + bulletHitRatio * 0.06);
@@ -2365,9 +2367,9 @@ export class GameScene extends Phaser.Scene {
         );
       } else if (bullet.routeFocus === 'pierce') {
         this.graphics.lineStyle(
-          1.3 + bulletHitRatio * 0.6 + pierceFlowRatio * 0.25,
+          1.0 + bulletHitRatio * 0.35 + pierceFlowRatio * 0.12,
           bulletTint,
-          0.16 + bulletSpeedRatio * 0.1 + bulletHitRatio * 0.08 + pierceFlowRatio * 0.06,
+          0.08 + bulletSpeedRatio * 0.04 + bulletHitRatio * 0.06 + pierceFlowRatio * 0.04,
         );
         const tickReach = 5 + bulletHitRatio * 2 + pierceSignatureRatio * 2;
         this.graphics.lineBetween(
@@ -2377,7 +2379,7 @@ export class GameScene extends Phaser.Scene {
           screen.y + bulletOrthoY * tickReach,
         );
         if (pierceSignatureRatio > 0.12) {
-          this.graphics.lineStyle(1.1, this.mixColor(bulletTint, 0xffffff, 0.32), 0.1 + pierceSignatureRatio * 0.12);
+          this.graphics.lineStyle(0.9, this.mixColor(bulletTint, 0xffffff, 0.32), 0.05 + pierceSignatureRatio * 0.07);
           this.graphics.strokeCircle(screen.x, screen.y, 7 + pierceSignatureRatio * 2 + bulletHitRatio * 2);
         }
         if (bulletHitRatio > 0) {
@@ -2402,7 +2404,7 @@ export class GameScene extends Phaser.Scene {
       }
       this.graphics.fillStyle(0xf8fbff, 0.98);
       this.graphics.fillCircle(screen.x, screen.y, (bullet.canEcho ? 3.4 : 2.8) + bulletHitRatio * 0.5);
-      if (bullet.pierceRemaining > 0) {
+      if (bullet.pierceRemaining > 0 && bullet.routeFocus !== 'pierce') {
         this.graphics.lineStyle(1 + bulletHitRatio * 0.4, this.mixColor(accentColor, 0xffffff, 0.35), 0.4 + bulletHitRatio * 0.1);
         this.graphics.strokeCircle(screen.x, screen.y, 6 + bulletHitRatio * 1.5);
       }
@@ -3266,10 +3268,6 @@ export class GameScene extends Phaser.Scene {
     const recoveryRatio = Math.min(1, battle.playerRecoverySec / 0.26);
     const critAuraRatio = battle.critOverdriveSec > 0 ? Math.min(1, battle.critOverdriveSec / 4.2) : 0;
     const dashDriveRatio = battle.dashDriveSec > 0 ? Math.min(1, battle.dashDriveSec / 1.15) : 0;
-    const playerPierceFlowRatio =
-      battle.pierceFlowSec > 0
-        ? Math.min(1, battle.pierceFlowSec / (0.46 + Math.min(0.28, battle.pierceFlowCount * 0.06)))
-        : 0;
     const freezeRatio = battle.impactFreezeSec > 0 ? Math.min(1, battle.impactFreezeSec / 0.09) : 0;
     const shotFlashRatio = battle.playerShotFlashSec > 0 ? Math.min(1, battle.playerShotFlashSec / 0.08) : 0;
     const shotRecoilRatio = battle.playerShotRecoilSec > 0 ? Math.min(1, battle.playerShotRecoilSec / 0.11) : 0;
@@ -3326,7 +3324,7 @@ export class GameScene extends Phaser.Scene {
       nearMissRatio,
       killFlowRatio,
       damageFlashRatio * 0.9,
-      pierceReadRatio,
+      0,
       moveBoostRatio,
       turnBurstRatio,
       velocityRatio * 0.8,
@@ -3348,30 +3346,6 @@ export class GameScene extends Phaser.Scene {
     this.graphics.fillEllipse(bodyX, bodyY + 18, 34, 14);
     this.graphics.fillStyle(liveFocusColor, 0.05 + combatReadRatio * 0.08);
     this.graphics.fillEllipse(bodyX, bodyY, 38 + combatReadRatio * 10, 38 + combatReadRatio * 10);
-    if (playerPierceFlowRatio > 0.08) {
-      const railColor = this.mixColor(0x8fdcff, 0xffffff, 0.22);
-      const railDirX = Math.abs(battle.playerAimDirX) > 0.01 || Math.abs(battle.playerAimDirY) > 0.01 ? battle.playerAimDirX : 1;
-      const railDirY = Math.abs(battle.playerAimDirX) > 0.01 || Math.abs(battle.playerAimDirY) > 0.01 ? battle.playerAimDirY : 0;
-      const railOrthoX = -railDirY;
-      const railOrthoY = railDirX;
-      const railLength = 34 + playerPierceFlowRatio * 26;
-      const railOffset = 13 + playerPierceFlowRatio * 5;
-      this.graphics.lineStyle(1.8 + playerPierceFlowRatio * 0.8, railColor, 0.12 + playerPierceFlowRatio * 0.24);
-      this.graphics.lineBetween(
-        bodyX - railDirX * (railLength * 0.55) + railOrthoX * railOffset,
-        bodyY - railDirY * (railLength * 0.55) + railOrthoY * railOffset,
-        bodyX + railDirX * railLength + railOrthoX * railOffset,
-        bodyY + railDirY * railLength + railOrthoY * railOffset,
-      );
-      this.graphics.lineBetween(
-        bodyX - railDirX * (railLength * 0.55) - railOrthoX * railOffset,
-        bodyY - railDirY * (railLength * 0.55) - railOrthoY * railOffset,
-        bodyX + railDirX * railLength - railOrthoX * railOffset,
-        bodyY + railDirY * railLength - railOrthoY * railOffset,
-      );
-      this.graphics.lineStyle(1.2, railColor, 0.08 + playerPierceFlowRatio * 0.16);
-      this.graphics.strokeCircle(bodyX, bodyY, 24 + playerPierceFlowRatio * 10);
-    }
     if (impactRatio > 0) {
       this.graphics.fillStyle(0xff6964, 0.12 + impactRatio * 0.16);
       this.graphics.fillCircle(playerScreen.x, playerScreen.y, 66 + impactRatio * 10);
@@ -3718,32 +3692,34 @@ export class GameScene extends Phaser.Scene {
         bodyX - aimOrthoX * (5 + shotFlashRatio * 8),
         bodyY - aimOrthoY * (5 + shotFlashRatio * 8),
       );
-      this.graphics.lineStyle(2, flashColor, 0.14 + shotFlashRatio * 0.24);
-      this.graphics.lineBetween(
-        bodyX + aimOrthoX * 7,
-        bodyY + aimOrthoY * 7,
-        muzzleX + aimDirX * (20 + shotFlashRatio * 18),
-        muzzleY + aimDirY * (20 + shotFlashRatio * 18),
-      );
-      this.graphics.lineBetween(
-        bodyX - aimOrthoX * 7,
-        bodyY - aimOrthoY * 7,
-        muzzleX + aimDirX * (20 + shotFlashRatio * 18),
-        muzzleY + aimDirY * (20 + shotFlashRatio * 18),
-      );
-      this.graphics.lineStyle(1.6, flashColor, 0.12 + shotFlashRatio * 0.22);
-      this.graphics.lineBetween(
-        muzzleX + aimOrthoX * (4 + shotFlashRatio * 3),
-        muzzleY + aimOrthoY * (4 + shotFlashRatio * 3),
-        muzzleX + aimDirX * (30 + shotFlashRatio * 24) + aimOrthoX * (10 + shotFlashRatio * 6),
-        muzzleY + aimDirY * (30 + shotFlashRatio * 24) + aimOrthoY * (10 + shotFlashRatio * 6),
-      );
-      this.graphics.lineBetween(
-        muzzleX - aimOrthoX * (4 + shotFlashRatio * 3),
-        muzzleY - aimOrthoY * (4 + shotFlashRatio * 3),
-        muzzleX + aimDirX * (30 + shotFlashRatio * 24) - aimOrthoX * (10 + shotFlashRatio * 6),
-        muzzleY + aimDirY * (30 + shotFlashRatio * 24) - aimOrthoY * (10 + shotFlashRatio * 6),
-      );
+      if (liveFocusRoute !== 'pierce') {
+        this.graphics.lineStyle(2, flashColor, 0.14 + shotFlashRatio * 0.24);
+        this.graphics.lineBetween(
+          bodyX + aimOrthoX * 7,
+          bodyY + aimOrthoY * 7,
+          muzzleX + aimDirX * (20 + shotFlashRatio * 18),
+          muzzleY + aimDirY * (20 + shotFlashRatio * 18),
+        );
+        this.graphics.lineBetween(
+          bodyX - aimOrthoX * 7,
+          bodyY - aimOrthoY * 7,
+          muzzleX + aimDirX * (20 + shotFlashRatio * 18),
+          muzzleY + aimDirY * (20 + shotFlashRatio * 18),
+        );
+        this.graphics.lineStyle(1.6, flashColor, 0.12 + shotFlashRatio * 0.22);
+        this.graphics.lineBetween(
+          muzzleX + aimOrthoX * (4 + shotFlashRatio * 3),
+          muzzleY + aimOrthoY * (4 + shotFlashRatio * 3),
+          muzzleX + aimDirX * (30 + shotFlashRatio * 24) + aimOrthoX * (10 + shotFlashRatio * 6),
+          muzzleY + aimDirY * (30 + shotFlashRatio * 24) + aimOrthoY * (10 + shotFlashRatio * 6),
+        );
+        this.graphics.lineBetween(
+          muzzleX - aimOrthoX * (4 + shotFlashRatio * 3),
+          muzzleY - aimOrthoY * (4 + shotFlashRatio * 3),
+          muzzleX + aimDirX * (30 + shotFlashRatio * 24) - aimOrthoX * (10 + shotFlashRatio * 6),
+          muzzleY + aimDirY * (30 + shotFlashRatio * 24) - aimOrthoY * (10 + shotFlashRatio * 6),
+        );
+      }
       if (killFlowRatio > 0.08) {
         this.graphics.lineStyle(1.4, this.mixColor(flashColor, 0xffffff, 0.18), 0.08 + killFlowRatio * 0.18);
         this.graphics.strokeCircle(muzzleX, muzzleY, 10 + killFlowRatio * 10 + shotFlashRatio * 6);

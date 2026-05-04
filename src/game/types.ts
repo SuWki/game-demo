@@ -530,6 +530,7 @@ export interface BattleState {
   eliteCrackFollowThroughMoments: number;
   bossFirelineCoverage: number;
   bossSafeWindowMoments: number;
+  bossSafeWindowGraceSec: number;
   outsideSafeDamageTimerSec: number;
   outsideSafeDamageTickCount: number;
   insideSafeProjectileClears: number;
@@ -690,6 +691,7 @@ export interface BattleDebugSnapshot {
   eliteCrackFollowThroughMoments: number;
   bossFirelineCoverage: number;
   bossSafeWindowMoments: number;
+  bossSafeWindowGraceSec: number;
   outsideSafeDamageTimerSec: number;
   outsideSafeDamageTickCount: number;
   insideSafeProjectileClears: number;
