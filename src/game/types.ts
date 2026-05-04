@@ -365,6 +365,10 @@ export interface EnemyState {
   // 命中瞬间特效
   routeHitFlashSec?: number;
   routeHitKind?: RouteHitKind;
+  // 流派构筑第四轮：关键牌机制接线状态
+  pierceSeamkeepActive?: boolean; // pierce-seamkeep: 裂纹持续时间延长
+  pierceFloodgateReady?: boolean; // pierce-floodgate: 裂纹扩散触发
+  pierceRiftbloomActive?: boolean; // pierce-riftbloom/prism: 裂纹扩散范围增加
 }
 
 export interface BulletState {
@@ -539,6 +543,14 @@ export interface BattleState {
   monitorDashCounterCooldownSec: number;
   monitorEliteCrackFollowThroughCooldownSec: number;
   monitorKillPickupContinueCooldownSec: number;
+  // 流派构筑第四轮：路线关键牌机制状态
+  pierceSeamkeepActive: boolean;
+  pierceFloodgateReady: boolean;
+  pierceRiftbloomActive: boolean;
+  dashBrushActive: boolean;
+  dashSidestepBankActive: boolean;
+  dashZeroWindowReady: boolean;
+  dashAfterimageReady: boolean;
 }
 
 export interface NodeRecord {
@@ -598,6 +610,20 @@ export interface RunState {
     elapsedSec: number;
     durationSec: number;
   } | null;
+  // 流派构筑第四轮：路线关键牌激活状态
+  activeRoutePerks?: {
+    pierceSeamkeep?: boolean;
+    pierceFloodgate?: boolean;
+    pierceRiftbloom?: boolean;
+    piercePrism?: boolean;
+    dashBrush?: boolean;
+    dashSidestepBank?: boolean;
+    dashZeroWindow?: boolean;
+    dashAfterimage?: boolean;
+    critAfterglow?: boolean;
+    critEmbershard?: boolean;
+    critCrownfire?: boolean;
+  };
 }
 
 export interface BattleDebugConfig {

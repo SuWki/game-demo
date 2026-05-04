@@ -192,6 +192,7 @@ export class RunEngine {
       currentEvent: null,
       battle: null,
       result: null,
+      activeRoutePerks: {},
     };
     this.enterBattle(openingNode);
   }
@@ -336,6 +337,8 @@ export class RunEngine {
     this.applyEffects(upgrade.effects, {
       pickId: `upgrade:${upgrade.sourceId}`,
     });
+    // 检测并激活关键路线牌机制
+    this.activateRoutePerkFromTags(upgrade.tags);
     if (!this.state.selectedUpgrades.includes(upgrade.sourceId)) {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
@@ -801,6 +804,14 @@ export class RunEngine {
       monitorDashCounterCooldownSec: 0,
       monitorEliteCrackFollowThroughCooldownSec: 0,
       monitorKillPickupContinueCooldownSec: 0,
+      // 流派构筑第四轮：路线关键牌战斗状态
+      pierceSeamkeepActive: this.state.activeRoutePerks?.pierceSeamkeep ?? false,
+      pierceFloodgateReady: this.state.activeRoutePerks?.pierceFloodgate ?? false,
+      pierceRiftbloomActive: (this.state.activeRoutePerks?.pierceRiftbloom ?? false) || (this.state.activeRoutePerks?.piercePrism ?? false),
+      dashBrushActive: this.state.activeRoutePerks?.dashBrush ?? false,
+      dashSidestepBankActive: this.state.activeRoutePerks?.dashSidestepBank ?? false,
+      dashZeroWindowReady: this.state.activeRoutePerks?.dashZeroWindow ?? false,
+      dashAfterimageReady: this.state.activeRoutePerks?.dashAfterimage ?? false,
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
@@ -2419,6 +2430,34 @@ export class RunEngine {
       this.state.maturedRoute = routeId;
       this.services.metrics.markRouteMatured(routeId);
       this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.matureHint ?? '');
+    }
+  }
+
+  private activateRoutePerkFromTags(tags?: string[]): void {
+    if (!tags || tags.length === 0) return;
+
+    const perkMap: Record<string, keyof NonNullable<typeof this.state.activeRoutePerks>> = {
+      'pierce-seamkeep': 'pierceSeamkeep',
+      'pierce-floodgate': 'pierceFloodgate',
+      'pierce-riftbloom': 'pierceRiftbloom',
+      'pierce-prism': 'piercePrism',
+      'dash-brush': 'dashBrush',
+      'dash-sidestep-bank': 'dashSidestepBank',
+      'dash-zero-window': 'dashZeroWindow',
+      'dash-afterimage': 'dashAfterimage',
+      'crit-afterglow': 'critAfterglow',
+      'crit-embershard': 'critEmbershard',
+      'crit-crownfire': 'critCrownfire',
+    };
+
+    for (const tag of tags) {
+      const perkKey = perkMap[tag];
+      if (perkKey) {
+        if (!this.state.activeRoutePerks) {
+          this.state.activeRoutePerks = {};
+        }
+        this.state.activeRoutePerks[perkKey] = true;
+      }
     }
   }
 

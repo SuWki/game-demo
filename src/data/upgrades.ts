@@ -1403,10 +1403,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-afterglow',
     name: '余热描边',
-    description: '提高暴击稳定性，更容易连续命中同一目标并叠加破绽',
+    description: '延长破绽持续时间，更容易连续命中同一目标叠加破绽',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge'],
+    tags: ['bridge', 'crit-afterglow'],
     selection: {
       baseWeight: 3.96,
       minRound: 2,
@@ -1684,11 +1684,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-embershard',
     name: '余烬爆点',
-    description: '强化暴击破绽收束，帮助连续暴击更快打出爆发',
+    description: '破绽爆发时产生小范围爆点（对精英/Boss降倍率）',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'crit-embershard'],
     selection: {
       baseWeight: 1.02,
       minRound: 3,
@@ -1830,11 +1830,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-crownfire',
     name: '冠火收束',
-    description: '火力、暴击系统与机动的终极强化',
+    description: '破绽爆发后短时间提高下一次暴击收益，不常驻',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'crit-crownfire'],
     selection: {
       baseWeight: 1.01,
       minRound: 3,
@@ -2217,10 +2217,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamkeep',
     name: '拆缝续程',
-    description: '穿透与弹道强化',
+    description: '穿透命中带裂纹敌人时，裂纹持续时间延长，帮助更稳定累积层数',
     category: 'route',
     routeId: 'pierce',
-    tags: ['bridge'],
+    tags: ['bridge', 'pierce-seamkeep'],
     selection: {
       baseWeight: 3.84,
       minRound: 2,
@@ -2451,11 +2451,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-riftbloom',
     name: '裂面回响',
-    description: '穿透与弹道的终极强化',
+    description: '贯穿裂纹目标后，下一次裂纹扩散范围略增（对精英/Boss有倍率限制）',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'pierce-riftbloom'],
     selection: {
       baseWeight: 1.02,
       minRound: 3,
@@ -2672,11 +2672,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-floodgate',
     name: '裂层清账',
-    description: '强化贯穿节奏，帮助裂纹更稳定累积到扩散清线',
+    description: '裂纹扩散时，对同线后方敌人追加小范围裂纹伤害（精英/Boss伤害受限）',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'pierce-floodgate'],
     selection: {
       baseWeight: 1.01,
       minRound: 3,
@@ -2957,10 +2957,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-brush',
     name: '擦身推进',
-    description: '获得基础脉冲伤害能力，穿梭冷却归零时自动触发',
+    description: '脉冲命中敌人时更容易叠第一层标记，更快进入三层回切',
     category: 'route',
     routeId: 'dash',
-    tags: ['starter'],
+    tags: ['starter', 'dash-brush'],
     selection: {
       baseWeight: 6,
       maxRound: 2,
@@ -3232,11 +3232,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-prism',
     name: '棱镜破轨',
-    description: '穿透与弹道的终极强化',
+    description: '贯穿裂纹目标后，下一次裂纹扩散范围略增（对精英/Boss有倍率限制）',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'pierce-prism'],
     selection: {
       baseWeight: 1.05,
       minRound: 3,
@@ -3302,10 +3302,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidestep-bank',
     name: '侧返蓄窗',
-    description: '缩短穿梭冷却并延长无伤窗口，更稳定进入回切反打',
+    description: '进入回切窗口时，短时间提升下一次命中的脉冲层数收益',
     category: 'route',
     routeId: 'dash',
-    tags: ['bridge'],
+    tags: ['bridge', 'dash-sidestep-bank'],
     selection: {
       baseWeight: 3.6,
       minRound: 2,
@@ -3374,11 +3374,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-afterimage',
     name: '残影回切',
-    description: '穿梭脉冲与无伤窗口的终极强化',
+    description: '回切触发后留下短暂残影脉冲，不常驻无敌',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'dash-afterimage'],
     selection: {
       baseWeight: 1.01,
       minRound: 3,
@@ -3670,11 +3670,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-zero-window',
     name: '瞬返空档',
-    description: '强化脉冲伤害与无伤窗口，帮助三层脉冲后打出回切反击',
+    description: '三层脉冲触发回切后，窗口内命中被 dash 标记敌人获得额外小伤害',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
-    tags: ['payoff', 'finisher', 'rare'],
+    tags: ['payoff', 'finisher', 'rare', 'dash-zero-window'],
     selection: {
       baseWeight: 1.05,
       minRound: 3,
