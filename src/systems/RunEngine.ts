@@ -616,14 +616,16 @@ export class RunEngine {
 
     const template = BATTLE_TEMPLATES[battle.templateId];
     const label = battle.label || template.name;
+    const timeText = Math.ceil(battle.remainingSec) + 's';
+
     switch (template.winCondition.type) {
       case 'survive':
-        return `${label} ${Math.ceil(battle.remainingSec)}s`;
+        return `${label} ${timeText}`;
       case 'elite':
-        return `${label} ${battle.eliteAlive ? '\u51fb\u7834\u7cbe\u82f1' : '\u51c6\u5907\u4ea4\u706b'}`;
+        return `${label} ${battle.eliteAlive ? '\u51fb\u7834\u7cbe\u82f1' : '\u51c6\u5907\u4ea4\u706b'} ${timeText}`;
       case 'kills':
       default:
-        return `${label} ${battle.kills}/${template.winCondition.target ?? battle.targetKills}`;
+        return `${label} ${battle.kills}/${template.winCondition.target ?? battle.targetKills} ${timeText}`;
     }
   }
 
@@ -781,6 +783,7 @@ export class RunEngine {
       playerDamageAngle: -Math.PI / 2,
       cameraShakeSec: 0,
       cameraShakeStrength: 0,
+      cameraShakeFrequency: 11,
       tempoPulseSec: 0,
       playerShotFlashSec: 0,
       playerShotRecoilSec: 0,
@@ -2029,6 +2032,9 @@ export class RunEngine {
       levelReached: this.state.level,
       routeTrace,
       replayPrompt,
+      selectedUpgrades: this.state.selectedUpgrades
+        .map((id) => UPGRADE_ARCHETYPES.find((u) => u.id === id))
+        .filter((u): u is UpgradeDefinition => u !== undefined),
     };
     this.services.metrics.finishRun({
       outcome,
@@ -2344,8 +2350,14 @@ export class RunEngine {
   }
 
   private applyModifiers(modifiers: Partial<PlayerStats>): void {
-    this.state.stats.maxHp += modifiers.maxHp ?? 0;
-    this.state.stats.hp = clamp(this.state.stats.hp, 0, this.state.stats.maxHp);
+    const maxHpGain = modifiers.maxHp ?? 0;
+    this.state.stats.maxHp += maxHpGain;
+    // 加生命上限时同时回复相同数值的血量
+    if (maxHpGain > 0) {
+      this.state.stats.hp = clamp(this.state.stats.hp + maxHpGain, 0, this.state.stats.maxHp);
+    } else {
+      this.state.stats.hp = clamp(this.state.stats.hp, 0, this.state.stats.maxHp);
+    }
     this.state.stats.damage += modifiers.damage ?? 0;
     this.state.stats.fireRate += modifiers.fireRate ?? 0;
     this.state.stats.projectileSpeed += modifiers.projectileSpeed ?? 0;
@@ -2619,7 +2631,7 @@ export class RunEngine {
       angle: Math.atan2(battle.playerAimDirY, battle.playerAimDirX),
       spinRate: 9.2,
     });
-    this.kickBattleShake(battle, 0.18, 0.42 + dashCharge * 0.06);
+    this.kickBattleShake(battle, 0.18, 0.42 + dashCharge * 0.06, 20);
     battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
     this.enqueueAudio('dash');
 
@@ -2818,7 +2830,7 @@ export class RunEngine {
         growthPerSec: 220,
         innerRadiusRatio: 0.62,
       });
-      this.kickBattleShake(battle, 0.34, 0.8);
+      this.kickBattleShake(battle, 0.34, 0.8, 10);
       battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.24);
       battle.eliteSupportCooldownSec = this.getEliteEscortRespawnSec(template, battle);
       const openingEscortBatch = this.getEliteEscortBatch(template, battle);
@@ -2881,7 +2893,7 @@ export class RunEngine {
     if (spawnedThisTick >= 2) {
       battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.12 + Math.min(0.12, spawnedThisTick * 0.03));
       if (spawnedThisTick >= 3) {
-        this.kickBattleShake(battle, 0.08, 0.12 + Math.min(0.14, spawnedThisTick * 0.02));
+        this.kickBattleShake(battle, 0.08, 0.12 + Math.min(0.14, spawnedThisTick * 0.02), 13);
       }
     }
   }
@@ -3935,7 +3947,7 @@ export class RunEngine {
       angle: baseAngle,
       spinRate: focusRoute === 'dash' ? 7.6 : focusRoute === 'pierce' ? 5.8 : 6.4,
     });
-    this.kickBattleShake(battle, 0.05 + killFlowBoost * 0.008, focusRoute === 'dash' ? 0.18 + killFlowRatio * 0.03 : 0.12 + killFlowRatio * 0.02);
+    this.kickBattleShake(battle, 0.05 + killFlowBoost * 0.008, focusRoute === 'dash' ? 0.18 + killFlowRatio * 0.03 : 0.12 + killFlowRatio * 0.02, 11);
     this.enqueueAudio('shoot');
 
     for (let index = 0; index < shotCount; index += 1) {
@@ -4026,7 +4038,7 @@ export class RunEngine {
           pulseColor: critical ? 0xffcf74 : 0xff7d86,
           secondaryColor: critical ? 0xfff8d4 : 0xffffff,
         });
-        this.kickBattleShake(battle, critical ? 0.14 : 0.08, critical ? 0.34 : 0.14);
+        this.kickBattleShake(battle, critical ? 0.14 : 0.08, critical ? 0.34 : 0.14, critical ? 30 : 25);
         battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, critical ? 0.095 : 0.072);
         battle.playerShotRecoilSec = Math.max(battle.playerShotRecoilSec, critical ? 0.11 : 0.09);
         battle.playerShotRecoilStrength = Math.max(battle.playerShotRecoilStrength, critical ? 7.2 : 5.6);
@@ -4581,7 +4593,7 @@ export class RunEngine {
           battle.playerImpactSec = Math.max(battle.playerImpactSec, 0.34);
           this.queueImpactFreeze(battle, enemy.elite ? 0.09 : 0.068, enemy.elite ? 0.1 : 0.15);
           this.pushPlayerKnockback(battle, enemy.x, enemy.y, enemy.elite ? 240 : 190);
-          this.kickBattleShake(battle, 0.22, enemy.elite ? 0.76 : 0.48);
+          this.kickBattleShake(battle, 0.22, enemy.elite ? 0.76 : 0.48, 9);
           this.registerPlayerThreatDirection(battle, enemy.x, enemy.y, 0.34);
           this.createCombatPulse(battle, {
             x: battle.playerX,
@@ -5544,7 +5556,7 @@ export class RunEngine {
           battle.playerImpactSec = Math.max(battle.playerImpactSec, 0.3);
           this.queueImpactFreeze(battle, projectile.radius > 5 ? 0.082 : 0.062, projectile.radius > 5 ? 0.12 : 0.16);
           this.pushPlayerKnockback(battle, projectile.x, projectile.y, projectile.radius > 5 ? 220 : 170);
-          this.kickBattleShake(battle, 0.2, projectile.radius > 5 ? 0.44 : 0.4);
+          this.kickBattleShake(battle, 0.2, projectile.radius > 5 ? 0.44 : 0.4, 9);
           this.registerPlayerThreatDirection(battle, projectile.x, projectile.y, 0.3);
           this.createCombatPulse(battle, {
             x: battle.playerX,
@@ -5580,7 +5592,7 @@ export class RunEngine {
         battle.playerNearMissSec = Math.max(battle.playerNearMissSec, 0.14);
         battle.playerNearMissAngle = Math.atan2(projectile.y - battle.playerY, projectile.x - battle.playerX);
         battle.playerNearMissCooldownSec = 0.09;
-        this.kickBattleShake(battle, 0.05, 0.14);
+        this.kickBattleShake(battle, 0.05, 0.14, 11);
         this.createCombatPulse(battle, {
           x: battle.playerX,
           y: battle.playerY,
@@ -6074,11 +6086,12 @@ export class RunEngine {
     });
   }
 
-  private kickBattleShake(battle: BattleState, durationSec: number, strength: number): void {
+  private kickBattleShake(battle: BattleState, durationSec: number, strength: number, frequency: number = 11): void {
     const softenedDuration = durationSec * 0.62;
     const softenedStrength = Math.min(0.5, strength * 0.36);
     battle.cameraShakeSec = Math.max(battle.cameraShakeSec, softenedDuration);
     battle.cameraShakeStrength = Math.max(battle.cameraShakeStrength, softenedStrength);
+    battle.cameraShakeFrequency = frequency;
   }
 
   private queueImpactFreeze(battle: BattleState, durationSec: number, factor: number): void {

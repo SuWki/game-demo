@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="dangerHot" x1="15%" y1="8%" x2="85%" y2="92%">
+      <stop offset="0%" stop-color="#ffd58a"/>
+      <stop offset="44%" stop-color="#ff5b49"/>
+      <stop offset="100%" stop-color="#6b1224"/>
+    </linearGradient>
+    <linearGradient id="dangerFast" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffb1a2"/>
+      <stop offset="50%" stop-color="#ff2f3d"/>
+      <stop offset="100%" stop-color="#6b1224"/>
+    </linearGradient>
+    <linearGradient id="cyanHull" x1="20%" y1="5%" x2="80%" y2="95%">
+      <stop offset="0%" stop-color="#e9fbff"/>
+      <stop offset="45%" stop-color="#50d7ff"/>
+      <stop offset="100%" stop-color="#11609a"/>
+    </linearGradient>
+    <linearGradient id="violetHull" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#fff1ff"/>
+      <stop offset="38%" stop-color="#d36cff"/>
+      <stop offset="100%" stop-color="#3d176e"/>
+    </linearGradient>
+    <radialGradient id="whiteBurst" cx="50%" cy="50%" r="62%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="48%" stop-color="#e0f5ff" stop-opacity="0.72"/>
+      <stop offset="100%" stop-color="#e0f5ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="critBurst" cx="50%" cy="50%" r="62%">
+      <stop offset="0%" stop-color="#fff4c4" stop-opacity="1"/>
+      <stop offset="42%" stop-color="#ffcb74" stop-opacity="0.86"/>
+      <stop offset="100%" stop-color="#ff8c6a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pierceBurst" cx="50%" cy="50%" r="62%">
+      <stop offset="0%" stop-color="#f4fbff" stop-opacity="1"/>
+      <stop offset="45%" stop-color="#8fd8ff" stop-opacity="0.78"/>
+      <stop offset="100%" stop-color="#50d7ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dashBurst" cx="50%" cy="50%" r="62%">
+      <stop offset="0%" stop-color="#f6fff8" stop-opacity="1"/>
+      <stop offset="45%" stop-color="#8cffdf" stop-opacity="0.74"/>
+      <stop offset="100%" stop-color="#7ae7ac" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <ellipse cx="128" cy="134" rx="66" ry="66" fill="#d36cff" opacity="0.18" filter="url(#softGlow)"/>
+  <rect x="65" y="76" width="126" height="112" rx="18" fill="#100914" stroke="#ffbd66" stroke-width="6"/>
+  <rect x="83" y="94" width="90" height="76" rx="12" fill="url(#dangerHot)" stroke="#3d101c" stroke-width="4"/>
+  <path d="M52 103 H20 V153 H52 M204 103 H236 V153 H204" fill="#241020" stroke="#d36cff" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M100 73 L100 42 H156 L156 73" fill="#2a1028" stroke="#ff7b4c" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="128" cy="132" r="25" fill="#070913" stroke="#fff1ff" stroke-width="4"/>
+  <circle cx="128" cy="132" r="10" fill="#d36cff" filter="url(#softGlow)"/>
+  <path d="M90 112 H166 M90 152 H166" stroke="#ffd58a" stroke-width="4" opacity="0.52"/>
+</svg>

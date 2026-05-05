@@ -494,6 +494,28 @@ export class OverlayController {
                 <span>最近轨迹</span>
                 <strong>${routeTrace.length > 0 ? routeTrace.map((node) => node.title).join(' / ') : '暂无轨迹'}</strong>
               </article>
+              ${
+                result.selectedUpgrades && result.selectedUpgrades.length > 0
+                  ? `
+              <article class="commercial-result-card">
+                <span>强化历史 (${result.selectedUpgrades.length})</span>
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+                  ${result.selectedUpgrades
+                    .map(
+                      (upgrade) => `
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                      <span style="color: ${RARITY_COLOR_MAP[upgrade.rarity]}; font-weight: 600;">[${upgrade.rarityLabel}]</span>
+                      <span style="color: #e0e0e0;">${upgrade.name}</span>
+                      ${upgrade.routeId ? `<span style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]}; font-size: 11px;">(${ROUTE_NAME_MAP[upgrade.routeId]})</span>` : ''}
+                    </div>
+                  `
+                    )
+                    .join('')}
+                </div>
+              </article>
+              `
+                  : ''
+              }
             </div>
           </aside>
         </div>

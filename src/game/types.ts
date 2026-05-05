@@ -523,6 +523,7 @@ export interface BattleState {
   playerDamageAngle: number;
   cameraShakeSec: number;
   cameraShakeStrength: number;
+  cameraShakeFrequency: number;
   tempoPulseSec: number;
   playerShotFlashSec: number;
   playerShotRecoilSec: number;
@@ -589,6 +590,7 @@ export interface RunResult {
   levelReached: number;
   routeTrace: NodeRecord[];
   replayPrompt: string;
+  selectedUpgrades: UpgradeDefinition[];
 }
 
 export interface RunState {

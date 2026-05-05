@@ -1355,13 +1355,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.05,
-          critMultiplier: 0.15,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1387,13 +1380,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.22,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.045,
-          critMultiplier: 0.18,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1421,13 +1407,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.38,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.042,
-          critMultiplier: 0.12,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1463,13 +1442,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.36,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.032,
-          critMultiplier: 0.22,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1508,14 +1480,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.042,
-          critMultiplier: 0.16,
-          projectileSpeed: 18,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1543,13 +1507,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       excludeFromFinalPrep: true,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.045,
-          projectileSpeed: 18,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1670,12 +1627,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.055,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1704,13 +1655,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.035,
-          critMultiplier: 0.18,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1743,13 +1687,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.055,
-          critMultiplier: 0.22,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1776,13 +1713,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.38,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.042,
-          critMultiplier: 0.18,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1814,14 +1744,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.042,
-          projectileSpeed: 18,
-          critMultiplier: 0.16,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1850,13 +1772,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.038,
-          critMultiplier: 0.32,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1887,13 +1802,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.038,
-          critMultiplier: 0.22,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1922,13 +1830,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.34,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.055,
-          critMultiplier: 0.28,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -1960,14 +1861,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.045,
-          critMultiplier: 0.18,
-          projectileSpeed: 18,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -1994,12 +1887,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critMultiplier: 0.32,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -2028,13 +1915,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.038,
-          critMultiplier: 0.26,
-        },
-      },
-      {
         type: 'route',
         routeId: 'crit',
       },
@@ -2060,13 +1940,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.040,
-          critMultiplier: 0.24,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -2094,13 +1967,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2126,13 +1992,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.22,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 14,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2160,13 +2019,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 12,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2193,13 +2045,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.38,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2235,13 +2080,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.36,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 14,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2280,13 +2118,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2314,13 +2145,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       excludeFromFinalPrep: true,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          projectileSpeed: 16,
-          pierce: 1,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2354,13 +2178,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 14,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2393,13 +2210,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 14,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2431,13 +2241,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       excludeFromFinalPrep: true,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2472,13 +2275,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 18,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2507,13 +2303,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.4,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critChance: 0.045,
-          critMultiplier: 0.32,
-        },
-      },
       {
         type: 'route',
         routeId: 'crit',
@@ -2544,14 +2333,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.28,
-          dashPulseDamage: 5.5,
-          dashInvulnerability: 0.06,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -2577,13 +2358,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.42,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 22,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2615,13 +2389,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.38,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2657,13 +2424,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 14,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2692,13 +2452,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 18,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2733,13 +2486,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2768,14 +2514,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.28,
-          dashInvulnerability: 0.12,
-          dashPulseDamage: 8.5,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -2806,12 +2544,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2838,13 +2570,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2876,13 +2601,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 16,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2910,12 +2628,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -2941,13 +2653,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 22,
-        },
-      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2975,12 +2680,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashPulseDamage: 5,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3006,14 +2705,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.22,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          moveSpeed: 16,
-          dashInvulnerability: 0.08,
-          dashInterval: -0.34,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3041,13 +2732,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.48,
-          dashPulseDamage: 5.5,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3074,14 +2758,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.38,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.32,
-          dashInvulnerability: 0.08,
-          dashPulseDamage: 4,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3253,13 +2929,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          pierce: 1,
-          projectileSpeed: 20,
-        },
-      },
-      {
         type: 'route',
         routeId: 'pierce',
       },
@@ -3287,13 +2956,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.42,
-          dashInvulnerability: 0.06,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3320,13 +2982,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.38,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.32,
-          dashInvulnerability: 0.08,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3358,14 +3013,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.22,
-          dashInvulnerability: 0.08,
-          dashPulseDamage: 4.5,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3394,13 +3041,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashPulseDamage: 12,
-          dashInvulnerability: 0.14,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3431,14 +3071,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.26,
-          dashPulseDamage: 7.5,
-          dashInvulnerability: 0.08,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3467,13 +3099,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.34,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashPulseDamage: 7.5,
-          dashInterval: -0.18,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3504,13 +3129,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.32,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.22,
-          dashInvulnerability: 0.08,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3583,13 +3201,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.36,
-          dashPulseDamage: 4,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3617,14 +3228,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'stats',
-        modifiers: {
-          dashPulseDamage: 7,
-          dashInvulnerability: 0.08,
-          dashInterval: -0.28,
-        },
-      },
-      {
         type: 'route',
         routeId: 'dash',
       },
@@ -3650,13 +3253,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 3,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashPulseDamage: 6,
-          dashInvulnerability: 0.12,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
@@ -3690,14 +3286,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       finalPrepBonus: 2.4,
     },
     effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashInterval: -0.32,
-          dashInvulnerability: 0.10,
-          dashPulseDamage: 8,
-        },
-      },
       {
         type: 'route',
         routeId: 'dash',
