@@ -32,6 +32,32 @@ export class BootScene extends Phaser.Scene {
       height: 128,
     });
 
+    // Low-interference battle backgrounds
+    this.load.svg('preview-bg-space-nebula', 'assets/preview-runtime/visual/bg-space-nebula.svg', {
+      width: 960,
+      height: 540,
+    });
+    this.load.svg('preview-bg-floor-hex-tile', 'assets/preview-runtime/visual/bg-floor-hex-tile.svg', {
+      width: 160,
+      height: 160,
+    });
+    this.load.svg('preview-bg-floor-holo-tile', 'assets/preview-runtime/visual/bg-floor-holo-tile.svg', {
+      width: 160,
+      height: 160,
+    });
+    this.load.svg('preview-bg-debris-decal', 'assets/preview-runtime/visual/bg-debris-decal.svg', {
+      width: 384,
+      height: 384,
+    });
+    this.load.svg('preview-bg-boss-danger', 'assets/preview-runtime/visual/bg-boss-danger.svg', {
+      width: 960,
+      height: 540,
+    });
+    this.load.svg('preview-bg-boss-core', 'assets/preview-runtime/visual/bg-boss-core.svg', {
+      width: 960,
+      height: 540,
+    });
+
     // Elite units
     this.load.svg('preview-elite-core-main', 'assets/preview-runtime/visual/elite-core-main.svg', {
       width: 256,

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+  <defs>
+    <radialGradient id="holoCore" cx="50%" cy="50%" r="56%">
+      <stop offset="0" stop-color="#44ddff" stop-opacity=".18"/>
+      <stop offset=".58" stop-color="#1b4f68" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#02080d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="160" height="160" fill="none"/>
+  <rect x="11" y="11" width="138" height="138" rx="22" fill="url(#holoCore)" stroke="#44ddff" stroke-opacity=".22" stroke-width="1.6"/>
+  <path d="M32 44h96M32 80h96M32 116h96M44 32v96M80 32v96M116 32v96" stroke="#7aff7a" stroke-opacity=".08" stroke-width="1"/>
+  <path d="M38 38l84 84M122 38l-84 84" stroke="#44ddff" stroke-opacity=".12" stroke-width="1.4"/>
+  <path d="M62 80h36M80 62v36" stroke="#dff9ff" stroke-opacity=".22" stroke-width="2" stroke-linecap="round"/>
+</svg>

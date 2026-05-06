@@ -41,6 +41,12 @@ const PREVIEW_BRUTE_ENEMY_TEXTURE = 'preview-enemy-brute';
 const PREVIEW_SKIRMISHER_ENEMY_TEXTURE = 'preview-enemy-skirmisher';
 const PREVIEW_RANGED_ENEMY_TEXTURE = 'preview-enemy-ranged';
 const PREVIEW_XP_ORB_TEXTURE = 'preview-fx-xp-orb';
+const PREVIEW_BG_SPACE_NEBULA_TEXTURE = 'preview-bg-space-nebula';
+const PREVIEW_BG_FLOOR_HEX_TEXTURE = 'preview-bg-floor-hex-tile';
+const PREVIEW_BG_FLOOR_HOLO_TEXTURE = 'preview-bg-floor-holo-tile';
+const PREVIEW_BG_DEBRIS_DECAL_TEXTURE = 'preview-bg-debris-decal';
+const PREVIEW_BG_BOSS_DANGER_TEXTURE = 'preview-bg-boss-danger';
+const PREVIEW_BG_BOSS_CORE_TEXTURE = 'preview-bg-boss-core';
 const PREVIEW_ELITE_CORE_TEXTURE = 'preview-elite-core-main';
 const PREVIEW_ELITE_CRACK_TEXTURE = 'preview-elite-core-crack';
 const PREVIEW_ELITE_ESCORT_TEXTURE = 'preview-elite-escort-unit';
@@ -1895,6 +1901,7 @@ export class GameScene extends Phaser.Scene {
 
     const camera = this.getBattleCameraRect(battle);
     this.renderBattleTerrain(battle, camera, accentColor);
+    this.renderLowHealthWarning(battle, camera);
     this.renderBattleEntities(battle, camera, accentColor);
     this.endRuntimePreviewImageFrame();
   }
@@ -1916,6 +1923,7 @@ export class GameScene extends Phaser.Scene {
     size: number,
     rotation = 0,
     alpha = 0.82,
+    options?: { height?: number; depth?: number },
   ): boolean {
     if (!this.runtimeVisualPreviewEnabled || !this.textures.exists(textureKey)) {
       return false;
@@ -1931,8 +1939,9 @@ export class GameScene extends Phaser.Scene {
 
     image
       .setTexture(textureKey)
+      .setDepth(options?.depth ?? 30)
       .setPosition(x, y)
-      .setDisplaySize(size, size)
+      .setDisplaySize(size, options?.height ?? size)
       .setRotation(rotation)
       .setAlpha(alpha)
       .setVisible(true);
@@ -2068,7 +2077,16 @@ export class GameScene extends Phaser.Scene {
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
     accentColor: number,
   ): void {
-    this.graphics.fillGradientStyle(0x0b1721, 0x0f2030, 0x060a0f, 0x04070b, 1);
+    this.renderRuntimePreviewImage(
+      PREVIEW_BG_SPACE_NEBULA_TEXTURE,
+      camera.width * 0.5,
+      camera.height * 0.5,
+      camera.width,
+      0,
+      0.9,
+      { height: camera.height, depth: 4 },
+    );
+    this.graphics.fillGradientStyle(0x0b1721, 0x0f2030, 0x060a0f, 0x04070b, 0.9, 0.9, 0.96, 0.96);
     this.graphics.fillRect(0, 0, camera.width, camera.height);
 
     const blotStartX = Math.floor(camera.left / TERRAIN_BLOT_SIZE) - 1;
@@ -2083,6 +2101,17 @@ export class GameScene extends Phaser.Scene {
         const screen = this.worldToScreen(camera, worldX, worldY);
         const width = 190 + noise * 140;
         const height = 88 + this.getTerrainNoise(blotX, blotY, 9) * 90;
+        if (noise > 0.58) {
+          this.renderRuntimePreviewImage(
+            PREVIEW_BG_DEBRIS_DECAL_TEXTURE,
+            screen.x,
+            screen.y,
+            width * 1.1,
+            (noise - 0.5) * Math.PI,
+            0.34,
+            { height: height * 1.65, depth: 5 },
+          );
+        }
         this.graphics.fillStyle(noise > 0.54 ? 0x33404b : 0x1a232c, noise > 0.54 ? 0.16 : 0.1);
         this.graphics.fillEllipse(screen.x, screen.y, width, height);
       }
@@ -2099,7 +2128,17 @@ export class GameScene extends Phaser.Scene {
         const worldY = tileY * TERRAIN_TILE_SIZE;
         const screen = this.worldToScreen(camera, worldX, worldY);
         const tileColor = noise > 0.62 ? 0x213244 : noise > 0.3 ? 0x182634 : 0x101922;
-        this.graphics.fillStyle(tileColor, 0.18 + noise * 0.08);
+        const tileTexture = noise > 0.68 ? PREVIEW_BG_FLOOR_HOLO_TEXTURE : PREVIEW_BG_FLOOR_HEX_TEXTURE;
+        this.renderRuntimePreviewImage(
+          tileTexture,
+          screen.x + (TERRAIN_TILE_SIZE - 8) * 0.5,
+          screen.y + (TERRAIN_TILE_SIZE - 8) * 0.5,
+          TERRAIN_TILE_SIZE - 8,
+          0,
+          0.5 + noise * 0.16,
+          { depth: 5 },
+        );
+        this.graphics.fillStyle(tileColor, 0.12 + noise * 0.06);
         this.graphics.fillRoundedRect(screen.x, screen.y, TERRAIN_TILE_SIZE - 8, TERRAIN_TILE_SIZE - 8, 20);
 
         const detailNoise = this.getTerrainNoise(tileX, tileY, 4);
@@ -2133,6 +2172,19 @@ export class GameScene extends Phaser.Scene {
   ): void {
     const template = BATTLE_TEMPLATES[battle.templateId];
     const pulse = 0.5 + Math.sin(battle.elapsedSec * 1.7 + battle.kills * 0.08) * 0.5;
+    if (battle.encounterType === 'boss') {
+      const bossBackdropTexture =
+        battle.templateId === 'boss-lockdown' ? PREVIEW_BG_BOSS_CORE_TEXTURE : PREVIEW_BG_BOSS_DANGER_TEXTURE;
+      this.renderRuntimePreviewImage(
+        bossBackdropTexture,
+        camera.width * 0.5,
+        camera.height * 0.5,
+        camera.width,
+        0,
+        0.48 + pulse * 0.1,
+        { height: camera.height, depth: 6 },
+      );
+    }
     const encounterGlow =
       template.winCondition.type === 'survive'
         ? this.mixColor(accentColor, 0xff8677, 0.22)
@@ -2227,6 +2279,42 @@ export class GameScene extends Phaser.Scene {
     this.graphics.lineBetween(center.x + 96, center.y + 46, center.x + 148, center.y + 74);
   }
 
+  private renderLowHealthWarning(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    const state = this.engine.getState();
+    const healthRatio = state.stats.hp / state.stats.maxHp;
+
+    // P0优化：低血量警告（<30%时触发）
+    if (healthRatio < 0.3) {
+      const pulseSpeed = healthRatio < 0.15 ? 8 : 5; // 血量越低脉动越快
+      const pulseAlpha = 0.5 + Math.sin(battle.elapsedSec * pulseSpeed) * 0.5;
+      const warningAlpha = (0.3 - healthRatio) / 0.3; // 血量越低越明显
+      const edgeThickness = 40;
+
+      // 屏幕边缘红色渐变警告
+      const redColor = 0xff0000;
+      const finalAlpha = pulseAlpha * warningAlpha * 0.4;
+
+      // 上边缘
+      this.graphics.fillGradientStyle(redColor, redColor, 0x000000, 0x000000, finalAlpha, finalAlpha, 0, 0);
+      this.graphics.fillRect(0, 0, camera.width, edgeThickness);
+
+      // 下边缘
+      this.graphics.fillGradientStyle(0x000000, 0x000000, redColor, redColor, 0, 0, finalAlpha, finalAlpha);
+      this.graphics.fillRect(0, camera.height - edgeThickness, camera.width, edgeThickness);
+
+      // 左边缘
+      this.graphics.fillGradientStyle(redColor, 0x000000, redColor, 0x000000, finalAlpha, 0, finalAlpha, 0);
+      this.graphics.fillRect(0, 0, edgeThickness, camera.height);
+
+      // 右边缘
+      this.graphics.fillGradientStyle(0x000000, redColor, 0x000000, redColor, 0, finalAlpha, 0, finalAlpha);
+      this.graphics.fillRect(camera.width - edgeThickness, 0, edgeThickness, camera.height);
+    }
+  }
+
   private renderBattleEntities(
     battle: BattleState,
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
@@ -2240,7 +2328,7 @@ export class GameScene extends Phaser.Scene {
 
     const tempoRatio = Math.min(1, battle.tempoPulseSec / 0.3);
     const dominantRoute = this.engine.getDominantRoute();
-    const state = this.engine.getState();
+    const engineState = this.engine.getState();
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     const flowChainRatio =
       battle.killFlowSec > 0
@@ -2267,7 +2355,7 @@ export class GameScene extends Phaser.Scene {
             ? this.mixColor(accentColor, 0xbfffea, 0.22)
             : this.mixColor(accentColor, 0xfff2c3, 0.18);
     const pickupGuideColor = this.mixColor(0x9df7c5, liveFocusRoute === 'dash' ? 0xdffff6 : 0xffffff, 0.18);
-    const pierceReadRatio = liveFocusRoute === 'pierce' ? Math.min(1, state.routeCounts.pierce / 5) : 0;
+    const pierceReadRatio = liveFocusRoute === 'pierce' ? Math.min(1, engineState.routeCounts.pierce / 5) : 0;
     const pierceSignatureRatio = Math.max(pierceReadRatio * 0.55, pierceFlowRatio);
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
     for (const orb of battle.experienceOrbs) {
@@ -2965,33 +3053,58 @@ export class GameScene extends Phaser.Scene {
           0.42 + flashRatio * 0.28,
         );
         if (enemy.routeHitKind === 'crit') {
-          // 暴击：橙色爆闪 + 裂纹环扩散（增强版）
-          const critFlashColor = 0xff6b2c;
-          // 增强填充透明度和范围
-          this.graphics.fillStyle(critFlashColor, 0.45 * flashRatio);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 8 * flashRatio);
-          // 增强外环透明度和粗细
-          this.graphics.lineStyle(3.5, critFlashColor, 0.85 * flashRatio);
-          const ringRadius = enemy.radius + 12 + (1 - flashRatio) * 8;
-          this.graphics.strokeCircle(screen.x, screen.y, ringRadius);
-          // 添加第二层更亮的内环
-          this.graphics.lineStyle(2, 0xffaa55, 0.7 * flashRatio);
-          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 6);
+          // P0优化：暴击 - 红色爆炸效果，更强烈的视觉冲击
+          const critFlashColor = 0xff4444;
+          const critBrightColor = 0xffaa55;
+          // 核心爆闪（更大更亮）
+          this.graphics.fillStyle(critFlashColor, 0.6 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 1.5);
+          // 外扩散环（三层，营造爆炸感）
+          this.graphics.lineStyle(4, critFlashColor, 0.9 * flashRatio);
+          const ringRadius1 = enemy.radius + 15 + (1 - flashRatio) * 12;
+          this.graphics.strokeCircle(screen.x, screen.y, ringRadius1);
+          this.graphics.lineStyle(2.5, critBrightColor, 0.8 * flashRatio);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 8);
+          this.graphics.lineStyle(1.5, 0xffffff, 0.7 * flashRatio);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 4);
         } else if (enemy.routeHitKind === 'pierce') {
-          // 穿透：蓝色入射/出射短痕
-          const pierceFlashColor = 0x5cb8ff;
-          this.graphics.lineStyle(2, pierceFlashColor, 0.5 * flashRatio);
-          const slashLen = enemy.radius * 0.6 * flashRatio;
-          this.graphics.lineBetween(screen.x - slashLen, screen.y - slashLen, screen.x + slashLen, screen.y + slashLen);
-          this.graphics.lineBetween(screen.x + slashLen, screen.y - slashLen, screen.x - slashLen, screen.y + slashLen);
+          // P0优化：穿透 - 青色穿刺效果，强调贯穿感
+          const pierceFlashColor = 0x00d4ff;
+          const pierceBrightColor = 0x88f0ff;
+          // 十字穿刺线（更长更亮）
+          this.graphics.lineStyle(3, pierceFlashColor, 0.8 * flashRatio);
+          const slashLen = enemy.radius * 1.2;
+          this.graphics.lineBetween(screen.x - slashLen, screen.y, screen.x + slashLen, screen.y);
+          this.graphics.lineBetween(screen.x, screen.y - slashLen, screen.x, screen.y + slashLen);
+          // 亮核心
+          this.graphics.lineStyle(1.5, pierceBrightColor, 0.9 * flashRatio);
+          const shortLen = enemy.radius * 0.8;
+          this.graphics.lineBetween(screen.x - shortLen, screen.y, screen.x + shortLen, screen.y);
+          this.graphics.lineBetween(screen.x, screen.y - shortLen, screen.x, screen.y + shortLen);
+          // 中心点
+          this.graphics.fillStyle(0xffffff, 0.7 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, 3);
         } else if (enemy.routeHitKind === 'dash') {
-          // 穿梭：绿色相位涟漪
-          const dashFlashColor = 0x7aff7a;
-          this.graphics.lineStyle(1.5, dashFlashColor, 0.4 * flashRatio);
-          const rippleRadius = enemy.radius + 6 + (1 - flashRatio) * 10;
-          this.graphics.strokeCircle(screen.x, screen.y, rippleRadius);
-          this.graphics.fillStyle(dashFlashColor, 0.15 * flashRatio);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.5);
+          // P0优化：Dash - 橙色冲击波，强调动态感
+          const dashFlashColor = 0xff8844;
+          const dashBrightColor = 0xffbb66;
+          // 多层冲击波（快速扩散）
+          this.graphics.lineStyle(2.5, dashFlashColor, 0.7 * flashRatio);
+          const rippleRadius1 = enemy.radius + 8 + (1 - flashRatio) * 15;
+          this.graphics.strokeCircle(screen.x, screen.y, rippleRadius1);
+          this.graphics.lineStyle(1.8, dashBrightColor, 0.6 * flashRatio);
+          const rippleRadius2 = enemy.radius + 4 + (1 - flashRatio) * 10;
+          this.graphics.strokeCircle(screen.x, screen.y, rippleRadius2);
+          // 中心闪光
+          this.graphics.fillStyle(dashBrightColor, 0.5 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.7);
+          // 方向性粒子效果（4个方向）
+          for (let i = 0; i < 4; i++) {
+            const angle = (i * Math.PI) / 2;
+            const dist = enemy.radius + (1 - flashRatio) * 12;
+            this.graphics.fillStyle(dashFlashColor, 0.8 * flashRatio);
+            this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 3);
+          }
         }
       } else if (enemy.hitFlashSec > 0) {
         const normalHitRatio = Phaser.Math.Clamp(enemy.hitFlashSec / 0.14, 0, 1);
@@ -3408,7 +3521,7 @@ export class GameScene extends Phaser.Scene {
         ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
         : 0;
     const damageFlashRatio = battle.playerDamageFlashSec > 0 ? Math.min(1, battle.playerDamageFlashSec / 0.34) : 0;
-    const hpRatio = state.stats.hp / Math.max(1, state.stats.maxHp);
+    const hpRatio = engineState.stats.hp / Math.max(1, engineState.stats.maxHp);
     const lowHpRatio = Phaser.Math.Clamp((0.46 - hpRatio) / 0.46, 0, 1);
     const criticalHpRatio = Phaser.Math.Clamp((0.24 - hpRatio) / 0.24, 0, 1);
     const dangerPulse = 0.5 + Math.sin(battle.elapsedSec * 6.3 + battle.kills * 0.12) * 0.5;
@@ -3416,7 +3529,7 @@ export class GameScene extends Phaser.Scene {
     const moveDirX = moveMagnitude > 0.01 ? battle.playerMoveDirX / moveMagnitude : 0;
     const moveDirY = moveMagnitude > 0.01 ? battle.playerMoveDirY / moveMagnitude : 0;
     const velocityMagnitude = Math.hypot(battle.playerVelocityX, battle.playerVelocityY);
-    const velocityRatio = Phaser.Math.Clamp(velocityMagnitude / Math.max(1, getPlayerMoveSpeed(state.stats) * 1.16), 0, 1);
+    const velocityRatio = Phaser.Math.Clamp(velocityMagnitude / Math.max(1, getPlayerMoveSpeed(engineState.stats) * 1.16), 0, 1);
     const aimMagnitude = Math.hypot(battle.playerAimDirX, battle.playerAimDirY);
     const aimDirX = aimMagnitude > 0.01 ? battle.playerAimDirX / aimMagnitude : 0;
     const aimDirY = aimMagnitude > 0.01 ? battle.playerAimDirY / aimMagnitude : -1;
@@ -3470,6 +3583,44 @@ export class GameScene extends Phaser.Scene {
       impactRatio <= 0.12 && damageFlashRatio <= 0.18 && nearMissRatio <= 0.1
         ? this.getIncomingThreatMarkers(battle)
         : [];
+
+    // P0优化：Dash残影效果
+    if (dashDriveRatio > 0) {
+      const dashColor = 0xff8844;
+      const dashBrightColor = 0xffbb66;
+      const afterimageAlpha = dashDriveRatio * 0.5;
+
+      // 多层残影（3层，营造运动模糊感）
+      for (let i = 0; i < 3; i++) {
+        const offset = (i + 1) * 8 * dashDriveRatio;
+        const alpha = afterimageAlpha * (1 - i * 0.25);
+        const size = 38 - i * 4;
+
+        // 残影位置：沿移动方向的反方向
+        const afterimageX = bodyX - moveDirX * offset;
+        const afterimageY = bodyY - moveDirY * offset;
+
+        // 渐变色残影
+        this.graphics.fillStyle(i === 0 ? dashBrightColor : dashColor, alpha);
+        this.graphics.fillEllipse(afterimageX, afterimageY, size, size);
+      }
+
+      // Dash启动/结束特效
+      if (dashDriveRatio > 0.8) {
+        // 刚启动：爆发粒子
+        const burstAlpha = (dashDriveRatio - 0.8) * 5 * 0.6;
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI) / 3;
+          const dist = 25 + (1 - dashDriveRatio) * 15;
+          this.graphics.fillStyle(dashBrightColor, burstAlpha);
+          this.graphics.fillCircle(
+            bodyX + Math.cos(angle) * dist,
+            bodyY + Math.sin(angle) * dist,
+            4
+          );
+        }
+      }
+    }
 
     this.graphics.fillStyle(0x000000, 0.22);
     this.graphics.fillEllipse(bodyX, bodyY + 18, 34, 14);
@@ -3811,6 +3962,314 @@ export class GameScene extends Phaser.Scene {
       if (criticalHpRatio > 0) {
         this.graphics.lineStyle(2.2, this.mixColor(0xffc29c, 0xffffff, 0.22), 0.1 + criticalHpRatio * 0.22 + dangerPulse * 0.08);
         this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 68 + dangerPulse * 12 + criticalHpRatio * 12);
+      }
+    }
+
+    // Kill Streak screen edge glow
+    if (battle.killStreakCount >= 2) {
+      const streakRatio = Math.min(1, (battle.killStreakCount - 2) / 8); // 0 at 2 kills, 1 at 10+ kills
+      const streakPulse = Math.sin(this.time.now * 0.008) * 0.5 + 0.5;
+      const streakColor = this.mixColor(0xffd700, 0xffffff, 0.3); // Golden glow
+      const edgeAlpha = 0.02 + streakRatio * 0.08 + streakPulse * streakRatio * 0.04;
+      const edgeDepth = 12 + streakRatio * 20;
+
+      this.graphics.fillStyle(streakColor, edgeAlpha);
+      this.graphics.fillRect(0, 0, camera.width, edgeDepth);
+      this.graphics.fillRect(0, camera.height - edgeDepth, camera.width, edgeDepth);
+      this.graphics.fillRect(0, edgeDepth, edgeDepth, camera.height - edgeDepth * 2);
+      this.graphics.fillRect(camera.width - edgeDepth, edgeDepth, edgeDepth, camera.height - edgeDepth * 2);
+
+      // Corner accents for high streaks
+      if (battle.killStreakCount >= 5) {
+        const cornerInset = 16;
+        const cornerLength = 15 + streakRatio * 25 + streakPulse * 8;
+        this.graphics.lineStyle(2 + streakRatio * 1.5, streakColor, 0.15 + streakRatio * 0.25 + streakPulse * 0.1);
+        this.graphics.lineBetween(cornerInset, cornerInset, cornerInset + cornerLength, cornerInset);
+        this.graphics.lineBetween(cornerInset, cornerInset, cornerInset, cornerInset + cornerLength);
+        this.graphics.lineBetween(camera.width - cornerInset, cornerInset, camera.width - cornerInset - cornerLength, cornerInset);
+        this.graphics.lineBetween(camera.width - cornerInset, cornerInset, camera.width - cornerInset, cornerInset + cornerLength);
+        this.graphics.lineBetween(cornerInset, camera.height - cornerInset, cornerInset + cornerLength, camera.height - cornerInset);
+        this.graphics.lineBetween(cornerInset, camera.height - cornerInset, cornerInset, camera.height - cornerInset - cornerLength);
+        this.graphics.lineBetween(
+          camera.width - cornerInset,
+          camera.height - cornerInset,
+          camera.width - cornerInset - cornerLength,
+          camera.height - cornerInset,
+        );
+        this.graphics.lineBetween(
+          camera.width - cornerInset,
+          camera.height - cornerInset,
+          camera.width - cornerInset,
+          camera.height - cornerInset - cornerLength,
+        );
+      }
+    }
+
+    // Crit路线独特被动视觉指示器
+    const critStage = this.engine.getRouteBuildStage('crit');
+    if (critStage === 'committed' || critStage === 'matured') {
+      const baseX = camera.width / 2;
+      const baseY = camera.height - 80;
+
+      // 破绽层数指示器（5个圆点）
+      for (let i = 0; i < 5; i++) {
+        const dotX = baseX - 40 + i * 20;
+        const dotY = baseY;
+        const isActive = i < battle.critComboStacks;
+        const dotColor = isActive ? 0xff6b6b : 0x444444;
+        const dotAlpha = isActive ? 0.8 : 0.3;
+        const dotRadius = isActive ? 5 : 4;
+
+        this.graphics.fillStyle(dotColor, dotAlpha);
+        this.graphics.fillCircle(dotX, dotY, dotRadius);
+
+        // 第5层时闪烁效果
+        if (i === 4 && battle.critFinisherReady) {
+          const pulse = Math.sin(this.time.now * 0.012) * 0.5 + 0.5;
+          this.graphics.lineStyle(2, 0xffff00, 0.4 + pulse * 0.4);
+          this.graphics.strokeCircle(dotX, dotY, 8 + pulse * 3);
+        }
+      }
+
+      // 终结打击就绪提示
+      if (battle.critFinisherReady) {
+        const pulse = Math.sin(this.time.now * 0.01) * 0.5 + 0.5;
+        this.graphics.fillStyle(0xffff00, 0.15 + pulse * 0.1);
+        this.graphics.fillRect(baseX - 50, baseY - 15, 100, 30);
+        this.graphics.lineStyle(2, 0xffff00, 0.5 + pulse * 0.3);
+        this.graphics.strokeRect(baseX - 50, baseY - 15, 100, 30);
+      }
+
+      // 爆发连锁窗口指示器
+      if (battle.critBurstChainSec > 0) {
+        const chainY = baseY - 35;
+        const chainWidth = 100;
+        const chainProgress = battle.critBurstChainSec / 2.0;
+        const chainColor = 0xff4444;
+
+        // 背景条
+        this.graphics.fillStyle(0x222222, 0.6);
+        this.graphics.fillRect(baseX - chainWidth / 2, chainY, chainWidth, 6);
+
+        // 进度条
+        this.graphics.fillStyle(chainColor, 0.8);
+        this.graphics.fillRect(baseX - chainWidth / 2, chainY, chainWidth * chainProgress, 6);
+
+        // 连锁计数指示器（3个小方块）
+        for (let i = 0; i < 3; i++) {
+          const boxX = baseX - 30 + i * 30;
+          const boxY = chainY - 12;
+          const isUsed = i < battle.critBurstChainCount;
+          const boxColor = isUsed ? 0x666666 : chainColor;
+          const boxAlpha = isUsed ? 0.4 : 0.8;
+
+          this.graphics.fillStyle(boxColor, boxAlpha);
+          this.graphics.fillRect(boxX, boxY, 8, 8);
+        }
+      }
+    }
+
+    // Pierce路线独特被动视觉指示器
+    const pierceStage = this.engine.getRouteBuildStage('pierce');
+    if (pierceStage === 'committed' || pierceStage === 'matured') {
+      const baseX = camera.width / 2;
+      const baseY = camera.height - 120;
+
+      // 连锁层数指示器（3个菱形）
+      for (let i = 0; i < 3; i++) {
+        const diamondX = baseX - 30 + i * 30;
+        const diamondY = baseY;
+        const isActive = i < battle.pierceChainStacks;
+        const diamondColor = isActive ? 0x00ffcc : 0x444444;
+        const diamondAlpha = isActive ? 0.8 : 0.3;
+        const diamondSize = isActive ? 6 : 5;
+
+        // 绘制菱形
+        this.graphics.fillStyle(diamondColor, diamondAlpha);
+        this.graphics.fillTriangle(
+          diamondX, diamondY - diamondSize,
+          diamondX + diamondSize, diamondY,
+          diamondX, diamondY + diamondSize
+        );
+        this.graphics.fillTriangle(
+          diamondX, diamondY - diamondSize,
+          diamondX - diamondSize, diamondY,
+          diamondX, diamondY + diamondSize
+        );
+
+        // 第3层时闪烁效果
+        if (i === 2 && battle.pierceChainStacks >= 3) {
+          const pulse = Math.sin(this.time.now * 0.015) * 0.5 + 0.5;
+          this.graphics.lineStyle(2, 0x00ffff, 0.5 + pulse * 0.4);
+          this.graphics.strokeCircle(diamondX, diamondY, 10 + pulse * 3);
+        }
+      }
+
+      // 连锁衰减计时器
+      if (battle.pierceChainDecaySec > 0) {
+        const timerY = baseY + 20;
+        const timerWidth = 80;
+        const timerProgress = battle.pierceChainDecaySec / 2.0;
+
+        this.graphics.fillStyle(0x222222, 0.6);
+        this.graphics.fillRect(baseX - timerWidth / 2, timerY, timerWidth, 4);
+
+        this.graphics.fillStyle(0x00ffcc, 0.7);
+        this.graphics.fillRect(baseX - timerWidth / 2, timerY, timerWidth * timerProgress, 4);
+      }
+    }
+
+    // Dash路线独特被动视觉指示器
+    const dashStage = this.engine.getRouteBuildStage('dash');
+    if (dashStage === 'committed' || dashStage === 'matured') {
+      const baseX = camera.width / 2;
+      const baseY = camera.height - 60;
+
+      // 动量层数指示器（5个箭头）
+      for (let i = 0; i < 5; i++) {
+        const arrowX = baseX - 50 + i * 25;
+        const arrowY = baseY;
+        const isActive = i < battle.dashMomentumStacks;
+        const arrowColor = isActive ? 0x00d4ff : 0x444444;
+        const arrowAlpha = isActive ? 0.8 : 0.3;
+        const arrowSize = isActive ? 7 : 6;
+
+        // 绘制向右箭头
+        this.graphics.fillStyle(arrowColor, arrowAlpha);
+        this.graphics.fillTriangle(
+          arrowX - arrowSize, arrowY - arrowSize,
+          arrowX + arrowSize, arrowY,
+          arrowX - arrowSize, arrowY + arrowSize
+        );
+        this.graphics.fillRect(arrowX - arrowSize - 4, arrowY - 2, 6, 4);
+
+        // 第5层时闪烁效果
+        if (i === 4 && battle.dashMomentumStacks >= 5) {
+          const pulse = Math.sin(this.time.now * 0.015) * 0.5 + 0.5;
+          this.graphics.lineStyle(2, 0x00ffff, 0.5 + pulse * 0.4);
+          this.graphics.strokeCircle(arrowX, arrowY, 12 + pulse * 3);
+        }
+      }
+
+      // 动量衰减计时器
+      if (battle.dashMomentumDecaySec > 0) {
+        const timerY = baseY + 20;
+        const timerWidth = 100;
+        const timerProgress = battle.dashMomentumDecaySec / 2.0;
+
+        this.graphics.fillStyle(0x222222, 0.6);
+        this.graphics.fillRect(baseX - timerWidth / 2, timerY, timerWidth, 4);
+
+        this.graphics.fillStyle(0x00d4ff, 0.7);
+        this.graphics.fillRect(baseX - timerWidth / 2, timerY, timerWidth * timerProgress, 4);
+      }
+
+      // 幽灵打击就绪指示器
+      if (battle.dashGhostStrikeReady) {
+        const ghostX = baseX + 70;
+        const ghostY = baseY;
+        const pulse = Math.sin(this.time.now * 0.02) * 0.5 + 0.5;
+
+        // 绘制幽灵子弹图标
+        this.graphics.fillStyle(0xbef7ff, 0.6 + pulse * 0.3);
+        this.graphics.fillCircle(ghostX, ghostY, 8);
+        this.graphics.fillStyle(0xffffff, 0.8 + pulse * 0.2);
+        this.graphics.fillCircle(ghostX, ghostY, 4);
+
+        // 外圈光晕
+        this.graphics.lineStyle(2, 0x00ffff, 0.4 + pulse * 0.4);
+        this.graphics.strokeCircle(ghostX, ghostY, 12 + pulse * 4);
+      }
+
+      // 反击窗口指示器
+      if (battle.dashCounterWindowSec > 0) {
+        const counterX = baseX - 70;
+        const counterY = baseY;
+        const windowProgress = battle.dashCounterWindowSec / 1.2;
+        const pulse = Math.sin(this.time.now * 0.025) * 0.5 + 0.5;
+
+        // 绘制反击图标（交叉剑）
+        this.graphics.lineStyle(3, 0xffaa00, 0.7 + pulse * 0.2);
+        this.graphics.lineBetween(counterX - 6, counterY - 6, counterX + 6, counterY + 6);
+        this.graphics.lineBetween(counterX + 6, counterY - 6, counterX - 6, counterY + 6);
+
+        // 窗口计时器圆环
+        this.graphics.lineStyle(2, 0xffaa00, 0.5);
+        this.graphics.strokeCircle(counterX, counterY, 12);
+        this.graphics.lineStyle(3, 0xffdd00, 0.8);
+        this.graphics.beginPath();
+        this.graphics.arc(counterX, counterY, 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * windowProgress, false);
+        this.graphics.strokePath();
+      }
+    }
+
+    // Upgrade stat changes display - visual indicator
+    const runState = this.engine.getState();
+    if (runState.lastUpgradeChanges && battle.elapsedSec < 4) {
+      const changes = runState.lastUpgradeChanges;
+      const fadeInRatio = Math.min(1, battle.elapsedSec / 0.3);
+      const fadeOutRatio = battle.elapsedSec > 3 ? 1 - (battle.elapsedSec - 3) / 1 : 1;
+      const displayAlpha = fadeInRatio * fadeOutRatio;
+
+      const changeCount = Object.keys(changes).length;
+      if (changeCount > 0) {
+        const centerX = camera.width / 2;
+        const startY = camera.height * 0.3;
+        const barWidth = 180;
+        const barHeight = 6;
+        const spacing = 12;
+        const totalHeight = changeCount * (barHeight + spacing) + 20;
+
+        // Background panel
+        this.graphics.fillStyle(0x0a0a0a, displayAlpha * 0.85);
+        this.graphics.fillRoundedRect(
+          centerX - barWidth / 2 - 15,
+          startY - 15,
+          barWidth + 30,
+          totalHeight,
+          6
+        );
+
+        // Border glow
+        this.graphics.lineStyle(2, 0xffd700, displayAlpha * 0.7);
+        this.graphics.strokeRoundedRect(
+          centerX - barWidth / 2 - 15,
+          startY - 15,
+          barWidth + 30,
+          totalHeight,
+          6
+        );
+
+        let index = 0;
+        const renderStatBar = (label: string, value: number, color: number) => {
+          const y = startY + index * (barHeight + spacing);
+          const barLength = Math.min(barWidth, Math.abs(value) * 20);
+
+          // Stat indicator dot
+          this.graphics.fillStyle(color, displayAlpha * 0.9);
+          this.graphics.fillCircle(centerX - barWidth / 2 - 5, y + barHeight / 2, 4);
+
+          // Stat bar
+          this.graphics.fillStyle(color, displayAlpha * 0.6);
+          this.graphics.fillRect(centerX - barWidth / 2, y, barLength, barHeight);
+
+          // Stat bar border
+          this.graphics.lineStyle(1, color, displayAlpha * 0.8);
+          this.graphics.strokeRect(centerX - barWidth / 2, y, barWidth, barHeight);
+
+          index++;
+        };
+
+        if (changes.damage) renderStatBar('DMG', changes.damage, 0xff6b6b);
+        if (changes.fireRate) renderStatBar('RATE', changes.fireRate, 0xffa94d);
+        if (changes.critChance) renderStatBar('CRIT%', changes.critChance, 0xffd43b);
+        if (changes.critMultiplier) renderStatBar('CRIT×', changes.critMultiplier, 0xffe066);
+        if (changes.pierce) renderStatBar('PIERCE', changes.pierce, 0x74c0fc);
+        if (changes.multishot) renderStatBar('MULTI', changes.multishot, 0x4dabf7);
+        if (changes.moveSpeed) renderStatBar('SPEED', changes.moveSpeed, 0x51cf66);
+        if (changes.maxHp) renderStatBar('HP', changes.maxHp, 0xff8787);
+        if (changes.dashInterval) renderStatBar('DASH', -changes.dashInterval, 0x20c997);
+        if (changes.regeneration) renderStatBar('REGEN', changes.regeneration, 0x69db7c);
       }
     }
 

@@ -3775,6 +3775,16 @@ button:hover {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 
+  .commercial-result-aside {
+    width: 100%;
+    max-width: 600px;
+    justify-self: center;
+  }
+
+  .commercial-result-stack {
+    grid-template-columns: 1fr;
+  }
+
   .commercial-choice-panel .choice-grid-tray {
     grid-template-columns: 1fr;
   }

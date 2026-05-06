@@ -356,6 +356,9 @@ export interface EnemyState {
   critMarkSec: number;
   pierceMarkSec: number;
   dashMarkSec: number;
+  lastHitWasCrit: boolean; // 最后一击是否暴击
+  lastHitWasPierce: boolean; // 最后一击是否穿透
+  lastHitWasDash: boolean; // 最后一击是否为Dash脉冲
   // 流派构筑第三轮：层数积累与命中反馈
   critMarkStacks?: number;
   critMarkBurstReady?: boolean;
@@ -374,6 +377,7 @@ export interface EnemyState {
   // Dash 回切窗口状态
   dashCounterWindowSec?: number; // 回切窗口持续时间
   dashMarkedForBonus?: boolean; // 是否被标记为可接受窗口额外伤害
+  slowSec?: number; // 减速效果持续时间（Dash冲击波）
 }
 
 export interface BulletState {
@@ -513,6 +517,9 @@ export interface BattleState {
   playerRecoverySec: number;
   killFlowSec: number;
   killFlowCount: number;
+  killStreakCount: number;
+  killStreakDecaySec: number;
+  killStreakMultiplier: number;
   pierceFlowSec: number;
   pierceFlowCount: number;
   pickupFlowSec: number;
@@ -564,6 +571,23 @@ export interface BattleState {
   // Crit 破绽爆发后短收益窗口
   critBurstBonusSec: number;
   critBurstBonusRatio: number;
+  // Crit路线独特被动状态
+  critComboStacks: number; // 破绽累积层数（最多5层）
+  critComboDecaySec: number; // 破绽累积衰减计时器
+  critFinisherReady: boolean; // 终结打击就绪
+  critBurstChainSec: number; // 爆发连锁窗口计时器
+  critBurstChainCount: number; // 爆发连锁已触发次数
+  // Pierce路线独特被动状态
+  pierceFractureMark: Set<number>; // 裂纹标记的敌人ID集合
+  pierceChainStacks: number; // 连锁反应层数（每次穿透+1，最多3层）
+  pierceChainDecaySec: number; // 连锁反应衰减计时器
+  // Dash路线独特被动状态
+  dashAfterimages: Array<{ x: number; y: number; lifeSec: number; damage: number }>; // 残影炮塔列表
+  dashConsecutiveCount: number; // 连续穿梭计数（3秒内）
+  dashConsecutiveWindowSec: number; // 连续穿梭窗口计时器
+  dashGhostStrikeReady: boolean; // 幽灵打击就绪（Dash后下次攻击穿透+额外伤害）
+  dashMomentumStacks: number; // 动量层数（连续Dash叠加攻速和移速）
+  dashMomentumDecaySec: number; // 动量衰减计时器
 }
 
 export interface NodeRecord {
@@ -624,6 +648,8 @@ export interface RunState {
     elapsedSec: number;
     durationSec: number;
   } | null;
+  // 升级能力变化显示
+  lastUpgradeChanges: StatModifiers | null;
   // 流派构筑第四轮：路线关键牌激活状态
   activeRoutePerks?: {
     pierceSeamkeep?: boolean;

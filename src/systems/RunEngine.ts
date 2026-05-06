@@ -76,6 +76,7 @@ import type {
   RunOutcome,
   RunState,
   Services,
+  StatModifiers,
   UpgradeArchetype,
   UpgradeDefinition,
   UpgradeSource,
@@ -188,6 +189,7 @@ export class RunEngine {
       battleWins: 0,
       nodeOptions: [],
       currentNode: openingNode,
+      lastUpgradeChanges: null,
       upgradeChoices: [],
       currentEvent: null,
       battle: null,
@@ -334,9 +336,19 @@ export class RunEngine {
 
     const source = this.state.upgradeSource;
     const previousDominantRoute = this.getDominantRoute();
+
+    // Capture stats before upgrade
+    const statsBefore = { ...this.state.stats };
+
     this.applyEffects(upgrade.effects, {
       pickId: `upgrade:${upgrade.sourceId}`,
     });
+
+    // Capture stats after upgrade and calculate changes
+    const statsAfter = this.state.stats;
+    const statChanges = this.calculateStatChanges(statsBefore, statsAfter);
+    this.state.lastUpgradeChanges = statChanges;
+
     // 检测并激活关键路线牌机制
     this.activateRoutePerkFromTags(upgrade.tags);
     if (!this.state.selectedUpgrades.includes(upgrade.sourceId)) {
@@ -497,6 +509,11 @@ export class RunEngine {
     battle.playerImpactSec = Math.max(0, battle.playerImpactSec - dt);
     battle.playerRecoverySec = Math.max(0, battle.playerRecoverySec - dt);
     battle.killFlowSec = Math.max(0, battle.killFlowSec - dt);
+    battle.killStreakDecaySec = Math.max(0, battle.killStreakDecaySec - dt);
+    if (battle.killStreakDecaySec === 0 && battle.killStreakCount > 0) {
+      battle.killStreakCount = 0;
+      battle.killStreakMultiplier = 1.0;
+    }
     battle.pierceFlowSec = Math.max(0, battle.pierceFlowSec - dt);
     battle.pickupFlowSec = Math.max(0, battle.pickupFlowSec - dt);
     battle.pickupLeadSec = Math.max(0, battle.pickupLeadSec - dt);
@@ -519,6 +536,31 @@ export class RunEngine {
       0,
       battle.monitorKillPickupContinueCooldownSec - dt,
     );
+
+    // Crit路线独特被动计时器衰减
+    battle.critComboDecaySec = Math.max(0, battle.critComboDecaySec - dt);
+    if (battle.critComboDecaySec === 0) {
+      battle.critComboStacks = 0;
+      battle.critFinisherReady = false;
+    }
+    battle.critBurstChainSec = Math.max(0, battle.critBurstChainSec - dt);
+    if (battle.critBurstChainSec === 0) {
+      battle.critBurstChainCount = 0;
+    }
+
+    // Pierce路线独特被动计时器衰减
+    battle.pierceChainDecaySec = Math.max(0, battle.pierceChainDecaySec - dt);
+    if (battle.pierceChainDecaySec === 0) {
+      battle.pierceChainStacks = 0;
+    }
+
+    // Dash路线独特被动计时器衰减
+    battle.dashMomentumDecaySec = Math.max(0, battle.dashMomentumDecaySec - dt);
+    if (battle.dashMomentumDecaySec === 0) {
+      battle.dashMomentumStacks = 0;
+    }
+    battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - dt);
+
     if (battle.pickupFlowSec <= 0) {
       battle.pickupFlowCount = 0;
     }
@@ -635,6 +677,26 @@ export class RunEngine {
     return top && top[1] > 0 ? top[0] : null;
   }
 
+  private calculateStatChanges(before: PlayerStats, after: PlayerStats): StatModifiers {
+    const changes: StatModifiers = {};
+
+    if (after.maxHp !== before.maxHp) changes.maxHp = after.maxHp - before.maxHp;
+    if (after.damage !== before.damage) changes.damage = after.damage - before.damage;
+    if (after.fireRate !== before.fireRate) changes.fireRate = after.fireRate - before.fireRate;
+    if (after.projectileSpeed !== before.projectileSpeed) changes.projectileSpeed = after.projectileSpeed - before.projectileSpeed;
+    if (after.critChance !== before.critChance) changes.critChance = after.critChance - before.critChance;
+    if (after.critMultiplier !== before.critMultiplier) changes.critMultiplier = after.critMultiplier - before.critMultiplier;
+    if (after.pierce !== before.pierce) changes.pierce = after.pierce - before.pierce;
+    if (after.multishot !== before.multishot) changes.multishot = after.multishot - before.multishot;
+    if (after.moveSpeed !== before.moveSpeed) changes.moveSpeed = after.moveSpeed - before.moveSpeed;
+    if (after.dashInterval !== before.dashInterval) changes.dashInterval = after.dashInterval - before.dashInterval;
+    if (after.dashPulseDamage !== before.dashPulseDamage) changes.dashPulseDamage = after.dashPulseDamage - before.dashPulseDamage;
+    if (after.dashInvulnerability !== before.dashInvulnerability) changes.dashInvulnerability = after.dashInvulnerability - before.dashInvulnerability;
+    if (after.regeneration !== before.regeneration) changes.regeneration = after.regeneration - before.regeneration;
+
+    return changes;
+  }
+
   private getResultRoute(): RouteId | null {
     return this.state.maturedRoute ?? this.state.committedRoute ?? this.getDominantRoute();
   }
@@ -658,7 +720,7 @@ export class RunEngine {
     }
   }
 
-  private getRouteBuildStage(routeId: RouteId): RouteBuildStage {
+  public getRouteBuildStage(routeId: RouteId): RouteBuildStage {
     if (this.state.maturedRoute === routeId) {
       return 'matured';
     }
@@ -773,6 +835,9 @@ export class RunEngine {
       playerRecoverySec: 0,
       killFlowSec: 0,
       killFlowCount: 0,
+      killStreakCount: 0,
+      killStreakDecaySec: 0,
+      killStreakMultiplier: 1.0,
       pierceFlowSec: 0,
       pierceFlowCount: 0,
       pickupFlowSec: 0,
@@ -823,6 +888,23 @@ export class RunEngine {
       critCrownfireReady: this.state.activeRoutePerks?.critCrownfire ?? false,
       critBurstBonusSec: 0,
       critBurstBonusRatio: 0,
+      // Crit路线独特被动状态
+      critComboStacks: 0,
+      critComboDecaySec: 0,
+      critFinisherReady: false,
+      critBurstChainSec: 0,
+      critBurstChainCount: 0,
+      // Pierce路线独特被动状态
+      pierceFractureMark: new Set<number>(),
+      pierceChainStacks: 0,
+      pierceChainDecaySec: 0,
+      // Dash路线独特被动状态
+      dashAfterimages: [],
+      dashConsecutiveCount: 0,
+      dashConsecutiveWindowSec: 0,
+      dashGhostStrikeReady: false,
+      dashMomentumStacks: 0,
+      dashMomentumDecaySec: 0,
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
@@ -2638,11 +2720,25 @@ export class RunEngine {
     // 流派构筑第三轮：开启回切反打窗口
     battle.dashCounterWindowSec = 1.2;
 
+    // Dash路线独特被动：幽灵打击 - Dash后下次攻击穿透并造成额外伤害
+    if (dashStage === 'committed' || dashStage === 'matured') {
+      battle.dashGhostStrikeReady = true;
+    }
+
+    // Dash路线独特被动：动量 - 连续Dash叠加攻速和移速加成
+    if (dashStage === 'committed' || dashStage === 'matured') {
+      battle.dashMomentumStacks = Math.min(5, battle.dashMomentumStacks + 1);
+      battle.dashMomentumDecaySec = 2.0; // 2秒内不Dash则衰减
+    }
+
     for (const enemy of battle.enemies) {
       const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
       if (distance <= pulseRadius) {
         enemy.hp -= pulseDamage;
         dashPulseHits += 1;
+        // 记录Dash击杀类型
+        enemy.lastHitWasCrit = false;
+        enemy.lastHitWasPierce = false;
         // 流派构筑第三轮：脉冲层数积累与回切标记
         const oldStacks = enemy.dashPulseStacks ?? 0;
         enemy.dashMarkSec = 1.5;
@@ -2808,6 +2904,9 @@ export class RunEngine {
         critMarkSec: 0,
         pierceMarkSec: 0,
         dashMarkSec: 0,
+        lastHitWasCrit: false,
+        lastHitWasPierce: false,
+        lastHitWasDash: false,
         // 流派构筑第三轮：层数积累初始化
         critMarkStacks: 0,
         pierceMarkStacks: 0,
@@ -3082,6 +3181,20 @@ export class RunEngine {
       battle.tempoPulseSec,
       enemy.elite ? 0.36 : 0.17 + Math.min(0.2, battle.killFlowCount * 0.054),
     );
+
+    // Kill Streak System
+    if (battle.killStreakDecaySec > 0) {
+      battle.killStreakCount += 1;
+    } else {
+      battle.killStreakCount = 1;
+    }
+
+    // Reset decay timer (3 seconds window)
+    battle.killStreakDecaySec = 3.0;
+
+    // Calculate multiplier: +5% per kill, max +50% at 10 kills
+    battle.killStreakMultiplier = 1.0 + Math.min(0.5, battle.killStreakCount * 0.05);
+
     return battle.killFlowCount;
   }
 
@@ -3692,6 +3805,9 @@ export class RunEngine {
       critMarkSec: 0,
       pierceMarkSec: 0,
       dashMarkSec: 0,
+      lastHitWasCrit: false,
+      lastHitWasPierce: false,
+      lastHitWasDash: false,
       // 流派构筑第三轮：层数积累初始化
       critMarkStacks: 0,
       pierceMarkStacks: 0,
@@ -3950,6 +4066,12 @@ export class RunEngine {
     this.kickBattleShake(battle, 0.05 + killFlowBoost * 0.008, focusRoute === 'dash' ? 0.18 + killFlowRatio * 0.03 : 0.12 + killFlowRatio * 0.02, 11);
     this.enqueueAudio('shoot');
 
+    // Dash路线独特被动：动量加成
+    let baseDamage = this.state.stats.damage;
+    if ((dashStage === 'committed' || dashStage === 'matured') && battle.dashMomentumStacks > 0) {
+      baseDamage *= 1 + battle.dashMomentumStacks * 0.08;
+    }
+
     for (let index = 0; index < shotCount; index += 1) {
       const offset = (index - spreadCenter) * spreadStep;
       const angle = baseAngle + offset;
@@ -3959,12 +4081,31 @@ export class RunEngine {
         y: battle.playerY,
         vx: Math.cos(angle) * projectileSpeed,
         vy: Math.sin(angle) * projectileSpeed,
-        damage: this.state.stats.damage,
+        damage: baseDamage,
         lifeSec: bulletLifeSec,
         pierceRemaining: this.state.stats.pierce,
         canEcho: this.state.routeCounts.pierce > 0,
         hitCount: 0,
         routeFocus: focusRoute ?? undefined,
+      });
+    }
+
+    // Dash路线独特被动：幽灵打击（额外发射一颗子弹）
+    if ((dashStage === 'committed' || dashStage === 'matured') && battle.dashGhostStrikeReady) {
+      battle.dashGhostStrikeReady = false;
+      const ghostAngle = baseAngle + (Math.random() - 0.5) * 0.3;
+      battle.bullets.push({
+        id: battle.nextBulletId++,
+        x: battle.playerX,
+        y: battle.playerY,
+        vx: Math.cos(ghostAngle) * projectileSpeed * 1.15,
+        vy: Math.sin(ghostAngle) * projectileSpeed * 1.15,
+        damage: baseDamage * 0.7,
+        lifeSec: bulletLifeSec,
+        pierceRemaining: this.state.stats.pierce,
+        canEcho: this.state.routeCounts.pierce > 0,
+        hitCount: 0,
+        routeFocus: 'dash',
       });
     }
   }
@@ -3991,6 +4132,36 @@ export class RunEngine {
 
         const critical = Math.random() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
+
+        // Crit路线独特被动：破绽累积 + 终结打击 + 爆发连锁
+        const critStage = this.getRouteBuildStage('crit');
+        if (critStage === 'committed' || critStage === 'matured') {
+          if (!critical) {
+            // 非暴击命中：累积破绽层数（最多5层）
+            battle.critComboStacks = Math.min(5, battle.critComboStacks + 1);
+            battle.critComboDecaySec = 2.0; // 2秒内无命中则重置
+            if (battle.critComboStacks >= 5) {
+              battle.critFinisherReady = true;
+            }
+          } else {
+            // 暴击命中
+            if (battle.critFinisherReady) {
+              // 终结打击：5层时暴击伤害+150%
+              damage *= 2.5; // 原伤害 * 2.5 = +150%
+              battle.critFinisherReady = false;
+              battle.critComboStacks = 0;
+              battle.critComboDecaySec = 0;
+              battle.critBurstChainCount = 0; // 重置爆发连锁计数
+              battle.critBurstChainSec = 2.0; // 开启2秒爆发连锁窗口
+            } else if (battle.critBurstChainSec > 0 && battle.critBurstChainCount < 3) {
+              // 爆发连锁：终结打击后2秒内每次暴击额外+30%伤害（最多3次）
+              damage *= 1.3;
+              battle.critBurstChainCount += 1;
+            }
+            // 暴击也重置衰减计时器
+            battle.critComboDecaySec = 2.0;
+          }
+        }
         if (bullet.routeFocus === 'pierce' || bullet.hitCount > 0) {
           damage *= Math.max(0.38, 1 - bullet.hitCount * 0.24);
         }
@@ -4028,6 +4199,46 @@ export class RunEngine {
 
         enemy.hp -= damage;
         bullet.hitCount += 1;
+
+        // 记录击杀类型用于路线特色击杀奖励
+        enemy.lastHitWasCrit = critical;
+        enemy.lastHitWasPierce = bullet.hitCount > 1 || bullet.routeFocus === 'pierce';
+
+        // Pierce路线独特被动
+        const pierceStage = this.getRouteBuildStage('pierce');
+        if (pierceStage === 'committed' || pierceStage === 'matured') {
+          if (bullet.hitCount > 1) {
+            // 穿透印记：穿透命中标记敌人
+            battle.pierceFractureMark.add(enemy.id);
+
+            // 连锁累积：穿透命中累积层数
+            battle.pierceChainStacks = Math.min(3, battle.pierceChainStacks + 1);
+            battle.pierceChainDecaySec = 2.0;
+
+            // 连锁爆发：3层时额外伤害
+            if (battle.pierceChainStacks >= 3) {
+              damage *= 1.4;
+              enemy.hp -= damage * 0.4; // 额外40%伤害
+              battle.pierceChainStacks = 0;
+              battle.pierceChainDecaySec = 0;
+              // 创建连锁爆发视觉效果
+              this.createCombatPulse(battle, {
+                x: enemy.x,
+                y: enemy.y,
+                radius: 40,
+                lifeSec: 0.3,
+                color: 0x00ffcc,
+                secondaryColor: 0xaaffff,
+                fillAlpha: 0.6,
+                strokeAlpha: 0.8,
+                strokeWidth: 2,
+                growthPerSec: 100,
+                innerRadiusRatio: 0.5,
+              });
+            }
+          }
+        }
+
         const impactCue: AudioCue =
           critical ? 'crit' : bullet.routeFocus === 'pierce' ? 'pierceHit' : bullet.routeFocus === 'dash' ? 'dashHit' : 'hit';
         this.enqueueAudio(impactCue);
@@ -4657,6 +4868,12 @@ export class RunEngine {
   }
 
   private updateArchetypeEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    // 护卫使用专门的护卫AI
+    if (enemy.role === 'escort') {
+      this.updateEscortEnemy(enemy, battle, dt);
+      return;
+    }
+
     switch (enemy.archetype) {
       case 'standard':
         this.updateStandardEnemy(enemy, battle, dt);
@@ -5828,7 +6045,7 @@ export class RunEngine {
     for (const orb of battle.experienceOrbs) {
       const distance = Math.hypot(orb.x - battle.playerX, orb.y - battle.playerY);
       if (distance <= pickupRadius) {
-        this.gainExperience(orb.value);
+        this.gainExperience(orb.value * battle.killStreakMultiplier);
         const pickupChain = this.registerPickupFlow(battle, orb.value);
         const pickupChainRatio = this.getPickupFlowRatio(battle);
         const pickupChainCarry =
@@ -6087,8 +6304,9 @@ export class RunEngine {
   }
 
   private kickBattleShake(battle: BattleState, durationSec: number, strength: number, frequency: number = 11): void {
-    const softenedDuration = durationSec * 0.62;
-    const softenedStrength = Math.min(0.5, strength * 0.36);
+    // 大幅降低震动强度，避免眩晕感（降低到原来的10%）
+    const softenedDuration = durationSec * 0.3;
+    const softenedStrength = Math.min(0.15, strength * 0.1);
     battle.cameraShakeSec = Math.max(battle.cameraShakeSec, softenedDuration);
     battle.cameraShakeStrength = Math.max(battle.cameraShakeStrength, softenedStrength);
     battle.cameraShakeFrequency = frequency;
@@ -6583,6 +6801,165 @@ export class RunEngine {
         value: shardValue,
         velocityX: Math.cos(angle) * launchSpeed + (Math.random() - 0.5) * 26,
         velocityY: Math.sin(angle) * launchSpeed + (Math.random() - 0.5) * 26,
+      });
+    }
+
+    // 路线特色击杀奖励
+    const routeCounts = this.state.routeCounts;
+
+    // Crit路线：暴击击杀产生爆炸波（小范围AOE伤害）
+    if (enemy.lastHitWasCrit && routeCounts.crit >= 2) {
+      const explosionRadius = 80 + routeCounts.crit * 8;
+      const explosionDamage = this.state.stats.damage * (0.3 + routeCounts.crit * 0.05);
+
+      battle.enemies.forEach((target) => {
+        if (target.id === enemy.id || target.hp <= 0) return;
+        const distance = Math.hypot(target.x - enemy.x, target.y - enemy.y);
+        if (distance <= explosionRadius) {
+          const falloff = 1 - distance / explosionRadius;
+          target.hp -= explosionDamage * falloff;
+          target.hitFlashSec = 0.12;
+        }
+      });
+
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: 20,
+        lifeSec: 0.3,
+        color: 0xff4444,
+        secondaryColor: 0xffaa44,
+        fillAlpha: 0.2,
+        strokeAlpha: 0.8,
+        strokeWidth: 3,
+        growthPerSec: explosionRadius * 3,
+        innerRadiusRatio: 0.3,
+        spokeCount: 8,
+        spokeLength: 20,
+        angle: 0,
+        spinRate: 12,
+      });
+    }
+
+    // Pierce路线：穿透击杀触发连锁闪电（跳跃到附近敌人）
+    if (enemy.lastHitWasPierce && routeCounts.pierce >= 2) {
+      const chainCount = Math.min(3, 1 + Math.floor(routeCounts.pierce / 3));
+      const chainDamage = this.state.stats.damage * (0.4 + routeCounts.pierce * 0.04);
+      const chainRange = 120 + routeCounts.pierce * 6;
+
+      let currentX = enemy.x;
+      let currentY = enemy.y;
+      const hitTargets = new Set<number>([enemy.id]);
+
+      for (let i = 0; i < chainCount; i++) {
+        const nearestTarget = battle.enemies
+          .filter((target) => !hitTargets.has(target.id) && target.hp > 0)
+          .map((target) => ({
+            target,
+            distance: Math.hypot(target.x - currentX, target.y - currentY),
+          }))
+          .filter(({ distance }) => distance <= chainRange)
+          .sort((a, b) => a.distance - b.distance)[0];
+
+        if (!nearestTarget) break;
+
+        const damageMultiplier = Math.pow(0.7, i);
+        nearestTarget.target.hp -= chainDamage * damageMultiplier;
+        nearestTarget.target.hitFlashSec = 0.14;
+        hitTargets.add(nearestTarget.target.id);
+
+        this.createCombatPulse(battle, {
+          x: nearestTarget.target.x,
+          y: nearestTarget.target.y,
+          radius: 12,
+          lifeSec: 0.2,
+          color: 0x44aaff,
+          secondaryColor: 0xaaffff,
+          fillAlpha: 0.15,
+          strokeAlpha: 0.7,
+          strokeWidth: 2,
+          growthPerSec: 150,
+          innerRadiusRatio: 0.5,
+        });
+
+        currentX = nearestTarget.target.x;
+        currentY = nearestTarget.target.y;
+      }
+    }
+
+    // Dash路线：脉冲击杀产生冲击波（击退+减速）
+    if (enemy.lastHitWasDash && routeCounts.dash >= 2) {
+      const shockwaveRadius = 100 + routeCounts.dash * 10;
+      const knockbackStrength = 150 + routeCounts.dash * 15;
+      const slowDuration = 1.5 + routeCounts.dash * 0.2;
+
+      battle.enemies.forEach((target) => {
+        if (target.id === enemy.id || target.hp <= 0) return;
+        const dx = target.x - enemy.x;
+        const dy = target.y - enemy.y;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance <= shockwaveRadius && distance > 0) {
+          const falloff = 1 - distance / shockwaveRadius;
+          const knockbackX = (dx / distance) * knockbackStrength * falloff;
+          const knockbackY = (dy / distance) * knockbackStrength * falloff;
+
+          target.x += knockbackX * 0.016;
+          target.y += knockbackY * 0.016;
+          target.slowSec = Math.max(target.slowSec || 0, slowDuration * falloff);
+          target.hitFlashSec = 0.1;
+        }
+      });
+
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: 25,
+        lifeSec: 0.35,
+        color: 0x00ffff,
+        secondaryColor: 0xaaffff,
+        fillAlpha: 0.1,
+        strokeAlpha: 0.75,
+        strokeWidth: 3.5,
+        growthPerSec: shockwaveRadius * 2.5,
+        innerRadiusRatio: 0.7,
+        spokeCount: 6,
+        spokeLength: 28,
+        angle: 0,
+        spinRate: -10,
+      });
+    }
+
+    // Pierce路线独特被动：穿透印记爆破
+    if (pierceStage === 'matured' && battle.pierceFractureMark.has(enemy.id)) {
+      // 击杀带穿透印记的敌人时，传播印记到附近敌人
+      const spreadRadius = 120;
+      battle.enemies.forEach((target) => {
+        if (target.id === enemy.id || target.hp <= 0) return;
+        const distance = Math.hypot(target.x - enemy.x, target.y - enemy.y);
+        if (distance <= spreadRadius) {
+          battle.pierceFractureMark.add(target.id);
+          target.hitFlashSec = 0.12;
+        }
+      });
+
+      // 创建传播视觉效果
+      this.createCombatPulse(battle, {
+        x: enemy.x,
+        y: enemy.y,
+        radius: 20,
+        lifeSec: 0.3,
+        color: 0x8844ff,
+        secondaryColor: 0xcc88ff,
+        fillAlpha: 0.12,
+        strokeAlpha: 0.65,
+        strokeWidth: 2.5,
+        growthPerSec: spreadRadius * 3,
+        innerRadiusRatio: 0.6,
+        spokeCount: 8,
+        spokeLength: 16,
+        angle: 0,
+        spinRate: 12,
       });
     }
   }
@@ -7735,6 +8112,151 @@ export class RunEngine {
       battle.playerShotFlashSec,
       0.05 + Math.min(0.05, crackedEscorts * 0.01 + (focusRoute === 'crit' ? 0.02 : focusRoute === 'pierce' ? 0.012 : 0)),
     );
+  }
+
+  private updateEscortEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    const eliteEnemy = this.getEliteEnemy(battle);
+    if (!eliteEnemy) {
+      // 如果没有精英，降级为标准移动
+      this.updateArchetypeEnemyByType(enemy, battle, dt);
+      return;
+    }
+
+    const dx = battle.playerX - enemy.x;
+    const dy = battle.playerY - enemy.y;
+    const playerDistance = Math.max(1, Math.hypot(dx, dy));
+    const playerDirX = dx / playerDistance;
+    const playerDirY = dy / playerDistance;
+
+    const eliteDx = eliteEnemy.x - enemy.x;
+    const eliteDy = eliteEnemy.y - enemy.y;
+    const eliteDistance = Math.max(1, Math.hypot(eliteDx, eliteDy));
+    const eliteDirX = eliteDx / eliteDistance;
+    const eliteDirY = eliteDy / eliteDistance;
+
+    // 计算玩家到精英的向量（用于拦截）
+    const eliteToPlayerDx = battle.playerX - eliteEnemy.x;
+    const eliteToPlayerDy = battle.playerY - eliteEnemy.y;
+    const eliteToPlayerDistance = Math.max(1, Math.hypot(eliteToPlayerDx, eliteToPlayerDy));
+    const eliteToPlayerDirX = eliteToPlayerDx / eliteToPlayerDistance;
+    const eliteToPlayerDirY = eliteToPlayerDy / eliteToPlayerDistance;
+
+    const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
+    const weave = Math.sin(battle.elapsedSec * 1.8 + enemy.id * 0.5);
+    const strafeX = -playerDirY;
+    const strafeY = playerDirX;
+
+    // 护卫的理想位置：在精英和玩家之间
+    const guardDistance = enemy.archetype === 'ranged' ? 80 : enemy.archetype === 'brute' ? 50 : 65;
+    const guardX = eliteEnemy.x + eliteToPlayerDirX * guardDistance;
+    const guardY = eliteEnemy.y + eliteToPlayerDirY * guardDistance;
+
+    // 添加侧向偏移，形成防御弧线
+    const orthoX = -eliteToPlayerDirY;
+    const orthoY = eliteToPlayerDirX;
+    const lateralOffset = (enemy.id % 3 - 1) * 35; // -35, 0, 35
+    const targetX = guardX + orthoX * lateralOffset;
+    const targetY = guardY + orthoY * lateralOffset;
+
+    const toTargetDx = targetX - enemy.x;
+    const toTargetDy = targetY - enemy.y;
+    const toTargetDistance = Math.max(1, Math.hypot(toTargetDx, toTargetDy));
+    const toTargetDirX = toTargetDx / toTargetDistance;
+    const toTargetDirY = toTargetDy / toTargetDistance;
+
+    let moveX = 0;
+    let moveY = 0;
+
+    // 1. 阵型保持力：向理想位置移动
+    const formationWeight = toTargetDistance > 40 ? 0.85 : toTargetDistance > 20 ? 0.6 : 0.35;
+    moveX += toTargetDirX * formationWeight;
+    moveY += toTargetDirY * formationWeight;
+
+    // 2. 与精英保持距离（不要离太远）
+    if (eliteDistance > 140) {
+      moveX += eliteDirX * 0.4;
+      moveY += eliteDirY * 0.4;
+    } else if (eliteDistance < 40) {
+      // 太近了，稍微远离
+      moveX -= eliteDirX * 0.2;
+      moveY -= eliteDirY * 0.2;
+    }
+
+    // 3. 根据原型调整行为
+    if (enemy.archetype === 'ranged') {
+      // 远程护卫：保持距离，优先射击
+      if (playerDistance < 100) {
+        moveX -= playerDirX * 0.3;
+        moveY -= playerDirY * 0.3;
+      }
+      moveX += strafeX * weave * 0.12;
+      moveY += strafeY * weave * 0.12;
+    } else if (enemy.archetype === 'brute') {
+      // 重型护卫：更激进地拦截
+      if (playerDistance < 120 && eliteToPlayerDistance < 150) {
+        moveX += playerDirX * 0.25;
+        moveY += playerDirY * 0.25;
+      }
+    } else if (enemy.archetype === 'skirmisher') {
+      // 游击护卫：快速机动
+      moveX += strafeX * weave * 0.18;
+      moveY += strafeY * weave * 0.18;
+      if (playerDistance < 90) {
+        moveX += playerDirX * 0.2;
+        moveY += playerDirY * 0.2;
+      }
+    } else {
+      // 标准护卫：平衡
+      if (playerDistance < 110) {
+        moveX += playerDirX * 0.15;
+        moveY += playerDirY * 0.15;
+      }
+      moveX += strafeX * weave * 0.08;
+      moveY += strafeY * weave * 0.08;
+    }
+
+    // 4. 受伤后撤
+    if (recoveryRatio > 0) {
+      const retreatSign = enemy.id % 2 === 0 ? -1 : 1;
+      moveX += strafeX * retreatSign * (0.2 + recoveryRatio * 0.35);
+      moveY += strafeY * retreatSign * (0.2 + recoveryRatio * 0.35);
+      moveX -= playerDirX * (0.12 + recoveryRatio * 0.25);
+      moveY -= playerDirY * (0.12 + recoveryRatio * 0.25);
+    }
+
+    // 5. 压力脉冲期：协同进攻
+    if (enemy.pressurePulseSec > 0) {
+      const pressureRatio = Math.min(1, enemy.pressurePulseSec / this.getEnemyPressureWindowSec(enemy));
+      moveX += playerDirX * (0.2 + pressureRatio * 0.4);
+      moveY += playerDirY * (0.2 + pressureRatio * 0.4);
+    }
+
+    const moveMagnitude = Math.max(0.01, Math.hypot(moveX, moveY));
+    const normalizedMoveX = moveX / moveMagnitude;
+    const normalizedMoveY = moveY / moveMagnitude;
+    const moveSpeed = enemy.speed * dt;
+    enemy.x += normalizedMoveX * moveSpeed;
+    enemy.y += normalizedMoveY * moveSpeed;
+  }
+
+  private updateArchetypeEnemyByType(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
+    switch (enemy.archetype) {
+      case 'standard':
+        this.updateStandardEnemy(enemy, battle, dt);
+        return;
+      case 'brute':
+        this.updateBruteEnemy(enemy, battle, dt);
+        return;
+      case 'skirmisher':
+        this.updateSkirmisherEnemy(enemy, battle, dt);
+        return;
+      case 'ranged':
+        this.updateRangedEnemy(enemy, battle, dt);
+        return;
+      default:
+        this.updateStandardEnemy(enemy, battle, dt);
+        return;
+    }
   }
 
   private stabilizeEliteCrackEscort(

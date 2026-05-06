@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import './style.css';
+import './style-space-combat.css';
 import type { BattleTemplateId, Services } from './game/types';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';

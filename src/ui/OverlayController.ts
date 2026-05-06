@@ -103,45 +103,63 @@ export class OverlayController {
     this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
-      <section class="screen-minimal menu-screen commercial-start-screen">
-        <div class="screen-gridline" aria-hidden="true"></div>
-        <div class="commercial-corner-label">01 START SCREEN</div>
-        <div class="commercial-screen-layout">
-          <div class="commercial-screen-copy">
-            <p class="screen-kicker">AUTONOMOUS COMBAT DRONE PROGRAM</p>
-            <h1 class="screen-title">PROJECT<br />ORBITAL</h1>
-            <p class="screen-subtitle">节点推进 / 自动射击 / 模组构筑</p>
-            <p class="screen-brief">移动躲弹，自动开火。<br />打倒敌人，拾取能量，撑到 Boss。</p>
-            <div class="screen-meta-strip">
-              <span>RUNS ${summary.totalRuns}</span>
-              <span>WINS ${summary.wins}</span>
-              <span>${summary.lastDurationSec > 0 ? `LAST ${this.formatDuration(summary.lastDurationSec)}` : 'NO RUN'}</span>
-              <span>${summary.lastRouteName || 'NO ROUTE'}</span>
-            </div>
-            <div class="screen-actions commercial-screen-actions">
-              <button class="text-action text-action-primary" data-action="start">
-                <span>开始作战</span>
-                <small>移动躲弹，自动开火</small>
-              </button>
-              <button class="text-action" data-action="export">
-                <span>战斗记录</span>
-                <small>查看本地记录</small>
-              </button>
-              <button class="text-action" data-action="volume">
-                <span>音量</span>
-                <small>调整背景与音效</small>
-              </button>
+      <section class="screen-minimal menu-screen space-combat-start-screen">
+        <div class="space-scanlines" aria-hidden="true"></div>
+        <div class="space-particles" aria-hidden="true"></div>
+
+        <div class="start-screen-container">
+          <div class="start-screen-header">
+            <div class="title-glitch-wrapper">
+              <h1 class="space-title">PROJECT ORBITAL</h1>
+              <div class="title-subtitle">轨道计划 - 自主战斗无人机系统</div>
             </div>
           </div>
-          <div class="commercial-visual-anchor" aria-hidden="true">
-            <span class="screen-ring ring-a"></span>
-            <span class="screen-ring ring-b"></span>
-            <span class="screen-ring ring-c"></span>
-            <span class="commercial-core"></span>
-            <span class="commercial-core-wing commercial-core-wing-a"></span>
-            <span class="commercial-core-wing commercial-core-wing-b"></span>
-            <span class="commercial-core-wing commercial-core-wing-c"></span>
-            <span class="commercial-core-wing commercial-core-wing-d"></span>
+
+          <div class="start-screen-visual">
+            <div class="hologram-ship">
+              <div class="ship-core"></div>
+              <div class="orbit-ring orbit-ring-1"></div>
+              <div class="orbit-ring orbit-ring-2"></div>
+              <div class="orbit-ring orbit-ring-3"></div>
+            </div>
+          </div>
+
+          <div class="start-screen-actions">
+            <button class="combat-action combat-action-primary" data-action="start">
+              <span class="action-icon">▶</span>
+              <div class="action-content">
+                <strong>开始作战</strong>
+                <small>WASD移动 · 空格冲刺 · 自动射击</small>
+              </div>
+            </button>
+
+            <div class="start-screen-stats">
+              <div class="stat-item">
+                <span class="stat-label">出击</span>
+                <strong class="stat-value">${summary.totalRuns}</strong>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">胜利</span>
+                <strong class="stat-value">${summary.wins}</strong>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">上次</span>
+                <strong class="stat-value">${summary.lastDurationSec > 0 ? this.formatDuration(summary.lastDurationSec) : '--:--'}</strong>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">路线</span>
+                <strong class="stat-value">${summary.lastRouteName || '无'}</strong>
+              </div>
+            </div>
+
+            <div class="start-screen-secondary">
+              <button class="combat-action-small" data-action="export">
+                <span>战斗记录</span>
+              </button>
+              <button class="combat-action-small" data-action="volume">
+                <span>音量设置</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -405,7 +423,7 @@ export class OverlayController {
     this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
-    const routeTrace = result.routeTrace.slice(-4);
+    const isVictory = result.outcome === 'victory';
     const buildStageLabel =
       result.buildStage === 'unformed'
         ? '未站稳'
@@ -415,109 +433,93 @@ export class OverlayController {
             ? '开始站稳'
             : '已经成型';
     this.screenLayer.innerHTML = `
-      <section class="screen-minimal result-screen commercial-result-screen ${result.outcome === 'victory' ? 'is-victory' : 'is-defeat'}">
-        <div class="screen-gridline" aria-hidden="true"></div>
-        <div class="commercial-corner-label">04 RESULT SCREEN</div>
-        <div class="commercial-screen-layout">
-          <div class="commercial-screen-copy commercial-result-copy">
-            <p class="screen-kicker">${result.outcome === 'victory' ? '本局完成' : '本局失败'}</p>
-            <h1 class="screen-title">${result.outcome === 'victory' ? '任务完成' : '任务失败'}</h1>
-            <p class="screen-subtitle">看看这局怎么收场</p>
-            <div class="screen-summary-grid commercial-result-report">
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">路线</span>
-                <strong>${routeLabel}</strong>
-              </article>
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">生存时间</span>
-                <strong>${this.formatDuration(result.runDurationSec)}</strong>
-              </article>
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">等级</span>
-                <strong>Lv.${result.levelReached}</strong>
-              </article>
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">节点</span>
-                <strong>${result.nodesCleared}</strong>
-              </article>
+      <section class="screen-minimal result-screen space-combat-result-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
+        <div class="space-scanlines" aria-hidden="true"></div>
+        <div class="result-particles" aria-hidden="true"></div>
+
+        <div class="result-screen-container">
+          <div class="result-screen-header">
+            <div class="result-status-icon ${isVictory ? 'status-victory' : 'status-defeat'}">
+              ${isVictory ? '✓' : '✗'}
             </div>
-            <p class="screen-meta-line">${result.summary}</p>
-            <div class="screen-actions commercial-screen-actions commercial-result-actions">
-              <button class="text-action text-action-primary" data-action="restart">
-                <span>再来一局</span>
-                <small>立刻重开</small>
-              </button>
-              <button class="text-action" data-action="menu">
-                <span>返回机库</span>
-                <small>回到开始页</small>
-              </button>
+            <h1 class="result-title">${isVictory ? '任务完成' : '任务失败'}</h1>
+            <p class="result-subtitle">${isVictory ? 'MISSION COMPLETE' : 'MISSION FAILED'}</p>
+            ${!isVictory ? `<p class="result-reason">${result.endingReason}</p>` : ''}
+          </div>
+
+          <div class="result-core-stats">
+            <div class="core-stat-item">
+              <span class="core-stat-label">存活时间</span>
+              <strong class="core-stat-value">${this.formatDuration(result.runDurationSec)}</strong>
+            </div>
+            <div class="core-stat-item">
+              <span class="core-stat-label">击杀数</span>
+              <strong class="core-stat-value">${result.battleWins}</strong>
+            </div>
+            <div class="core-stat-item">
+              <span class="core-stat-label">路线</span>
+              <strong class="core-stat-value">${routeLabel}</strong>
+              <small class="core-stat-sub">${buildStageLabel}</small>
             </div>
           </div>
-          <aside class="commercial-result-aside" aria-label="对局数据">
-            <div class="commercial-visual-anchor commercial-result-anchor" aria-hidden="true">
-              <span class="screen-ring ring-a"></span>
-              <span class="screen-ring ring-b"></span>
-              <span class="screen-ring ring-c"></span>
-              <span class="commercial-core"></span>
-              <div class="commercial-debrief-panel">
-                <span>本局小结</span>
-                <strong>${result.outcome === 'victory' ? '可以收工' : '调整再来'}</strong>
-                <small>${result.buildLabel}</small>
-              </div>
+
+          ${
+            result.selectedUpgrades && result.selectedUpgrades.length > 0
+              ? `
+          <div class="result-upgrade-timeline">
+            <div class="timeline-header">
+              <span>升级历程</span>
+              <small>${result.selectedUpgrades.length} 个强化</small>
             </div>
-            <div class="commercial-result-stack">
-              <article class="commercial-result-card">
-                <span>构筑摘要</span>
-                <strong>${result.buildSummary}</strong>
-              </article>
-              <article class="commercial-result-card">
-                <span>结束原因</span>
-                <strong>${result.endingReason}</strong>
-              </article>
-              <article class="commercial-result-card">
-                <span>终点节点</span>
-                <strong>${result.finalNodeTitle}</strong>
-              </article>
-              <article class="commercial-result-card is-row">
-                <span>战斗胜场</span>
-                <strong>${result.battleWins}</strong>
-                <span>推进节点</span>
-                <strong>${result.nodesCleared}</strong>
-              </article>
-              <article class="commercial-result-card is-row">
-                <span>路线阶段</span>
-                <strong>${buildStageLabel}</strong>
-                <span>结局类型</span>
-                <strong>${result.endingLabel}</strong>
-              </article>
-              <article class="commercial-result-card">
-                <span>最近轨迹</span>
-                <strong>${routeTrace.length > 0 ? routeTrace.map((node) => node.title).join(' / ') : '暂无轨迹'}</strong>
-              </article>
-              ${
-                result.selectedUpgrades && result.selectedUpgrades.length > 0
-                  ? `
-              <article class="commercial-result-card">
-                <span>强化历史 (${result.selectedUpgrades.length})</span>
-                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
-                  ${result.selectedUpgrades
-                    .map(
-                      (upgrade) => `
-                    <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-                      <span style="color: ${RARITY_COLOR_MAP[upgrade.rarity]}; font-weight: 600;">[${upgrade.rarityLabel}]</span>
-                      <span style="color: #e0e0e0;">${upgrade.name}</span>
-                      ${upgrade.routeId ? `<span style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]}; font-size: 11px;">(${ROUTE_NAME_MAP[upgrade.routeId]})</span>` : ''}
-                    </div>
-                  `
-                    )
-                    .join('')}
+            <div class="timeline-scroll">
+              ${result.selectedUpgrades
+                .map(
+                  (upgrade) => `
+                <div class="timeline-item" style="border-color: ${RARITY_COLOR_MAP[upgrade.rarity]};">
+                  <div class="timeline-item-icon" style="background: ${RARITY_COLOR_MAP[upgrade.rarity]};">
+                    ${(upgrade.rarityLabel ?? upgrade.rarity ?? '强化').charAt(0)}
+                  </div>
+                  <div class="timeline-item-content">
+                    <strong>${upgrade.name}</strong>
+                    ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${ROUTE_NAME_MAP[upgrade.routeId]}</small>` : ''}
+                  </div>
                 </div>
-              </article>
               `
-                  : ''
-              }
+                )
+                .join('')}
             </div>
-          </aside>
+          </div>
+          `
+              : ''
+          }
+
+          <div class="result-screen-actions">
+            <button class="combat-action combat-action-primary" data-action="restart">
+              <span class="action-icon">▶</span>
+              <div class="action-content">
+                <strong>再来一局</strong>
+                <small>按 R 快速重开</small>
+              </div>
+            </button>
+            <button class="combat-action-small" data-action="menu">
+              <span>返回机库</span>
+            </button>
+          </div>
+
+          <div class="result-detail-stats">
+            <div class="detail-stat">
+              <span>等级</span>
+              <strong>Lv.${result.levelReached}</strong>
+            </div>
+            <div class="detail-stat">
+              <span>节点</span>
+              <strong>${result.nodesCleared}</strong>
+            </div>
+            <div class="detail-stat">
+              <span>结局</span>
+              <strong>${result.endingLabel}</strong>
+            </div>
+          </div>
         </div>
       </section>
     `;

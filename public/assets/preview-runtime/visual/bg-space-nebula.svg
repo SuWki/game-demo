@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+  <defs>
+    <radialGradient id="nebulaA" cx="28%" cy="34%" r="48%">
+      <stop offset="0" stop-color="#2e5f84" stop-opacity=".34"/>
+      <stop offset=".42" stop-color="#153958" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#07111b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebulaB" cx="76%" cy="58%" r="46%">
+      <stop offset="0" stop-color="#6d4da2" stop-opacity=".22"/>
+      <stop offset=".44" stop-color="#284061" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#07111b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dust" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#44ddff" stop-opacity=".16"/>
+      <stop offset=".48" stop-color="#ffffff" stop-opacity=".02"/>
+      <stop offset="1" stop-color="#7aff7a" stop-opacity=".08"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="none"/>
+  <ellipse cx="260" cy="190" rx="360" ry="220" fill="url(#nebulaA)"/>
+  <ellipse cx="720" cy="320" rx="330" ry="210" fill="url(#nebulaB)"/>
+  <path d="M52 430C192 332 300 365 430 286S690 146 888 120" fill="none" stroke="url(#dust)" stroke-width="34" stroke-linecap="round" opacity=".28"/>
+  <g fill="#dff9ff" opacity=".45">
+    <circle cx="94" cy="84" r="1.2"/>
+    <circle cx="158" cy="248" r=".9"/>
+    <circle cx="266" cy="76" r="1"/>
+    <circle cx="394" cy="148" r=".8"/>
+    <circle cx="470" cy="420" r="1.1"/>
+    <circle cx="604" cy="94" r=".9"/>
+    <circle cx="710" cy="212" r="1.2"/>
+    <circle cx="826" cy="430" r=".8"/>
+    <circle cx="900" cy="284" r="1"/>
+  </g>
+  <g fill="#44ddff" opacity=".18">
+    <circle cx="210" cy="392" r="2"/>
+    <circle cx="548" cy="230" r="1.6"/>
+    <circle cx="848" cy="92" r="1.7"/>
+  </g>
+</svg>
