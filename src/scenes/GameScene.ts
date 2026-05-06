@@ -107,6 +107,8 @@ export class GameScene extends Phaser.Scene {
 
   private graphics!: Phaser.GameObjects.Graphics;
 
+  private terrainGraphics!: Phaser.GameObjects.Graphics;
+
   private readonly runtimePreviewImages: Phaser.GameObjects.Image[] = [];
 
   private runtimePreviewImageCursor = 0;
@@ -168,6 +170,8 @@ export class GameScene extends Phaser.Scene {
     this.engine.setDebugConfig(this.getRuntimeDebugConfig());
     this.runtimePreviewImages.length = 0;
     this.runtimePreviewImageCursor = 0;
+    this.terrainGraphics = this.add.graphics();
+    this.terrainGraphics.setDepth(1);
     this.graphics = this.add.graphics();
     this.graphics.setDepth(10);
     this.runtimeVisualPreviewEnabled = window.localStorage.getItem(RUNTIME_VISUAL_PREVIEW_STORAGE_KEY) !== 'off';
@@ -1835,6 +1839,7 @@ export class GameScene extends Phaser.Scene {
     const fadeRatio = Math.min(1, elapsedSec / 0.3); // 0.3秒淡入
     const pulseRatio = Math.min(1, elapsedSec / durationSec); // 整体进度
 
+    this.terrainGraphics.clear();
     this.graphics.clear();
 
     // 深色背景
@@ -1890,6 +1895,7 @@ export class GameScene extends Phaser.Scene {
     const accentColor = dominantRoute ? parseInt(ROUTE_COLOR_MAP[dominantRoute].slice(1), 16) : 0x61d7ff;
     const battle = this.engine.getState().battle;
 
+    this.terrainGraphics.clear();
     this.graphics.clear();
     this.beginRuntimePreviewImageFrame();
     if (!battle) {
@@ -2077,6 +2083,7 @@ export class GameScene extends Phaser.Scene {
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
     accentColor: number,
   ): void {
+    const g = this.terrainGraphics;
     this.renderRuntimePreviewImage(
       PREVIEW_BG_SPACE_NEBULA_TEXTURE,
       camera.width * 0.5,
@@ -2084,10 +2091,10 @@ export class GameScene extends Phaser.Scene {
       camera.width,
       0,
       0.9,
-      { height: camera.height, depth: 4 },
+      { height: camera.height, depth: 2 },
     );
-    this.graphics.fillGradientStyle(0x0b1721, 0x0f2030, 0x060a0f, 0x04070b, 0.9, 0.9, 0.96, 0.96);
-    this.graphics.fillRect(0, 0, camera.width, camera.height);
+    g.fillGradientStyle(0x0b1721, 0x0f2030, 0x060a0f, 0x04070b, 0.58, 0.62, 0.86, 0.88);
+    g.fillRect(0, 0, camera.width, camera.height);
 
     const blotStartX = Math.floor(camera.left / TERRAIN_BLOT_SIZE) - 1;
     const blotEndX = Math.ceil(camera.right / TERRAIN_BLOT_SIZE) + 1;
@@ -2109,11 +2116,11 @@ export class GameScene extends Phaser.Scene {
             width * 1.1,
             (noise - 0.5) * Math.PI,
             0.34,
-            { height: height * 1.65, depth: 5 },
+            { height: height * 1.65, depth: 3 },
           );
         }
-        this.graphics.fillStyle(noise > 0.54 ? 0x33404b : 0x1a232c, noise > 0.54 ? 0.16 : 0.1);
-        this.graphics.fillEllipse(screen.x, screen.y, width, height);
+        g.fillStyle(noise > 0.54 ? 0x33404b : 0x1a232c, noise > 0.54 ? 0.16 : 0.1);
+        g.fillEllipse(screen.x, screen.y, width, height);
       }
     }
 
@@ -2136,14 +2143,14 @@ export class GameScene extends Phaser.Scene {
           TERRAIN_TILE_SIZE - 8,
           0,
           0.5 + noise * 0.16,
-          { depth: 5 },
+          { depth: 3 },
         );
-        this.graphics.fillStyle(tileColor, 0.12 + noise * 0.06);
-        this.graphics.fillRoundedRect(screen.x, screen.y, TERRAIN_TILE_SIZE - 8, TERRAIN_TILE_SIZE - 8, 20);
+        g.fillStyle(tileColor, 0.12 + noise * 0.06);
+        g.fillRoundedRect(screen.x, screen.y, TERRAIN_TILE_SIZE - 8, TERRAIN_TILE_SIZE - 8, 20);
 
         const detailNoise = this.getTerrainNoise(tileX, tileY, 4);
-        this.graphics.fillStyle(0x71869a, 0.07 + detailNoise * 0.06);
-        this.graphics.fillEllipse(
+        g.fillStyle(0x71869a, 0.07 + detailNoise * 0.06);
+        g.fillEllipse(
           screen.x + 24 + detailNoise * 44,
           screen.y + 20 + this.getTerrainNoise(tileX, tileY, 5) * 52,
           20 + detailNoise * 26,
@@ -2155,8 +2162,8 @@ export class GameScene extends Phaser.Scene {
           for (let pebble = 0; pebble < pebbleCount; pebble += 1) {
             const px = screen.x + 18 + this.getTerrainNoise(tileX, tileY, 20 + pebble) * (TERRAIN_TILE_SIZE - 36);
             const py = screen.y + 18 + this.getTerrainNoise(tileX, tileY, 30 + pebble) * (TERRAIN_TILE_SIZE - 36);
-            this.graphics.fillStyle(0x0d1116, 0.18);
-            this.graphics.fillCircle(px, py, 2 + this.getTerrainNoise(tileX, tileY, 40 + pebble) * 3);
+            g.fillStyle(0x0d1116, 0.18);
+            g.fillCircle(px, py, 2 + this.getTerrainNoise(tileX, tileY, 40 + pebble) * 3);
           }
         }
       }
@@ -2170,6 +2177,7 @@ export class GameScene extends Phaser.Scene {
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
     accentColor: number,
   ): void {
+    const g = this.terrainGraphics;
     const template = BATTLE_TEMPLATES[battle.templateId];
     const pulse = 0.5 + Math.sin(battle.elapsedSec * 1.7 + battle.kills * 0.08) * 0.5;
     if (battle.encounterType === 'boss') {
@@ -2182,7 +2190,7 @@ export class GameScene extends Phaser.Scene {
         camera.width,
         0,
         0.48 + pulse * 0.1,
-        { height: camera.height, depth: 6 },
+        { height: camera.height, depth: 4 },
       );
     }
     const encounterGlow =
@@ -2194,29 +2202,29 @@ export class GameScene extends Phaser.Scene {
 
     if (template.winCondition.type === 'survive') {
       const edgeAlpha = 0.032 + pulse * 0.03;
-      this.graphics.fillStyle(encounterGlow, edgeAlpha);
-      this.graphics.fillRect(0, 0, camera.width, 26);
-      this.graphics.fillRect(0, camera.height - 26, camera.width, 26);
-      this.graphics.lineStyle(2, encounterGlow, 0.035 + pulse * 0.05);
-      this.graphics.lineBetween(0, 34, camera.width, 34);
-      this.graphics.lineBetween(0, camera.height - 34, camera.width, camera.height - 34);
+      g.fillStyle(encounterGlow, edgeAlpha);
+      g.fillRect(0, 0, camera.width, 26);
+      g.fillRect(0, camera.height - 26, camera.width, 26);
+      g.lineStyle(2, encounterGlow, 0.035 + pulse * 0.05);
+      g.lineBetween(0, 34, camera.width, 34);
+      g.lineBetween(0, camera.height - 34, camera.width, camera.height - 34);
     } else if (template.winCondition.type === 'elite') {
       const topBeaconY = this.worldToScreen(camera, ARENA_WIDTH * 0.5, 116).y;
       const centerBeacon = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
-      this.graphics.lineStyle(2, encounterGlow, 0.035 + pulse * 0.05);
-      this.graphics.lineBetween(camera.width * 0.5, topBeaconY, centerBeacon.x, centerBeacon.y - 64);
-      this.graphics.lineStyle(1.5, encounterGlow, 0.035 + pulse * 0.04);
-      this.graphics.lineBetween(centerBeacon.x - 56, centerBeacon.y, centerBeacon.x - 20, centerBeacon.y);
-      this.graphics.lineBetween(centerBeacon.x + 20, centerBeacon.y, centerBeacon.x + 56, centerBeacon.y);
-      this.graphics.lineBetween(centerBeacon.x, centerBeacon.y - 56, centerBeacon.x, centerBeacon.y - 22);
+      g.lineStyle(2, encounterGlow, 0.035 + pulse * 0.05);
+      g.lineBetween(camera.width * 0.5, topBeaconY, centerBeacon.x, centerBeacon.y - 64);
+      g.lineStyle(1.5, encounterGlow, 0.035 + pulse * 0.04);
+      g.lineBetween(centerBeacon.x - 56, centerBeacon.y, centerBeacon.x - 20, centerBeacon.y);
+      g.lineBetween(centerBeacon.x + 20, centerBeacon.y, centerBeacon.x + 56, centerBeacon.y);
+      g.lineBetween(centerBeacon.x, centerBeacon.y - 56, centerBeacon.x, centerBeacon.y - 22);
     } else {
       const center = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
-      this.graphics.lineStyle(1.5, encounterGlow, 0.025 + pulse * 0.035);
-      this.graphics.lineBetween(center.x - 132, center.y, center.x - 78, center.y);
-      this.graphics.lineBetween(center.x + 78, center.y, center.x + 132, center.y);
-      this.graphics.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
-      this.graphics.fillTriangle(center.x - 150, center.y, center.x - 126, center.y - 12, center.x - 126, center.y + 12);
-      this.graphics.fillTriangle(center.x + 150, center.y, center.x + 126, center.y - 12, center.x + 126, center.y + 12);
+      g.lineStyle(1.5, encounterGlow, 0.025 + pulse * 0.035);
+      g.lineBetween(center.x - 132, center.y, center.x - 78, center.y);
+      g.lineBetween(center.x + 78, center.y, center.x + 132, center.y);
+      g.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
+      g.fillTriangle(center.x - 150, center.y, center.x - 126, center.y - 12, center.x - 126, center.y + 12);
+      g.fillTriangle(center.x + 150, center.y, center.x + 126, center.y - 12, center.x + 126, center.y + 12);
     }
 
     const pattern = template.spawnRule?.pattern ?? 'surround';
@@ -2227,10 +2235,10 @@ export class GameScene extends Phaser.Scene {
         if (screenX < -40 || screenX > camera.width + 40) {
           continue;
         }
-        this.graphics.fillStyle(encounterGlow, 0.032 + pulse * 0.026);
-        this.graphics.fillRect(screenX - 18, 0, 36, camera.height);
-        this.graphics.lineStyle(1.5, encounterGlow, 0.03 + pulse * 0.04);
-        this.graphics.lineBetween(screenX, 0, screenX, camera.height);
+        g.fillStyle(encounterGlow, 0.032 + pulse * 0.026);
+        g.fillRect(screenX - 18, 0, 36, camera.height);
+        g.lineStyle(1.5, encounterGlow, 0.03 + pulse * 0.04);
+        g.lineBetween(screenX, 0, screenX, camera.height);
       }
       return;
     }
@@ -2260,23 +2268,23 @@ export class GameScene extends Phaser.Scene {
         const left = this.worldToScreen(camera, 52, worldY);
         const right = this.worldToScreen(camera, ARENA_WIDTH - 52, worldY);
         if (left.y >= -48 && left.y <= camera.height + 48) {
-          this.graphics.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
-          this.graphics.fillTriangle(left.x, left.y, left.x + 24, left.y - 16, left.x + 24, left.y + 16);
+          g.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
+          g.fillTriangle(left.x, left.y, left.x + 24, left.y - 16, left.x + 24, left.y + 16);
         }
         if (right.y >= -48 && right.y <= camera.height + 48) {
-          this.graphics.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
-          this.graphics.fillTriangle(right.x, right.y, right.x - 24, right.y - 16, right.x - 24, right.y + 16);
+          g.fillStyle(encounterGlow, 0.08 + pulse * 0.06);
+          g.fillTriangle(right.x, right.y, right.x - 24, right.y - 16, right.x - 24, right.y + 16);
         }
       }
       return;
     }
 
     const center = this.worldToScreen(camera, ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5);
-    this.graphics.lineStyle(1.5, encounterGlow, 0.025 + pulse * 0.035);
-    this.graphics.lineBetween(center.x - 148, center.y - 74, center.x - 96, center.y - 46);
-    this.graphics.lineBetween(center.x - 148, center.y + 74, center.x - 96, center.y + 46);
-    this.graphics.lineBetween(center.x + 96, center.y - 46, center.x + 148, center.y - 74);
-    this.graphics.lineBetween(center.x + 96, center.y + 46, center.x + 148, center.y + 74);
+    g.lineStyle(1.5, encounterGlow, 0.025 + pulse * 0.035);
+    g.lineBetween(center.x - 148, center.y - 74, center.x - 96, center.y - 46);
+    g.lineBetween(center.x - 148, center.y + 74, center.x - 96, center.y + 46);
+    g.lineBetween(center.x + 96, center.y - 46, center.x + 148, center.y - 74);
+    g.lineBetween(center.x + 96, center.y + 46, center.x + 148, center.y + 74);
   }
 
   private renderLowHealthWarning(
