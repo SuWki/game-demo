@@ -174,6 +174,7 @@ export class GameScene extends Phaser.Scene {
     this.terrainGraphics.setDepth(1);
     this.graphics = this.add.graphics();
     this.graphics.setDepth(10);
+    this.cameras.main.setZoom(1);
     this.runtimeVisualPreviewEnabled = window.localStorage.getItem(RUNTIME_VISUAL_PREVIEW_STORAGE_KEY) !== 'off';
     this.moveKeys = this.input.keyboard!.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -2020,28 +2021,15 @@ export class GameScene extends Phaser.Scene {
     const maxLeft = Math.max(0, ARENA_WIDTH - width);
     const maxTop = Math.max(0, ARENA_HEIGHT - height);
 
-    // Camera prediction offset: shift camera towards movement direction
-    const speed = Math.sqrt(battle.playerVelocityX * battle.playerVelocityX + battle.playerVelocityY * battle.playerVelocityY);
-    const predictionFactor = 0.15;
-    const predictionOffsetX = speed > 50 ? battle.playerVelocityX * predictionFactor : 0;
-    const predictionOffsetY = speed > 50 ? battle.playerVelocityY * predictionFactor : 0;
+    // Keep the camera centered and stable. Predictive camera drift caused motion sickness during playtests.
+    const predictionOffsetX = 0;
+    const predictionOffsetY = 0;
 
     const baseLeft = clamp(battle.playerX - width * 0.5 + predictionOffsetX, 0, maxLeft);
     const baseTop = clamp(battle.playerY - height * 0.5 + predictionOffsetY, 0, maxTop);
-    const shakeWindow = battle.cameraShakeSec > 0 ? Phaser.Math.Clamp(battle.cameraShakeSec / 0.22, 0, 1) : 0;
-    const shakeStrength = Math.min(1, battle.cameraShakeStrength) * (0.18 + shakeWindow * 0.36);
-    const shakeFrequency = battle.cameraShakeFrequency || 11;
-    const shakePhase = battle.elapsedSec * shakeFrequency + battle.kills * 0.08;
-    const shakeX =
-      battle.cameraShakeSec > 0
-        ? Math.sin(shakePhase) * (1.1 + shakeWindow * 0.8) * shakeStrength
-        : 0;
-    const shakeY =
-      battle.cameraShakeSec > 0
-        ? Math.cos(shakePhase * 0.82 + 0.42) * (0.8 + shakeWindow * 0.58) * shakeStrength
-        : 0;
-    const left = clamp(baseLeft + shakeX, 0, maxLeft);
-    const top = clamp(baseTop + shakeY, 0, maxTop);
+    // 镜头抖动已完全禁用
+    const left = clamp(baseLeft, 0, maxLeft);
+    const top = clamp(baseTop, 0, maxTop);
 
     return {
       left,
@@ -3978,8 +3966,9 @@ export class GameScene extends Phaser.Scene {
       const streakRatio = Math.min(1, (battle.killStreakCount - 2) / 8); // 0 at 2 kills, 1 at 10+ kills
       const streakPulse = Math.sin(this.time.now * 0.008) * 0.5 + 0.5;
       const streakColor = this.mixColor(0xffd700, 0xffffff, 0.3); // Golden glow
+      // 固定宽度，只做渐显渐隐，避免缩放导致的不适感
       const edgeAlpha = 0.02 + streakRatio * 0.08 + streakPulse * streakRatio * 0.04;
-      const edgeDepth = 12 + streakRatio * 20;
+      const edgeDepth = 20; // 固定宽度
 
       this.graphics.fillStyle(streakColor, edgeAlpha);
       this.graphics.fillRect(0, 0, camera.width, edgeDepth);
@@ -3990,8 +3979,8 @@ export class GameScene extends Phaser.Scene {
       // Corner accents for high streaks
       if (battle.killStreakCount >= 5) {
         const cornerInset = 16;
-        const cornerLength = 15 + streakRatio * 25 + streakPulse * 8;
-        this.graphics.lineStyle(2 + streakRatio * 1.5, streakColor, 0.15 + streakRatio * 0.25 + streakPulse * 0.1);
+        const cornerLength = 30; // 固定长度
+        this.graphics.lineStyle(2.5, streakColor, 0.15 + streakRatio * 0.25 + streakPulse * 0.1);
         this.graphics.lineBetween(cornerInset, cornerInset, cornerInset + cornerLength, cornerInset);
         this.graphics.lineBetween(cornerInset, cornerInset, cornerInset, cornerInset + cornerLength);
         this.graphics.lineBetween(camera.width - cornerInset, cornerInset, camera.width - cornerInset - cornerLength, cornerInset);
@@ -4421,13 +4410,9 @@ export class GameScene extends Phaser.Scene {
     // Update turn burst tracking
     this.lastTurnBurstSec = battle.playerTurnBurstSec;
 
-    // Dash camera zoom effect
-    if (this.lastDashDriveSec === 0 && battle.dashDriveSec > 0) {
-      const camera = this.cameras.main;
-      camera.zoomTo(0.9, 150, 'Sine.easeOut');
-      this.time.delayedCall(300, () => {
-        camera.zoomTo(1.0, 200, 'Sine.easeIn');
-      });
+    // Camera zoom effects stay disabled to avoid motion sickness.
+    if (this.cameras.main.zoom !== 1) {
+      this.cameras.main.setZoom(1);
     }
     this.lastDashDriveSec = battle.dashDriveSec;
 

@@ -593,18 +593,18 @@ export class OverlayController {
   }
 
   private renderRouteChoiceContext(phaseLabel: string, optionCount: number, progress: PanelProgress): string {
+    const stageLabel = this.getCompactProgressLabel(progress.progressLabel);
     return `
-      <aside class="choice-context choice-context-route" aria-label="路线推进信息">
-        <div class="route-context-node is-origin"></div>
-        <div class="route-context-lines" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+      <aside class="choice-context choice-context-route" aria-label="下一站选择说明">
         <div class="route-context-copy">
-          <span>当前段位</span>
-          <strong>${phaseLabel || progress.progressLabel}</strong>
-          <small>${optionCount} 条候选路线 · 选择 1 条作战路线</small>
+          <span>下一站</span>
+          <strong>${stageLabel} · ${phaseLabel || '选择路线'}</strong>
+          <small>这不是倒计时或血条，而是本局推进位置。</small>
+        </div>
+        <div class="route-context-copy route-context-rule">
+          <span>选择规则</span>
+          <strong>${optionCount} 个候选，选 1 个进入</strong>
+          <small>战斗用于推进和拿经验；强化补属性；异常改变玩法。</small>
         </div>
       </aside>
     `;

@@ -6304,12 +6304,9 @@ export class RunEngine {
   }
 
   private kickBattleShake(battle: BattleState, durationSec: number, strength: number, frequency: number = 11): void {
-    // 大幅降低震动强度，避免眩晕感（降低到原来的10%）
-    const softenedDuration = durationSec * 0.3;
-    const softenedStrength = Math.min(0.15, strength * 0.1);
-    battle.cameraShakeSec = Math.max(battle.cameraShakeSec, softenedDuration);
-    battle.cameraShakeStrength = Math.max(battle.cameraShakeStrength, softenedStrength);
-    battle.cameraShakeFrequency = frequency;
+    // 完全禁用震动效果，避免眩晕感
+    // 保留方法签名以避免破坏现有调用
+    return;
   }
 
   private queueImpactFreeze(battle: BattleState, durationSec: number, factor: number): void {
