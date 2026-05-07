@@ -325,6 +325,20 @@ export class PilotAudio {
     return this.masterVolume;
   }
 
+  public setMusicVolume(volume: number): void {
+    const clampedVolume = Math.max(0, Math.min(1.5, volume));
+    if (this.musicGain) {
+      this.musicGain.gain.value = Math.max(0.0001, clampedVolume);
+    }
+  }
+
+  public setSfxVolume(volume: number): void {
+    const clampedVolume = Math.max(0, Math.min(1.5, volume));
+    if (this.sfxGain) {
+      this.sfxGain.gain.value = Math.max(0.0001, clampedVolume * 1.42);
+    }
+  }
+
   public setMusic(mode: MusicMode): void {
     this.desiredMusicMode = mode;
     this.syncMusicMode(false);

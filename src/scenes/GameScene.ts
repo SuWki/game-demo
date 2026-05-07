@@ -158,6 +158,18 @@ export class GameScene extends Phaser.Scene {
 
   private lastDashDriveSec = 0;
 
+  private lastShotFlashSec = 0;
+
+  private shellCasings: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    rotation: number;
+    rotationSpeed: number;
+    life: number;
+  }> = [];
+
   public constructor() {
     super('GameScene');
   }
@@ -4284,6 +4296,24 @@ export class GameScene extends Phaser.Scene {
       1,
     );
     if (shotFlashRatio > 0) {
+      // Spawn shell casing on new shot
+      if (battle.playerShotFlashSec > this.lastShotFlashSec) {
+        const ejectDirX = -aimOrthoX; // Eject perpendicular to aim direction
+        const ejectDirY = -aimOrthoY;
+        const ejectSpeed = 80 + Math.random() * 40;
+
+        this.shellCasings.push({
+          x: bodyX + ejectDirX * 8,
+          y: bodyY + ejectDirY * 8,
+          vx: ejectDirX * ejectSpeed + battle.playerVelocityX * 0.5,
+          vy: ejectDirY * ejectSpeed + battle.playerVelocityY * 0.5,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.3,
+          life: 1.0,
+        });
+      }
+      this.lastShotFlashSec = battle.playerShotFlashSec;
+
       // Get fire rate to adjust muzzle flash
       const state = this.engine.getState();
       const fireRate = state.stats.fireRate;
@@ -4399,6 +4429,96 @@ export class GameScene extends Phaser.Scene {
           onComplete: () => trailCircle.destroy(),
         });
       }
+    }
+
+    // Ground interaction effects
+    // Dash burst effect when dash starts
+    if (battle.dashDriveSec > 0 && this.lastDashDriveSec === 0) {
+      // Dash just started - create ground burst particles
+      const burstColor = 0x00d4ff;
+      const particleCount = 8;
+
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2;
+        const distance = 15 + Math.random() * 10;
+        const targetX = bodyX + Math.cos(angle) * distance;
+        const targetY = bodyY + Math.sin(angle) * distance;
+
+        const particle = this.add.circle(bodyX, bodyY, 3, burstColor, 0.6);
+        particle.setDepth(-1);
+
+        this.tweens.add({
+          targets: particle,
+          x: targetX,
+          y: targetY,
+          alpha: 0,
+          scale: 0.3,
+          duration: 250,
+          ease: 'Cubic.easeOut',
+          onComplete: () => particle.destroy(),
+        });
+      }
+
+      // Ground impact ring
+      const impactRing = this.add.circle(bodyX, bodyY, 10, burstColor, 0.4);
+      impactRing.setDepth(-1);
+      this.tweens.add({
+        targets: impactRing,
+        scale: 3,
+        alpha: 0,
+        duration: 300,
+        ease: 'Cubic.easeOut',
+        onComplete: () => impactRing.destroy(),
+      });
+    }
+
+    // Enhanced ground trail during dash
+    if (dashDriveRatio > 0.3 && velocityMagnitude > 150) {
+      // Create ground scorch marks during dash
+      const scorchAlpha = dashDriveRatio * 0.15;
+      const scorchSize = 6 + dashDriveRatio * 4;
+
+      this.graphics.fillStyle(0x00d4ff, scorchAlpha);
+      this.graphics.fillCircle(bodyX, bodyY, scorchSize);
+    }
+
+    // Update and render shell casings
+    const deltaSeconds = 0.016; // Approximate frame time
+    for (let i = this.shellCasings.length - 1; i >= 0; i--) {
+      const shell = this.shellCasings[i];
+
+      // Update physics
+      shell.x += shell.vx * deltaSeconds;
+      shell.y += shell.vy * deltaSeconds;
+      shell.vy += 300 * deltaSeconds; // Gravity
+      shell.vx *= 0.98; // Air resistance
+      shell.vy *= 0.98;
+      shell.rotation += shell.rotationSpeed;
+      shell.life -= deltaSeconds * 1.2;
+
+      // Remove if expired
+      if (shell.life <= 0) {
+        this.shellCasings.splice(i, 1);
+        continue;
+      }
+
+      // Render shell casing
+      const shellScreen = this.worldToScreen(camera, shell.x, shell.y);
+      const alpha = Math.min(1, shell.life) * 0.6;
+
+      // Calculate rotated corners
+      const cos = Math.cos(shell.rotation);
+      const sin = Math.sin(shell.rotation);
+      const w = 2;
+      const h = 3;
+
+      // Shell body (small rectangle)
+      this.graphics.fillStyle(0xd4a574, alpha);
+      this.graphics.fillRect(shellScreen.x - w, shellScreen.y - h, w * 2, h * 2);
+
+      // Shell highlight
+      this.graphics.fillStyle(0xffedc8, alpha * 0.5);
+      this.graphics.fillRect(shellScreen.x - w * 0.5, shellScreen.y - h * 0.5, w, h);
     }
 
     const chargeGlowRatio = Math.max(
