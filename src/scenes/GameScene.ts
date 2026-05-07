@@ -4284,51 +4284,98 @@ export class GameScene extends Phaser.Scene {
       1,
     );
     if (shotFlashRatio > 0) {
-      const flashColor =
-        liveFocusRoute === 'crit'
+      // Get fire rate to adjust muzzle flash
+      const state = this.engine.getState();
+      const fireRate = state.stats.fireRate;
+
+      // Calculate fire rate tier (baseline is 1.0)
+      // Low fire rate (< 1.5): Large, orange-red flash
+      // Medium fire rate (1.5-3.0): Standard flash
+      // High fire rate (> 3.0): Small, blue-white flash
+      const fireRateTier = fireRate < 1.5 ? 'low' : fireRate > 3.0 ? 'high' : 'medium';
+
+      // Adjust flash size based on fire rate
+      const sizeMultiplier = fireRateTier === 'low' ? 1.4 : fireRateTier === 'high' ? 0.7 : 1.0;
+
+      // Adjust flash color based on fire rate
+      let flashColor: number;
+      if (fireRateTier === 'low') {
+        // Low fire rate: Orange-red, powerful
+        flashColor = liveFocusRoute === 'crit'
+          ? this.mixColor(0xff8844, 0xffaa44, 0.3)
+          : liveFocusRoute === 'pierce'
+            ? this.mixColor(0xff9966, 0xffbb88, 0.3)
+            : liveFocusRoute === 'dash'
+              ? this.mixColor(0xff9955, 0xffbb77, 0.3)
+              : 0xffaa66;
+      } else if (fireRateTier === 'high') {
+        // High fire rate: Blue-white, rapid
+        flashColor = liveFocusRoute === 'crit'
+          ? this.mixColor(0xaaddff, 0xffffff, 0.4)
+          : liveFocusRoute === 'pierce'
+            ? this.mixColor(0x88ccff, 0xffffff, 0.4)
+            : liveFocusRoute === 'dash'
+              ? this.mixColor(0x99ddff, 0xffffff, 0.4)
+              : 0xccf0ff;
+      } else {
+        // Medium fire rate: Standard colors
+        flashColor = liveFocusRoute === 'crit'
           ? this.mixColor(0xffcf76, 0xffffff, 0.24)
           : liveFocusRoute === 'pierce'
             ? this.mixColor(0x98dcff, 0xffffff, 0.26)
             : liveFocusRoute === 'dash'
               ? this.mixColor(0x8effde, 0xffffff, 0.24)
               : 0xf8fbff;
+      }
+
       this.graphics.fillStyle(flashColor, 0.18 + shotFlashRatio * 0.3);
       this.graphics.fillTriangle(
-        muzzleX + aimDirX * (14 + shotFlashRatio * 16),
-        muzzleY + aimDirY * (14 + shotFlashRatio * 16),
-        bodyX + aimOrthoX * (5 + shotFlashRatio * 8),
-        bodyY + aimOrthoY * (5 + shotFlashRatio * 8),
-        bodyX - aimOrthoX * (5 + shotFlashRatio * 8),
-        bodyY - aimOrthoY * (5 + shotFlashRatio * 8),
+        muzzleX + aimDirX * (14 + shotFlashRatio * 16 * sizeMultiplier),
+        muzzleY + aimDirY * (14 + shotFlashRatio * 16 * sizeMultiplier),
+        bodyX + aimOrthoX * (5 + shotFlashRatio * 8 * sizeMultiplier),
+        bodyY + aimOrthoY * (5 + shotFlashRatio * 8 * sizeMultiplier),
+        bodyX - aimOrthoX * (5 + shotFlashRatio * 8 * sizeMultiplier),
+        bodyY - aimOrthoY * (5 + shotFlashRatio * 8 * sizeMultiplier),
       );
       if (liveFocusRoute !== 'pierce') {
         this.graphics.lineStyle(2, flashColor, 0.14 + shotFlashRatio * 0.24);
         this.graphics.lineBetween(
           bodyX + aimOrthoX * 7,
           bodyY + aimOrthoY * 7,
-          muzzleX + aimDirX * (20 + shotFlashRatio * 18),
-          muzzleY + aimDirY * (20 + shotFlashRatio * 18),
+          muzzleX + aimDirX * (20 + shotFlashRatio * 18 * sizeMultiplier),
+          muzzleY + aimDirY * (20 + shotFlashRatio * 18 * sizeMultiplier),
         );
         this.graphics.lineBetween(
           bodyX - aimOrthoX * 7,
           bodyY - aimOrthoY * 7,
-          muzzleX + aimDirX * (20 + shotFlashRatio * 18),
-          muzzleY + aimDirY * (20 + shotFlashRatio * 18),
+          muzzleX + aimDirX * (20 + shotFlashRatio * 18 * sizeMultiplier),
+          muzzleY + aimDirY * (20 + shotFlashRatio * 18 * sizeMultiplier),
         );
         this.graphics.lineStyle(1.6, flashColor, 0.12 + shotFlashRatio * 0.22);
         this.graphics.lineBetween(
           muzzleX + aimOrthoX * (4 + shotFlashRatio * 3),
           muzzleY + aimOrthoY * (4 + shotFlashRatio * 3),
-          muzzleX + aimDirX * (30 + shotFlashRatio * 24) + aimOrthoX * (10 + shotFlashRatio * 6),
-          muzzleY + aimDirY * (30 + shotFlashRatio * 24) + aimOrthoY * (10 + shotFlashRatio * 6),
+          muzzleX + aimDirX * (30 + shotFlashRatio * 24 * sizeMultiplier) + aimOrthoX * (10 + shotFlashRatio * 6),
+          muzzleY + aimDirY * (30 + shotFlashRatio * 24 * sizeMultiplier) + aimOrthoY * (10 + shotFlashRatio * 6),
         );
         this.graphics.lineBetween(
           muzzleX - aimOrthoX * (4 + shotFlashRatio * 3),
           muzzleY - aimOrthoY * (4 + shotFlashRatio * 3),
-          muzzleX + aimDirX * (30 + shotFlashRatio * 24) - aimOrthoX * (10 + shotFlashRatio * 6),
-          muzzleY + aimDirY * (30 + shotFlashRatio * 24) - aimOrthoY * (10 + shotFlashRatio * 6),
+          muzzleX + aimDirX * (30 + shotFlashRatio * 24 * sizeMultiplier) - aimOrthoX * (10 + shotFlashRatio * 6),
+          muzzleY + aimDirY * (30 + shotFlashRatio * 24 * sizeMultiplier) - aimOrthoY * (10 + shotFlashRatio * 6),
         );
       }
+
+      // Add muzzle smoke effect for low fire rate
+      if (fireRateTier === 'low' && shotFlashRatio > 0.3) {
+        this.graphics.fillStyle(0x888888, 0.08 + shotFlashRatio * 0.12);
+        this.graphics.fillCircle(
+          muzzleX + aimDirX * (20 + shotFlashRatio * 10),
+          muzzleY + aimDirY * (20 + shotFlashRatio * 10),
+          6 + shotFlashRatio * 8
+        );
+      }
+
       if (killFlowRatio > 0.08) {
         this.graphics.lineStyle(1.4, this.mixColor(flashColor, 0xffffff, 0.18), 0.08 + killFlowRatio * 0.18);
         this.graphics.strokeCircle(muzzleX, muzzleY, 10 + killFlowRatio * 10 + shotFlashRatio * 6);

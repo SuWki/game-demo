@@ -448,15 +448,15 @@ export class OverlayController {
           </div>
 
           <div class="result-core-stats">
-            <div class="core-stat-item">
+            <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="0">
               <span class="core-stat-label">存活时间</span>
-              <strong class="core-stat-value">${this.formatDuration(result.runDurationSec)}</strong>
+              <strong class="core-stat-value" data-target="${result.runDurationSec}" data-format="duration">${this.formatDuration(result.runDurationSec)}</strong>
             </div>
-            <div class="core-stat-item">
+            <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="80">
               <span class="core-stat-label">击杀数</span>
-              <strong class="core-stat-value">${result.battleWins}</strong>
+              <strong class="core-stat-value" data-target="${result.battleWins}" data-format="number">0</strong>
             </div>
-            <div class="core-stat-item">
+            <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="160">
               <span class="core-stat-label">路线</span>
               <strong class="core-stat-value">${routeLabel}</strong>
               <small class="core-stat-sub">${buildStageLabel}</small>
@@ -507,15 +507,15 @@ export class OverlayController {
           </div>
 
           <div class="result-detail-stats">
-            <div class="detail-stat">
+            <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="240">
               <span>等级</span>
-              <strong>Lv.${result.levelReached}</strong>
+              <strong data-target="${result.levelReached}" data-format="level">Lv.1</strong>
             </div>
-            <div class="detail-stat">
+            <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="320">
               <span>节点</span>
-              <strong>${result.nodesCleared}</strong>
+              <strong data-target="${result.nodesCleared}" data-format="number">0</strong>
             </div>
-            <div class="detail-stat">
+            <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="400">
               <span>结局</span>
               <strong>${result.endingLabel}</strong>
             </div>
@@ -525,6 +525,73 @@ export class OverlayController {
     `;
     this.bindClick('[data-action="restart"]', actions.onRestart);
     this.bindClick('[data-action="menu"]', actions.onBackToMenu);
+
+    // Animate stats appearing and counting up
+    this.animateResultStats();
+  }
+
+  private animateResultStats(): void {
+    const statItems = this.screenLayer.querySelectorAll('[data-animate="stat"]');
+
+    statItems.forEach((item) => {
+      const delay = parseInt((item as HTMLElement).dataset.delay || '0', 10);
+
+      setTimeout(() => {
+        // Fade in the stat item
+        (item as HTMLElement).style.transition = 'opacity 0.3s ease-out';
+        (item as HTMLElement).style.opacity = '1';
+
+        // Animate number counting
+        const valueElement = item.querySelector('[data-target]') as HTMLElement;
+        if (valueElement) {
+          const target = parseInt(valueElement.dataset.target || '0', 10);
+          const format = valueElement.dataset.format || 'number';
+
+          if (format === 'number') {
+            this.animateCounter(valueElement, 0, target, 400);
+          } else if (format === 'level') {
+            this.animateCounter(valueElement, 1, target, 400, (val) => `Lv.${val}`);
+          } else if (format === 'duration') {
+            // Duration already set, just highlight it
+            valueElement.style.transition = 'color 0.2s ease-out';
+            valueElement.style.color = '#4af';
+            setTimeout(() => {
+              valueElement.style.color = '';
+            }, 300);
+          }
+        }
+      }, delay);
+    });
+  }
+
+  private animateCounter(
+    element: HTMLElement,
+    start: number,
+    end: number,
+    duration: number,
+    formatter?: (val: number) => string
+  ): void {
+    const startTime = performance.now();
+    const range = end - start;
+
+    const updateCounter = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(start + range * eased);
+
+      element.textContent = formatter ? formatter(current) : String(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCounter);
+      } else {
+        element.textContent = formatter ? formatter(end) : String(end);
+      }
+    };
+
+    requestAnimationFrame(updateCounter);
   }
 
   public pushToast(message: string, tone: ToastTone = 'neutral'): void {
@@ -594,8 +661,13 @@ export class OverlayController {
 
   private renderRouteChoiceContext(phaseLabel: string, optionCount: number, progress: PanelProgress): string {
     const stageLabel = this.getCompactProgressLabel(progress.progressLabel);
+
+    // Render progress visualization
+    const progressBar = this.renderProgressBar(progress.phaseTrack);
+
     return `
       <aside class="choice-context choice-context-route" aria-label="下一站选择说明">
+        ${progressBar}
         <div class="route-context-copy">
           <span>下一站</span>
           <strong>${stageLabel} · ${phaseLabel || '选择路线'}</strong>
@@ -607,6 +679,48 @@ export class OverlayController {
           <small>战斗用于推进和拿经验；强化补属性；异常改变玩法。</small>
         </div>
       </aside>
+    `;
+  }
+
+  private renderProgressBar(phaseTrack: Array<{ label: string; state: string }>): string {
+    const nodeIcons: Record<string, string> = {
+      'done': '●',
+      'active': '◉',
+      'upcoming': '○',
+      'boss-upcoming': '◈',
+      'boss-active': '◆',
+    };
+
+    const nodeColors: Record<string, string> = {
+      'done': '#4a5568',
+      'active': '#4af',
+      'upcoming': '#2d3748',
+      'boss-upcoming': '#ff6b6b',
+      'boss-active': '#ff4444',
+    };
+
+    const nodes = phaseTrack.map((phase, index) => {
+      const icon = nodeIcons[phase.state] || '○';
+      const color = nodeColors[phase.state] || '#2d3748';
+      const isBoss = phase.state.includes('boss');
+      const isActive = phase.state === 'active' || phase.state === 'boss-active';
+
+      return `
+        <div class="progress-node ${phase.state} ${isActive ? 'is-active' : ''}"
+             style="color: ${color};"
+             title="${phase.label}">
+          <span class="progress-node-icon ${isBoss ? 'is-boss' : ''}">${icon}</span>
+          ${isActive ? `<span class="progress-node-label">${phase.label}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="route-progress-bar" aria-label="路线进度">
+        <div class="progress-track">
+          ${nodes}
+        </div>
+      </div>
     `;
   }
 
