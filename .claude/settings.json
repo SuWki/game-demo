@@ -1,13 +1,18 @@
 {
   "permissions": {
-    "defaultMode": "auto",
+    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(python -m http.server 8765)",
       "Bash(npm list *)",
       "Bash(node tools/qa-*)",
+      "Bash(node tools/audit-route-*.mjs*)",
       "Bash(netstat *)",
       "Bash(curl *)",
-      "Bash(npx playwright install *)"
+      "Bash(npx playwright install *)",
+      "Bash(npx tsx src/tests/balanceTest.ts*)",
+      "Bash(ls -la e:/codex/unity-learning/*/)",
+      "Bash(ls -la output/*/)",
+      "Bash(ls -la dist/ | head -*)"
     ]
   }
 }

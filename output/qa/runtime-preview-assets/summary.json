@@ -66,15 +66,17 @@
   "previewAudioCueCounts": {
     "pressure": 1,
     "shoot": 6,
-    "hit": 2,
-    "kill": 2
+    "hit": 1,
+    "kill": 3,
+    "crit": 1
   },
   "cueCounts": {
     "start": 1,
     "pressure": 1,
     "shoot": 6,
-    "hit": 2,
-    "kill": 2
+    "hit": 1,
+    "kill": 3,
+    "crit": 1
   },
   "screenshot": "output\\qa\\runtime-preview-assets\\battle-preview-runtime.png"
 }
