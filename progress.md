@@ -1551,3 +1551,31 @@ TODO
 - Tightened gameplay feel issues in code: movement no longer uses impact-freeze simulationDt, dash route gets a baseline pulse once the route has appeared, regen/dash heal/pierce cap/pierce echo/pierce refund were reduced, boss safe zones now protect inside and punish outside more clearly, and boss ranged density/wall shots were reduced again.
 - Updated player-facing wording from old dash/冲刺 terms to 穿梭 wording and kept HP/EXP integer display.
 - Verified with npm run build, full-flow QA, and boss-bastion directed QA.
+
+2026-05-07
+- 完成路线特化关卡设计文档（ROUTE_SPECIFIC_ENCOUNTERS_DESIGN.md）
+  - 为Crit/Pierce/Dash三条路线设计专属精英关和Boss关
+  - 3个精英关：蓄势压制(elite-pressure-hold)、感染压制(elite-contagion)、夹道压制(elite-gauntlet)
+  - 3个Boss关：处决首领(boss-executioner)、要塞首领(boss-fortress)、猎杀首领(boss-predator)
+  - 包含完整的TypeScript配置、节点蓝图、实现步骤、平衡性分析和测试要点
+  - 设计目标：充分检验每个流派的核心机制（Crit爆发节奏、Pierce印记传播、Dash动量维持）
+- 整理核心循环改进文档（CORE_LOOP_IMPROVEMENT.md）
+  - 记录已完成的连杀奖励机制、升级能力变化显示、路线特色击杀奖励
+  - 记录Crit/Pierce/Dash路线独特被动的实现状态
+- 整理3C改进建议文档（3C_IMPROVEMENT.md）
+- 新增持续优化文档目录（doc/30_持续优化/）
+  - 实机测试记录和问题清单
+  - 素材管理指南和检查报告
+  - 护卫AI优化方案
+  - 求职版本开发排期
+- 新增UI设计文档（docs/ui-redesign-proposal.md、docs/visual-optimization-progress.md）
+- 新增工具脚本（tools/fix-route-upgrades.mjs/py）
+- 更新测试截图（output/qa/boss-directed-v2/、output/qa/current-version/）
+- 提交并推送到远程codex-dev分支（commit 27d26a0）
+
+TODO
+- 按照ROUTE_SPECIFIC_ENCOUNTERS_DESIGN.md实现6个新关卡模板
+- 更新src/game/types.ts添加新的BattleTemplateId
+- 更新src/data/battleTemplates.ts添加6个完整配置
+- 更新src/data/nodes.ts添加节点蓝图
+- 测试验证新关卡的平衡性和体验
