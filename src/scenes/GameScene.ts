@@ -246,9 +246,11 @@ export class GameScene extends Phaser.Scene {
     this.processAnnouncements();
     this.syncOverlay();
 
-    // Boss 战结束过渡画面
+    // Boss 战结束过渡画面 / 关卡结束过渡
     if (state.status === 'bossEnding' && state.bossEnding) {
       this.renderBossEnding(state.bossEnding);
+    } else if (state.status === 'phaseTransition' && state.phaseTransition) {
+      this.renderPhaseTransition(state.phaseTransition);
     } else {
       this.renderBattle();
     }
@@ -709,6 +711,15 @@ export class GameScene extends Phaser.Scene {
       if (panelKey !== this.lastPanelKey) {
         this.services.overlay.showBossEnding(state.bossEnding);
         this.lastPanelKey = panelKey;
+      }
+      return;
+    }
+
+    // 关卡结束过渡：隐藏面板，不显示关卡选择
+    if (state.status === 'phaseTransition') {
+      if (this.lastPanelKey) {
+        this.services.overlay.hidePanel();
+        this.lastPanelKey = '';
       }
       return;
     }
@@ -1249,7 +1260,7 @@ export class GameScene extends Phaser.Scene {
 
   private shouldDisplayToast(tone: ToastTone): boolean {
     const status = this.engine.getState().status;
-    if (status === 'battle' || status === 'upgradeChoice' || status === 'eventChoice' || status === 'nodeChoice') {
+    if (status === 'battle' || status === 'upgradeChoice' || status === 'eventChoice' || status === 'nodeChoice' || status === 'phaseTransition') {
       return false;
     }
 
@@ -1663,9 +1674,9 @@ export class GameScene extends Phaser.Scene {
       if (battle.encounterType === 'boss') {
         return {
           objectiveLabel: 'Boss 目标',
-          objectiveText: '击败场上首领',
-          objectiveDetail: '盯住金色血条，把最后一段收掉。',
-          objectiveProgressText: battle.eliteAlive ? `${targetTitle} / 终结首领` : '首领即将进场',
+          objectiveText: '击败当前首领',
+          objectiveDetail: '盯住金色血条，清空就能直接过关。',
+          objectiveProgressText: battle.eliteAlive ? `目标 ${targetTitle}` : '首领即将进场',
           objectiveTone: 'boss',
         };
       }
@@ -1677,19 +1688,19 @@ export class GameScene extends Phaser.Scene {
 
       if (winCondition === 'survive') {
         return {
-          objectiveLabel: '当前目标',
+          objectiveLabel: '生存目标',
           objectiveText: '撑到倒计时结束',
-          objectiveDetail: '优先活下来，别贪线。',
+          objectiveDetail: '只要活到计时归零就能过关。',
           objectiveProgressText: `剩余 ${Math.ceil(battle.remainingSec)}s`,
           objectiveTone: 'survive',
         };
       }
 
       return {
-        objectiveLabel: '当前目标',
-        objectiveText: '清掉这一波敌群',
-        objectiveDetail: '击破数量够了就能继续推进。',
-        objectiveProgressText: `${battle.kills} / ${battle.targetKills}`,
+        objectiveLabel: '战斗目标',
+        objectiveText: '清掉这一波敌人',
+        objectiveDetail: `击破 ${battle.targetKills} 个敌人后进入下一站。`,
+        objectiveProgressText: `进度 ${battle.kills} / ${battle.targetKills}`,
         objectiveTone: 'battle',
       };
     }
@@ -1700,7 +1711,7 @@ export class GameScene extends Phaser.Scene {
 
       if (state.phase === 'finalBattle' || hasBossNode) {
         return {
-          objectiveLabel: '当前目标',
+          objectiveLabel: '流程目标',
           objectiveText: '确认最终战',
           objectiveDetail: '选定后立刻进入 Boss。',
           objectiveProgressText: '最终收束入口',
@@ -1710,7 +1721,7 @@ export class GameScene extends Phaser.Scene {
 
       if (state.phase === 'finalPrep' || hasFinalPrepNode) {
         return {
-          objectiveLabel: '当前目标',
+          objectiveLabel: '流程目标',
           objectiveText: '进入最终整备',
           objectiveDetail: '补最后一手，再进 Boss。',
           objectiveProgressText: '整备后进入 Boss',
@@ -1719,7 +1730,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       return {
-        objectiveLabel: '当前目标',
+        objectiveLabel: '流程目标',
         objectiveText: '选下一站路线',
         objectiveDetail: `当前第 ${currentStep} / ${state.totalRounds} 站。`,
         objectiveProgressText: bossDistanceText,
@@ -1729,7 +1740,7 @@ export class GameScene extends Phaser.Scene {
 
     if (state.status === 'upgradeChoice') {
       return {
-        objectiveLabel: '当前目标',
+        objectiveLabel: '流程目标',
         objectiveText: state.currentNode?.isFinalPrep ? '完成最终整备' : '完成强化选择',
         objectiveDetail: state.upgradeSource === 'levelUp' ? '选完立刻回战斗。' : '补完这一手继续推进。',
         objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
@@ -1739,7 +1750,7 @@ export class GameScene extends Phaser.Scene {
 
     if (state.status === 'eventChoice') {
       return {
-        objectiveLabel: '当前目标',
+        objectiveLabel: '流程目标',
         objectiveText: state.currentEvent?.contentKind === 'anomaly' ? '完成异常处理' : '完成事件选择',
         objectiveDetail: '处理完就继续往下走。',
         objectiveProgressText: bossDistanceText,
@@ -1748,7 +1759,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     return {
-      objectiveLabel: '当前目标',
+      objectiveLabel: '流程目标',
       objectiveText: '准备进入下一局',
       objectiveDetail: '把一条路线收成型。',
       objectiveProgressText: bossDistanceText,
@@ -1766,9 +1777,9 @@ export class GameScene extends Phaser.Scene {
 
     if (!battle.eliteAlive) {
       return {
-        objectiveLabel: '当前目标',
-        objectiveText: '稳住第一轮压力',
-        objectiveDetail: '精英还没进场，先把站位和血量稳住。',
+        objectiveLabel: '精英目标',
+        objectiveText: '稳住直到精英进场',
+        objectiveDetail: '先保住站位和血量，别急着抢节奏。',
         objectiveProgressText: '精英即将进场',
         objectiveTone: 'elite',
       };
@@ -1776,7 +1787,7 @@ export class GameScene extends Phaser.Scene {
 
     if (displayedCrackRatio > 0.1) {
       return {
-        objectiveLabel: '当前目标',
+        objectiveLabel: '精英目标',
         objectiveText: '裂口已开，压上本体',
         objectiveDetail: '沿楔形追进去，别把火力再丢回护卫。',
         objectiveProgressText: `窗口 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
@@ -1786,19 +1797,19 @@ export class GameScene extends Phaser.Scene {
 
     if (escortCount > 0) {
       return {
-        objectiveLabel: '当前目标',
+        objectiveLabel: '精英目标',
         objectiveText: '先拆护卫，等裂口',
         objectiveDetail: '护卫还在成屏，别硬顶本体，等破口再追。',
-        objectiveProgressText: `护卫 ${escortCount} · 本体在后`,
+        objectiveProgressText: `护卫剩余 ${escortCount}`,
         objectiveTone: 'elite',
       };
     }
 
     return {
-      objectiveLabel: '当前目标',
+      objectiveLabel: '精英目标',
       objectiveText: '盯住精英本体',
       objectiveDetail: '屏障已经变薄，继续压本体就能过关。',
-      objectiveProgressText: `${BATTLE_TEMPLATES[battle.templateId].name} · 击破本体`,
+      objectiveProgressText: `${BATTLE_TEMPLATES[battle.templateId].name} · 本体收尾`,
       objectiveTone: 'elite',
     };
   }
@@ -1903,6 +1914,58 @@ export class GameScene extends Phaser.Scene {
     // 这里只渲染图形效果，文本通过 syncOverlay 更新
   }
 
+  private renderPhaseTransition(phaseTransition: NonNullable<RunState['phaseTransition']>): void {
+    const { elapsedSec, durationSec } = phaseTransition;
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+    const fadeInRatio = Math.min(1, elapsedSec / 0.25); // 0.25秒淡入
+    const progressRatio = Math.min(1, elapsedSec / durationSec); // 整体进度
+    const fadeOutRatio = Math.max(0, (elapsedSec - (durationSec - 0.3)) / 0.3); // 最后0.3秒淡出
+
+    this.terrainGraphics.clear();
+    this.graphics.clear();
+
+    // 半透明遮罩（随时间加深再淡出）
+    const bgAlpha = (0.3 + fadeInRatio * 0.3) * (1 - fadeOutRatio);
+    this.graphics.fillStyle(0x0a0806, bgAlpha);
+    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+
+    // 胜利色（金色）
+    const resultColor = 0xffd774;
+    const glowAlpha = (0.25 + Math.sin(elapsedSec * 6) * 0.1) * (1 - fadeOutRatio);
+
+    // 中心微光晕
+    this.graphics.fillStyle(resultColor, glowAlpha * fadeInRatio);
+    this.graphics.fillCircle(centerX, centerY, 60 + progressRatio * 20);
+
+    // 细环
+    this.graphics.lineStyle(1.5, resultColor, 0.5 * fadeInRatio * (1 - fadeOutRatio));
+    this.graphics.strokeCircle(centerX, centerY, 50);
+
+    // 旋转粒子效果（简化版）
+    const rotation = elapsedSec * 0.8;
+    this.graphics.fillStyle(resultColor, 0.6 * fadeInRatio * (1 - fadeOutRatio));
+    for (let i = 0; i < 3; i++) {
+      const angle = rotation + (i * Math.PI * 2) / 3;
+      const dist = 70;
+      const x = centerX + Math.cos(angle) * dist;
+      const y = centerY + Math.sin(angle) * dist;
+      this.graphics.fillCircle(x, y, 3);
+    }
+
+    // 底部进度条（指示过渡剩余时间）
+    const barWidth = 200;
+    const barHeight = 3;
+    const barX = centerX - barWidth / 2;
+    const barY = centerY + 80;
+    // 背景条
+    this.graphics.fillStyle(0x333333, 0.5 * fadeInRatio);
+    this.graphics.fillRect(barX, barY, barWidth, barHeight);
+    // 进度条
+    this.graphics.fillStyle(resultColor, 0.8 * fadeInRatio);
+    this.graphics.fillRect(barX, barY, barWidth * (1 - progressRatio), barHeight);
+  }
+
   private renderBattle(): void {
     const dominantRoute = this.engine.getDominantRoute();
     const accentColor = dominantRoute ? parseInt(ROUTE_COLOR_MAP[dominantRoute].slice(1), 16) : 0x61d7ff;
@@ -1922,7 +1985,66 @@ export class GameScene extends Phaser.Scene {
     this.renderBattleTerrain(battle, camera, accentColor);
     this.renderLowHealthWarning(battle, camera);
     this.renderBattleEntities(battle, camera, accentColor);
+    this.renderRouteAura(battle, camera);
+    this.renderUpgradeFlash();
     this.endRuntimePreviewImageFrame();
+  }
+
+  private renderRouteAura(
+    battle: BattleState,
+    camera: {
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+      width: number;
+      height: number;
+    },
+  ): void {
+    const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
+    if (!liveFocusRoute) {
+      return;
+    }
+    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
+    const time = this.time.now / 1000;
+    const pulse = Math.sin(time * 2) * 0.5 + 0.5; // 0-1呼吸效果
+
+    // 路线颜色映射
+    const routeColor =
+      liveFocusRoute === 'crit'
+        ? 0xff4444 // 红色（暴击）
+        : liveFocusRoute === 'pierce'
+          ? 0x44ccff // 青色（穿透）
+          : 0x44ff88; // 绿色（冲刺）
+
+    // 外环（呼吸效果）
+    const outerRadius = 48 + pulse * 6;
+    const outerAlpha = 0.08 + pulse * 0.06;
+    this.graphics.lineStyle(2, routeColor, outerAlpha);
+    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, outerRadius);
+
+    // 内环（更亮）
+    const innerRadius = 38 + pulse * 4;
+    const innerAlpha = 0.12 + pulse * 0.08;
+    this.graphics.lineStyle(1.5, routeColor, innerAlpha);
+    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, innerRadius);
+
+    // 底部微光
+    const glowAlpha = 0.04 + pulse * 0.03;
+    this.graphics.fillStyle(routeColor, glowAlpha);
+    this.graphics.fillCircle(playerScreen.x, playerScreen.y, outerRadius + 4);
+  }
+
+  private renderUpgradeFlash(): void {
+    const state = this.engine.getState();
+    if (state.upgradeFlashSec <= 0) {
+      return;
+    }
+    const flashRatio = Math.min(1, state.upgradeFlashSec / 0.25);
+    const alpha = flashRatio * 0.35; // 最大透明度0.35
+    // 白色全屏闪光
+    this.graphics.fillStyle(0xffffff, alpha);
+    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
   }
 
   private beginRuntimePreviewImageFrame(): void {
@@ -2785,18 +2907,17 @@ export class GameScene extends Phaser.Scene {
             screen.y + Math.sin(faceAngle - 0.4) * (enemy.radius + 4),
           );
         } else if (enemy.archetype === 'skirmisher') {
-          this.graphics.lineStyle(2, leadColor, 0.16 + leadFocusRatio * 0.22);
-          this.graphics.lineBetween(
-            screen.x - enemy.radius - 10,
-            screen.y - enemy.radius - 8,
-            screen.x + enemy.radius + 6,
-            screen.y - 2,
+          const leadMarkerRadius = enemy.radius + 10 + leadFocusRatio * 5;
+          this.graphics.fillStyle(leadColor, 0.16 + leadFocusRatio * 0.18);
+          this.graphics.fillCircle(
+            screen.x + Math.cos(faceAngle) * leadMarkerRadius,
+            screen.y + Math.sin(faceAngle) * leadMarkerRadius,
+            3.2 + leadFocusRatio * 1.4,
           );
-          this.graphics.lineBetween(
-            screen.x - enemy.radius - 10,
-            screen.y + enemy.radius + 8,
-            screen.x + enemy.radius + 6,
-            screen.y + 2,
+          this.graphics.fillCircle(
+            screen.x - Math.cos(faceAngle) * (enemy.radius + 4),
+            screen.y - Math.sin(faceAngle) * (enemy.radius + 4),
+            2.2 + leadFocusRatio * 0.8,
           );
         } else if (enemy.archetype === 'ranged') {
           const bracket = enemy.radius + 12 + leadFocusRatio * 6;
@@ -3296,14 +3417,6 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (!enemy.elite && enemy.archetype === 'skirmisher') {
-        this.graphics.lineStyle(2, enemyStroke, 0.36);
-        this.graphics.lineBetween(screen.x - enemy.radius - 3, screen.y, screen.x + enemy.radius + 3, screen.y);
-        this.graphics.lineBetween(
-          screen.x - enemy.radius + 1,
-          screen.y - enemy.radius + 2,
-          screen.x + enemy.radius - 1,
-          screen.y + enemy.radius - 2,
-        );
         const orbitAngle = battle.elapsedSec * 4.4 + enemy.id * 0.7;
         const orbitRadius = enemy.radius + 9;
         this.graphics.fillStyle(enemyStroke, 0.18);
@@ -3318,20 +3431,9 @@ export class GameScene extends Phaser.Scene {
           2,
         );
         if (spawnRatio > 0.12) {
-          const sweepAlpha = 0.08 + spawnRatio * 0.14;
-          this.graphics.lineStyle(2, enemyStroke, sweepAlpha);
-          this.graphics.lineBetween(
-            screen.x - enemy.radius - 10,
-            screen.y - enemy.radius - 6,
-            screen.x + enemy.radius + 2,
-            screen.y - 2,
-          );
-          this.graphics.lineBetween(
-            screen.x - enemy.radius - 10,
-            screen.y + enemy.radius + 6,
-            screen.x + enemy.radius + 2,
-            screen.y + 2,
-          );
+          const spawnGlowRadius = enemy.radius + 11 + spawnRatio * 5;
+          this.graphics.lineStyle(1.6, enemyStroke, 0.06 + spawnRatio * 0.12);
+          this.graphics.strokeCircle(screen.x, screen.y, spawnGlowRadius);
         }
         if (pressureRatio > 0) {
           this.graphics.lineStyle(2, enemyStroke, 0.12 + pressureRatio * 0.18);
@@ -4212,75 +4314,9 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Upgrade stat changes display - visual indicator
-    const runState = this.engine.getState();
-    if (runState.lastUpgradeChanges && battle.elapsedSec < 4) {
-      const changes = runState.lastUpgradeChanges;
-      const fadeInRatio = Math.min(1, battle.elapsedSec / 0.3);
-      const fadeOutRatio = battle.elapsedSec > 3 ? 1 - (battle.elapsedSec - 3) / 1 : 1;
-      const displayAlpha = fadeInRatio * fadeOutRatio;
-
-      const changeCount = Object.keys(changes).length;
-      if (changeCount > 0) {
-        const centerX = camera.width / 2;
-        const startY = camera.height * 0.3;
-        const barWidth = 180;
-        const barHeight = 6;
-        const spacing = 12;
-        const totalHeight = changeCount * (barHeight + spacing) + 20;
-
-        // Background panel
-        this.graphics.fillStyle(0x0a0a0a, displayAlpha * 0.85);
-        this.graphics.fillRoundedRect(
-          centerX - barWidth / 2 - 15,
-          startY - 15,
-          barWidth + 30,
-          totalHeight,
-          6
-        );
-
-        // Border glow
-        this.graphics.lineStyle(2, 0xffd700, displayAlpha * 0.7);
-        this.graphics.strokeRoundedRect(
-          centerX - barWidth / 2 - 15,
-          startY - 15,
-          barWidth + 30,
-          totalHeight,
-          6
-        );
-
-        let index = 0;
-        const renderStatBar = (label: string, value: number, color: number) => {
-          const y = startY + index * (barHeight + spacing);
-          const barLength = Math.min(barWidth, Math.abs(value) * 20);
-
-          // Stat indicator dot
-          this.graphics.fillStyle(color, displayAlpha * 0.9);
-          this.graphics.fillCircle(centerX - barWidth / 2 - 5, y + barHeight / 2, 4);
-
-          // Stat bar
-          this.graphics.fillStyle(color, displayAlpha * 0.6);
-          this.graphics.fillRect(centerX - barWidth / 2, y, barLength, barHeight);
-
-          // Stat bar border
-          this.graphics.lineStyle(1, color, displayAlpha * 0.8);
-          this.graphics.strokeRect(centerX - barWidth / 2, y, barWidth, barHeight);
-
-          index++;
-        };
-
-        if (changes.damage) renderStatBar('DMG', changes.damage, 0xff6b6b);
-        if (changes.fireRate) renderStatBar('RATE', changes.fireRate, 0xffa94d);
-        if (changes.critChance) renderStatBar('CRIT%', changes.critChance, 0xffd43b);
-        if (changes.critMultiplier) renderStatBar('CRIT×', changes.critMultiplier, 0xffe066);
-        if (changes.pierce) renderStatBar('PIERCE', changes.pierce, 0x74c0fc);
-        if (changes.multishot) renderStatBar('MULTI', changes.multishot, 0x4dabf7);
-        if (changes.moveSpeed) renderStatBar('SPEED', changes.moveSpeed, 0x51cf66);
-        if (changes.maxHp) renderStatBar('HP', changes.maxHp, 0xff8787);
-        if (changes.dashInterval) renderStatBar('DASH', -changes.dashInterval, 0x20c997);
-        if (changes.regeneration) renderStatBar('REGEN', changes.regeneration, 0x69db7c);
-      }
-    }
+    // The old top-center yellow upgrade bar was ambiguous during battle start,
+    // so we now rely on the upgrade choice panel itself rather than re-showing
+    // an unlabeled overlay after combat resumes.
 
     if (battle.invulnerableSec > 0 || freezeRatio > 0.08) {
       const shieldColor = battle.invulnerableSec > 0 ? 0x9cff97 : this.mixColor(liveFocusColor, 0xffffff, 0.16);

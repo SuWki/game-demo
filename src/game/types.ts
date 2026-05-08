@@ -24,7 +24,7 @@ export type BattleTemplateId =
   | 'survival-gauntlet'
   | 'survival-sieve';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
-export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'bossEnding' | 'result';
+export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'bossEnding' | 'phaseTransition' | 'result';
 export type RunOutcome = 'victory' | 'defeat';
 export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
 export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
@@ -648,6 +648,14 @@ export interface RunState {
     elapsedSec: number;
     durationSec: number;
   } | null;
+  // 关卡结束过渡（普通战斗→关卡选择）
+  phaseTransition?: {
+    label: string;
+    elapsedSec: number;
+    durationSec: number;
+  } | null;
+  // 升级生效屏幕闪光
+  upgradeFlashSec: number;
   // 升级能力变化显示
   lastUpgradeChanges: StatModifiers | null;
   // 流派构筑第四轮：路线关键牌激活状态

@@ -52,8 +52,18 @@ const SCHEDULE_AHEAD_SEC = 0.42;
 const RMS_AUDIBLE_THRESHOLD = 0.0035;
 const RUNTIME_AUDIO_PREVIEW_STORAGE_KEY = 'pilot-runtime-preview-audio';
 const PREVIEW_CUE_URLS: Partial<Record<AudioCue, string>> = {
+  click: 'assets/preview-runtime/audio/ui_click.wav',
+  confirm: 'assets/preview-runtime/audio/ui_confirm.wav',
+  start: 'assets/preview-runtime/audio/ui_start.wav',
+  upgrade: 'assets/preview-runtime/audio/ui_upgrade.wav',
+  anomaly: 'assets/preview-runtime/audio/ui_anomaly.wav',
+  boss: 'assets/preview-runtime/audio/ui_boss_alert.wav',
   shoot: 'assets/preview-runtime/audio/player_shoot_core.wav',
+  dash: 'assets/preview-runtime/audio/player_dash_start.wav',
   hit: 'assets/preview-runtime/audio/player_hit_regular.wav',
+  pierceHit: 'assets/preview-runtime/audio/player_pierce_hit.wav',
+  dashHit: 'assets/preview-runtime/audio/player_dash_hit.wav',
+  critSplash: 'assets/preview-runtime/audio/player_crit_splash.wav',
   kill: 'assets/preview-runtime/audio/player_kill_regular.wav',
   pickup: 'assets/preview-runtime/audio/player_pickup_single.wav',
   hurt: 'assets/preview-runtime/audio/player_hurt_core.wav',
@@ -63,6 +73,58 @@ const PREVIEW_CUE_URLS: Partial<Record<AudioCue, string>> = {
   crit: 'assets/preview-runtime/audio/route_crit_signature.wav',
   pierceEcho: 'assets/preview-runtime/audio/route_pierce_signature.wav',
   dashPulse: 'assets/preview-runtime/audio/route_dash_signature.wav',
+  relayStandard: 'assets/preview-runtime/audio/enemy_relay_standard.wav',
+  relaySkirmisher: 'assets/preview-runtime/audio/enemy_relay_skirmisher.wav',
+  relayBrute: 'assets/preview-runtime/audio/enemy_relay_brute.wav',
+  relayRanged: 'assets/preview-runtime/audio/enemy_relay_ranged.wav',
+  victory: 'assets/preview-runtime/audio/ui_victory.wav',
+  defeat: 'assets/preview-runtime/audio/ui_defeat.wav',
+  result: 'assets/preview-runtime/audio/ui_result.wav',
+};
+
+// 音量平衡映射 - 根据音效类型调整音量
+const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
+  // UI音效 - 0.5
+  click: 0.5,
+  confirm: 0.5,
+  start: 0.6,
+
+  // 战斗音效 - 0.4-0.7
+  shoot: 0.4, // 降低射击音量，避免疲劳
+  hit: 0.5,
+  pierceHit: 0.55,
+  dashHit: 0.6,
+  critSplash: 0.65,
+  kill: 0.7,
+
+  // 玩家状态 - 0.5-0.8
+  hurt: 0.8, // 突出受伤反馈
+  pickup: 0.5,
+  dash: 0.6,
+  nearMiss: 0.45,
+
+  // 敌人音效 - 0.4-0.5
+  enemyShot: 0.45,
+  relayStandard: 0.5,
+  relaySkirmisher: 0.5,
+  relayBrute: 0.55,
+  relayRanged: 0.5,
+
+  // 特殊事件 - 0.75-0.9
+  boss: 0.9,
+  upgrade: 0.75,
+  anomaly: 0.8,
+  pressure: 0.85,
+
+  // 路线特效 - 0.65
+  crit: 0.65,
+  pierceEcho: 0.65,
+  dashPulse: 0.65,
+
+  // 结算 - 0.7-0.8
+  victory: 0.8,
+  defeat: 0.75,
+  result: 0.7,
 };
 
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
@@ -481,32 +543,8 @@ export class PilotAudio {
   }
 
   private getPreviewCueGain(cue: AudioCue): number {
-    switch (cue) {
-      case 'shoot':
-        return 0.68;
-      case 'hit':
-        return 0.74;
-      case 'kill':
-        return 0.82;
-      case 'pickup':
-        return 0.7;
-      case 'hurt':
-        return 0.94;
-      case 'enemyShot':
-        return 0.72;
-      case 'nearMiss':
-        return 0.78;
-      case 'pressure':
-        return 0.88;
-      case 'crit':
-        return 0.76;
-      case 'pierceEcho':
-        return 0.76;
-      case 'dashPulse':
-        return 0.76;
-      default:
-        return 0.72;
-    }
+    // 使用音量映射表，如果没有定义则使用默认值0.7
+    return CUE_VOLUME_MAP[cue] ?? 0.7;
   }
 
   private startScheduler(): void {

@@ -148,6 +148,16 @@ export class RunEngine {
     right: false,
   };
 
+  // 输入缓冲系统 - 150ms窗口
+  // 为每个方向键维护一个缓冲计时器，在150ms内即使按键松开也视为按下
+  private inputBufferMs = {
+    up: 0,
+    down: 0,
+    left: 0,
+    right: 0,
+  };
+  private readonly INPUT_BUFFER_WINDOW_MS = 150;
+
   private debugConfig: BattleDebugRuntimeConfig = {
     freezeEnemyMovement: false,
     freezeEnemyProjectiles: false,
@@ -190,6 +200,7 @@ export class RunEngine {
       nodeOptions: [],
       currentNode: openingNode,
       lastUpgradeChanges: null,
+      upgradeFlashSec: 0,
       upgradeChoices: [],
       currentEvent: null,
       battle: null,
@@ -204,10 +215,37 @@ export class RunEngine {
   }
 
   public setInputState(nextInput: PlayerInputState): void {
+    const now = performance.now();
+    // 更新输入缓冲：按键按下时重置缓冲，松开时保留150ms
+    if (nextInput.up) {
+      this.inputBufferMs.up = now;
+    }
+    if (nextInput.down) {
+      this.inputBufferMs.down = now;
+    }
+    if (nextInput.left) {
+      this.inputBufferMs.left = now;
+    }
+    if (nextInput.right) {
+      this.inputBufferMs.right = now;
+    }
+
     this.inputState.up = nextInput.up;
     this.inputState.down = nextInput.down;
     this.inputState.left = nextInput.left;
     this.inputState.right = nextInput.right;
+  }
+
+  // 获取缓冲后的输入状态（在150ms窗口内视为持续按下）
+  private getBufferedInputState(): PlayerInputState {
+    const now = performance.now();
+    const isBuffered = (lastPressMs: number) => now - lastPressMs < this.INPUT_BUFFER_WINDOW_MS;
+    return {
+      up: this.inputState.up || isBuffered(this.inputBufferMs.up),
+      down: this.inputState.down || isBuffered(this.inputBufferMs.down),
+      left: this.inputState.left || isBuffered(this.inputBufferMs.left),
+      right: this.inputState.right || isBuffered(this.inputBufferMs.right),
+    };
   }
 
   public setDebugConfig(nextConfig: BattleDebugRuntimeConfig): void {
@@ -385,6 +423,7 @@ export class RunEngine {
 
     this.enqueueAudio('upgrade');
     this.enqueueTip(`${upgrade.rarityLabel}品 ${upgrade.name}`);
+    this.state.upgradeFlashSec = 0.25; // 0.25秒屏幕闪光
 
     this.state.upgradeChoices = [];
     this.state.upgradeSource = null;
@@ -484,12 +523,28 @@ export class RunEngine {
       return;
     }
 
+    // 处理关卡结束过渡
+    if (this.state.status === 'phaseTransition' && this.state.phaseTransition) {
+      const dt = deltaMs / 1000;
+      this.state.phaseTransition.elapsedSec += dt;
+      if (this.state.phaseTransition.elapsedSec >= this.state.phaseTransition.durationSec) {
+        this.state.phaseTransition = null;
+        this.advanceRound();
+      }
+      return;
+    }
+
     if (this.state.status !== 'battle' || !this.state.battle) {
       return;
     }
 
     const battle = this.state.battle;
     const dt = deltaMs / 1000;
+
+    // 升级闪光计时器衰减
+    if (this.state.upgradeFlashSec > 0) {
+      this.state.upgradeFlashSec = Math.max(0, this.state.upgradeFlashSec - dt);
+    }
     battle.elapsedSec += dt;
     battle.impactFreezeSec = Math.max(0, battle.impactFreezeSec - dt);
     if (battle.impactFreezeSec <= 0) {
@@ -2040,12 +2095,16 @@ export class RunEngine {
       return;
     }
 
-    if (this.state.queuedLevelUps > 0 && this.state.status === 'upgradeChoice') {
-      this.advanceAfterPendingUpgrades = true;
-      return;
-    }
+    // 普通战斗结束：添加过渡状态，避免瞬间进入关卡选择
+    this.state.status = 'phaseTransition';
+    this.state.phaseTransition = {
+      label: `${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`,
+      elapsedSec: 0,
+      durationSec: 1.2, // 停留 1.2 秒
+    };
+    this.enqueueAudio('victory');
 
-    this.advanceRound();
+    // 注意：不再直接调用 advanceRound()，过渡结束后由 tick() 处理
   }
 
   private advanceRound(): void {
@@ -2564,18 +2623,19 @@ export class RunEngine {
   }
 
   private updatePlayerMovement(battle: BattleState, dt: number): void {
+    const bufferedInput = this.getBufferedInputState();
     let moveX = 0;
     let moveY = 0;
-    if (this.inputState.left) {
+    if (bufferedInput.left) {
       moveX -= 1;
     }
-    if (this.inputState.right) {
+    if (bufferedInput.right) {
       moveX += 1;
     }
-    if (this.inputState.up) {
+    if (bufferedInput.up) {
       moveY -= 1;
     }
-    if (this.inputState.down) {
+    if (bufferedInput.down) {
       moveY += 1;
     }
 

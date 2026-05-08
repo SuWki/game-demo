@@ -129,7 +129,7 @@ export class OverlayController {
               <span class="action-icon">▶</span>
               <div class="action-content">
                 <strong>开始作战</strong>
-                <small>WASD移动 · 空格冲刺 · 自动射击</small>
+                <small>WASD移动 · 自动射击</small>
               </div>
             </button>
 
@@ -332,6 +332,12 @@ export class OverlayController {
     progress: PanelProgress,
     onChoose: (nodeId: string) => void,
   ): void {
+    // 检测是否有Boss节点
+    const hasBossNode = options.some((node) => node.type === 'boss');
+    const alertText = hasBossNode
+      ? '<span class="is-boss-warning">⚠️ 警告：下一轮为Boss战 · 建议检查装备和路线构筑</span>'
+      : undefined;
+
     this.showPanel({
       panelClassName: 'panel-node-choice panel-route-choice',
       panelLayerClassName: 'panel-layer-center',
@@ -341,6 +347,7 @@ export class OverlayController {
       contextHtml: this.renderRouteChoiceContext(phaseLabel, options.length, progress),
       items: options.map((node) => this.renderNodeChoiceCard(node)),
       progress,
+      alertText,
     });
     for (const node of options) {
       this.bindClick(`[data-choice="${node.id}"]`, () => onChoose(node.id));
@@ -362,7 +369,7 @@ export class OverlayController {
       eyebrow: isFinalPrep ? '最后补强' : '选择强化',
       title: isFinalPrep ? '最终整备' : '机体强化',
       contextHtml: this.renderUpgradeChoiceContext(progress),
-      items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade)),
+      items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade, progress)),
       progress,
     });
     for (const upgrade of choices) {
@@ -501,6 +508,9 @@ export class OverlayController {
                 <small>按 R 快速重开</small>
               </div>
             </button>
+            <button class="combat-action-small" data-action="details">
+              <span>查看详情</span>
+            </button>
             <button class="combat-action-small" data-action="menu">
               <span>返回机库</span>
             </button>
@@ -525,6 +535,7 @@ export class OverlayController {
     `;
     this.bindClick('[data-action="restart"]', actions.onRestart);
     this.bindClick('[data-action="menu"]', actions.onBackToMenu);
+    this.bindClick('[data-action="details"]', () => this.showResultDetails(result));
 
     // Animate stats appearing and counting up
     this.animateResultStats();
@@ -592,6 +603,114 @@ export class OverlayController {
     };
 
     requestAnimationFrame(updateCounter);
+  }
+
+  private showResultDetails(result: RunResult): void {
+    this.hideScreen();
+    this.panelLayer.className = 'panel-layer panel-layer-center';
+    this.panelLayer.classList.remove('hidden');
+
+    const routeLabel = this.getRouteDisplayLabel(result.routeId);
+
+    // 路线构筑时间轴
+    const upgradeTimeline = result.selectedUpgrades && result.selectedUpgrades.length > 0
+      ? result.selectedUpgrades.map((upgrade, index) => `
+          <div class="detail-timeline-item">
+            <div class="detail-timeline-marker" style="background: ${RARITY_COLOR_MAP[upgrade.rarity]};">
+              ${index + 1}
+            </div>
+            <div class="detail-timeline-content">
+              <strong>${upgrade.name}</strong>
+              ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${ROUTE_NAME_MAP[upgrade.routeId]}</small>` : '<small>通用</small>'}
+            </div>
+          </div>
+        `).join('')
+      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">无升级记录</p>';
+
+    this.panelLayer.innerHTML = `
+      <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
+        <div class="tray-header">
+          <div class="tray-title-group">
+            <span class="panel-eyebrow">BATTLE ANALYSIS</span>
+            <h2 class="panel-title">战斗数据详情</h2>
+          </div>
+        </div>
+
+        <div class="result-details-content">
+          <div class="result-details-section">
+            <h3 class="detail-section-title">📊 数据可视化</h3>
+            <div class="detail-placeholder">
+              <div class="placeholder-icon">📈</div>
+              <p><strong>DPS曲线图</strong></p>
+              <small>功能开发中 - 将展示战斗过程中的伤害输出趋势</small>
+            </div>
+            <div class="detail-placeholder">
+              <div class="placeholder-icon">🎯</div>
+              <p><strong>伤害构成分析</strong></p>
+              <small>功能开发中 - 将展示暴击/穿透/冲刺伤害占比</small>
+            </div>
+          </div>
+
+          <div class="result-details-section">
+            <h3 class="detail-section-title">🛠️ 路线构筑时间轴</h3>
+            <div class="detail-timeline-scroll">
+              ${upgradeTimeline}
+            </div>
+          </div>
+
+          <div class="result-details-section">
+            <h3 class="detail-section-title">📈 本局数据</h3>
+            <div class="detail-stats-grid">
+              <div class="detail-stat-card">
+                <span>存活时间</span>
+                <strong>${this.formatDuration(result.runDurationSec)}</strong>
+              </div>
+              <div class="detail-stat-card">
+                <span>击杀数</span>
+                <strong>${result.battleWins}</strong>
+              </div>
+              <div class="detail-stat-card">
+                <span>等级</span>
+                <strong>Lv.${result.levelReached}</strong>
+              </div>
+              <div class="detail-stat-card">
+                <span>路线</span>
+                <strong>${routeLabel}</strong>
+              </div>
+              <div class="detail-stat-card">
+                <span>节点</span>
+                <strong>${result.nodesCleared}</strong>
+              </div>
+              <div class="detail-stat-card">
+                <span>升级数</span>
+                <strong>${result.selectedUpgrades?.length ?? 0}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="result-details-section">
+            <h3 class="detail-section-title">🏆 历史对比</h3>
+            <div class="detail-placeholder">
+              <div class="placeholder-icon">📊</div>
+              <p><strong>历史最佳对比</strong></p>
+              <small>功能开发中 - 将展示与历史最佳成绩的对比</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-details-actions">
+          <button class="text-action text-action-primary" data-action="close">
+            <span>关闭详情</span>
+            <small>返回结算页面</small>
+          </button>
+        </div>
+      </section>
+    `;
+
+    this.bindClick('[data-action="close"]', () => {
+      this.hidePanel();
+      this.screenLayer.classList.remove('hidden');
+    });
   }
 
   public pushToast(message: string, tone: ToastTone = 'neutral'): void {
@@ -669,6 +788,22 @@ export class OverlayController {
       <aside class="choice-context choice-context-route" aria-label="下一站选择说明">
         ${progressBar}
         <div class="route-context-copy">
+          <span>当前关卡位置</span>
+          <strong>${stageLabel}</strong>
+          <small>${phaseLabel || '选择路线'}</small>
+        </div>
+        <div class="route-context-copy route-context-rule">
+          <span>选择规则</span>
+          <strong>${optionCount} 个候选，选 1 个进入</strong>
+          <small>战斗推进流程，强化补属性，异常改变玩法。</small>
+        </div>
+      </aside>
+    `;
+
+    return `
+      <aside class="choice-context choice-context-route" aria-label="下一站选择说明">
+        ${progressBar}
+        <div class="route-context-copy">
           <span>下一站</span>
           <strong>${stageLabel} · ${phaseLabel || '选择路线'}</strong>
           <small>这不是倒计时或血条，而是本局推进位置。</small>
@@ -698,6 +833,38 @@ export class OverlayController {
       'boss-upcoming': '#ff6b6b',
       'boss-active': '#ff4444',
     };
+
+    const modernNodes = phaseTrack
+      .map((phase) => {
+        const iconMap: Record<string, string> = {
+          done: '●',
+          active: '●',
+          upcoming: '○',
+          'boss-upcoming': '◇',
+          'boss-active': '◆',
+        };
+        const icon = iconMap[phase.state] ?? '●';
+        const color = nodeColors[phase.state] || '#2d3748';
+        const isBoss = phase.state.includes('boss');
+        const isActive = phase.state === 'active' || phase.state === 'boss-active';
+        const isDone = phase.state === 'done';
+
+        return `
+          <div class="progress-node ${phase.state} ${isActive ? 'is-active' : ''}" style="color: ${color};" title="${phase.label}">
+            <span class="progress-node-icon ${isBoss ? 'is-boss' : ''}">${icon}</span>
+            <span class="progress-node-label ${isDone ? 'is-done' : ''}">${phase.label}</span>
+          </div>
+        `;
+      })
+      .join('');
+
+    return `
+      <div class="route-progress-bar" aria-label="路线进度">
+        <div class="progress-track">
+          ${modernNodes}
+        </div>
+      </div>
+    `;
 
     const nodes = phaseTrack.map((phase, index) => {
       const icon = nodeIcons[phase.state] || '○';
@@ -778,7 +945,7 @@ export class OverlayController {
     `;
   }
 
-  private renderUpgradeChoiceCard(upgrade: UpgradeDefinition): string {
+  private renderUpgradeChoiceCard(upgrade: UpgradeDefinition, progress: PanelProgress): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
     const effectText = this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
     const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
@@ -787,6 +954,17 @@ export class OverlayController {
     const focusLabelHtml = this.renderTooltipTerm(focusLabel, this.getFocusTooltip(focusLabel));
     const nameHtml = this.decorateTooltipTerms(upgrade.name);
     const effectTextHtml = this.decorateTooltipTerms(effectText);
+
+    // 获取路线图标
+    const routeIcon = upgrade.routeId
+      ? (upgrade.routeId === 'crit' ? '🔴' : upgrade.routeId === 'pierce' ? '🔵' : '🟢')
+      : '⚪';
+
+    // 获取路线进度信息
+    const routeProgressHtml = upgrade.routeId
+      ? `<span class="choice-route-progress">${progress.routeStatusText}</span>`
+      : '';
+
     return `
       <button
         class="choice-strip choice-strip-upgrade ${upgrade.routeId ? 'is-route-upgrade' : 'is-generic-upgrade'}"
@@ -794,7 +972,7 @@ export class OverlayController {
         data-choice="${upgrade.id}"
       >
         <div class="choice-strip-head">
-          <span class="choice-type">强化</span>
+          <span class="choice-type"><span class="choice-route-icon">${routeIcon}</span> 强化</span>
           <span class="choice-rarity">${upgrade.rarityLabel}</span>
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
@@ -805,6 +983,7 @@ export class OverlayController {
           <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabelHtml}</span>
           <div class="choice-foot-trail">
             <span class="choice-effect-tag">${focusLabelHtml}</span>
+            ${routeProgressHtml}
             <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
           </div>
         </div>
