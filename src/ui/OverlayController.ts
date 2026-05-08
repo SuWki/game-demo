@@ -1,4 +1,4 @@
-import { getBattleEncounterLabel } from '../data/battleTemplates';
+import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
 import { RARITY_COLOR_MAP } from '../data/balance';
 import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import { describeContentEffects } from '../data/upgrades';
@@ -315,6 +315,8 @@ export class OverlayController {
         <section class="game-hud-fixed__center">
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
           <span class="game-hud-fixed__mode">${snapshot.statusText}</span>
+          <span class="game-hud-fixed__objective">${snapshot.objectiveText} · ${snapshot.objectiveProgressText}</span>
+          ${snapshot.statusSubtext ? `<span class="game-hud-fixed__reward">${snapshot.statusSubtext}</span>` : ''}
         </section>
         <section class="game-hud-fixed__right">
           <button class="hud-pause-button" data-action="pause">暂停</button>
@@ -335,7 +337,7 @@ export class OverlayController {
     // 检测是否有Boss节点
     const hasBossNode = options.some((node) => node.type === 'boss');
     const alertText = hasBossNode
-      ? '<span class="is-boss-warning">⚠️ 警告：下一轮为Boss战 · 建议检查装备和路线构筑</span>'
+      ? '<span class="is-boss-warning">⚠️ 警告：下一站是 Boss 战</span>'
       : undefined;
 
     this.showPanel({
@@ -781,37 +783,17 @@ export class OverlayController {
   private renderRouteChoiceContext(phaseLabel: string, optionCount: number, progress: PanelProgress): string {
     const stageLabel = this.getCompactProgressLabel(progress.progressLabel);
 
-    // Render progress visualization
-    const progressBar = this.renderProgressBar(progress.phaseTrack);
-
     return `
       <aside class="choice-context choice-context-route" aria-label="下一站选择说明">
-        ${progressBar}
         <div class="route-context-copy">
-          <span>当前关卡位置</span>
+          <span>当前关卡</span>
           <strong>${stageLabel}</strong>
           <small>${phaseLabel || '选择路线'}</small>
         </div>
         <div class="route-context-copy route-context-rule">
           <span>选择规则</span>
           <strong>${optionCount} 个候选，选 1 个进入</strong>
-          <small>战斗推进流程，强化补属性，异常改变玩法。</small>
-        </div>
-      </aside>
-    `;
-
-    return `
-      <aside class="choice-context choice-context-route" aria-label="下一站选择说明">
-        ${progressBar}
-        <div class="route-context-copy">
-          <span>下一站</span>
-          <strong>${stageLabel} · ${phaseLabel || '选择路线'}</strong>
-          <small>这不是倒计时或血条，而是本局推进位置。</small>
-        </div>
-        <div class="route-context-copy route-context-rule">
-          <span>选择规则</span>
-          <strong>${optionCount} 个候选，选 1 个进入</strong>
-          <small>战斗用于推进和拿经验；强化补属性；异常改变玩法。</small>
+          <small>战斗可能出现多条路；强化和异常只给一条。</small>
         </div>
       </aside>
     `;
@@ -850,7 +832,7 @@ export class OverlayController {
         const isDone = phase.state === 'done';
 
         return `
-          <div class="progress-node ${phase.state} ${isActive ? 'is-active' : ''}" style="color: ${color};" title="${phase.label}">
+          <div class="progress-node ${phase.state} ${isActive ? 'is-active' : ''}" style="color: ${color};">
             <span class="progress-node-icon ${isBoss ? 'is-boss' : ''}">${icon}</span>
             <span class="progress-node-label ${isDone ? 'is-done' : ''}">${phase.label}</span>
           </div>
@@ -947,8 +929,10 @@ export class OverlayController {
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition, progress: PanelProgress): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
-    const effectText = this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
-    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}加成` : '通用';
+    const effectText = upgrade.routeId
+      ? this.getRouteUpgradeReadableText(upgrade)
+      : this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
+    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}流` : '通用';
     const focusLabel = this.getEffectFocusLabel(upgrade.effects);
     const routeLabelHtml = this.renderTooltipTerm(routeLabel, this.getRouteTooltip(upgrade.routeId));
     const focusLabelHtml = this.renderTooltipTerm(focusLabel, this.getFocusTooltip(focusLabel));
@@ -984,11 +968,58 @@ export class OverlayController {
           <div class="choice-foot-trail">
             <span class="choice-effect-tag">${focusLabelHtml}</span>
             ${routeProgressHtml}
-            <span class="choice-prompt">${upgrade.routeId ? '偏流派' : '补属性'}</span>
+            <span class="choice-prompt">${upgrade.routeId ? '走流派' : '补属性'}</span>
           </div>
         </div>
       </button>
     `;
+  }
+
+  private getRouteUpgradeReadableText(upgrade: UpgradeDefinition): string {
+    const modifiers = upgrade.effects
+      ?.filter((effect): effect is Extract<ContentEffect, { type: 'stats' }> => effect.type === 'stats')
+      .reduce<NonNullable<Extract<ContentEffect, { type: 'stats' }>['modifiers']>>(
+        (merged, effect) => ({ ...merged, ...effect.modifiers }),
+        {},
+      );
+
+    switch (upgrade.routeId) {
+      case 'crit':
+        if ((modifiers?.critChance ?? 0) > 0 && (modifiers?.critMultiplier ?? 0) > 0) {
+          return '更容易打出暴击，暴击打中后也更疼。';
+        }
+        if ((modifiers?.critChance ?? 0) > 0) {
+          return '更容易打出暴击，适合抓精英和 Boss 的破绽。';
+        }
+        if ((modifiers?.critMultiplier ?? 0) > 0) {
+          return '暴击打中后更疼，适合短时间爆发。';
+        }
+        return '暴击会留下橙色破绽，连续打中破绽能打出爆发。';
+      case 'pierce':
+        {
+          const pierceValue = modifiers?.pierce ?? 0;
+          if (pierceValue > 0) {
+            return `子弹多穿过 ${Math.round(pierceValue)} 个敌人，适合打一排目标。`;
+          }
+        }
+        if ((modifiers?.projectileSpeed ?? 0) > 0) {
+          return '子弹飞得更快，穿透线更稳。';
+        }
+        return '穿透命中会在敌人身上留下蓝色裂纹。';
+      case 'dash':
+        if ((modifiers?.dashInterval ?? 0) < 0) {
+          return '自动脉冲更快准备好，靠近敌人时更容易反打。';
+        }
+        if ((modifiers?.dashPulseDamage ?? 0) > 0) {
+          return '自动脉冲打中附近敌人时更有力。';
+        }
+        if ((modifiers?.dashInvulnerability ?? 0) > 0) {
+          return '自动脉冲触发后，短时间更安全。';
+        }
+        return '穿梭流会自动释放近身脉冲，不需要按键。';
+      default:
+        return upgrade.description;
+    }
   }
 
   private renderEventChoiceCard(
@@ -1111,6 +1142,17 @@ export class OverlayController {
 
   private getNodeCardDescription(node: NodeOption): string {
     if (node.type === 'battle') {
+      const template = node.templateId ? BATTLE_TEMPLATES[node.templateId] : null;
+      const winType = template?.winCondition.type;
+      if (winType === 'elite') {
+        return '击败精英本体即可过关，小怪只是干扰。';
+      }
+      if (winType === 'survive') {
+        return '撑到倒计时结束即可过关，不需要清完敌人。';
+      }
+      if (winType === 'kills') {
+        return `击败 ${template?.winCondition.target ?? '目标'} 个敌人即可过关，越快完成越赚。`;
+      }
       return node.description;
     }
     if (node.type === 'upgrade') {
@@ -1339,7 +1381,7 @@ export class OverlayController {
     }
     const safeTooltip = this.escapeHtml(tooltip);
     const safeLabel = this.escapeHtml(label);
-    return `<span class="choice-tooltip-term" tabindex="0" data-tooltip="${safeTooltip}" title="${safeTooltip}">${safeLabel}</span>`;
+    return `<span class="choice-tooltip-term" tabindex="0" data-tooltip="${safeTooltip}">${safeLabel}</span>`;
   }
 
   private decorateTooltipTerms(text: string): string {
@@ -1377,11 +1419,11 @@ export class OverlayController {
   private getRouteTooltip(routeId?: RouteReference): string {
     switch (routeId) {
       case 'crit':
-        return '暴击路线：提高爆发和击杀收割。';
+        return '暴击流：命中有概率打出高伤害，并给敌人留下橙色破绽。连续打破绽会爆发。';
       case 'pierce':
-        return '穿透路线：子弹穿过敌人，适合清线回收。';
+        return '穿透流：子弹打穿敌人继续向后飞，适合打一排敌人。蓝色裂纹代表刚被穿透命中过。';
       case 'dash':
-        return '穿梭路线：换位、借窗、回切反打。';
+        return '穿梭流：不需要按键。冷却好后角色会自动闪动并放出近身脉冲，适合贴近反打。';
       default:
         return '';
     }
@@ -1389,7 +1431,7 @@ export class OverlayController {
 
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
-      暴击: '每次子弹命中都会独立判定。判定成功时伤害变高，并会在敌人身上留下橙色破绽标记；再次打中破绽才是暴击路线的承接收益。',
+      暴击: '子弹命中时有概率触发。触发后伤害更高，并在敌人身上留下橙色破绽。',
       爆伤: '只影响已经触发暴击的那次命中，不提高触发概率。',
       穿透: '子弹命中敌人后不会立刻消失，会继续打到后方目标。敌人越站成一线，穿透收益越高；蓝色裂纹表示它刚被穿透命中过。',
       穿梭: '穿梭是自动触发的相位脉冲，不需要按键。冷却归零时角色会短暂闪动并释放一次近身脉冲；冷却越短，触发越频繁。',
@@ -1499,7 +1541,7 @@ export class OverlayController {
 
   private getCompactProgressLabel(progressLabel: string): string {
     const match = progressLabel.match(/(\d+\s*\/\s*\d+)/);
-    return match ? `推进 ${match[1]}` : progressLabel;
+    return match ? match[1].replace(/\s+/g, ' ') : progressLabel.replace(/^推进\s*/, '');
   }
 
   private getHudWaveLabel(progressLabel: string): string {

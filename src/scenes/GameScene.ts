@@ -854,10 +854,23 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getBattleStatusSubtext(battle: BattleState): string {
-    const summaryParts: string[] = [];
+    const template = BATTLE_TEMPLATES[battle.templateId];
     if (battle.encounterType === 'boss') {
-      summaryParts.push(battle.eliteAlive ? 'Boss 已进场' : 'Boss 即将进场');
+      if (battle.pressureSafeWindowSec > 0) {
+        return '安全区出现：进入蓝色区域躲避火线';
+      }
+      return battle.eliteAlive ? '目标：击败 Boss 本体' : 'Boss 即将进场';
     }
+    if (template.winCondition.type === 'survive') {
+      return `生存倒计时：${Math.ceil(battle.remainingSec)}秒`;
+    }
+    if (template.winCondition.type === 'kills' || template.winCondition.type === 'elite') {
+      return battle.remainingSec > 0
+        ? `奖励倒计时：${Math.ceil(battle.remainingSec)}秒`
+        : '奖励倒计时结束：继续完成目标';
+    }
+
+    const summaryParts: string[] = [];
     if (battle.pressurePhaseLabel) {
       summaryParts.push(`阶段 ${battle.pressurePhaseLabel}`);
     }
@@ -1674,8 +1687,8 @@ export class GameScene extends Phaser.Scene {
       if (battle.encounterType === 'boss') {
         return {
           objectiveLabel: 'Boss 目标',
-          objectiveText: '击败当前首领',
-          objectiveDetail: '盯住金色血条，清空就能直接过关。',
+          objectiveText: '击败 Boss 本体',
+          objectiveDetail: '优先盯住金色血条，小怪只是干扰。',
           objectiveProgressText: battle.eliteAlive ? `目标 ${targetTitle}` : '首领即将进场',
           objectiveTone: 'boss',
         };
@@ -1699,7 +1712,7 @@ export class GameScene extends Phaser.Scene {
       return {
         objectiveLabel: '战斗目标',
         objectiveText: '清掉这一波敌人',
-        objectiveDetail: `击破 ${battle.targetKills} 个敌人后进入下一站。`,
+        objectiveDetail: `击破 ${battle.targetKills} 个敌人后进入下一站。奖励倒计时内完成可多选 1 个强化。`,
         objectiveProgressText: `进度 ${battle.kills} / ${battle.targetKills}`,
         objectiveTone: 'battle',
       };
@@ -1817,14 +1830,14 @@ export class GameScene extends Phaser.Scene {
   private getRouteStatusText(): string {
     const state = this.engine.getState();
     if (state.maturedRoute) {
-      return `${ROUTE_NAME_MAP[state.maturedRoute]}已成型`;
+      return `${ROUTE_NAME_MAP[state.maturedRoute]}流已成型`;
     }
     if (state.committedRoute) {
-      return `${ROUTE_NAME_MAP[state.committedRoute]}正在成线`;
+      return `${ROUTE_NAME_MAP[state.committedRoute]}流正在成型`;
     }
 
     const dominantRoute = this.engine.getDominantRoute();
-    return dominantRoute ? `${ROUTE_NAME_MAP[dominantRoute]}开始冒头` : '还没站稳主路线';
+    return dominantRoute ? `正在走${ROUTE_NAME_MAP[dominantRoute]}流` : '还没有主流派';
   }
 
   private getToastTone(text: string): ToastTone {

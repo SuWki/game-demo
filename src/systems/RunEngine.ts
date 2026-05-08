@@ -201,6 +201,7 @@ export class RunEngine {
       currentNode: openingNode,
       lastUpgradeChanges: null,
       upgradeFlashSec: 0,
+      levelUpPanelDelaySec: 0,
       upgradeChoices: [],
       currentEvent: null,
       battle: null,
@@ -276,6 +277,7 @@ export class RunEngine {
     this.state.upgradeSource = null;
     this.state.result = null;
     this.state.queuedLevelUps = 0;
+    this.state.levelUpPanelDelaySec = 0;
     this.state.stats.hp = this.state.stats.maxHp;
     this.enterBattle(debugNode);
   }
@@ -545,6 +547,13 @@ export class RunEngine {
     if (this.state.upgradeFlashSec > 0) {
       this.state.upgradeFlashSec = Math.max(0, this.state.upgradeFlashSec - dt);
     }
+    if (this.state.levelUpPanelDelaySec > 0) {
+      this.state.levelUpPanelDelaySec = Math.max(0, this.state.levelUpPanelDelaySec - dt);
+      if (this.state.levelUpPanelDelaySec === 0 && this.state.queuedLevelUps > 0) {
+        this.openQueuedLevelUpPanel();
+        return;
+      }
+    }
     battle.elapsedSec += dt;
     battle.impactFreezeSec = Math.max(0, battle.impactFreezeSec - dt);
     if (battle.impactFreezeSec <= 0) {
@@ -682,26 +691,10 @@ export class RunEngine {
     }
 
     if (battle.remainingSec <= 0) {
-      this.finalizeBossPressureMetrics(battle);
-      this.services.metrics.recordBattleCompleted(
-        battle.templateId,
-        'loss',
-        BATTLE_TEMPLATES[battle.templateId].contentTier,
-        this.getBattleMonitoringSummary(battle),
-      );
-      // Boss 战失败：显示专属收尾画面
-      if (battle.encounterType === 'boss') {
-        this.state.status = 'bossEnding';
-        this.state.bossEnding = {
-          outcome: 'defeat',
-          label: '机体失效 / Boss 未击破',
-          elapsedSec: 0,
-          durationSec: 1.5,
-        };
-        this.enqueueAudio('defeat');
-        return;
+      const template = BATTLE_TEMPLATES[battle.templateId];
+      if (template.winCondition.type === 'survive') {
+        this.completeBattle();
       }
-      this.finishRun('defeat', 'timeOut');
     }
   }
 
@@ -713,16 +706,15 @@ export class RunEngine {
 
     const template = BATTLE_TEMPLATES[battle.templateId];
     const label = battle.label || template.name;
-    const timeText = Math.ceil(battle.remainingSec) + 's';
 
     switch (template.winCondition.type) {
       case 'survive':
-        return `${label} ${timeText}`;
+        return `${label} 生存`;
       case 'elite':
-        return `${label} ${battle.eliteAlive ? '\u51fb\u7834\u7cbe\u82f1' : '\u51c6\u5907\u4ea4\u706b'} ${timeText}`;
+        return `${label} ${battle.eliteAlive ? '\u51fb\u7834\u7cbe\u82f1' : '\u51c6\u5907\u4ea4\u706b'}`;
       case 'kills':
       default:
-        return `${label} ${battle.kills}/${template.winCondition.target ?? battle.targetKills} ${timeText}`;
+        return `${label} ${battle.kills}/${template.winCondition.target ?? battle.targetKills}`;
     }
   }
 
@@ -1256,6 +1248,7 @@ export class RunEngine {
         battle.bossSafeWindowMoments += 1;
         this.refreshBossSafeWindowGrace(battle);
         this.clearBossSafeWindowBlockers(battle);
+        this.enqueueTip('安全区出现：进入蓝色区域');
       }
 
       if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
@@ -1302,6 +1295,7 @@ export class RunEngine {
       battle.bossSafeWindowMoments += 1;
       this.refreshBossSafeWindowGrace(battle);
       this.clearBossSafeWindowBlockers(battle);
+      this.enqueueTip('安全区出现：进入蓝色区域');
     }
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
@@ -2079,7 +2073,17 @@ export class RunEngine {
       this.getCurrentBattleIndex(),
       this.state.phase,
     );
+    const template = BATTLE_TEMPLATES[battle.templateId];
+    const earnedTimedReward =
+      battle.encounterType !== 'boss' && template.winCondition.type !== 'survive' && battle.remainingSec > 0;
     this.enqueueTip(`${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`);
+    if (earnedTimedReward) {
+      this.state.queuedLevelUps += 1;
+      this.enqueueTip('奖励倒计时达成：额外强化 +1');
+    }
+    if (battle.encounterType !== 'boss') {
+      this.advanceAfterPendingUpgrades = true;
+    }
     this.gainExperience(completionExp);
 
     // Boss 战结束：显示专属收尾画面
@@ -2094,6 +2098,12 @@ export class RunEngine {
       this.enqueueAudio('victory');
       return;
     }
+
+    if (this.state.queuedLevelUps > 0) {
+      this.openQueuedLevelUpPanel();
+      return;
+    }
+    this.advanceAfterPendingUpgrades = false;
 
     // 普通战斗结束：添加过渡状态，避免瞬间进入关卡选择
     this.state.status = 'phaseTransition';
@@ -6258,7 +6268,12 @@ export class RunEngine {
     if (leveled) {
       this.enqueueAudio('upgrade');
       this.enqueueTip(`等级提升 Lv.${this.state.level}`);
-      this.openQueuedLevelUpPanel();
+      if (this.state.status === 'battle') {
+        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.55);
+        this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.55);
+      } else {
+        this.openQueuedLevelUpPanel();
+      }
     }
   }
 
@@ -6266,6 +6281,7 @@ export class RunEngine {
     if (this.state.queuedLevelUps <= 0 || this.state.status === 'result') {
       return;
     }
+    this.state.levelUpPanelDelaySec = 0;
     this.state.status = 'upgradeChoice';
     this.state.upgradeSource = 'levelUp';
     this.state.upgradeChoices = this.rollUpgradeChoices('levelUp');
@@ -7291,6 +7307,17 @@ export class RunEngine {
             )
           : 0;
       let score = 132 - distance * 0.42 + (enemy.elite ? 18 : 0);
+      if (battle.encounterType === 'boss' && activeElite) {
+        if (enemy.id === activeElite.id) {
+          score += 96;
+          score += distance <= 360 ? 28 : 12;
+        } else if (enemy.role === 'escort') {
+          score -= 42;
+          if (eliteLinkDistance <= 260) {
+            score -= 28;
+          }
+        }
+      }
       if (!enemy.elite && isPickupLead) {
         score += 28 + pickupLeadRatio * 34 + ordinarySurgeRatio * 18;
       }

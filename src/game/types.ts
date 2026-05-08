@@ -15,9 +15,15 @@ export type BattleTemplateId =
   | 'elite-lockdown'
   | 'elite-screen'
   | 'elite-bulwark'
+  | 'elite-pressure-hold'
+  | 'elite-contagion'
+  | 'elite-gauntlet'
   | 'boss-hunt'
   | 'boss-lockdown'
   | 'boss-bastion'
+  | 'boss-executioner'
+  | 'boss-fortress'
+  | 'boss-predator'
   | 'survival'
   | 'survival-crossfire'
   | 'survival-rush'
@@ -662,6 +668,8 @@ export interface RunState {
   } | null;
   // 升级生效屏幕闪光
   upgradeFlashSec: number;
+  // 战斗中升级时先播放短提示，再弹出选择面板，避免遮住升级反馈
+  levelUpPanelDelaySec: number;
   // 升级能力变化显示
   lastUpgradeChanges: StatModifiers | null;
   // 流派构筑第四轮：路线关键牌激活状态

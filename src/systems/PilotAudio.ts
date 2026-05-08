@@ -104,7 +104,6 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
   // 战斗音效 - 0.4-0.7
   shoot: 0.4, // 降低射击音量，避免疲劳
   hit: 0.5,
-  hit: 0.5,
   pierceHit: 0.55,
   dashHit: 0.6,
   critSplash: 0.65,

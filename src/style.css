@@ -3289,6 +3289,29 @@ button:hover {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.62);
 }
 
+.game-hud-fixed__objective {
+  margin-top: 2px;
+  padding: 3px 10px;
+  border: 1px solid rgba(111, 231, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(3, 12, 20, 0.48);
+  color: rgba(239, 252, 255, 0.92);
+  font-size: clamp(12px, 1.05vw, 15px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.game-hud-fixed__reward {
+  color: rgba(255, 197, 118, 0.96);
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.62),
+    0 0 14px rgba(255, 174, 74, 0.24);
+}
+
 .panel-layer::before {
   background:
     linear-gradient(180deg, rgba(9, 13, 18, 0.48), rgba(9, 13, 18, 0.28)),
@@ -3862,7 +3885,7 @@ button:hover {
 .panel-route-choice.commercial-choice-panel {
   width: min(1360px, calc(100vw - 80px));
   max-height: none;
-  min-height: 300px;
+  min-height: 350px;
   margin-bottom: 0;
   padding: 24px 38px 30px;
   overflow: visible;
@@ -3899,7 +3922,7 @@ button:hover {
 .panel-route-choice .choice-context-route {
   position: absolute;
   left: 38px;
-  top: 96px;
+  top: 116px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
@@ -3996,6 +4019,12 @@ button:hover {
   gap: 28px;
   margin-left: 286px;
   padding-top: 24px;
+}
+
+.panel-route-choice .choice-grid-tray.is-two-choice,
+.panel-route-choice .choice-grid-tray.is-single-choice {
+  align-content: center;
+  min-height: 190px;
 }
 
 .panel-route-choice .choice-strip-node {
