@@ -7,76 +7,70 @@
       "status": 200,
       "ok": true,
       "contentType": "image/svg+xml",
-      "bytes": 1807
+      "bytes": 0
     },
     {
       "asset": "/assets/preview-runtime/visual/enemy-standard-a.svg",
       "status": 200,
       "ok": true,
       "contentType": "image/svg+xml",
-      "bytes": 1554
+      "bytes": 0
     },
     {
       "asset": "/assets/preview-runtime/visual/fx-xp-orb.svg",
       "status": 200,
       "ok": true,
       "contentType": "image/svg+xml",
-      "bytes": 1184
+      "bytes": 0
     },
     {
       "asset": "/assets/preview-runtime/audio/player_shoot_core.wav",
       "status": 200,
       "ok": true,
       "contentType": "audio/wav",
-      "bytes": 11510
+      "bytes": 23084
     },
     {
       "asset": "/assets/preview-runtime/audio/player_hit_regular.wav",
       "status": 200,
       "ok": true,
       "contentType": "audio/wav",
-      "bytes": 13274
+      "bytes": 25004
     },
     {
       "asset": "/assets/preview-runtime/audio/player_kill_regular.wav",
       "status": 200,
       "ok": true,
       "contentType": "audio/wav",
-      "bytes": 21212
+      "bytes": 73004
     },
     {
       "asset": "/assets/preview-runtime/audio/player_pickup_single.wav",
       "status": 200,
       "ok": true,
       "contentType": "audio/wav",
-      "bytes": 17684
+      "bytes": 34604
     },
     {
       "asset": "/assets/preview-runtime/audio/player_hurt_core.wav",
       "status": 200,
       "ok": true,
       "contentType": "audio/wav",
-      "bytes": 30032
+      "bytes": 46124
     }
   ],
   "browserCheck": "completed",
   "consoleErrors": [],
   "previewAudioEnabled": true,
-  "previewAudioReady": 11,
+  "previewAudioReady": 28,
   "previewAudioCueCounts": {
     "pressure": 1,
-    "shoot": 6,
-    "hit": 1,
-    "kill": 3,
-    "crit": 1
+    "shoot": 4
   },
   "cueCounts": {
     "start": 1,
     "pressure": 1,
-    "shoot": 6,
-    "hit": 1,
-    "kill": 3,
-    "crit": 1
+    "shoot": 4
   },
   "screenshot": "output\\qa\\runtime-preview-assets\\battle-preview-runtime.png"
 }

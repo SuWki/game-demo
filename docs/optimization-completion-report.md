@@ -173,16 +173,28 @@
    - 添加Boss警告样式和动画
    - 添加结算详情面板样式
 
+### 资源文件
+5. `public/assets/preview-runtime/audio/` - 游戏运行时音效资源
+   - 新增缺失音效文件（移动、冷却提示、升级生效、按钮悬停等）
+
+6. `output/asset-preview/audio/` - 音效预览资源
+
 ### 文档文件
-4. `docs/audio-system-analysis.md` (新建)
+7. `docs/audio-system-analysis.md`
    - 音效完整性检测报告
    - 缺失音效清单
    - AI生成提示词
    - 音量平衡建议
 
-5. `docs/game-experience-optimization-plan.md` (更新)
+8. `docs/game-experience-optimization-plan.md`
    - 更新任务进度
    - 记录开发日志
+
+### 已删除的过时文件
+- `docs/upgrade-choice-enhancement-test.md` - 测试文档，功能已验证
+- `docs/urgent-bug-fix-dash-input.md` - 基于错误前提，已过时
+- `docs/visual-optimization-progress.md` - 内容已整合到本报告
+- `output/qa/` 下所有测试截图（211张）
 
 ---
 
