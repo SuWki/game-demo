@@ -421,7 +421,7 @@ export class RunEngine {
       this.firstUpgradeRecorded = true;
     }
 
-    this.enqueueAudio('upgrade');
+    this.enqueueAudio('upgradeEquipped');
     this.enqueueTip(`${upgrade.rarityLabel}品 ${upgrade.name}`);
     this.state.upgradeFlashSec = 0.25; // 0.25秒屏幕闪光
 
@@ -2590,6 +2590,7 @@ export class RunEngine {
     ) {
       this.state.maturedRoute = routeId;
       this.services.metrics.markRouteMatured(routeId);
+      this.enqueueAudio('routeMatured');
       this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.matureHint ?? '');
     }
   }
@@ -2999,7 +3000,7 @@ export class RunEngine {
       this.enqueueTip(
         battle.encounterType === 'boss' ? 'Boss 已进场：击败金色血条首领即可通关' : '精英进入战场',
       );
-      this.enqueueAudio('pressure');
+      this.enqueueAudio(battle.encounterType === 'boss' ? 'boss' : 'eliteSpawn');
     }
 
     if (battle.eliteAlive && template.eliteRule && (template.eliteRule.escortBatch ?? 0) > 0) {

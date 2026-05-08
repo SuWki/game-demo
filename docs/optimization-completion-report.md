@@ -7,6 +7,30 @@
 
 ## ✅ 已完成任务
 
+### 5. 删除敌人程序绘制装饰线条 ✅
+
+**实现内容**:
+- ✅ 删除Escort敌人的程序绘制回退代码（含lineBetween线段）
+- ✅ 删除Brute敌人的3条装饰性lineBetween和fillTriangle三角形
+- ✅ 删除Ranged敌人的垂直线、支架线、恢复线等装饰lineBetween
+- ✅ 删除Standard敌人的pressure和spawn装饰lineBetween
+- ✅ 保留所有strokeCircle/fillCircle圆环（角色周围圆环不删除）
+- ✅ 保留Ranged瞄准轨迹线和准心（gameplay必需）
+- ✅ 保留Skirmisher的orbit圆点
+
+**保留元素**:
+- 血条、Boss血条边框
+- 暴击处刑框（lineBetween gameplay元素）
+- 冲刺追击指示器（strokeCircle）
+- Ranged瞄准轨迹线和准心圆圈
+
+**修改文件**:
+- `src/scenes/GameScene.ts` - 删除Escort/Brute/Ranged/Standard敌人的装饰性lineBetween/fillTriangle
+
+**实际工作量**: 0.5天
+
+---
+
 ### 1. 升级选择信息强化 ✅
 
 **实现内容**:
@@ -132,6 +156,16 @@
 2. `src/systems/PilotAudio.ts`
    - 添加音量映射表
    - 简化音量获取方法
+
+3. `src/systems/RunEngine.ts`
+   - 添加150ms输入缓冲系统
+   - 添加关卡结束过渡状态
+
+4. `src/scenes/GameScene.ts`
+   - 添加升级生效屏幕闪光
+   - 添加路线特色光环渲染
+   - 添加关卡结束过渡画面
+   - 删除敌人装饰性程序绘制线条（保留圆环和gameplay必需元素）
 
 ### CSS文件
 3. `src/style.css`
@@ -283,13 +317,14 @@
 5. **路线特色可视化** - 红/青/绿光环，随时知道自己的构筑方向
 6. **关卡过渡自然** - 1.2秒缓冲过渡，避免瞬间切换的割裂感
 
-### P2 - 音效与数据
+### P2 - 音效与数据与视觉清理
 7. **音效更平衡** - 音量映射表，长时间游玩不疲劳
 8. **结算数据可视化** - 详情面板+升级时间轴，成就感更强
+9. **敌人视觉清理** - 删除多余程序绘制线条，统一使用图片素材
 
 所有功能都保持了原有UI风格，没有破坏现有布局。
 
-**已完成工作量**: 6个主要任务（原预计4个）
+**已完成工作量**: 7个主要任务（原预计4个）
 **实际开发时间**: 4天
 
 ---

@@ -55,9 +55,12 @@ const PREVIEW_CUE_URLS: Partial<Record<AudioCue, string>> = {
   click: 'assets/preview-runtime/audio/ui_click.wav',
   confirm: 'assets/preview-runtime/audio/ui_confirm.wav',
   start: 'assets/preview-runtime/audio/ui_start.wav',
+  resume: 'assets/preview-runtime/audio/ui_resume.wav',
   upgrade: 'assets/preview-runtime/audio/ui_upgrade.wav',
+  upgradeEquipped: 'assets/preview-runtime/audio/upgrade_equipped.wav',
   anomaly: 'assets/preview-runtime/audio/ui_anomaly.wav',
   boss: 'assets/preview-runtime/audio/ui_boss_alert.wav',
+  abilityReady: 'assets/preview-runtime/audio/ability_ready.wav',
   shoot: 'assets/preview-runtime/audio/player_shoot_core.wav',
   dash: 'assets/preview-runtime/audio/player_dash_start.wav',
   hit: 'assets/preview-runtime/audio/player_hit_regular.wav',
@@ -70,13 +73,16 @@ const PREVIEW_CUE_URLS: Partial<Record<AudioCue, string>> = {
   enemyShot: 'assets/preview-runtime/audio/enemy_shot_regular.wav',
   nearMiss: 'assets/preview-runtime/audio/player_near_miss.wav',
   pressure: 'assets/preview-runtime/audio/state_pressure_regular.wav',
+  lowHpWarning: 'assets/preview-runtime/audio/player_low_hp_warning.wav',
   crit: 'assets/preview-runtime/audio/route_crit_signature.wav',
   pierceEcho: 'assets/preview-runtime/audio/route_pierce_signature.wav',
   dashPulse: 'assets/preview-runtime/audio/route_dash_signature.wav',
+  routeMatured: 'assets/preview-runtime/audio/route_matured.wav',
   relayStandard: 'assets/preview-runtime/audio/enemy_relay_standard.wav',
   relaySkirmisher: 'assets/preview-runtime/audio/enemy_relay_skirmisher.wav',
   relayBrute: 'assets/preview-runtime/audio/enemy_relay_brute.wav',
   relayRanged: 'assets/preview-runtime/audio/enemy_relay_ranged.wav',
+  eliteSpawn: 'assets/preview-runtime/audio/enemy_elite_spawn.wav',
   victory: 'assets/preview-runtime/audio/ui_victory.wav',
   defeat: 'assets/preview-runtime/audio/ui_defeat.wav',
   result: 'assets/preview-runtime/audio/ui_result.wav',
@@ -88,9 +94,16 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
   click: 0.5,
   confirm: 0.5,
   start: 0.6,
+  resume: 0.52,
+  upgrade: 0.75,
+  upgradeEquipped: 0.68,
+  anomaly: 0.8,
+  boss: 0.9,
+  abilityReady: 0.48,
 
   // 战斗音效 - 0.4-0.7
   shoot: 0.4, // 降低射击音量，避免疲劳
+  hit: 0.5,
   hit: 0.5,
   pierceHit: 0.55,
   dashHit: 0.6,
@@ -111,15 +124,15 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
   relayRanged: 0.5,
 
   // 特殊事件 - 0.75-0.9
-  boss: 0.9,
-  upgrade: 0.75,
-  anomaly: 0.8,
   pressure: 0.85,
+  lowHpWarning: 0.42,
 
   // 路线特效 - 0.65
   crit: 0.65,
   pierceEcho: 0.65,
   dashPulse: 0.65,
+  routeMatured: 0.72,
+  eliteSpawn: 0.74,
 
   // 结算 - 0.7-0.8
   victory: 0.8,
@@ -830,6 +843,10 @@ export class PilotAudio {
       case 'shoot':
         this.duckMusic(0.05, 0.04);
         return;
+      case 'abilityReady':
+      case 'resume':
+        this.duckMusic(0.08, 0.06);
+        return;
       case 'dash':
         this.duckMusic(0.1, 0.075);
         return;
@@ -857,9 +874,12 @@ export class PilotAudio {
         return;
       case 'pressure':
       case 'boss':
+      case 'routeMatured':
+      case 'eliteSpawn':
         this.duckMusic(this.cueContext.encounter === 'boss' ? 0.35 : 0.29, 0.17);
         return;
       case 'hurt':
+      case 'lowHpWarning':
         this.duckMusic(0.46, 0.2);
         return;
       default:
@@ -1071,6 +1091,27 @@ export class PilotAudio {
             });
           },
         };
+      case 'resume':
+        return {
+          cooldownMs: 180,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 320,
+              peak: 0.036,
+              duration: 0.09,
+              sweepTo: 470,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 560,
+              peak: 0.022,
+              duration: 0.11,
+              delay: 0.02,
+              sweepTo: 740,
+            });
+          },
+        };
       case 'upgrade':
         return {
           cooldownMs: 120,
@@ -1089,6 +1130,27 @@ export class PilotAudio {
               duration: 0.14,
               delay: 0.03,
               sweepTo: 980,
+            });
+          },
+        };
+      case 'upgradeEquipped':
+        return {
+          cooldownMs: 120,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 250,
+              peak: 0.044,
+              duration: 0.1,
+              sweepTo: 220,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 640,
+              peak: 0.028,
+              duration: 0.12,
+              delay: 0.018,
+              sweepTo: 860,
             });
           },
         };
@@ -1139,6 +1201,27 @@ export class PilotAudio {
               duration: 0.18,
               delay: 0.04,
               sweepTo: 420,
+            });
+          },
+        };
+      case 'abilityReady':
+        return {
+          cooldownMs: 260,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 520,
+              peak: 0.032,
+              duration: 0.08,
+              sweepTo: 700,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 780,
+              peak: 0.02,
+              duration: 0.09,
+              delay: 0.018,
+              sweepTo: 980,
             });
           },
         };
@@ -1926,6 +2009,69 @@ export class PilotAudio {
               frequency: 82 + variant * 0.14 - (this.cueContext.encounter === 'boss' ? 8 : 0),
               sweepTo: 44 + variant * 0.03 - (this.cueContext.encounter === 'boss' ? 6 : 0),
               type: 'triangle',
+            });
+          },
+        };
+      case 'lowHpWarning':
+        return {
+          cooldownMs: 420,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 210,
+              peak: 0.032,
+              duration: 0.12,
+              sweepTo: 180,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 420,
+              peak: 0.018,
+              duration: 0.1,
+              delay: 0.025,
+              sweepTo: 360,
+            });
+          },
+        };
+      case 'routeMatured':
+        return {
+          cooldownMs: 680,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 340,
+              peak: 0.046,
+              duration: 0.16,
+              sweepTo: 520,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 620,
+              peak: 0.028,
+              duration: 0.18,
+              delay: 0.035,
+              sweepTo: 880,
+            });
+          },
+        };
+      case 'eliteSpawn':
+        return {
+          cooldownMs: 560,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 180,
+              peak: 0.05,
+              duration: 0.18,
+              sweepTo: 128,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 320,
+              peak: 0.026,
+              duration: 0.14,
+              delay: 0.026,
+              sweepTo: 250,
             });
           },
         };

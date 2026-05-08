@@ -3393,8 +3393,8 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (!enemy.elite && enemy.role === 'escort') {
-        // Try to render escort preview image
-        const escortRendered = this.renderRuntimePreviewImage(
+        // 只使用图片素材
+        this.renderRuntimePreviewImage(
           PREVIEW_ELITE_ESCORT_TEXTURE,
           screen.x,
           screen.y,
@@ -3402,18 +3402,6 @@ export class GameScene extends Phaser.Scene {
           faceAngle + Math.PI / 2,
           0.76,
         );
-
-        if (!escortRendered) {
-          // Procedural fallback
-          const escortFill = this.mixColor(ENEMY_ESCORT_FILL, enemyFill, 0.24);
-          const escortStroke = this.mixColor(ENEMY_ESCORT_STROKE, enemyStroke, 0.26);
-          this.graphics.lineStyle(1.6, escortStroke, 0.22 + recoveryRatio * 0.18 + pressureRatio * 0.08);
-          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10 + recoveryRatio * 4);
-          this.graphics.lineBetween(screen.x - enemy.radius - 12, screen.y, screen.x - enemy.radius - 4, screen.y);
-          this.graphics.lineBetween(screen.x + enemy.radius + 4, screen.y, screen.x + enemy.radius + 12, screen.y);
-          this.graphics.fillStyle(escortFill, 0.08 + pressureRatio * 0.1);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 3);
-        }
       }
 
       if (!enemy.elite && enemy.archetype === 'skirmisher') {
@@ -3447,37 +3435,6 @@ export class GameScene extends Phaser.Scene {
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 7);
         this.graphics.fillStyle(enemyStroke, 0.12);
         this.graphics.fillCircle(screen.x, screen.y, Math.max(4, enemy.radius - 4));
-        this.graphics.lineStyle(2, enemyStroke, 0.24);
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle) * (enemy.radius - 2),
-          screen.y + Math.sin(faceAngle) * (enemy.radius - 2),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 12),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 12),
-        );
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle + 0.34) * (enemy.radius + 1),
-          screen.y + Math.sin(faceAngle + 0.34) * (enemy.radius + 1),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 10),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 10),
-        );
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle - 0.34) * (enemy.radius + 1),
-          screen.y + Math.sin(faceAngle - 0.34) * (enemy.radius + 1),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 10),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 10),
-        );
-        if (spawnRatio > 0.12) {
-          const pushLength = enemy.radius + 16 + spawnRatio * 10;
-          this.graphics.fillStyle(enemyStroke, 0.04 + spawnRatio * 0.08);
-          this.graphics.fillTriangle(
-            screen.x + Math.cos(faceAngle) * pushLength,
-            screen.y + Math.sin(faceAngle) * pushLength,
-            screen.x + Math.cos(faceAngle + 0.42) * (enemy.radius + 2),
-            screen.y + Math.sin(faceAngle + 0.42) * (enemy.radius + 2),
-            screen.x + Math.cos(faceAngle - 0.42) * (enemy.radius + 2),
-            screen.y + Math.sin(faceAngle - 0.42) * (enemy.radius + 2),
-          );
-        }
         if (pressureRatio > 0) {
           this.graphics.lineStyle(3, enemyStroke, 0.1 + pressureRatio * 0.18);
           this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 11 + pressureRatio * 4);
@@ -3485,28 +3442,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (!enemy.elite && enemy.archetype === 'ranged') {
-        this.graphics.lineStyle(2, enemyStroke, 0.36);
-        this.graphics.lineBetween(screen.x, screen.y - enemy.radius - 4, screen.x, screen.y + enemy.radius + 4);
-        if (spawnRatio > 0.12) {
-          const braceAlpha = 0.08 + spawnRatio * 0.14;
-          this.graphics.lineStyle(1.5, enemyStroke, braceAlpha);
-          this.graphics.lineBetween(
-            screen.x - enemy.radius - 10,
-            screen.y - enemy.radius - 6,
-            screen.x - enemy.radius - 2,
-            screen.y - 1,
-          );
-          this.graphics.lineBetween(
-            screen.x + enemy.radius + 10,
-            screen.y - enemy.radius - 6,
-            screen.x + enemy.radius + 2,
-            screen.y - 1,
-          );
-          this.graphics.lineStyle(1.2, enemyStroke, braceAlpha - 0.02);
-          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 12 + spawnRatio * 3);
-        }
         const lockRatio = Phaser.Math.Clamp(1 - enemy.rangedCooldownSec / 0.85, 0, 1);
-        this.graphics.lineStyle(1, enemyStroke, enemy.rangedCooldownSec <= 0.65 ? 0.24 + lockRatio * 0.14 : 0.12);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 10);
         if (enemy.rangedCooldownSec <= 0.65) {
           const predictedTarget = this.getProjectedEnemyAimScreenPoint(enemy, battle, camera);
@@ -3521,50 +3457,13 @@ export class GameScene extends Phaser.Scene {
           this.graphics.lineStyle(1, enemyStroke, 0.14 + lockRatio * 0.16);
           this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 14 + lockRatio * 5);
         }
-        if (recoveryRatio > 0) {
-          const recoverColor = this.mixColor(enemyStroke, 0xb4ffff, 0.28);
-          this.graphics.lineStyle(2, recoverColor, 0.16 + recoveryRatio * 0.22);
-          this.graphics.lineBetween(screen.x - enemy.radius - 10, screen.y - enemy.radius - 8, screen.x - enemy.radius - 3, screen.y - 2);
-          this.graphics.lineBetween(screen.x + enemy.radius + 10, screen.y - enemy.radius - 8, screen.x + enemy.radius + 3, screen.y - 2);
-        }
         if (pressureRatio > 0) {
           this.graphics.lineStyle(1.5, enemyStroke, 0.12 + pressureRatio * 0.18);
           this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 16 + pressureRatio * 5);
         }
       }
 
-      if (!enemy.elite && enemy.archetype === 'standard' && pressureRatio > 0) {
-        const faceAngle = Math.atan2(playerScreen.y - screen.y, playerScreen.x - screen.x);
-        this.graphics.lineStyle(2, enemyStroke, 0.1 + pressureRatio * 0.18);
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle - 0.24) * (enemy.radius + 1),
-          screen.y + Math.sin(faceAngle - 0.24) * (enemy.radius + 1),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
-        );
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle + 0.24) * (enemy.radius + 1),
-          screen.y + Math.sin(faceAngle + 0.24) * (enemy.radius + 1),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 12 + pressureRatio * 6),
-        );
-      } else if (!enemy.elite && enemy.archetype === 'standard' && spawnRatio > 0.12) {
-        const faceAngle = Math.atan2(playerScreen.y - screen.y, playerScreen.x - screen.x);
-        const intentAlpha = 0.08 + spawnRatio * 0.12;
-        this.graphics.lineStyle(1.6, enemyStroke, intentAlpha);
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle - 0.28) * (enemy.radius + 1),
-          screen.y + Math.sin(faceAngle - 0.28) * (enemy.radius + 1),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 10 + spawnRatio * 6),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 10 + spawnRatio * 6),
-        );
-        this.graphics.lineBetween(
-          screen.x + Math.cos(faceAngle + 0.28) * (enemy.radius + 1),
-          screen.y + Math.sin(faceAngle + 0.28) * (enemy.radius + 1),
-          screen.x + Math.cos(faceAngle) * (enemy.radius + 10 + spawnRatio * 6),
-          screen.y + Math.sin(faceAngle) * (enemy.radius + 10 + spawnRatio * 6),
-        );
-      }
+      // Standard敌人的装饰性线段已删除
 
       const hpRatio = enemy.hp / enemy.maxHp;
       if (enemy.elite && battle.encounterType === 'boss') {
