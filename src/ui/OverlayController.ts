@@ -929,10 +929,13 @@ export class OverlayController {
 
   private renderUpgradeChoiceCard(upgrade: UpgradeDefinition, progress: PanelProgress): string {
     const routeAccent = this.getRouteAccent(upgrade.routeId);
+    const cardAccent = upgrade.routeId ? routeAccent : RARITY_COLOR_MAP[upgrade.rarity];
     const effectText = upgrade.routeId
       ? this.getRouteUpgradeReadableText(upgrade)
       : this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
     const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}流` : '通用';
+    const cardTypeLabel = upgrade.routeId ? '流派强化' : '强化';
+    const cardBadgeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}流` : upgrade.rarityLabel;
     const focusLabel = this.getEffectFocusLabel(upgrade.effects);
     const routeLabelHtml = this.renderTooltipTerm(routeLabel, this.getRouteTooltip(upgrade.routeId));
     const focusLabelHtml = this.renderTooltipTerm(focusLabel, this.getFocusTooltip(focusLabel));
@@ -952,12 +955,12 @@ export class OverlayController {
     return `
       <button
         class="choice-strip choice-strip-upgrade ${upgrade.routeId ? 'is-route-upgrade' : 'is-generic-upgrade'}"
-        style="--choice-accent: ${routeAccent}; --rarity-accent: ${RARITY_COLOR_MAP[upgrade.rarity]}"
+        style="--choice-accent: ${routeAccent}; --rarity-accent: ${cardAccent}"
         data-choice="${upgrade.id}"
       >
         <div class="choice-strip-head">
-          <span class="choice-type"><span class="choice-route-icon">${routeIcon}</span> 强化</span>
-          <span class="choice-rarity">${upgrade.rarityLabel}</span>
+          <span class="choice-type"><span class="choice-route-icon">${routeIcon}</span> ${cardTypeLabel}</span>
+          <span class="choice-rarity">${cardBadgeLabel}</span>
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${nameHtml}</strong>

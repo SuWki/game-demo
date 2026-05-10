@@ -1376,11 +1376,45 @@ button:hover {
 }
 
 .choice-strip-upgrade.is-route-upgrade {
+  border-color: color-mix(in srgb, var(--choice-accent, var(--accent)) 74%, rgba(221, 236, 248, 0.1));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--choice-accent, var(--accent)) 14%, #172432) 0%, #0d1823 100%);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--rarity-accent, var(--accent)) 34%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--choice-accent, var(--accent)) 38%, transparent),
     0 18px 30px rgba(3, 8, 14, 0.3),
-    0 0 30px color-mix(in srgb, var(--rarity-accent, var(--accent)) 18%, transparent),
+    0 0 30px color-mix(in srgb, var(--choice-accent, var(--accent)) 20%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--choice-accent, var(--accent)) 22%, transparent);
+}
+
+.choice-strip-upgrade.is-route-upgrade::before {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--choice-accent, var(--accent)) 92%, rgba(255, 255, 255, 0.08)),
+      color-mix(in srgb, var(--choice-accent, var(--accent)) 54%, transparent) 42%,
+      transparent 78%
+    )
+    top / 100% 3px no-repeat,
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--choice-accent, var(--accent)) 82%, transparent),
+      transparent 54%
+    )
+    left / 3px 100% no-repeat;
+}
+
+.choice-strip-upgrade.is-route-upgrade::after {
+  background: linear-gradient(
+    135deg,
+    transparent 0 44%,
+    color-mix(in srgb, var(--choice-accent, var(--accent)) 36%, transparent) 44% 100%
+  );
+}
+
+.choice-strip-upgrade.is-route-upgrade .choice-rarity {
+  border-color: color-mix(in srgb, var(--choice-accent, var(--accent)) 62%, transparent);
+  background: color-mix(in srgb, var(--choice-accent, var(--accent)) 18%, rgba(255, 255, 255, 0.04));
+  color: color-mix(in srgb, var(--choice-accent, var(--accent)) 88%, #ffffff);
 }
 
 .choice-strip-upgrade .choice-strip-head {
@@ -4162,6 +4196,13 @@ button:hover {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--rarity-accent) 12%, rgba(18, 31, 42, 0.92)), rgba(6, 13, 20, 0.96)),
     linear-gradient(90deg, color-mix(in srgb, var(--rarity-accent) 18%, transparent), transparent 36%);
+}
+
+.panel-upgrade-choice .choice-strip-upgrade.is-route-upgrade {
+  border-color: color-mix(in srgb, var(--choice-accent) 72%, rgba(150, 210, 232, 0.1));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--choice-accent) 13%, rgba(18, 31, 42, 0.92)), rgba(6, 13, 20, 0.96)),
+    linear-gradient(90deg, color-mix(in srgb, var(--choice-accent) 20%, transparent), transparent 36%);
 }
 
 .panel-event-choice-anomaly.commercial-choice-panel {
