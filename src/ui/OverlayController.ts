@@ -29,7 +29,7 @@ interface PauseActions {
 
 type PanelProgress = Pick<
   OverlayHudSnapshot,
-  'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary'
+  'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary' | 'upgradeRewardLabel'
 >;
 
 const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
@@ -315,7 +315,6 @@ export class OverlayController {
         <section class="game-hud-fixed__center">
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
           <span class="game-hud-fixed__mode">${snapshot.statusText}</span>
-          <span class="game-hud-fixed__objective">${snapshot.objectiveText} · ${snapshot.objectiveProgressText}</span>
           ${snapshot.statusSubtext ? `<span class="game-hud-fixed__reward">${snapshot.statusSubtext}</span>` : ''}
         </section>
         <section class="game-hud-fixed__right">
@@ -951,6 +950,9 @@ export class OverlayController {
     const routeProgressHtml = upgrade.routeId
       ? `<span class="choice-route-progress">${progress.routeStatusText}</span>`
       : '';
+    const rewardBadgeHtml = progress.upgradeRewardLabel
+      ? `<span class="choice-reward-badge">${progress.upgradeRewardLabel}</span>`
+      : '';
 
     return `
       <button
@@ -960,7 +962,7 @@ export class OverlayController {
       >
         <div class="choice-strip-head">
           <span class="choice-type"><span class="choice-route-icon">${routeIcon}</span> ${cardTypeLabel}</span>
-          <span class="choice-rarity">${cardBadgeLabel}</span>
+          <span class="choice-head-badges">${rewardBadgeHtml}<span class="choice-rarity">${cardBadgeLabel}</span></span>
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${nameHtml}</strong>
@@ -1019,7 +1021,7 @@ export class OverlayController {
         if ((modifiers?.dashInvulnerability ?? 0) > 0) {
           return '自动脉冲触发后，短时间更安全。';
         }
-        return '穿梭流会自动释放近身脉冲，不需要按键。';
+        return '穿梭流会自动释放近身脉冲。';
       default:
         return upgrade.description;
     }
@@ -1426,7 +1428,7 @@ export class OverlayController {
       case 'pierce':
         return '穿透流：子弹打穿敌人继续向后飞，适合打一排敌人。蓝色裂纹代表刚被穿透命中过。';
       case 'dash':
-        return '穿梭流：不需要按键。冷却好后角色会自动闪动并放出近身脉冲，适合贴近反打。';
+        return '穿梭流：冷却好后角色会自动闪动并放出近身脉冲，适合贴近反打。';
       default:
         return '';
     }
@@ -1437,7 +1439,7 @@ export class OverlayController {
       暴击: '子弹命中时有概率触发。触发后伤害更高，并在敌人身上留下橙色破绽。',
       爆伤: '只影响已经触发暴击的那次命中，不提高触发概率。',
       穿透: '子弹命中敌人后不会立刻消失，会继续打到后方目标。敌人越站成一线，穿透收益越高；蓝色裂纹表示它刚被穿透命中过。',
-      穿梭: '穿梭是自动触发的相位脉冲，不需要按键。冷却归零时角色会短暂闪动并释放一次近身脉冲；冷却越短，触发越频繁。',
+      穿梭: '穿梭是自动触发的相位脉冲。冷却归零时角色会短暂闪动并释放一次近身脉冲；冷却越短，触发越频繁。',
       脉冲: '穿梭触发时在角色附近释放的短促范围伤害。绿色脉冲标记表示敌人被这次穿梭脉冲擦到。',
       无伤: '穿梭触发后的极短保护时间，只在自动脉冲刚发生后生效，用来穿过危险窗或回切反打。',
       扩面: '增加弹幕覆盖，适合清小怪。',

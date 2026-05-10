@@ -184,6 +184,8 @@ export class RunEngine {
       experience: 0,
       experienceToNext: getExperienceToNextLevel(1),
       queuedLevelUps: 0,
+      queuedRewardUpgrades: 0,
+      currentUpgradeIsReward: false,
       upgradeSource: null,
       routeCounts: {
         crit: 0,
@@ -425,13 +427,17 @@ export class RunEngine {
 
     this.enqueueAudio('upgradeEquipped');
     this.enqueueTip(`${upgrade.rarityLabel}品 ${upgrade.name}`);
-    this.state.upgradeFlashSec = 0.25; // 0.25秒屏幕闪光
+    this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.22);
 
     this.state.upgradeChoices = [];
     this.state.upgradeSource = null;
 
     if (source === 'levelUp') {
       this.state.queuedLevelUps = Math.max(0, this.state.queuedLevelUps - 1);
+      if (this.state.currentUpgradeIsReward) {
+        this.state.queuedRewardUpgrades = Math.max(0, this.state.queuedRewardUpgrades - 1);
+      }
+      this.state.currentUpgradeIsReward = false;
       if (this.state.queuedLevelUps > 0) {
         this.openQueuedLevelUpPanel();
         return;
@@ -2079,6 +2085,7 @@ export class RunEngine {
     this.enqueueTip(`${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`);
     if (earnedTimedReward) {
       this.state.queuedLevelUps += 1;
+      this.state.queuedRewardUpgrades += 1;
       this.enqueueTip('奖励倒计时达成：额外强化 +1');
     }
     if (battle.encounterType !== 'boss') {
@@ -3015,7 +3022,7 @@ export class RunEngine {
 
     if (battle.eliteAlive && template.eliteRule && (template.eliteRule.escortBatch ?? 0) > 0) {
       const escortMax = this.getEliteEscortMax(template, battle);
-      const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite).length;
+      const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
       if (currentEscorts < escortMax && battle.eliteSupportCooldownSec <= 0) {
         const batchSize = Math.min(this.getEliteEscortBatch(template, battle), escortMax - currentEscorts);
         this.spawnEliteSupportEnemies(battle, batchSize);
@@ -3105,7 +3112,7 @@ export class RunEngine {
     }
 
     const escortMax = this.getEliteEscortMax(template, battle);
-    const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite).length;
+    const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
     const allowedCount = Math.min(requestedCount, Math.max(0, escortMax - currentEscorts));
     if (allowedCount <= 0) {
       return;
@@ -5986,7 +5993,7 @@ export class RunEngine {
         break;
       case 'screened':
       case 'summoner': {
-        const escorts = battle.enemies.filter((candidate) => !candidate.elite);
+        const escorts = battle.enemies.filter((candidate) => !candidate.elite && candidate.role === 'escort' && candidate.hp > 0);
         if (escorts.length > 0) {
           const escortCenter = escorts.reduce(
             (acc, escort) => ({
@@ -6076,6 +6083,19 @@ export class RunEngine {
       moveY -= dirY * (0.14 + recoveryRatio * 0.24);
       moveX += strafeX * strafeDirection * (0.08 + recoveryRatio * 0.16);
       moveY += strafeY * strafeDirection * (0.08 + recoveryRatio * 0.16);
+    }
+
+    const bodyBlockDistance = battle.encounterType === 'boss' ? enemy.radius + 92 : enemy.radius + 62;
+    const antiBodyBlockRatio = clamp((bodyBlockDistance - distance) / bodyBlockDistance, 0, 1);
+    if (antiBodyBlockRatio > 0) {
+      const awayStrength = battle.encounterType === 'boss'
+        ? 2.15 + antiBodyBlockRatio * 2.1
+        : 1.35 + antiBodyBlockRatio * 1.15;
+      moveX -= dirX * awayStrength;
+      moveY -= dirY * awayStrength;
+      moveX += strafeX * strafeDirection * (0.2 + antiBodyBlockRatio * 0.35);
+      moveY += strafeY * strafeDirection * (0.2 + antiBodyBlockRatio * 0.35);
+      enemy.tacticCooldownSec = Math.max(enemy.tacticCooldownSec, battle.encounterType === 'boss' ? 0.18 : 0.1);
     }
 
     const moveMagnitude = Math.max(1, Math.hypot(moveX, moveY));
@@ -6266,10 +6286,10 @@ export class RunEngine {
     }
 
     if (leveled) {
-      this.enqueueAudio('upgrade');
+      this.enqueueAudio('levelUpReady');
       this.enqueueTip(`等级提升 Lv.${this.state.level}`);
       if (this.state.status === 'battle') {
-        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.55);
+        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.4);
         this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.55);
       } else {
         this.openQueuedLevelUpPanel();
@@ -6284,6 +6304,7 @@ export class RunEngine {
     this.state.levelUpPanelDelaySec = 0;
     this.state.status = 'upgradeChoice';
     this.state.upgradeSource = 'levelUp';
+    this.state.currentUpgradeIsReward = this.state.queuedRewardUpgrades > 0;
     this.state.upgradeChoices = this.rollUpgradeChoices('levelUp');
     this.state.currentEvent = null;
     this.state.nodeOptions = [];

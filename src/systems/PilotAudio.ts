@@ -96,6 +96,7 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
   start: 0.6,
   resume: 0.52,
   upgrade: 0.75,
+  levelUpReady: 0.42,
   upgradeEquipped: 0.68,
   anomaly: 0.8,
   boss: 0.9,
@@ -1129,6 +1130,27 @@ export class PilotAudio {
               duration: 0.14,
               delay: 0.03,
               sweepTo: 980,
+            });
+          },
+        };
+      case 'levelUpReady':
+        return {
+          cooldownMs: 220,
+          play: (context, destination, now) => {
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 520,
+              peak: 0.024,
+              duration: 0.16,
+              sweepTo: 700,
+            });
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 780,
+              peak: 0.018,
+              duration: 0.18,
+              delay: 0.045,
+              sweepTo: 920,
             });
           },
         };

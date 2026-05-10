@@ -160,6 +160,10 @@ export class GameScene extends Phaser.Scene {
 
   private lastShotFlashSec = 0;
 
+  private readonly enemyLabelTexts: Phaser.GameObjects.Text[] = [];
+
+  private enemyLabelCursor = 0;
+
   private shellCasings: Array<{
     x: number;
     y: number;
@@ -827,8 +831,8 @@ export class GameScene extends Phaser.Scene {
       })).filter((route) => route.value > 0 || route.active),
       statSummary: createPanelStatSummary(state.stats),
       statusText,
-      statusSubtext:
-        state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : progressSnapshot.progressDetail,
+      statusSubtext: state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : undefined,
+      upgradeRewardLabel: state.currentUpgradeIsReward ? '通关奖励' : undefined,
       progressLabel: progressSnapshot.progressLabel,
       progressDetail: progressSnapshot.progressDetail,
       phaseTrack: progressSnapshot.phaseTrack,
@@ -1577,24 +1581,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getBattleStatusSubtext(battle: BattleState): string {
-    const summaryParts: string[] = [];
     if (battle.encounterType === 'boss') {
-      summaryParts.push(battle.eliteAlive ? 'Boss 已进场' : 'Boss 即将进场');
+      if (battle.pressureSafeWindowSec > 0) {
+        return '安全区出现：进入安全区';
+      }
+      if (battle.bossSafeWindowGraceSec > 0) {
+        return `寻找安全区：${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
+      }
+      return '';
     }
-    if (battle.pressurePhaseLabel) {
-      summaryParts.push(`阶段 ${battle.pressurePhaseLabel}`);
+
+    if (BATTLE_TEMPLATES[battle.templateId].winCondition.type === 'survive') {
+      return `生存倒计时：${Math.max(0, Math.ceil(battle.remainingSec))}秒`;
     }
-    if (battle.pressureSignatureLabel) {
-      summaryParts.push(`招式 ${battle.pressureSignatureLabel}`);
-    } else if (battle.pressurePatternLabel) {
-      summaryParts.push(`区域 ${battle.pressurePatternLabel}`);
+
+    if (battle.remainingSec > 0) {
+      return `奖励倒计时：${Math.ceil(battle.remainingSec)}秒`;
     }
-    return summaryParts.join(' / ') || BATTLE_TEMPLATES[battle.templateId].description;
+
+    return '奖励倒计时结束';
   }
 
   private getPanelProgressSnapshot(): Pick<
     OverlayHudSnapshot,
-    'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary'
+    'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary' | 'upgradeRewardLabel'
   > {
     const state = this.engine.getState();
     const progress = this.getRunProgressSnapshot();
@@ -1605,6 +1615,7 @@ export class GameScene extends Phaser.Scene {
       levelText: `Lv.${state.level}`,
       routeStatusText: this.getRouteStatusText(),
       statSummary: createPanelStatSummary(state.stats),
+      upgradeRewardLabel: state.currentUpgradeIsReward ? '通关奖励' : undefined,
     };
   }
 
@@ -1621,6 +1632,9 @@ export class GameScene extends Phaser.Scene {
 
   private getUpgradePanelDescription(): string {
     const state = this.engine.getState();
+    if (state.currentUpgradeIsReward) {
+      return '奖励倒计时内完成关卡获得的额外强化。';
+    }
     if (state.upgradeSource === 'levelUp') {
       return '战斗里立刻补一项强化。';
     }
@@ -1878,6 +1892,8 @@ export class GameScene extends Phaser.Scene {
 
     this.terrainGraphics.clear();
     this.graphics.clear();
+    this.beginEnemyLabelFrame();
+    this.endEnemyLabelFrame();
 
     // 深色背景
     const bgAlpha = 0.6 + fadeRatio * 0.3;
@@ -1937,6 +1953,8 @@ export class GameScene extends Phaser.Scene {
 
     this.terrainGraphics.clear();
     this.graphics.clear();
+    this.beginEnemyLabelFrame();
+    this.endEnemyLabelFrame();
 
     // 半透明遮罩（随时间加深再淡出）
     const bgAlpha = (0.3 + fadeInRatio * 0.3) * (1 - fadeOutRatio);
@@ -1987,10 +2005,12 @@ export class GameScene extends Phaser.Scene {
     this.terrainGraphics.clear();
     this.graphics.clear();
     this.beginRuntimePreviewImageFrame();
+    this.beginEnemyLabelFrame();
     if (!battle) {
       this.graphics.fillGradientStyle(0x13100d, 0x13100d, 0x070706, 0x050505, 1);
       this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
       this.endRuntimePreviewImageFrame();
+      this.endEnemyLabelFrame();
       return;
     }
 
@@ -1998,9 +2018,64 @@ export class GameScene extends Phaser.Scene {
     this.renderBattleTerrain(battle, camera, accentColor);
     this.renderLowHealthWarning(battle, camera);
     this.renderBattleEntities(battle, camera, accentColor);
+    this.renderEliteBossLabels(battle, camera);
     this.renderRouteAura(battle, camera);
     this.renderUpgradeFlash();
     this.endRuntimePreviewImageFrame();
+    this.endEnemyLabelFrame();
+  }
+
+  private beginEnemyLabelFrame(): void {
+    this.enemyLabelCursor = 0;
+  }
+
+  private endEnemyLabelFrame(): void {
+    for (let index = this.enemyLabelCursor; index < this.enemyLabelTexts.length; index += 1) {
+      this.enemyLabelTexts[index].setVisible(false);
+    }
+  }
+
+  private renderEliteBossLabels(
+    battle: BattleState,
+    camera: { left: number; top: number },
+  ): void {
+    for (const enemy of battle.enemies) {
+      if (!enemy.elite || enemy.hp <= 0) {
+        continue;
+      }
+      const screen = this.worldToScreen(camera, enemy.x, enemy.y);
+      const label = battle.encounterType === 'boss' ? 'Boss' : '精英';
+      const tone = battle.encounterType === 'boss' ? '#ffd774' : '#ffdd7d';
+      const text = this.getEnemyLabelText();
+      text
+        .setText(label)
+        .setPosition(screen.x, screen.y - enemy.radius - (battle.encounterType === 'boss' ? 39 : 23))
+        .setStyle({
+          fontFamily: 'Arial, sans-serif',
+          fontSize: battle.encounterType === 'boss' ? '13px' : '11px',
+          fontStyle: '700',
+          color: tone,
+          backgroundColor: 'rgba(12, 18, 22, 0.72)',
+          padding: { left: 5, right: 5, top: 1, bottom: 1 },
+        })
+        .setVisible(true);
+    }
+  }
+
+  private getEnemyLabelText(): Phaser.GameObjects.Text {
+    let text = this.enemyLabelTexts[this.enemyLabelCursor];
+    if (!text) {
+      text = this.add.text(0, 0, '', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '11px',
+        color: '#ffdd7d',
+      });
+      text.setOrigin(0.5, 0.5);
+      text.setDepth(90);
+      this.enemyLabelTexts.push(text);
+    }
+    this.enemyLabelCursor += 1;
+    return text;
   }
 
   private renderRouteAura(
@@ -2014,50 +2089,30 @@ export class GameScene extends Phaser.Scene {
       height: number;
     },
   ): void {
-    const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
-    if (!liveFocusRoute) {
-      return;
-    }
-    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
-    const time = this.time.now / 1000;
-    const pulse = Math.sin(time * 2) * 0.5 + 0.5; // 0-1呼吸效果
-
-    // 路线颜色映射
-    const routeColor =
-      liveFocusRoute === 'crit'
-        ? 0xff4444 // 红色（暴击）
-        : liveFocusRoute === 'pierce'
-          ? 0x44ccff // 青色（穿透）
-          : 0x44ff88; // 绿色（冲刺）
-
-    // 外环（呼吸效果）
-    const outerRadius = 48 + pulse * 6;
-    const outerAlpha = 0.08 + pulse * 0.06;
-    this.graphics.lineStyle(2, routeColor, outerAlpha);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, outerRadius);
-
-    // 内环（更亮）
-    const innerRadius = 38 + pulse * 4;
-    const innerAlpha = 0.12 + pulse * 0.08;
-    this.graphics.lineStyle(1.5, routeColor, innerAlpha);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, innerRadius);
-
-    // 底部微光
-    const glowAlpha = 0.04 + pulse * 0.03;
-    this.graphics.fillStyle(routeColor, glowAlpha);
-    this.graphics.fillCircle(playerScreen.x, playerScreen.y, outerRadius + 4);
+    // 玩家周围常驻路线线条已取消；路线反馈改到敌人受击特效上。
+    void battle;
+    void camera;
   }
 
   private renderUpgradeFlash(): void {
     const state = this.engine.getState();
-    if (state.upgradeFlashSec <= 0) {
+    const battle = state.battle;
+    if (state.upgradeFlashSec <= 0 || !battle) {
       return;
     }
-    const flashRatio = Math.min(1, state.upgradeFlashSec / 0.25);
-    const alpha = flashRatio * 0.35; // 最大透明度0.35
-    // 白色全屏闪光
-    this.graphics.fillStyle(0xffffff, alpha);
-    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+    const camera = this.getBattleCameraRect(battle);
+    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
+    const flashRatio = Phaser.Math.Clamp(state.upgradeFlashSec / 0.4, 0, 1);
+    const pulse = 0.5 + Math.sin(battle.elapsedSec * 10) * 0.5;
+    const glowColor = this.mixColor(0x7af7d4, 0xffffff, 0.2);
+
+    // 升级反馈只围绕玩家出现，避免频繁全屏白光刺眼。
+    this.graphics.fillStyle(glowColor, 0.045 + flashRatio * 0.08);
+    this.graphics.fillCircle(playerScreen.x, playerScreen.y, 46 + flashRatio * 36 + pulse * 5);
+    this.graphics.lineStyle(2, glowColor, 0.18 + flashRatio * 0.22);
+    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 38 + flashRatio * 28 + pulse * 4);
+    this.graphics.lineStyle(1.2, 0xffffff, 0.08 + flashRatio * 0.12);
+    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 58 + flashRatio * 38);
   }
 
   private beginRuntimePreviewImageFrame(): void {

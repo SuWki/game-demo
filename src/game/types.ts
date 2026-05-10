@@ -40,6 +40,7 @@ export type AudioCue =
   | 'start'
   | 'resume'
   | 'upgrade'
+  | 'levelUpReady'
   | 'upgradeEquipped'
   | 'anomaly'
   | 'boss'
@@ -638,6 +639,8 @@ export interface RunState {
   experience: number;
   experienceToNext: number;
   queuedLevelUps: number;
+  queuedRewardUpgrades: number;
+  currentUpgradeIsReward: boolean;
   upgradeSource: UpgradeSource | null;
   routeCounts: Record<RouteId, number>;
   committedRoute: RouteId | null;
@@ -819,6 +822,7 @@ export interface OverlayHudSnapshot {
   }>;
   statusText: string;
   statusSubtext?: string;
+  upgradeRewardLabel?: string;
   progressLabel: string;
   progressDetail: string;
   phaseTrack: Array<{

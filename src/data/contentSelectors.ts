@@ -209,7 +209,10 @@ function buildContentContext(state: Readonly<RunState>): ContentContext {
 }
 
 function canOfferUpgrade(archetype: UpgradeArchetype, context: ContentContext): boolean {
-  return !context.selectedUpgradeIds.includes(archetype.id);
+  if (archetype.category === 'route') {
+    return !context.selectedUpgradeIds.includes(archetype.id);
+  }
+  return Boolean(archetype.repeatable) || !context.selectedUpgradeIds.includes(archetype.id);
 }
 
 function buildWeightedUpgradePool(
