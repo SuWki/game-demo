@@ -102,37 +102,37 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
   boss: 0.9,
   abilityReady: 0.48,
 
-  // 战斗音效 - 0.4-0.7
-  shoot: 0.4, // 降低射击音量，避免疲劳
-  hit: 0.5,
-  pierceHit: 0.55,
-  dashHit: 0.6,
-  critSplash: 0.65,
-  kill: 0.7,
+  // 战斗音效 - 下压高频命中链，给 BGM 鼓点留空间
+  shoot: 0.34,
+  hit: 0.38,
+  pierceHit: 0.42,
+  dashHit: 0.44,
+  critSplash: 0.5,
+  kill: 0.54,
 
   // 玩家状态 - 0.5-0.8
-  hurt: 0.8, // 突出受伤反馈
-  pickup: 0.5,
-  dash: 0.6,
+  hurt: 0.72, // 仍然突出受伤，但不压过音乐
+  pickup: 0.42,
+  dash: 0.48,
   nearMiss: 0.45,
 
   // 敌人音效 - 0.4-0.5
-  enemyShot: 0.45,
-  relayStandard: 0.5,
-  relaySkirmisher: 0.5,
-  relayBrute: 0.55,
-  relayRanged: 0.5,
+  enemyShot: 0.36,
+  relayStandard: 0.42,
+  relaySkirmisher: 0.42,
+  relayBrute: 0.46,
+  relayRanged: 0.42,
 
   // 特殊事件 - 0.75-0.9
-  pressure: 0.85,
+  pressure: 0.72,
   lowHpWarning: 0.42,
 
   // 路线特效 - 0.65
-  crit: 0.65,
-  pierceEcho: 0.65,
-  dashPulse: 0.65,
-  routeMatured: 0.72,
-  eliteSpawn: 0.74,
+  crit: 0.48,
+  pierceEcho: 0.48,
+  dashPulse: 0.52,
+  routeMatured: 0.58,
+  eliteSpawn: 0.62,
 
   // 结算 - 0.7-0.8
   victory: 0.8,
@@ -143,7 +143,7 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   menu: {
     stepSec: 0.34,
-    gain: 0.46,
+    gain: 0.58,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -157,7 +157,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   battle: {
     stepSec: 0.28,
-    gain: 0.54,
+    gain: 0.74,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
@@ -171,7 +171,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   boss: {
     stepSec: 0.22,
-    gain: 0.56,
+    gain: 0.82,
     bassType: 'sawtooth',
     leadType: 'square',
     accentType: 'triangle',
@@ -185,7 +185,7 @@ const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
   },
   result: {
     stepSec: 0.34,
-    gain: 0.42,
+    gain: 0.52,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
@@ -410,7 +410,7 @@ export class PilotAudio {
   public setSfxVolume(volume: number): void {
     const clampedVolume = Math.max(0, Math.min(1.5, volume));
     if (this.sfxGain) {
-      this.sfxGain.gain.value = Math.max(0.0001, clampedVolume * 1.42);
+      this.sfxGain.gain.value = Math.max(0.0001, clampedVolume * 1.08);
     }
   }
 
@@ -490,7 +490,7 @@ export class PilotAudio {
 
     this.masterGain.gain.value = Math.max(0.0001, this.masterVolume * 1.16);
     this.musicGain.gain.value = 0.0001;
-    this.sfxGain.gain.value = 1.42;
+    this.sfxGain.gain.value = 1.08;
 
     this.musicGain.connect(this.masterGain);
     this.sfxGain.connect(this.masterGain);

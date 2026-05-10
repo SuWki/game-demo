@@ -353,6 +353,11 @@ export class RunEngine {
       this.state.upgradeSource = 'nodePrep';
       this.state.upgradeChoices = this.rollUpgradeChoices('nodePrep');
       this.state.currentEvent = null;
+      if (this.state.upgradeChoices.length === 0) {
+        this.enqueueTip('本次整备没有可用强化，已继续推进。');
+        this.advanceRound();
+        return;
+      }
       this.services.metrics.recordUpgradeOfferSeen(this.state.upgradeChoices, {
         phase: this.state.phase,
         source: 'nodePrep',
@@ -6308,6 +6313,24 @@ export class RunEngine {
     this.state.upgradeChoices = this.rollUpgradeChoices('levelUp');
     this.state.currentEvent = null;
     this.state.nodeOptions = [];
+    if (this.state.upgradeChoices.length === 0) {
+      this.state.queuedLevelUps = Math.max(0, this.state.queuedLevelUps - 1);
+      if (this.state.currentUpgradeIsReward) {
+        this.state.queuedRewardUpgrades = Math.max(0, this.state.queuedRewardUpgrades - 1);
+      }
+      this.state.currentUpgradeIsReward = false;
+      if (this.state.queuedLevelUps > 0) {
+        this.openQueuedLevelUpPanel();
+        return;
+      }
+      if (this.advanceAfterPendingUpgrades) {
+        this.advanceAfterPendingUpgrades = false;
+        this.advanceRound();
+        return;
+      }
+      this.state.status = 'battle';
+      return;
+    }
     this.services.metrics.recordUpgradeOfferSeen(this.state.upgradeChoices, {
       phase: this.state.phase,
       source: 'levelUp',

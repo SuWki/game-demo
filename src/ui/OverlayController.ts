@@ -932,12 +932,8 @@ export class OverlayController {
     const effectText = upgrade.routeId
       ? this.getRouteUpgradeReadableText(upgrade)
       : this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
-    const routeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}流` : '通用';
     const cardTypeLabel = upgrade.routeId ? '流派强化' : '强化';
     const cardBadgeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}流` : upgrade.rarityLabel;
-    const focusLabel = this.getEffectFocusLabel(upgrade.effects);
-    const routeLabelHtml = this.renderTooltipTerm(routeLabel, this.getRouteTooltip(upgrade.routeId));
-    const focusLabelHtml = this.renderTooltipTerm(focusLabel, this.getFocusTooltip(focusLabel));
     const nameHtml = this.decorateTooltipTerms(upgrade.name);
     const effectTextHtml = this.decorateTooltipTerms(effectText);
 
@@ -946,10 +942,6 @@ export class OverlayController {
       ? (upgrade.routeId === 'crit' ? '🔴' : upgrade.routeId === 'pierce' ? '🔵' : '🟢')
       : '⚪';
 
-    // 获取路线进度信息
-    const routeProgressHtml = upgrade.routeId
-      ? `<span class="choice-route-progress">${progress.routeStatusText}</span>`
-      : '';
     const rewardBadgeHtml = progress.upgradeRewardLabel
       ? `<span class="choice-reward-badge">${progress.upgradeRewardLabel}</span>`
       : '';
@@ -967,14 +959,6 @@ export class OverlayController {
         <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${nameHtml}</strong>
           <small>${effectTextHtml}</small>
-        </div>
-        <div class="choice-strip-foot">
-          <span class="choice-route-boost ${upgrade.routeId ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabelHtml}</span>
-          <div class="choice-foot-trail">
-            <span class="choice-effect-tag">${focusLabelHtml}</span>
-            ${routeProgressHtml}
-            <span class="choice-prompt">${upgrade.routeId ? '走流派' : '补属性'}</span>
-          </div>
         </div>
       </button>
     `;
@@ -1358,7 +1342,7 @@ export class OverlayController {
       return healEffect.amount >= 0 ? '续航' : '承压';
     }
 
-    return '承接';
+    return '效果';
   }
 
   private getStatFocusLabel(statKey: string): string {
@@ -1497,11 +1481,11 @@ export class OverlayController {
     }
 
     if (eventDef.anomalyClass === 'hybrid') {
-      return '并线承接';
+      return '多流派';
     }
 
     if (eventDef.anomalyClass === 'bossEcho') {
-      return 'Boss 承接';
+      return 'Boss 奖励';
     }
 
     const hasPressure = option.effects?.some((effect) => effect.type === 'heal' && effect.amount < 0);
@@ -1519,7 +1503,7 @@ export class OverlayController {
     if (routeSummary) {
       tags.push(routeSummary);
     } else if (eventDef.contentKind === 'anomaly' && eventDef.anomalyClass === 'hybrid') {
-      tags.push('当前路线承接');
+      tags.push('当前流派');
     }
 
     const healEffect = option.effects?.find((effect): effect is Extract<ContentEffect, { type: 'heal' }> => effect.type === 'heal');

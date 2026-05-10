@@ -36,7 +36,6 @@ export class MainMenuScene extends Phaser.Scene {
           services.audio.unlock();
           services.audio.play('start');
           services.metrics.beginRunFromMenu();
-          services.overlay.pushToast('行动开始，先拿到第一条主路线信号。', 'accent');
           this.cameras.main.fadeOut(140, 4, 10, 16);
           this.time.delayedCall(150, () => {
             this.scene.start('GameScene');
