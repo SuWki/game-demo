@@ -149,7 +149,6 @@ export class GameScene extends Phaser.Scene {
     templateId: 'elimination',
   };
 
-  private trailThrottleCounter = 0;
 
   private lastTurnBurstSec = 0;
 
@@ -1811,8 +1810,7 @@ export class GameScene extends Phaser.Scene {
             ? this.mixColor(accentColor, 0xbfffea, 0.22)
             : this.mixColor(accentColor, 0xfff2c3, 0.18);
     const pickupGuideColor = this.mixColor(0x9df7c5, liveFocusRoute === 'dash' ? 0xdffff6 : 0xffffff, 0.18);
-    const pierceReadRatio = liveFocusRoute === 'pierce' ? Math.min(1, engineState.routeCounts.pierce / 5) : 0;
-    const pierceSignatureRatio = Math.max(pierceReadRatio * 0.55, pierceFlowRatio);
+    const pierceSignatureRatio = pierceFlowRatio;
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
     for (const orb of battle.experienceOrbs) {
       if (!this.isVisibleInCamera(camera, orb.x, orb.y, 20)) {
@@ -1840,11 +1838,6 @@ export class GameScene extends Phaser.Scene {
         this.graphics.lineStyle(1.2, flowGuideColor, flowLinkAlpha);
         this.graphics.strokeCircle(screen.x, screen.y, 12 + flowChainRatio * 4);
       }
-      if (pierceSignatureRatio > 0.12 && distanceToPlayer <= 230) {
-        const railAlpha = 0.04 + pierceSignatureRatio * Math.max(0, 1 - distanceToPlayer / 230) * 0.12;
-        this.graphics.lineStyle(1.1, this.mixColor(0x8fdcff, 0xffffff, 0.16), railAlpha);
-        this.graphics.strokeCircle(screen.x, screen.y, 11 + pierceSignatureRatio * 4);
-      }
       this.graphics.fillStyle(XP_ORB_FILL, 0.12 + pulse * 0.14 + orbSpeedRatio * 0.08);
       this.graphics.fillCircle(screen.x, screen.y, 9 + pulse * 2);
       this.graphics.fillStyle(XP_ORB_FILL, 0.92);
@@ -1866,19 +1859,21 @@ export class GameScene extends Phaser.Scene {
       const lifeRatio = pulse.maxLifeSec > 0 ? pulse.lifeSec / pulse.maxLifeSec : 0;
       const expansionRatio = 1 - lifeRatio;
       const impactRadius = Math.max(6, pulse.radius * (0.58 + expansionRatio * 0.34));
-      const glowAlpha = Math.min(0.42, pulse.fillAlpha * 1.2 + pulse.strokeAlpha * 0.12) * lifeRatio;
+      const distanceToPlayer = Math.hypot(pulse.x - battle.playerX, pulse.y - battle.playerY);
+      const isPlayerSidePulse = distanceToPlayer <= Math.max(42, pulse.radius * 0.45);
+      const glowAlpha = Math.min(isPlayerSidePulse ? 0.16 : 0.3, pulse.fillAlpha * 0.7 + pulse.strokeAlpha * 0.06) * lifeRatio;
       if (glowAlpha > 0) {
-        this.graphics.fillStyle(pulse.color, glowAlpha * 0.46);
-        this.graphics.fillCircle(screen.x, screen.y, impactRadius * 1.18);
-        this.graphics.fillStyle(pulse.secondaryColor, glowAlpha * 0.18);
-        this.graphics.fillCircle(screen.x, screen.y, impactRadius * 0.58);
+        this.graphics.fillStyle(pulse.color, glowAlpha * (isPlayerSidePulse ? 0.24 : 0.38));
+        this.graphics.fillCircle(screen.x, screen.y, impactRadius * (isPlayerSidePulse ? 0.92 : 1.08));
+        this.graphics.fillStyle(pulse.secondaryColor, glowAlpha * 0.12);
+        this.graphics.fillCircle(screen.x, screen.y, impactRadius * 0.48);
       }
-      const rimAlpha = Math.min(0.62, pulse.strokeAlpha * 0.52) * lifeRatio;
-      this.graphics.lineStyle(Math.max(1.4, pulse.strokeWidth * 0.72), pulse.color, rimAlpha);
+      const rimAlpha = Math.min(isPlayerSidePulse ? 0.24 : 0.42, pulse.strokeAlpha * 0.36) * lifeRatio;
+      this.graphics.lineStyle(Math.max(1.1, pulse.strokeWidth * (isPlayerSidePulse ? 0.48 : 0.62)), pulse.color, rimAlpha);
       this.graphics.strokeCircle(screen.x, screen.y, impactRadius);
-      if (pulse.spokeCount > 0 && pulse.spokeLength > 0) {
-        const shardCount = Math.min(8, Math.max(3, pulse.spokeCount));
-        const shardAlpha = Math.min(0.58, pulse.strokeAlpha * 0.48) * lifeRatio;
+      if (!isPlayerSidePulse && pulse.spokeCount > 0 && pulse.spokeLength > 0) {
+        const shardCount = Math.min(5, Math.max(3, pulse.spokeCount));
+        const shardAlpha = Math.min(0.28, pulse.strokeAlpha * 0.24) * lifeRatio;
         const shardInner = impactRadius * 0.36;
         const shardOuter = impactRadius + pulse.spokeLength * (0.24 + expansionRatio * 0.38);
         this.graphics.lineStyle(Math.max(1, pulse.strokeWidth * 0.5), pulse.secondaryColor, shardAlpha);
@@ -2893,48 +2888,10 @@ export class GameScene extends Phaser.Scene {
         ? this.getIncomingThreatMarkers(battle)
         : [];
 
-    // P0优化：Dash残影效果
-    if (dashDriveRatio > 0) {
-      const dashColor = 0xff8844;
-      const dashBrightColor = 0xffbb66;
-      const afterimageAlpha = dashDriveRatio * 0.5;
-
-      // 多层残影（3层，营造运动模糊感）
-      for (let i = 0; i < 3; i++) {
-        const offset = (i + 1) * 8 * dashDriveRatio;
-        const alpha = afterimageAlpha * (1 - i * 0.25);
-        const size = 38 - i * 4;
-
-        // 残影位置：沿移动方向的反方向
-        const afterimageX = bodyX - moveDirX * offset;
-        const afterimageY = bodyY - moveDirY * offset;
-
-        // 渐变色残影
-        this.graphics.fillStyle(i === 0 ? dashBrightColor : dashColor, alpha);
-        this.graphics.fillEllipse(afterimageX, afterimageY, size, size);
-      }
-
-      // Dash启动/结束特效
-      if (dashDriveRatio > 0.8) {
-        // 刚启动：爆发粒子
-        const burstAlpha = (dashDriveRatio - 0.8) * 5 * 0.6;
-        for (let i = 0; i < 6; i++) {
-          const angle = (i * Math.PI) / 3;
-          const dist = 25 + (1 - dashDriveRatio) * 15;
-          this.graphics.fillStyle(dashBrightColor, burstAlpha);
-          this.graphics.fillCircle(
-            bodyX + Math.cos(angle) * dist,
-            bodyY + Math.sin(angle) * dist,
-            4
-          );
-        }
-      }
-    }
-
     this.graphics.fillStyle(0x000000, 0.22);
     this.graphics.fillEllipse(bodyX, bodyY + 18, 34, 14);
-    this.graphics.fillStyle(liveFocusColor, 0.05 + combatReadRatio * 0.08);
-    this.graphics.fillEllipse(bodyX, bodyY, 38 + combatReadRatio * 10, 38 + combatReadRatio * 10);
+    this.graphics.fillStyle(liveFocusColor, 0.015 + combatReadRatio * 0.025);
+    this.graphics.fillEllipse(bodyX, bodyY, 30 + combatReadRatio * 5, 30 + combatReadRatio * 5);
     if (impactRatio > 0) {
       this.graphics.fillStyle(0xff6964, 0.12 + impactRatio * 0.16);
       this.graphics.fillCircle(playerScreen.x, playerScreen.y, 66 + impactRatio * 10);
@@ -3033,10 +2990,10 @@ export class GameScene extends Phaser.Scene {
       const surgeOrthoX = -surgeDirY;
       const surgeOrthoY = surgeDirX;
       const surgeColor = this.mixColor(liveFocusColor, 0xffffff, 0.18);
-      for (let streak = 0; streak < 3; streak += 1) {
+      for (let streak = 0; streak < 1; streak += 1) {
         const offset = 18 + streak * 12 + tempoRatio * 10;
         const width = 8 + streak * 2;
-        this.graphics.fillStyle(surgeColor, 0.06 + tempoRatio * (0.06 - streak * 0.01));
+        this.graphics.fillStyle(surgeColor, 0.025 + tempoRatio * 0.035);
         this.graphics.fillTriangle(
           bodyX - surgeDirX * (offset + 12) + surgeOrthoX * width,
           bodyY - surgeDirY * (offset + 12) + surgeOrthoY * width,
@@ -3054,10 +3011,10 @@ export class GameScene extends Phaser.Scene {
       const flowOrthoY = flowDirX;
       const flowColor = this.mixColor(liveFocusColor, 0xfff2c3, 0.26 + killFlowRatio * 0.16);
       const chainCount = Math.max(1, battle.killFlowCount);
-      for (let streak = 0; streak < Math.min(4, chainCount + 1); streak += 1) {
+      for (let streak = 0; streak < Math.min(2, chainCount + 1); streak += 1) {
         const offset = 14 + streak * 10 + killFlowRatio * 8;
         const width = 8 + streak * 2 + killFlowRatio * 4;
-        this.graphics.fillStyle(flowColor, 0.05 + killFlowRatio * 0.05 - streak * 0.008);
+        this.graphics.fillStyle(flowColor, 0.025 + killFlowRatio * 0.035 - streak * 0.006);
         this.graphics.fillTriangle(
           bodyX - flowDirX * (offset + 14) + flowOrthoX * width,
           bodyY - flowDirY * (offset + 14) + flowOrthoY * width,
@@ -3069,10 +3026,10 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (pickupFlowRatio > 0) {
-      for (let streak = 0; streak < Math.min(4, Math.max(1, battle.pickupFlowCount)); streak += 1) {
+      for (let streak = 0; streak < Math.min(2, Math.max(1, battle.pickupFlowCount)); streak += 1) {
         const offset = 10 + streak * 9 + pickupFlowRatio * 7;
         const width = 6 + streak * 2 + pickupFlowRatio * 3;
-        this.graphics.fillStyle(pickupGuideColor, 0.04 + pickupFlowRatio * 0.05 - streak * 0.006);
+        this.graphics.fillStyle(pickupGuideColor, 0.018 + pickupFlowRatio * 0.03 - streak * 0.006);
         this.graphics.fillTriangle(
           bodyX + pickupGuideDirX * (offset + 16) + pickupGuideOrthoX * width,
           bodyY + pickupGuideDirY * (offset + 16) + pickupGuideOrthoY * width,
@@ -3083,11 +3040,11 @@ export class GameScene extends Phaser.Scene {
         );
       }
 
-      const pipCount = Math.min(4, Math.max(1, battle.pickupFlowCount));
+      const pipCount = Math.min(2, Math.max(1, battle.pickupFlowCount));
       for (let index = 0; index < pipCount; index += 1) {
         const angle = battle.elapsedSec * 6.4 + index * 0.5 - 0.55;
         const radius = 22 + index * 5 + pickupFlowRatio * 6;
-        this.graphics.fillStyle(pickupGuideColor, 0.08 + pickupFlowRatio * 0.14 - index * 0.015);
+        this.graphics.fillStyle(pickupGuideColor, 0.035 + pickupFlowRatio * 0.055 - index * 0.012);
         this.graphics.fillCircle(
           bodyX + pickupGuideDirX * 8 + pickupGuideOrthoX * Math.sin(angle) * 10,
           bodyY + pickupGuideDirY * 8 + pickupGuideOrthoY * Math.cos(angle) * (radius * 0.18),
@@ -3120,10 +3077,10 @@ export class GameScene extends Phaser.Scene {
       const trailOrthoX = -trailDirY;
       const trailOrthoY = trailDirX;
       const trailColor = this.mixColor(liveFocusColor, 0xe9ffff, 0.22 + moveBoostRatio * 0.16);
-      for (let streak = 0; streak < 3; streak += 1) {
+      for (let streak = 0; streak < 1; streak += 1) {
         const offset = 14 + streak * (10 + velocityRatio * 8);
         const width = 7 + streak * 2 + moveBoostRatio * 4;
-        this.graphics.fillStyle(trailColor, 0.04 + velocityRatio * 0.04 + moveBoostRatio * 0.05 - streak * 0.01);
+        this.graphics.fillStyle(trailColor, 0.018 + velocityRatio * 0.025 + moveBoostRatio * 0.03);
         this.graphics.fillTriangle(
           bodyX - trailDirX * (offset + 14) + trailOrthoX * width,
           bodyY - trailDirY * (offset + 14) + trailOrthoY * width,
@@ -3139,12 +3096,12 @@ export class GameScene extends Phaser.Scene {
       if (this.lastTurnBurstSec === 0 && battle.playerTurnBurstSec > 0) {
         const turnAngle = Math.atan2(-moveDirY, -moveDirX);
         const particleColor = this.mixColor(0xbef7ff, liveFocusColor, 0.28);
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 3; i++) {
           const angle = turnAngle + (Math.random() - 0.5) * 1.05;
           const speed = 50 + Math.random() * 100;
           const vx = Math.cos(angle) * speed;
           const vy = Math.sin(angle) * speed;
-          const particle = this.add.circle(bodyX, bodyY, 2 + Math.random() * 2, particleColor, 0.6);
+          const particle = this.add.circle(bodyX, bodyY, 1.6 + Math.random() * 1.2, particleColor, 0.28);
           particle.setDepth(-1);
           this.tweens.add({
             targets: particle,
@@ -3160,7 +3117,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       const skidColor = this.mixColor(0xbef7ff, liveFocusColor, 0.28);
-      this.graphics.lineStyle(2, skidColor, 0.12 + turnBurstRatio * 0.24);
+      this.graphics.lineStyle(1.4, skidColor, 0.05 + turnBurstRatio * 0.12);
       this.graphics.lineBetween(
         bodyX + moveDirY * 16,
         bodyY - moveDirX * 16,
@@ -3326,9 +3283,9 @@ export class GameScene extends Phaser.Scene {
       this.graphics.lineStyle(
         1.8 + freezeRatio * 0.8,
         shieldColor,
-        battle.invulnerableSec > 0 ? 0.48 : 0.18 + freezeRatio * 0.16,
+        battle.invulnerableSec > 0 ? 0.28 : 0.1 + freezeRatio * 0.12,
       );
-      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 18 + freezeRatio * 8);
+      this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 16 + freezeRatio * 5);
     }
     this.graphics.fillStyle(
       impactRatio > 0 ? this.mixColor(0xf8fbff, 0xff8c86, impactRatio * 0.8) : battle.invulnerableSec > 0 ? 0x9cff97 : 0xf8fbff,
@@ -3451,39 +3408,22 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Movement trail effect
-    if (velocityMagnitude > 100) {
-      this.trailThrottleCounter++;
-      if (this.trailThrottleCounter >= 3) {
-        this.trailThrottleCounter = 0;
-        const trailColor = liveFocusRoute === 'dash' ? 0x00d4ff : 0x4488ff;
-        const trailCircle = this.add.circle(bodyX, bodyY, 8, trailColor, 0.3);
-        trailCircle.setDepth(-1);
-        this.tweens.add({
-          targets: trailCircle,
-          alpha: 0,
-          scale: 0.5,
-          duration: 200,
-          ease: 'Cubic.easeOut',
-          onComplete: () => trailCircle.destroy(),
-        });
-      }
-    }
+    // 不再在玩家周围生成常驻移动圆环，避免与敌方预警线混淆。
 
     // Ground interaction effects
     // Dash burst effect when dash starts
     if (battle.dashDriveSec > 0 && this.lastDashDriveSec === 0) {
-      // Dash just started - create ground burst particles
+      // Dash just started - create a small burst without a persistent player ring.
       const burstColor = 0x00d4ff;
-      const particleCount = 8;
+      const particleCount = 4;
 
       for (let i = 0; i < particleCount; i++) {
         const angle = (i / particleCount) * Math.PI * 2;
-        const distance = 15 + Math.random() * 10;
+        const distance = 10 + Math.random() * 6;
         const targetX = bodyX + Math.cos(angle) * distance;
         const targetY = bodyY + Math.sin(angle) * distance;
 
-        const particle = this.add.circle(bodyX, bodyY, 3, burstColor, 0.6);
+        const particle = this.add.circle(bodyX, bodyY, 2, burstColor, 0.28);
         particle.setDepth(-1);
 
         this.tweens.add({
@@ -3492,30 +3432,18 @@ export class GameScene extends Phaser.Scene {
           y: targetY,
           alpha: 0,
           scale: 0.3,
-          duration: 250,
+          duration: 180,
           ease: 'Cubic.easeOut',
           onComplete: () => particle.destroy(),
         });
       }
-
-      // Ground impact ring
-      const impactRing = this.add.circle(bodyX, bodyY, 10, burstColor, 0.4);
-      impactRing.setDepth(-1);
-      this.tweens.add({
-        targets: impactRing,
-        scale: 3,
-        alpha: 0,
-        duration: 300,
-        ease: 'Cubic.easeOut',
-        onComplete: () => impactRing.destroy(),
-      });
     }
 
     // Enhanced ground trail during dash
     if (dashDriveRatio > 0.3 && velocityMagnitude > 150) {
       // Create ground scorch marks during dash
-      const scorchAlpha = dashDriveRatio * 0.15;
-      const scorchSize = 6 + dashDriveRatio * 4;
+      const scorchAlpha = dashDriveRatio * 0.05;
+      const scorchSize = 3 + dashDriveRatio * 2;
 
       this.graphics.fillStyle(0x00d4ff, scorchAlpha);
       this.graphics.fillCircle(bodyX, bodyY, scorchSize);

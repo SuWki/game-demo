@@ -262,8 +262,8 @@ export class RunEngine {
     const debugNode: NodeOption = {
       id: `debug-${templateId}-${battlePhase}`,
       type: nodeType,
-      title: `[DEBUG] ${template.name}`,
-      description: `Debug restart for ${template.id}`,
+      title: template.name,
+      description: template.encounterType === 'boss' ? '击败首领即可通关。' : '完成当前战斗目标。',
       templateId,
       phase: battlePhase,
       difficultyScale: 1,

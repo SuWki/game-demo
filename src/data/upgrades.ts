@@ -3298,6 +3298,83 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
 ];
 
+const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  'crit-aim': '开启暴击流：命中有概率打出高伤，并给敌人留下破绽。',
+  'crit-primer': '开启暴击流：命中有概率打出高伤，并给敌人留下破绽。',
+  'crit-afterglow': '破绽留得更久，更容易连续打同一个敌人并引爆。',
+  'crit-heat-latch': '暴击流推进：提高破绽连击的稳定性。',
+  'crit-flare-path': '暴击流推进：更适合追着同一目标打出连续破绽。',
+  'crit-sidechannel': '转向暴击流：获得暴击流进度，开始围绕破绽输出。',
+  'crit-reroute-spark': '转向暴击流：获得暴击流进度，补足破绽连击。',
+  'crit-reroute-feed': '转向暴击流：获得暴击流进度，让暴击更容易接上。',
+  'crit-branch-ignite': '暴击流推进：更容易给目标叠破绽，准备三层爆发。',
+  'crit-embershard': '破绽爆发时会炸到附近敌人，对精英和Boss效果较弱。',
+  'crit-burst': '暴击流推进：提高连续暴击的成型速度。',
+  'crit-sparkline': '暴击流推进：更适合盯住一个目标连续输出。',
+  'crit-linekeep': '暴击流推进：让破绽链更容易维持。',
+  'crit-crownfire': '破绽爆发后，下一次暴击会更痛。',
+  'crit-ember-rail': '暴击流承接：更适合把破绽打满后收掉目标。',
+  'crit-redline': '暴击流承接：提高短时间压血能力。',
+  'crit-heat-rake': '暴击流承接：让破绽目标更容易被追击。',
+  'crit-heat': '暴击流收束：强化破绽爆发的单体输出。',
+  'crit-cascade': '暴击流收束：破绽爆发后更容易继续清场。',
+  'crit-superheat': '暴击流收束：把破绽连击集中成更强爆发。',
+  'crit-finish': '暴击流终局：围绕破绽爆发完成最后输出。',
+
+  'pierce-core': '开启穿透流：子弹可继续打后方敌人，并给穿透目标留下裂纹。',
+  'pierce-rail': '开启穿透流：子弹穿过敌人后继续命中后排，适合打成一条线的敌人。',
+  'pierce-seamline': '开启穿透流：穿透命中会留下裂纹，连续命中裂纹可触发扩散。',
+  'pierce-vector': '穿透流推进：更容易打到后排敌人并叠裂纹。',
+  'pierce-seamkeep': '裂纹留得更久，方便继续用穿透命中叠层。',
+  'pierce-shearline': '穿透流推进：提高连续穿透和裂纹扩散的稳定性。',
+  'pierce-sidechannel': '转向穿透流：获得穿透流进度，开始围绕裂纹扩散输出。',
+  'pierce-reroute-seam': '转向穿透流：获得穿透流进度，补足裂纹连击。',
+  'pierce-reroute-ledger': '转向穿透流：获得穿透流进度，让后排敌人更容易被打到。',
+  'pierce-sidestitch': '转向穿透流：获得穿透流进度，提升穿线收益。',
+  'pierce-riftbloom': '裂纹扩散范围变大，对精英和Boss效果较弱。',
+  'pierce-fan': '穿透流推进：更容易用一发子弹打穿多名敌人。',
+  'pierce-relay-spine': '穿透流承接：强化后排连锁命中。',
+  'pierce-ledger-fanout': '穿透流承接：让裂纹扩散更容易覆盖敌群。',
+  'pierce-floodgate': '裂纹扩散时会追加一段后方伤害，对精英和Boss效果较弱。',
+  'pierce-seam-ledger': '穿透流承接：提高裂纹目标的连续命中收益。',
+  'pierce-echo': '穿透流承接：提高穿透命中后的连锁效率。',
+  'pierce-ripple': '穿透流承接：让裂纹扩散更容易传到后方。',
+  'pierce-ledger-line': '穿透流承接：强化一条线上的清怪能力。',
+  'pierce-bloom': '穿透流收束：裂纹扩散更适合处理密集敌群。',
+  'pierce-chain': '穿透流终局：围绕裂纹扩散完成清线。',
+  'pierce-prism': '裂纹扩散范围变大，适合处理密集敌群。',
+
+  'dash-brush': '开启穿梭流：自动脉冲命中敌人会叠层，三层后触发回切反打。',
+  'dash-feint': '开启穿梭流：自动脉冲命中敌人后，开始积累回切反打。',
+  'dash-lanebreak': '开启穿梭流：靠自动脉冲叠层，触发短时间反打窗口。',
+  'dash-phasebank': '穿梭流承接：更频繁触发自动脉冲。',
+  'dash-cutback': '穿梭流收束：强化三层后的回切反打。',
+  'dash-slipstream': '穿梭流推进：缩短自动脉冲等待时间，并增加短暂无伤。',
+  'dash-sidechannel': '转向穿梭流：获得穿梭流进度，开始围绕自动脉冲叠层。',
+  'dash-reroute-cutin': '转向穿梭流：获得穿梭流进度，更快进入脉冲节奏。',
+  'dash-reroute-recall': '转向穿梭流：获得穿梭流进度，补足回切反打。',
+  'dash-loop': '穿梭流推进：自动脉冲更频繁，并带更短的安全窗口。',
+  'dash-sidestep-bank': '脉冲触发后的短时间内，下一次命中更容易叠层。',
+  'dash-return-hold': '穿梭流承接：延长脉冲后的安全时间。',
+  'dash-afterimage': '回切触发后留下残影，对附近敌人造成小伤害。',
+  'dash-retrace-beat': '穿梭流承接：提高脉冲后的反打稳定性。',
+  'dash-counterline': '穿梭流承接：让三层脉冲后的反击更明显。',
+  'dash-return-snap': '穿梭流承接：更快进入下一次自动脉冲。',
+  'dash-rebound-window': '转向穿梭流：获得穿梭流进度，补足短窗反打。',
+  'dash-rethread': '穿梭流收束：缩短脉冲节奏，并提高反打伤害。',
+  'dash-reentry': '穿梭流收束：强化脉冲、回切和短暂无伤。',
+  'dash-anchor': '穿梭流终局：围绕自动脉冲和回切反打完成收束。',
+  'dash-zero-window': '三层脉冲触发后，短时间内打被标记敌人会追加伤害。',
+};
+
+function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
+  if (archetype.category === 'route') {
+    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '路线强化：推进当前流派机制。';
+  }
+
+  return archetype.description ?? describeContentEffects(effects, archetype.routeId);
+}
+
 export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeRarity): UpgradeDefinition {
   const scaledEffects = scaleEffects(archetype.effects, rarity);
   const effectsWithoutInstantHeal = scaledEffects.filter((effect) => effect.type !== 'heal');
@@ -3314,7 +3391,7 @@ export function buildUpgradeChoice(archetype: UpgradeArchetype, rarity: UpgradeR
     id: `${archetype.id}:${rarity}:${Math.random().toString(36).slice(2, 8)}`,
     sourceId: archetype.id,
     name: archetype.name,
-    description: archetype.description ?? describeContentEffects(effects, archetype.routeId),
+    description: getUpgradeDescription(archetype, effects),
     category: archetype.category,
     contentTier: archetype.contentTier,
     rarity,
