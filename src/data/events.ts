@@ -142,7 +142,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'route-calibration-focus',
         label: '继续压当前方向',
-        description: '强化已有路线的关键手感。',
+        description: '强化已有流派的关键手感。',
         routeId: 'dominant',
         effects: [
           {
@@ -198,7 +198,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'targeted-telemetry-press',
         label: '追当前窗口',
-        description: '把当前路线继续往前压一小步，并补一点基础火力。',
+        description: '让当前流派更稳定，并补一点基础火力。',
         routeId: 'dominant',
         effects: [
           {
@@ -864,10 +864,10 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'heavy-buffer-armor',
         label: '接入重装外甲',
-        gameplayLabel: '抗压推进',
+        gameplayLabel: '稳住压力',
         gainLabel: '生命上限明显提高',
         costLabel: '移速和射速降低',
-        description: '牺牲灵活度，换更厚的容错。适合想顶着压力推进的局。',
+        description: '牺牲灵活度，换更厚的容错。适合想稳住血线的局。',
         effects: [
           {
             type: 'stats',
@@ -920,9 +920,9 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'rapid-light-rounds-trigger',
         label: '切换轻弹循环',
         gameplayLabel: '高频触发',
-        gainLabel: '射速大幅提高，更容易打出路线反馈',
+        gainLabel: '射速大幅提高，更容易触发流派效果',
         costLabel: '单发伤害降低',
-        description: '不靠单发爆点，改靠高频命中把路线效果打出来。',
+        description: '不靠单发爆点，改靠高频命中打出流派效果。',
         effects: [
           {
             type: 'stats',
@@ -1020,7 +1020,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     name: '回收驱动协议',
     contentKind: 'anomaly',
     anomalyClass: 'hybrid',
-    description: '基础火力被压低，但经验回收和路线推进会成为这一局的节奏核心。',
+    description: '基础火力被压低，但经验回收和流派成长会成为这一局的重点。',
     selection: {
       baseWeight: 0.92,
       minRound: 2,
@@ -1035,7 +1035,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-tempo',
         label: '接入回收驱动',
         gameplayLabel: '拾取驱动',
-        gainLabel: '移速提高，并推进当前路线',
+        gainLabel: '移速提高，当前流派 +1',
         costLabel: '基础伤害降低',
         routeId: 'dominant',
         description: '伤害变低，但更鼓励主动回收经验、维持追击节奏。',
@@ -1057,10 +1057,10 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-magnet',
         label: '接入磁轨回收',
         gameplayLabel: '回收拉扯',
-        gainLabel: '弹速和移速提高，并推进当前路线',
+        gainLabel: '弹速和移速提高，当前流派 +1',
         costLabel: '射速降低',
         routeId: 'dominant',
-        description: '把输出节奏让给回收路线，适合边捡边重新找输出角度。',
+        description: '把输出节奏让给回收和走位，适合边捡边重新找输出角度。',
         effects: [
           {
             type: 'stats',
@@ -1101,7 +1101,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'dash-charge-pulse',
         label: '接入穿梭脉冲',
         gameplayLabel: '换位爆发',
-        gainLabel: '穿梭脉冲伤害提高，穿梭路线推进',
+        gainLabel: '穿梭脉冲伤害提高，穿梭流 +1',
         costLabel: '基础伤害降低',
         routeId: 'dash',
         description: '普通射击变弱，穿梭后的反打窗口更重要。',

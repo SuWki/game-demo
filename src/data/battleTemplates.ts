@@ -33,7 +33,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   elimination: {
     id: 'elimination',
     name: '歼灭',
-    description: '清掉敌群，把前段经验和推进节奏拉起来。',
+    description: '清掉敌群，把前段经验和清怪节奏拉起来。',
     durationSec: 25,
     spawnIntervalSec: 0.74,
     enemyHp: 17,
@@ -87,7 +87,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elimination-sweep': {
     id: 'elimination-sweep',
     name: '扫线歼灭',
-    description: '厚体敌群沿横线推进，更像一场清线突围。',
+    description: '厚体敌群横向压过来，更像一场清线突围。',
     durationSec: 28,
     spawnIntervalSec: 0.9,
     enemyHp: 26,
@@ -1404,7 +1404,7 @@ function getSpawnPatternReadout(template: BattleTemplateDefinition): string {
   }
 
   if (spawnRule.pattern === 'lanes') {
-    return spawnRule.laneBias === 'horizontal' ? '横线推进' : '纵向火线';
+    return spawnRule.laneBias === 'horizontal' ? '横向压迫' : '纵向火线';
   }
 
   return '环压逼近';
@@ -1459,7 +1459,7 @@ export function getBattleEnemyReadout(
   const parts: string[] = [];
 
   if (pressurePhaseLabel) {
-    parts.push(`${emphasizeTransition ? '转段' : '阶段'} ${pressurePhaseLabel}`);
+    parts.push(`${emphasizeTransition ? '变化' : '当前'} ${pressurePhaseLabel}`);
   }
 
   if (pressureSignatureLabel) {

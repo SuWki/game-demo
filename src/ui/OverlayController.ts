@@ -48,8 +48,8 @@ const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
 
 const TOAST_BADGES: Record<ToastTone, string> = {
   neutral: '信息',
-  accent: '阶段',
-  route: '路线',
+  accent: '提示',
+  route: '流派',
   danger: '危险',
   success: '完成',
 };
@@ -147,7 +147,7 @@ export class OverlayController {
                 <strong class="stat-value">${summary.lastDurationSec > 0 ? this.formatDuration(summary.lastDurationSec) : '--:--'}</strong>
               </div>
               <div class="stat-item">
-                <span class="stat-label">路线</span>
+                <span class="stat-label">流派</span>
                 <strong class="stat-value">${summary.lastRouteName || '无'}</strong>
               </div>
             </div>
@@ -193,11 +193,11 @@ export class OverlayController {
             </div>
             <div class="screen-summary-grid pause-panel-grid">
               <article class="screen-summary-card">
-                <span class="screen-summary-label">路线</span>
+                <span class="screen-summary-label">流派</span>
                 <strong>${snapshot.routeStatusText}</strong>
               </article>
               <article class="screen-summary-card">
-                <span class="screen-summary-label">阶段</span>
+                <span class="screen-summary-label">进度</span>
                 <strong>${snapshot.progressLabel}</strong>
               </article>
               <article class="screen-summary-card">
@@ -342,7 +342,7 @@ export class OverlayController {
     this.showPanel({
       panelClassName: 'panel-node-choice panel-route-choice',
       panelLayerClassName: 'panel-layer-center',
-      modeLabel: '路线选择',
+      modeLabel: '下一站',
       eyebrow: '下一站',
       title: '选择下一站',
       contextHtml: this.renderRouteChoiceContext(phaseLabel, options.length, progress),
@@ -465,7 +465,7 @@ export class OverlayController {
               <strong class="core-stat-value" data-target="${result.battleWins}" data-format="number">0</strong>
             </div>
             <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="160">
-              <span class="core-stat-label">路线</span>
+              <span class="core-stat-label">流派</span>
               <strong class="core-stat-value">${routeLabel}</strong>
               <small class="core-stat-sub">${buildStageLabel}</small>
             </div>
@@ -613,7 +613,7 @@ export class OverlayController {
 
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
 
-    // 路线构筑时间轴
+    // 本局选择记录
     const upgradeTimeline = result.selectedUpgrades && result.selectedUpgrades.length > 0
       ? result.selectedUpgrades.map((upgrade, index) => `
           <div class="detail-timeline-item">
@@ -643,17 +643,17 @@ export class OverlayController {
             <div class="detail-placeholder">
               <div class="placeholder-icon">📈</div>
               <p><strong>DPS曲线图</strong></p>
-              <small>功能开发中 - 将展示战斗过程中的伤害输出趋势</small>
+              <small>本局暂未记录详细曲线</small>
             </div>
             <div class="detail-placeholder">
               <div class="placeholder-icon">🎯</div>
               <p><strong>伤害构成分析</strong></p>
-              <small>功能开发中 - 将展示暴击/穿透/冲刺伤害占比</small>
+              <small>本局暂未记录详细构成</small>
             </div>
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">🛠️ 路线构筑时间轴</h3>
+            <h3 class="detail-section-title">本局选择记录</h3>
             <div class="detail-timeline-scroll">
               ${upgradeTimeline}
             </div>
@@ -675,7 +675,7 @@ export class OverlayController {
                 <strong>Lv.${result.levelReached}</strong>
               </div>
               <div class="detail-stat-card">
-                <span>路线</span>
+                <span>流派</span>
                 <strong>${routeLabel}</strong>
               </div>
               <div class="detail-stat-card">
@@ -694,7 +694,7 @@ export class OverlayController {
             <div class="detail-placeholder">
               <div class="placeholder-icon">📊</div>
               <p><strong>历史最佳对比</strong></p>
-              <small>功能开发中 - 将展示与历史最佳成绩的对比</small>
+              <small>本局暂未记录历史对比</small>
             </div>
           </div>
         </div>
@@ -787,7 +787,7 @@ export class OverlayController {
         <div class="route-context-copy">
           <span>当前关卡</span>
           <strong>${stageLabel}</strong>
-          <small>${phaseLabel || '选择路线'}</small>
+          <small>${phaseLabel || '选择下一站'}</small>
         </div>
         <div class="route-context-copy route-context-rule">
           <span>选择规则</span>
@@ -840,7 +840,7 @@ export class OverlayController {
       .join('');
 
     return `
-      <div class="route-progress-bar" aria-label="路线进度">
+      <div class="route-progress-bar" aria-label="关卡进度">
         <div class="progress-track">
           ${modernNodes}
         </div>
@@ -864,7 +864,7 @@ export class OverlayController {
     }).join('');
 
     return `
-      <div class="route-progress-bar" aria-label="路线进度">
+      <div class="route-progress-bar" aria-label="关卡进度">
         <div class="progress-track">
           ${nodes}
         </div>
@@ -1145,7 +1145,7 @@ export class OverlayController {
       return node.description;
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '拿完直接进 Boss。' : '补 1 项强化再继续推进。';
+      return node.isFinalPrep ? '拿完直接进 Boss。' : '补 1 项强化再继续。';
     }
     if (node.type === 'anomaly') {
       return '做一次异常处理，拿当前这拍的变化。';
@@ -1153,7 +1153,7 @@ export class OverlayController {
     if (node.type === 'boss') {
       return '直接进入首领战。';
     }
-    return '继续推进。';
+    return '继续前进。';
   }
 
   private getNodeCardEntryLabel(node: NodeOption): string {
@@ -1182,7 +1182,7 @@ export class OverlayController {
         case 'distortion':
           return '异常读数';
         default:
-          return '当前路线';
+          return '当前流派';
       }
     }
     return ROUTE_NAME_MAP[routeId];
@@ -1324,7 +1324,7 @@ export class OverlayController {
     }
 
     return entries
-      .map(([routeId, count]) => `${routeId === 'dominant' ? '当前路线' : ROUTE_NAME_MAP[routeId]}推进 +${count}`)
+      .map(([routeId, count]) => `${routeId === 'dominant' ? '当前流派' : `${ROUTE_NAME_MAP[routeId]}流`} +${count}`)
       .join(' / ');
   }
 
@@ -1425,7 +1425,7 @@ export class OverlayController {
       穿透: '子弹命中敌人后不会立刻消失，会继续打到后方目标。敌人越站成一线，穿透收益越高；蓝色裂纹表示它刚被穿透命中过。',
       穿梭: '穿梭是自动触发的相位脉冲。冷却归零时角色会短暂闪动并释放一次近身脉冲；冷却越短，触发越频繁。',
       脉冲: '穿梭触发时在角色附近释放的短促范围伤害。绿色脉冲标记表示敌人被这次穿梭脉冲擦到。',
-      无伤: '穿梭触发后的极短保护时间，只在自动脉冲刚发生后生效，用来穿过危险窗或回切反打。',
+      无伤: '穿梭触发后的极短保护时间，只在自动脉冲刚发生后生效，用来穿过危险后反击。',
       扩面: '增加弹幕覆盖，适合清小怪。',
       射速: '更快开火，回报链更连续。',
     };

@@ -511,12 +511,12 @@ export function describeContentEffects(
     }
 
     if (effect.routeId !== 'dominant') {
-      segments.push(`${ROUTE_NAME_MAP[effect.routeId]}路线推进 +1`);
+      segments.push(`${ROUTE_NAME_MAP[effect.routeId]}流 +1`);
     }
   }
 
-  if (routeId && !segments.some((segment) => segment.includes('路线推进'))) {
-    segments.push(`${ROUTE_NAME_MAP[routeId]}路线推进 +1`);
+  if (routeId && !segments.some((segment) => segment.includes('流 +'))) {
+    segments.push(`${ROUTE_NAME_MAP[routeId]}流 +1`);
   }
 
   return segments.join('，');
@@ -1923,7 +1923,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-finish',
     name: '终端爆发',
-    description: '暴击路线的终极封板强化',
+    description: '暴击流的终局强化',
     category: 'route',
     routeId: 'crit',
     tags: ['finisher'],
@@ -2493,7 +2493,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-cutback',
-    name: '回切留影',
+    name: '脉冲留影',
     description: '穿梭系统的终极强化',
     category: 'route',
     contentTier: 'rare',
@@ -2661,8 +2661,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-brush',
-    name: '擦身推进',
-    description: '脉冲命中敌人时更容易叠第一层标记，更快进入三层回切',
+    name: '擦身蓄能',
+    description: '脉冲擦到敌人时更容易积蓄能量。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter', 'dash-brush'],
@@ -2688,7 +2688,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-feint',
     name: '侧滑取样',
-    description: '快速换位、擦身或回切时触发短暂脉冲收益',
+    description: '快速贴近或脱离敌人时，触发短暂脉冲收益。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2714,7 +2714,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-lanebreak',
     name: '换边破窗',
-    description: '快速换位、擦身或回切时触发短暂脉冲收益',
+    description: '快速贴近或脱离敌人时，触发短暂脉冲收益。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2775,7 +2775,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidechannel',
     name: '错位取样',
-    description: '跨路线的灵活切换，附带生命恢复',
+    description: '换一种流派接法，附带少量恢复',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2820,7 +2820,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-cutin',
     name: '偏帧切入',
-    description: '跨路线的灵活切换，附带生命恢复',
+    description: '换一种流派接法，附带少量恢复',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2864,7 +2864,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-recall',
     name: '借位追回',
-    description: '跨路线的灵活切换，附带生命恢复',
+    description: '换一种流派接法，附带少量恢复',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2964,7 +2964,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidestep-bank',
     name: '侧返蓄窗',
-    description: '进入回切窗口时，短时间提升下一次命中的脉冲层数收益',
+    description: '脉冲刚触发后的短时间内，下一次命中更容易叠层。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'dash-sidestep-bank'],
@@ -3020,8 +3020,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-afterimage',
-    name: '残影回切',
-    description: '回切触发后留下短暂残影脉冲，不常驻无敌',
+    name: '残影脉冲',
+    description: '脉冲触发后留下短暂残影伤害，不提供长期无敌。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3078,7 +3078,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-counterline',
-    name: '回切反打',
+    name: '脉冲反击',
     description: '穿梭脉冲与冷却强化',
     category: 'route',
     routeId: 'dash',
@@ -3138,7 +3138,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rebound-window',
     name: '借窗回返',
-    description: '跨路线的灵活切换，附带生命恢复',
+    description: '换一种流派接法，附带少量恢复',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3266,7 +3266,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-zero-window',
     name: '瞬返空档',
-    description: '三层脉冲触发回切后，窗口内命中被 dash 标记敌人获得额外小伤害',
+    description: '三层脉冲触发后，短时间内命中被标记敌人会追加小伤害。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',

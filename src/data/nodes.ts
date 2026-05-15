@@ -55,7 +55,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-battle',
         type: 'battle',
         phase: 'opening',
-        title: '歼灭推进',
+        title: '歼灭行动',
         description: '击破指定数量敌人，清场越快压力越低',
         templateCandidates: [
           { templateId: 'elimination', weight: 2.6 },
@@ -139,7 +139,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '方向定标',
-        description: '更容易补当前路线相关强化',
+        description: '更容易补当前流派相关强化',
         selection: {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
@@ -196,8 +196,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event-ripple',
         type: 'anomaly',
         phase: 'opening',
-        title: '路线混接',
-        description: '改变路线之间的联动方式',
+        title: '流派混接',
+        description: '改变流派之间的联动方式',
         selection: {
           baseWeight: 1.45,
           soloMultiplier: 0.2,
@@ -289,7 +289,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-dash-cutback',
         type: 'battle',
         phase: 'mid',
-        title: '回切压线',
+        title: '脉冲压线',
         description: '敌舰封锁区域，利用机动性寻找反击机会',
         templateCandidates: [
           { templateId: 'elite-lockdown', weight: 1.8 },
@@ -378,7 +378,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '方向定标',
-        description: '更容易补当前路线相关强化',
+        description: '更容易补当前流派相关强化',
         selection: {
           baseWeight: 3.8,
           soloMultiplier: 0.92,
@@ -448,7 +448,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '转折校准',
-        description: '转折点：坚持当前路线还是转变战术',
+        description: '转折点：坚持当前打法还是转变战术',
         selection: {
           baseWeight: 2.15,
           soloMultiplier: 0.88,
@@ -882,7 +882,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '方向定标',
-        description: '更容易补当前路线相关强化',
+        description: '更容易补当前流派相关强化',
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.82,
@@ -959,7 +959,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '旁路归并',
-        description: '路线融合：整合不同战术体系',
+        description: '流派融合：整合不同战术体系',
         selection: {
           baseWeight: 1.48,
           repeatTypeMultiplier: 0.8,

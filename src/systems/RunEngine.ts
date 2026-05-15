@@ -354,7 +354,7 @@ export class RunEngine {
       this.state.upgradeChoices = this.rollUpgradeChoices('nodePrep');
       this.state.currentEvent = null;
       if (this.state.upgradeChoices.length === 0) {
-        this.enqueueTip('本次整备没有可用强化，已继续推进。');
+        this.enqueueTip('本次没有可用强化，已继续前进。');
         this.advanceRound();
         return;
       }
@@ -2230,19 +2230,19 @@ export class RunEngine {
 
   private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage): string {
     if (!routeId) {
-      return '本局还没有站稳主路线';
+      return '本局还没有形成清晰打法';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
     switch (buildStage) {
       case 'matured':
-        return `${routeName}路线已经成型`;
+        return `${routeName}流已经成型`;
       case 'committed':
-        return `${routeName}路线已经开始站稳`;
+        return `${routeName}流已经开始站稳`;
       case 'hinted':
         return `${routeName}倾向已经出现`;
       default:
-        return '本局还没有站稳主路线';
+        return '本局还没有形成清晰打法';
     }
   }
 
@@ -2271,9 +2271,9 @@ export class RunEngine {
   private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
     switch (endingKind) {
       case 'hpDepleted':
-        return `${finalNodeTitle}阶段中机体耐久归零`;
+        return `${finalNodeTitle}中机体耐久归零`;
       case 'timeOut':
-        return `${finalNodeTitle}阶段的压力没能顶住`;
+        return `${finalNodeTitle}的压力没能顶住`;
       default:
         return `${finalNodeTitle}已完成收束`;
     }
@@ -2285,81 +2285,49 @@ export class RunEngine {
     buildStage: RouteBuildStage,
     endingKind: RunEndingKind,
   ): string {
-    const replayProfile = this.getReplayProfile(routeId);
     if (!routeId) {
-      return '再来一局优先把前段节奏立住，主路线会更容易自然站稳。';
+      return '再来一局先稳住前几场战斗，打法会更容易成型。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        if (replayProfile.bossEchoHits === 0 && replayProfile.rarePayoffHits === 0) {
-          return `${routeName}路线这一局已经跑通，下局试着去撞一拍首领残响或尾段稀有收束，结尾会更像另一种 run。`;
-        }
-        if (replayProfile.hybridHits + replayProfile.redirectHits >= 2) {
-          return `${routeName}路线这一局是带着偏航味道跑通的，下局反过来压纯收尾，会更像另一种打法。`;
-        }
-        if (replayProfile.hybridHits === 0 && replayProfile.redirectHits === 0) {
-          return `${routeName}路线这一局已经跑通，下局可以故意留一段混搭或改线窗口，看它怎么把尾段带偏。`;
-        }
-        return `${routeName}路线这一局已经跑通，再开一局可以换另一种尾段读法，看看这条线怎么收。`;
+        return `${routeName}流已经完整打通。再开一局可以试试另一条流派。`;
       }
-      if (replayProfile.rarePayoffHits === 0) {
-        return `${routeName}路线已经站住了，下局试着撞一张尾段高收益牌，会更容易把结尾拉开。`;
+      if (buildStage === 'committed') {
+        return `${routeName}流已经站稳。再来一局可以继续补最后一段输出。`;
       }
-      if (replayProfile.bossEchoHits > 0 && replayProfile.rarePayoffHits > 0) {
-        return `${routeName}路线已经站住了，这局还吃到了首领残响和尾段高收益；下局换一条收尾线，会更像另一种 run。`;
-      }
-      if (replayProfile.anomalyVisits === 0 || replayProfile.hybridHits === 0) {
-        return `${routeName}路线已经站住了，下局多去撞低频异常和混搭窗口，会更容易读到另一种尾段。`;
-      }
-      return `${routeName}路线已经站住了，再来一局可以继续把它压到完整成型。`;
+      return `${routeName}流已经冒头。再来一局可以优先补它的关键牌。`;
     }
 
     if (endingKind === 'timeOut') {
-      if (replayProfile.rarePayoffHits === 0) {
-        return `${routeName}路线已经起势，再来一局多去找尾段高收益牌，通常会更容易把最后一段撑厚。`;
-      }
-      if (replayProfile.bossEchoHits === 0) {
-        return `${routeName}路线已经起势，再来一局试着提前吃到首领残响式预读，最后一段会更好接。`;
-      }
-      return `${routeName}路线已经起势，再来一局重点补最后一段输出和转场决策。`;
+      return `${routeName}流已经起势，但最后一段压力还没顶住。下局优先补输出或生存。`;
     }
     if (buildStage === 'matured' || buildStage === 'committed') {
-      if (replayProfile.hybridHits + replayProfile.redirectHits >= 2) {
-        return `${routeName}路线已经起势，但这局偏航偏得有点深；下局早点补锚点，收尾会更稳。`;
-      }
-      if (replayProfile.rarePayoffHits === 0 || replayProfile.routeRareHits === 0) {
-        return `${routeName}路线已经起势，再来一局把尾段高收益和路线收尾补上，会更容易完整落地。`;
-      }
-      if (replayProfile.anomalyVisits === 0) {
-        return `${routeName}路线已经起势，再来一局把异常窗口也接上，会更容易看到另一种结尾。`;
-      }
-      return `${routeName}路线已经起势，再来一局重点把最后一段耐久和收束补齐。`;
+      return `${routeName}流已经成型，但这局被打断了。下局注意精英和 Boss 的安全窗口。`;
     }
-    return `${routeName}倾向已经出现，再来一局把前中段节奏接稳，会更容易看到完整收尾。`;
+    return `${routeName}流刚出现苗头，这局先被打断了。下局早点补关键牌。`;
   }
-
   private getResultSummary(outcome: RunOutcome, routeId: RouteId | null, buildStage: RouteBuildStage): string {
     if (!routeId) {
-      return outcome === 'victory' ? '这轮试飞已经顺利收束。' : '这局还没站稳路线，就先被打断了。';
+      return outcome === 'victory' ? '这轮试飞已经顺利完成。' : '这局打法还没站稳，就先被打断了。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        return `${routeName}路线已经完整撑到了收尾。`;
+        return `${routeName}流已经完整撑到了最后。`;
       }
       if (buildStage === 'committed') {
-        return `${routeName}路线已经站稳，并顺利撑到了收尾。`;
+        return `${routeName}流已经站稳，并顺利撑到了最后。`;
       }
-      return `${routeName}路线把这轮试飞带到了收尾。`;
+      return `${routeName}流把这轮试飞带到了最后。`;
     }
 
     if (buildStage === 'matured' || buildStage === 'committed') {
-      return `${routeName}路线已经起势，但这局还是在收尾前被打断了。`;
+      return `${routeName}流已经起势，但这局还是在最后被打断了。`;
     }
-    return `${routeName}路线刚露出倾向，这局就先被打断了。`;
+    return `${routeName}流刚露出倾向，这局就先被打断了。`;
   }
 
   private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {
@@ -2602,7 +2570,7 @@ export class RunEngine {
         phase: this.state.phase,
         pickId: meta?.pickId ?? `route:${routeId}`,
       });
-      this.enqueueTip(`${ROUTE_NAME_MAP[routeId]}路线开始站稳`);
+      this.enqueueTip(`${ROUTE_NAME_MAP[routeId]}流开始成型`);
     }
 
     if (
@@ -6346,7 +6314,7 @@ export class RunEngine {
 
     switch (nextPhase) {
       case 'mid':
-        this.enqueueTip('进入中段：开始把当前路线站稳。');
+        this.enqueueTip('进入中段：开始稳住当前打法。');
         this.enqueueAudio('confirm');
         return;
       case 'late':
