@@ -206,6 +206,19 @@ export interface StatModifiers {
   dashPulseDamage?: number;
   dashInvulnerability?: number;
   regeneration?: number;
+  // 流派机制强化（暴击流）
+  critOverdriveCritBonus?: number;  // 超频期间额外暴击率
+  critSplashRadius?: number;        // 破绽溅射范围
+  flawDurationBonus?: number;       // 破绽持续时间加成
+  critOverdriveDurationBonus?: number; // 超频持续时间加成
+  // 流派机制强化（穿透流）
+  pierceEchoDamageBonus?: number;   // 回响伤害加成
+  crackSpreadRadius?: number;       // 裂纹扩散范围
+  pierceCooldownRefundBonus?: number; // 穿透冷却缩减加成
+  // 流派机制强化（穿梭流）
+  dashChargeSpeed?: number;         // 脉冲充能速度加成
+  dashCounterDamageBonus?: number;  // 反击伤害加成
+  dashGrazeRadiusBonus?: number;     // 擦伤半径加成
 }
 
 export interface ContentSelectionProfile {
@@ -336,6 +349,19 @@ export interface PlayerStats {
   dashPulseDamage: number;
   dashInvulnerability: number;
   regeneration: number;
+  // 流派机制属性（暴击流）
+  critOverdriveCritBonus: number;
+  critSplashRadius: number;
+  flawDurationBonus: number;
+  critOverdriveDurationBonus: number;
+  // 流派机制属性（穿透流）
+  pierceEchoDamageBonus: number;
+  crackSpreadRadius: number;
+  pierceCooldownRefundBonus: number;
+  // 流派机制属性（穿梭流）
+  dashChargeSpeed: number;
+  dashCounterDamageBonus: number;
+  dashGrazeRadiusBonus: number;
 }
 
 export type RouteHitKind = 'crit' | 'pierce' | 'dash';

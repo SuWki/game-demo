@@ -102,6 +102,16 @@ export function createBaseStats(): PlayerStats {
     dashPulseDamage: 0,
     dashInvulnerability: 0.24,
     regeneration: 0,
+    critOverdriveCritBonus: 0,
+    critSplashRadius: 0,
+    flawDurationBonus: 0,
+    critOverdriveDurationBonus: 0,
+    pierceEchoDamageBonus: 0,
+    crackSpreadRadius: 0,
+    pierceCooldownRefundBonus: 0,
+    dashChargeSpeed: 0,
+    dashCounterDamageBonus: 0,
+    dashGrazeRadiusBonus: 0,
   };
 }
 
@@ -121,6 +131,16 @@ export function createUpgradeValueReferenceStats(): PlayerStats {
     dashPulseDamage: UPGRADE_VALUE_REFERENCE.dashPulseDamage,
     dashInvulnerability: UPGRADE_VALUE_REFERENCE.dashInvulnerability,
     regeneration: UPGRADE_VALUE_REFERENCE.regeneration,
+    critOverdriveCritBonus: 0,
+    critSplashRadius: 0,
+    flawDurationBonus: 0,
+    critOverdriveDurationBonus: 0,
+    pierceEchoDamageBonus: 0,
+    crackSpreadRadius: 0,
+    pierceCooldownRefundBonus: 0,
+    dashChargeSpeed: 0,
+    dashCounterDamageBonus: 0,
+    dashGrazeRadiusBonus: 0,
   };
 }
 
@@ -542,7 +562,7 @@ export function getEffectiveFireRate(stats: PlayerStats, battle: BattleState, cr
 export function getEffectiveCritChance(stats: PlayerStats, buildStage: RouteBuildStage, critOverdriveSec: number): number {
   let critChance = stats.critChance;
   if (critOverdriveSec > 0) {
-    critChance += 0.08;
+    critChance += 0.08 + (stats.critOverdriveCritBonus ?? 0);
     if (buildStage === 'committed') {
       critChance += 0.08;
     }
@@ -553,11 +573,13 @@ export function getEffectiveCritChance(stats: PlayerStats, buildStage: RouteBuil
   return clamp(critChance, 0, 0.95);
 }
 
-export function getCritSplashRatio(buildStage: RouteBuildStage, critOverdriveSec: number): number {
+export function getCritSplashRatio(buildStage: RouteBuildStage, critOverdriveSec: number, stats?: PlayerStats): number {
   if (buildStage !== 'matured' || critOverdriveSec <= 0) {
     return 0;
   }
-  return 0.45;
+  const baseRatio = 0.45;
+  const bonus = stats?.critSplashRadius ?? 0;
+  return baseRatio + bonus;
 }
 
 export function getPierceEchoCount(multishot: number, buildStage: RouteBuildStage): number {

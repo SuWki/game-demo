@@ -476,7 +476,7 @@ function formatModifierLabel(key: keyof StatModifiers, value: number): string {
     case 'dashPulseDamage':
       return `脉冲伤害 ${sign}${Math.round(value)}`;
     case 'dashInvulnerability':
-      return `无伤窗口 ${seconds(value)}`;
+      return `无伤时间 ${seconds(value)}`;
     case 'regeneration':
       return `每10秒回复 ${sign}${Math.round(value * 10)}`;
     default:
@@ -1337,7 +1337,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-aim',
     name: '聚焦瞄准',
-    description: '命中时概率触发高伤，适合抓短窗爆发',
+    description: '命中时概率触发高伤，适合抓短时机爆发',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -1355,15 +1355,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveCritBonus: 0.03,
+        },
       },
     ],
   },
   {
     id: 'crit-primer',
     name: '升温预热',
-    description: '命中时概率触发高伤，适合抓短窗爆发',
+    description: '命中时概率触发高伤，适合抓短时机爆发',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -1381,8 +1383,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          flawDurationBonus: 0.15,
+        },
       },
     ],
   },
@@ -1408,16 +1412,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          flawDurationBonus: 0.25,
+        },
       },
     ],
   },
@@ -1443,16 +1441,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveDurationBonus: 0.3,
+        },
       },
     ],
   },
@@ -1480,8 +1472,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveCritBonus: 0.05,
+        },
       },
     ],
   },
@@ -1508,19 +1502,21 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.12,
+        },
       },
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'heal',
+        amount: 6,
       },
     ],
   },
   {
     id: 'crit-reroute-spark',
     name: '借火切入',
-    description: '火力、暴击与弹速提升，并修复损伤',
+    description: '超频期间额外暴击率+4%，修复损伤',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
@@ -1542,9 +1538,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.045,
-          critMultiplier: 0.14,
-          projectileSpeed: 16,
+          critOverdriveCritBonus: 0.04,
         },
       },
       {
@@ -1564,7 +1558,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-reroute-feed',
     name: '借焰续拍',
-    description: '暴击提升，并修复损伤',
+    description: '破绽持续时间+20%，修复损伤',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
@@ -1586,8 +1580,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.055,
-          critMultiplier: 0.22,
+          flawDurationBonus: 0.2,
         },
       },
       {
@@ -1627,8 +1620,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.08,
+        },
       },
     ],
   },
@@ -1687,8 +1682,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          flawDurationBonus: 0.18,
+        },
       },
     ],
   },
@@ -1714,8 +1711,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveCritBonus: 0.04,
+        },
       },
     ],
   },
@@ -1744,8 +1743,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveDurationBonus: 0.22,
+        },
       },
     ],
   },
@@ -1773,8 +1774,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.15,
+          critOverdriveCritBonus: 0.06,
+        },
       },
     ],
   },
@@ -1802,8 +1806,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          flawDurationBonus: 0.2,
+          critOverdriveCritBonus: 0.05,
+        },
       },
     ],
   },
@@ -1831,8 +1838,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveDurationBonus: 0.35,
+        },
       },
     ],
   },
@@ -1861,8 +1870,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.1,
+          flawDurationBonus: 0.12,
+        },
       },
     ],
   },
@@ -1888,8 +1900,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveCritBonus: 0.08,
+        },
       },
     ],
   },
@@ -1915,8 +1929,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.18,
+        },
       },
     ],
   },
@@ -1941,8 +1957,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critOverdriveCritBonus: 0.06,
+          critOverdriveDurationBonus: 0.4,
+        },
       },
     ],
   },
@@ -1967,8 +1986,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.05,
+        },
       },
     ],
   },
@@ -1993,8 +2014,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.08,
+        },
       },
     ],
   },
@@ -2019,8 +2042,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceCooldownRefundBonus: 0.005,
+        },
       },
     ],
   },
@@ -2046,16 +2071,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.12,
+        },
       },
     ],
   },
@@ -2081,16 +2100,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.06,
+          crackSpreadRadius: 0.06,
+        },
       },
     ],
   },
@@ -2118,8 +2132,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceCooldownRefundBonus: 0.008,
+        },
       },
     ],
   },
@@ -2146,19 +2162,21 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.15,
+        },
       },
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'heal',
+        amount: 6,
       },
     ],
   },
   {
     id: 'pierce-reroute-seam',
     name: '借线破层',
-    description: '穿透与弹道强化',
+    description: '回响伤害+8%，修复损伤',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2177,6 +2195,16 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       excludeFromFinalPrep: true,
     },
     effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.08,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 6,
+      },
       {
         type: 'route',
         routeId: 'pierce',
@@ -2210,12 +2238,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.06,
+        },
       },
     ],
   },
@@ -2242,19 +2268,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.1,
+        },
       },
     ],
   },
   {
     id: 'pierce-riftbloom',
     name: '裂面回响',
-    description: '贯穿裂纹目标后，下一次裂纹扩散范围略增（对精英/Boss有倍率限制）',
+    description: '裂纹扩散范围强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2275,8 +2299,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.25,
+          pierceEchoDamageBonus: 0.1,
+        },
       },
     ],
   },
@@ -2304,8 +2331,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'crit',
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.2,
+          flawDurationBonus: 0.15,
+        },
       },
     ],
   },
@@ -2333,8 +2363,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.12,
+        },
       },
     ],
   },
@@ -2359,12 +2391,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.04,
+        },
       },
     ],
   },
@@ -2390,12 +2420,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.14,
+        },
       },
     ],
   },
@@ -2424,15 +2452,18 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.05,
+          crackSpreadRadius: 0.08,
+        },
       },
     ],
   },
   {
     id: 'pierce-floodgate',
     name: '裂层清账',
-    description: '裂纹扩散时，对同线后方敌人追加小范围裂纹伤害（精英/Boss伤害受限）',
+    description: '裂纹扩散追加后方伤害',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2453,12 +2484,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.2,
+          pierceEchoDamageBonus: 0.08,
+        },
       },
     ],
   },
@@ -2486,8 +2516,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.09,
+        },
       },
     ],
   },
@@ -2515,8 +2547,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.25,
+        },
       },
     ],
   },
@@ -2544,8 +2578,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceCooldownRefundBonus: 0.01,
+        },
       },
     ],
   },
@@ -2571,8 +2607,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.18,
+        },
       },
     ],
   },
@@ -2601,8 +2639,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.07,
+        },
       },
     ],
   },
@@ -2628,8 +2668,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.22,
+        },
       },
     ],
   },
@@ -2654,8 +2696,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.2,
+          pierceEchoDamageBonus: 0.12,
+        },
       },
     ],
   },
@@ -2680,8 +2725,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.08,
+        },
       },
     ],
   },
@@ -2706,8 +2753,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashGrazeRadiusBonus: 6,
+        },
       },
     ],
   },
@@ -2732,15 +2781,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.12,
+        },
       },
     ],
   },
   {
     id: 'dash-slipstream',
     name: '换位余程',
-    description: '穿梭冷却与无伤窗口强化',
+    description: '穿梭冷却与无伤时间强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -2759,16 +2810,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.12,
+          dashGrazeRadiusBonus: 5,
+        },
       },
     ],
   },
@@ -2797,30 +2843,20 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 14,
-          dashInterval: -0.28,
-          dashInvulnerability: 0.05,
-          dashPulseDamage: 4,
+          dashCounterDamageBonus: 0.18,
+          dashGrazeRadiusBonus: 8,
         },
       },
       {
         type: 'heal',
-        amount: 8,
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
+        amount: 6,
       },
     ],
   },
   {
     id: 'dash-reroute-cutin',
     name: '偏帧切入',
-    description: '换一种流派接法，附带少量恢复',
+    description: '脉冲充能速度+15%，修复损伤',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2842,9 +2878,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 12,
-          dashInterval: -0.22,
-          dashInvulnerability: 0.04,
+          dashChargeSpeed: 0.15,
         },
       },
       {
@@ -2886,29 +2920,19 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 12,
-          dashInterval: -0.35,
-          dashPulseDamage: 5.5,
+          dashGrazeRadiusBonus: 10,
         },
       },
       {
         type: 'heal',
         amount: 6,
       },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
     ],
   },
   {
     id: 'pierce-prism',
     name: '棱镜破轨',
-    description: '贯穿裂纹目标后，下一次裂纹扩散范围略增（对精英/Boss有倍率限制）',
+    description: '裂纹扩散范围强化',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2929,15 +2953,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'pierce',
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.3,
+        },
       },
     ],
   },
   {
     id: 'dash-loop',
     name: '净帧循环',
-    description: '缩短穿梭冷却并延长无伤窗口，更频繁触发相位脉冲',
+    description: '缩短穿梭冷却并延长无伤时间，更频繁触发相位脉冲',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -2956,8 +2982,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.1,
+          dashGrazeRadiusBonus: 6,
+        },
       },
     ],
   },
@@ -2983,15 +3012,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.14,
+        },
       },
     ],
   },
   {
     id: 'dash-return-hold',
     name: '回线留窗',
-    description: '穿梭冷却与无伤窗口强化',
+    description: '穿梭冷却与无伤时间强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3013,8 +3044,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.08,
+          dashCounterDamageBonus: 0.1,
+        },
       },
     ],
   },
@@ -3042,15 +3076,18 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.2,
+          dashGrazeRadiusBonus: 12,
+        },
       },
     ],
   },
   {
     id: 'dash-retrace-beat',
     name: '回线追拍',
-    description: '穿梭脉冲与无伤窗口强化',
+    description: '穿梭脉冲与无伤时间强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3071,8 +3108,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.1,
+          dashCounterDamageBonus: 0.12,
+        },
       },
     ],
   },
@@ -3100,15 +3140,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.15,
+        },
       },
     ],
   },
   {
     id: 'dash-return-snap',
     name: '回摆取窗',
-    description: '穿梭冷却与无伤窗口强化',
+    description: '穿梭冷却与无伤时间强化',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3130,8 +3172,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.08,
+          dashGrazeRadiusBonus: 8,
+        },
       },
     ],
   },
@@ -3160,29 +3205,19 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'stats',
         modifiers: {
-          moveSpeed: 14,
-          dashInterval: -0.18,
-          dashPulseDamage: 3,
+          dashChargeSpeed: 0.1,
         },
       },
       {
         type: 'heal',
         amount: 6,
       },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
     ],
   },
   {
     id: 'dash-rethread',
     name: '回线续拍',
-    description: '穿梭频率与脉冲伤害的短窗爆发组合',
+    description: '穿梭频率与脉冲伤害的短时机爆发组合',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3201,15 +3236,17 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.18,
+        },
       },
     ],
   },
   {
     id: 'dash-reentry',
     name: '回环汲能',
-    description: '穿梭脉冲、冷却与无伤窗口的强力组合',
+    description: '穿梭脉冲、冷却与无伤时间的强力组合',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3228,8 +3265,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.1,
+          dashCounterDamageBonus: 0.15,
+        },
       },
     ],
   },
@@ -3254,12 +3294,12 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashChargeSpeed: 0.12,
+          dashCounterDamageBonus: 0.12,
+          dashGrazeRadiusBonus: 10,
+        },
       },
     ],
   },
@@ -3287,84 +3327,86 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     },
     effects: [
       {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.22,
+          dashGrazeRadiusBonus: 15,
+        },
       },
     ],
   },
 ];
 
 const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
-  'crit-aim': '开启暴击流：命中有概率打出高伤，并给敌人留下破绽。',
-  'crit-primer': '开启暴击流：命中有概率打出高伤，并给敌人留下破绽。',
-  'crit-afterglow': '破绽留得更久，更容易连续打同一个敌人并引爆。',
-  'crit-heat-latch': '暴击流推进：提高破绽连击的稳定性。',
-  'crit-flare-path': '暴击流推进：更适合追着同一目标打出连续破绽。',
-  'crit-sidechannel': '转向暴击流：获得暴击流进度，开始围绕破绽输出。',
-  'crit-reroute-spark': '转向暴击流：获得暴击流进度，补足破绽连击。',
-  'crit-reroute-feed': '转向暴击流：获得暴击流进度，让暴击更容易接上。',
-  'crit-branch-ignite': '暴击流推进：更容易给目标叠破绽，准备三层爆发。',
-  'crit-embershard': '破绽爆发时会炸到附近敌人，对精英和Boss效果较弱。',
-  'crit-burst': '暴击流推进：提高连续暴击的成型速度。',
-  'crit-sparkline': '暴击流推进：更适合盯住一个目标连续输出。',
-  'crit-linekeep': '暴击流推进：让破绽链更容易维持。',
-  'crit-crownfire': '破绽爆发后，下一次暴击会更痛。',
-  'crit-ember-rail': '暴击流承接：更适合把破绽打满后收掉目标。',
-  'crit-redline': '暴击流承接：提高短时间压血能力。',
-  'crit-heat-rake': '暴击流承接：让破绽目标更容易被追击。',
-  'crit-heat': '暴击流收束：强化破绽爆发的单体输出。',
-  'crit-cascade': '暴击流收束：破绽爆发后更容易继续清场。',
-  'crit-superheat': '暴击流收束：把破绽连击集中成更强爆发。',
-  'crit-finish': '暴击流终局：围绕破绽爆发完成最后输出。',
+  // 暴击流 - 破绽机制
+  'crit-aim': '命中时概率留下破绽标记',
+  'crit-primer': '命中时概率留下破绽标记',
+  'crit-afterglow': '破绽标记持续时间延长',
+  'crit-heat-latch': '击破破绽后更容易连续触发',
+  'crit-flare-path': '连续命中更容易叠加破绽',
+  'crit-sidechannel': '破绽触发概率和爆发伤害提升',
+  'crit-reroute-spark': '超频状态下暴击强化，修复损伤',
+  'crit-reroute-feed': '破绽机制效率提升，修复损伤',
+  'crit-branch-ignite': '破绽叠加更快，准备多层爆发',
+  'crit-embershard': '破绽爆发会波及附近敌人',
+  'crit-burst': '连续破绽更容易成型',
+  'crit-sparkline': '更容易盯住目标连续叠加',
+  'crit-linekeep': '破绽链维持更稳定',
+  'crit-crownfire': '破绽爆发后，下一次爆发更强',
+  'crit-ember-rail': '多层破绽爆发伤害更高',
+  'crit-redline': '短时间内压制能力更强',
+  'crit-heat-rake': '破绽目标追击更容易',
+  'crit-heat': '破绽爆发单体输出强化',
+  'crit-cascade': '破绽爆发后更容易继续清场',
+  'crit-superheat': '破绽连击集中成更强爆发',
+  'crit-finish': '破绽爆发完成最后输出',
 
-  'pierce-core': '开启穿透流：子弹可继续打后方敌人，并给穿透目标留下裂纹。',
-  'pierce-rail': '开启穿透流：子弹穿过敌人后继续命中后排，适合打成一条线的敌人。',
-  'pierce-seamline': '开启穿透流：穿透命中会留下裂纹，连续命中裂纹可触发扩散。',
-  'pierce-vector': '穿透流推进：更容易打到后排敌人并叠裂纹。',
-  'pierce-seamkeep': '裂纹留得更久，方便继续用穿透命中叠层。',
-  'pierce-shearline': '穿透流推进：提高连续穿透和裂纹扩散的稳定性。',
-  'pierce-sidechannel': '转向穿透流：获得穿透流进度，开始围绕裂纹扩散输出。',
-  'pierce-reroute-seam': '转向穿透流：获得穿透流进度，补足裂纹连击。',
-  'pierce-reroute-ledger': '转向穿透流：获得穿透流进度，让后排敌人更容易被打到。',
-  'pierce-sidestitch': '转向穿透流：获得穿透流进度，提升穿线收益。',
-  'pierce-riftbloom': '裂纹扩散范围变大，对精英和Boss效果较弱。',
-  'pierce-fan': '穿透流推进：更容易用一发子弹打穿多名敌人。',
-  'pierce-relay-spine': '穿透流承接：强化后排连锁命中。',
-  'pierce-ledger-fanout': '穿透流承接：让裂纹扩散更容易覆盖敌群。',
-  'pierce-floodgate': '裂纹扩散时会追加一段后方伤害，对精英和Boss效果较弱。',
-  'pierce-seam-ledger': '穿透流承接：提高裂纹目标的连续命中收益。',
-  'pierce-echo': '穿透流承接：提高穿透命中后的连锁效率。',
-  'pierce-ripple': '穿透流承接：让裂纹扩散更容易传到后方。',
-  'pierce-ledger-line': '穿透流承接：强化一条线上的清怪能力。',
-  'pierce-bloom': '穿透流收束：裂纹扩散更适合处理密集敌群。',
-  'pierce-chain': '穿透流终局：围绕裂纹扩散完成清线。',
-  'pierce-prism': '裂纹扩散范围变大，适合处理密集敌群。',
+  // 穿透流 - 裂纹机制
+  'pierce-core': '子弹可穿透命中后排',
+  'pierce-rail': '穿透命中留下裂纹路径',
+  'pierce-seamline': '裂纹触发扩散机制',
+  'pierce-vector': '更容易命中后排并叠加裂纹',
+  'pierce-seamkeep': '裂纹持续时间延长',
+  'pierce-shearline': '穿透和裂纹扩散更稳定',
+  'pierce-sidechannel': '裂纹扩散范围和效率提升',
+  'pierce-reroute-seam': '裂纹回响伤害提升，修复损伤',
+  'pierce-reroute-ledger': '穿透后排命中强化，修复损伤',
+  'pierce-sidestitch': '穿透后排收益更高',
+  'pierce-riftbloom': '裂纹扩散范围扩大',
+  'pierce-fan': '一发穿透多名敌人',
+  'pierce-relay-spine': '后排连锁命中强化',
+  'pierce-ledger-fanout': '裂纹扩散覆盖敌群',
+  'pierce-floodgate': '裂纹扩散追加后方伤害',
+  'pierce-seam-ledger': '裂纹目标连续命中收益更高',
+  'pierce-echo': '穿透命中后回响效率更高',
+  'pierce-ripple': '裂纹扩散更容易传到后方',
+  'pierce-ledger-line': '一条线上清怪能力强化',
+  'pierce-bloom': '裂纹扩散适合密集敌群',
+  'pierce-chain': '裂纹扩散完成清线',
+  'pierce-prism': '裂纹扩散范围扩大',
 
-  'dash-brush': '开启穿梭流：自动脉冲命中敌人会叠层，三层后触发回切反打。',
-  'dash-feint': '开启穿梭流：自动脉冲命中敌人后，开始积累回切反打。',
-  'dash-lanebreak': '开启穿梭流：靠自动脉冲叠层，触发短时间反打窗口。',
-  'dash-phasebank': '穿梭流承接：更频繁触发自动脉冲。',
-  'dash-cutback': '穿梭流收束：强化三层后的回切反打。',
-  'dash-slipstream': '穿梭流推进：缩短自动脉冲等待时间，并增加短暂无伤。',
-  'dash-sidechannel': '转向穿梭流：获得穿梭流进度，开始围绕自动脉冲叠层。',
-  'dash-reroute-cutin': '转向穿梭流：获得穿梭流进度，更快进入脉冲节奏。',
-  'dash-reroute-recall': '转向穿梭流：获得穿梭流进度，补足回切反打。',
-  'dash-loop': '穿梭流推进：自动脉冲更频繁，并带更短的安全窗口。',
-  'dash-sidestep-bank': '脉冲触发后的短时间内，下一次命中更容易叠层。',
-  'dash-return-hold': '穿梭流承接：延长脉冲后的安全时间。',
-  'dash-afterimage': '回切触发后留下残影，对附近敌人造成小伤害。',
-  'dash-retrace-beat': '穿梭流承接：提高脉冲后的反打稳定性。',
-  'dash-counterline': '穿梭流承接：让三层脉冲后的反击更明显。',
-  'dash-return-snap': '穿梭流承接：更快进入下一次自动脉冲。',
-  'dash-rebound-window': '转向穿梭流：获得穿梭流进度，补足短窗反打。',
-  'dash-rethread': '穿梭流收束：缩短脉冲节奏，并提高反打伤害。',
-  'dash-reentry': '穿梭流收束：强化脉冲、回切和短暂无伤。',
-  'dash-anchor': '穿梭流终局：围绕自动脉冲和回切反打完成收束。',
-  'dash-zero-window': '三层脉冲触发后，短时间内打被标记敌人会追加伤害。',
+  // 穿梭流 - 脉冲机制
+  'dash-brush': '自动脉冲命中叠层，满层后反击',
+  'dash-feint': '自动脉冲积累反击层数',
+  'dash-lanebreak': '脉冲叠层触发短时间反击',
+  'dash-phasebank': '自动脉冲触发更频繁',
+  'dash-cutback': '满层脉冲后的反击更强',
+  'dash-slipstream': '脉冲间隔缩短，附带无伤时间',
+  'dash-sidechannel': '脉冲频率和反击伤害提升',
+  'dash-reroute-cutin': '脉冲充能更快，修复损伤',
+  'dash-reroute-recall': '脉冲反击强化，修复损伤',
+  'dash-loop': '脉冲更频繁，反击时机更短',
+  'dash-sidestep-bank': '脉冲触发后更容易叠层',
+  'dash-return-hold': '脉冲后安全时间延长',
+  'dash-afterimage': '反击触发残影伤害附近敌人',
+  'dash-retrace-beat': '脉冲反击稳定性更高',
+  'dash-counterline': '满层脉冲反击更明显',
+  'dash-return-snap': '更快进入下一次脉冲',
+  'dash-rebound-window': '脉冲频率和反击伤害提升',
+  'dash-rethread': '脉冲节奏缩短，反击更强',
+  'dash-reentry': '脉冲反击和无伤时间强化',
+  'dash-anchor': '脉冲反击完成收束',
+  'dash-zero-window': '满层脉冲后打击标记敌人追加伤害',
 };
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
