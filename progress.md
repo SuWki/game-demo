@@ -1579,3 +1579,28 @@ TODO
 - 更新src/data/battleTemplates.ts添加6个完整配置
 - 更新src/data/nodes.ts添加节点蓝图
 - 测试验证新关卡的平衡性和体验
+2026-05-10
+- 修复一次中途引入的开始游戏阻断：HUD 倒计时改从战斗模板读取 winCondition，npm run build 与 full-flow QA 均通过。
+- 本轮 P0 体验修复已覆盖：升级全屏白闪改玩家周围柔光、levelUpReady 独立提示音、HUD 顶部去掉设计说明行、奖励强化卡加“通关奖励”、精英/Boss 血条标签、穿梭文案移除“不需要按键”、路线牌同一张不可重复选择。
+- 修复精英护卫不出现的根因：护卫计数只统计 role === 'escort'，不再让普通怪占用护卫名额。
+- Boss 行为回调：主 Boss 模板更偏 screened/kiting，并在 updateEliteEnemy 加入近距离反顶人后撤，避免 Boss 贴脸堵住玩家进安全区。
+- 验证：npm run build 通过；qa-current-version 通过 consoleErrors=[] resultSeen=true；路线审计硬违规 0 / 超预算 0；boss-hunt 定向 QA 通过并采到安全区数据。
+TODO
+- 用户需要实机确认：升级柔光是否不刺眼、奖励强化提示是否清楚、精英/Boss 标签是否可读、Boss 是否仍有贴脸顶人情况、护卫恢复后精英压力是否合适。
+
+2026-05-18
+- 流派强化机制改造：将暴击流、穿透流、穿梭流所有 type: 'route' 进度效果改为 type: 'stats' 机制属性
+- 新增机制属性：critOverdriveCritBonus、critSplashRadius、flawDurationBonus、critOverdriveDurationBonus、pierceEchoDamageBonus、crackSpreadRadius、pierceCooldownRefundBonus、dashChargeSpeed、dashCounterDamageBonus、dashGrazeRadiusBonus
+- 重写 ROUTE_DESCRIPTION_OVERRIDES：64张路线牌描述全部改为纯机制描述，不再提及属性数值
+- 文本规范实施：
+  - "窗口"统一改为"时间"（无伤窗口→无伤时间）
+  - "短窗"统一改为"短时机"（短窗爆发→短时机爆发）
+  - "反击窗口"→"反击时机"
+  - 简化过长描述："贯穿裂纹目标后...（对精英/Boss有倍率限制）"→"裂纹扩散范围强化"
+- 创建文本规范文档 doc/10_设计文档/玩家可见文本规范.md
+- 更新设计基线与约束文档，添加文本规范引用
+- 创建本轮复盘 doc/30_持续优化/开发复盘/2026-05-18_流派强化文本规范实施.md
+- 验证：npm run build 通过
+
+TODO
+- 用户需要实机确认：各流派强化是否正常触发、机制描述是否易懂、数值平衡是否合理

@@ -56,7 +56,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '歼灭行动',
-        description: '击破指定数量敌人，清场越快压力越低',
+        description: '消灭敌人',
         templateCandidates: [
           { templateId: 'elimination', weight: 2.6 },
           { templateId: 'elimination-pincer', weight: 1.4 },
@@ -74,7 +74,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '侧压试飞',
-        description: '敌人从侧翼包抄，考验你的机动能力',
+        description: '敌人侧面包抄',
         templateCandidates: [
           { templateId: 'elimination-pincer', weight: 1.8 },
           { templateId: 'elimination', weight: 1.3 },
@@ -96,7 +96,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '厚线突围',
-        description: '密集敌群正面压来，需要稳住阵线清理',
+        description: '敌人密集正面进攻',
         templateCandidates: [
           { templateId: 'elimination-sweep', weight: 2 },
           { templateId: 'elimination', weight: 1 },
@@ -117,7 +117,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '火线试压',
-        description: '远程火力封锁航线，必须灵活走位应对',
+        description: '远程敌人火力封锁',
         templateCandidates: [
           { templateId: 'elimination-crossline', weight: 2.1 },
           { templateId: 'elimination-pincer', weight: 1.1 },
@@ -139,7 +139,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '方向定标',
-        description: '更容易补当前流派相关强化',
+        description: '强化当前流派',
         selection: {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
@@ -155,7 +155,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '机体整备',
-        description: '更偏生存、机动、容错',
+        description: '提升生存和机动',
         selection: {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.78,
@@ -171,7 +171,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '系统改写',
-        description: '改变玩法方式的异常事件',
+        description: '改变玩法的特殊事件',
         selection: {
           baseWeight: 1.8,
           soloMultiplier: 0.25,
@@ -184,7 +184,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '风险授权',
-        description: '拿收益但带明显代价的异常',
+        description: '有风险也有收益',
         selection: {
           baseWeight: 2.1,
           soloMultiplier: 0.36,
@@ -197,7 +197,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '流派混接',
-        description: '改变流派之间的联动方式',
+        description: '改变流派之间的配合',
         selection: {
           baseWeight: 1.45,
           soloMultiplier: 0.2,
@@ -220,7 +220,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '精英压制',
-        description: '击败强化敌人，注意它的特殊行动',
+        description: '击败被强化的敌人',
         templateCandidates: [
           { templateId: 'elite', weight: 2.4 },
           { templateId: 'elite-lockdown', weight: 1.5 },
@@ -244,7 +244,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '压线续热',
-        description: '敌军持续压制，需要保持火力输出',
+        description: '敌人持续压制',
         templateCandidates: [
           { templateId: 'elite', weight: 1.6 },
           { templateId: 'elite-lockdown', weight: 1.2 },
@@ -266,7 +266,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '封锁突破',
-        description: '敌舰被护卫掩护，先击破护卫再攻击本体',
+        description: '先击破护卫',
         templateCandidates: [
           { templateId: 'elite-screen', weight: 1.8 },
           { templateId: 'elite', weight: 1.3 },
@@ -290,7 +290,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '脉冲压线',
-        description: '敌舰封锁区域，利用机动性寻找反击机会',
+        description: '靠机动反击',
         templateCandidates: [
           { templateId: 'elite-lockdown', weight: 1.8 },
           { templateId: 'elite-vice', weight: 1.35 },
@@ -312,7 +312,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '拖场绞锁',
-        description: '敌舰与护卫协同作战，一场艰难的持久战',
+        description: '持久战',
         templateCandidates: [
           { templateId: 'elite-vice', weight: 2.2 },
           { templateId: 'elite-screen', weight: 0.9 },
@@ -334,7 +334,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '壁垒拆解',
-        description: '敌舰部署重型护盾，突破防御是关键',
+        description: '突破重甲防御',
         templateCandidates: [
           { templateId: 'elite-bulwark', weight: 2.1 },
           { templateId: 'elite-screen', weight: 1 },
@@ -356,7 +356,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '拆屏挂账',
-        description: '敌军轮番进攻，撕开防线后逐个击破',
+        description: '撕开防线，逐个击破',
         templateCandidates: [
           { templateId: 'elite-bulwark', weight: 1.7 },
           { templateId: 'elite-screen', weight: 1.25 },
@@ -378,7 +378,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '方向定标',
-        description: '更容易补当前流派相关强化',
+        description: '强化当前流派',
         selection: {
           baseWeight: 3.8,
           soloMultiplier: 0.92,
@@ -391,7 +391,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '机体整备',
-        description: '更偏生存、机动、容错',
+        description: '提升生存和机动',
         selection: {
           baseWeight: 3.4,
           soloMultiplier: 0.9,
@@ -409,7 +409,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '火力校准',
-        description: '更偏输出但不直接超模',
+        description: '基础能力提升',
         selection: {
           baseWeight: 1.5,
           soloMultiplier: 0.86,
@@ -422,7 +422,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '改道整备',
-        description: '战术调整：重新评估发展方向',
+        description: '重新选择方向',
         selection: {
           baseWeight: 2.7,
           soloMultiplier: 0.9,
@@ -435,7 +435,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '并轨整备',
-        description: '混合升级：融合不同战术风格',
+        description: '融合多种战术',
         selection: {
           baseWeight: 2.25,
           soloMultiplier: 0.88,
@@ -448,7 +448,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '转折校准',
-        description: '转折点：坚持当前打法还是转变战术',
+        description: '坚持或改变',
         selection: {
           baseWeight: 2.15,
           soloMultiplier: 0.88,
@@ -466,7 +466,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '系统改写',
-        description: '改变玩法方式的异常事件',
+        description: '改变玩法的特殊事件',
         selection: {
           baseWeight: 2.9,
           soloMultiplier: 0.45,
@@ -479,7 +479,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '偏航裂口',
-        description: '航线偏移：可能改变后续路径',
+        description: '航线发生偏移',
         selection: {
           baseWeight: 3.1,
           soloMultiplier: 0.42,
@@ -492,7 +492,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '侧频噪点',
-        description: '频率干扰：航线出现异常波动',
+        description: '受到频率干扰',
         selection: {
           baseWeight: 2.15,
           soloMultiplier: 0.46,
@@ -505,7 +505,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '蓄势压制',
-        description: '周期性护盾窗口，考验爆发时机把控',
+        description: '敌人有护盾间隙',
         templateId: 'elite-pressure-hold',
         difficultyScale: 1.22,
         selection: {
@@ -525,7 +525,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '感染压制',
-        description: '密集护卫群，考验印记传播战术',
+        description: '击杀带印记的护卫',
         templateId: 'elite-contagion',
         difficultyScale: 1.23,
         selection: {
@@ -545,7 +545,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'mid',
         title: '夹道压制',
-        description: '高速弹幕封锁，考验连续机动能力',
+        description: '连续机动躲避',
         templateId: 'elite-gauntlet',
         difficultyScale: 1.24,
         selection: {
@@ -565,7 +565,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '改道失真',
-        description: '改道机会：是否要改变航线',
+        description: '是否改变方向',
         selection: {
           baseWeight: 2.8,
           soloMultiplier: 0.48,
@@ -578,7 +578,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '相位裂缝',
-        description: '相位裂缝：不稳定的空间异常',
+        description: '空间异常',
         selection: {
           baseWeight: 2.15,
           soloMultiplier: 0.4,
@@ -591,7 +591,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '欠账裂纹',
-        description: '代价交易：付出代价换取收益',
+        description: '代价换收益',
         selection: {
           baseWeight: 2.35,
           soloMultiplier: 0.38,
@@ -604,7 +604,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '分叉噪井',
-        description: '分叉点：多条路径在此交汇',
+        description: '多条路径交汇',
         selection: {
           baseWeight: 2.25,
           soloMultiplier: 0.42,
@@ -617,7 +617,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '偏航试拍',
-        description: '预兆信号：提前感知后续变化',
+        description: '收到预兆信号',
         selection: {
           baseWeight: 2.18,
           soloMultiplier: 0.4,
@@ -640,7 +640,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '生存压制',
-        description: '撑过倒计时，重点是走位和保命',
+        description: '坚持到时间结束',
         templateCandidates: [
           { templateId: 'survival', weight: 1.8 },
           { templateId: 'survival-crossfire', weight: 0.45 },
@@ -660,7 +660,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '夹道求生',
-        description: '狭路相逢：在狭窄空间中突围',
+        description: '在狭窄空间突围',
         templateCandidates: [
           { templateId: 'survival-gauntlet', weight: 1.8 },
           { templateId: 'survival-rush', weight: 1.3 },
@@ -682,7 +682,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '尾段突压',
-        description: '高速突袭：敌军快速逼近',
+        description: '高速敌人逼近',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 2 },
           { templateId: 'survival', weight: 1 },
@@ -705,7 +705,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '交火夹层',
-        description: '交叉火力：被夹在敌军火力之间',
+        description: '受到交叉火力夹击',
         templateCandidates: [
           { templateId: 'survival-crossfire', weight: 1.9 },
           { templateId: 'survival-gauntlet', weight: 0.8 },
@@ -727,7 +727,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '筛火求生',
-        description: '火力网：远近敌军轮番进攻',
+        description: '远近敌人轮流进攻',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 2 },
           { templateId: 'survival-crossfire', weight: 1 },
@@ -750,7 +750,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '热区续压',
-        description: '持续压制：保持火力等待爆发时机',
+        description: '等待高伤时机',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.45 },
           { templateId: 'survival', weight: 1.15 },
@@ -772,7 +772,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '拆线回收',
-        description: '层层防御：突破多重防线',
+        description: '突破多层防线',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 1.4 },
           { templateId: 'survival-gauntlet', weight: 1.25 },
@@ -794,7 +794,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '回摆追回',
-        description: '反击时机：利用机动性反守为攻',
+        description: '靠机动反守为攻',
         templateCandidates: [
           { templateId: 'survival-crossfire', weight: 1.35 },
           { templateId: 'survival-rush', weight: 1.2 },
@@ -816,7 +816,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '爆点追收',
-        description: '爆发时刻：积蓄火力一击制胜',
+        description: '积蓄火力一击制胜',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.6 },
           { templateId: 'survival', weight: 1.1 },
@@ -838,7 +838,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '裂面清账',
-        description: '贯穿攻势：穿透防线直击要害',
+        description: '穿透防线直击要害',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 1.55 },
           { templateId: 'survival-gauntlet', weight: 1.4 },
@@ -860,7 +860,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '回线反压',
-        description: '极限机动：在狭窄空间中反击',
+        description: '在狭窄空间反击',
         templateCandidates: [
           { templateId: 'survival-crossfire', weight: 1.5 },
           { templateId: 'survival-rush', weight: 1.35 },
@@ -882,7 +882,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '方向定标',
-        description: '更容易补当前流派相关强化',
+        description: '强化当前流派',
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.82,
@@ -893,8 +893,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-anchor',
         type: 'upgrade',
         phase: 'late',
-        title: '尾段稳压',
-        description: '最后调整：为决战做最后准备',
+        title: '后期稳压',
+        description: '为决战做准备',
         selection: {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.82,
@@ -906,7 +906,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '定势整备',
-        description: '战术定型：巩固当前战斗风格',
+        description: '巩固当前风格',
         selection: {
           baseWeight: 2.58,
           repeatTypeMultiplier: 0.8,
@@ -923,7 +923,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '收束筹码',
-        description: '收益兑现：获得强力升级',
+        description: '获得强力升级',
         selection: {
           baseWeight: 2.7,
           repeatTypeMultiplier: 0.82,
@@ -935,7 +935,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '稀有读数',
-        description: '稀有机遇：可能改变战局的升级',
+        description: '获得稀有强化',
         selection: {
           baseWeight: 2.05,
           repeatTypeMultiplier: 0.8,
@@ -947,7 +947,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '终拍定稿',
-        description: '终局定型：决定最终战斗方式',
+        description: '战斗方式最终定型',
         selection: {
           baseWeight: 2.15,
           repeatTypeMultiplier: 0.8,
@@ -959,7 +959,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '旁路归并',
-        description: '流派融合：整合不同战术体系',
+        description: '整合战术体系',
         selection: {
           baseWeight: 1.48,
           repeatTypeMultiplier: 0.8,
@@ -971,7 +971,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '风险授权',
-        description: '拿收益但带明显代价的异常',
+        description: '有风险也有收益',
         selection: {
           baseWeight: 2.9,
           soloMultiplier: 0.3,
@@ -984,7 +984,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '尾段押注',
-        description: '孤注一掷：沿{focusLabel}全力押注',
+        description: '全力押注一个方向',
         selection: {
           baseWeight: 3.02,
           soloMultiplier: 0.42,
@@ -997,7 +997,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '黑匣异常',
-        description: '未知信号：神秘的黑匣子数据',
+        description: '发现未知信号',
         selection: {
           baseWeight: 1.5,
           soloMultiplier: 0.26,
@@ -1010,7 +1010,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: 'Boss 阴影',
-        description: '首领气息：感受到强大敌人的威压',
+        description: '感受到首领威压',
         selection: {
           baseWeight: 1.6,
           soloMultiplier: 0.3,
@@ -1023,7 +1023,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '首领残响',
-        description: '首领回响：提前感知最终敌人',
+        description: '感受到首领回响',
         selection: {
           baseWeight: 1.7,
           soloMultiplier: 0.28,
@@ -1036,7 +1036,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '余辉偏折',
-        description: '多重选择：多条路径但充满风险',
+        description: '面临多重选择',
         selection: {
           baseWeight: 1.5,
           soloMultiplier: 0.3,
@@ -1049,7 +1049,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '并线残响',
-        description: '战术交汇：融合战术并预见首领',
+        description: '战术在此交汇',
         selection: {
           baseWeight: 1.34,
           soloMultiplier: 0.26,
@@ -1062,7 +1062,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '首领侧录',
-        description: '首领预兆：窥见最终战的端倪',
+        description: '发现首领预兆',
         selection: {
           baseWeight: 1.58,
           soloMultiplier: 0.26,
@@ -1075,7 +1075,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'late',
         title: '终段偏航',
-        description: '最后抉择：决战前的最终选择',
+        description: '面临最后抉择',
         selection: {
           baseWeight: 1.88,
           soloMultiplier: 0.28,
@@ -1094,7 +1094,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'finalPrep',
         title: '最终整备',
-        description: '最终整备：为决战做好准备',
+        description: '最终整备',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1105,7 +1105,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'finalPrep',
         title: 'Boss 预整备',
-        description: '决战准备：修补所有弱点',
+        description: '修补机体弱点',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1127,7 +1127,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '追猎首领',
-        description: '终局压迫战，观察安全窗并反击',
+        description: '终局压迫战',
         templateId: 'boss-hunt',
         difficultyScale: 1.38,
         selection: {
@@ -1142,7 +1142,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '锁域首领',
-        description: '终局压迫战，观察安全窗并反击',
+        description: '终局压迫战',
         templateId: 'boss-lockdown',
         difficultyScale: 1.39,
         selection: {
@@ -1157,7 +1157,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '屏卫首领',
-        description: '终局压迫战，观察安全窗并反击',
+        description: '终局压迫战',
         templateId: 'boss-bastion',
         difficultyScale: 1.4,
         selection: {
@@ -1172,7 +1172,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '处决首领',
-        description: '终局爆发战，把握虚弱窗口一击必杀',
+        description: '终局爆发战',
         templateId: 'boss-executioner',
         difficultyScale: 1.42,
         selection: {
@@ -1187,7 +1187,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '要塞首领',
-        description: '终局穿透战，贯穿多层防线直击要害',
+        description: '终局穿透战',
         templateId: 'boss-fortress',
         difficultyScale: 1.43,
         selection: {
@@ -1202,7 +1202,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '猎杀首领',
-        description: '终局机动战，极限走位反守为攻',
+        description: '终局机动战',
         templateId: 'boss-predator',
         difficultyScale: 1.44,
         selection: {
@@ -1389,7 +1389,7 @@ export function createOpeningBattleNode(): NodeOption {
       type: 'battle',
       phase: 'opening',
       title: '起始歼灭',
-      description: '开局战斗：消灭敌人开始征程',
+      description: '消灭出现的敌人',
       templateCandidates: [
         { templateId: 'elimination', weight: 2.8 },
         { templateId: 'elimination-pincer', weight: 1.1 },

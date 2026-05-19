@@ -1,7 +1,7 @@
-# unity学习
+# Auto-Shooter Demo
 
 #### Description
-学习中
+A node-based auto shooter game built with Phaser 3
 
 #### Software Architecture
 Software architecture description

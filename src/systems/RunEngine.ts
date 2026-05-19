@@ -1048,6 +1048,7 @@ export class RunEngine {
     battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.24);
     battle.pressurePatternPulseCount = 0;
     this.clearPressureSafeWindow(battle);
+    this.enqueueTip('安全区即将刷新');
 
     if (battle.encounterType === 'boss') {
       this.services.metrics.recordBossPhasePatternSeen(battle.templateId, phase.id, phase.label, phase.patternLabel);
@@ -1259,7 +1260,7 @@ export class RunEngine {
         battle.bossSafeWindowMoments += 1;
         this.refreshBossSafeWindowGrace(battle);
         this.clearBossSafeWindowBlockers(battle);
-        this.enqueueTip('安全区出现：进入蓝色区域');
+        this.enqueueTip('进入绿色安全区');
       }
 
       if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
@@ -1306,7 +1307,7 @@ export class RunEngine {
       battle.bossSafeWindowMoments += 1;
       this.refreshBossSafeWindowGrace(battle);
       this.clearBossSafeWindowBlockers(battle);
-      this.enqueueTip('安全区出现：进入蓝色区域');
+      this.enqueueTip('进入绿色安全区');
     }
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
@@ -2897,6 +2898,11 @@ export class RunEngine {
     battle.enemySpawnTimerSec -= dt;
     battle.eliteSupportCooldownSec = Math.max(0, battle.eliteSupportCooldownSec - dt);
     const regularEnemyCap = this.getRegularEnemyCap(battle);
+    // Defensive: ensure regularEnemyCap is a valid finite number
+    if (!Number.isFinite(regularEnemyCap)) {
+      // If cap calculation failed, use a safe default
+      return;
+    }
     const activeRegularEnemies = battle.enemies.filter((enemy) => !enemy.elite && enemy.hp > 0);
     const activeArchetypeCounts = this.countArchetypes(activeRegularEnemies);
     if (
@@ -3005,7 +3011,9 @@ export class RunEngine {
 
     let spawnedThisTick = 0;
     const spawnCounts = { ...activeArchetypeCounts };
-    while (battle.enemySpawnTimerSec <= 0) {
+    let spawnGuard = 0;
+    while (battle.enemySpawnTimerSec <= 0 && spawnGuard < 1000) {
+      spawnGuard += 1;
       battle.enemySpawnTimerSec += this.getEnemySpawnInterval(battle, template, battle.elapsedSec);
       if (regularEnemyCap !== null && battle.enemies.filter((enemy) => !enemy.elite).length >= regularEnemyCap) {
         break;
@@ -8782,21 +8790,37 @@ export class RunEngine {
     elapsedSec: number,
   ): number {
     const pressureMultiplier = this.getActivePressurePhase(battle)?.spawnIntervalMultiplier ?? 1;
-    return Math.max(
+    const baseInterval = getEnemySpawnInterval(template, this.getCurrentBattleIndex(), this.state.phase, elapsedSec);
+    const result = Math.max(
       0.18,
-      getEnemySpawnInterval(template, this.getCurrentBattleIndex(), this.state.phase, elapsedSec) * pressureMultiplier,
+      baseInterval * pressureMultiplier,
     );
+    // Defensive: ensure we always return a valid positive number
+    if (!Number.isFinite(result) || result <= 0) {
+      return 0.74; // Default spawn interval
+    }
+    return result;
   }
 
   private getRegularEnemyCap(battle: BattleState): number | null {
     const template = BATTLE_TEMPLATES[battle.templateId];
+    // Defensive: ensure template.regularEnemyCap is valid before division
+    const baseCap = template.regularEnemyCap;
+    if (!Number.isFinite(baseCap) || baseCap <= 0) {
+      return 9; // Default cap
+    }
     const eliteCapMultiplier =
-      template.eliteRule && battle.eliteAlive ? (template.eliteRule.regularEnemyCap ?? template.regularEnemyCap) / template.regularEnemyCap : 1;
-    return Math.max(
+      template.eliteRule && battle.eliteAlive ? (template.eliteRule.regularEnemyCap ?? baseCap) / baseCap : 1;
+    const result = Math.max(
       1,
       getRegularEnemyCap(template, this.getCurrentBattleIndex(), this.state.phase, eliteCapMultiplier) +
         (this.getActivePressurePhase(battle)?.regularEnemyCapBonus ?? 0),
     );
+    // Defensive: ensure result is valid
+    if (!Number.isFinite(result)) {
+      return 9; // Default cap
+    }
+    return result;
   }
 
   private getEnemyExperienceValue(battle: BattleState, isElite: boolean): number {

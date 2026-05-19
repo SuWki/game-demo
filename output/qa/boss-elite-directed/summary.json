@@ -1,17 +1,7 @@
 {
   "consoleErrors": [],
   "bossSnapshots": [],
-  "eliteSnapshots": [
-    {
-      "step": 55,
-      "templateId": "elite-vice",
-      "eliteAlive": false,
-      "bossFirelineCoverage": 0,
-      "bossSafeWindowMoments": 0
-    }
-  ],
-  "screenshots": [
-    "elite-55.png"
-  ],
+  "eliteSnapshots": [],
+  "screenshots": [],
   "audioSnapshots": []
 }

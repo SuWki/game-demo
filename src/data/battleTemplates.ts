@@ -33,7 +33,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   elimination: {
     id: 'elimination',
     name: '歼灭',
-    description: '清掉敌群，把前段经验和清怪节奏拉起来。',
+    description: '消灭敌人',
     durationSec: 25,
     spawnIntervalSec: 0.74,
     enemyHp: 17,
@@ -60,7 +60,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elimination-pincer': {
     id: 'elimination-pincer',
     name: '夹击歼灭',
-    description: '高速侧压更重，逼你更早换侧。',
+    description: '敌人从侧面接近',
     durationSec: 26,
     spawnIntervalSec: 0.68,
     enemyHp: 16,
@@ -87,7 +87,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elimination-sweep': {
     id: 'elimination-sweep',
     name: '扫线歼灭',
-    description: '厚体敌群横向压过来，更像一场清线突围。',
+    description: '厚血敌人横向逼近',
     durationSec: 28,
     spawnIntervalSec: 0.9,
     enemyHp: 26,
@@ -115,7 +115,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elimination-crossline': {
     id: 'elimination-crossline',
     name: '火线歼灭',
-    description: '早段就有远程火线插进来，更考基础换位和补线节奏。',
+    description: '有远程敌人出现',
     durationSec: 27,
     spawnIntervalSec: 0.7,
     enemyHp: 18,
@@ -143,7 +143,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   elite: {
     id: 'elite',
     name: '精英压制',
-    description: '更偏正面拆首领的中段检定。',
+    description: '击败精英敌人',
     durationSec: 31,
     spawnIntervalSec: 1.18,
     enemyHp: 23,
@@ -205,7 +205,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-vice': {
     id: 'elite-vice',
     name: '绞锁压制',
-    description: '低频绞锁模板。首领会不断补援，把中段拖成一场拆线硬仗。',
+    description: '精英会召唤援军',
     contentTier: 'rare',
     durationSec: 30,
     spawnIntervalSec: 0.96,
@@ -270,7 +270,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-lockdown': {
     id: 'elite-lockdown',
     name: '包围压制',
-    description: '更偏侧压封位的中段首领战，留给你整理空间更少。',
+    description: '敌人侧面包围',
     durationSec: 30,
     spawnIntervalSec: 1,
     enemyHp: 23,
@@ -334,7 +334,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-screen': {
     id: 'elite-screen',
     name: '掩护压制',
-    description: '首领会借屏卫和火线遮住本体，逼你先拆屏再收束。',
+    description: '先清理护卫',
     durationSec: 34,
     spawnIntervalSec: 1.14,
     enemyHp: 22,
@@ -398,7 +398,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-bulwark': {
     id: 'elite-bulwark',
     name: '壁垒压制',
-    description: '厚屏护卫会替首领顶线，更像一场拆壁垒再穿本体的中段硬仗。',
+    description: '先突破防线',
     durationSec: 33,
     spawnIntervalSec: 1.04,
     enemyHp: 24,
@@ -463,7 +463,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'boss-hunt': {
     id: 'boss-hunt',
     name: '正面压制',
-    description: '最终 Boss 会直接压上来，用明确的高压节奏收束整局。',
+    description: 'Boss正面进攻',
     encounterType: 'boss',
     durationSec: 38,
     spawnIntervalSec: 1.08,
@@ -563,7 +563,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'boss-lockdown': {
     id: 'boss-lockdown',
     name: '锁域首领',
-    description: '最终 Boss 会提早带着护卫压进来，把最后一段走位空间挤得更紧。',
+    description: 'Boss与护卫一同出现',
     encounterType: 'boss',
     durationSec: 37,
     spawnIntervalSec: 1,
@@ -665,7 +665,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'boss-bastion': {
     id: 'boss-bastion',
     name: '屏卫首领',
-    description: '最终 Boss 会借护卫与远程火线拖长对局，让最终关不再只是普通 elite 变体。',
+    description: 'Boss有护卫保护',
     encounterType: 'boss',
     durationSec: 39,
     spawnIntervalSec: 1.06,
@@ -784,7 +784,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'boss-executioner': {
     id: 'boss-executioner',
     name: '处决首领',
-    description: 'Boss会周期性进入狂暴和虚弱状态，必须在虚弱窗口爆发击杀',
+    description: '虚弱时全力输出',
     encounterType: 'boss',
     durationSec: 40,
     spawnIntervalSec: 1.1,
@@ -865,7 +865,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'boss-fortress': {
     id: 'boss-fortress',
     name: '要塞首领',
-    description: 'Boss被多层护卫墙保护，必须穿透防线才能击中本体',
+    description: '多层护卫保护',
     encounterType: 'boss',
     durationSec: 40,
     spawnIntervalSec: 0.95,
@@ -954,7 +954,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'boss-predator': {
     id: 'boss-predator',
     name: '猎杀首领',
-    description: 'Boss会主动追击并发射密集弹幕，只有持续Dash才能生存',
+    description: '追击并发射弹幕',
     encounterType: 'boss',
     durationSec: 38,
     spawnIntervalSec: 0.88,
@@ -1056,7 +1056,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   survival: {
     id: 'survival',
     name: '生存压制',
-    description: '基础后段求生段，重点看你能否在持续敌潮里稳住节奏。',
+    description: '靠走位保命',
     durationSec: 29,
     spawnIntervalSec: 0.48,
     enemyHp: 22,
@@ -1082,7 +1082,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-crossfire': {
     id: 'survival-crossfire',
     name: '交火求生',
-    description: '低频交火模板。两向火线会更频繁地逼你换边。',
+    description: '两个方向远程火力',
     contentTier: 'rare',
     durationSec: 24,
     spawnIntervalSec: 0.4,
@@ -1110,7 +1110,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-rush': {
     id: 'survival-rush',
     name: '紧逼生存',
-    description: '高速敌潮会不断贴脸，逼你在高压里抢回线窗口。',
+    description: '高速敌人不断逼近',
     durationSec: 23,
     spawnIntervalSec: 0.34,
     enemyHp: 22,
@@ -1136,7 +1136,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-gauntlet': {
     id: 'survival-gauntlet',
     name: '夹道求生',
-    description: '厚体敌群沿通道压来，空档更短，更像后段顶线求生。',
+    description: '重型敌人从通道进攻',
     durationSec: 27,
     spawnIntervalSec: 0.46,
     enemyHp: 27,
@@ -1163,7 +1163,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-sieve': {
     id: 'survival-sieve',
     name: '筛火求生',
-    description: '远程火线和高速怪轮换漏进来，更像后段补线与回线的持续检定。',
+    description: '远程与高速敌人交替出现',
     durationSec: 26,
     spawnIntervalSec: 0.42,
     enemyHp: 23,
@@ -1190,7 +1190,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-pressure-hold': {
     id: 'elite-pressure-hold',
     name: '蓄势压制',
-    description: '精英会周期性召唤护盾小怪，必须在护盾窗口期爆发击杀',
+    description: '护盾消失时进攻',
     contentTier: 'rare',
     durationSec: 35,
     spawnIntervalSec: 1.2,
@@ -1250,7 +1250,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-contagion': {
     id: 'elite-contagion',
     name: '感染压制',
-    description: '精英被密集护卫包围，击杀带印记的护卫可引发连锁崩溃',
+    description: '击杀有印记的护卫',
     contentTier: 'rare',
     durationSec: 33,
     spawnIntervalSec: 0.85,
@@ -1314,7 +1314,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-gauntlet': {
     id: 'elite-gauntlet',
     name: '夹道压制',
-    description: '精英会封锁区域并发射弹幕，必须频繁Dash穿梭才能生存',
+    description: '弹幕封锁区域',
     contentTier: 'rare',
     durationSec: 32,
     spawnIntervalSec: 0.9,

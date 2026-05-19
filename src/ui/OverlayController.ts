@@ -434,12 +434,12 @@ export class OverlayController {
     const isVictory = result.outcome === 'victory';
     const buildStageLabel =
       result.buildStage === 'unformed'
-        ? '未站稳'
+        ? '未成型'
         : result.buildStage === 'hinted'
-          ? '已出倾向'
+          ? '有倾向'
           : result.buildStage === 'committed'
-            ? '开始站稳'
-            : '已经成型';
+            ? '开始成型'
+            : '已成型';
     this.screenLayer.innerHTML = `
       <section class="screen-minimal result-screen space-combat-result-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
         <div class="space-scanlines" aria-hidden="true"></div>
@@ -792,7 +792,6 @@ export class OverlayController {
         <div class="route-context-copy route-context-rule">
           <span>选择规则</span>
           <strong>${optionCount} 个候选，选 1 个进入</strong>
-          <small>战斗可能出现多条路；强化和异常只给一条。</small>
         </div>
       </aside>
     `;
@@ -899,7 +898,7 @@ export class OverlayController {
           <span><small>风险类型</small><b>${this.getEventClassLabel(eventDef)}</b></span>
           <span><small>当前进度</small><b>${progress.progressLabel}</b></span>
         </div>
-        <div class="anomaly-warning-strip">收益与代价同级显示，确认前请看清处理结果</div>
+        <div class="anomaly-warning-strip">奖励与代价同时显示，确认前请看清处理结果</div>
       </aside>
     `;
   }
@@ -965,6 +964,12 @@ export class OverlayController {
   }
 
   private getRouteUpgradeReadableText(upgrade: UpgradeDefinition): string {
+    // 路线牌在 buildUpgradeChoice 中已经通过 ROUTE_DESCRIPTION_OVERRIDES 设置了描述
+    // 直接使用该描述，避免所有无 stats 的路线牌 fallback 到重复的默认描述
+    if (upgrade.description) {
+      return upgrade.description;
+    }
+
     const modifiers = upgrade.effects
       ?.filter((effect): effect is Extract<ContentEffect, { type: 'stats' }> => effect.type === 'stats')
       .reduce<NonNullable<Extract<ContentEffect, { type: 'stats' }>['modifiers']>>(
@@ -975,37 +980,37 @@ export class OverlayController {
     switch (upgrade.routeId) {
       case 'crit':
         if ((modifiers?.critChance ?? 0) > 0 && (modifiers?.critMultiplier ?? 0) > 0) {
-          return '更容易打出暴击，暴击打中后也更疼。';
+          return '更容易打出暴击，暴击伤害也更高。';
         }
         if ((modifiers?.critChance ?? 0) > 0) {
-          return '更容易打出暴击，适合抓精英和 Boss 的破绽。';
+          return '更容易打出暴击。';
         }
         if ((modifiers?.critMultiplier ?? 0) > 0) {
-          return '暴击打中后更疼，适合短时间爆发。';
+          return '暴击伤害更高。';
         }
-        return '暴击会留下橙色破绽，连续打中破绽能打出爆发。';
+        return '暴击命中造成更高伤害。';
       case 'pierce':
         {
           const pierceValue = modifiers?.pierce ?? 0;
           if (pierceValue > 0) {
-            return `子弹多穿过 ${Math.round(pierceValue)} 个敌人，适合打一排目标。`;
+            return `子弹多穿过 ${Math.round(pierceValue)} 个敌人。`;
           }
         }
         if ((modifiers?.projectileSpeed ?? 0) > 0) {
-          return '子弹飞得更快，穿透线更稳。';
+          return '子弹飞得更快。';
         }
-        return '穿透命中会在敌人身上留下蓝色裂纹。';
+        return '子弹可穿过敌人命中后排。';
       case 'dash':
         if ((modifiers?.dashInterval ?? 0) < 0) {
-          return '自动脉冲更快准备好，靠近敌人时更容易反打。';
+          return '自动脉冲间隔更短。';
         }
         if ((modifiers?.dashPulseDamage ?? 0) > 0) {
-          return '自动脉冲打中附近敌人时更有力。';
+          return '自动脉冲伤害更高。';
         }
         if ((modifiers?.dashInvulnerability ?? 0) > 0) {
-          return '自动脉冲触发后，短时间更安全。';
+          return '自动脉冲后无敌时间更长。';
         }
-        return '穿梭流会自动释放近身脉冲。';
+        return '靠近敌人时自动释放近身脉冲。';
       default:
         return upgrade.description;
     }
@@ -1134,26 +1139,26 @@ export class OverlayController {
       const template = node.templateId ? BATTLE_TEMPLATES[node.templateId] : null;
       const winType = template?.winCondition.type;
       if (winType === 'elite') {
-        return '击败精英本体即可过关，小怪只是干扰。';
+        return node.description || '击败精英本体过关';
       }
       if (winType === 'survive') {
-        return '撑到倒计时结束即可过关，不需要清完敌人。';
+        return node.description || '坚持到结束';
       }
       if (winType === 'kills') {
-        return `击败 ${template?.winCondition.target ?? '目标'} 个敌人即可过关，越快完成越赚。`;
+        return node.description || `击败 ${template?.winCondition.target ?? '目标'} 个敌人`;
       }
       return node.description;
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '拿完直接进 Boss。' : '补 1 项强化再继续。';
+      return node.isFinalPrep ? '拿完直接进 Boss' : '补 1 项强化再继续';
     }
     if (node.type === 'anomaly') {
-      return '做一次异常处理，拿当前这拍的变化。';
+      return '做一次异常处理';
     }
     if (node.type === 'boss') {
-      return '直接进入首领战。';
+      return '直接进入首领战';
     }
-    return '继续前进。';
+    return '继续前进';
   }
 
   private getNodeCardEntryLabel(node: NodeOption): string {
@@ -1176,11 +1181,11 @@ export class OverlayController {
       }
       switch (eventDef.anomalyClass) {
         case 'hybrid':
-          return '并线样本';
+          return '多流派混合';
         case 'bossEcho':
-          return 'Boss 预读';
+          return 'Boss 战前奖励';
         case 'distortion':
-          return '异常读数';
+          return '异常效果';
         default:
           return '当前流派';
       }
@@ -1376,7 +1381,7 @@ export class OverlayController {
   private decorateTooltipTerms(text: string): string {
     const tooltipTerms: Array<[string, string]> = [
       ['穿梭冷却', this.getFocusTooltip('穿梭')],
-      ['无伤窗口', this.getFocusTooltip('无伤')],
+      ['无敌时间', this.getFocusTooltip('无伤')],
       ['脉冲伤害', this.getFocusTooltip('脉冲')],
       ['暴击率', this.getFocusTooltip('暴击')],
       ['暴击伤害', this.getFocusTooltip('爆伤')],
@@ -1408,11 +1413,11 @@ export class OverlayController {
   private getRouteTooltip(routeId?: RouteReference): string {
     switch (routeId) {
       case 'crit':
-        return '暴击流：命中有概率打出高伤害，并给敌人留下橙色破绽。连续打破绽会爆发。';
+        return '暴击流：子弹有几率造成更高伤害。';
       case 'pierce':
-        return '穿透流：子弹打穿敌人继续向后飞，适合打一排敌人。蓝色裂纹代表刚被穿透命中过。';
+        return '穿透流：子弹可穿过敌人，命中后方目标。';
       case 'dash':
-        return '穿梭流：冷却好后角色会自动闪动并放出近身脉冲，适合贴近反打。';
+        return '穿梭流：自动闪动并释放近身范围攻击。';
       default:
         return '';
     }
@@ -1420,14 +1425,14 @@ export class OverlayController {
 
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
-      暴击: '子弹命中时有概率触发。触发后伤害更高，并在敌人身上留下橙色破绽。',
-      爆伤: '只影响已经触发暴击的那次命中，不提高触发概率。',
-      穿透: '子弹命中敌人后不会立刻消失，会继续打到后方目标。敌人越站成一线，穿透收益越高；蓝色裂纹表示它刚被穿透命中过。',
-      穿梭: '穿梭是自动触发的相位脉冲。冷却归零时角色会短暂闪动并释放一次近身脉冲；冷却越短，触发越频繁。',
-      脉冲: '穿梭触发时在角色附近释放的短促范围伤害。绿色脉冲标记表示敌人被这次穿梭脉冲擦到。',
-      无伤: '穿梭触发后的极短保护时间，只在自动脉冲刚发生后生效，用来穿过危险后反击。',
-      扩面: '增加弹幕覆盖，适合清小怪。',
-      射速: '更快开火，回报链更连续。',
+      暴击: '子弹命中时有几率造成更高伤害。',
+      爆伤: '暴击时的伤害倍数。',
+      穿透: '子弹穿过敌人后继续向后飞行，可命中后方目标。',
+      穿梭: '自动触发的短距离闪动，同时释放近身范围攻击。',
+      脉冲: '穿梭触发时的范围伤害。',
+      无伤: '穿梭触发后的短暂无敌时间。',
+      扩面: '同时发射更多子弹。',
+      射速: '开火速度更快。',
     };
     return tooltipMap[label] ?? '';
   }
@@ -1454,13 +1459,13 @@ export class OverlayController {
   private getEventClassLabel(eventDef: EventDefinition): string {
     switch (eventDef.anomalyClass) {
       case 'routeWindow':
-        return '改道窗';
+        return '切换流派';
       case 'hybrid':
-        return '并线';
+        return '混合流派';
       case 'bossEcho':
-        return '预读';
+        return '提前奖励';
       case 'distortion':
-        return '失真';
+        return '效果变异';
       default:
         return '异常';
     }
@@ -1468,20 +1473,20 @@ export class OverlayController {
 
   private getEventChoiceActionLabel(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
     if (eventDef.contentKind !== 'anomaly') {
-      return '补一拍';
+      return '执行';
     }
 
     const routeRef = this.getEventRouteReference(eventDef, option);
     const routeSummary = this.getRouteEffectSummary(option.effects);
     if (eventDef.anomalyClass === 'routeWindow') {
       if (routeRef && eventDef.routeAffinity && routeRef !== eventDef.routeAffinity) {
-        return '真改道';
+        return '确认切换';
       }
-      return routeSummary ? '续当前线' : '保留窗口';
+      return routeSummary ? '继续当前流派' : '保持选择';
     }
 
     if (eventDef.anomalyClass === 'hybrid') {
-      return '多流派';
+      return '混合流派';
     }
 
     if (eventDef.anomalyClass === 'bossEcho') {
@@ -1489,7 +1494,7 @@ export class OverlayController {
     }
 
     const hasPressure = option.effects?.some((effect) => effect.type === 'heal' && effect.amount < 0);
-    return hasPressure ? '冒压换读法' : '失真补一拍';
+    return hasPressure ? '承受压力' : '执行异常';
   }
 
   private getEventChoiceTags(eventDef: EventDefinition, option: EventDefinition['options'][number]): string[] {
