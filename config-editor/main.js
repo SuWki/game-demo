@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { schemaMap, detectConfigType } from './schemas.js';
+import { schemaMap, detectConfigType, fieldRelations, configDescriptions } from './schemas.js';
 
 // 全局状态
 let table = null;
@@ -169,6 +169,9 @@ function loadData(data) {
   dropZone.style.display = 'none';
   tableContainer.style.display = 'block';
   
+  // 显示配置说明
+  showConfigDescription();
+  
   // 销毁旧表格
   if (table) {
     table.destroy();
@@ -208,6 +211,46 @@ function loadData(data) {
   if (currentConfigType) {
     console.log(`识别配置类型: ${currentConfigType}`);
   }
+}
+
+function showConfigDescription() {
+  // 移除旧的说明
+  const oldDesc = document.getElementById('config-description');
+  if (oldDesc) {
+    oldDesc.remove();
+  }
+  
+  if (!currentConfigType || !configDescriptions[currentConfigType]) {
+    return;
+  }
+  
+  const descDiv = document.createElement('div');
+  descDiv.id = 'config-description';
+  descDiv.style.cssText = `
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    animation: fadeIn 0.3s ease;
+  `;
+  
+  descDiv.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="16" x2="12" y2="12"/>
+      <line x1="12" y1="8" x2="12.01" y2="8"/>
+    </svg>
+    <div>
+      <strong style="color: #0369a1; font-size: 0.9rem;">${currentConfigType}</strong>
+      <p style="color: #0c4a6e; font-size: 0.85rem; margin: 0.25rem 0 0; line-height: 1.5;">${configDescriptions[currentConfigType]}</p>
+    </div>
+  `;
+  
+  tableContainer.insertBefore(descDiv, tableContainer.firstChild);
 }
 
 function updateStatusBar() {
@@ -257,22 +300,32 @@ function generateColumns(data) {
     }
   }
   
+  // 获取当前配置类型的关联字段
+  const relations = currentConfigType ? fieldRelations[currentConfigType] || {} : {};
+  
   // 生成列定义
-  return Array.from(allKeys).map(key => ({
-    title: key,
-    field: key,
-    editor: 'input',
-    headerFilter: 'input',
-    resizable: true,
-    formatter: function(cell) {
-      const value = cell.getValue();
-      if (value === null || value === undefined) return '<span style="color: #718096;">null</span>';
-      if (typeof value === 'boolean') return value ? '✅' : '❌';
-      if (typeof value === 'object') return JSON.stringify(value).substring(0, 50) + '...';
-      return value;
-    },
-    validator: getColumnValidator(key)
-  }));
+  return Array.from(allKeys).map(key => {
+    const relation = relations[key];
+    const hasRelation = relation && relation.targetTable;
+    
+    return {
+      title: hasRelation 
+        ? `<span>${key}</span><span class="relation-badge" data-relation="${relation.relatesTo}" data-target="${relation.targetTable}">🔗</span>`
+        : key,
+      field: key,
+      editor: 'input',
+      headerFilter: 'input',
+      resizable: true,
+      formatter: function(cell) {
+        const value = cell.getValue();
+        if (value === null || value === undefined) return '<span style="color: #94a3b8;">null</span>';
+        if (typeof value === 'boolean') return value ? '<span style="color: #10b981;">true</span>' : '<span style="color: #ef4444;">false</span>';
+        if (typeof value === 'object') return JSON.stringify(value).substring(0, 50) + '...';
+        return value;
+      },
+      validator: getColumnValidator(key)
+    };
+  });
 }
 
 function getColumnValidator(key) {
@@ -761,4 +814,62 @@ window.addEventListener('load', () => {
   addHistoryButton();
   addTemplateButton();
   addResetButton();
+  initNotesFeature();
 });
+
+// ============================================================
+// 备注功能
+// ============================================================
+
+const NOTES_KEY = 'config-editor-notes';
+
+function initNotesFeature() {
+  const notesBtn = document.getElementById('btn-notes');
+  const notesModal = document.getElementById('notes-modal');
+  const notesClose = document.getElementById('notes-modal-close');
+  const notesCancel = document.getElementById('notes-cancel');
+  const notesSave = document.getElementById('notes-save');
+  const notesTextarea = document.getElementById('notes-textarea');
+  
+  // 加载已保存的备注
+  const savedNotes = localStorage.getItem(NOTES_KEY);
+  if (savedNotes) {
+    notesTextarea.value = savedNotes;
+  }
+  
+  // 打开备注弹窗
+  notesBtn.addEventListener('click', () => {
+    notesModal.classList.add('active');
+    notesTextarea.focus();
+  });
+  
+  // 关闭备注弹窗
+  function closeModal() {
+    notesModal.classList.remove('active');
+  }
+  
+  notesClose.addEventListener('click', closeModal);
+  notesCancel.addEventListener('click', closeModal);
+  
+  // 点击弹窗外部关闭
+  notesModal.addEventListener('click', (e) => {
+    if (e.target === notesModal) {
+      closeModal();
+    }
+  });
+  
+  // ESC 键关闭
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && notesModal.classList.contains('active')) {
+      closeModal();
+    }
+  });
+  
+  // 保存备注
+  notesSave.addEventListener('click', () => {
+    const notes = notesTextarea.value.trim();
+    localStorage.setItem(NOTES_KEY, notes);
+    closeModal();
+    showToast('备注已保存', 'success');
+  });
+}

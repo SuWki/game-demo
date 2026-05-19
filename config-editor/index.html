@@ -13,7 +13,13 @@
 <body>
   <div id="app">
     <header>
-      <h1>🎮 游戏配置编辑器</h1>
+      <h1>
+        🎮 游戏配置编辑器
+        <button class="header-notes" id="btn-notes" data-tooltip="添加备注">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          备注
+        </button>
+      </h1>
       <div class="header-actions">
         <button id="btn-import" class="btn btn-primary" data-tooltip="导入 Excel/CSV 文件">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -65,6 +71,23 @@
     <footer>
       <p>游戏配置编辑器 v1.0 | 支持 Excel/CSV 导入导出 | 实时数据验证</p>
     </footer>
+  </div>
+
+  <!-- 备注弹窗 -->
+  <div class="notes-modal" id="notes-modal">
+    <div class="notes-modal-content">
+      <div class="notes-modal-header">
+        <h3>📝 配置备注</h3>
+        <button class="notes-modal-close" id="notes-modal-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <textarea class="notes-textarea" id="notes-textarea" placeholder="在此输入备注信息...&#10;&#10;例如：&#10;- 本次修改内容&#10;- 需要注意的事项&#10;- 与其他表的关联说明"></textarea>
+      <div class="notes-modal-actions">
+        <button class="btn btn-secondary" id="notes-cancel">取消</button>
+        <button class="btn btn-primary" id="notes-save">保存备注</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/tabulator-tables@5.5.4/dist/js/tabulator.min.js"></script>

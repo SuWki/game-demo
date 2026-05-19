@@ -218,6 +218,27 @@ export const enemyArchetypeSchema = {
   }
 };
 
+// 字段关联关系定义
+export const fieldRelations = {
+  upgrades: {
+    routeId: { relatesTo: '路线 ID', targetTable: 'routes', targetField: 'id' },
+    'effects.routeId': { relatesTo: '路线效果', targetTable: 'routes', targetField: 'id' }
+  },
+  battleTemplates: {
+    regularArchetypes: { relatesTo: '敌人原型', targetTable: 'enemyArchetypes', targetField: 'id' },
+    'winCondition.type': { relatesTo: '胜利条件类型', targetTable: null, targetField: null },
+    'spawnRule.pattern': { relatesTo: '生成模式', targetTable: null, targetField: null }
+  },
+  enemyArchetypes: {}
+};
+
+// 配置类型说明
+export const configDescriptions = {
+  upgrades: '升级配置表 - 定义游戏中可获取的升级项，包括属性、稀有度和出现权重',
+  battleTemplates: '战斗模板表 - 定义战斗波次的敌人配置、持续时间和胜利条件',
+  enemyArchetypes: '敌人原型表 - 定义敌人的基础属性倍率，供战斗模板引用'
+};
+
 // 验证规则映射
 export const schemaMap = {
   upgrades: upgradeSchema,
