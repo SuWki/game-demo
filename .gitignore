@@ -13,6 +13,13 @@ dist/
 vite-dev.log
 vite-dev.err.log
 
+# Test outputs and local files
+output/
+qa-results/
+test-results/
+*.test.ts
+*.spec.ts
+
 # Executables
 *.swf
 *.air
