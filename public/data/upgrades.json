@@ -1,0 +1,3091 @@
+[
+  {
+    "id": "generic-firepower",
+    "name": "火控强化",
+    "description": "提升武器火力输出",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 4,
+      "noDominantRouteBonus": 2,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-cadence",
+    "name": "压缩射频",
+    "description": "加快武器射击频率",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 4,
+      "noDominantRouteBonus": 2,
+      "finalPrepBonus": 3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "fireRate": 0.22
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-ballistics",
+    "name": "弹道校正",
+    "description": "提升弹速与火力",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 1,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "projectileSpeed": 26,
+          "damage": 1.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-optics",
+    "name": "精密镜组",
+    "description": "提高暴击命中率",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "maxRound": 3,
+      "noDominantRouteBonus": 3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critChance": 0.05
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-reactor",
+    "name": "爆伤蓄能",
+    "description": "增强暴击伤害",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 2,
+      "finalPrepBonus": 3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critMultiplier": 0.22
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-frame",
+    "name": "强化骨架",
+    "description": "提升耐久上限并修复损伤",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 4,
+      "noDominantRouteBonus": 2,
+      "finalPrepBonus": 4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 12
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 12
+      }
+    ]
+  },
+  {
+    "id": "generic-thrusters",
+    "name": "矢量喷口",
+    "description": "提升机动速度",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "noDominantRouteBonus": 2,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "moveSpeed": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-overclock",
+    "name": "循环稳态",
+    "description": "增强自我修复能力",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 2,
+      "minRound": 2,
+      "finalPrepBonus": 4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "regeneration": 0.12,
+          "fireRate": 0.09
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-vector-buffer",
+    "name": "矢量缓冲",
+    "description": "平衡提升射速、移速与弹速",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.4,
+      "minRound": 1,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "opening": 0.8,
+        "mid": 1.2
+      },
+      "noDominantRouteBonus": 2.4,
+      "finalPrepBonus": 1.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "fireRate": 0.12,
+          "moveSpeed": 12,
+          "projectileSpeed": 14
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-pressure-bypass",
+    "name": "压差旁路",
+    "description": "强化生存能力并修复损伤",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.1,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.2,
+        "late": 0.8,
+        "finalPrep": 0.8
+      },
+      "finalPrepBonus": 2.6
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 8,
+          "regeneration": 0.09,
+          "moveSpeed": 8
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "generic-sideband-cache",
+    "name": "侧频缓存",
+    "description": "综合提升射速、弹速与机动",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.6,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.4,
+        "late": 1,
+        "finalPrep": 0.8
+      },
+      "noDominantRouteBonus": 1.4,
+      "finalPrepBonus": 1.4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "fireRate": 0.1,
+          "projectileSpeed": 18,
+          "moveSpeed": 9
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-open-loop",
+    "name": "开环余量",
+    "description": "提升耐久与恢复能力",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.4,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.3,
+        "late": 1,
+        "finalPrep": 1
+      },
+      "finalPrepBonus": 1.6
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 6,
+          "regeneration": 0.07,
+          "moveSpeed": 7
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 8
+      }
+    ]
+  },
+  {
+    "id": "generic-crossfeed",
+    "name": "交叉回授",
+    "description": "全面提升性能并修复损伤",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.7,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.6,
+        "late": 1.1
+      },
+      "noDominantRouteBonus": 0.8,
+      "finalPrepBonus": 0.8,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "fireRate": 0.09,
+          "projectileSpeed": 15,
+          "moveSpeed": 9
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "generic-reroute-buffer",
+    "name": "改道缓冲",
+    "description": "均衡强化生存与机动",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.7,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.5,
+        "late": 0.8
+      },
+      "noDominantRouteBonus": 1.1,
+      "finalPrepBonus": 0.8
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 4.5,
+          "regeneration": 0.06,
+          "moveSpeed": 9,
+          "projectileSpeed": 12
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "generic-relay-throttle",
+    "name": "并线节流",
+    "description": "提升射速与弹道性能",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.6,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.4,
+        "late": 0.9
+      },
+      "finalPrepBonus": 0.9
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 2.2,
+          "fireRate": 0.1,
+          "projectileSpeed": 12,
+          "moveSpeed": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-terminal-weave",
+    "name": "终段并轨",
+    "description": "全面强化战斗性能",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "payoff",
+      "hybrid",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.94,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.6,
+        "finalPrep": 2.2,
+        "finalBattle": 1.2
+      },
+      "finalPrepBonus": 2.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 3,
+          "fireRate": 0.16,
+          "projectileSpeed": 24,
+          "moveSpeed": 14,
+          "regeneration": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-sightline-cache",
+    "name": "视界缓存",
+    "description": "提升火力与弹道精度",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "stabilizer"
+    ],
+    "selection": {
+      "baseWeight": 2.8,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.3,
+        "late": 1.1,
+        "finalPrep": 0.9
+      },
+      "noDominantRouteBonus": 1.2,
+      "finalPrepBonus": 1.4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 1.5,
+          "projectileSpeed": 21,
+          "moveSpeed": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-terminal-baffle",
+    "name": "终端护幕",
+    "description": "大幅强化生存与火力",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "payoff",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.92,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.3,
+        "finalPrep": 2.3,
+        "finalBattle": 1.1
+      },
+      "finalPrepBonus": 2.4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 9,
+          "regeneration": 0.09,
+          "damage": 2.2,
+          "projectileSpeed": 14
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "generic-salvo-cache",
+    "name": "齐射缓存",
+    "description": "强化火力与射速",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.3,
+      "minRound": 1,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "opening": 0.9,
+        "mid": 1.1
+      },
+      "noDominantRouteBonus": 1.8,
+      "finalPrepBonus": 1.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 2.2,
+          "fireRate": 0.09,
+          "projectileSpeed": 14
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-drift-anchor",
+    "name": "漂移定舵",
+    "description": "均衡提升生存与机动",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "stabilizer",
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.6,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.5,
+        "late": 0.9,
+        "finalPrep": 0.7
+      },
+      "noDominantRouteBonus": 1.3,
+      "finalPrepBonus": 1.1
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 4.5,
+          "moveSpeed": 10,
+          "fireRate": 0.06,
+          "regeneration": 0.06
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "generic-branch-buffer",
+    "name": "支路缓冲",
+    "description": "提升火力、弹速与机动",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.5,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.4,
+        "late": 1,
+        "finalPrep": 0.8
+      },
+      "noDominantRouteBonus": 1.5,
+      "finalPrepBonus": 1.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 1.5,
+          "projectileSpeed": 15,
+          "moveSpeed": 9
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-last-mile",
+    "name": "终段余量",
+    "description": "大幅提升生存与火力",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "payoff",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.94,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.45,
+        "finalPrep": 2.15,
+        "finalBattle": 1.2
+      },
+      "finalPrepBonus": 2.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 7.5,
+          "damage": 3,
+          "fireRate": 0.08,
+          "regeneration": 0.11
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "generic-mirror-lattice",
+    "name": "镜格并流",
+    "description": "提升火力与暴击精度",
+    "category": "generic",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "hybrid"
+    ],
+    "selection": {
+      "baseWeight": 2.45,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.35,
+        "late": 1.05,
+        "finalPrep": 0.78
+      },
+      "noDominantRouteBonus": 0.9,
+      "finalPrepBonus": 1
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 1.5,
+          "critChance": 0.04,
+          "projectileSpeed": 14,
+          "moveSpeed": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-borrowed-tail",
+    "name": "借尾并幅",
+    "description": "大幅强化火力与弹幕",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "payoff",
+      "hybrid",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.9,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.75,
+        "finalPrep": 2.1,
+        "finalBattle": 1.2
+      },
+      "finalPrepBonus": 2.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 3,
+          "fireRate": 0.11,
+          "multishot": 1,
+          "moveSpeed": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-crown-pocket",
+    "name": "余波护仓",
+    "description": "强化生存与恢复能力",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "payoff",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.88,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.42,
+        "finalPrep": 2.05,
+        "finalBattle": 1.05
+      },
+      "finalPrepBonus": 2.1
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 7.5,
+          "regeneration": 0.12,
+          "projectileSpeed": 14,
+          "moveSpeed": 6
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "generic-tailfold",
+    "name": "尾流归并",
+    "description": "全面提升火力与射速",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "bridge",
+      "payoff",
+      "hybrid",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.86,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.72,
+        "finalPrep": 2.12,
+        "finalBattle": 1.12
+      },
+      "finalPrepBonus": 2.25
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "damage": 2,
+          "fireRate": 0.09,
+          "projectileSpeed": 14,
+          "moveSpeed": 9
+        }
+      }
+    ]
+  },
+  {
+    "id": "generic-echo-stow",
+    "name": "余响备压",
+    "description": "提升生存与恢复能力",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "payoff",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.84,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.48,
+        "finalPrep": 2.08,
+        "finalBattle": 1.05
+      },
+      "finalPrepBonus": 2.15
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 6,
+          "regeneration": 0.12,
+          "projectileSpeed": 15,
+          "moveSpeed": 7.5
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 8
+      }
+    ]
+  },
+  {
+    "id": "generic-last-lock",
+    "name": "终段封板",
+    "description": "大幅强化火力输出",
+    "category": "generic",
+    "contentTier": "rare",
+    "repeatable": true,
+    "tags": [
+      "payoff",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 0.92,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.56,
+        "finalPrep": 2.36,
+        "finalBattle": 1.08
+      },
+      "finalPrepBonus": 2.45
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "maxHp": 8,
+          "damage": 2.2,
+          "regeneration": 0.08,
+          "projectileSpeed": 12
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 8
+      }
+    ]
+  },
+  {
+    "id": "crit-aim",
+    "name": "聚焦瞄准",
+    "description": "命中时概率触发高伤，适合抓短时机爆发",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 6,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.5,
+        "mid": 0.4
+      },
+      "noDominantRouteBonus": 8,
+      "hintedRouteBonus": 1.8,
+      "dominantRouteBonus": 2.8,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveCritBonus": 0.03
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-primer",
+    "name": "升温预热",
+    "description": "命中时概率触发高伤，适合抓短时机爆发",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 5.4,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.6,
+        "mid": 0.5
+      },
+      "noDominantRouteBonus": 7.5,
+      "hintedRouteBonus": 1.8,
+      "dominantRouteBonus": 2.6,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "flawDurationBonus": 0.15
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-afterglow",
+    "name": "余热描边",
+    "description": "延长破绽持续时间，更容易连续命中同一目标叠加破绽",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "crit-afterglow"
+    ],
+    "selection": {
+      "baseWeight": 3.96,
+      "minRound": 2,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "mid": 1.54,
+        "late": 0.4
+      },
+      "hintedRouteBonus": 2.42,
+      "dominantRouteBonus": 3.98,
+      "committedRouteBonus": 1.8,
+      "offRouteMultiplier": 0.38
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "flawDurationBonus": 0.25
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-heat-latch",
+    "name": "续热点火",
+    "description": "暴击与暴伤核心提升",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.94,
+      "minRound": 2,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "mid": 1.58,
+        "late": 0.42
+      },
+      "hintedRouteBonus": 2.5,
+      "dominantRouteBonus": 4.22,
+      "committedRouteBonus": 1.98,
+      "offRouteMultiplier": 0.36
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveDurationBonus": 0.3
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-flare-path",
+    "name": "灼迹导火",
+    "description": "暴击与弹速强化",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.1,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.2,
+        "late": 1,
+        "finalPrep": 0.5
+      },
+      "hintedRouteBonus": 1.1,
+      "dominantRouteBonus": 4.1,
+      "committedRouteBonus": 2.8,
+      "maturedRouteBonus": 1.1,
+      "finalPrepBonus": 1.2,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveCritBonus": 0.05
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-sidechannel",
+    "name": "旁路升温",
+    "description": "暴击与弹速提升",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 2.25,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 2.1,
+        "late": 1
+      },
+      "hintedRouteBonus": 0.05,
+      "dominantRouteBonus": 0.15,
+      "committedRouteBonus": 0.1,
+      "offRouteMultiplier": 2.05,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.12
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "crit-reroute-spark",
+    "name": "借火切入",
+    "description": "超频期间额外暴击率+4%，修复损伤",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.95,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.9,
+        "late": 0.85
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.3,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveCritBonus": 0.04
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
+      }
+    ]
+  },
+  {
+    "id": "crit-reroute-feed",
+    "name": "借焰续拍",
+    "description": "破绽持续时间+20%，修复损伤",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.78,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.82,
+        "late": 0.92
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.34,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "flawDurationBonus": 0.2
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
+      }
+    ]
+  },
+  {
+    "id": "crit-branch-ignite",
+    "name": "借爆并焰",
+    "description": "暴击命中后概率触发额外破绽标记，为后续连击铺垫",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 2.2,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.5,
+        "late": 0.8
+      },
+      "hintedRouteBonus": 1.8,
+      "dominantRouteBonus": 3.2,
+      "committedRouteBonus": 2.4,
+      "offRouteMultiplier": 0.35,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.08
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-embershard",
+    "name": "余烬爆点",
+    "description": "破绽爆发时产生小范围爆点（对精英/Boss降倍率）",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "crit",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "crit-embershard"
+    ],
+    "selection": {
+      "baseWeight": 1.02,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.45,
+        "finalPrep": 2.1,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 3.9,
+      "committedRouteBonus": 3.5,
+      "maturedRouteBonus": 2.3,
+      "finalPrepBonus": 2.3
+    },
+    "effects": [
+      {
+        "type": "route",
+        "routeId": "crit"
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
+      }
+    ]
+  },
+  {
+    "id": "crit-burst",
+    "name": "连发校准",
+    "description": "暴击率与暴伤提升",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 4,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.4,
+        "late": 0.6
+      },
+      "hintedRouteBonus": 2.1,
+      "dominantRouteBonus": 4.2,
+      "committedRouteBonus": 2.2,
+      "finalPrepBonus": 2,
+      "offRouteMultiplier": 0.42
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "flawDurationBonus": 0.18
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-sparkline",
+    "name": "火迹预压",
+    "description": "暴击率与暴伤双重提升",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.6,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.5,
+        "late": 0.7
+      },
+      "hintedRouteBonus": 2.2,
+      "dominantRouteBonus": 3.9,
+      "committedRouteBonus": 1.8,
+      "offRouteMultiplier": 0.38
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveCritBonus": 0.04
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-linekeep",
+    "name": "压线留焰",
+    "description": "暴击与弹道强化",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.78,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.58,
+        "late": 0.92,
+        "finalPrep": 0.28
+      },
+      "hintedRouteBonus": 1.82,
+      "dominantRouteBonus": 4.52,
+      "committedRouteBonus": 3.88,
+      "maturedRouteBonus": 1.56,
+      "finalPrepBonus": 0.72,
+      "offRouteMultiplier": 0.28
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveDurationBonus": 0.22
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-crownfire",
+    "name": "冠火收束",
+    "description": "破绽爆发后短时间提高下一次暴击收益，不常驻",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "crit",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "crit-crownfire"
+    ],
+    "selection": {
+      "baseWeight": 1.01,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.5,
+        "finalPrep": 2.15,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 4,
+      "committedRouteBonus": 3.7,
+      "maturedRouteBonus": 2.5,
+      "finalPrepBonus": 2.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.15,
+          "critOverdriveCritBonus": 0.06
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-ember-rail",
+    "name": "灼链追爆",
+    "description": "暴击与暴伤的强力组合",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.05,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.65,
+        "finalPrep": 0.95,
+        "finalBattle": 0.72
+      },
+      "hintedRouteBonus": 0.45,
+      "dominantRouteBonus": 4.7,
+      "committedRouteBonus": 4.1,
+      "maturedRouteBonus": 2.1,
+      "finalPrepBonus": 1.9,
+      "offRouteMultiplier": 0.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "flawDurationBonus": 0.2,
+          "critOverdriveCritBonus": 0.05
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-redline",
+    "name": "热区压缩",
+    "description": "暴击与射速的极限压榨",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 2.9,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.1,
+        "late": 1.3,
+        "finalPrep": 0.6
+      },
+      "hintedRouteBonus": 1.2,
+      "dominantRouteBonus": 4.4,
+      "committedRouteBonus": 3.2,
+      "maturedRouteBonus": 1.4,
+      "finalPrepBonus": 1.4,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveDurationBonus": 0.35
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-heat-rake",
+    "name": "续热压线",
+    "description": "暴击与弹道强化",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.08,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.32,
+        "late": 1.28,
+        "finalPrep": 0.5
+      },
+      "hintedRouteBonus": 1.18,
+      "dominantRouteBonus": 4.48,
+      "committedRouteBonus": 3.46,
+      "maturedRouteBonus": 1.72,
+      "finalPrepBonus": 1.32,
+      "offRouteMultiplier": 0.32
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.1,
+          "flawDurationBonus": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-heat",
+    "name": "热区追击",
+    "description": "暴击伤害的强力爆发",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.7,
+        "finalPrep": 1
+      },
+      "hintedRouteBonus": 0.4,
+      "dominantRouteBonus": 4.6,
+      "committedRouteBonus": 4,
+      "maturedRouteBonus": 2,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveCritBonus": 0.08
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-cascade",
+    "name": "爆链灼流",
+    "description": "暴击伤害的连锁爆发",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.2,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.5,
+        "finalPrep": 1
+      },
+      "hintedRouteBonus": 0.4,
+      "dominantRouteBonus": 4.8,
+      "committedRouteBonus": 4.2,
+      "maturedRouteBonus": 2.2,
+      "finalPrepBonus": 2.2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.18
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-finish",
+    "name": "终端爆发",
+    "description": "暴击流的终局强化",
+    "category": "route",
+    "routeId": "crit",
+    "tags": [
+      "finisher"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.6,
+        "finalPrep": 1.2
+      },
+      "dominantRouteBonus": 5,
+      "committedRouteBonus": 4,
+      "maturedRouteBonus": 3,
+      "finalPrepBonus": 3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critOverdriveCritBonus": 0.06,
+          "critOverdriveDurationBonus": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-core",
+    "name": "穿甲校正",
+    "description": "弹体穿过多个目标时获得拆线收益，依赖站位和敌线",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 4.8,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.62,
+        "mid": 0.5
+      },
+      "noDominantRouteBonus": 6.5,
+      "hintedRouteBonus": 1.98,
+      "dominantRouteBonus": 2.94,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.05
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-rail",
+    "name": "贯穿轨校",
+    "description": "弹体穿过多个目标时获得拆线收益，依赖站位和敌线",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 4.4,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.62,
+        "mid": 0.6
+      },
+      "noDominantRouteBonus": 6.2,
+      "hintedRouteBonus": 2.08,
+      "dominantRouteBonus": 2.76,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.08
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-seamline",
+    "name": "拆线起幅",
+    "description": "弹体穿过多个目标时获得拆线收益，依赖站位和敌线",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 4.2,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.74,
+        "mid": 0.62
+      },
+      "noDominantRouteBonus": 6.4,
+      "hintedRouteBonus": 2.12,
+      "dominantRouteBonus": 2.94,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceCooldownRefundBonus": 0.005
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-vector",
+    "name": "折线导程",
+    "description": "穿透与弹道精准强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.86,
+      "minRound": 2,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "mid": 1.48,
+        "late": 0.4
+      },
+      "hintedRouteBonus": 2.34,
+      "dominantRouteBonus": 3.92,
+      "committedRouteBonus": 1.8,
+      "offRouteMultiplier": 0.38
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-seamkeep",
+    "name": "拆缝续程",
+    "description": "穿透命中带裂纹敌人时，裂纹持续时间延长，帮助更稳定累积层数",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "pierce-seamkeep"
+    ],
+    "selection": {
+      "baseWeight": 3.84,
+      "minRound": 2,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "mid": 1.58,
+        "late": 0.44
+      },
+      "hintedRouteBonus": 2.36,
+      "dominantRouteBonus": 4.08,
+      "committedRouteBonus": 2.02,
+      "offRouteMultiplier": 0.36
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.06,
+          "crackSpreadRadius": 0.06
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-shearline",
+    "name": "切层折返",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.1,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.2,
+        "late": 1,
+        "finalPrep": 0.5
+      },
+      "hintedRouteBonus": 1.1,
+      "dominantRouteBonus": 4.1,
+      "committedRouteBonus": 2.8,
+      "maturedRouteBonus": 1.1,
+      "finalPrepBonus": 1.2,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceCooldownRefundBonus": 0.008
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-sidechannel",
+    "name": "侧轨借线",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 2.25,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 2.1,
+        "late": 1
+      },
+      "hintedRouteBonus": 0.05,
+      "dominantRouteBonus": 0.15,
+      "committedRouteBonus": 0.1,
+      "offRouteMultiplier": 2.05,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.15
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "pierce-reroute-seam",
+    "name": "借线破层",
+    "description": "回响伤害+8%，修复损伤",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.95,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.9,
+        "late": 0.85
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.3,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.08
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
+      }
+    ]
+  },
+  {
+    "id": "pierce-reroute-ledger",
+    "name": "借层回收",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.78,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.82,
+        "late": 0.92
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.34,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.06
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-sidestitch",
+    "name": "借层并轨",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.88,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.75,
+        "late": 1
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.26,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-riftbloom",
+    "name": "裂面回响",
+    "description": "裂纹扩散范围强化",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "pierce",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "pierce-riftbloom"
+    ],
+    "selection": {
+      "baseWeight": 1.02,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.45,
+        "finalPrep": 2.1,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 3.9,
+      "committedRouteBonus": 3.5,
+      "maturedRouteBonus": 2.3,
+      "finalPrepBonus": 2.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.25,
+          "pierceEchoDamageBonus": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "crit-superheat",
+    "name": "灼区归档",
+    "description": "暴击与暴伤的极限爆发",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "crit",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 1.05,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.4,
+        "finalPrep": 2,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 3.8,
+      "committedRouteBonus": 3.6,
+      "maturedRouteBonus": 2.4,
+      "finalPrepBonus": 2.4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.2,
+          "flawDurationBonus": 0.15
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-phasebank",
+    "name": "相位蓄返",
+    "description": "穿梭脉冲与冷却强化",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.34,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.2,
+        "late": 1,
+        "finalPrep": 0.5
+      },
+      "hintedRouteBonus": 1.1,
+      "dominantRouteBonus": 4.1,
+      "committedRouteBonus": 2.8,
+      "maturedRouteBonus": 1.1,
+      "finalPrepBonus": 1.2,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-fan",
+    "name": "裂轨分束",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 4,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.3,
+        "late": 0.6
+      },
+      "hintedRouteBonus": 2.18,
+      "dominantRouteBonus": 4.28,
+      "committedRouteBonus": 2,
+      "offRouteMultiplier": 0.42
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.04
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-relay-spine",
+    "name": "并轨穿脊",
+    "description": "穿透与弹道的核心强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.6,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.5,
+        "late": 0.7
+      },
+      "hintedRouteBonus": 2.28,
+      "dominantRouteBonus": 4.06,
+      "committedRouteBonus": 1.8,
+      "offRouteMultiplier": 0.38
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.14
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-ledger-fanout",
+    "name": "拆账铺面",
+    "description": "穿透与弹道平衡提升",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.82,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.6,
+        "late": 0.94,
+        "finalPrep": 0.26
+      },
+      "hintedRouteBonus": 1.86,
+      "dominantRouteBonus": 4.5,
+      "committedRouteBonus": 3.92,
+      "maturedRouteBonus": 1.58,
+      "finalPrepBonus": 0.68,
+      "offRouteMultiplier": 0.28
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.05,
+          "crackSpreadRadius": 0.08
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-floodgate",
+    "name": "裂层清账",
+    "description": "裂纹扩散追加后方伤害",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "pierce",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "pierce-floodgate"
+    ],
+    "selection": {
+      "baseWeight": 1.01,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.5,
+        "finalPrep": 2.15,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 4,
+      "committedRouteBonus": 3.7,
+      "maturedRouteBonus": 2.5,
+      "finalPrepBonus": 2.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.2,
+          "pierceEchoDamageBonus": 0.08
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-seam-ledger",
+    "name": "裂幕归账",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.62,
+        "finalPrep": 0.92,
+        "finalBattle": 0.72
+      },
+      "hintedRouteBonus": 0.45,
+      "dominantRouteBonus": 4.65,
+      "committedRouteBonus": 4.15,
+      "maturedRouteBonus": 2.15,
+      "finalPrepBonus": 1.9,
+      "offRouteMultiplier": 0.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.09
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-cutback",
+    "name": "脉冲留影",
+    "description": "穿梭系统的终极强化",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "dash",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare"
+    ],
+    "selection": {
+      "baseWeight": 1.02,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.45,
+        "finalPrep": 2.1,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 3.9,
+      "committedRouteBonus": 3.5,
+      "maturedRouteBonus": 2.3,
+      "finalPrepBonus": 2.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.25
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-echo",
+    "name": "贯层回响",
+    "description": "穿透强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 2.9,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.1,
+        "late": 1.3,
+        "finalPrep": 0.6
+      },
+      "hintedRouteBonus": 1.2,
+      "dominantRouteBonus": 4.4,
+      "committedRouteBonus": 3.2,
+      "maturedRouteBonus": 1.4,
+      "finalPrepBonus": 1.4,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceCooldownRefundBonus": 0.01
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-ripple",
+    "name": "回响切层",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.6,
+        "finalPrep": 0.9
+      },
+      "hintedRouteBonus": 0.4,
+      "dominantRouteBonus": 4.6,
+      "committedRouteBonus": 4,
+      "maturedRouteBonus": 2,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.18
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-ledger-line",
+    "name": "拆线归账",
+    "description": "穿透与弹道强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.06,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.26,
+        "late": 1.34,
+        "finalPrep": 0.48
+      },
+      "hintedRouteBonus": 1.12,
+      "dominantRouteBonus": 4.46,
+      "committedRouteBonus": 3.42,
+      "maturedRouteBonus": 1.74,
+      "finalPrepBonus": 1.28,
+      "offRouteMultiplier": 0.32
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "pierceEchoDamageBonus": 0.07
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-bloom",
+    "name": "扇裂扩面",
+    "description": "穿透强化",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.2,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.4,
+        "finalPrep": 0.8
+      },
+      "hintedRouteBonus": 0.4,
+      "dominantRouteBonus": 4.8,
+      "committedRouteBonus": 4.2,
+      "maturedRouteBonus": 2.2,
+      "finalPrepBonus": 1.8
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.22
+        }
+      }
+    ]
+  },
+  {
+    "id": "pierce-chain",
+    "name": "续链增程",
+    "description": "穿透与弹道的极限延伸",
+    "category": "route",
+    "routeId": "pierce",
+    "tags": [
+      "finisher"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.6,
+        "finalPrep": 1
+      },
+      "dominantRouteBonus": 5,
+      "committedRouteBonus": 4,
+      "maturedRouteBonus": 3,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.2,
+          "pierceEchoDamageBonus": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-brush",
+    "name": "擦身蓄能",
+    "description": "脉冲擦到敌人时更容易积蓄能量。",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "starter",
+      "dash-brush"
+    ],
+    "selection": {
+      "baseWeight": 6,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.5,
+        "mid": 0.4
+      },
+      "noDominantRouteBonus": 8,
+      "hintedRouteBonus": 1.8,
+      "dominantRouteBonus": 2.8,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.08
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-feint",
+    "name": "侧滑取样",
+    "description": "快速贴近或脱离敌人时，触发短暂脉冲收益。",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 5.4,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.5,
+        "mid": 0.5
+      },
+      "noDominantRouteBonus": 7.5,
+      "hintedRouteBonus": 1.8,
+      "dominantRouteBonus": 2.6,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashGrazeRadiusBonus": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-lanebreak",
+    "name": "换边破窗",
+    "description": "快速贴近或脱离敌人时，触发短暂脉冲收益。",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "starter"
+    ],
+    "selection": {
+      "baseWeight": 5.68,
+      "maxRound": 2,
+      "phaseBonuses": {
+        "opening": 1.56,
+        "mid": 0.54
+      },
+      "noDominantRouteBonus": 7.8,
+      "hintedRouteBonus": 1.92,
+      "dominantRouteBonus": 2.72,
+      "offRouteMultiplier": 0.22
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-slipstream",
+    "name": "换位余程",
+    "description": "穿梭冷却与无伤时间强化",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 4.02,
+      "minRound": 2,
+      "maxRound": 3,
+      "phaseBonuses": {
+        "mid": 1.4,
+        "late": 0.4
+      },
+      "hintedRouteBonus": 2.2,
+      "dominantRouteBonus": 3.8,
+      "committedRouteBonus": 1.8,
+      "offRouteMultiplier": 0.38
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.12,
+          "dashGrazeRadiusBonus": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-sidechannel",
+    "name": "错位取样",
+    "description": "换一种流派接法，附带少量恢复",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 2.25,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 2.1,
+        "late": 1
+      },
+      "hintedRouteBonus": 0.05,
+      "dominantRouteBonus": 0.15,
+      "committedRouteBonus": 0.1,
+      "offRouteMultiplier": 2.05,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.18,
+          "dashGrazeRadiusBonus": 8
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "dash-reroute-cutin",
+    "name": "偏帧切入",
+    "description": "脉冲充能速度+15%，修复损伤",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.95,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.9,
+        "late": 0.85
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.3,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.15
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
+      }
+    ]
+  },
+  {
+    "id": "dash-reroute-recall",
+    "name": "借位追回",
+    "description": "换一种流派接法，附带少量恢复",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.78,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.82,
+        "late": 0.92
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.34,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashGrazeRadiusBonus": 10
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "pierce-prism",
+    "name": "棱镜破轨",
+    "description": "裂纹扩散范围强化",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "pierce",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "pierce-prism"
+    ],
+    "selection": {
+      "baseWeight": 1.05,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.4,
+        "finalPrep": 2,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 3.8,
+      "committedRouteBonus": 3.6,
+      "maturedRouteBonus": 2.4,
+      "finalPrepBonus": 2.4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "crackSpreadRadius": 0.3
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-loop",
+    "name": "净帧循环",
+    "description": "缩短穿梭冷却并延长无伤时间，更频繁触发相位脉冲",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 4,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.4,
+        "late": 0.6
+      },
+      "hintedRouteBonus": 2.1,
+      "dominantRouteBonus": 4.2,
+      "committedRouteBonus": 2.2,
+      "finalPrepBonus": 2,
+      "offRouteMultiplier": 0.42
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.1,
+          "dashGrazeRadiusBonus": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-sidestep-bank",
+    "name": "侧返蓄窗",
+    "description": "脉冲刚触发后的短时间内，下一次命中更容易叠层。",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "dash-sidestep-bank"
+    ],
+    "selection": {
+      "baseWeight": 3.6,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.5,
+        "late": 0.7
+      },
+      "hintedRouteBonus": 2.2,
+      "dominantRouteBonus": 3.9,
+      "committedRouteBonus": 1.8,
+      "offRouteMultiplier": 0.38
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.14
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-return-hold",
+    "name": "回线留窗",
+    "description": "穿梭冷却与无伤时间强化",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge"
+    ],
+    "selection": {
+      "baseWeight": 3.18,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.34,
+        "late": 0.82,
+        "finalPrep": 0.22
+      },
+      "hintedRouteBonus": 1.18,
+      "dominantRouteBonus": 3.92,
+      "committedRouteBonus": 2.78,
+      "maturedRouteBonus": 1.18,
+      "finalPrepBonus": 0.56,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.08,
+          "dashCounterDamageBonus": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-afterimage",
+    "name": "残影脉冲",
+    "description": "脉冲触发后留下短暂残影伤害，不提供长期无敌。",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "dash",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "dash-afterimage"
+    ],
+    "selection": {
+      "baseWeight": 1.01,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.5,
+        "finalPrep": 2.15,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 4,
+      "committedRouteBonus": 3.7,
+      "maturedRouteBonus": 2.5,
+      "finalPrepBonus": 2.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.2,
+          "dashGrazeRadiusBonus": 12
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-retrace-beat",
+    "name": "回线追拍",
+    "description": "穿梭脉冲与无伤时间强化",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.02,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.64,
+        "finalPrep": 0.92,
+        "finalBattle": 0.72
+      },
+      "hintedRouteBonus": 0.45,
+      "dominantRouteBonus": 4.7,
+      "committedRouteBonus": 4.1,
+      "maturedRouteBonus": 2.1,
+      "finalPrepBonus": 1.92,
+      "offRouteMultiplier": 0.3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.1,
+          "dashCounterDamageBonus": 0.12
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-counterline",
+    "name": "脉冲反击",
+    "description": "穿梭脉冲与冷却强化",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 2.9,
+      "minRound": 2,
+      "phaseBonuses": {
+        "mid": 1.1,
+        "late": 1.3,
+        "finalPrep": 0.6
+      },
+      "hintedRouteBonus": 1.2,
+      "dominantRouteBonus": 4.4,
+      "committedRouteBonus": 3.2,
+      "maturedRouteBonus": 1.4,
+      "finalPrepBonus": 1.4,
+      "offRouteMultiplier": 0.34
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.15
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-return-snap",
+    "name": "回摆取窗",
+    "description": "穿梭冷却与无伤时间强化",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.04,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.34,
+        "late": 1.24,
+        "finalPrep": 0.46
+      },
+      "hintedRouteBonus": 1.14,
+      "dominantRouteBonus": 4.44,
+      "committedRouteBonus": 3.38,
+      "maturedRouteBonus": 1.68,
+      "finalPrepBonus": 1.24,
+      "offRouteMultiplier": 0.32
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.08,
+          "dashGrazeRadiusBonus": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-rebound-window",
+    "name": "借窗回返",
+    "description": "换一种流派接法，附带少量恢复",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "redirect"
+    ],
+    "selection": {
+      "baseWeight": 1.88,
+      "minRound": 2,
+      "maxRound": 4,
+      "phaseBonuses": {
+        "mid": 1.75,
+        "late": 1
+      },
+      "hintedRouteBonus": 0.04,
+      "dominantRouteBonus": 0.12,
+      "committedRouteBonus": 0.08,
+      "offRouteMultiplier": 2.26,
+      "excludeFromFinalPrep": true
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.1
+        }
+      },
+      {
+        "type": "heal",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "dash-rethread",
+    "name": "回线续拍",
+    "description": "穿梭频率与脉冲伤害的短时机爆发组合",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.6,
+        "finalPrep": 0.9
+      },
+      "hintedRouteBonus": 0.4,
+      "dominantRouteBonus": 4.6,
+      "committedRouteBonus": 4,
+      "maturedRouteBonus": 2,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.18
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-reentry",
+    "name": "回环汲能",
+    "description": "穿梭脉冲、冷却与无伤时间的强力组合",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "bridge",
+      "payoff"
+    ],
+    "selection": {
+      "baseWeight": 3.2,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.5,
+        "finalPrep": 0.9
+      },
+      "hintedRouteBonus": 0.4,
+      "dominantRouteBonus": 4.8,
+      "committedRouteBonus": 4.2,
+      "maturedRouteBonus": 2.2,
+      "finalPrepBonus": 2
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.1,
+          "dashCounterDamageBonus": 0.15
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-anchor",
+    "name": "穿梭定标",
+    "description": "穿梭脉冲、生存与机动的终极封板",
+    "category": "route",
+    "routeId": "dash",
+    "tags": [
+      "finisher"
+    ],
+    "selection": {
+      "baseWeight": 3,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.6,
+        "finalPrep": 1.2
+      },
+      "dominantRouteBonus": 5,
+      "committedRouteBonus": 4,
+      "maturedRouteBonus": 3,
+      "finalPrepBonus": 3
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashChargeSpeed": 0.12,
+          "dashCounterDamageBonus": 0.12,
+          "dashGrazeRadiusBonus": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "dash-zero-window",
+    "name": "瞬返空档",
+    "description": "三层脉冲触发后，短时间内命中被标记敌人会追加小伤害。",
+    "category": "route",
+    "contentTier": "rare",
+    "routeId": "dash",
+    "tags": [
+      "payoff",
+      "finisher",
+      "rare",
+      "dash-zero-window"
+    ],
+    "selection": {
+      "baseWeight": 1.05,
+      "minRound": 3,
+      "phaseBonuses": {
+        "late": 1.4,
+        "finalPrep": 2,
+        "finalBattle": 2.2
+      },
+      "hintedRouteBonus": 0.2,
+      "dominantRouteBonus": 3.8,
+      "committedRouteBonus": 3.6,
+      "maturedRouteBonus": 2.4,
+      "finalPrepBonus": 2.4
+    },
+    "effects": [
+      {
+        "type": "stats",
+        "modifiers": {
+          "dashCounterDamageBonus": 0.22,
+          "dashGrazeRadiusBonus": 15
+        }
+      }
+    ]
+  }
+]

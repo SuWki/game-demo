@@ -1,0 +1,1385 @@
+[
+  {
+    "id": "elimination",
+    "name": "歼灭",
+    "description": "消灭敌人",
+    "durationSec": 25,
+    "spawnIntervalSec": 0.74,
+    "enemyHp": 17,
+    "enemySpeed": 60,
+    "enemyDamage": 7,
+    "regularEnemyCap": 9,
+    "pressureMultiplier": 1.06,
+    "accent": 5738751,
+    "winCondition": {
+      "type": "kills",
+      "target": 22
+    },
+    "spawnRule": {
+      "pattern": "surround",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 3.2,
+      "brute": 0.9,
+      "skirmisher": 1.2,
+      "ranged": 0.18
+    }
+  },
+  {
+    "id": "elimination-pincer",
+    "name": "夹击歼灭",
+    "description": "敌人从侧面接近",
+    "durationSec": 26,
+    "spawnIntervalSec": 0.68,
+    "enemyHp": 16,
+    "enemySpeed": 70,
+    "enemyDamage": 7,
+    "regularEnemyCap": 12,
+    "pressureMultiplier": 1.16,
+    "accent": 6266111,
+    "winCondition": {
+      "type": "kills",
+      "target": 24
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 2
+    },
+    "regularArchetypes": {
+      "standard": 1.4,
+      "brute": 0.45,
+      "skirmisher": 3.4,
+      "ranged": 0.34
+    }
+  },
+  {
+    "id": "elimination-sweep",
+    "name": "扫线歼灭",
+    "description": "厚血敌人横向逼近",
+    "durationSec": 28,
+    "spawnIntervalSec": 0.9,
+    "enemyHp": 26,
+    "enemySpeed": 52,
+    "enemyDamage": 8,
+    "regularEnemyCap": 8,
+    "pressureMultiplier": 1.18,
+    "accent": 6723327,
+    "winCondition": {
+      "type": "kills",
+      "target": 17
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "horizontal"
+    },
+    "regularArchetypes": {
+      "standard": 1.1,
+      "brute": 3.1,
+      "skirmisher": 0.5,
+      "ranged": 0.28
+    }
+  },
+  {
+    "id": "elimination-crossline",
+    "name": "火线歼灭",
+    "description": "有远程敌人出现",
+    "durationSec": 27,
+    "spawnIntervalSec": 0.7,
+    "enemyHp": 18,
+    "enemySpeed": 64,
+    "enemyDamage": 8,
+    "regularEnemyCap": 10,
+    "pressureMultiplier": 1.12,
+    "accent": 6793215,
+    "winCondition": {
+      "type": "kills",
+      "target": 23
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "vertical"
+    },
+    "regularArchetypes": {
+      "standard": 1.5,
+      "brute": 0.8,
+      "skirmisher": 1.2,
+      "ranged": 1.65
+    }
+  },
+  {
+    "id": "elite",
+    "name": "精英压制",
+    "description": "击败精英敌人",
+    "durationSec": 31,
+    "spawnIntervalSec": 1.18,
+    "enemyHp": 23,
+    "enemySpeed": 53,
+    "enemyDamage": 9,
+    "regularEnemyCap": 10,
+    "pressureMultiplier": 1.26,
+    "accent": 16759370,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "surround",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 2.5,
+      "brute": 1.9,
+      "skirmisher": 0.65,
+      "ranged": 0.35
+    },
+    "escortArchetypes": {
+      "standard": 1.8,
+      "brute": 0.9,
+      "skirmisher": 0.85,
+      "ranged": 0.35
+    },
+    "eliteRule": {
+      "spawnAtSec": 4,
+      "hpMultiplier": 9.8,
+      "speedMultiplier": 1.02,
+      "damageMultiplier": 2.35,
+      "guardSec": 4.6,
+      "guardDamageMultiplier": 0.48,
+      "radius": 22,
+      "regularEnemyCap": 11,
+      "behavior": "frontline",
+      "preferredDistance": 152,
+      "strafeStrength": 0.32,
+      "escortBatch": 1,
+      "escortRespawnSec": 7.4,
+      "escortMax": 2,
+      "pressurePhases": [
+        {
+          "id": "collapse",
+          "label": "压进",
+          "triggerHpRatio": 0.58,
+          "triggerRemainingSec": 14,
+          "spawnIntervalMultiplier": 0.9,
+          "regularEnemyCapBonus": 1,
+          "eliteSpeedMultiplier": 1.14,
+          "preferredDistanceDelta": -18,
+          "strafeStrengthBonus": 0.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "elite-vice",
+    "name": "绞锁压制",
+    "description": "精英会召唤援军",
+    "contentTier": "rare",
+    "durationSec": 30,
+    "spawnIntervalSec": 0.96,
+    "enemyHp": 25,
+    "enemySpeed": 57,
+    "enemyDamage": 10,
+    "regularEnemyCap": 11,
+    "pressureMultiplier": 1.45,
+    "accent": 16749384,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 1.4,
+      "brute": 1,
+      "skirmisher": 1.1,
+      "ranged": 1.6
+    },
+    "escortArchetypes": {
+      "standard": 0.7,
+      "brute": 0.45,
+      "skirmisher": 1,
+      "ranged": 2.2
+    },
+    "eliteRule": {
+      "spawnAtSec": 3,
+      "hpMultiplier": 9.5,
+      "speedMultiplier": 1.04,
+      "damageMultiplier": 2.4,
+      "guardSec": 4.2,
+      "guardDamageMultiplier": 0.52,
+      "radius": 22,
+      "regularEnemyCap": 13,
+      "behavior": "summoner",
+      "preferredDistance": 200,
+      "strafeStrength": 0.38,
+      "escortBatch": 2,
+      "escortRespawnSec": 3.4,
+      "escortMax": 10,
+      "pressurePhases": [
+        {
+          "id": "pinch",
+          "label": "围压",
+          "triggerHpRatio": 0.64,
+          "triggerRemainingSec": 16,
+          "spawnIntervalMultiplier": 0.88,
+          "regularEnemyCapBonus": 1,
+          "escortBatchBonus": 1,
+          "escortMaxBonus": 2,
+          "escortRespawnMultiplier": 0.74,
+          "rangedShotIntervalMultiplier": 1.15,
+          "strafeStrengthBonus": 0.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "elite-lockdown",
+    "name": "包围压制",
+    "description": "敌人侧面包围",
+    "durationSec": 30,
+    "spawnIntervalSec": 1,
+    "enemyHp": 23,
+    "enemySpeed": 61,
+    "enemyDamage": 9,
+    "regularEnemyCap": 10,
+    "pressureMultiplier": 1.38,
+    "accent": 16751421,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 1.3,
+      "brute": 0.9,
+      "skirmisher": 2.2,
+      "ranged": 1.1
+    },
+    "escortArchetypes": {
+      "standard": 0.8,
+      "brute": 0.45,
+      "skirmisher": 1.8,
+      "ranged": 1.35
+    },
+    "eliteRule": {
+      "spawnAtSec": 2.8,
+      "hpMultiplier": 9,
+      "speedMultiplier": 1.04,
+      "damageMultiplier": 2.42,
+      "guardSec": 4.1,
+      "guardDamageMultiplier": 0.52,
+      "radius": 22,
+      "regularEnemyCap": 13,
+      "behavior": "kiting",
+      "preferredDistance": 190,
+      "strafeStrength": 0.42,
+      "escortBatch": 2,
+      "escortRespawnSec": 5.2,
+      "escortMax": 7,
+      "pressurePhases": [
+        {
+          "id": "seal-in",
+          "label": "收口",
+          "triggerHpRatio": 0.6,
+          "triggerRemainingSec": 15,
+          "spawnIntervalMultiplier": 0.9,
+          "regularEnemyCapBonus": 1,
+          "escortBatchBonus": 1,
+          "escortMaxBonus": 2,
+          "escortRespawnMultiplier": 0.78,
+          "eliteSpeedMultiplier": 1.14,
+          "strafeStrengthBonus": 0.1
+        }
+      ]
+    }
+  },
+  {
+    "id": "elite-screen",
+    "name": "掩护压制",
+    "description": "先清理护卫",
+    "durationSec": 34,
+    "spawnIntervalSec": 1.14,
+    "enemyHp": 22,
+    "enemySpeed": 53,
+    "enemyDamage": 9,
+    "regularEnemyCap": 9,
+    "pressureMultiplier": 1.35,
+    "accent": 16761690,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 1,
+      "laneBias": "vertical"
+    },
+    "regularArchetypes": {
+      "standard": 1.1,
+      "brute": 0.9,
+      "skirmisher": 1.1,
+      "ranged": 1.9
+    },
+    "escortArchetypes": {
+      "standard": 0.65,
+      "brute": 0.45,
+      "skirmisher": 0.95,
+      "ranged": 2.7
+    },
+    "eliteRule": {
+      "spawnAtSec": 3.4,
+      "hpMultiplier": 8.8,
+      "speedMultiplier": 0.98,
+      "damageMultiplier": 2.2,
+      "guardSec": 4.3,
+      "guardDamageMultiplier": 0.52,
+      "radius": 22,
+      "regularEnemyCap": 12,
+      "behavior": "screened",
+      "preferredDistance": 210,
+      "strafeStrength": 0.34,
+      "escortBatch": 3,
+      "escortRespawnSec": 4.8,
+      "escortMax": 8,
+      "pressurePhases": [
+        {
+          "id": "crossfire",
+          "label": "封火",
+          "triggerHpRatio": 0.62,
+          "triggerRemainingSec": 15,
+          "escortBatchBonus": 1,
+          "escortMaxBonus": 1,
+          "escortRespawnMultiplier": 0.8,
+          "rangedShotIntervalMultiplier": 1.15,
+          "rangedProjectileSpeedMultiplier": 0.96,
+          "strafeStrengthBonus": 0.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "elite-bulwark",
+    "name": "壁垒压制",
+    "description": "先突破防线",
+    "durationSec": 33,
+    "spawnIntervalSec": 1.04,
+    "enemyHp": 24,
+    "enemySpeed": 54,
+    "enemyDamage": 10,
+    "regularEnemyCap": 10,
+    "pressureMultiplier": 1.4,
+    "accent": 16757351,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 1,
+      "laneBias": "horizontal"
+    },
+    "regularArchetypes": {
+      "standard": 1.1,
+      "brute": 1.6,
+      "skirmisher": 0.7,
+      "ranged": 1.4
+    },
+    "escortArchetypes": {
+      "standard": 0.8,
+      "brute": 1.7,
+      "skirmisher": 0.55,
+      "ranged": 1.1
+    },
+    "eliteRule": {
+      "spawnAtSec": 3.2,
+      "hpMultiplier": 9.6,
+      "speedMultiplier": 0.98,
+      "damageMultiplier": 2.34,
+      "guardSec": 4.4,
+      "guardDamageMultiplier": 0.5,
+      "radius": 23,
+      "regularEnemyCap": 12,
+      "behavior": "screened",
+      "preferredDistance": 196,
+      "strafeStrength": 0.34,
+      "escortBatch": 2,
+      "escortRespawnSec": 4.6,
+      "escortMax": 8,
+      "pressurePhases": [
+        {
+          "id": "brace",
+          "label": "压栅",
+          "triggerHpRatio": 0.62,
+          "triggerRemainingSec": 15,
+          "minResidenceSec": 4,
+          "escortBatchBonus": 1,
+          "escortMaxBonus": 2,
+          "escortRespawnMultiplier": 0.76,
+          "eliteSpeedMultiplier": 1.12,
+          "preferredDistanceDelta": -20,
+          "strafeStrengthBonus": 0.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "boss-hunt",
+    "name": "正面压制",
+    "description": "Boss正面进攻",
+    "encounterType": "boss",
+    "durationSec": 38,
+    "spawnIntervalSec": 1.08,
+    "enemyHp": 26,
+    "enemySpeed": 58,
+    "enemyDamage": 10,
+    "regularEnemyCap": 10,
+    "pressureMultiplier": 1.44,
+    "accent": 16743769,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "surround",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 1.3,
+      "brute": 1.6,
+      "skirmisher": 1,
+      "ranged": 0.55
+    },
+    "escortArchetypes": {
+      "standard": 1.2,
+      "brute": 1.4,
+      "skirmisher": 0.8,
+      "ranged": 0.28
+    },
+    "eliteRule": {
+      "spawnAtSec": 2,
+      "hpMultiplier": 16.5,
+      "speedMultiplier": 1.22,
+      "damageMultiplier": 2.52,
+      "guardSec": 4.9,
+      "guardDamageMultiplier": 0.38,
+      "radius": 26,
+      "regularEnemyCap": 12,
+      "behavior": "screened",
+      "preferredDistance": 192,
+      "strafeStrength": 0.42,
+      "escortBatch": 2,
+      "escortRespawnSec": 8.5,
+      "escortMax": 5,
+      "pressurePhases": [
+        {
+          "id": "close-in",
+          "label": "逼近",
+          "behaviorOverride": "screened",
+          "signatureLabel": "逼近压线",
+          "signatureDurationSec": 2.8,
+          "signaturePulseIntervalSec": 1.35,
+          "signatureEscortBurst": 2,
+          "patternLabel": "纵压驱进",
+          "patternMode": "laneCrush",
+          "patternPulseIntervalSec": 1.95,
+          "patternEscortBurst": 3,
+          "patternEscortArchetype": "brute",
+          "patternSafeWindowSize": 283,
+          "patternSafeWindowLingerSec": 2.02,
+          "patternWallShotCount": 2,
+          "triggerHpRatio": 0.74,
+          "triggerRemainingSec": 24,
+          "minResidenceSec": 4.2,
+          "entryGuardSec": 1.2,
+          "entryGuardDamageMultiplier": 0.28,
+          "entryEscortBurst": 2,
+          "spawnIntervalMultiplier": 0.92,
+          "regularEnemyCapBonus": 1,
+          "escortRespawnMultiplier": 1,
+          "eliteSpeedMultiplier": 1.22,
+          "preferredDistanceDelta": -18,
+          "strafeStrengthBonus": 0.12
+        },
+        {
+          "id": "kill-window",
+          "label": "收束",
+          "behaviorOverride": "screened",
+          "triggerHpRatio": 0.38,
+          "triggerRemainingSec": 12,
+          "minResidenceSec": 4.6,
+          "entryGuardSec": 1.4,
+          "entryGuardDamageMultiplier": 0.24,
+          "entryEscortBurst": 1,
+          "spawnIntervalMultiplier": 0.88,
+          "regularEnemyCapBonus": 1,
+          "escortBatchBonus": 0,
+          "escortMaxBonus": 1,
+          "escortRespawnMultiplier": 0.96,
+          "eliteSpeedMultiplier": 1.12,
+          "preferredDistanceDelta": -28,
+          "strafeStrengthBonus": 0.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "boss-lockdown",
+    "name": "锁域首领",
+    "description": "Boss与护卫一同出现",
+    "encounterType": "boss",
+    "durationSec": 37,
+    "spawnIntervalSec": 1,
+    "enemyHp": 25,
+    "enemySpeed": 60,
+    "enemyDamage": 10,
+    "regularEnemyCap": 8,
+    "pressureMultiplier": 1.48,
+    "accent": 16746064,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 1.2,
+      "brute": 1,
+      "skirmisher": 1.8,
+      "ranged": 0.45
+    },
+    "escortArchetypes": {
+      "standard": 0.8,
+      "brute": 0.45,
+      "skirmisher": 2.2,
+      "ranged": 0.65
+    },
+    "eliteRule": {
+      "spawnAtSec": 1.9,
+      "hpMultiplier": 16.2,
+      "speedMultiplier": 1.16,
+      "damageMultiplier": 2.48,
+      "guardSec": 4.8,
+      "guardDamageMultiplier": 0.4,
+      "radius": 26,
+      "regularEnemyCap": 9,
+      "behavior": "kiting",
+      "preferredDistance": 196,
+      "strafeStrength": 0.46,
+      "escortBatch": 2,
+      "escortRespawnSec": 8.2,
+      "escortMax": 5,
+      "pressurePhases": [
+        {
+          "id": "pin-down",
+          "label": "封位",
+          "behaviorOverride": "screened",
+          "signatureLabel": "护卫封位",
+          "signatureDurationSec": 3.2,
+          "signaturePulseIntervalSec": 1.25,
+          "signatureEscortBurst": 2,
+          "patternLabel": "侧翼夹封",
+          "patternMode": "sideClamp",
+          "patternPulseIntervalSec": 2.05,
+          "patternEscortBurst": 3,
+          "patternEscortArchetype": "skirmisher",
+          "patternSafeWindowSize": 252,
+          "patternSafeWindowLingerSec": 2.04,
+          "patternWallShotCount": 2,
+          "triggerHpRatio": 0.76,
+          "triggerRemainingSec": 24,
+          "minResidenceSec": 4.4,
+          "entryGuardSec": 1.3,
+          "entryGuardDamageMultiplier": 0.28,
+          "entryEscortBurst": 2,
+          "spawnIntervalMultiplier": 0.92,
+          "regularEnemyCapBonus": 1,
+          "escortBatchBonus": 0,
+          "escortMaxBonus": 1,
+          "escortRespawnMultiplier": 1,
+          "rangedShotIntervalMultiplier": 1.15,
+          "strafeStrengthBonus": 0.18
+        },
+        {
+          "id": "lockfield",
+          "label": "锁场",
+          "behaviorOverride": "screened",
+          "triggerHpRatio": 0.4,
+          "triggerRemainingSec": 11,
+          "minResidenceSec": 4.8,
+          "entryGuardSec": 1.5,
+          "entryGuardDamageMultiplier": 0.24,
+          "entryEscortBurst": 1,
+          "spawnIntervalMultiplier": 0.92,
+          "regularEnemyCapBonus": 1,
+          "escortBatchBonus": 0,
+          "escortMaxBonus": 1,
+          "escortRespawnMultiplier": 0.98,
+          "eliteSpeedMultiplier": 1.1,
+          "rangedShotIntervalMultiplier": 1.12,
+          "preferredDistanceDelta": -18,
+          "strafeStrengthBonus": 0.1
+        }
+      ]
+    }
+  },
+  {
+    "id": "boss-bastion",
+    "name": "屏卫首领",
+    "description": "Boss有护卫保护",
+    "encounterType": "boss",
+    "durationSec": 39,
+    "spawnIntervalSec": 1.06,
+    "enemyHp": 27,
+    "enemySpeed": 56,
+    "enemyDamage": 10,
+    "regularEnemyCap": 8,
+    "pressureMultiplier": 1.48,
+    "accent": 16749666,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 1,
+      "laneBias": "vertical"
+    },
+    "regularArchetypes": {
+      "standard": 1,
+      "brute": 1.1,
+      "skirmisher": 1,
+      "ranged": 0.52
+    },
+    "escortArchetypes": {
+      "standard": 0.6,
+      "brute": 0.45,
+      "skirmisher": 0.9,
+      "ranged": 0.85
+    },
+    "eliteRule": {
+      "spawnAtSec": 2.2,
+      "hpMultiplier": 16.8,
+      "speedMultiplier": 1.16,
+      "damageMultiplier": 2.44,
+      "guardSec": 5,
+      "guardDamageMultiplier": 0.4,
+      "radius": 27,
+      "regularEnemyCap": 9,
+      "behavior": "screened",
+      "preferredDistance": 216,
+      "strafeStrength": 0.44,
+      "escortBatch": 2,
+      "escortRespawnSec": 8.8,
+      "escortMax": 5,
+      "pressurePhases": [
+        {
+          "id": "crossfire",
+          "label": "交火",
+          "behaviorOverride": "summoner",
+          "signatureLabel": "火线齐射",
+          "signatureDurationSec": 3.4,
+          "signaturePulseIntervalSec": 1.35,
+          "signatureVolleyCount": 2,
+          "patternLabel": "交叉火线",
+          "patternMode": "crossfireWave",
+          "patternPulseIntervalSec": 2.36,
+          "patternVolleyCount": 2,
+          "patternVolleySpreadRad": 0.18,
+          "patternVolleyShotsPerShooter": 1,
+          "patternSafeWindowSize": 285,
+          "patternSafeWindowSecondarySize": 215,
+          "patternSafeWindowLingerSec": 2.08,
+          "patternPocketShiftModes": [
+            "sweep",
+            "centerReset"
+          ],
+          "patternWallShotCount": 2,
+          "triggerHpRatio": 0.88,
+          "triggerRemainingSec": 30,
+          "minResidenceSec": 1,
+          "entryGuardSec": 1.2,
+          "entryGuardDamageMultiplier": 0.28,
+          "entryEscortBurst": 1,
+          "escortBatchBonus": 0,
+          "escortMaxBonus": 1,
+          "escortRespawnMultiplier": 1,
+          "rangedShotIntervalMultiplier": 1.05,
+          "rangedProjectileSpeedMultiplier": 1.1,
+          "strafeStrengthBonus": 0.1
+        },
+        {
+          "id": "fireline",
+          "label": "火线收束",
+          "behaviorOverride": "kiting",
+          "signatureLabel": "压边迁火",
+          "signatureDurationSec": 2.8,
+          "signaturePulseIntervalSec": 1.28,
+          "signatureVolleyCount": 2,
+          "patternLabel": "压边迁火",
+          "patternMode": "crossfireWave",
+          "patternPulseIntervalSec": 1.78,
+          "patternVolleyCount": 2,
+          "patternVolleySpreadRad": 0.14,
+          "patternVolleyShotsPerShooter": 1,
+          "patternSafeWindowSize": 274,
+          "patternSafeWindowSecondarySize": 204,
+          "patternSafeWindowLingerSec": 1.96,
+          "patternPocketShiftModes": [
+            "edgeBounce",
+            "centerReset"
+          ],
+          "patternWallShotCount": 2,
+          "triggerHpRatio": 0.82,
+          "triggerRemainingSec": 21,
+          "minResidenceSec": 3.8,
+          "entryGuardSec": 1.4,
+          "entryGuardDamageMultiplier": 0.24,
+          "entryEscortBurst": 1,
+          "spawnIntervalMultiplier": 0.96,
+          "regularEnemyCapBonus": 1,
+          "escortBatchBonus": 0,
+          "escortMaxBonus": 1,
+          "escortRespawnMultiplier": 1,
+          "rangedShotIntervalMultiplier": 1.22,
+          "rangedProjectileSpeedMultiplier": 1.15,
+          "strafeStrengthBonus": 0.1
+        }
+      ]
+    }
+  },
+  {
+    "id": "boss-executioner",
+    "name": "处决首领",
+    "description": "虚弱时全力输出",
+    "encounterType": "boss",
+    "durationSec": 40,
+    "spawnIntervalSec": 1.1,
+    "enemyHp": 29,
+    "enemySpeed": 58,
+    "enemyDamage": 11,
+    "regularEnemyCap": 10,
+    "pressureMultiplier": 1.52,
+    "accent": 16730731,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "surround",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 3.2,
+      "brute": 1.2,
+      "skirmisher": 0.8,
+      "ranged": 0.3
+    },
+    "escortArchetypes": {
+      "standard": 2,
+      "brute": 1.5,
+      "skirmisher": 0.5,
+      "ranged": 0.3
+    },
+    "eliteRule": {
+      "spawnAtSec": 2,
+      "hpMultiplier": 18.5,
+      "speedMultiplier": 1.15,
+      "damageMultiplier": 2.65,
+      "guardSec": 6.5,
+      "guardDamageMultiplier": 0.15,
+      "radius": 28,
+      "regularEnemyCap": 11,
+      "behavior": "screened",
+      "preferredDistance": 196,
+      "strafeStrength": 0.4,
+      "escortBatch": 2,
+      "escortRespawnSec": 9.5,
+      "escortMax": 4,
+      "pressurePhases": [
+        {
+          "id": "berserk-cycle",
+          "label": "狂暴循环",
+          "signatureLabel": "狂暴冲锋",
+          "signatureDurationSec": 4.5,
+          "signaturePulseIntervalSec": 1.5,
+          "signatureEscortBurst": 3,
+          "triggerHpRatio": 0.8,
+          "triggerRemainingSec": 28,
+          "minResidenceSec": 6,
+          "entryGuardSec": 4.5,
+          "entryGuardDamageMultiplier": 0.12,
+          "entryEscortBurst": 3,
+          "spawnIntervalMultiplier": 0.9,
+          "regularEnemyCapBonus": 3,
+          "escortRespawnMultiplier": 0.85,
+          "eliteSpeedMultiplier": 1.12,
+          "preferredDistanceDelta": -24
+        },
+        {
+          "id": "execution-window",
+          "label": "处决窗口",
+          "signatureLabel": "虚弱暴露",
+          "signatureDurationSec": 2.5,
+          "triggerHpRatio": 0.35,
+          "triggerRemainingSec": 10,
+          "minResidenceSec": 5.5,
+          "entryGuardSec": 0,
+          "entryGuardDamageMultiplier": 1.5,
+          "entryEscortBurst": 5,
+          "regularEnemyCapBonus": 4,
+          "escortBatchBonus": 2,
+          "escortMaxBonus": 3,
+          "eliteSpeedMultiplier": 0.75
+        }
+      ]
+    }
+  },
+  {
+    "id": "boss-fortress",
+    "name": "要塞首领",
+    "description": "多层护卫保护",
+    "encounterType": "boss",
+    "durationSec": 40,
+    "spawnIntervalSec": 0.95,
+    "enemyHp": 28,
+    "enemySpeed": 54,
+    "enemyDamage": 11,
+    "regularEnemyCap": 11,
+    "pressureMultiplier": 1.55,
+    "accent": 4038655,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "horizontal"
+    },
+    "regularArchetypes": {
+      "standard": 2,
+      "brute": 2.5,
+      "skirmisher": 0.8,
+      "ranged": 0.6
+    },
+    "escortArchetypes": {
+      "standard": 1.5,
+      "brute": 3.5,
+      "skirmisher": 0.5,
+      "ranged": 0.8
+    },
+    "eliteRule": {
+      "spawnAtSec": 2.2,
+      "hpMultiplier": 17.8,
+      "speedMultiplier": 1.08,
+      "damageMultiplier": 2.58,
+      "guardSec": 5.2,
+      "guardDamageMultiplier": 0.42,
+      "radius": 29,
+      "regularEnemyCap": 13,
+      "behavior": "screened",
+      "preferredDistance": 220,
+      "strafeStrength": 0.48,
+      "escortBatch": 5,
+      "escortRespawnSec": 5.8,
+      "escortMax": 15,
+      "pressurePhases": [
+        {
+          "id": "wall-formation",
+          "label": "壁垒成型",
+          "signatureLabel": "护卫成墙",
+          "signatureDurationSec": 4,
+          "signaturePulseIntervalSec": 1.8,
+          "signatureEscortBurst": 6,
+          "patternLabel": "横向壁垒",
+          "patternMode": "laneCrush",
+          "patternEscortArchetype": "brute",
+          "triggerHpRatio": 0.75,
+          "triggerRemainingSec": 26,
+          "minResidenceSec": 5.5,
+          "entryGuardSec": 3,
+          "entryGuardDamageMultiplier": 0.35,
+          "entryEscortBurst": 8,
+          "spawnIntervalMultiplier": 0.88,
+          "regularEnemyCapBonus": 4,
+          "escortBatchBonus": 3,
+          "escortMaxBonus": 8,
+          "escortRespawnMultiplier": 0.7
+        },
+        {
+          "id": "layered-defense",
+          "label": "多层防御",
+          "signatureLabel": "三重壁垒",
+          "signatureDurationSec": 3.5,
+          "signaturePulseIntervalSec": 1.5,
+          "signatureEscortBurst": 5,
+          "triggerHpRatio": 0.4,
+          "triggerRemainingSec": 12,
+          "minResidenceSec": 5,
+          "entryEscortBurst": 10,
+          "regularEnemyCapBonus": 5,
+          "escortBatchBonus": 4,
+          "escortMaxBonus": 10,
+          "escortRespawnMultiplier": 0.65,
+          "eliteSpeedMultiplier": 1.15
+        }
+      ]
+    }
+  },
+  {
+    "id": "boss-predator",
+    "name": "猎杀首领",
+    "description": "追击并发射弹幕",
+    "encounterType": "boss",
+    "durationSec": 38,
+    "spawnIntervalSec": 0.88,
+    "enemyHp": 26,
+    "enemySpeed": 68,
+    "enemyDamage": 11,
+    "regularEnemyCap": 14,
+    "pressureMultiplier": 1.58,
+    "accent": 4063114,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 2
+    },
+    "regularArchetypes": {
+      "standard": 1,
+      "brute": 0.5,
+      "skirmisher": 4,
+      "ranged": 2.5
+    },
+    "escortArchetypes": {
+      "standard": 0.6,
+      "brute": 0.3,
+      "skirmisher": 3.5,
+      "ranged": 3
+    },
+    "eliteRule": {
+      "spawnAtSec": 1.8,
+      "hpMultiplier": 17.2,
+      "speedMultiplier": 1.32,
+      "damageMultiplier": 2.62,
+      "guardSec": 4.5,
+      "guardDamageMultiplier": 0.45,
+      "radius": 27,
+      "regularEnemyCap": 16,
+      "behavior": "screened",
+      "preferredDistance": 190,
+      "strafeStrength": 0.46,
+      "escortBatch": 2,
+      "escortRespawnSec": 7.6,
+      "escortMax": 6,
+      "pressurePhases": [
+        {
+          "id": "hunt-mode",
+          "label": "狩猎模式",
+          "signatureLabel": "追击弹幕",
+          "signatureDurationSec": 3.8,
+          "signaturePulseIntervalSec": 0.85,
+          "signatureVolleyCount": 4,
+          "patternLabel": "交叉追击",
+          "patternMode": "crossfireWave",
+          "patternPulseIntervalSec": 1.2,
+          "patternVolleyCount": 3,
+          "patternVolleySpreadRad": 0.22,
+          "patternVolleyShotsPerShooter": 2,
+          "patternSafeWindowSize": 240,
+          "patternSafeWindowLingerSec": 1.5,
+          "patternPocketShiftModes": [
+            "sweep",
+            "edgeBounce"
+          ],
+          "triggerHpRatio": 0.78,
+          "triggerRemainingSec": 25,
+          "minResidenceSec": 5.2,
+          "entryGuardSec": 2.5,
+          "entryGuardDamageMultiplier": 0.38,
+          "entryEscortBurst": 4,
+          "spawnIntervalMultiplier": 0.82,
+          "regularEnemyCapBonus": 4,
+          "escortBatchBonus": 2,
+          "escortMaxBonus": 4,
+          "rangedShotIntervalMultiplier": 1.35,
+          "rangedProjectileSpeedMultiplier": 1.25,
+          "eliteSpeedMultiplier": 1.14,
+          "preferredDistanceDelta": -22,
+          "strafeStrengthBonus": 0.12
+        },
+        {
+          "id": "frenzy",
+          "label": "狂乱",
+          "signatureLabel": "弹幕风暴",
+          "signatureDurationSec": 3.2,
+          "signaturePulseIntervalSec": 0.65,
+          "signatureVolleyCount": 5,
+          "triggerHpRatio": 0.38,
+          "triggerRemainingSec": 11,
+          "minResidenceSec": 4.8,
+          "entryEscortBurst": 3,
+          "spawnIntervalMultiplier": 0.9,
+          "regularEnemyCapBonus": 2,
+          "escortBatchBonus": 1,
+          "escortMaxBonus": 2,
+          "rangedShotIntervalMultiplier": 1.45,
+          "rangedProjectileSpeedMultiplier": 1.35,
+          "eliteSpeedMultiplier": 1.18,
+          "preferredDistanceDelta": -26,
+          "strafeStrengthBonus": 0.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "survival",
+    "name": "生存压制",
+    "description": "靠走位保命",
+    "durationSec": 29,
+    "spawnIntervalSec": 0.48,
+    "enemyHp": 22,
+    "enemySpeed": 68,
+    "enemyDamage": 9,
+    "regularEnemyCap": 13,
+    "pressureMultiplier": 1.28,
+    "accent": 16736122,
+    "winCondition": {
+      "type": "survive"
+    },
+    "spawnRule": {
+      "pattern": "surround",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 2.3,
+      "brute": 1.05,
+      "skirmisher": 1.55,
+      "ranged": 0.55
+    }
+  },
+  {
+    "id": "survival-crossfire",
+    "name": "交火求生",
+    "description": "两个方向远程火力",
+    "contentTier": "rare",
+    "durationSec": 24,
+    "spawnIntervalSec": 0.4,
+    "enemyHp": 24,
+    "enemySpeed": 74,
+    "enemyDamage": 10,
+    "regularEnemyCap": 12,
+    "pressureMultiplier": 1.38,
+    "accent": 16733814,
+    "winCondition": {
+      "type": "survive"
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "vertical"
+    },
+    "regularArchetypes": {
+      "standard": 1,
+      "brute": 0.8,
+      "skirmisher": 1,
+      "ranged": 3.1
+    }
+  },
+  {
+    "id": "survival-rush",
+    "name": "紧逼生存",
+    "description": "高速敌人不断逼近",
+    "durationSec": 23,
+    "spawnIntervalSec": 0.34,
+    "enemyHp": 22,
+    "enemySpeed": 76,
+    "enemyDamage": 10,
+    "regularEnemyCap": 16,
+    "pressureMultiplier": 1.4,
+    "accent": 16731496,
+    "winCondition": {
+      "type": "survive"
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 2
+    },
+    "regularArchetypes": {
+      "standard": 1.3,
+      "brute": 0.8,
+      "skirmisher": 3.4,
+      "ranged": 0.45
+    }
+  },
+  {
+    "id": "survival-gauntlet",
+    "name": "夹道求生",
+    "description": "重型敌人从通道进攻",
+    "durationSec": 27,
+    "spawnIntervalSec": 0.46,
+    "enemyHp": 27,
+    "enemySpeed": 63,
+    "enemyDamage": 10,
+    "regularEnemyCap": 13,
+    "pressureMultiplier": 1.36,
+    "accent": 16740226,
+    "winCondition": {
+      "type": "survive"
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "horizontal"
+    },
+    "regularArchetypes": {
+      "standard": 1.25,
+      "brute": 2.3,
+      "skirmisher": 0.95,
+      "ranged": 0.55
+    }
+  },
+  {
+    "id": "survival-sieve",
+    "name": "筛火求生",
+    "description": "远程与高速敌人交替出现",
+    "durationSec": 26,
+    "spawnIntervalSec": 0.42,
+    "enemyHp": 23,
+    "enemySpeed": 71,
+    "enemyDamage": 10,
+    "regularEnemyCap": 14,
+    "pressureMultiplier": 1.37,
+    "accent": 16738181,
+    "winCondition": {
+      "type": "survive"
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "vertical"
+    },
+    "regularArchetypes": {
+      "standard": 1,
+      "brute": 0.7,
+      "skirmisher": 1.8,
+      "ranged": 2.25
+    }
+  },
+  {
+    "id": "elite-pressure-hold",
+    "name": "蓄势压制",
+    "description": "护盾消失时进攻",
+    "contentTier": "rare",
+    "durationSec": 35,
+    "spawnIntervalSec": 1.2,
+    "enemyHp": 24,
+    "enemySpeed": 55,
+    "enemyDamage": 9,
+    "regularEnemyCap": 8,
+    "pressureMultiplier": 1.32,
+    "accent": 16739146,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "surround",
+      "burstCount": 1
+    },
+    "regularArchetypes": {
+      "standard": 3.5,
+      "brute": 0.8,
+      "skirmisher": 0.5,
+      "ranged": 0.2
+    },
+    "escortArchetypes": {
+      "standard": 0.5,
+      "brute": 3,
+      "skirmisher": 0.3,
+      "ranged": 0.2
+    },
+    "eliteRule": {
+      "spawnAtSec": 3.5,
+      "hpMultiplier": 10.5,
+      "speedMultiplier": 0.95,
+      "damageMultiplier": 2.5,
+      "guardSec": 5.5,
+      "guardDamageMultiplier": 0.35,
+      "radius": 23,
+      "regularEnemyCap": 9,
+      "behavior": "frontline",
+      "preferredDistance": 140,
+      "strafeStrength": 0.25,
+      "escortBatch": 3,
+      "escortRespawnSec": 8.5,
+      "escortMax": 6,
+      "pressurePhases": [
+        {
+          "id": "shield-cycle",
+          "label": "护盾循环",
+          "triggerHpRatio": 0.65,
+          "triggerRemainingSec": 18,
+          "minResidenceSec": 5,
+          "entryGuardSec": 4,
+          "entryGuardDamageMultiplier": 0.25,
+          "entryEscortBurst": 4,
+          "escortBatchBonus": 2,
+          "escortMaxBonus": 3,
+          "escortRespawnMultiplier": 0.7,
+          "regularEnemyCapBonus": 2
+        }
+      ]
+    }
+  },
+  {
+    "id": "elite-contagion",
+    "name": "感染压制",
+    "description": "击杀有印记的护卫",
+    "contentTier": "rare",
+    "durationSec": 33,
+    "spawnIntervalSec": 0.85,
+    "enemyHp": 21,
+    "enemySpeed": 58,
+    "enemyDamage": 9,
+    "regularEnemyCap": 14,
+    "pressureMultiplier": 1.42,
+    "accent": 4899839,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "lanes",
+      "burstCount": 2,
+      "laneBias": "horizontal"
+    },
+    "regularArchetypes": {
+      "standard": 2.8,
+      "brute": 1.5,
+      "skirmisher": 1.2,
+      "ranged": 0.5
+    },
+    "escortArchetypes": {
+      "standard": 2.5,
+      "brute": 1,
+      "skirmisher": 1.5,
+      "ranged": 0.8
+    },
+    "eliteRule": {
+      "spawnAtSec": 2.8,
+      "hpMultiplier": 9.2,
+      "speedMultiplier": 1,
+      "damageMultiplier": 2.38,
+      "guardSec": 4,
+      "guardDamageMultiplier": 0.55,
+      "radius": 22,
+      "regularEnemyCap": 16,
+      "behavior": "screened",
+      "preferredDistance": 200,
+      "strafeStrength": 0.38,
+      "escortBatch": 4,
+      "escortRespawnSec": 4.2,
+      "escortMax": 12,
+      "pressurePhases": [
+        {
+          "id": "swarm",
+          "label": "蜂群",
+          "triggerHpRatio": 0.6,
+          "triggerRemainingSec": 16,
+          "minResidenceSec": 4.5,
+          "entryEscortBurst": 6,
+          "spawnIntervalMultiplier": 0.75,
+          "regularEnemyCapBonus": 4,
+          "escortBatchBonus": 2,
+          "escortMaxBonus": 6,
+          "escortRespawnMultiplier": 0.65,
+          "eliteSpeedMultiplier": 1.12
+        }
+      ]
+    }
+  },
+  {
+    "id": "elite-gauntlet",
+    "name": "夹道压制",
+    "description": "弹幕封锁区域",
+    "contentTier": "rare",
+    "durationSec": 32,
+    "spawnIntervalSec": 0.9,
+    "enemyHp": 23,
+    "enemySpeed": 66,
+    "enemyDamage": 10,
+    "regularEnemyCap": 13,
+    "pressureMultiplier": 1.45,
+    "accent": 4915100,
+    "winCondition": {
+      "type": "elite",
+      "target": 1
+    },
+    "spawnRule": {
+      "pattern": "pincers",
+      "burstCount": 2
+    },
+    "regularArchetypes": {
+      "standard": 1.2,
+      "brute": 0.6,
+      "skirmisher": 3.5,
+      "ranged": 1.8
+    },
+    "escortArchetypes": {
+      "standard": 0.8,
+      "brute": 0.4,
+      "skirmisher": 2.8,
+      "ranged": 2.2
+    },
+    "eliteRule": {
+      "spawnAtSec": 2.5,
+      "hpMultiplier": 8.8,
+      "speedMultiplier": 1.18,
+      "damageMultiplier": 2.45,
+      "guardSec": 3.8,
+      "guardDamageMultiplier": 0.58,
+      "radius": 22,
+      "regularEnemyCap": 15,
+      "behavior": "kiting",
+      "preferredDistance": 180,
+      "strafeStrength": 0.52,
+      "escortBatch": 3,
+      "escortRespawnSec": 5.5,
+      "escortMax": 9,
+      "pressurePhases": [
+        {
+          "id": "lockdown",
+          "label": "封锁",
+          "signatureLabel": "弹幕封锁",
+          "signatureDurationSec": 3.5,
+          "signaturePulseIntervalSec": 1.1,
+          "signatureVolleyCount": 3,
+          "triggerHpRatio": 0.62,
+          "triggerRemainingSec": 15,
+          "minResidenceSec": 4.2,
+          "entryEscortBurst": 4,
+          "spawnIntervalMultiplier": 0.88,
+          "regularEnemyCapBonus": 3,
+          "escortBatchBonus": 2,
+          "escortMaxBonus": 3,
+          "rangedShotIntervalMultiplier": 1.25,
+          "rangedProjectileSpeedMultiplier": 1.15,
+          "eliteSpeedMultiplier": 1.22,
+          "strafeStrengthBonus": 0.15
+        }
+      ]
+    }
+  }
+]

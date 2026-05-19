@@ -1,0 +1,27 @@
+{
+  "VIEWPORT_WIDTH": 960,
+  "VIEWPORT_HEIGHT": 540,
+  "ARENA_WIDTH": 2400,
+  "ARENA_HEIGHT": 1560,
+  "PLAYER_BODY_RADIUS": 12,
+  "PLAYER_COLLISION_RADIUS": 18,
+  "UPGRADE_VALUE_BUCKET_THRESHOLDS": {
+    "mid": 65,
+    "high": 105,
+    "spike": 150
+  },
+  "RARITY_LABEL_MAP": {
+    "common": "白",
+    "uncommon": "绿",
+    "rare": "蓝",
+    "epic": "紫",
+    "legendary": "金"
+  },
+  "RARITY_COLOR_MAP": {
+    "common": "#d6dde6",
+    "uncommon": "#83d87c",
+    "rare": "#69b5ff",
+    "epic": "#bb84ff",
+    "legendary": "#ffca69"
+  }
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>游戏配置编辑器</title>
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.4/dist/css/tabulator.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🎮 游戏配置编辑器</h1>
+      <div class="header-actions">
+        <button id="btn-import" class="btn btn-primary">📁 导入文件</button>
+        <button id="btn-export-json" class="btn btn-secondary">💾 导出 JSON</button>
+        <button id="btn-export-excel" class="btn btn-secondary">📊 导出 Excel</button>
+        <button id="btn-validate" class="btn btn-success">✅ 验证配置</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- 拖拽上传区域 -->
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-content">
+          <div class="drop-icon">📂</div>
+          <h2>拖拽 Excel/CSV 文件到此处</h2>
+          <p>或点击"导入文件"按钮选择文件</p>
+          <div class="supported-formats">
+            <span class="format-badge">.xlsx</span>
+            <span class="format-badge">.xls</span>
+            <span class="format-badge">.csv</span>
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+      </div>
+
+      <!-- 表格容器 -->
+      <div id="table-container" class="table-container" style="display: none;">
+        <div id="config-table"></div>
+      </div>
+
+      <!-- 验证结果面板 -->
+      <div id="validation-panel" class="validation-panel" style="display: none;">
+        <h3>验证结果</h3>
+        <div id="validation-results"></div>
+      </div>
+    </main>
+
+    <footer>
+      <p>游戏配置编辑器 v1.0 | 支持 Excel/CSV 导入导出 | 实时数据验证</p>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/tabulator-tables@5.5.4/dist/js/tabulator.min.js"></script>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

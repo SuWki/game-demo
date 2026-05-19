@@ -1,0 +1,45 @@
+[
+  {
+    "id": "standard",
+    "name": "普通怪",
+    "hpMultiplier": 1,
+    "speedMultiplier": 1,
+    "radiusMultiplier": 1,
+    "contactDamageMultiplier": 1,
+    "experienceMultiplier": 1
+  },
+  {
+    "id": "brute",
+    "name": "厚血慢速大体型怪",
+    "hpMultiplier": 1.85,
+    "speedMultiplier": 0.7,
+    "radiusMultiplier": 1.48,
+    "contactDamageMultiplier": 1.2,
+    "experienceMultiplier": 1.32
+  },
+  {
+    "id": "skirmisher",
+    "name": "高速脆皮怪",
+    "hpMultiplier": 0.72,
+    "speedMultiplier": 1.28,
+    "radiusMultiplier": 0.88,
+    "contactDamageMultiplier": 0.92,
+    "experienceMultiplier": 0.95,
+    "strafeStrength": 0.34
+  },
+  {
+    "id": "ranged",
+    "name": "远程怪",
+    "hpMultiplier": 0.82,
+    "speedMultiplier": 0.86,
+    "radiusMultiplier": 1.02,
+    "contactDamageMultiplier": 0.74,
+    "experienceMultiplier": 1.12,
+    "preferredDistance": 210,
+    "strafeStrength": 0.24,
+    "shotIntervalSec": 2.35,
+    "projectileSpeed": 220,
+    "projectileDamageMultiplier": 0.76,
+    "projectileRadius": 5
+  }
+]
