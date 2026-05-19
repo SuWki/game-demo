@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/auto-shooter-demo/config-editor/',
+  base: '/game-demo/config-editor/',
   server: {
     port: 3000,
   },
