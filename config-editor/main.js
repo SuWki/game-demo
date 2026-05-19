@@ -11,6 +11,57 @@ let currentFileName = '';
 let currentConfigType = null;
 let loadedConfigs = {}; // 存储已加载的配置表（用于跨表验证）
 
+// Toast 通知系统
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+    font-size: 0.9rem;
+  `;
+  
+  if (type === 'success') {
+    toast.style.borderLeft = '4px solid var(--accent-success)';
+  } else if (type === 'error') {
+    toast.style.borderLeft = '4px solid var(--accent-error)';
+  } else if (type === 'warning') {
+    toast.style.borderLeft = '4px solid var(--accent-warning)';
+  }
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// 添加 toast 动画样式
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
 // 初始化 Ajv 验证器
 const ajv = new Ajv({ allErrors: true });
 addFormats(ajv);
@@ -60,6 +111,12 @@ fileInput.addEventListener('change', (e) => {
 // 处理文件
 function handleFile(file) {
   currentFileName = file.name;
+  
+  // 显示加载状态
+  const dropContent = dropZone.querySelector('.drop-content');
+  const originalContent = dropContent.innerHTML;
+  dropContent.innerHTML = '<div class="loading"></div><p style="margin-top: 1rem; color: var(--text-secondary);">正在解析文件...</p>';
+  
   const reader = new FileReader();
   
   reader.onload = (e) => {
@@ -80,10 +137,21 @@ function handleFile(file) {
       if (currentConfigType) {
         loadedConfigs[currentConfigType] = jsonData;
       }
+      
+      // 恢复原始内容
+      dropContent.innerHTML = originalContent;
+      showToast(`成功加载 ${jsonData.length} 条记录`, 'success');
     } catch (error) {
-      alert(`文件解析失败: ${error.message}`);
+      showToast(`文件解析失败: ${error.message}`, 'error');
       console.error(error);
+      // 恢复原始内容
+      dropContent.innerHTML = originalContent;
     }
+  };
+  
+  reader.onerror = () => {
+    showToast('文件读取失败', 'error');
+    dropContent.innerHTML = originalContent;
   };
   
   reader.readAsArrayBuffer(file);
@@ -133,10 +201,49 @@ function loadData(data) {
     },
   });
   
+  // 更新状态栏
+  updateStatusBar();
+  
   console.log(`已加载 ${data.length} 条记录`);
   if (currentConfigType) {
     console.log(`识别配置类型: ${currentConfigType}`);
   }
+}
+
+function updateStatusBar() {
+  // 移除旧的状态栏
+  const oldStatusBar = document.getElementById('status-bar');
+  if (oldStatusBar) {
+    oldStatusBar.remove();
+  }
+  
+  // 创建新的状态栏
+  const statusBar = document.createElement('div');
+  statusBar.id = 'status-bar';
+  statusBar.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+  `;
+  
+  const recordCount = currentData.length;
+  const configType = currentConfigType || '未知类型';
+  const fileName = currentFileName || '未命名';
+  
+  statusBar.innerHTML = `
+    <span>📄 文件: ${fileName}</span>
+    <span>📊 记录数: ${recordCount}</span>
+    <span>🏷️ 类型: ${configType}</span>
+  `;
+  
+  tableContainer.appendChild(statusBar);
 }
 
 function generateColumns(data) {
@@ -214,7 +321,7 @@ function highlightChanges() {
 
 document.getElementById('btn-export-json').addEventListener('click', () => {
   if (currentData.length === 0) {
-    alert('没有数据可导出');
+    showToast('没有数据可导出', 'warning');
     return;
   }
   
@@ -228,12 +335,12 @@ document.getElementById('btn-export-json').addEventListener('click', () => {
   a.click();
   
   URL.revokeObjectURL(url);
-  console.log('已导出 JSON 文件');
+  showToast(`已导出 JSON 文件: ${a.download}`, 'success');
 });
 
 document.getElementById('btn-export-excel').addEventListener('click', () => {
   if (currentData.length === 0) {
-    alert('没有数据可导出');
+    showToast('没有数据可导出', 'warning');
     return;
   }
   
@@ -244,7 +351,7 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
   const fileName = currentFileName.replace(/\.[^/.]+$/, '.xlsx');
   XLSX.writeFile(workbook, fileName);
   
-  console.log('已导出 Excel 文件');
+  showToast(`已导出 Excel 文件: ${fileName}`, 'success');
 });
 
 // ============================================================
@@ -253,10 +360,11 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
 
 document.getElementById('btn-validate').addEventListener('click', () => {
   if (currentData.length === 0) {
-    alert('没有数据可验证');
+    showToast('没有数据可验证', 'warning');
     return;
   }
   
+  showToast('正在验证配置...', 'info');
   validateConfig(currentData);
 });
 
@@ -358,38 +466,56 @@ function displayValidationResults(results) {
   validationPanel.style.display = 'block';
   validationResults.innerHTML = '';
   
+  // 滚动到验证面板
+  validationPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
   // 统计
   const errorCount = results.errors.length;
   const warningCount = results.warnings.length;
   
   if (errorCount === 0 && warningCount === 0) {
-    validationResults.innerHTML = '<div class="validation-success">✅ 所有验证通过！</div>';
+    validationResults.innerHTML = '<div class="validation-success">✅ 所有验证通过！配置数据完全正确。</div>';
     return;
   }
   
   // 显示摘要
   const summary = document.createElement('div');
   summary.className = results.success ? 'validation-success' : 'validation-error';
+  summary.style.marginBottom = '1rem';
   summary.textContent = results.success 
     ? `✅ 验证通过（${warningCount} 个警告）` 
     : `❌ 验证失败（${errorCount} 个错误，${warningCount} 个警告）`;
   validationResults.appendChild(summary);
   
   // 显示错误
-  results.errors.forEach(error => {
-    const div = document.createElement('div');
-    div.className = 'validation-error';
-    div.textContent = `❌ ${error}`;
-    validationResults.appendChild(div);
-  });
+  if (errorCount > 0) {
+    const errorHeader = document.createElement('div');
+    errorHeader.style.cssText = 'color: var(--accent-error); font-weight: 600; margin: 1rem 0 0.5rem; font-size: 0.9rem;';
+    errorHeader.textContent = `错误 (${errorCount}):`;
+    validationResults.appendChild(errorHeader);
+    
+    results.errors.forEach(error => {
+      const div = document.createElement('div');
+      div.className = 'validation-error';
+      div.textContent = ` ${error}`;
+      validationResults.appendChild(div);
+    });
+  }
   
   // 显示警告
-  results.warnings.forEach(warning => {
-    const div = document.createElement('div');
-    div.className = 'validation-warning';
-    div.textContent = `⚠️ ${warning}`;
-    validationResults.appendChild(div);
-  });
+  if (warningCount > 0) {
+    const warningHeader = document.createElement('div');
+    warningHeader.style.cssText = 'color: var(--accent-warning); font-weight: 600; margin: 1rem 0 0.5rem; font-size: 0.9rem;';
+    warningHeader.textContent = `警告 (${warningCount}):`;
+    validationResults.appendChild(warningHeader);
+    
+    results.warnings.forEach(warning => {
+      const div = document.createElement('div');
+      div.className = 'validation-warning';
+      div.textContent = `⚠️ ${warning}`;
+      validationResults.appendChild(div);
+    });
+  }
 }
 
 // ============================================================
@@ -454,7 +580,7 @@ function showHistoryPanel() {
   const history = getHistory();
   
   if (history.length === 0) {
-    alert('没有历史记录');
+    showToast('没有历史记录', 'warning');
     return;
   }
   
@@ -470,6 +596,9 @@ function showHistoryPanel() {
     const index = parseInt(choice) - 1;
     if (index >= 0 && index < history.length) {
       loadFromHistory(index);
+      showToast('已从历史记录加载', 'success');
+    } else {
+      showToast('无效的历史记录编号', 'error');
     }
   }
 }
@@ -514,12 +643,13 @@ function showTemplateMenu() {
         templateData = getEnemyArchetypeTemplate();
         break;
       default:
-        alert('无效选择');
+        showToast('无效选择', 'error');
         return;
     }
     
     currentFileName = `${currentConfigType}-template.xlsx`;
     loadData(templateData);
+    showToast(`已加载 ${currentConfigType} 模板`, 'success');
   }
 }
 
@@ -576,17 +706,59 @@ function getEnemyArchetypeTemplate() {
 
 // ============================================================
 // 按钮事件
-// ============================================================
-
 document.getElementById('btn-import').addEventListener('click', () => {
   fileInput.click();
 });
 
+// 添加重置按钮功能
+function addResetButton() {
+  const resetBtn = document.createElement('button');
+  resetBtn.id = 'btn-reset';
+  resetBtn.className = 'btn btn-secondary';
+  resetBtn.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    重新加载
+  `;
+  resetBtn.addEventListener('click', () => {
+    if (confirm('确定要重新加载吗？当前未保存的更改将丢失。')) {
+      resetEditor();
+    }
+  });
+  
+  document.querySelector('.header-actions').appendChild(resetBtn);
+}
+
+function resetEditor() {
+  // 隐藏表格容器
+  tableContainer.style.display = 'none';
+  validationPanel.style.display = 'none';
+  
+  // 显示拖拽区域
+  dropZone.style.display = 'block';
+  
+  // 销毁表格
+  if (table) {
+    table.destroy();
+    table = null;
+  }
+  
+  // 清除数据
+  currentData = [];
+  originalData = [];
+  currentFileName = '';
+  currentConfigType = null;
+  loadedConfigs = {};
+  
+  // 清除文件输入
+  fileInput.value = '';
+  
+  showToast('编辑器已重置', 'info');
+}
+
 // ============================================================
 // 初始化
-// ============================================================
-
 window.addEventListener('load', () => {
   addHistoryButton();
   addTemplateButton();
+  addResetButton();
 });
