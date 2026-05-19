@@ -20,12 +20,12 @@ function showToast(message, type = 'info') {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    background: var(--bg-card);
-    color: var(--text-primary);
+    background: #ffffff;
+    color: #0f172a;
     padding: 1rem 1.5rem;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
     z-index: 1000;
     animation: slideIn 0.3s ease;
     max-width: 400px;
@@ -33,11 +33,11 @@ function showToast(message, type = 'info') {
   `;
   
   if (type === 'success') {
-    toast.style.borderLeft = '4px solid var(--accent-success)';
+    toast.style.borderLeft = '4px solid #10b981';
   } else if (type === 'error') {
-    toast.style.borderLeft = '4px solid var(--accent-error)';
+    toast.style.borderLeft = '4px solid #ef4444';
   } else if (type === 'warning') {
-    toast.style.borderLeft = '4px solid var(--accent-warning)';
+    toast.style.borderLeft = '4px solid #f59e0b';
   }
   
   document.body.appendChild(toast);
@@ -115,7 +115,7 @@ function handleFile(file) {
   // 显示加载状态
   const dropContent = dropZone.querySelector('.drop-content');
   const originalContent = dropContent.innerHTML;
-  dropContent.innerHTML = '<div class="loading"></div><p style="margin-top: 1rem; color: var(--text-secondary);">正在解析文件...</p>';
+  dropContent.innerHTML = '<div class="loading"></div><p style="margin-top: 1rem; color: #475569;">正在解析文件...</p>';
   
   const reader = new FileReader();
   
@@ -225,12 +225,12 @@ function updateStatusBar() {
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
+    background: #f1f5f9;
+    border-radius: 10px;
     margin-top: 1rem;
     font-size: 0.85rem;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    color: #475569;
+    border: 1px solid #e2e8f0;
   `;
   
   const recordCount = currentData.length;
