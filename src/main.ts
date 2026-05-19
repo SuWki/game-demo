@@ -9,6 +9,7 @@ import { ResultScene } from './scenes/ResultScene';
 import { MetaProgression } from './systems/MetaProgression';
 import { MetricsTracker } from './systems/MetricsTracker';
 import { PilotAudio } from './systems/PilotAudio';
+import { ConfigLoader } from './systems/ConfigLoader';
 import { BattleDebugPanel } from './ui/BattleDebugPanel';
 import { OverlayController } from './ui/OverlayController';
 
@@ -44,12 +45,17 @@ const debugPanel = new BattleDebugPanel(uiRoot);
 const metrics = new MetricsTracker(window.localStorage);
 metrics.attachToWindow(window);
 
+// 初始化配置加载器并预加载
+const configLoader = new ConfigLoader();
+await configLoader.preloadCore();
+
 const services: Services = {
   overlay,
   debugPanel,
   metrics,
   meta: new MetaProgression(window.localStorage),
   audio: new PilotAudio(),
+  configLoader,
 };
 
 const savedAudioVolume = Number(window.localStorage.getItem('pilot-audio-volume'));

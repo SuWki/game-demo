@@ -7,7 +7,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "export:data": "npx tsx scripts/export-data.mjs",
+    "validate:configs": "npx tsx tools/validate-configs.ts",
+    "excel:to-json": "node tools/excel-to-json.mjs",
+    "json:to-excel": "node tools/json-to-excel.mjs"
   },
   "repository": {
     "type": "git",
@@ -19,6 +23,7 @@
   },
   "devDependencies": {
     "typescript": "^6.0.2",
-    "vite": "^8.0.3"
+    "vite": "^8.0.3",
+    "xlsx": "^0.18.5"
   }
 }

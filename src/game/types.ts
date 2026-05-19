@@ -868,4 +868,5 @@ export interface Services {
   metrics: import('../systems/MetricsTracker').MetricsTracker;
   meta: import('../systems/MetaProgression').MetaProgression;
   audio: import('../systems/PilotAudio').PilotAudio;
+  configLoader: import('../systems/ConfigLoader').ConfigLoader;
 }

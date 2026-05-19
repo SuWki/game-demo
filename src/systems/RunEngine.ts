@@ -1,4 +1,4 @@
-import {
+﻿import {
   ARENA_HEIGHT,
   ARENA_WIDTH,
   VIEWPORT_HEIGHT,
@@ -37,21 +37,20 @@ import {
   getSpawnBurstCount,
 } from '../data/balance';
 import {
-  BATTLE_TEMPLATES,
   getBattleActiveEliteBehavior,
   getBattleTargetKills,
   isBattleVictory,
   shouldSpawnElite,
 } from '../data/battleTemplates';
 import { rollEventDefinition, rollUpgradeChoices } from '../data/contentSelectors';
-import { ENEMY_ARCHETYPES, getEnemyArchetype, pickEnemyArchetype } from '../data/enemyArchetypes';
+import { getEnemyArchetype, pickEnemyArchetype } from '../data/enemyArchetypes';
 import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
-import { UPGRADE_ARCHETYPES } from '../data/upgrades';
 import type {
   BattlePressurePhaseDefinition,
   BattleState,
   BattleDebugRuntimeConfig,
+  BattleTemplateDefinition,
   BattleTemplateId,
   ContentEffect,
   ContentTier,
@@ -213,6 +212,45 @@ export class RunEngine {
     this.enterBattle(openingNode);
   }
 
+  // ============================================================
+  // 配置访问方法（通过 ConfigLoader）
+  // ============================================================
+
+  private getBattleTemplate(id: BattleTemplateId): BattleTemplateDefinition {
+    const templates = this.services.configLoader.getBattleTemplates();
+    const template = templates.find(t => t.id === id);
+    if (!template) {
+      throw new Error(`[RunEngine] 战斗模板未找到: ${id}`);
+    }
+    return template;
+  }
+
+  private getAllBattleTemplates(): BattleTemplateDefinition[] {
+    return this.services.configLoader.getBattleTemplates();
+  }
+
+  private getUpgradeArchetypeById(id: string): UpgradeArchetype {
+    const upgrades = this.services.configLoader.getUpgrades();
+    const upgrade = upgrades.find(u => u.id === id);
+    if (!upgrade) {
+      throw new Error(`[RunEngine] 升级原型未找到: ${id}`);
+    }
+    return upgrade;
+  }
+
+  private getAllUpgradeArchetypes(): UpgradeArchetype[] {
+    return this.services.configLoader.getUpgrades();
+  }
+
+  private getEnemyArchetypeDef(id: EnemyArchetypeId): import('../game/types').EnemyArchetypeDefinition {
+    const archetypes = this.services.configLoader.getEnemyArchetypes();
+    const archetype = archetypes.find(a => a.id === id);
+    if (!archetype) {
+      throw new Error(`[RunEngine] 敌人原型未找到: ${id}`);
+    }
+    return archetype;
+  }
+
   public getState(): Readonly<RunState> {
     return this.state;
   }
@@ -256,7 +294,7 @@ export class RunEngine {
   }
 
   public restartDebugBattle(templateId: BattleTemplateId, phase: DebugBattlePhaseId): void {
-    const template = BATTLE_TEMPLATES[templateId];
+    const template = this.getBattleTemplate(templateId);
     const battlePhase = template.encounterType === 'boss' ? 'finalBattle' : phase;
     const nodeType: NodeType = template.encounterType === 'boss' ? 'boss' : 'battle';
     const debugNode: NodeOption = {
@@ -305,7 +343,7 @@ export class RunEngine {
     }
 
     if (typeof options.remainingSec === 'number' && Number.isFinite(options.remainingSec)) {
-      battle.remainingSec = clamp(options.remainingSec, 1, BATTLE_TEMPLATES[battle.templateId].durationSec);
+      battle.remainingSec = clamp(options.remainingSec, 1, this.getBattleTemplate(battle.templateId).durationSec);
     }
 
     if (
@@ -702,7 +740,7 @@ export class RunEngine {
     }
 
     if (battle.remainingSec <= 0) {
-      const template = BATTLE_TEMPLATES[battle.templateId];
+      const template = this.getBattleTemplate(battle.templateId);
       if (template.winCondition.type === 'survive') {
         this.completeBattle();
       }
@@ -715,7 +753,7 @@ export class RunEngine {
       return '';
     }
 
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const label = battle.label || template.name;
 
     switch (template.winCondition.type) {
@@ -804,7 +842,7 @@ export class RunEngine {
   }
 
   private enterBattle(node: NodeOption): void {
-    const template = BATTLE_TEMPLATES[node.templateId ?? 'elimination'];
+    const template = this.getBattleTemplate(node.templateId ?? 'elimination');
     const battleIndex = this.getCurrentBattleIndex();
     const encounterType = template.encounterType ?? (node.type === 'boss' ? 'boss' : 'battle');
     const battleLabel = encounterType === 'boss' ? `Boss \u00b7 ${node.title}` : template.name;
@@ -981,7 +1019,7 @@ export class RunEngine {
   }
 
   private getActivePressurePhase(battle: BattleState): BattlePressurePhaseDefinition | null {
-    const phases = BATTLE_TEMPLATES[battle.templateId].eliteRule?.pressurePhases ?? [];
+    const phases = this.getBattleTemplate(battle.templateId).eliteRule?.pressurePhases ?? [];
     if (battle.pressurePhaseIndex < 0 || battle.pressurePhaseIndex >= phases.length) {
       return null;
     }
@@ -991,7 +1029,7 @@ export class RunEngine {
 
   private getActiveEliteBehavior(
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
   ): EliteBehaviorId {
     return getBattleActiveEliteBehavior(battle.templateId, battle.pressurePhaseIndex) ?? template.eliteRule?.behavior ?? 'frontline';
   }
@@ -1692,7 +1730,7 @@ export class RunEngine {
       battle.outsideSafeDamageTimerSec = 0;
       battle.outsideSafeDamageTickCount = (battle.outsideSafeDamageTickCount || 0) + 1;
 
-      const template = BATTLE_TEMPLATES[battle.templateId];
+      const template = this.getBattleTemplate(battle.templateId);
       const damagePerTick = Math.max(
         8,
         this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.35),
@@ -1754,7 +1792,7 @@ export class RunEngine {
         6,
         Math.round(
           this.getContactDamage(
-            BATTLE_TEMPLATES[battle.templateId],
+            this.getBattleTemplate(battle.templateId),
             this.getCurrentBattleIndex(),
             this.state.phase,
             battle.difficultyScale,
@@ -1887,7 +1925,7 @@ export class RunEngine {
     this.services.metrics.recordBattleCompleted(
       battle.templateId,
       'loss',
-      BATTLE_TEMPLATES[battle.templateId].contentTier,
+      this.getBattleTemplate(battle.templateId).contentTier,
       this.getBattleMonitoringSummary(battle),
     );
     // Boss 战失败：显示专属收尾画面
@@ -2002,7 +2040,7 @@ export class RunEngine {
   }
 
   private updatePressurePhase(battle: BattleState): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const phases = template.eliteRule?.pressurePhases;
     if (!battle.eliteAlive || !phases || phases.length === 0) {
       return;
@@ -2077,18 +2115,18 @@ export class RunEngine {
     this.services.metrics.recordBattleCompleted(
       battle.templateId,
       'win',
-      BATTLE_TEMPLATES[battle.templateId].contentTier,
+      this.getBattleTemplate(battle.templateId).contentTier,
       this.getBattleMonitoringSummary(battle),
     );
     const completionExp = getBattleCompletionExperience(
-      BATTLE_TEMPLATES[battle.templateId],
+      this.getBattleTemplate(battle.templateId),
       this.getCurrentBattleIndex(),
       this.state.phase,
     );
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const earnedTimedReward =
       battle.encounterType !== 'boss' && template.winCondition.type !== 'survive' && battle.remainingSec > 0;
-    this.enqueueTip(`${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`);
+    this.enqueueTip(`${battle.label || this.getBattleTemplate(battle.templateId).name}完成`);
     if (earnedTimedReward) {
       this.state.queuedLevelUps += 1;
       this.state.queuedRewardUpgrades += 1;
@@ -2121,7 +2159,7 @@ export class RunEngine {
     // 普通战斗结束：添加过渡状态，避免瞬间进入关卡选择
     this.state.status = 'phaseTransition';
     this.state.phaseTransition = {
-      label: `${battle.label || BATTLE_TEMPLATES[battle.templateId].name}完成`,
+      label: `${battle.label || this.getBattleTemplate(battle.templateId).name}完成`,
       elapsedSec: 0,
       durationSec: 1.2, // 停留 1.2 秒
     };
@@ -2197,7 +2235,7 @@ export class RunEngine {
       routeTrace,
       replayPrompt,
       selectedUpgrades: this.state.selectedUpgrades
-        .map((id) => UPGRADE_ARCHETYPES.find((u) => u.id === id))
+        .map((id) => this.getAllUpgradeArchetypes().find((u) => u.id === id))
         .filter((u): u is UpgradeDefinition => u !== undefined),
     };
     this.services.metrics.finishRun({
@@ -2333,7 +2371,7 @@ export class RunEngine {
 
   private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {
     const pickedIds = new Set(this.state.selectedUpgrades);
-    return UPGRADE_ARCHETYPES.filter((archetype) => pickedIds.has(archetype.id));
+    return this.getAllUpgradeArchetypes().filter((archetype) => pickedIds.has(archetype.id));
   }
 
   private hasAnyUpgradeTag(tags: string[] | undefined, expected: string[]): boolean {
@@ -2891,7 +2929,7 @@ export class RunEngine {
   }
 
   private spawnEnemies(battle: BattleState, dt: number): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     if (this.debugConfig.freezeEnemySpawning) {
       return;
     }
@@ -3057,7 +3095,7 @@ export class RunEngine {
   }
 
   private getEliteEscortBatch(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     battle: BattleState,
   ): number {
     const baseBatch = template.eliteRule?.escortBatch ?? 0;
@@ -3065,7 +3103,7 @@ export class RunEngine {
   }
 
   private getEliteEscortMax(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     battle: BattleState,
   ): number {
     const eliteRule = template.eliteRule;
@@ -3074,7 +3112,7 @@ export class RunEngine {
   }
 
   private getEliteEscortRespawnSec(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     battle: BattleState,
   ): number {
     const baseRespawn = template.eliteRule?.escortRespawnSec ?? 5;
@@ -3087,7 +3125,7 @@ export class RunEngine {
       return;
     }
 
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     if (!template.eliteRule || (template.eliteRule.escortBatch ?? 0) <= 0) {
       return;
     }
@@ -3112,7 +3150,7 @@ export class RunEngine {
       return;
     }
 
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     if (!template.eliteRule || (template.eliteRule.escortBatch ?? 0) <= 0) {
       return;
     }
@@ -3191,7 +3229,7 @@ export class RunEngine {
   }
 
   private getContactDamage(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     round: number,
     phase: RunState['phase'],
     difficultyScale: number,
@@ -3407,7 +3445,7 @@ export class RunEngine {
       return;
     }
 
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const flowRatio =
       battle.killFlowSec > 0
@@ -3550,15 +3588,15 @@ export class RunEngine {
     );
   }
 
-  private isSkirmisherHeavyTemplate(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): boolean {
+  private isSkirmisherHeavyTemplate(template: BattleTemplateDefinition): boolean {
     return (template.regularArchetypes?.skirmisher ?? 0) >= 1.9;
   }
 
-  private isBruteHeavyTemplate(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): boolean {
+  private isBruteHeavyTemplate(template: BattleTemplateDefinition): boolean {
     return (template.regularArchetypes?.brute ?? 0) >= 1.8;
   }
 
-  private isRangedHeavyTemplate(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): boolean {
+  private isRangedHeavyTemplate(template: BattleTemplateDefinition): boolean {
     return (template.regularArchetypes?.ranged ?? 0) >= 1.45;
   }
 
@@ -3579,7 +3617,7 @@ export class RunEngine {
   }
 
   private getOrdinaryRefillWindow(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     activeRegularCount: number,
     regularEnemyCap: number,
     archetypeCounts: Record<EnemyArchetypeId, number>,
@@ -3611,7 +3649,7 @@ export class RunEngine {
   }
 
   private getAdaptiveSpawnBurstCount(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     battle: BattleState,
     archetypeCounts: Record<EnemyArchetypeId, number>,
     regularEnemyCap: number | null,
@@ -3662,7 +3700,7 @@ export class RunEngine {
   }
 
   private getAdaptiveSpawnArchetype(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     archetypeCounts: Record<EnemyArchetypeId, number>,
     activeRegularCount: number,
     burstIndex: number,
@@ -3696,13 +3734,13 @@ export class RunEngine {
     return undefined;
   }
 
-  private getSpawnBurstCount(template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES]): number {
+  private getSpawnBurstCount(template: BattleTemplateDefinition): number {
     return getSpawnBurstCount(template);
   }
 
   private getSpawnPosition(
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     burstIndex: number,
   ): { x: number; y: number } {
     const view = this.getBattleViewportBounds(battle);
@@ -3805,7 +3843,7 @@ export class RunEngine {
 
   private createArchetypedEnemy(
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     role: 'regular' | 'escort',
     x: number,
     y: number,
@@ -3883,7 +3921,7 @@ export class RunEngine {
       return;
     }
 
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const eliteEnemy = this.getEliteEnemy(battle);
     const activeBehavior = this.getActiveEliteBehavior(battle, template);
     const battleIndex = this.getCurrentBattleIndex();
@@ -4757,7 +4795,7 @@ export class RunEngine {
 
   private updateEnemies(battle: BattleState, dt: number): void {
     const survivors = [];
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     for (const enemy of battle.enemies) {
       const previousX = enemy.x;
       const previousY = enemy.y;
@@ -4953,7 +4991,7 @@ export class RunEngine {
   }
 
   private updateStandardEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const dx = battle.playerX - enemy.x;
     const dy = battle.playerY - enemy.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -5133,7 +5171,7 @@ export class RunEngine {
   }
 
   private updateBruteEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const dx = battle.playerX - enemy.x;
     const dy = battle.playerY - enemy.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -5309,7 +5347,7 @@ export class RunEngine {
   }
 
   private updateSkirmisherEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const pincerHeavy = pattern === 'pincers' || this.isSkirmisherHeavyTemplate(template);
     const recoveryRatio = this.getEnemyRecoveryRatio(enemy);
@@ -5462,7 +5500,7 @@ export class RunEngine {
   }
 
   private updateRangedEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const archetype = getEnemyArchetype(enemy.archetype);
     const pressurePhase = this.getActivePressurePhase(battle);
     const pattern = template.spawnRule?.pattern ?? 'surround';
@@ -5898,7 +5936,7 @@ export class RunEngine {
   private updateEliteEnemy(
     enemy: BattleState['enemies'][number],
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     dt: number,
   ): void {
     const eliteRule = template.eliteRule;
@@ -6875,7 +6913,7 @@ export class RunEngine {
     battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - (enemy.elite ? 0.02 : 0.01) - flowChainBonus * 0.003);
     this.enqueueAudio(enemy.elite ? 'crit' : 'kill');
 
-    const orbValue = Math.round(this.getEnemyExperienceValue(battle, enemy.elite) * ENEMY_ARCHETYPES[enemy.archetype].experienceMultiplier);
+    const orbValue = Math.round(this.getEnemyExperienceValue(battle, enemy.elite) * this.getEnemyArchetypeDef(enemy.archetype).experienceMultiplier);
     const orbBurstCount =
       enemy.elite ? Math.min(5, Math.max(3, Math.ceil(orbValue / 10))) : orbValue >= 18 ? 3 : orbValue >= 9 ? 2 : 1;
     const baseOrbValue = Math.floor(orbValue / orbBurstCount);
@@ -8064,7 +8102,7 @@ export class RunEngine {
 
     if (bulletRouteFocus === 'pierce' && (pierceStage === 'committed' || pierceStage === 'matured')) {
       const laneScore = this.getPierceLaneScore(battle, enemy);
-      const behavior = this.getActiveEliteBehavior(battle, BATTLE_TEMPLATES[battle.templateId]);
+      const behavior = this.getActiveEliteBehavior(battle, this.getBattleTemplate(battle.templateId));
       const escortLimit = laneScore >= 1.2 || breachRatio > 0.66 ? 2 : 1;
       const escorts = this.getEliteNearbyEscorts(battle, enemy, 218).slice(0, escortLimit);
       const pierceFlowCount = this.registerPierceFlow(battle, {
@@ -8577,7 +8615,7 @@ export class RunEngine {
   private startElitePressurePulse(
     enemy: BattleState['enemies'][number],
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     behavior: EliteBehaviorId,
   ): void {
     const cycle = this.getElitePressureCycle(behavior);
@@ -8637,7 +8675,7 @@ export class RunEngine {
   private resolveElitePressurePulse(
     enemy: BattleState['enemies'][number],
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
   ): void {
     const behavior = this.getActiveEliteBehavior(battle, template);
     const cycle = this.getElitePressureCycle(behavior);
@@ -8765,7 +8803,7 @@ export class RunEngine {
   }
 
   private getRegularEnemyHp(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     round: number,
     phase: RunState['phase'],
     difficultyScale: number,
@@ -8775,7 +8813,7 @@ export class RunEngine {
   }
 
   private getRegularEnemySpeed(
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     round: number,
     phase: RunState['phase'],
     difficultyScale: number,
@@ -8786,7 +8824,7 @@ export class RunEngine {
 
   private getEnemySpawnInterval(
     battle: BattleState,
-    template: (typeof BATTLE_TEMPLATES)[keyof typeof BATTLE_TEMPLATES],
+    template: BattleTemplateDefinition,
     elapsedSec: number,
   ): number {
     const pressureMultiplier = this.getActivePressurePhase(battle)?.spawnIntervalMultiplier ?? 1;
@@ -8803,7 +8841,7 @@ export class RunEngine {
   }
 
   private getRegularEnemyCap(battle: BattleState): number | null {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     // Defensive: ensure template.regularEnemyCap is valid before division
     const baseCap = template.regularEnemyCap;
     if (!Number.isFinite(baseCap) || baseCap <= 0) {
@@ -8824,7 +8862,7 @@ export class RunEngine {
   }
 
   private getEnemyExperienceValue(battle: BattleState, isElite: boolean): number {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     return getEnemyExperienceValue(template, this.getCurrentBattleIndex(), this.state.phase, isElite);
   }
 

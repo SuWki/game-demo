@@ -1,6 +1,6 @@
 ﻿import Phaser from 'phaser';
 import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/balance';
-import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
+import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import type {
@@ -174,6 +174,30 @@ export class GameScene extends Phaser.Scene {
     super('GameScene');
   }
 
+  // ============================================================
+  // 配置访问方法（通过 ConfigLoader）
+  // ============================================================
+
+  private getBattleTemplate(id: import('../game/types').BattleTemplateId): import('../game/types').BattleTemplateDefinition {
+    const templates = this.services.configLoader.getBattleTemplates();
+    const template = templates.find(t => t.id === id);
+    if (!template) {
+      throw new Error(`[GameScene] 战斗模板未找到: ${id}`);
+    }
+    return template;
+  }
+
+  private getAllBattleTemplates(): import('../game/types').BattleTemplateDefinition[] {
+    return this.services.configLoader.getBattleTemplates();
+  }
+
+  private getRoute(routeId: import('../game/types').RouteId) {
+    const routes = this.services.configLoader.get('balance') as any;
+    // Routes are still loaded from the routes.ts file for now
+    // as they contain UI-specific data
+    return ROUTES.find(r => r.id === routeId);
+  }
+
   public create(): void {
     this.services = this.game.registry.get('services') as Services;
     this.services.audio.unlock();
@@ -271,7 +295,7 @@ export class GameScene extends Phaser.Scene {
 
   public updateDebugConfig(patch: Partial<BattleDebugConfig>): void {
     Object.assign(this.debugConfig, patch);
-    if (patch.templateId && BATTLE_TEMPLATES[patch.templateId].encounterType === 'boss') {
+    if (patch.templateId && this.getBattleTemplate(patch.templateId).encounterType === 'boss') {
       this.debugConfig.phase = 'finalBattle';
     }
     this.debugConfig.timeScale = Phaser.Math.Clamp(this.debugConfig.timeScale, 0.1, 2);
@@ -281,7 +305,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public restartDebugBattle(templateId: BattleDebugConfig['templateId'], phase: DebugBattlePhaseId): void {
-    const normalizedPhase = BATTLE_TEMPLATES[templateId].encounterType === 'boss' ? 'finalBattle' : phase;
+    const normalizedPhase = this.getBattleTemplate(templateId).encounterType === 'boss' ? 'finalBattle' : phase;
     this.debugConfig.templateId = templateId;
     this.debugConfig.phase = normalizedPhase;
     this.debugConfig.paused = false;
@@ -550,7 +574,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getDebugTemplateOptions(): BattleDebugTemplateOption[] {
-    return Object.values(BATTLE_TEMPLATES).map((template) => ({
+    return this.getAllBattleTemplates().map((template) => ({
       id: template.id,
       label: template.name,
       group:
@@ -752,7 +776,7 @@ export class GameScene extends Phaser.Scene {
         ? 'boss'
         : state.status === 'battle' && battle?.encounterType === 'battle' && battle.eliteAlive
           ? 'elite'
-          : state.status === 'battle' && battle && BATTLE_TEMPLATES[battle.templateId].winCondition.type === 'survive'
+          : state.status === 'battle' && battle && this.getBattleTemplate(battle.templateId).winCondition.type === 'survive'
             ? 'survive'
             : state.status === 'battle'
               ? 'ordinary'
@@ -860,10 +884,10 @@ export class GameScene extends Phaser.Scene {
   private getBattleIdentityLabel(battle: BattleState): string {
     const nodeTitle = this.engine.getState().currentNode?.title;
     if (battle.encounterType === 'boss') {
-      return nodeTitle ?? BATTLE_TEMPLATES[battle.templateId].name;
+      return nodeTitle ?? this.getBattleTemplate(battle.templateId).name;
     }
 
-    return battle.label || nodeTitle || BATTLE_TEMPLATES[battle.templateId].name;
+    return battle.label || nodeTitle || this.getBattleTemplate(battle.templateId).name;
   }
 
   private getBattleStatusSubtext(battle: BattleState): string {
@@ -877,7 +901,7 @@ export class GameScene extends Phaser.Scene {
       return '';
     }
 
-    if (BATTLE_TEMPLATES[battle.templateId].winCondition.type === 'survive') {
+    if (this.getBattleTemplate(battle.templateId).winCondition.type === 'survive') {
       return `生存倒计时：${Math.max(0, Math.ceil(battle.remainingSec))}秒`;
     }
 
@@ -992,7 +1016,7 @@ export class GameScene extends Phaser.Scene {
         };
       }
 
-      const winCondition = BATTLE_TEMPLATES[battle.templateId].winCondition.type;
+      const winCondition = this.getBattleTemplate(battle.templateId).winCondition.type;
       if (winCondition === 'elite') {
         return this.getEliteObjectiveSnapshot(battle);
       }
@@ -1120,7 +1144,7 @@ export class GameScene extends Phaser.Scene {
       objectiveLabel: '精英目标',
       objectiveText: '盯住精英本体',
       objectiveDetail: '护卫压力降低，集中打精英。',
-      objectiveProgressText: `${BATTLE_TEMPLATES[battle.templateId].name} · 本体收尾`,
+      objectiveProgressText: `${this.getBattleTemplate(battle.templateId).name} · 本体收尾`,
       objectiveTone: 'elite',
     };
   }
@@ -1639,7 +1663,7 @@ export class GameScene extends Phaser.Scene {
     accentColor: number,
   ): void {
     const g = this.terrainGraphics;
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const pulse = 0.5 + Math.sin(battle.elapsedSec * 1.7 + battle.kills * 0.08) * 0.5;
     if (battle.encounterType === 'boss') {
       const bossBackdropTexture =
@@ -2373,7 +2397,7 @@ export class GameScene extends Phaser.Scene {
       if (pressureRatio > 0) {
         const pressureColor =
           enemy.elite
-            ? this.mixColor(BATTLE_TEMPLATES[battle.templateId].accent, 0xfff0bf, 0.3)
+            ? this.mixColor(this.getBattleTemplate(battle.templateId).accent, 0xfff0bf, 0.3)
             : enemy.archetype === 'brute'
               ? this.mixColor(enemyStroke, 0xffe1b2, 0.28)
               : enemy.archetype === 'skirmisher'
@@ -2606,18 +2630,18 @@ export class GameScene extends Phaser.Scene {
         if (battle.pressureTransitionSec > 0) {
           const pulseAlpha = Math.min(0.44, 0.14 + battle.pressureTransitionSec * 0.2);
           const pulseRadius = enemy.radius + 12 + (1.15 - battle.pressureTransitionSec) * 7;
-          this.graphics.lineStyle(4, BATTLE_TEMPLATES[battle.templateId].accent, pulseAlpha);
+          this.graphics.lineStyle(4, this.getBattleTemplate(battle.templateId).accent, pulseAlpha);
           this.graphics.strokeCircle(screen.x, screen.y, pulseRadius);
         }
         if (battle.pressureSignatureSec > 0) {
           const signatureAlpha = Math.min(0.28, 0.12 + battle.pressureSignatureSec * 0.04);
           const signatureRadius = enemy.radius + 15 + Math.sin(battle.elapsedSec * 7.5) * 2;
-          this.graphics.lineStyle(3, BATTLE_TEMPLATES[battle.templateId].accent, signatureAlpha);
+          this.graphics.lineStyle(3, this.getBattleTemplate(battle.templateId).accent, signatureAlpha);
           this.graphics.strokeCircle(screen.x, screen.y, signatureRadius);
         }
         if (battle.pressurePatternFlashSec > 0) {
           const patternAlpha = Math.min(0.26, 0.08 + battle.pressurePatternFlashSec * 0.28);
-          this.graphics.lineStyle(2, BATTLE_TEMPLATES[battle.templateId].accent, patternAlpha);
+          this.graphics.lineStyle(2, this.getBattleTemplate(battle.templateId).accent, patternAlpha);
           this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 20 + battle.pressurePatternFlashSec * 12);
         }
         if (enemy.guardSec > 0) {
@@ -3725,7 +3749,7 @@ export class GameScene extends Phaser.Scene {
 
     const eliteScreen = this.worldToScreen(camera, elite.x, elite.y);
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
-    const pulseColor = this.mixColor(BATTLE_TEMPLATES[battle.templateId].accent, 0xffefbf, 0.34);
+    const pulseColor = this.mixColor(this.getBattleTemplate(battle.templateId).accent, 0xffefbf, 0.34);
     const crackColor = this.mixColor(0xfff0c4, 0xf5fbff, 0.42);
 
     if (escorts.length > 0 && (elitePressure > 0.04 || eliteCrackRatio > 0.08 || eliteBreachFlashRatio > 0.08)) {
@@ -4087,7 +4111,7 @@ export class GameScene extends Phaser.Scene {
     camera: { left: number; top: number; width: number; height: number },
     accentColor: number,
   ): void {
-    const template = BATTLE_TEMPLATES[battle.templateId];
+    const template = this.getBattleTemplate(battle.templateId);
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     const alpha = 0.026 + Math.min(0.04, battle.tempoPulseSec * 0.1 + (battle.elapsedSec / Math.max(1, template.durationSec)) * 0.028);
