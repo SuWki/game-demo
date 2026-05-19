@@ -468,6 +468,32 @@ main {
   gap: 4px;
 }
 
+/* Header Filter Input Styles */
+.tabulator-header-filter {
+  padding: 0.5rem !important;
+}
+
+.tabulator-header-filter input {
+  width: 100% !important;
+  padding: 0.4rem 0.6rem !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  font-size: 0.8rem !important;
+  outline: none !important;
+  transition: border-color var(--transition-fast) !important;
+}
+
+.tabulator-header-filter input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+}
+
+.tabulator-header-filter input::placeholder {
+  color: var(--text-muted) !important;
+}
+
 .tabulator-row {
   background: var(--bg-card) !important;
   border-color: var(--border-color) !important;
@@ -502,6 +528,41 @@ main {
 
 .tabulator-cell:hover {
   background: rgba(99, 102, 241, 0.03) !important;
+}
+
+/* Action Buttons in Table */
+.tabulator-cell .action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.tabulator-cell .action-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.tabulator-cell .action-btn.copy-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary);
+}
+
+.tabulator-cell .action-btn.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-error);
+}
+
+.tabulator-cell .action-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Pagination */

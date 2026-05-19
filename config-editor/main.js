@@ -204,6 +204,9 @@ function loadData(data) {
     },
   });
   
+  // 添加新增行按钮
+  addAddRowButton();
+  
   // 更新状态栏
   updateStatusBar();
   
@@ -251,6 +254,65 @@ function showConfigDescription() {
   `;
   
   tableContainer.insertBefore(descDiv, tableContainer.firstChild);
+}
+
+function addAddRowButton() {
+  // 移除旧的按钮
+  const oldBtn = document.getElementById('add-row-btn');
+  if (oldBtn) {
+    oldBtn.remove();
+  }
+  
+  const addBtn = document.createElement('button');
+  addBtn.id = 'add-row-btn';
+  addBtn.className = 'btn btn-primary';
+  addBtn.style.cssText = `
+    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  `;
+  addBtn.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+    新增一行
+  `;
+  
+  addBtn.addEventListener('click', () => {
+    // 获取最后一行数据作为模板
+    const lastRow = table.getRow(table.getDataCount());
+    let newRowData = {};
+    
+    if (lastRow) {
+      newRowData = JSON.parse(JSON.stringify(lastRow.getData()));
+    }
+    
+    // 自增 ID
+    if (newRowData.id) {
+      const match = newRowData.id.match(/^(.*?)(\d+)$/);
+      if (match) {
+        newRowData.id = match[1] + (parseInt(match[2]) + 1);
+      } else {
+        newRowData.id = newRowData.id + '-new';
+      }
+    } else {
+      newRowData.id = `new-${Date.now()}`;
+    }
+    
+    // 清空其他字段
+    Object.keys(newRowData).forEach(key => {
+      if (key !== 'id') {
+        newRowData[key] = '';
+      }
+    });
+    
+    table.addRow(newRowData, true);
+    showToast('已添加新行', 'success');
+  });
+  
+  tableContainer.insertBefore(addBtn, tableContainer.children[1]);
 }
 
 function updateStatusBar() {
@@ -304,7 +366,7 @@ function generateColumns(data) {
   const relations = currentConfigType ? fieldRelations[currentConfigType] || {} : {};
   
   // 生成列定义
-  return Array.from(allKeys).map(key => {
+  const columns = Array.from(allKeys).map(key => {
     const relation = relations[key];
     const hasRelation = relation && relation.targetTable;
     
@@ -315,6 +377,7 @@ function generateColumns(data) {
       field: key,
       editor: 'input',
       headerFilter: 'input',
+      headerFilterPlaceholder: '筛选...',
       resizable: true,
       formatter: function(cell) {
         const value = cell.getValue();
@@ -326,6 +389,74 @@ function generateColumns(data) {
       validator: getColumnValidator(key)
     };
   });
+  
+  // 添加操作列（复制上一行、删除）
+  columns.push({
+    title: '操作',
+    field: '_actions',
+    width: 100,
+    frozen: true,
+    hozAlign: 'center',
+    headerSort: false,
+    headerFilter: false,
+    formatter: function(cell) {
+      return `
+        <div style="display: flex; gap: 4px; justify-content: center;">
+          <button class="action-btn copy-btn" title="复制上一行" data-row="${cell.getRow().getPosition()}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button class="action-btn delete-btn" title="删除此行" data-row="${cell.getRow().getPosition()}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+    },
+    cellClick: function(e, cell) {
+      const target = e.target.closest('.action-btn');
+      if (!target) return;
+      
+      const row = cell.getRow();
+      const rowPos = row.getPosition();
+      
+      if (target.classList.contains('copy-btn')) {
+        // 复制上一行
+        if (rowPos > 1) {
+          const prevRow = table.getRow(rowPos - 1);
+          const prevData = prevRow.getData();
+          const newData = JSON.parse(JSON.stringify(prevData));
+          
+          // 自增 ID
+          if (newData.id) {
+            const match = newData.id.match(/^(.*?)(\d+)$/);
+            if (match) {
+              newData.id = match[1] + (parseInt(match[2]) + 1);
+            } else {
+              newData.id = newData.id + '-copy';
+            }
+          }
+          
+          row.update(newData);
+          showToast('已复制上一行数据', 'success');
+        } else {
+          showToast('没有上一行可复制', 'warning');
+        }
+      } else if (target.classList.contains('delete-btn')) {
+        // 删除当前行
+        if (confirm('确定要删除此行吗？')) {
+          row.delete();
+          showToast('已删除该行', 'info');
+        }
+      }
+    }
+  });
+  
+  return columns;
 }
 
 function getColumnValidator(key) {
