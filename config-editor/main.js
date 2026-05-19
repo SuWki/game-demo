@@ -10,6 +10,8 @@ let originalData = [];
 let currentFileName = '';
 let currentConfigType = null;
 let loadedConfigs = {}; // 存储已加载的配置表（用于跨表验证）
+let filterVisible = false; // 筛选器显示状态
+let nextAutoId = 0; // 自动 ID 计数器
 
 // Toast 通知系统
 function showToast(message, type = 'info') {
@@ -165,6 +167,21 @@ function loadData(data) {
   currentData = JSON.parse(JSON.stringify(data));
   originalData = JSON.parse(JSON.stringify(data));
   
+  // 计算下一个自动 ID
+  nextAutoId = 0;
+  if (data.length > 0) {
+    const maxId = Math.max(...data.map(row => {
+      const id = row.id;
+      if (typeof id === 'number') return id;
+      if (typeof id === 'string') {
+        const num = parseInt(id);
+        return isNaN(num) ? -1 : num;
+      }
+      return -1;
+    }));
+    nextAutoId = maxId >= 0 ? maxId + 1 : 0;
+  }
+  
   // 显示表格容器
   dropZone.style.display = 'none';
   tableContainer.style.display = 'block';
@@ -204,8 +221,11 @@ function loadData(data) {
     },
   });
   
-  // 添加新增行按钮
-  addAddRowButton();
+  // 初始化筛选器状态
+  updateFilterVisibility();
+  
+  // 绑定工具栏事件
+  bindToolbarEvents();
   
   // 更新状态栏
   updateStatusBar();
@@ -253,66 +273,63 @@ function showConfigDescription() {
     </div>
   `;
   
-  tableContainer.insertBefore(descDiv, tableContainer.firstChild);
+  tableContainer.insertBefore(descDiv, tableContainer.children[0]);
 }
 
-function addAddRowButton() {
-  // 移除旧的按钮
-  const oldBtn = document.getElementById('add-row-btn');
-  if (oldBtn) {
-    oldBtn.remove();
+function bindToolbarEvents() {
+  // 新增行按钮
+  const addRowBtn = document.getElementById('btn-add-row');
+  if (addRowBtn) {
+    addRowBtn.removeEventListener('click', handleAddRow);
+    addRowBtn.addEventListener('click', handleAddRow);
   }
   
-  const addBtn = document.createElement('button');
-  addBtn.id = 'add-row-btn';
-  addBtn.className = 'btn btn-primary';
-  addBtn.style.cssText = `
-    margin-bottom: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  `;
-  addBtn.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-    新增一行
-  `;
+  // 筛选切换按钮
+  const toggleFilterBtn = document.getElementById('btn-toggle-filter');
+  if (toggleFilterBtn) {
+    toggleFilterBtn.removeEventListener('click', toggleFilter);
+    toggleFilterBtn.addEventListener('click', toggleFilter);
+  }
+}
+
+function handleAddRow() {
+  // 获取最后一行数据作为模板
+  const lastRow = table.getRow(table.getDataCount());
+  let newRowData = {};
   
-  addBtn.addEventListener('click', () => {
-    // 获取最后一行数据作为模板
-    const lastRow = table.getRow(table.getDataCount());
-    let newRowData = {};
-    
-    if (lastRow) {
-      newRowData = JSON.parse(JSON.stringify(lastRow.getData()));
+  if (lastRow) {
+    newRowData = JSON.parse(JSON.stringify(lastRow.getData()));
+  }
+  
+  // 自增 ID
+  newRowData.id = nextAutoId++;
+  
+  // 清空其他字段
+  Object.keys(newRowData).forEach(key => {
+    if (key !== 'id') {
+      newRowData[key] = '';
     }
-    
-    // 自增 ID
-    if (newRowData.id) {
-      const match = newRowData.id.match(/^(.*?)(\d+)$/);
-      if (match) {
-        newRowData.id = match[1] + (parseInt(match[2]) + 1);
-      } else {
-        newRowData.id = newRowData.id + '-new';
-      }
-    } else {
-      newRowData.id = `new-${Date.now()}`;
-    }
-    
-    // 清空其他字段
-    Object.keys(newRowData).forEach(key => {
-      if (key !== 'id') {
-        newRowData[key] = '';
-      }
-    });
-    
-    table.addRow(newRowData, true);
-    showToast('已添加新行', 'success');
   });
   
-  tableContainer.insertBefore(addBtn, tableContainer.children[1]);
+  table.addRow(newRowData, true);
+  showToast('已添加新行', 'success');
+}
+
+function toggleFilter() {
+  filterVisible = !filterVisible;
+  updateFilterVisibility();
+  
+  const toggleBtn = document.getElementById('btn-toggle-filter');
+  if (toggleBtn) {
+    toggleBtn.classList.toggle('active', filterVisible);
+  }
+}
+
+function updateFilterVisibility() {
+  const filterElements = document.querySelectorAll('.tabulator-header-filter');
+  filterElements.forEach(el => {
+    el.style.display = filterVisible ? 'block' : 'none';
+  });
 }
 
 function updateStatusBar() {
@@ -432,14 +449,7 @@ function generateColumns(data) {
           const newData = JSON.parse(JSON.stringify(prevData));
           
           // 自增 ID
-          if (newData.id) {
-            const match = newData.id.match(/^(.*?)(\d+)$/);
-            if (match) {
-              newData.id = match[1] + (parseInt(match[2]) + 1);
-            } else {
-              newData.id = newData.id + '-copy';
-            }
-          }
+          newData.id = nextAutoId++;
           
           row.update(newData);
           showToast('已复制上一行数据', 'success');
@@ -932,6 +942,8 @@ function resetEditor() {
   currentFileName = '';
   currentConfigType = null;
   loadedConfigs = {};
+  filterVisible = false;
+  nextAutoId = 0;
   
   // 清除文件输入
   fileInput.value = '';
