@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { schemaMap, detectConfigType, fieldRelations, configDescriptions } from './schemas.js';
+import { schemaMap, detectConfigType, fieldRelations, configDescriptions, enumFields, getFieldDescriptions, getFieldTypes } from './schemas.js';
 
 // 全局状态
 let table = null;
@@ -12,6 +12,80 @@ let currentConfigType = null;
 let loadedConfigs = {}; // 存储已加载的配置表（用于跨表验证）
 let filterVisible = false; // 筛选器显示状态
 let nextAutoId = 0; // 自动 ID 计数器
+
+// 自动保存相关
+const AUTO_SAVE_KEY = 'config-editor-autosave';
+const AUTO_SAVE_INTERVAL = 30000; // 30秒
+let autoSaveTimer = null;
+let lastAutoSaveTime = null;
+let isDirty = false; // 数据是否已修改
+
+// 撤销/重做管理器
+class HistoryManager {
+  constructor(maxSize = 50) {
+    this.undoStack = [];
+    this.redoStack = [];
+    this.maxSize = maxSize;
+    this.isUndoing = false;
+  }
+
+  push(action) {
+    if (this.isUndoing) return;
+    this.undoStack.push(action);
+    this.redoStack = []; // 清空重做栈
+    if (this.undoStack.length > this.maxSize) {
+      this.undoStack.shift();
+    }
+    this.updateUI();
+  }
+
+  undo() {
+    if (this.undoStack.length === 0) return null;
+    const action = this.undoStack.pop();
+    this.redoStack.push(action);
+    this.isUndoing = true;
+    this.updateUI();
+    return action;
+  }
+
+  redo() {
+    if (this.redoStack.length === 0) return null;
+    const action = this.redoStack.pop();
+    this.undoStack.push(action);
+    this.updateUI();
+    return action;
+  }
+
+  canUndo() {
+    return this.undoStack.length > 0;
+  }
+
+  canRedo() {
+    return this.redoStack.length > 0;
+  }
+
+  clear() {
+    this.undoStack = [];
+    this.redoStack = [];
+    this.isUndoing = false;
+    this.updateUI();
+  }
+
+  updateUI() {
+    const undoBtn = document.getElementById('btn-undo');
+    const redoBtn = document.getElementById('btn-redo');
+    if (undoBtn) undoBtn.disabled = !this.canUndo();
+    if (redoBtn) redoBtn.disabled = !this.canRedo();
+    if (undoBtn) undoBtn.style.opacity = this.canUndo() ? '1' : '0.5';
+    if (redoBtn) redoBtn.style.opacity = this.canRedo() ? '1' : '0.5';
+  }
+
+  setUndoing(value) {
+    this.isUndoing = value;
+  }
+}
+
+const historyManager = new HistoryManager(50);
 
 // Toast 通知系统
 function showToast(message, type = 'info') {
@@ -113,36 +187,31 @@ fileInput.addEventListener('change', (e) => {
 // 处理文件
 function handleFile(file) {
   currentFileName = file.name;
-  
+
   // 显示加载状态
   const dropContent = dropZone.querySelector('.drop-content');
   const originalContent = dropContent.innerHTML;
   dropContent.innerHTML = '<div class="loading"></div><p style="margin-top: 1rem; color: #475569;">正在解析文件...</p>';
-  
+
   const reader = new FileReader();
-  
+
   reader.onload = (e) => {
     try {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-      
+
       // 读取第一个工作表
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
-      
+
       // 识别配置类型
       currentConfigType = detectConfigType(jsonData, file.name);
-      
-      loadData(jsonData);
-      
-      // 保存到已加载配置（用于跨表验证）
-      if (currentConfigType) {
-        loadedConfigs[currentConfigType] = jsonData;
-      }
-      
+
       // 恢复原始内容
       dropContent.innerHTML = originalContent;
-      showToast(`成功加载 ${jsonData.length} 条记录`, 'success');
+
+      // 显示导入预览
+      showImportPreview(jsonData);
     } catch (error) {
       showToast(`文件解析失败: ${error.message}`, 'error');
       console.error(error);
@@ -150,12 +219,12 @@ function handleFile(file) {
       dropContent.innerHTML = originalContent;
     }
   };
-  
+
   reader.onerror = () => {
     showToast('文件读取失败', 'error');
     dropContent.innerHTML = originalContent;
   };
-  
+
   reader.readAsArrayBuffer(file);
 }
 
@@ -211,11 +280,31 @@ function loadData(data) {
     clipboardPasteParser: 'table',
     clipboardCopyRowRange: 'active',
     cellEdited: function(cell) {
+      if (!historyManager.isUndoing) {
+        const action = {
+          type: 'edit',
+          rowIndex: cell.getRow().getPosition() - 1,
+          field: cell.getField(),
+          oldValue: cell.getOldValue(),
+          newValue: cell.getValue()
+        };
+        historyManager.push(action);
+      }
       updateCurrentData();
       highlightChanges();
       saveToHistory();
+      // 实时验证
+      validateCellRealtime(cell);
     },
-    rowDeleted: function() {
+    rowDeleted: function(row) {
+      if (!historyManager.isUndoing) {
+        const action = {
+          type: 'delete',
+          rowIndex: row.getPosition() - 1,
+          data: row.getData()
+        };
+        historyManager.push(action);
+      }
       updateCurrentData();
       saveToHistory();
     },
@@ -283,42 +372,260 @@ function bindToolbarEvents() {
     addRowBtn.removeEventListener('click', handleAddRow);
     addRowBtn.addEventListener('click', handleAddRow);
   }
-  
+
   // 筛选切换按钮
   const toggleFilterBtn = document.getElementById('btn-toggle-filter');
   if (toggleFilterBtn) {
     toggleFilterBtn.removeEventListener('click', toggleFilter);
     toggleFilterBtn.addEventListener('click', toggleFilter);
   }
+
+  // 撤销按钮
+  const undoBtn = document.getElementById('btn-undo');
+  if (undoBtn) {
+    undoBtn.addEventListener('click', undoAction);
+  }
+
+  // 重做按钮
+  const redoBtn = document.getElementById('btn-redo');
+  if (redoBtn) {
+    redoBtn.addEventListener('click', redoAction);
+  }
+
+  // 批量编辑按钮
+  const batchEditBtn = document.getElementById('btn-batch-edit');
+  if (batchEditBtn) {
+    batchEditBtn.addEventListener('click', showBatchEditModal);
+  }
+
+  // 对比按钮
+  const compareBtn = document.getElementById('btn-compare');
+  if (compareBtn) {
+    compareBtn.addEventListener('click', showCompareView);
+  }
+
+  // 关闭对比面板
+  const closeCompareBtn = document.getElementById('btn-close-compare');
+  if (closeCompareBtn) {
+    closeCompareBtn.addEventListener('click', hideCompareView);
+  }
+
+  // 全局搜索按钮
+  const globalSearchBtn = document.getElementById('btn-global-search');
+  if (globalSearchBtn) {
+    globalSearchBtn.addEventListener('click', toggleGlobalSearch);
+  }
+
+  // 快捷键帮助按钮
+  const shortcutsBtn = document.getElementById('btn-shortcuts');
+  if (shortcutsBtn) {
+    shortcutsBtn.addEventListener('click', showShortcutsModal);
+  }
+
+  // 搜索面板事件
+  const searchInput = document.getElementById('global-search-input');
+  const searchPrev = document.getElementById('search-prev');
+  const searchNext = document.getElementById('search-next');
+  const searchClose = document.getElementById('search-close');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', debounce(handleGlobalSearch, 200));
+    searchInput.addEventListener('keydown', handleSearchKeydown);
+  }
+  if (searchPrev) searchPrev.addEventListener('click', () => navigateSearchResult(-1));
+  if (searchNext) searchNext.addEventListener('click', () => navigateSearchResult(1));
+  if (searchClose) searchClose.addEventListener('click', hideGlobalSearch);
+
+  // 批量编辑弹窗事件
+  const batchModalClose = document.getElementById('batch-modal-close');
+  const batchCancel = document.getElementById('batch-cancel');
+  const batchApply = document.getElementById('batch-apply');
+
+  if (batchModalClose) batchModalClose.addEventListener('click', hideBatchEditModal);
+  if (batchCancel) batchCancel.addEventListener('click', hideBatchEditModal);
+  if (batchApply) batchApply.addEventListener('click', applyBatchEdit);
+
+  // 键盘快捷键
+  document.addEventListener('keydown', handleKeyboardShortcut);
 }
 
 function handleAddRow() {
   // 获取最后一行数据作为模板
   const lastRow = table.getRow(table.getDataCount());
   let newRowData = {};
-  
+
   if (lastRow) {
     newRowData = JSON.parse(JSON.stringify(lastRow.getData()));
   }
-  
+
   // 自增 ID
   newRowData.id = nextAutoId++;
-  
+
   // 清空其他字段
   Object.keys(newRowData).forEach(key => {
     if (key !== 'id') {
       newRowData[key] = '';
     }
   });
-  
+
   table.addRow(newRowData, true);
+
+  // 记录到历史
+  const action = {
+    type: 'add',
+    data: newRowData
+  };
+  historyManager.push(action);
+
   showToast('已添加新行', 'success');
+}
+
+function undoAction() {
+  const action = historyManager.undo();
+  if (!action) {
+    showToast('没有可撤销的操作', 'warning');
+    return;
+  }
+
+  historyManager.setUndoing(true);
+  try {
+    switch (action.type) {
+      case 'edit':
+        const rows = table.getRows();
+        if (rows[action.rowIndex]) {
+          const row = rows[action.rowIndex];
+          row.update({ [action.field]: action.oldValue });
+        }
+        break;
+      case 'add':
+        // 删除最后一行（假设新增行在最后）
+        const lastRow = table.getRow(table.getDataCount());
+        if (lastRow && lastRow.getData().id === action.data.id) {
+          lastRow.delete();
+        }
+        break;
+      case 'delete':
+        // 恢复删除的行
+        table.addRow(action.data, false);
+        break;
+    }
+    updateCurrentData();
+    highlightChanges();
+    showToast('已撤销', 'success');
+  } finally {
+    historyManager.setUndoing(false);
+  }
+}
+
+function redoAction() {
+  const action = historyManager.redo();
+  if (!action) {
+    showToast('没有可重做的操作', 'warning');
+    return;
+  }
+
+  historyManager.setUndoing(true);
+  try {
+    switch (action.type) {
+      case 'edit':
+        const rows = table.getRows();
+        if (rows[action.rowIndex]) {
+          const row = rows[action.rowIndex];
+          row.update({ [action.field]: action.newValue });
+        }
+        break;
+      case 'add':
+        table.addRow(action.data, true);
+        break;
+      case 'delete':
+        const rowToDelete = table.getRows()[action.rowIndex];
+        if (rowToDelete && rowToDelete.getData().id === action.data.id) {
+          rowToDelete.delete();
+        }
+        break;
+    }
+    updateCurrentData();
+    highlightChanges();
+    showToast('已重做', 'success');
+  } finally {
+    historyManager.setUndoing(false);
+  }
+}
+
+function handleKeyboardShortcut(e) {
+  // 全局搜索快捷键 (Ctrl+F)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    const searchPanel = document.getElementById('global-search-panel');
+    if (searchPanel.style.display === 'none') {
+      toggleGlobalSearch();
+      document.getElementById('global-search-input').focus();
+    } else {
+      document.getElementById('global-search-input').focus();
+    }
+    return;
+  }
+
+  // 如果搜索面板打开，优先处理搜索导航
+  const searchPanel = document.getElementById('global-search-panel');
+  if (searchPanel.style.display !== 'none') {
+    if (e.key === 'Escape') {
+      hideGlobalSearch();
+      return;
+    }
+  }
+
+  // 忽略在输入框中的快捷键（搜索输入框除外）
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+
+  if (e.ctrlKey || e.metaKey) {
+    switch (e.key.toLowerCase()) {
+      case 'z':
+        e.preventDefault();
+        if (e.shiftKey) {
+          redoAction();
+        } else {
+          undoAction();
+        }
+        break;
+      case 'y':
+        e.preventDefault();
+        redoAction();
+        break;
+      case 's':
+        e.preventDefault();
+        // 触发JSON导出
+        document.getElementById('btn-export-json').click();
+        break;
+      case 'e':
+        e.preventDefault();
+        // 触发Excel导出
+        document.getElementById('btn-export-excel').click();
+        break;
+    }
+  }
+
+  // Delete 键删除选中行
+  if (e.key === 'Delete' && table) {
+    const selectedRows = table.getSelectedRows();
+    if (selectedRows.length > 0) {
+      e.preventDefault();
+      if (confirm(`确定要删除选中的 ${selectedRows.length} 行吗？`)) {
+        selectedRows.forEach(row => row.delete());
+        updateCurrentData();
+        saveToHistory();
+        showToast(`已删除 ${selectedRows.length} 行`, 'info');
+      }
+    }
+  }
 }
 
 function toggleFilter() {
   filterVisible = !filterVisible;
   updateFilterVisibility();
-  
+
   const toggleBtn = document.getElementById('btn-toggle-filter');
   if (toggleBtn) {
     toggleBtn.classList.toggle('active', filterVisible);
@@ -363,6 +670,7 @@ function updateStatusBar() {
     <span>📄 文件: ${fileName}</span>
     <span>📊 记录数: ${recordCount}</span>
     <span>🏷️ 类型: ${configType}</span>
+    ${isDirty ? '<span class="save-indicator unsaved">● 未保存</span>' : (lastAutoSaveTime ? `<span class="save-indicator saved">✓ ${lastAutoSaveTime.toLocaleTimeString()} 已保存</span>` : '')}
   `;
   
   tableContainer.appendChild(statusBar);
@@ -370,7 +678,7 @@ function updateStatusBar() {
 
 function generateColumns(data) {
   if (data.length === 0) return [];
-  
+
   // 收集所有键
   const allKeys = new Set();
   for (const row of data) {
@@ -378,29 +686,96 @@ function generateColumns(data) {
       allKeys.add(key);
     }
   }
-  
-  // 获取当前配置类型的关联字段
+
+  // 获取当前配置类型的各种信息
   const relations = currentConfigType ? fieldRelations[currentConfigType] || {} : {};
-  
+  const enums = currentConfigType ? enumFields[currentConfigType] || {} : {};
+  const descriptions = currentConfigType ? getFieldDescriptions(currentConfigType) : {};
+  const fieldTypes = currentConfigType ? getFieldTypes(currentConfigType) : {};
+
   // 生成列定义
   const columns = Array.from(allKeys).map(key => {
     const relation = relations[key];
     const hasRelation = relation && relation.targetTable;
-    
+    const enumValues = enums[key];
+    const isEnumField = enumValues && Array.isArray(enumValues);
+    const typeInfo = fieldTypes[key] || { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
+
+    // 根据字段类型确定编辑器
+    let editor = 'input';
+    let editorParams = {};
+
+    if (isEnumField) {
+      editor = 'select';
+      editorParams = {
+        values: enumValues.map(v => ({
+          value: v,
+          label: String(v)
+        })),
+        allowEmpty: true
+      };
+    } else if (typeInfo.editor === 'number') {
+      editor = 'number';
+      editorParams = {
+        min: typeInfo.min,
+        max: typeInfo.max,
+        step: typeInfo.min !== undefined && typeInfo.min % 1 !== 0 ? 0.1 : 1
+      };
+    } else if (typeInfo.editor === 'toggle') {
+      editor = 'tickCross';
+    }
+
+    // 构建标题，包含字段类型图标和描述
+    let title = '';
+    const typeIcon = `<span class="field-type-icon" style="color: ${typeInfo.color}; font-size: 0.75rem; margin-right: 4px;" title="类型: ${typeInfo.label}\n${descriptions[key] || ''}">${typeInfo.icon}</span>`;
+    const desc = descriptions[key] || (hasRelation ? relation.relatesTo : '');
+
+    if (hasRelation) {
+      title = `${typeIcon}<span title="${desc}">${key}</span><span class="relation-badge" data-relation="${relation.relatesTo}" data-target="${relation.targetTable}" title="关联: ${relation.relatesTo}">🔗</span>`;
+    } else if (desc) {
+      title = `${typeIcon}<span title="${desc}">${key}</span>`;
+    } else {
+      title = `${typeIcon}<span>${key}</span>`;
+    }
+
     return {
-      title: hasRelation 
-        ? `<span>${key}</span><span class="relation-badge" data-relation="${relation.relatesTo}" data-target="${relation.targetTable}">🔗</span>`
-        : key,
+      title: title,
       field: key,
-      editor: 'input',
+      editor: editor,
+      editorParams: editorParams,
       headerFilter: 'input',
       headerFilterPlaceholder: '筛选...',
       resizable: true,
       formatter: function(cell) {
         const value = cell.getValue();
-        if (value === null || value === undefined) return '<span style="color: #94a3b8;">null</span>';
-        if (typeof value === 'boolean') return value ? '<span style="color: #10b981;">true</span>' : '<span style="color: #ef4444;">false</span>';
-        if (typeof value === 'object') return JSON.stringify(value).substring(0, 50) + '...';
+
+        // null/undefined
+        if (value === null || value === undefined) {
+          return '<span class="cell-null">null</span>';
+        }
+
+        // 布尔值
+        if (typeof value === 'boolean') {
+          return value
+            ? '<span class="cell-boolean cell-boolean-true">✓ true</span>'
+            : '<span class="cell-boolean cell-boolean-false">✗ false</span>';
+        }
+
+        // 对象/数组
+        if (typeof value === 'object') {
+          return `<span class="cell-object">${typeInfo.icon} ${JSON.stringify(value).substring(0, 40)}...</span>`;
+        }
+
+        // 数字
+        if (typeof value === 'number') {
+          return `<span class="cell-number">${value}</span>`;
+        }
+
+        // 枚举字段高亮
+        if (isEnumField) {
+          return `<span class="cell-enum" style="color: ${typeInfo.color}">${value}</span>`;
+        }
+
         return value;
       },
       validator: getColumnValidator(key)
@@ -467,6 +842,217 @@ function generateColumns(data) {
   });
   
   return columns;
+}
+
+// 实时单元格验证
+function validateCellRealtime(cell) {
+  const field = cell.getField();
+  const value = cell.getValue();
+  const row = cell.getRow();
+  const cellEl = cell.getElement();
+
+  // 清除之前的验证状态
+  cellEl.classList.remove('validation-error', 'validation-warning');
+  cellEl.removeAttribute('data-validation-message');
+
+  let errors = [];
+  let warnings = [];
+
+  // 1. 必填字段检查
+  if (field === 'id' && (value === '' || value === null || value === undefined)) {
+    errors.push('ID 不能为空');
+  }
+
+  // 2. 数值字段检查
+  if ((field.includes('damage') || field.includes('hp') || field.includes('speed') ||
+       field.includes('Multiplier') || field.includes('Weight') ||
+       field.includes('Sec') || field.includes('Interval')) &&
+      value !== '' && value !== null && value !== undefined) {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      errors.push('必须是数字');
+    } else if (numValue < 0) {
+      errors.push('不能为负数');
+    }
+  }
+
+  // 3. 枚举字段检查
+  if (currentConfigType && enumFields[currentConfigType]) {
+    const enumValues = enumFields[currentConfigType][field];
+    if (enumValues && value !== '' && value !== null && value !== undefined) {
+      if (!enumValues.includes(value)) {
+        warnings.push(`建议值: ${enumValues.join(', ')}`);
+      }
+    }
+  }
+
+  // 4. 关联字段检查
+  if (currentConfigType && fieldRelations[currentConfigType]) {
+    const relation = fieldRelations[currentConfigType][field];
+    if (relation && relation.targetTable && value) {
+      const targetData = loadedConfigs[relation.targetTable];
+      if (targetData) {
+        const validIds = new Set(targetData.map(item => item.id));
+        if (!validIds.has(value)) {
+          warnings.push(`关联的 ${relation.relatesTo} 中不存在此值`);
+        }
+      }
+    }
+  }
+
+  // 应用验证样式
+  if (errors.length > 0) {
+    cellEl.classList.add('validation-error');
+    cellEl.setAttribute('data-validation-message', errors.join(', '));
+    showCellTooltip(cellEl, errors.join(', '), 'error');
+  } else if (warnings.length > 0) {
+    cellEl.classList.add('validation-warning');
+    cellEl.setAttribute('data-validation-message', warnings.join(', '));
+    showCellTooltip(cellEl, warnings.join(', '), 'warning');
+  }
+
+  // 更新行级错误指示
+  updateRowValidationIndicator(row);
+
+  return { valid: errors.length === 0, errors, warnings };
+}
+
+// 显示单元格提示
+function showCellTooltip(element, message, type) {
+  // 移除旧的 tooltip
+  const oldTooltip = element.querySelector('.cell-tooltip');
+  if (oldTooltip) oldTooltip.remove();
+
+  const tooltip = document.createElement('div');
+  tooltip.className = `cell-tooltip cell-tooltip-${type}`;
+  tooltip.textContent = message;
+  tooltip.style.cssText = `
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    margin-bottom: 4px;
+    background: ${type === 'error' ? '#ef4444' : '#f59e0b'};
+    color: white;
+  `;
+
+  element.style.position = 'relative';
+  element.appendChild(tooltip);
+
+  // 3秒后移除
+  setTimeout(() => {
+    if (tooltip.parentNode) tooltip.remove();
+  }, 3000);
+}
+
+// 更新行级验证指示器
+function updateRowValidationIndicator(row) {
+  const rowEl = row.getElement();
+  if (!rowEl) return;
+
+  const cells = row.getCells();
+  let hasError = false;
+  let hasWarning = false;
+
+  cells.forEach(cell => {
+    const cellEl = cell.getElement();
+    if (cellEl) {
+      if (cellEl.classList.contains('validation-error')) hasError = true;
+      if (cellEl.classList.contains('validation-warning')) hasWarning = true;
+    }
+  });
+
+  rowEl.classList.remove('row-validation-error', 'row-validation-warning');
+  if (hasError) {
+    rowEl.classList.add('row-validation-error');
+  } else if (hasWarning) {
+    rowEl.classList.add('row-validation-warning');
+  }
+}
+
+// ============================================================
+// 自动保存功能
+// ============================================================
+
+function scheduleAutoSave() {
+  isDirty = true;
+  updateSaveIndicator();
+
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
+
+  autoSaveTimer = setTimeout(() => {
+    performAutoSave();
+  }, AUTO_SAVE_INTERVAL);
+}
+
+function performAutoSave() {
+  if (!isDirty || currentData.length === 0) return;
+
+  const saveData = {
+    timestamp: new Date().toISOString(),
+    fileName: currentFileName,
+    configType: currentConfigType,
+    data: currentData
+  };
+
+  localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(saveData));
+  lastAutoSaveTime = new Date();
+  isDirty = false;
+  updateSaveIndicator();
+
+  console.log('自动保存完成:', lastAutoSaveTime.toLocaleTimeString());
+}
+
+function updateSaveIndicator() {
+  // 在状态栏显示保存状态
+  const statusBar = document.getElementById('status-bar');
+  if (!statusBar) return;
+
+  const saveIndicator = statusBar.querySelector('.save-indicator') || document.createElement('span');
+  saveIndicator.className = 'save-indicator';
+
+  if (isDirty) {
+    saveIndicator.innerHTML = ' <span style="color: #f59e0b;">● 未保存</span>';
+  } else if (lastAutoSaveTime) {
+    saveIndicator.innerHTML = ` <span style="color: #10b981;">✓ ${lastAutoSaveTime.toLocaleTimeString()} 已保存</span>`;
+  } else {
+    saveIndicator.innerHTML = '';
+  }
+
+  if (!statusBar.querySelector('.save-indicator')) {
+    statusBar.appendChild(saveIndicator);
+  }
+}
+
+function loadAutoSave() {
+  try {
+    const saved = localStorage.getItem(AUTO_SAVE_KEY);
+    if (saved) {
+      const saveData = JSON.parse(saved);
+      return saveData;
+    }
+  } catch (e) {
+    console.error('加载自动保存失败:', e);
+  }
+  return null;
+}
+
+function clearAutoSave() {
+  localStorage.removeItem(AUTO_SAVE_KEY);
+  isDirty = false;
+  lastAutoSaveTime = null;
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
+  }
 }
 
 function getColumnValidator(key) {
@@ -1015,4 +1601,567 @@ function initNotesFeature() {
     closeModal();
     showToast('备注已保存', 'success');
   });
+}
+
+// ============================================================
+// 数据对比功能
+// ============================================================
+
+function showCompareView() {
+  if (!table || currentData.length === 0) {
+    showToast('请先加载数据', 'warning');
+    return;
+  }
+
+  const comparePanel = document.getElementById('compare-panel');
+  const compareResults = document.getElementById('compare-results');
+
+  // 计算差异
+  const diffs = computeDataDiff(originalData, currentData);
+
+  if (diffs.length === 0) {
+    compareResults.innerHTML = '<div class="compare-empty">✅ 没有变更，当前数据与原始数据一致</div>';
+  } else {
+    compareResults.innerHTML = generateDiffView(diffs);
+  }
+
+  comparePanel.style.display = 'block';
+}
+
+function hideCompareView() {
+  const comparePanel = document.getElementById('compare-panel');
+  comparePanel.style.display = 'none';
+}
+
+function computeDataDiff(original, current) {
+  const diffs = [];
+
+  // 创建ID到数据的映射
+  const originalMap = new Map(original.map((row, idx) => [row.id || idx, { ...row, _index: idx }]));
+  const currentMap = new Map(current.map((row, idx) => [row.id || idx, { ...row, _index: idx }]));
+
+  // 检查新增和修改
+  current.forEach((currentRow, currentIdx) => {
+    const id = currentRow.id || currentIdx;
+    const originalRow = originalMap.get(id);
+
+    if (!originalRow) {
+      // 新增的行
+      diffs.push({
+        type: 'added',
+        rowIndex: currentIdx,
+        current: currentRow
+      });
+    } else {
+      // 检查字段变更
+      const fieldDiffs = [];
+      const allKeys = new Set([...Object.keys(originalRow), ...Object.keys(currentRow)]);
+
+      allKeys.forEach(key => {
+        if (key === '_index') return;
+        const oldVal = originalRow[key];
+        const newVal = currentRow[key];
+        if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+          fieldDiffs.push({
+            field: key,
+            oldValue: oldVal,
+            newValue: newVal
+          });
+        }
+      });
+
+      if (fieldDiffs.length > 0) {
+        diffs.push({
+          type: 'modified',
+          rowIndex: currentIdx,
+          current: currentRow,
+          fieldDiffs: fieldDiffs
+        });
+      }
+    }
+  });
+
+  // 检查删除的行
+  original.forEach((originalRow, originalIdx) => {
+    const id = originalRow.id || originalIdx;
+    if (!currentMap.has(id)) {
+      diffs.push({
+        type: 'deleted',
+        rowIndex: originalIdx,
+        original: originalRow
+      });
+    }
+  });
+
+  return diffs.sort((a, b) => a.rowIndex - b.rowIndex);
+}
+
+function generateDiffView(diffs) {
+  let html = '<div class="compare-summary">';
+  const added = diffs.filter(d => d.type === 'added').length;
+  const modified = diffs.filter(d => d.type === 'modified').length;
+  const deleted = diffs.filter(d => d.type === 'deleted').length;
+
+  html += `<span class="compare-badge added">新增 ${added}</span>`;
+  html += `<span class="compare-badge modified">修改 ${modified}</span>`;
+  html += `<span class="compare-badge deleted">删除 ${deleted}</span>`;
+  html += '</div>';
+
+  html += '<div class="compare-list">';
+  diffs.forEach(diff => {
+    html += '<div class="compare-item">';
+
+    if (diff.type === 'added') {
+      html += `<div class="compare-row-header compare-added">`;
+      html += `<span class="compare-type">新增</span>`;
+      html += `<span class="compare-row-id">行 ${diff.rowIndex + 1}: ${diff.current.id || '无ID'}</span>`;
+      html += `</div>`;
+    } else if (diff.type === 'deleted') {
+      html += `<div class="compare-row-header compare-deleted">`;
+      html += `<span class="compare-type">删除</span>`;
+      html += `<span class="compare-row-id">行 ${diff.rowIndex + 1}: ${diff.original.id || '无ID'}</span>`;
+      html += `</div>`;
+      html += `<div class="compare-fields">`;
+      Object.entries(diff.original).forEach(([key, value]) => {
+        if (key !== '_index') {
+          html += `<div class="compare-field"><span class="field-name">${key}:</span> <span class="field-value deleted">${formatValue(value)}</span></div>`;
+        }
+      });
+      html += `</div>`;
+    } else if (diff.type === 'modified') {
+      html += `<div class="compare-row-header compare-modified">`;
+      html += `<span class="compare-type">修改</span>`;
+      html += `<span class="compare-row-id">行 ${diff.rowIndex + 1}: ${diff.current.id || '无ID'}</span>`;
+      html += `</div>`;
+      html += `<div class="compare-fields">`;
+      diff.fieldDiffs.forEach(fieldDiff => {
+        html += `<div class="compare-field">`;
+        html += `<span class="field-name">${fieldDiff.field}:</span> `;
+        html += `<span class="field-value old">${formatValue(fieldDiff.oldValue)}</span>`;
+        html += `<span class="compare-arrow">→</span>`;
+        html += `<span class="field-value new">${formatValue(fieldDiff.newValue)}</span>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += '</div>';
+  });
+  html += '</div>';
+
+  return html;
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined) return '<em>null</em>';
+  if (typeof value === 'object') return JSON.stringify(value).substring(0, 50);
+  return String(value);
+}
+
+// ============================================================
+// 全局搜索功能
+// ============================================================
+
+let searchResults = [];
+let currentSearchIndex = -1;
+let searchHighlightTimeout = null;
+
+function toggleGlobalSearch() {
+  const panel = document.getElementById('global-search-panel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'flex';
+    document.getElementById('global-search-input').focus();
+  } else {
+    hideGlobalSearch();
+  }
+}
+
+function hideGlobalSearch() {
+  const panel = document.getElementById('global-search-panel');
+  panel.style.display = 'none';
+  clearSearchHighlights();
+  searchResults = [];
+  currentSearchIndex = -1;
+}
+
+function handleSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      navigateSearchResult(-1);
+    } else {
+      navigateSearchResult(1);
+    }
+  } else if (e.key === 'Escape') {
+    hideGlobalSearch();
+  }
+}
+
+function handleGlobalSearch() {
+  clearSearchHighlights();
+
+  const input = document.getElementById('global-search-input');
+  const query = input.value.trim();
+
+  if (!query || !table) {
+    updateSearchCount(0);
+    return;
+  }
+
+  const caseSensitive = document.getElementById('search-case-sensitive').checked;
+  const useRegex = document.getElementById('search-regex').checked;
+  const wholeWord = document.getElementById('search-whole-word').checked;
+
+  searchResults = performGlobalSearch(query, caseSensitive, useRegex, wholeWord);
+  currentSearchIndex = searchResults.length > 0 ? 0 : -1;
+
+  updateSearchCount(searchResults.length);
+
+  if (searchResults.length > 0) {
+    highlightSearchResult(searchResults[0]);
+  }
+}
+
+function performGlobalSearch(query, caseSensitive, useRegex, wholeWord) {
+  const results = [];
+  const rows = table.getRows();
+
+  let pattern;
+  try {
+    if (useRegex) {
+      const flags = caseSensitive ? 'g' : 'gi';
+      pattern = new RegExp(query, flags);
+    } else {
+      let escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (wholeWord) {
+        escaped = `\\b${escaped}\\b`;
+      }
+      const flags = caseSensitive ? 'g' : 'gi';
+      pattern = new RegExp(escaped, flags);
+    }
+  } catch (e) {
+    showToast('无效的正则表达式', 'error');
+    return [];
+  }
+
+  rows.forEach((row, rowIdx) => {
+    const data = row.getData();
+    Object.entries(data).forEach(([field, value]) => {
+      if (field === '_actions') return;
+      const strValue = String(value ?? '');
+      if (pattern.test(strValue)) {
+        results.push({
+          row: row,
+          rowIndex: rowIdx,
+          field: field,
+          value: value
+        });
+        pattern.lastIndex = 0; // 重置正则 lastIndex
+      }
+    });
+  });
+
+  return results;
+}
+
+function highlightSearchResult(result) {
+  if (!result) return;
+
+  // 滚动到行
+  result.row.scrollTo();
+
+  // 高亮单元格
+  const cell = result.row.getCell(result.field);
+  if (cell) {
+    const cellEl = cell.getElement();
+    cellEl.classList.add('search-highlight');
+
+    // 3秒后移除高亮
+    if (searchHighlightTimeout) {
+      clearTimeout(searchHighlightTimeout);
+    }
+    searchHighlightTimeout = setTimeout(() => {
+      cellEl.classList.remove('search-highlight');
+    }, 3000);
+  }
+}
+
+function clearSearchHighlights() {
+  if (!table) return;
+  table.getRows().forEach(row => {
+    row.getCells().forEach(cell => {
+      const el = cell.getElement();
+      if (el) el.classList.remove('search-highlight');
+    });
+  });
+}
+
+function navigateSearchResult(direction) {
+  if (searchResults.length === 0) return;
+
+  clearSearchHighlights();
+
+  currentSearchIndex += direction;
+  if (currentSearchIndex < 0) {
+    currentSearchIndex = searchResults.length - 1;
+  } else if (currentSearchIndex >= searchResults.length) {
+    currentSearchIndex = 0;
+  }
+
+  const result = searchResults[currentSearchIndex];
+  highlightSearchResult(result);
+  updateSearchCount(searchResults.length, currentSearchIndex + 1);
+}
+
+function updateSearchCount(total, current = 0) {
+  const countEl = document.getElementById('global-search-count');
+  if (total === 0) {
+    countEl.textContent = '无结果';
+    countEl.className = 'global-search-count no-results';
+  } else {
+    countEl.textContent = current > 0 ? `${current}/${total}` : `${total} 个结果`;
+    countEl.className = 'global-search-count';
+  }
+}
+
+// 防抖函数
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+function showBatchEditModal() {
+  if (!table) {
+    showToast('请先加载数据', 'warning');
+    return;
+  }
+
+  const selectedRows = table.getSelectedRows();
+  const modal = document.getElementById('batch-modal');
+  const countSpan = document.getElementById('batch-selected-count');
+  const fieldSelect = document.getElementById('batch-field-select');
+
+  // 如果没有选中的行，默认选择所有行
+  const targetRows = selectedRows.length > 0 ? selectedRows : table.getRows();
+  countSpan.textContent = targetRows.length;
+
+  // 填充字段选择下拉框
+  fieldSelect.innerHTML = '<option value="">请选择字段...</option>';
+  if (currentData.length > 0) {
+    const keys = Object.keys(currentData[0]).filter(key => key !== '_actions');
+    keys.forEach(key => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = key;
+      fieldSelect.appendChild(option);
+    });
+  }
+
+  modal.style.display = 'flex';
+}
+
+function hideBatchEditModal() {
+  const modal = document.getElementById('batch-modal');
+  modal.style.display = 'none';
+  // 清空输入
+  document.getElementById('batch-field-select').value = '';
+  document.getElementById('batch-value-input').value = '';
+}
+
+function applyBatchEdit() {
+  const fieldSelect = document.getElementById('batch-field-select');
+  const valueInput = document.getElementById('batch-value-input');
+
+  const field = fieldSelect.value;
+  const newValue = valueInput.value;
+
+  if (!field) {
+    showToast('请选择字段', 'warning');
+    return;
+  }
+
+  if (!table) return;
+
+  const selectedRows = table.getSelectedRows();
+  const targetRows = selectedRows.length > 0 ? selectedRows : table.getRows();
+
+  if (targetRows.length === 0) {
+    showToast('没有可编辑的行', 'warning');
+    return;
+  }
+
+  // 根据字段类型转换值
+  let convertedValue = newValue;
+  const sampleValue = currentData[0]?.[field];
+  if (typeof sampleValue === 'number') {
+    convertedValue = parseFloat(newValue);
+    if (isNaN(convertedValue)) {
+      showToast('请输入有效的数字', 'warning');
+      return;
+    }
+  } else if (typeof sampleValue === 'boolean') {
+    convertedValue = newValue.toLowerCase() === 'true';
+  }
+
+  // 批量更新
+  let updatedCount = 0;
+  targetRows.forEach(row => {
+    row.update({ [field]: convertedValue });
+    updatedCount++;
+  });
+
+  updateCurrentData();
+  highlightChanges();
+  saveToHistory();
+
+  showToast(`已批量更新 ${updatedCount} 行的 ${field} 字段`, 'success');
+  hideBatchEditModal();
+}
+
+// ============================================================
+// 导入预览功能
+// ============================================================
+
+let pendingImportData = null;
+let previewTable = null;
+
+function showImportPreview(data) {
+  pendingImportData = data;
+
+  const modal = document.getElementById('import-preview-modal');
+  const infoEl = document.getElementById('import-preview-info');
+  const conflictsEl = document.getElementById('import-preview-conflicts');
+  const tableWrapper = document.getElementById('import-preview-table');
+
+  // 显示基本信息
+  infoEl.innerHTML = `
+    <p><strong>文件名:</strong> ${currentFileName}</p>
+    <p><strong>记录数:</strong> ${data.length} 条</p>
+    <p><strong>配置类型:</strong> ${currentConfigType || '未知'}</p>
+  `;
+
+  // 检查冲突（重复ID）
+  const conflicts = checkImportConflicts(data);
+  if (conflicts.length > 0) {
+    conflictsEl.innerHTML = `
+      <div class="import-conflicts-warning">
+        <strong>⚠️ 发现 ${conflicts.length} 个重复ID:</strong>
+        <ul>${conflicts.map(c => `<li>ID "${c.id}" 出现 ${c.count} 次</li>`).join('')}</ul>
+      </div>
+    `;
+  } else {
+    conflictsEl.innerHTML = '<div class="import-no-conflicts">✅ 未发现重复ID</div>';
+  }
+
+  // 销毁旧的预览表格
+  if (previewTable) {
+    previewTable.destroy();
+  }
+
+  // 创建预览表格（只显示前5行）
+  const previewData = data.slice(0, 5);
+  const allKeys = new Set();
+  data.forEach(row => Object.keys(row).forEach(key => allKeys.add(key)));
+
+  const columns = Array.from(allKeys).map(key => ({
+    title: key,
+    field: key,
+    formatter: function(cell) {
+      const value = cell.getValue();
+      if (value === null || value === undefined) return '<span style="color: #94a3b8;">null</span>';
+      if (typeof value === 'object') return JSON.stringify(value).substring(0, 50) + '...';
+      return String(value).substring(0, 50);
+    }
+  }));
+
+  previewTable = new Tabulator('#import-preview-table', {
+    data: previewData,
+    columns: columns,
+    layout: 'fitColumns',
+    height: '250px'
+  });
+
+  modal.style.display = 'flex';
+
+  // 绑定预览弹窗事件
+  document.getElementById('import-preview-close').onclick = hideImportPreview;
+  document.getElementById('import-preview-cancel').onclick = hideImportPreview;
+  document.getElementById('import-preview-confirm').onclick = confirmImport;
+}
+
+function hideImportPreview() {
+  const modal = document.getElementById('import-preview-modal');
+  modal.style.display = 'none';
+  pendingImportData = null;
+  if (previewTable) {
+    previewTable.destroy();
+    previewTable = null;
+  }
+}
+
+function confirmImport() {
+  if (!pendingImportData) return;
+
+  loadData(pendingImportData);
+
+  // 保存到已加载配置（用于跨表验证）
+  if (currentConfigType) {
+    loadedConfigs[currentConfigType] = pendingImportData;
+  }
+
+  historyManager.clear(); // 清除历史记录
+
+  showToast(`成功导入 ${pendingImportData.length} 条记录`, 'success');
+  hideImportPreview();
+}
+
+function checkImportConflicts(data) {
+  const idCounts = {};
+  data.forEach(row => {
+    const id = row.id;
+    if (id !== undefined && id !== null && id !== '') {
+      idCounts[id] = (idCounts[id] || 0) + 1;
+    }
+  });
+
+  return Object.entries(idCounts)
+    .filter(([_, count]) => count > 1)
+    .map(([id, count]) => ({ id, count }));
+}
+
+// ============================================================
+// 快捷键帮助功能
+// ============================================================
+
+function showShortcutsModal() {
+  const modal = document.getElementById('shortcuts-modal');
+  const closeBtn = document.getElementById('shortcuts-close');
+
+  modal.style.display = 'flex';
+
+  closeBtn.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  };
+
+  // ESC 关闭
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.style.display = 'none';
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
 }

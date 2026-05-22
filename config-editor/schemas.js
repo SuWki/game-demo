@@ -218,6 +218,31 @@ export const enemyArchetypeSchema = {
   }
 };
 
+// 枚举字段定义 - 用于表格下拉选择
+export const enumFields = {
+  // 全局通用枚举
+  common: {
+    rarity: ['common', 'uncommon', 'rare', 'epic', 'legendary'],
+    boolean: [true, false]
+  },
+  // upgrades 表的枚举字段
+  upgrades: {
+    category: ['generic', 'route'],
+    routeId: ['crit', 'pierce', 'dash'],
+    repeatable: [true, false],
+    'effects.type': ['stats', 'heal', 'route'],
+    'effects.routeId': ['crit', 'pierce', 'dash', 'dominant']
+  },
+  // battleTemplates 表的枚举字段
+  battleTemplates: {
+    'winCondition.type': ['kills', 'elite', 'survive'],
+    'spawnRule.pattern': ['surround', 'pincers', 'lanes'],
+    'winCondition.target': [10, 15, 20, 25, 30, 40, 50]
+  },
+  // enemyArchetypes 表的枚举字段
+  enemyArchetypes: {}
+};
+
 // 字段关联关系定义
 export const fieldRelations = {
   upgrades: {
@@ -246,6 +271,33 @@ export const schemaMap = {
   enemyArchetypes: enemyArchetypeSchema
 };
 
+// 提取字段描述
+export function getFieldDescriptions(configType) {
+  const schema = schemaMap[configType];
+  if (!schema || !schema.items || !schema.items.properties) return {};
+
+  const descriptions = {};
+  const properties = schema.items.properties;
+
+  function extractDescriptions(props, prefix = '') {
+    for (const [key, value] of Object.entries(props)) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (value.description) {
+        descriptions[fullKey] = value.description;
+      }
+      if (value.properties) {
+        extractDescriptions(value.properties, fullKey);
+      }
+      if (value.items && value.items.properties) {
+        extractDescriptions(value.items.properties, fullKey);
+      }
+    }
+  }
+
+  extractDescriptions(properties);
+  return descriptions;
+}
+
 // 自动识别配置类型
 export function detectConfigType(data, fileName) {
   if (data.length === 0) return null;
@@ -271,4 +323,65 @@ export function detectConfigType(data, fileName) {
   }
   
   return null;
+}
+
+// 字段类型映射图标和说明
+export const fieldTypeMeta = {
+  string: { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' },
+  number: { icon: '🔢', label: '数字', color: '#0ea5e9', editor: 'number' },
+  boolean: { icon: '☑️', label: '布尔', color: '#10b981', editor: 'toggle' },
+  array: { icon: '📋', label: '数组', color: '#f59e0b', editor: 'json' },
+  object: { icon: '📦', label: '对象', color: '#8b5cf6', editor: 'json' },
+  enum: { icon: '📋', label: '枚举', color: '#ec4899', editor: 'select' },
+  id: { icon: '🆔', label: 'ID', color: '#ef4444', editor: 'input' }
+};
+
+// 提取字段类型信息
+export function getFieldTypes(configType) {
+  const schema = schemaMap[configType];
+  if (!schema || !schema.items || !schema.items.properties) return {};
+
+  const types = {};
+  const properties = schema.items.properties;
+
+  function extractTypes(props, prefix = '') {
+    for (const [key, value] of Object.entries(props)) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+
+      let typeInfo = { ...fieldTypeMeta.string }; // 默认文本
+
+      if (key === 'id') {
+        typeInfo = { ...fieldTypeMeta.id };
+      } else if (value.enum) {
+        typeInfo = { ...fieldTypeMeta.enum };
+      } else if (value.type === 'number') {
+        typeInfo = { ...fieldTypeMeta.number };
+        if (value.minimum !== undefined) typeInfo.min = value.minimum;
+        if (value.maximum !== undefined) typeInfo.max = value.maximum;
+      } else if (value.type === 'boolean') {
+        typeInfo = { ...fieldTypeMeta.boolean };
+      } else if (value.type === 'array') {
+        typeInfo = { ...fieldTypeMeta.array };
+      } else if (value.type === 'object') {
+        typeInfo = { ...fieldTypeMeta.object };
+      }
+
+      // 添加描述
+      if (value.description) {
+        typeInfo.description = value.description;
+      }
+
+      types[fullKey] = typeInfo;
+
+      if (value.properties) {
+        extractTypes(value.properties, fullKey);
+      }
+      if (value.items && value.items.properties) {
+        extractTypes(value.items.properties, fullKey);
+      }
+    }
+  }
+
+  extractTypes(properties);
+  return types;
 }
