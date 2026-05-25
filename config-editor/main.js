@@ -676,65 +676,139 @@ function handleAddCol() {
   // 更新表格数据
   table.setData(newData);
 
-  // 添加新列定义
-  table.addColumn({
-    title: trimmedName,
-    field: trimmedName,
-    editor: 'input',
-    resizable: true,
-    headerSort: true,
-    headerFilter: 'input',
-    headerFilterPlaceholder: '筛选...',
-    titleFormatter: function(cell) {
-      const container = document.createElement('div');
-      container.className = 'col-header-content';
-      container.style.display = 'flex';
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'space-between';
-      container.style.width = '100%';
-      container.style.gap = '4px';
+  // 获取操作列的索引，在它之前插入新列
+  const allCols = table.getColumns();
+  const actionColIndex = allCols.findIndex(col => col.getField() === '_actions');
 
-      const labelWrap = document.createElement('div');
-      labelWrap.style.display = 'flex';
-      labelWrap.style.alignItems = 'center';
-      labelWrap.style.overflow = 'hidden';
-      labelWrap.innerHTML = '<span>' + trimmedName + '</span>';
+  // 添加新列定义（在操作列之前）
+  if (actionColIndex > 0) {
+    // 在操作列之前插入
+    table.addColumn({
+      title: trimmedName,
+      field: trimmedName,
+      editor: 'input',
+      resizable: true,
+      headerSort: true,
+      headerFilter: 'input',
+      headerFilterPlaceholder: '筛选...',
+      titleFormatter: function(cell) {
+        const container = document.createElement('div');
+        container.className = 'col-header-content';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'space-between';
+        container.style.width = '100%';
+        container.style.gap = '4px';
 
-      const actionsWrap = document.createElement('div');
-      actionsWrap.className = 'col-header-actions';
-      actionsWrap.style.display = 'flex';
-      actionsWrap.style.alignItems = 'center';
-      actionsWrap.style.gap = '2px';
-      actionsWrap.style.flexShrink = '0';
+        const labelWrap = document.createElement('div');
+        labelWrap.style.display = 'flex';
+        labelWrap.style.alignItems = 'center';
+        labelWrap.style.overflow = 'hidden';
+        labelWrap.innerHTML = '<span>' + trimmedName + '</span>';
 
-      const filterBtn = document.createElement('button');
-      filterBtn.className = 'col-header-btn filter-btn';
-      filterBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
-      filterBtn.title = '筛选 ' + trimmedName;
-      filterBtn.onclick = (e) => {
-        e.stopPropagation();
-        showColumnFilter(trimmedName, cell.getElement());
-      };
+        const actionsWrap = document.createElement('div');
+        actionsWrap.className = 'col-header-actions';
+        actionsWrap.style.display = 'flex';
+        actionsWrap.style.alignItems = 'center';
+        actionsWrap.style.gap = '2px';
+        actionsWrap.style.flexShrink = '0';
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'col-header-btn delete-col-btn';
-      deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      deleteBtn.title = '删除列 ' + trimmedName;
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm('确定要删除列 "' + trimmedName + '" 吗？')) {
-          deleteColumn(trimmedName);
+        const filterBtn = document.createElement('button');
+        filterBtn.className = 'col-header-btn filter-btn';
+        filterBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+        filterBtn.title = '筛选 ' + trimmedName;
+        filterBtn.onclick = (e) => {
+          e.stopPropagation();
+          showColumnFilter(trimmedName, cell.getElement());
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'col-header-btn delete-col-btn';
+        deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        deleteBtn.title = '删除列 ' + trimmedName;
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm('确定要删除列 "' + trimmedName + '" 吗？')) {
+            deleteColumn(trimmedName);
+          }
+        };
+
+        actionsWrap.appendChild(filterBtn);
+        actionsWrap.appendChild(deleteBtn);
+        container.appendChild(labelWrap);
+        container.appendChild(actionsWrap);
+
+        return container;
+      },
+      formatter: function(cell) {
+        const value = cell.getValue();
+        const fieldName = cell.getField();
+        const displayValue = String(value ?? '');
+        const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+
+        if (value === null || value === undefined || value === '') {
+          const placeholderText = '请输入...';
+          return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
         }
-      };
 
-      actionsWrap.appendChild(filterBtn);
-      actionsWrap.appendChild(deleteBtn);
-      container.appendChild(labelWrap);
-      container.appendChild(actionsWrap);
+        if (typeof value === 'boolean') {
+          const boolText = value ? 'true' : 'false';
+          return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+        }
 
-      return container;
-    }
-  });
+        if (typeof value === 'object') {
+          const objStr = JSON.stringify(value);
+          const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
+          return `<span class="cell-object" title="${fieldName}: ${objStr}">${displayStr}</span>`;
+        }
+
+        if (typeof value === 'number') {
+          return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
+        }
+
+        return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
+      }
+    }, true, '_actions');
+  } else {
+    // 如果没有操作列，直接添加
+    table.addColumn({
+      title: trimmedName,
+      field: trimmedName,
+      editor: 'input',
+      resizable: true,
+      headerSort: true,
+      headerFilter: 'input',
+      headerFilterPlaceholder: '筛选...',
+      formatter: function(cell) {
+        const value = cell.getValue();
+        const fieldName = cell.getField();
+        const displayValue = String(value ?? '');
+        const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+
+        if (value === null || value === undefined || value === '') {
+          const placeholderText = '请输入...';
+          return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
+        }
+
+        if (typeof value === 'boolean') {
+          const boolText = value ? 'true' : 'false';
+          return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+        }
+
+        if (typeof value === 'object') {
+          const objStr = JSON.stringify(value);
+          const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
+          return `<span class="cell-object" title="${fieldName}: ${objStr}">${displayStr}</span>`;
+        }
+
+        if (typeof value === 'number') {
+          return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
+        }
+
+        return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
+      }
+    });
+  }
 
   updateCurrentData();
   showToast('已添加新列：' + trimmedName, 'success');
@@ -930,11 +1004,78 @@ function generateColumns(data) {
 
   // 生成列定义
   const columns = Array.from(allKeys).map(key => {
-    const relation = relations[key];
+    // 简化路径（移除数组索引）用于 schema 查找
+    const simplifiedKey = key.includes('.')
+      ? key.split('.').filter(p => !/^\d+$/.test(p)).join('.')
+      : key;
+
+    // 查找关联关系（支持数组索引路径如 effects.0.routeId -> effects.routeId）
+    let relation = relations[key];
+    if (!relation && key.includes('.')) {
+      relation = relations[simplifiedKey];
+    }
     const hasRelation = relation && relation.targetTable;
-    const enumValues = enums[key];
+
+    // 查找枚举值（支持数组索引路径如 effects.0.type -> effects.type）
+    let enumValues = enums[key];
+    if (!enumValues && key.includes('.')) {
+      enumValues = enums[simplifiedKey];
+    }
     const isEnumField = enumValues && Array.isArray(enumValues);
-    const typeInfo = fieldTypes[key] || { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
+
+    // 查找字段类型（支持数组索引路径如 effects.0.type -> effects.type）
+    let typeInfo = fieldTypes[key];
+    if (!typeInfo && key.includes('.')) {
+      typeInfo = fieldTypes[simplifiedKey];
+    }
+    if (!typeInfo) {
+      typeInfo = { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
+    }
+
+    // 获取字段描述（支持嵌套字段如 effects.0.type）
+    let fieldDesc = descriptions[key];
+    if (!fieldDesc && key.includes('.')) {
+      fieldDesc = descriptions[simplifiedKey];
+    }
+    if (!fieldDesc && key.includes('.')) {
+      // 尝试通过 schema 手动解析嵌套字段描述
+      // 例如 effects.0.type -> effects.items.properties.type.description
+      const parts = key.split('.');
+      const schema = schemaMap[currentConfigType];
+      if (schema && schema.items && schema.items.properties) {
+        let props = schema.items.properties;
+        let found = true;
+
+        for (let i = 0; i < parts.length && found; i++) {
+          const part = parts[i];
+
+          // 如果是数字索引（数组索引），跳过，继续下一个
+          if (/^\d+$/.test(part)) {
+            continue;
+          }
+
+          if (props[part]) {
+            if (i === parts.length - 1) {
+              // 最后一个部分，获取描述
+              fieldDesc = props[part].description;
+            } else {
+              // 不是最后一个，继续深入
+              if (props[part].properties) {
+                // 普通对象，进入其 properties
+                props = props[part].properties;
+              } else if (props[part].items && props[part].items.properties) {
+                // 数组类型，进入其 items 的 properties
+                props = props[part].items.properties;
+              } else {
+                found = false;
+              }
+            }
+          } else {
+            found = false;
+          }
+        }
+      }
+    }
 
     // 根据字段类型确定编辑器
     let editor = 'input';
@@ -1062,7 +1203,13 @@ function generateColumns(data) {
           return `<span class="cell-enum" style="color: ${typeInfo.color}">${value}</span>`;
         }
 
-        return value;
+        // 关联字段标记（在单元格中显示关联指示器）
+        if (hasRelation) {
+          return `<span class="cell-text cell-relation" title="${fieldName}: ${value} (${relation.relatesTo})">${value}<span class="cell-relation-badge">🔗</span></span>`;
+        }
+
+        // 普通文本 - 添加 title 属性以显示完整内容
+        return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
       },
       validator: getColumnValidator(key)
     };
