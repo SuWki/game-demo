@@ -13,13 +13,14 @@
 <body>
   <div id="app">
     <header>
-      <h1>
-        🎮 游戏配置编辑器
+      <div class="header-left">
+        <h1>🎮 游戏配置编辑器</h1>
         <button class="header-notes" id="btn-notes" data-tooltip="添加备注">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          备注
+          <span class="header-notes-text">备注</span>
         </button>
-      </h1>
+        <span class="header-notes-preview" id="header-notes-preview"></span>
+      </div>
       <div class="header-actions">
         <button id="btn-import" class="btn btn-primary" data-tooltip="导入 Excel/CSV 文件">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -95,6 +96,13 @@
             </svg>
             新增一行
           </button>
+          <button id="btn-add-col" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            新增一列
+          </button>
           <button id="btn-undo" class="btn btn-secondary" disabled title="撤销 (Ctrl+Z)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 7v6h6"/>
@@ -108,12 +116,6 @@
               <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
             </svg>
             重做
-          </button>
-          <button id="btn-toggle-filter" class="btn btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-            </svg>
-            筛选
           </button>
           <button id="btn-global-search" class="btn btn-secondary" title="全局搜索 (Ctrl+F)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

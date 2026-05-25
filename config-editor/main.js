@@ -310,9 +310,6 @@ function loadData(data) {
     },
   });
   
-  // 初始化筛选器状态
-  updateFilterVisibility();
-  
   // 绑定工具栏事件
   bindToolbarEvents();
   
@@ -373,11 +370,11 @@ function bindToolbarEvents() {
     addRowBtn.addEventListener('click', handleAddRow);
   }
 
-  // 筛选切换按钮
-  const toggleFilterBtn = document.getElementById('btn-toggle-filter');
-  if (toggleFilterBtn) {
-    toggleFilterBtn.removeEventListener('click', toggleFilter);
-    toggleFilterBtn.addEventListener('click', toggleFilter);
+  // 新增列按钮
+  const addColBtn = document.getElementById('btn-add-col');
+  if (addColBtn) {
+    addColBtn.removeEventListener('click', handleAddCol);
+    addColBtn.addEventListener('click', handleAddCol);
   }
 
   // 撤销按钮
@@ -456,10 +453,34 @@ function handleAddRow() {
 
   if (lastRow) {
     newRowData = JSON.parse(JSON.stringify(lastRow.getData()));
+  } else if (table && table.getData().length > 0) {
+    // 如果没有最后一行（可能分页等原因），用第一行作为模板
+    const firstRow = table.getRow(1);
+    if (firstRow) {
+      newRowData = JSON.parse(JSON.stringify(firstRow.getData()));
+    }
   }
 
-  // 自增 ID
-  newRowData.id = nextAutoId++;
+  // 重新计算下一个自动 ID（从 0 开始的最大值 + 1）
+  nextAutoId = 0;
+  if (table) {
+    const data = table.getData();
+    if (data.length > 0) {
+      const maxId = Math.max(...data.map(row => {
+        const id = row.id;
+        if (typeof id === 'number') return id;
+        if (typeof id === 'string') {
+          const num = parseInt(id);
+          return isNaN(num) ? -1 : num;
+        }
+        return -1;
+      }));
+      nextAutoId = maxId >= 0 ? maxId + 1 : 0;
+    }
+  }
+
+  // 设置自增 ID
+  newRowData.id = nextAutoId;
 
   // 清空其他字段
   Object.keys(newRowData).forEach(key => {
@@ -622,21 +643,235 @@ function handleKeyboardShortcut(e) {
   }
 }
 
-function toggleFilter() {
-  filterVisible = !filterVisible;
-  updateFilterVisibility();
+// 列筛选弹出框状态
+let activeFilterPopup = null;
 
-  const toggleBtn = document.getElementById('btn-toggle-filter');
-  if (toggleBtn) {
-    toggleBtn.classList.toggle('active', filterVisible);
+function handleAddCol() {
+  if (!table) {
+    showToast('请先加载数据', 'warning');
+    return;
+  }
+
+  const colName = prompt('请输入新列的名称：');
+  if (!colName || !colName.trim()) {
+    showToast('列名不能为空', 'warning');
+    return;
+  }
+
+  const trimmedName = colName.trim();
+
+  // 检查是否已存在
+  const existingCols = table.getColumns();
+  if (existingCols.some(col => col.getField() === trimmedName)) {
+    showToast('该列名已存在', 'error');
+    return;
+  }
+
+  // 添加新列到所有数据
+  const newData = table.getData();
+  newData.forEach(row => {
+    row[trimmedName] = '';
+  });
+
+  // 更新表格数据
+  table.setData(newData);
+
+  // 添加新列定义
+  table.addColumn({
+    title: trimmedName,
+    field: trimmedName,
+    editor: 'input',
+    resizable: true,
+    headerSort: true,
+    headerFilter: 'input',
+    headerFilterPlaceholder: '筛选...',
+    titleFormatter: function(cell) {
+      const container = document.createElement('div');
+      container.className = 'col-header-content';
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'space-between';
+      container.style.width = '100%';
+      container.style.gap = '4px';
+
+      const labelWrap = document.createElement('div');
+      labelWrap.style.display = 'flex';
+      labelWrap.style.alignItems = 'center';
+      labelWrap.style.overflow = 'hidden';
+      labelWrap.innerHTML = '<span>' + trimmedName + '</span>';
+
+      const actionsWrap = document.createElement('div');
+      actionsWrap.className = 'col-header-actions';
+      actionsWrap.style.display = 'flex';
+      actionsWrap.style.alignItems = 'center';
+      actionsWrap.style.gap = '2px';
+      actionsWrap.style.flexShrink = '0';
+
+      const filterBtn = document.createElement('button');
+      filterBtn.className = 'col-header-btn filter-btn';
+      filterBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+      filterBtn.title = '筛选 ' + trimmedName;
+      filterBtn.onclick = (e) => {
+        e.stopPropagation();
+        showColumnFilter(trimmedName, cell.getElement());
+      };
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'col-header-btn delete-col-btn';
+      deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      deleteBtn.title = '删除列 ' + trimmedName;
+      deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm('确定要删除列 "' + trimmedName + '" 吗？')) {
+          deleteColumn(trimmedName);
+        }
+      };
+
+      actionsWrap.appendChild(filterBtn);
+      actionsWrap.appendChild(deleteBtn);
+      container.appendChild(labelWrap);
+      container.appendChild(actionsWrap);
+
+      return container;
+    }
+  });
+
+  updateCurrentData();
+  showToast('已添加新列：' + trimmedName, 'success');
+}
+
+function deleteColumn(key) {
+  if (!table) return;
+
+  table.deleteColumn(key);
+
+  // 从数据中移除该字段
+  const newData = table.getData().map(row => {
+    const newRow = { ...row };
+    delete newRow[key];
+    return newRow;
+  });
+  table.setData(newData);
+
+  updateCurrentData();
+  showToast('已删除列：' + key, 'success');
+}
+
+function showColumnFilter(field, headerEl) {
+  // 关闭已有的弹出框
+  if (activeFilterPopup) {
+    activeFilterPopup.remove();
+    activeFilterPopup = null;
+  }
+
+  const popup = document.createElement('div');
+  popup.className = 'column-filter-popup';
+  popup.style.cssText = `
+    position: fixed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    z-index: 200;
+    min-width: 180px;
+    animation: fadeIn 0.15s ease;
+  `;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = '筛选 ' + field + '...';
+  input.style.cssText = `
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+  `;
+
+  // 恢复已有的筛选值
+  const existingFilter = table.getHeaderFilterValue(field);
+  if (existingFilter) {
+    input.value = existingFilter;
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      applyFilter();
+      closePopup();
+    } else if (e.key === 'Escape') {
+      closePopup();
+    }
+  });
+
+  input.addEventListener('blur', () => {
+    // 延迟关闭，以便点击其他元素
+    setTimeout(() => {
+      if (document.activeElement !== input) {
+        applyFilter();
+        closePopup();
+      }
+    }, 200);
+  });
+
+  const btnWrap = document.createElement('div');
+  btnWrap.style.cssText = 'display: flex; gap: 0.35rem; margin-top: 0.5rem; justify-content: flex-end;';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = '清除';
+  clearBtn.className = 'btn btn-sm btn-secondary';
+  clearBtn.style.cssText = 'padding: 0.25rem 0.5rem; font-size: 0.75rem;';
+  clearBtn.onclick = (e) => {
+    e.stopPropagation();
+    table.setHeaderFilterValue(field, '');
+    closePopup();
+  };
+
+  const okBtn = document.createElement('button');
+  okBtn.textContent = '确定';
+  okBtn.className = 'btn btn-sm btn-primary';
+  okBtn.style.cssText = 'padding: 0.25rem 0.5rem; font-size: 0.75rem;';
+  okBtn.onclick = (e) => {
+    e.stopPropagation();
+    applyFilter();
+    closePopup();
+  };
+
+  btnWrap.appendChild(clearBtn);
+  btnWrap.appendChild(okBtn);
+  popup.appendChild(input);
+  popup.appendChild(btnWrap);
+  document.body.appendChild(popup);
+
+  activeFilterPopup = popup;
+
+  // 定位弹出框
+  const rect = headerEl.getBoundingClientRect();
+  popup.style.left = rect.left + 'px';
+  popup.style.top = (rect.bottom + 4) + 'px';
+
+  input.focus();
+
+  function applyFilter() {
+    const value = input.value.trim();
+    table.setHeaderFilterValue(field, value || '');
+  }
+
+  function closePopup() {
+    if (popup.parentNode) {
+      popup.remove();
+    }
+    if (activeFilterPopup === popup) {
+      activeFilterPopup = null;
+    }
   }
 }
 
-function updateFilterVisibility() {
-  const filterElements = document.querySelectorAll('.tabulator-header-filter');
-  filterElements.forEach(el => {
-    el.style.display = filterVisible ? 'block' : 'none';
-  });
+function createColumnFilterPopup(key) {
+  return false;
 }
 
 function updateStatusBar() {
@@ -743,15 +978,66 @@ function generateColumns(data) {
       field: key,
       editor: editor,
       editorParams: editorParams,
+      resizable: true,
+      headerSort: true,
       headerFilter: 'input',
       headerFilterPlaceholder: '筛选...',
-      resizable: true,
+      titleFormatter: function(cell) {
+        const container = document.createElement('div');
+        container.className = 'col-header-content';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'space-between';
+        container.style.width = '100%';
+        container.style.gap = '4px';
+
+        const labelWrap = document.createElement('div');
+        labelWrap.style.display = 'flex';
+        labelWrap.style.alignItems = 'center';
+        labelWrap.style.overflow = 'hidden';
+        labelWrap.innerHTML = title;
+
+        const actionsWrap = document.createElement('div');
+        actionsWrap.className = 'col-header-actions';
+        actionsWrap.style.display = 'flex';
+        actionsWrap.style.alignItems = 'center';
+        actionsWrap.style.gap = '2px';
+        actionsWrap.style.flexShrink = '0';
+
+        const filterBtn = document.createElement('button');
+        filterBtn.className = 'col-header-btn filter-btn';
+        filterBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+        filterBtn.title = '筛选 ' + key;
+        filterBtn.onclick = (e) => {
+          e.stopPropagation();
+          showColumnFilter(key, cell.getElement());
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'col-header-btn delete-col-btn';
+        deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        deleteBtn.title = '删除列 ' + key;
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm('确定要删除列 "' + key + '" 吗？')) {
+            deleteColumn(key);
+          }
+        };
+
+        actionsWrap.appendChild(filterBtn);
+        actionsWrap.appendChild(deleteBtn);
+        container.appendChild(labelWrap);
+        container.appendChild(actionsWrap);
+
+        return container;
+      },
       formatter: function(cell) {
         const value = cell.getValue();
 
-        // null/undefined
-        if (value === null || value === undefined) {
-          return '<span class="cell-null">null</span>';
+        // null/undefined/空字符串 - 显示为 placeholder 样式
+        if (value === null || value === undefined || value === '') {
+          const field = cell.getField();
+          return `<span class="cell-placeholder">${field === 'id' ? '自动生成' : '请输入...'}</span>`;
         }
 
         // 布尔值
@@ -822,10 +1108,24 @@ function generateColumns(data) {
           const prevRow = table.getRow(rowPos - 1);
           const prevData = prevRow.getData();
           const newData = JSON.parse(JSON.stringify(prevData));
-          
-          // 自增 ID
-          newData.id = nextAutoId++;
-          
+
+          // 重新计算下一个自动 ID（从 0 开始的最大值 + 1）
+          let newId = 0;
+          const data = table.getData();
+          if (data.length > 0) {
+            const maxId = Math.max(...data.map(r => {
+              const id = r.id;
+              if (typeof id === 'number') return id;
+              if (typeof id === 'string') {
+                const num = parseInt(id);
+                return isNaN(num) ? -1 : num;
+              }
+              return -1;
+            }));
+            newId = maxId >= 0 ? maxId + 1 : 0;
+          }
+          newData.id = newId;
+
           row.update(newData);
           showToast('已复制上一行数据', 'success');
         } else {
@@ -1564,6 +1864,7 @@ function initNotesFeature() {
   const savedNotes = localStorage.getItem(NOTES_KEY);
   if (savedNotes) {
     notesTextarea.value = savedNotes;
+    updateNotesPreview(savedNotes);
   }
   
   // 打开备注弹窗
@@ -1598,9 +1899,24 @@ function initNotesFeature() {
   notesSave.addEventListener('click', () => {
     const notes = notesTextarea.value.trim();
     localStorage.setItem(NOTES_KEY, notes);
+    updateNotesPreview(notes);
     closeModal();
     showToast('备注已保存', 'success');
   });
+}
+
+function updateNotesPreview(notes) {
+  const previewEl = document.getElementById('header-notes-preview');
+  if (!previewEl) return;
+  if (notes && notes.trim()) {
+    const firstLine = notes.trim().split('\n')[0];
+    const truncated = firstLine.length > 30 ? firstLine.substring(0, 30) + '...' : firstLine;
+    previewEl.textContent = truncated;
+    previewEl.title = notes;
+  } else {
+    previewEl.textContent = '';
+    previewEl.title = '';
+  }
 }
 
 // ============================================================

@@ -66,6 +66,12 @@ header {
   box-shadow: var(--shadow-sm);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 header h1 {
   font-size: 1.5rem;
   font-weight: 700;
@@ -74,9 +80,6 @@ header h1 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
 }
 
 .header-notes {
@@ -100,6 +103,21 @@ header h1 {
 
 .header-notes svg {
   flex-shrink: 0;
+}
+
+.header-notes-text {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.header-notes-preview {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
 }
 
 .notes-modal {
@@ -416,28 +434,7 @@ main {
 
 /* Tabulator Header Filter Styles */
 .tabulator-header-filter {
-  padding: 0.5rem !important;
-}
-
-.tabulator-header-filter input {
-  width: 100% !important;
-  padding: 0.4rem 0.6rem !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: var(--radius-sm) !important;
-  background: var(--bg-card) !important;
-  color: var(--text-primary) !important;
-  font-size: 0.8rem !important;
-  outline: none !important;
-  transition: border-color var(--transition-fast) !important;
-}
-
-.tabulator-header-filter input:focus {
-  border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
-}
-
-.tabulator-header-filter input::placeholder {
-  color: var(--text-muted) !important;
+  display: none !important;
 }
 
 @keyframes fadeIn {
@@ -510,28 +507,7 @@ main {
 
 /* Header Filter Input Styles */
 .tabulator-header-filter {
-  padding: 0.5rem !important;
-}
-
-.tabulator-header-filter input {
-  width: 100% !important;
-  padding: 0.4rem 0.6rem !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: var(--radius-sm) !important;
-  background: var(--bg-card) !important;
-  color: var(--text-primary) !important;
-  font-size: 0.8rem !important;
-  outline: none !important;
-  transition: border-color var(--transition-fast) !important;
-}
-
-.tabulator-header-filter input:focus {
-  border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
-}
-
-.tabulator-header-filter input::placeholder {
-  color: var(--text-muted) !important;
+  display: none !important;
 }
 
 .tabulator-row {
@@ -1708,6 +1684,12 @@ footer {
   font-style: italic;
 }
 
+.cell-placeholder {
+  color: #94a3b8;
+  font-style: italic;
+  opacity: 0.7;
+}
+
 .cell-boolean {
   font-weight: 600;
   font-size: 0.85rem;
@@ -1789,4 +1771,92 @@ footer {
 
 .tabulator-col:hover .field-type-icon {
   opacity: 1;
+}
+
+/* ============================================================
+   列头按钮样式
+   ============================================================ */
+
+.col-header-content {
+  width: 100%;
+}
+
+.col-header-actions {
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.tabulator-col:hover .col-header-actions,
+.tabulator-col.tabulator-col-sortable:hover .col-header-actions {
+  opacity: 1;
+}
+
+.col-header-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  padding: 0;
+}
+
+.col-header-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.col-header-btn.filter-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary);
+}
+
+.col-header-btn.delete-col-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-error);
+}
+
+/* ============================================================
+   列筛选弹出框样式
+   ============================================================ */
+
+.column-filter-popup {
+  animation: fadeIn 0.15s ease;
+}
+
+.column-filter-popup input {
+  transition: border-color var(--transition-fast);
+}
+
+.column-filter-popup input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* ============================================================
+   Tabulator 编辑状态样式优化（blur 自动保存）
+   ============================================================ */
+
+.tabulator-cell.tabulator-editing {
+  padding: 0 !important;
+  border: 2px solid var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+.tabulator-cell.tabulator-editing input,
+.tabulator-cell.tabulator-editing select {
+  width: 100%;
+  height: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
 }
