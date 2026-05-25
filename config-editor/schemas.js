@@ -43,24 +43,57 @@ export const upgradeSchema = {
       effects: {
         type: "array",
         minItems: 1,
+        description: "升级效果列表",
         items: {
           type: "object",
           required: ["type"],
+          description: "单个效果配置",
           properties: {
-            type: { enum: ["stats", "heal", "route"] },
-            modifiers: { type: "object" },
-            amount: { type: "number" },
-            routeId: { enum: ["crit", "pierce", "dash", "dominant"] }
+            type: {
+              enum: ["stats", "heal", "route"],
+              description: "效果类型：stats=属性加成，heal=治疗，route=路线专属"
+            },
+            modifiers: {
+              type: "object",
+              description: "属性修改器（仅stats类型）"
+            },
+            amount: {
+              type: "number",
+              description: "效果数值（仅heal类型）"
+            },
+            routeId: {
+              enum: ["crit", "pierce", "dash", "dominant"],
+              description: "专属路线ID（仅route类型）"
+            }
           }
         }
       },
       selection: {
         type: "object",
+        description: "出现权重配置",
         properties: {
-          baseWeight: { type: "number", minimum: 0, maximum: 20 },
-          minRound: { type: "number", minimum: 0 },
-          maxRound: { type: "number", minimum: 0 },
-          offRouteMultiplier: { type: "number", minimum: 0, maximum: 5 }
+          baseWeight: {
+            type: "number",
+            minimum: 0,
+            maximum: 20,
+            description: "基础出现权重（0-20）"
+          },
+          minRound: {
+            type: "number",
+            minimum: 0,
+            description: "最早出现回合"
+          },
+          maxRound: {
+            type: "number",
+            minimum: 0,
+            description: "最晚出现回合"
+          },
+          offRouteMultiplier: {
+            type: "number",
+            minimum: 0,
+            maximum: 5,
+            description: "非专属路线时的权重倍数"
+          }
         }
       }
     }
@@ -373,11 +406,22 @@ export function getFieldTypes(configType) {
 
       types[fullKey] = typeInfo;
 
+      // 递归处理嵌套属性
       if (value.properties) {
         extractTypes(value.properties, fullKey);
       }
-      if (value.items && value.items.properties) {
-        extractTypes(value.items.properties, fullKey);
+      // 对于数组类型，也提取其 items 的 properties
+      if (value.items) {
+        if (value.items.properties) {
+          extractTypes(value.items.properties, fullKey);
+        }
+        // 同时存储数组项的描述信息
+        if (value.items.description) {
+          types[fullKey] = {
+            ...typeInfo,
+            itemDescription: value.items.description
+          };
+        }
       }
     }
   }

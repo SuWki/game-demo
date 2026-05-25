@@ -964,33 +964,56 @@ function generateColumns(data) {
     const hasRelation = relation && relation.targetTable;
     const enumValues = enums[key];
     const isEnumField = enumValues && Array.isArray(enumValues);
-    const typeInfo = fieldTypes[key] || { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
+
+    // 查找字段类型（支持数组索引路径如 effects.0.type -> effects.type）
+    let typeInfo = fieldTypes[key];
+    if (!typeInfo && key.includes('.')) {
+      // 尝试移除数组索引后的路径
+      const parts = key.split('.');
+      const simplifiedPath = parts.filter(p => !/^\d+$/.test(p)).join('.');
+      typeInfo = fieldTypes[simplifiedPath];
+    }
+    if (!typeInfo) {
+      typeInfo = { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
+    }
 
     // 获取字段描述（支持嵌套字段如 effects.0.type）
     let fieldDesc = descriptions[key];
     if (!fieldDesc && key.includes('.')) {
       // 尝试解析嵌套字段描述
-      // 例如 effects.0.type -> effects.items.properties.type
+      // 例如 effects.0.type -> effects.items.properties.type.description
       const parts = key.split('.');
-      let currentSchema = schemaMap[currentConfigType];
-      if (currentSchema && currentSchema.items && currentSchema.items.properties) {
-        let props = currentSchema.items.properties;
-        for (let i = 0; i < parts.length; i++) {
+      const schema = schemaMap[currentConfigType];
+      if (schema && schema.items && schema.items.properties) {
+        let props = schema.items.properties;
+        let found = true;
+
+        for (let i = 0; i < parts.length && found; i++) {
           const part = parts[i];
-          // 如果是数字索引，使用 items
-          if (/^\d+$/.test(part) && props[parts[i-1]] && props[parts[i-1]].items) {
-            if (props[parts[i-1]].items.properties) {
-              props = props[parts[i-1]].items.properties;
-            }
-          } else if (props[part]) {
+
+          // 如果是数字索引（数组索引），跳过，继续下一个
+          if (/^\d+$/.test(part)) {
+            continue;
+          }
+
+          if (props[part]) {
             if (i === parts.length - 1) {
               // 最后一个部分，获取描述
               fieldDesc = props[part].description;
-            } else if (props[part].properties) {
-              props = props[part].properties;
-            } else if (props[part].items && props[part].items.properties) {
-              props = props[part].items.properties;
+            } else {
+              // 不是最后一个，继续深入
+              if (props[part].properties) {
+                // 普通对象，进入其 properties
+                props = props[part].properties;
+              } else if (props[part].items && props[part].items.properties) {
+                // 数组类型，进入其 items 的 properties
+                props = props[part].items.properties;
+              } else {
+                found = false;
+              }
             }
+          } else {
+            found = false;
           }
         }
       }
@@ -1519,44 +1542,107 @@ function validateConfig(data) {
     warnings: [],
     success: true
   };
-  
+
   // 1. JSON Schema 验证
   if (currentConfigType && schemaMap[currentConfigType]) {
     const schema = schemaMap[currentConfigType];
     const validate = ajv.compile(schema);
     const valid = validate(data);
-    
+
     if (!valid) {
       validate.errors.forEach(err => {
         const rowMatch = err.instancePath.match(/\/(\d+)/);
         const rowIndex = rowMatch ? parseInt(rowMatch[1]) + 1 : '?';
-        
-        if (err.keyword === 'required' || err.keyword === 'type') {
-          results.errors.push(`第 ${rowIndex} 行: ${err.message} (${err.instancePath})`);
+        const fieldMatch = err.instancePath.match(/\/([^\/]+)$/);
+        const fieldName = fieldMatch ? fieldMatch[1] : '';
+
+        let errorMessage = `第 ${rowIndex} 行`;
+        let solution = '';
+
+        // 根据错误类型提供详细的解决方案
+        if (err.keyword === 'required') {
+          const missingField = err.params?.missingProperty || fieldName;
+          errorMessage += `: 缺少必需字段 "${missingField}"`;
+
+          // 根据字段名提供具体建议
+          if (missingField === 'effects') {
+            solution = '💡 解决方案：effects 是升级效果的数组，至少需要包含一个效果对象，例如：[{"type": "stats", "modifiers": {"damage": 3}}]';
+          } else if (missingField === 'type') {
+            solution = '💡 解决方案：type 是效果类型，可选值：stats(属性加成)、heal(治疗)、route(路线专属)';
+          } else if (missingField === 'id') {
+            solution = '💡 解决方案：id 是唯一标识符，只能包含小写字母、数字和横线，例如："fire-boost"';
+          } else if (missingField === 'name') {
+            solution = '💡 解决方案：name 是显示名称，不能为空';
+          } else if (missingField === 'category') {
+            solution = '💡 解决方案：category 是类别，可选值：generic(通用)、route(路线专属)';
+          } else {
+            solution = `💡 解决方案：请填写 "${missingField}" 字段的值`;
+          }
+        } else if (err.keyword === 'type') {
+          errorMessage += `: 字段 "${fieldName}" 类型错误`;
+          const expectedType = err.params?.type || 'string';
+          const actualValue = err.data;
+          solution = `💡 解决方案：该字段需要 ${expectedType} 类型，当前值是 "${actualValue}"(${typeof actualValue})。${getTypeHint(expectedType, fieldName)}`;
+        } else if (err.keyword === 'enum') {
+          errorMessage += `: 字段 "${fieldName}" 值不在允许范围内`;
+          const allowedValues = err.params?.allowedValues?.join(', ') || '';
+          solution = `💡 解决方案：可选值为 [${allowedValues}]，当前值 "${err.data}" 不被允许`;
+        } else if (err.keyword === 'pattern') {
+          errorMessage += `: 字段 "${fieldName}" 格式不正确`;
+          solution = `💡 解决方案：${err.message}`;
+        } else {
+          errorMessage += `: ${err.message} (${err.instancePath})`;
+          solution = '💡 解决方案：请检查该字段的值是否符合要求';
+        }
+
+        if (err.keyword === 'required' || err.keyword === 'type' || err.keyword === 'enum') {
+          results.errors.push({ message: errorMessage, solution: solution, row: rowIndex, field: fieldName });
           results.success = false;
         } else {
-          results.warnings.push(`第 ${rowIndex} 行: ${err.message} (${err.instancePath})`);
+          results.warnings.push({ message: errorMessage, solution: solution, row: rowIndex, field: fieldName });
         }
       });
     }
   }
-  
+
+  // 辅助函数：获取类型提示
+  function getTypeHint(expectedType, fieldName) {
+    if (fieldName === 'effects.0.type' || fieldName.includes('.type')) {
+      return '提示：可选值为 stats, heal, route';
+    }
+    if (expectedType === 'boolean') {
+      return '提示：请填写 true 或 false';
+    }
+    if (expectedType === 'number') {
+      return '提示：请填写数字，例如：1, 2.5, 10';
+    }
+    if (expectedType === 'string') {
+      return '提示：请填写文本';
+    }
+    return '';
+  }
+
   // 2. 跨表引用验证
   if (currentConfigType === 'battleTemplates' && loadedConfigs.enemyArchetypes) {
     const validArchetypes = new Set(loadedConfigs.enemyArchetypes.map(e => e.id));
-    
+
     data.forEach((row, index) => {
       if (row.regularArchetypes) {
         for (const archetype of Object.keys(row.regularArchetypes)) {
           if (!validArchetypes.has(archetype)) {
-            results.errors.push(`第 ${index + 1} 行: regularArchetypes 引用了不存在的敌人类型 "${archetype}"`);
+            results.errors.push({
+              message: `第 ${index + 1} 行: regularArchetypes 引用了不存在的敌人类型 "${archetype}"`,
+              solution: `💡 解决方案：请确保 "${archetype}" 在 enemyArchetypes 表中已定义`,
+              row: index + 1,
+              field: 'regularArchetypes'
+            });
             results.success = false;
           }
         }
       }
     });
   }
-  
+
   // 3. 数值平衡性分析
   if (currentConfigType === 'upgrades') {
     data.forEach((row, index) => {
@@ -1564,41 +1650,71 @@ function validateConfig(data) {
       if (row['selection.baseWeight'] !== undefined) {
         const weight = parseFloat(row['selection.baseWeight']);
         if (weight > 15) {
-          results.warnings.push(`第 ${index + 1} 行: baseWeight 为 ${weight}，过高可能导致该升级频繁出现`);
+          results.warnings.push({
+            message: `第 ${index + 1} 行: baseWeight 为 ${weight}，过高可能导致该升级频繁出现`,
+            solution: '💡 建议：建议将 baseWeight 调整为 5-15 之间',
+            row: index + 1,
+            field: 'selection.baseWeight'
+          });
         }
         if (weight < 0.5 && row.rarity !== 'legendary') {
-          results.warnings.push(`第 ${index + 1} 行: baseWeight 为 ${weight}，过低可能导致该升级极少出现`);
+          results.warnings.push({
+            message: `第 ${index + 1} 行: baseWeight 为 ${weight}，过低可能导致该升级极少出现`,
+            solution: '💡 建议：建议将 baseWeight 调整为至少 0.5，或将其设为 legendary 稀有度',
+            row: index + 1,
+            field: 'selection.baseWeight'
+          });
         }
       }
-      
+
       // 检查稀有度与权重的关系
       if (row.rarity === 'rare' && row['selection.baseWeight'] > 5) {
-        results.warnings.push(`第 ${index + 1} 行: rare 稀有度的 baseWeight 为 ${row['selection.baseWeight']}，建议 ≤ 5`);
+        results.warnings.push({
+          message: `第 ${index + 1} 行: rare 稀有度的 baseWeight 为 ${row['selection.baseWeight']}，建议 ≤ 5`,
+          solution: '💡 建议：稀有度为 rare 时，建议将 baseWeight 设为 1-5',
+          row: index + 1,
+          field: 'selection.baseWeight'
+        });
       }
     });
   }
-  
+
   // 4. 战斗模板难度曲线检查
   if (currentConfigType === 'battleTemplates') {
     const battleTemplates = data.filter(t => !t.id?.startsWith('boss'));
     if (battleTemplates.length > 1) {
       const avgHp = battleTemplates.reduce((sum, t) => sum + (parseFloat(t.enemyHp) || 0), 0) / battleTemplates.length;
       const avgDuration = battleTemplates.reduce((sum, t) => sum + (parseFloat(t.durationSec) || 0), 0) / battleTemplates.length;
-      
+
       if (avgHp > 100) {
-        results.warnings.push(`战斗模板平均敌人血量较高: ${avgHp.toFixed(1)}`);
+        results.warnings.push({
+          message: `战斗模板平均敌人血量较高: ${avgHp.toFixed(1)}`,
+          solution: '💡 建议：考虑降低敌人血量或增加其他平衡机制',
+          row: '-',
+          field: 'enemyHp'
+        });
       }
       if (avgDuration > 60) {
-        results.warnings.push(`战斗模板平均持续时间较长: ${avgDuration.toFixed(1)}秒`);
+        results.warnings.push({
+          message: `战斗模板平均持续时间较长: ${avgDuration.toFixed(1)}秒`,
+          solution: '💡 建议：考虑缩短战斗时间或增加节奏变化',
+          row: '-',
+          field: 'durationSec'
+        });
       }
-      
+
       // 检查难度曲线
       for (let i = 1; i < battleTemplates.length; i++) {
         const prevHp = parseFloat(battleTemplates[i-1].enemyHp) || 0;
         const currHp = parseFloat(battleTemplates[i].enemyHp) || 0;
-        
+
         if (currHp < prevHp * 0.8) {
-          results.warnings.push(`第 ${i + 1} 个战斗模板的 enemyHp (${currHp}) 比前一个 (${prevHp}) 低很多，难度曲线可能不平滑`);
+          results.warnings.push({
+            message: `第 ${i + 1} 个战斗模板的 enemyHp (${currHp}) 比前一个 (${prevHp}) 低很多，难度曲线可能不平滑`,
+            solution: '💡 建议：考虑让后续模板的敌人血量逐步增加',
+            row: i + 1,
+            field: 'enemyHp'
+          });
         }
       }
     }
@@ -1625,54 +1741,70 @@ function validateConfig(data) {
 function displayValidationResults(results) {
   validationPanel.style.display = 'block';
   validationResults.innerHTML = '';
-  
+
   // 滚动到验证面板
   validationPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  
+
   // 统计
   const errorCount = results.errors.length;
   const warningCount = results.warnings.length;
-  
+
   if (errorCount === 0 && warningCount === 0) {
     validationResults.innerHTML = '<div class="validation-success">✅ 所有验证通过！配置数据完全正确。</div>';
     return;
   }
-  
+
   // 显示摘要
   const summary = document.createElement('div');
   summary.className = results.success ? 'validation-success' : 'validation-error';
   summary.style.marginBottom = '1rem';
-  summary.textContent = results.success 
-    ? `✅ 验证通过（${warningCount} 个警告）` 
+  summary.textContent = results.success
+    ? `✅ 验证通过（${warningCount} 个警告）`
     : `❌ 验证失败（${errorCount} 个错误，${warningCount} 个警告）`;
   validationResults.appendChild(summary);
-  
+
   // 显示错误
   if (errorCount > 0) {
     const errorHeader = document.createElement('div');
     errorHeader.style.cssText = 'color: var(--accent-error); font-weight: 600; margin: 1rem 0 0.5rem; font-size: 0.9rem;';
     errorHeader.textContent = `错误 (${errorCount}):`;
     validationResults.appendChild(errorHeader);
-    
+
     results.errors.forEach(error => {
       const div = document.createElement('div');
       div.className = 'validation-error';
-      div.textContent = ` ${error}`;
+
+      // 处理新的错误对象格式
+      const errorMsg = typeof error === 'object' ? error.message : error;
+      const solution = typeof error === 'object' ? error.solution : '';
+
+      div.innerHTML = `
+        <div style="font-weight: 500; margin-bottom: 0.25rem;">${errorMsg}</div>
+        ${solution ? `<div style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #cbd5e1;">${solution}</div>` : ''}
+      `;
       validationResults.appendChild(div);
     });
   }
-  
+
   // 显示警告
   if (warningCount > 0) {
     const warningHeader = document.createElement('div');
     warningHeader.style.cssText = 'color: var(--accent-warning); font-weight: 600; margin: 1rem 0 0.5rem; font-size: 0.9rem;';
     warningHeader.textContent = `警告 (${warningCount}):`;
     validationResults.appendChild(warningHeader);
-    
+
     results.warnings.forEach(warning => {
       const div = document.createElement('div');
       div.className = 'validation-warning';
-      div.textContent = `⚠️ ${warning}`;
+
+      // 处理新的警告对象格式
+      const warningMsg = typeof warning === 'object' ? warning.message : warning;
+      const solution = typeof warning === 'object' ? warning.solution : '';
+
+      div.innerHTML = `
+        <div style="font-weight: 500; margin-bottom: 0.25rem;">⚠️ ${warningMsg}</div>
+        ${solution ? `<div style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #cbd5e1;">${solution}</div>` : ''}
+      `;
       validationResults.appendChild(div);
     });
   }
