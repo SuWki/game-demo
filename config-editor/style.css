@@ -540,10 +540,97 @@ main {
 .tabulator-cell {
   border-color: var(--border-color) !important;
   padding: 0.6rem 0.75rem !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.tabulator-cell > span {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tabulator-cell:hover {
   background: rgba(99, 102, 241, 0.03) !important;
+}
+
+/* 单元格悬浮提示样式 */
+.tabulator-cell [title] {
+  cursor: help;
+}
+
+/* 自定义单元格 tooltip */
+.cell-tooltip {
+  position: absolute;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  max-width: 400px;
+  word-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease;
+}
+
+.cell-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 自定义单元格 tooltip */
+.cell-tooltip {
+  position: fixed;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
+  max-width: 400px;
+  word-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease;
+  line-height: 1.5;
+}
+
+.cell-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 20px;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+  transform: rotate(45deg);
+}
+
+/* 确保单元格内容不会溢出 */
+.tabulator-cell .cell-boolean,
+.tabulator-cell .cell-number,
+.tabulator-cell .cell-enum,
+.tabulator-cell .cell-object,
+.tabulator-cell .cell-placeholder {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Action Buttons in Table */

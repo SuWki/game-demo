@@ -295,6 +295,8 @@ function loadData(data) {
       saveToHistory();
       // 实时验证
       validateCellRealtime(cell);
+      // 更新 tooltip
+      updateCellTooltip(cell);
     },
     rowDeleted: function(row) {
       if (!historyManager.isUndoing) {
@@ -1033,36 +1035,41 @@ function generateColumns(data) {
       },
       formatter: function(cell) {
         const value = cell.getValue();
+        const fieldName = cell.getField();
+        const displayValue = String(value ?? '');
+        const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
 
         // null/undefined/空字符串 - 显示为 placeholder 样式
         if (value === null || value === undefined || value === '') {
-          const field = cell.getField();
-          return `<span class="cell-placeholder">${field === 'id' ? '自动生成' : '请输入...'}</span>`;
+          const placeholderText = fieldName === 'id' ? '自动生成' : '请输入...';
+          return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
         }
 
         // 布尔值
         if (typeof value === 'boolean') {
-          return value
-            ? '<span class="cell-boolean cell-boolean-true">✓ true</span>'
-            : '<span class="cell-boolean cell-boolean-false">✗ false</span>';
+          const boolText = value ? 'true' : 'false';
+          return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
         }
 
         // 对象/数组
         if (typeof value === 'object') {
-          return `<span class="cell-object">${typeInfo.icon} ${JSON.stringify(value).substring(0, 40)}...</span>`;
+          const objStr = JSON.stringify(value);
+          const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
+          return `<span class="cell-object" title="${fieldName}: ${objStr}">${typeInfo.icon} ${displayStr}</span>`;
         }
 
         // 数字
         if (typeof value === 'number') {
-          return `<span class="cell-number">${value}</span>`;
+          return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
         }
 
         // 枚举字段高亮
         if (isEnumField) {
-          return `<span class="cell-enum" style="color: ${typeInfo.color}">${value}</span>`;
+          return `<span class="cell-enum" style="color: ${typeInfo.color}" title="${fieldName}: ${value}">${value}</span>`;
         }
 
-        return value;
+        // 普通文本 - 添加 title 属性以显示完整内容
+        return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
       },
       validator: getColumnValidator(key)
     };
@@ -2481,3 +2488,130 @@ function showShortcutsModal() {
   };
   document.addEventListener('keydown', escHandler);
 }
+
+// ============================================================
+// 单元格悬浮提示功能
+// ============================================================
+
+let currentTooltip = null;
+let tooltipTimeout = null;
+
+function initCellTooltip() {
+  const tableContainer = document.getElementById('config-table');
+  if (!tableContainer) return;
+
+  tableContainer.addEventListener('mouseover', handleCellMouseOver);
+  tableContainer.addEventListener('mouseout', handleCellMouseOut);
+  tableContainer.addEventListener('mousemove', handleCellMouseMove);
+}
+
+function handleCellMouseOver(e) {
+  const cell = e.target.closest('.tabulator-cell');
+  if (!cell) return;
+
+  // 获取单元格内的 span 元素
+  const span = cell.querySelector('span[class^="cell-"]');
+  if (!span) return;
+
+  // 获取 title 属性
+  const title = span.getAttribute('title');
+  if (!title) return;
+
+  // 检查内容是否被截断
+  const isTruncated = span.scrollWidth > span.clientWidth;
+
+  // 延迟显示 tooltip
+  tooltipTimeout = setTimeout(() => {
+    showCellTooltip(title, cell);
+  }, 500);
+}
+
+function handleCellMouseOut(e) {
+  const cell = e.target.closest('.tabulator-cell');
+  if (!cell) return;
+
+  // 清除延迟显示
+  if (tooltipTimeout) {
+    clearTimeout(tooltipTimeout);
+    tooltipTimeout = null;
+  }
+
+  // 隐藏 tooltip
+  hideCellTooltip();
+}
+
+function handleCellMouseMove(e) {
+  // 如果 tooltip 已显示，更新位置
+  if (currentTooltip) {
+    updateTooltipPosition(e.clientX, e.clientY);
+  }
+}
+
+function showCellTooltip(content, cellElement) {
+  // 移除现有的 tooltip
+  hideCellTooltip();
+
+  // 创建新的 tooltip
+  currentTooltip = document.createElement('div');
+  currentTooltip.className = 'cell-tooltip';
+  currentTooltip.textContent = content;
+  document.body.appendChild(currentTooltip);
+
+  // 定位 tooltip
+  const rect = cellElement.getBoundingClientRect();
+  currentTooltip.style.left = `${rect.left}px`;
+  currentTooltip.style.top = `${rect.bottom + 4}px`;
+}
+
+function updateTooltipPosition(x, y) {
+  if (!currentTooltip) return;
+
+  // 简单的跟随鼠标，但保持在视窗内
+  const tooltipRect = currentTooltip.getBoundingClientRect();
+  let left = x;
+  let top = y + 20;
+
+  // 防止超出视窗右侧
+  if (left + tooltipRect.width > window.innerWidth) {
+    left = window.innerWidth - tooltipRect.width - 10;
+  }
+
+  // 防止超出视窗底部
+  if (top + tooltipRect.height > window.innerHeight) {
+    top = y - tooltipRect.height - 10;
+  }
+
+  currentTooltip.style.left = `${left}px`;
+  currentTooltip.style.top = `${top}px`;
+}
+
+function hideCellTooltip() {
+  if (currentTooltip) {
+    currentTooltip.remove();
+    currentTooltip = null;
+  }
+}
+
+function updateCellTooltip(cell) {
+  // 单元格编辑后更新 title 属性
+  const cellElement = cell.getElement();
+  if (!cellElement) return;
+
+  const span = cellElement.querySelector('span[class^="cell-"]');
+  if (!span) return;
+
+  const value = cell.getValue();
+  const fieldName = cell.getField();
+  const displayValue = String(value ?? '');
+  const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+
+  if (value === null || value === undefined || value === '') {
+    const placeholderText = fieldName === 'id' ? '自动生成' : '请输入...';
+    span.setAttribute('title', `${fieldName}: ${placeholderText}`);
+  } else {
+    span.setAttribute('title', `${fieldName}: ${fullValue}`);
+  }
+}
+
+// 初始化 tooltip
+window.addEventListener('load', initCellTooltip);
