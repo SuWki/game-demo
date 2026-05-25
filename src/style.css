@@ -80,11 +80,76 @@ select {
 #phaser-root {
   position: relative;
   z-index: 0;
+  width: 100%;
+  height: 100%;
 }
 
 #phaser-root canvas {
   display: block;
   margin: 0 auto;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  #phaser-root canvas {
+    margin: 0;
+  }
+}
+
+/* Mobile landscape fullscreen */
+@media (max-width: 896px) and (orientation: landscape),
+       (max-height: 480px) and (orientation: landscape) {
+  html, body, #app, #game-shell {
+    width: 100vw;
+    height: 100vh;
+    height: -webkit-fill-available;
+    overflow: hidden;
+  }
+}
+
+/* Virtual joystick overlay */
+.joystick-zone {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: 140px;
+  height: 140px;
+  z-index: 20;
+  pointer-events: auto;
+  touch-action: none;
+  border-radius: 50%;
+  background: rgba(115, 216, 255, 0.06);
+  border: 1px solid rgba(115, 216, 255, 0.12);
+  display: none;
+}
+
+.joystick-knob {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(115, 216, 255, 0.35);
+  border: 1px solid rgba(115, 216, 255, 0.55);
+  box-shadow: 0 0 12px rgba(115, 216, 255, 0.25);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .joystick-zone {
+    display: block;
+  }
+
+  .control-hint::before {
+    content: '拖动移动 · 自动射击';
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .control-hint::before {
+    content: 'WASD移动 · 自动射击';
+  }
 }
 
 .ui-root {

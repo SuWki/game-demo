@@ -75,6 +75,8 @@ const unlockAudio = () => {
 window.addEventListener('pointerdown', unlockAudio, { passive: true });
 window.addEventListener('keydown', unlockAudio);
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   width: 960,
@@ -83,8 +85,13 @@ const game = new Phaser.Game({
   backgroundColor: '#06111a',
   scene: [BootScene, MainMenuScene, GameScene, ResultScene],
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: isMobile ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  input: {
+    touch: {
+      capture: true,
+    },
   },
 });
 

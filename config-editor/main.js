@@ -2,6 +2,8 @@ import * as XLSX from 'xlsx';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { schemaMap, detectConfigType, fieldRelations, configDescriptions, enumFields, getFieldDescriptions, getFieldTypes } from './schemas.js';
+import { FormulaEngine, SUPPORTED_FORMULAS, getFormulaSuggestions } from './src/formulaEngine.js';
+import { ChartManager, CHART_TYPES, AGGREGATION_OPTIONS, CHART_PRESETS } from './src/chartEngine.js';
 
 // 全局状态
 let table = null;
@@ -12,6 +14,13 @@ let currentConfigType = null;
 let loadedConfigs = {}; // 存储已加载的配置表（用于跨表验证）
 let filterVisible = false; // 筛选器显示状态
 let nextAutoId = 0; // 自动 ID 计数器
+
+// 公式引擎
+let formulaEngine = null;
+let formulaColumns = new Set(); // 存储公式列
+
+// 图表管理器
+let chartManager = null;
 
 // 自动保存相关
 const AUTO_SAVE_KEY = 'config-editor-autosave';
@@ -262,7 +271,13 @@ function loadData(data) {
   if (table) {
     table.destroy();
   }
-  
+
+  // 重置公式列
+  formulaColumns.clear();
+
+  // 初始化公式引擎
+  initFormulaEngine();
+
   // 创建新表格
   const columns = generateColumns(data);
   
@@ -295,8 +310,6 @@ function loadData(data) {
       saveToHistory();
       // 实时验证
       validateCellRealtime(cell);
-      // 更新 tooltip
-      updateCellTooltip(cell);
     },
     rowDeleted: function(row) {
       if (!historyManager.isUndoing) {
@@ -678,93 +691,139 @@ function handleAddCol() {
   // 更新表格数据
   table.setData(newData);
 
+  // 获取操作列的索引，在它之前插入新列
+  const allCols = table.getColumns();
+  const actionColIndex = allCols.findIndex(col => col.getField() === '_actions');
+
   // 添加新列定义（在操作列之前）
-  table.addColumn({
-    title: trimmedName,
-    field: trimmedName,
-    editor: 'input',
-    resizable: true,
-    headerSort: true,
-    headerFilter: 'input',
-    headerFilterPlaceholder: '筛选...',
-    titleFormatter: function(cell) {
-      const container = document.createElement('div');
-      container.className = 'col-header-content';
-      container.style.display = 'flex';
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'space-between';
-      container.style.width = '100%';
-      container.style.gap = '4px';
+  if (actionColIndex > 0) {
+    // 在操作列之前插入
+    table.addColumn({
+      title: trimmedName,
+      field: trimmedName,
+      editor: 'input',
+      resizable: true,
+      headerSort: true,
+      headerFilter: 'input',
+      headerFilterPlaceholder: '筛选...',
+      titleFormatter: function(cell) {
+        const container = document.createElement('div');
+        container.className = 'col-header-content';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'space-between';
+        container.style.width = '100%';
+        container.style.gap = '4px';
 
-      const labelWrap = document.createElement('div');
-      labelWrap.style.display = 'flex';
-      labelWrap.style.alignItems = 'center';
-      labelWrap.style.overflow = 'hidden';
-      labelWrap.innerHTML = '<span>' + trimmedName + '</span>';
+        const labelWrap = document.createElement('div');
+        labelWrap.style.display = 'flex';
+        labelWrap.style.alignItems = 'center';
+        labelWrap.style.overflow = 'hidden';
+        labelWrap.innerHTML = '<span>' + trimmedName + '</span>';
 
-      const actionsWrap = document.createElement('div');
-      actionsWrap.className = 'col-header-actions';
-      actionsWrap.style.display = 'flex';
-      actionsWrap.style.alignItems = 'center';
-      actionsWrap.style.gap = '2px';
-      actionsWrap.style.flexShrink = '0';
+        const actionsWrap = document.createElement('div');
+        actionsWrap.className = 'col-header-actions';
+        actionsWrap.style.display = 'flex';
+        actionsWrap.style.alignItems = 'center';
+        actionsWrap.style.gap = '2px';
+        actionsWrap.style.flexShrink = '0';
 
-      const filterBtn = document.createElement('button');
-      filterBtn.className = 'col-header-btn filter-btn';
-      filterBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
-      filterBtn.title = '筛选 ' + trimmedName;
-      filterBtn.onclick = (e) => {
-        e.stopPropagation();
-        showColumnFilter(trimmedName, cell.getElement());
-      };
+        const filterBtn = document.createElement('button');
+        filterBtn.className = 'col-header-btn filter-btn';
+        filterBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+        filterBtn.title = '筛选 ' + trimmedName;
+        filterBtn.onclick = (e) => {
+          e.stopPropagation();
+          showColumnFilter(trimmedName, cell.getElement());
+        };
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'col-header-btn delete-col-btn';
-      deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      deleteBtn.title = '删除列 ' + trimmedName;
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm('确定要删除列 "' + trimmedName + '" 吗？')) {
-          deleteColumn(trimmedName);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'col-header-btn delete-col-btn';
+        deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        deleteBtn.title = '删除列 ' + trimmedName;
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm('确定要删除列 "' + trimmedName + '" 吗？')) {
+            deleteColumn(trimmedName);
+          }
+        };
+
+        actionsWrap.appendChild(filterBtn);
+        actionsWrap.appendChild(deleteBtn);
+        container.appendChild(labelWrap);
+        container.appendChild(actionsWrap);
+
+        return container;
+      },
+      formatter: function(cell) {
+        const value = cell.getValue();
+        const fieldName = cell.getField();
+        const displayValue = String(value ?? '');
+        const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+
+        if (value === null || value === undefined || value === '') {
+          const placeholderText = '请输入...';
+          return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
         }
-      };
 
-      actionsWrap.appendChild(filterBtn);
-      actionsWrap.appendChild(deleteBtn);
-      container.appendChild(labelWrap);
-      container.appendChild(actionsWrap);
+        if (typeof value === 'boolean') {
+          const boolText = value ? 'true' : 'false';
+          return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+        }
 
-      return container;
-    },
-    formatter: function(cell) {
-      const value = cell.getValue();
-      const fieldName = cell.getField();
-      const displayValue = String(value ?? '');
-      const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+        if (typeof value === 'object') {
+          const objStr = JSON.stringify(value);
+          const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
+          return `<span class="cell-object" title="${fieldName}: ${objStr}">${displayStr}</span>`;
+        }
 
-      if (value === null || value === undefined || value === '') {
-        const placeholderText = '请输入...';
-        return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
+        if (typeof value === 'number') {
+          return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
+        }
+
+        return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
       }
+    }, true, '_actions');
+  } else {
+    // 如果没有操作列，直接添加
+    table.addColumn({
+      title: trimmedName,
+      field: trimmedName,
+      editor: 'input',
+      resizable: true,
+      headerSort: true,
+      headerFilter: 'input',
+      headerFilterPlaceholder: '筛选...',
+      formatter: function(cell) {
+        const value = cell.getValue();
+        const fieldName = cell.getField();
+        const displayValue = String(value ?? '');
+        const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
 
-      if (typeof value === 'boolean') {
-        const boolText = value ? 'true' : 'false';
-        return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+        if (value === null || value === undefined || value === '') {
+          const placeholderText = '请输入...';
+          return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
+        }
+
+        if (typeof value === 'boolean') {
+          const boolText = value ? 'true' : 'false';
+          return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+        }
+
+        if (typeof value === 'object') {
+          const objStr = JSON.stringify(value);
+          const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
+          return `<span class="cell-object" title="${fieldName}: ${objStr}">${displayStr}</span>`;
+        }
+
+        if (typeof value === 'number') {
+          return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
+        }
+
+        return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
       }
-
-      if (typeof value === 'object') {
-        const objStr = JSON.stringify(value);
-        const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
-        return `<span class="cell-object" title="${fieldName}: ${objStr}">${displayStr}</span>`;
-      }
-
-      if (typeof value === 'number') {
-        return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
-      }
-
-      return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
-    }
-  }, false, '_actions');
+    });
+  }
 
   updateCurrentData();
   showToast('已添加新列：' + trimmedName, 'success');
@@ -960,18 +1019,29 @@ function generateColumns(data) {
 
   // 生成列定义
   const columns = Array.from(allKeys).map(key => {
-    const relation = relations[key];
+    // 简化路径（移除数组索引）用于 schema 查找
+    const simplifiedKey = key.includes('.')
+      ? key.split('.').filter(p => !/^\d+$/.test(p)).join('.')
+      : key;
+
+    // 查找关联关系（支持数组索引路径如 effects.0.routeId -> effects.routeId）
+    let relation = relations[key];
+    if (!relation && key.includes('.')) {
+      relation = relations[simplifiedKey];
+    }
     const hasRelation = relation && relation.targetTable;
-    const enumValues = enums[key];
+
+    // 查找枚举值（支持数组索引路径如 effects.0.type -> effects.type）
+    let enumValues = enums[key];
+    if (!enumValues && key.includes('.')) {
+      enumValues = enums[simplifiedKey];
+    }
     const isEnumField = enumValues && Array.isArray(enumValues);
 
     // 查找字段类型（支持数组索引路径如 effects.0.type -> effects.type）
     let typeInfo = fieldTypes[key];
     if (!typeInfo && key.includes('.')) {
-      // 尝试移除数组索引后的路径
-      const parts = key.split('.');
-      const simplifiedPath = parts.filter(p => !/^\d+$/.test(p)).join('.');
-      typeInfo = fieldTypes[simplifiedPath];
+      typeInfo = fieldTypes[simplifiedKey];
     }
     if (!typeInfo) {
       typeInfo = { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
@@ -980,7 +1050,10 @@ function generateColumns(data) {
     // 获取字段描述（支持嵌套字段如 effects.0.type）
     let fieldDesc = descriptions[key];
     if (!fieldDesc && key.includes('.')) {
-      // 尝试解析嵌套字段描述
+      fieldDesc = descriptions[simplifiedKey];
+    }
+    if (!fieldDesc && key.includes('.')) {
+      // 尝试通过 schema 手动解析嵌套字段描述
       // 例如 effects.0.type -> effects.items.properties.type.description
       const parts = key.split('.');
       const schema = schemaMap[currentConfigType];
@@ -1045,8 +1118,8 @@ function generateColumns(data) {
 
     // 构建标题，包含字段类型图标和描述
     let title = '';
-    const typeIcon = `<span class="field-type-icon" style="color: ${typeInfo.color}; font-size: 0.75rem; margin-right: 4px;" title="类型: ${typeInfo.label}\n${fieldDesc || ''}">${typeInfo.icon}</span>`;
-    const desc = fieldDesc || (hasRelation ? relation.relatesTo : '');
+    const typeIcon = `<span class="field-type-icon" style="color: ${typeInfo.color}; font-size: 0.75rem; margin-right: 4px;" title="类型: ${typeInfo.label}\n${descriptions[key] || ''}">${typeInfo.icon}</span>`;
+    const desc = descriptions[key] || (hasRelation ? relation.relatesTo : '');
 
     if (hasRelation) {
       title = `${typeIcon}<span title="${desc}">${key}</span><span class="relation-badge" data-relation="${relation.relatesTo}" data-target="${relation.targetTable}" title="关联: ${relation.relatesTo}">🔗</span>`;
@@ -1116,37 +1189,38 @@ function generateColumns(data) {
       },
       formatter: function(cell) {
         const value = cell.getValue();
-        const fieldName = cell.getField();
-        const displayValue = String(value ?? '');
-        const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
 
         // null/undefined/空字符串 - 显示为 placeholder 样式
         if (value === null || value === undefined || value === '') {
-          const placeholderText = fieldName === 'id' ? '自动生成' : '请输入...';
-          return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
+          const field = cell.getField();
+          return `<span class="cell-placeholder">${field === 'id' ? '自动生成' : '请输入...'}</span>`;
         }
 
         // 布尔值
         if (typeof value === 'boolean') {
-          const boolText = value ? 'true' : 'false';
-          return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+          return value
+            ? '<span class="cell-boolean cell-boolean-true">✓ true</span>'
+            : '<span class="cell-boolean cell-boolean-false">✗ false</span>';
         }
 
         // 对象/数组
         if (typeof value === 'object') {
-          const objStr = JSON.stringify(value);
-          const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
-          return `<span class="cell-object" title="${fieldName}: ${objStr}">${typeInfo.icon} ${displayStr}</span>`;
+          return `<span class="cell-object">${typeInfo.icon} ${JSON.stringify(value).substring(0, 40)}...</span>`;
         }
 
         // 数字
         if (typeof value === 'number') {
-          return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
+          return `<span class="cell-number">${value}</span>`;
         }
 
         // 枚举字段高亮
         if (isEnumField) {
-          return `<span class="cell-enum" style="color: ${typeInfo.color}" title="${fieldName}: ${value}">${value}</span>`;
+          return `<span class="cell-enum" style="color: ${typeInfo.color}">${value}</span>`;
+        }
+
+        // 关联字段标记（在单元格中显示关联指示器）
+        if (hasRelation) {
+          return `<span class="cell-text cell-relation" title="${fieldName}: ${value} (${relation.relatesTo})">${value}<span class="cell-relation-badge">🔗</span></span>`;
         }
 
         // 普通文本 - 添加 title 属性以显示完整内容
@@ -1542,107 +1616,44 @@ function validateConfig(data) {
     warnings: [],
     success: true
   };
-
+  
   // 1. JSON Schema 验证
   if (currentConfigType && schemaMap[currentConfigType]) {
     const schema = schemaMap[currentConfigType];
     const validate = ajv.compile(schema);
     const valid = validate(data);
-
+    
     if (!valid) {
       validate.errors.forEach(err => {
         const rowMatch = err.instancePath.match(/\/(\d+)/);
         const rowIndex = rowMatch ? parseInt(rowMatch[1]) + 1 : '?';
-        const fieldMatch = err.instancePath.match(/\/([^\/]+)$/);
-        const fieldName = fieldMatch ? fieldMatch[1] : '';
-
-        let errorMessage = `第 ${rowIndex} 行`;
-        let solution = '';
-
-        // 根据错误类型提供详细的解决方案
-        if (err.keyword === 'required') {
-          const missingField = err.params?.missingProperty || fieldName;
-          errorMessage += `: 缺少必需字段 "${missingField}"`;
-
-          // 根据字段名提供具体建议
-          if (missingField === 'effects') {
-            solution = '💡 解决方案：effects 是升级效果的数组，至少需要包含一个效果对象，例如：[{"type": "stats", "modifiers": {"damage": 3}}]';
-          } else if (missingField === 'type') {
-            solution = '💡 解决方案：type 是效果类型，可选值：stats(属性加成)、heal(治疗)、route(路线专属)';
-          } else if (missingField === 'id') {
-            solution = '💡 解决方案：id 是唯一标识符，只能包含小写字母、数字和横线，例如："fire-boost"';
-          } else if (missingField === 'name') {
-            solution = '💡 解决方案：name 是显示名称，不能为空';
-          } else if (missingField === 'category') {
-            solution = '💡 解决方案：category 是类别，可选值：generic(通用)、route(路线专属)';
-          } else {
-            solution = `💡 解决方案：请填写 "${missingField}" 字段的值`;
-          }
-        } else if (err.keyword === 'type') {
-          errorMessage += `: 字段 "${fieldName}" 类型错误`;
-          const expectedType = err.params?.type || 'string';
-          const actualValue = err.data;
-          solution = `💡 解决方案：该字段需要 ${expectedType} 类型，当前值是 "${actualValue}"(${typeof actualValue})。${getTypeHint(expectedType, fieldName)}`;
-        } else if (err.keyword === 'enum') {
-          errorMessage += `: 字段 "${fieldName}" 值不在允许范围内`;
-          const allowedValues = err.params?.allowedValues?.join(', ') || '';
-          solution = `💡 解决方案：可选值为 [${allowedValues}]，当前值 "${err.data}" 不被允许`;
-        } else if (err.keyword === 'pattern') {
-          errorMessage += `: 字段 "${fieldName}" 格式不正确`;
-          solution = `💡 解决方案：${err.message}`;
-        } else {
-          errorMessage += `: ${err.message} (${err.instancePath})`;
-          solution = '💡 解决方案：请检查该字段的值是否符合要求';
-        }
-
-        if (err.keyword === 'required' || err.keyword === 'type' || err.keyword === 'enum') {
-          results.errors.push({ message: errorMessage, solution: solution, row: rowIndex, field: fieldName });
+        
+        if (err.keyword === 'required' || err.keyword === 'type') {
+          results.errors.push(`第 ${rowIndex} 行: ${err.message} (${err.instancePath})`);
           results.success = false;
         } else {
-          results.warnings.push({ message: errorMessage, solution: solution, row: rowIndex, field: fieldName });
+          results.warnings.push(`第 ${rowIndex} 行: ${err.message} (${err.instancePath})`);
         }
       });
     }
   }
-
-  // 辅助函数：获取类型提示
-  function getTypeHint(expectedType, fieldName) {
-    if (fieldName === 'effects.0.type' || fieldName.includes('.type')) {
-      return '提示：可选值为 stats, heal, route';
-    }
-    if (expectedType === 'boolean') {
-      return '提示：请填写 true 或 false';
-    }
-    if (expectedType === 'number') {
-      return '提示：请填写数字，例如：1, 2.5, 10';
-    }
-    if (expectedType === 'string') {
-      return '提示：请填写文本';
-    }
-    return '';
-  }
-
+  
   // 2. 跨表引用验证
   if (currentConfigType === 'battleTemplates' && loadedConfigs.enemyArchetypes) {
     const validArchetypes = new Set(loadedConfigs.enemyArchetypes.map(e => e.id));
-
+    
     data.forEach((row, index) => {
       if (row.regularArchetypes) {
         for (const archetype of Object.keys(row.regularArchetypes)) {
           if (!validArchetypes.has(archetype)) {
-            results.errors.push({
-              message: `第 ${index + 1} 行: regularArchetypes 引用了不存在的敌人类型 "${archetype}"`,
-              solution: `💡 解决方案：请确保 "${archetype}" 在 enemyArchetypes 表中已定义`,
-              row: index + 1,
-              field: 'regularArchetypes'
-            });
+            results.errors.push(`第 ${index + 1} 行: regularArchetypes 引用了不存在的敌人类型 "${archetype}"`);
             results.success = false;
           }
         }
       }
     });
   }
-
+  
   // 3. 数值平衡性分析
   if (currentConfigType === 'upgrades') {
     data.forEach((row, index) => {
@@ -1650,161 +1661,100 @@ function validateConfig(data) {
       if (row['selection.baseWeight'] !== undefined) {
         const weight = parseFloat(row['selection.baseWeight']);
         if (weight > 15) {
-          results.warnings.push({
-            message: `第 ${index + 1} 行: baseWeight 为 ${weight}，过高可能导致该升级频繁出现`,
-            solution: '💡 建议：建议将 baseWeight 调整为 5-15 之间',
-            row: index + 1,
-            field: 'selection.baseWeight'
-          });
+          results.warnings.push(`第 ${index + 1} 行: baseWeight 为 ${weight}，过高可能导致该升级频繁出现`);
         }
         if (weight < 0.5 && row.rarity !== 'legendary') {
-          results.warnings.push({
-            message: `第 ${index + 1} 行: baseWeight 为 ${weight}，过低可能导致该升级极少出现`,
-            solution: '💡 建议：建议将 baseWeight 调整为至少 0.5，或将其设为 legendary 稀有度',
-            row: index + 1,
-            field: 'selection.baseWeight'
-          });
+          results.warnings.push(`第 ${index + 1} 行: baseWeight 为 ${weight}，过低可能导致该升级极少出现`);
         }
       }
-
+      
       // 检查稀有度与权重的关系
       if (row.rarity === 'rare' && row['selection.baseWeight'] > 5) {
-        results.warnings.push({
-          message: `第 ${index + 1} 行: rare 稀有度的 baseWeight 为 ${row['selection.baseWeight']}，建议 ≤ 5`,
-          solution: '💡 建议：稀有度为 rare 时，建议将 baseWeight 设为 1-5',
-          row: index + 1,
-          field: 'selection.baseWeight'
-        });
+        results.warnings.push(`第 ${index + 1} 行: rare 稀有度的 baseWeight 为 ${row['selection.baseWeight']}，建议 ≤ 5`);
       }
     });
   }
-
+  
   // 4. 战斗模板难度曲线检查
   if (currentConfigType === 'battleTemplates') {
     const battleTemplates = data.filter(t => !t.id?.startsWith('boss'));
     if (battleTemplates.length > 1) {
       const avgHp = battleTemplates.reduce((sum, t) => sum + (parseFloat(t.enemyHp) || 0), 0) / battleTemplates.length;
       const avgDuration = battleTemplates.reduce((sum, t) => sum + (parseFloat(t.durationSec) || 0), 0) / battleTemplates.length;
-
+      
       if (avgHp > 100) {
-        results.warnings.push({
-          message: `战斗模板平均敌人血量较高: ${avgHp.toFixed(1)}`,
-          solution: '💡 建议：考虑降低敌人血量或增加其他平衡机制',
-          row: '-',
-          field: 'enemyHp'
-        });
+        results.warnings.push(`战斗模板平均敌人血量较高: ${avgHp.toFixed(1)}`);
       }
       if (avgDuration > 60) {
-        results.warnings.push({
-          message: `战斗模板平均持续时间较长: ${avgDuration.toFixed(1)}秒`,
-          solution: '💡 建议：考虑缩短战斗时间或增加节奏变化',
-          row: '-',
-          field: 'durationSec'
-        });
+        results.warnings.push(`战斗模板平均持续时间较长: ${avgDuration.toFixed(1)}秒`);
       }
-
+      
       // 检查难度曲线
       for (let i = 1; i < battleTemplates.length; i++) {
         const prevHp = parseFloat(battleTemplates[i-1].enemyHp) || 0;
         const currHp = parseFloat(battleTemplates[i].enemyHp) || 0;
-
+        
         if (currHp < prevHp * 0.8) {
-          results.warnings.push({
-            message: `第 ${i + 1} 个战斗模板的 enemyHp (${currHp}) 比前一个 (${prevHp}) 低很多，难度曲线可能不平滑`,
-            solution: '💡 建议：考虑让后续模板的敌人血量逐步增加',
-            row: i + 1,
-            field: 'enemyHp'
-          });
+          results.warnings.push(`第 ${i + 1} 个战斗模板的 enemyHp (${currHp}) 比前一个 (${prevHp}) 低很多，难度曲线可能不平滑`);
         }
       }
     }
   }
   
-  // 显示验证结果
   displayValidationResults(results);
-
-  // 强制滚动到验证面板
-  setTimeout(() => {
-    validationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
-
-  // 显示完成提示
-  if (results.success && results.errors.length === 0 && results.warnings.length === 0) {
-    showToast('✅ 验证通过！配置数据完全正确', 'success');
-  } else if (!results.success) {
-    showToast(`❌ 验证失败：发现 ${results.errors.length} 个错误`, 'error');
-  } else {
-    showToast(`⚠️ 验证通过：发现 ${results.warnings.length} 个警告`, 'warning');
-  }
 }
 
 function displayValidationResults(results) {
   validationPanel.style.display = 'block';
   validationResults.innerHTML = '';
-
+  
   // 滚动到验证面板
   validationPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
+  
   // 统计
   const errorCount = results.errors.length;
   const warningCount = results.warnings.length;
-
+  
   if (errorCount === 0 && warningCount === 0) {
     validationResults.innerHTML = '<div class="validation-success">✅ 所有验证通过！配置数据完全正确。</div>';
     return;
   }
-
+  
   // 显示摘要
   const summary = document.createElement('div');
   summary.className = results.success ? 'validation-success' : 'validation-error';
   summary.style.marginBottom = '1rem';
-  summary.textContent = results.success
-    ? `✅ 验证通过（${warningCount} 个警告）`
+  summary.textContent = results.success 
+    ? `✅ 验证通过（${warningCount} 个警告）` 
     : `❌ 验证失败（${errorCount} 个错误，${warningCount} 个警告）`;
   validationResults.appendChild(summary);
-
+  
   // 显示错误
   if (errorCount > 0) {
     const errorHeader = document.createElement('div');
     errorHeader.style.cssText = 'color: var(--accent-error); font-weight: 600; margin: 1rem 0 0.5rem; font-size: 0.9rem;';
     errorHeader.textContent = `错误 (${errorCount}):`;
     validationResults.appendChild(errorHeader);
-
+    
     results.errors.forEach(error => {
       const div = document.createElement('div');
       div.className = 'validation-error';
-
-      // 处理新的错误对象格式
-      const errorMsg = typeof error === 'object' ? error.message : error;
-      const solution = typeof error === 'object' ? error.solution : '';
-
-      div.innerHTML = `
-        <div style="font-weight: 500; margin-bottom: 0.25rem;">${errorMsg}</div>
-        ${solution ? `<div style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #cbd5e1;">${solution}</div>` : ''}
-      `;
+      div.textContent = ` ${error}`;
       validationResults.appendChild(div);
     });
   }
-
+  
   // 显示警告
   if (warningCount > 0) {
     const warningHeader = document.createElement('div');
     warningHeader.style.cssText = 'color: var(--accent-warning); font-weight: 600; margin: 1rem 0 0.5rem; font-size: 0.9rem;';
     warningHeader.textContent = `警告 (${warningCount}):`;
     validationResults.appendChild(warningHeader);
-
+    
     results.warnings.forEach(warning => {
       const div = document.createElement('div');
       div.className = 'validation-warning';
-
-      // 处理新的警告对象格式
-      const warningMsg = typeof warning === 'object' ? warning.message : warning;
-      const solution = typeof warning === 'object' ? warning.solution : '';
-
-      div.innerHTML = `
-        <div style="font-weight: 500; margin-bottom: 0.25rem;">⚠️ ${warningMsg}</div>
-        ${solution ? `<div style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #cbd5e1;">${solution}</div>` : ''}
-      `;
+      div.textContent = `⚠️ ${warning}`;
       validationResults.appendChild(div);
     });
   }
@@ -2695,128 +2645,530 @@ function showShortcutsModal() {
 }
 
 // ============================================================
-// 单元格悬浮提示功能
+// Excel 公式功能
 // ============================================================
 
-let currentTooltip = null;
-let tooltipTimeout = null;
+// 初始化公式引擎
+function initFormulaEngine() {
+  if (!currentData.length) return;
 
-function initCellTooltip() {
-  const tableContainer = document.getElementById('config-table');
-  if (!tableContainer) return;
-
-  tableContainer.addEventListener('mouseover', handleCellMouseOver);
-  tableContainer.addEventListener('mouseout', handleCellMouseOut);
-  tableContainer.addEventListener('mousemove', handleCellMouseMove);
+  const columns = Object.keys(currentData[0]).filter(key => key !== '_actions');
+  formulaEngine = new FormulaEngine(currentData, columns);
 }
 
-function handleCellMouseOver(e) {
-  const cell = e.target.closest('.tabulator-cell');
-  if (!cell) return;
+// 计算所有公式
+function calculateAllFormulas() {
+  if (!formulaEngine || formulaColumns.size === 0) return;
 
-  // 获取单元格内的 span 元素
-  const span = cell.querySelector('span[class^="cell-"]');
-  if (!span) return;
+  formulaColumns.forEach(colName => {
+    currentData.forEach((row, rowIndex) => {
+      const formula = row[colName];
+      if (formula && typeof formula === 'string' && formula.startsWith('=')) {
+        const result = formulaEngine.evaluate(formula, rowIndex);
+        // 存储计算结果到 _calc 前缀的字段
+        row[`_calc_${colName}`] = result;
+      }
+    });
+  });
 
-  // 获取 title 属性
-  const title = span.getAttribute('title');
-  if (!title) return;
-
-  // 检查内容是否被截断
-  const isTruncated = span.scrollWidth > span.clientWidth;
-
-  // 延迟显示 tooltip
-  tooltipTimeout = setTimeout(() => {
-    showCellHoverTooltip(title, cell);
-  }, 500);
-}
-
-function handleCellMouseOut(e) {
-  const cell = e.target.closest('.tabulator-cell');
-  if (!cell) return;
-
-  // 清除延迟显示
-  if (tooltipTimeout) {
-    clearTimeout(tooltipTimeout);
-    tooltipTimeout = null;
-  }
-
-  // 隐藏 tooltip
-  hideCellTooltip();
-}
-
-function handleCellMouseMove(e) {
-  // 如果 tooltip 已显示，更新位置
-  if (currentTooltip) {
-    updateTooltipPosition(e.clientX, e.clientY);
+  if (table) {
+    table.setData(currentData);
   }
 }
 
-function showCellHoverTooltip(content, cellElement) {
-  // 移除现有的 tooltip
-  hideCellTooltip();
-
-  // 创建新的 tooltip
-  currentTooltip = document.createElement('div');
-  currentTooltip.className = 'cell-tooltip';
-  currentTooltip.textContent = content;
-  document.body.appendChild(currentTooltip);
-
-  // 定位 tooltip
-  const rect = cellElement.getBoundingClientRect();
-  currentTooltip.style.left = `${rect.left}px`;
-  currentTooltip.style.top = `${rect.bottom + 4}px`;
-}
-
-function updateTooltipPosition(x, y) {
-  if (!currentTooltip) return;
-
-  // 简单的跟随鼠标，但保持在视窗内
-  const tooltipRect = currentTooltip.getBoundingClientRect();
-  let left = x;
-  let top = y + 20;
-
-  // 防止超出视窗右侧
-  if (left + tooltipRect.width > window.innerWidth) {
-    left = window.innerWidth - tooltipRect.width - 10;
+// 添加公式列
+function addFormulaColumn() {
+  if (!table) {
+    showToast('请先加载数据', 'warning');
+    return;
   }
 
-  // 防止超出视窗底部
-  if (top + tooltipRect.height > window.innerHeight) {
-    top = y - tooltipRect.height - 10;
+  const colName = prompt('请输入公式列名称（建议以"calc_"开头）:');
+  if (!colName || !colName.trim()) return;
+
+  const trimmedName = colName.trim();
+
+  // 检查是否已存在
+  const existingCols = table.getColumns();
+  if (existingCols.some(col => col.getField() === trimmedName)) {
+    showToast('该列名已存在', 'error');
+    return;
   }
 
-  currentTooltip.style.left = `${left}px`;
-  currentTooltip.style.top = `${top}px`;
-}
+  // 添加到公式列集合
+  formulaColumns.add(trimmedName);
 
-function hideCellTooltip() {
-  if (currentTooltip) {
-    currentTooltip.remove();
-    currentTooltip = null;
-  }
-}
+  // 初始化公式引擎
+  initFormulaEngine();
 
-function updateCellTooltip(cell) {
-  // 单元格编辑后更新 title 属性
-  const cellElement = cell.getElement();
-  if (!cellElement) return;
+  // 添加新列到所有数据
+  const newData = table.getData();
+  newData.forEach(row => {
+    row[trimmedName] = '=0'; // 默认公式
+  });
 
-  const span = cellElement.querySelector('span[class^="cell-"]');
-  if (!span) return;
+  // 更新表格数据
+  table.setData(newData);
 
-  const value = cell.getValue();
-  const fieldName = cell.getField();
-  const displayValue = String(value ?? '');
-  const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+  // 获取操作列的索引
+  const allCols = table.getColumns();
+  const actionColIndex = allCols.findIndex(col => col.getField() === '_actions');
 
-  if (value === null || value === undefined || value === '') {
-    const placeholderText = fieldName === 'id' ? '自动生成' : '请输入...';
-    span.setAttribute('title', `${fieldName}: ${placeholderText}`);
+  // 添加新列定义
+  const columnDef = {
+    title: createFormulaColumnTitle(trimmedName),
+    field: trimmedName,
+    editor: 'input',
+    resizable: true,
+    headerSort: true,
+    headerFilter: 'input',
+    headerFilterPlaceholder: '筛选...',
+    cellEdited: function(cell) {
+      const value = cell.getValue();
+      if (value && typeof value === 'string' && value.startsWith('=')) {
+        // 是公式，重新计算
+        const rowIndex = cell.getRow().getPosition() - 1;
+        const result = formulaEngine.evaluate(value, rowIndex);
+        cell.getRow().update({ [`_calc_${trimmedName}`]: result });
+      }
+      updateCurrentData();
+      scheduleAutoSave();
+    },
+    formatter: function(cell) {
+      const value = cell.getValue();
+      const fieldName = cell.getField();
+
+      // 显示公式本身
+      if (value && typeof value === 'string' && value.startsWith('=')) {
+        const rowIndex = cell.getRow().getPosition() - 1;
+        const result = formulaEngine ? formulaEngine.evaluate(value, rowIndex) : value;
+
+        // 如果有计算结果，显示结果；否则显示公式
+        if (result !== value && !String(result).startsWith('#')) {
+          return `<span class="cell-formula" title="公式: ${value}\n结果: ${result}">${result}</span>`;
+        } else {
+          return `<span class="cell-formula-error" title="公式: ${value}">${value}</span>`;
+        }
+      }
+
+      return `<span class="cell-text">${value || ''}</span>`;
+    },
+  };
+
+  if (actionColIndex > 0) {
+    table.addColumn(columnDef, true, '_actions');
   } else {
-    span.setAttribute('title', `${fieldName}: ${fullValue}`);
+    table.addColumn(columnDef);
+  }
+
+  showToast(`已添加公式列: ${trimmedName}，输入公式以=开头`, 'success');
+  showFormulaHelper();
+}
+
+// 创建公式列标题
+function createFormulaColumnTitle(colName) {
+  return `
+    <span class="formula-column-title">
+      <span class="formula-icon">🧮</span>
+      ${colName}
+      <span class="formula-badge">公式</span>
+    </span>
+  `;
+}
+
+// 显示公式帮助
+function showFormulaHelper() {
+  const modal = document.getElementById('formula-helper-modal');
+  if (!modal) {
+    createFormulaHelperModal();
+  }
+  document.getElementById('formula-helper-modal').style.display = 'flex';
+}
+
+// 创建公式帮助弹窗
+function createFormulaHelperModal() {
+  const modal = document.createElement('div');
+  modal.id = 'formula-helper-modal';
+  modal.className = 'modal formula-helper-modal';
+
+  let html = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🧮 Excel 公式帮助</h3>
+        <button class="modal-close" onclick="closeFormulaHelper()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="formula-intro">
+          <p>在公式列中输入以 <code>=</code> 开头的表达式，即可自动计算结果。</p>
+          <p>支持单元格引用 (A1, B2)、范围引用 (A1:A10) 和各种函数。</p>
+        </div>
+        <div class="formula-categories">
+  `;
+
+  Object.entries(SUPPORTED_FORMULAS).forEach(([category, formulas]) => {
+    html += `
+      <div class="formula-category">
+        <h4>${category}</h4>
+        <div class="formula-list">
+    `;
+    formulas.forEach(f => {
+      html += `
+        <div class="formula-item" onclick="insertFormula('${f.name}')">
+          <code class="formula-syntax">${f.syntax}</code>
+          <span class="formula-desc">${f.desc}</span>
+        </div>
+      `;
+    });
+    html += '</div></div>';
+  });
+
+  html += `
+        </div>
+        <div class="formula-examples">
+          <h4>常用示例</h4>
+          <ul>
+            <li><code>=SUM(A1:A10)</code> - 计算A1到A10的总和</li>
+            <li><code>=AVERAGE(B:B)</code> - 计算B列的平均值</li>
+            <li><code>=IF(A1>100, "高", "低")</code> - 条件判断</li>
+            <li><code>=MAX(C1:C20)</code> - 找出最大值</li>
+            <li><code>=CLAMP(A1, 0, 100)</code> - 限制数值范围(游戏专用)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeFormulaHelper()">关闭</button>
+      </div>
+    </div>
+  `;
+
+  modal.innerHTML = html;
+  document.body.appendChild(modal);
+
+  // 点击外部关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeFormulaHelper();
+  });
+}
+
+// 关闭公式帮助
+function closeFormulaHelper() {
+  const modal = document.getElementById('formula-helper-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 插入公式模板
+function insertFormula(funcName) {
+  showToast(`请复制使用: =${funcName}()`, 'info');
+}
+
+// ============================================================
+// 图表功能
+// ============================================================
+
+// 显示图表弹窗
+function showChartModal() {
+  if (!table || currentData.length === 0) {
+    showToast('请先加载数据', 'warning');
+    return;
+  }
+
+  // 初始化图表管理器
+  if (!chartManager) {
+    chartManager = new ChartManager('chart-container');
+  }
+
+  const modal = document.getElementById('chart-modal');
+  if (!modal) {
+    createChartModal();
+  }
+  document.getElementById('chart-modal').style.display = 'flex';
+
+  // 初始化图表配置
+  initChartConfig();
+}
+
+// 创建图表弹窗
+function createChartModal() {
+  const modal = document.createElement('div');
+  modal.id = 'chart-modal';
+  modal.className = 'modal chart-modal';
+
+  const columns = currentData.length > 0 ? Object.keys(currentData[0]).filter(k => k !== '_actions') : [];
+  const numericColumns = columns.filter(col => {
+    const sample = currentData[0]?.[col];
+    return typeof sample === 'number' || (typeof sample === 'string' && !isNaN(parseFloat(sample)));
+  });
+
+  modal.innerHTML = `
+    <div class="modal-content chart-modal-content">
+      <div class="modal-header">
+        <h3>📊 数据图表</h3>
+        <button class="modal-close" id="chart-modal-close">&times;</button>
+      </div>
+      <div class="modal-body chart-modal-body">
+        <div class="chart-sidebar">
+          <div class="chart-config-section">
+            <label>图表类型</label>
+            <select id="chart-type-select" class="chart-select">
+              ${CHART_TYPES.map(t => `<option value="${t.id}">${t.icon} ${t.name} - ${t.desc}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="chart-config-section">
+            <label>X轴字段</label>
+            <select id="chart-x-field" class="chart-select">
+              <option value="">行号</option>
+              ${columns.map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="chart-config-section">
+            <label>Y轴字段 (可多选)</label>
+            <div class="chart-field-list">
+              ${numericColumns.map(c => `
+                <label class="chart-field-item">
+                  <input type="checkbox" value="${c}" data-chart-field>
+                  ${c}
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="chart-config-section">
+            <label>数据聚合</label>
+            <select id="chart-aggregation" class="chart-select">
+              ${AGGREGATION_OPTIONS.map(a => `<option value="${a.id}">${a.name} - ${a.desc}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="chart-presets">
+            <label>预设模板</label>
+            <select id="chart-preset-select" class="chart-select">
+              <option value="">自定义</option>
+              ${Object.entries(CHART_PRESETS).flatMap(([type, presets]) =>
+                Object.entries(presets).map(([key, preset]) =>
+                  `<option value="${type}.${key}">${type} - ${preset.name}</option>`
+                )
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="chart-actions">
+            <button class="btn btn-primary" id="btn-generate-chart">生成图表</button>
+            <button class="btn btn-secondary" id="btn-export-chart">导出图片</button>
+          </div>
+
+          <div class="chart-stats" id="chart-stats">
+            <!-- 统计摘要显示在这里 -->
+          </div>
+        </div>
+
+        <div class="chart-main">
+          <div class="chart-container" id="chart-container">
+            <div class="chart-placeholder">选择配置后点击"生成图表"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // 绑定事件
+  document.getElementById('chart-modal-close').onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  document.getElementById('btn-generate-chart').onclick = generateChart;
+  document.getElementById('btn-export-chart').onclick = exportChart;
+  document.getElementById('chart-preset-select').onchange = applyChartPreset;
+}
+
+// 初始化图表配置
+function initChartConfig() {
+  const columns = currentData.length > 0 ? Object.keys(currentData[0]).filter(k => k !== '_actions') : [];
+  const numericColumns = columns.filter(col => {
+    const sample = currentData[0]?.[col];
+    return typeof sample === 'number' || (typeof sample === 'string' && !isNaN(parseFloat(sample)));
+  });
+
+  // 更新字段列表
+  const xSelect = document.getElementById('chart-x-field');
+  if (xSelect) {
+    xSelect.innerHTML = '<option value="">行号</option>' +
+      columns.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  const yList = document.querySelector('.chart-field-list');
+  if (yList) {
+    yList.innerHTML = numericColumns.map(c => `
+      <label class="chart-field-item">
+        <input type="checkbox" value="${c}" data-chart-field>
+        ${c}
+      </label>
+    `).join('');
   }
 }
 
-// 初始化 tooltip
-window.addEventListener('load', initCellTooltip);
+// 应用图表预设
+function applyChartPreset() {
+  const select = document.getElementById('chart-preset-select');
+  const value = select.value;
+  if (!value) return;
+
+  const [type, key] = value.split('.');
+  const preset = CHART_PRESETS[type]?.[key];
+  if (!preset) return;
+
+  // 应用预设配置
+  document.getElementById('chart-type-select').value = preset.type;
+  document.getElementById('chart-x-field').value = preset.xField || '';
+  document.getElementById('chart-aggregation').value = preset.aggregation || 'none';
+
+  // 选中Y轴字段
+  document.querySelectorAll('[data-chart-field]').forEach(cb => {
+    cb.checked = preset.yFields.includes(cb.value);
+  });
+
+  // 自动生成图表
+  generateChart();
+}
+
+// 生成图表
+function generateChart() {
+  if (!chartManager) return;
+
+  const chartType = document.getElementById('chart-type-select').value;
+  const xField = document.getElementById('chart-x-field').value;
+  const aggregation = document.getElementById('chart-aggregation').value;
+  const yFields = Array.from(document.querySelectorAll('[data-chart-field]:checked')).map(cb => cb.value);
+
+  if (yFields.length === 0) {
+    showToast('请至少选择一个Y轴字段', 'warning');
+    return;
+  }
+
+  // 准备数据
+  const chartData = chartManager.generateFromTable(currentData, {
+    chartType,
+    xField,
+    yFields,
+    aggregation,
+  });
+
+  // 生成统计摘要
+  const summary = chartManager.generateSummary(currentData, yFields);
+  displayChartStats(summary);
+
+  // 创建图表
+  const container = document.getElementById('chart-container');
+  container.innerHTML = '<canvas id="main-chart"></canvas>';
+
+  const { chart } = chartManager.createChart({
+    id: 'main-chart',
+    type: chartType,
+    data: chartData,
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: `${currentConfigType || '数据'} 图表分析`,
+        },
+      },
+    },
+  });
+
+  showToast('图表生成成功', 'success');
+}
+
+// 显示图表统计
+function displayChartStats(summary) {
+  const container = document.getElementById('chart-stats');
+  if (!container) return;
+
+  let html = '<h4>数据统计</h4>';
+  Object.entries(summary).forEach(([field, stats]) => {
+    html += `
+      <div class="chart-stat-item">
+        <strong>${field}</strong>
+        <div class="stat-row">
+          <span>总和: ${stats.sum}</span>
+          <span>平均: ${stats.avg}</span>
+        </div>
+        <div class="stat-row">
+          <span>最小: ${stats.min}</span>
+          <span>最大: ${stats.max}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// 导出图表
+function exportChart() {
+  if (!chartManager) return;
+
+  const imageData = chartManager.exportToImage('main-chart', 'png');
+  if (imageData) {
+    const a = document.createElement('a');
+    a.href = imageData;
+    a.download = `chart-${currentConfigType || 'data'}-${Date.now()}.png`;
+    a.click();
+    showToast('图表已导出', 'success');
+  }
+}
+
+// 添加工具栏按钮
+function addToolbarButtons() {
+  // 添加公式列按钮
+  const toolbar = document.querySelector('.table-toolbar');
+  if (toolbar) {
+    // 公式按钮
+    const formulaBtn = document.createElement('button');
+    formulaBtn.id = 'btn-add-formula';
+    formulaBtn.className = 'btn btn-secondary';
+    formulaBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        <line x1="8" y1="7" x2="16" y2="7"/>
+        <line x1="8" y1="11" x2="16" y2="11"/>
+        <line x1="8" y1="15" x2="12" y2="15"/>
+      </svg>
+      添加公式列
+    `;
+    formulaBtn.title = '添加Excel公式列';
+    formulaBtn.onclick = addFormulaColumn;
+    toolbar.appendChild(formulaBtn);
+
+    // 图表按钮
+    const chartBtn = document.createElement('button');
+    chartBtn.id = 'btn-show-chart';
+    chartBtn.className = 'btn btn-secondary';
+    chartBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      图表分析
+    `;
+    chartBtn.title = '打开图表分析';
+    chartBtn.onclick = showChartModal;
+    toolbar.appendChild(chartBtn);
+  }
+}
+
+// 在初始化时添加按钮
+const originalAddHistoryButton = addHistoryButton;
+addHistoryButton = function() {
+  originalAddHistoryButton();
+  addToolbarButtons();
+};
+

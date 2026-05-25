@@ -121,6 +121,16 @@ export class GameScene extends Phaser.Scene {
 
   private arrowKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
 
+  private touchInput = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+  };
+
+  private joystickGraphics!: Phaser.GameObjects.Graphics;
+
   private resultHandled = false;
 
   private lastHudKey = '';
@@ -235,6 +245,13 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-F3', this.handleDebugPanelToggle, this);
     this.input.keyboard!.on('keydown-F4', this.handleDebugPauseToggle, this);
     this.input.keyboard!.on('keydown-ESC', this.handlePauseToggle, this);
+
+    // Mobile virtual joystick
+    this.joystickGraphics = this.add.graphics();
+    this.joystickGraphics.setDepth(100);
+    this.joystickGraphics.setVisible(false);
+    this.setupTouchInput();
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
     this.syncOverlay();
     this.processAnnouncements();
@@ -255,11 +272,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update(_: number, delta: number): void {
+    const touchDir = this.getTouchDirection();
     this.engine.setInputState({
-      up: this.moveKeys.up.isDown || this.arrowKeys.up.isDown,
-      down: this.moveKeys.down.isDown || this.arrowKeys.down.isDown,
-      left: this.moveKeys.left.isDown || this.arrowKeys.left.isDown,
-      right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown,
+      up: this.moveKeys.up.isDown || this.arrowKeys.up.isDown || touchDir.up,
+      down: this.moveKeys.down.isDown || this.arrowKeys.down.isDown || touchDir.down,
+      left: this.moveKeys.left.isDown || this.arrowKeys.left.isDown || touchDir.left,
+      right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown || touchDir.right,
     });
     const scaledDelta = this.isSimulationPaused() ? 0 : delta * this.debugConfig.timeScale;
     if (scaledDelta > 0) {
@@ -533,10 +551,84 @@ export class GameScene extends Phaser.Scene {
     this.toggleGamePause();
   }
 
+  // ========== Mobile virtual joystick ==========
+  private setupTouchInput(): void {
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Left half of screen = movement joystick
+      if (pointer.x < this.cameras.main.width * 0.45) {
+        this.touchInput.active = true;
+        this.touchInput.startX = pointer.x;
+        this.touchInput.startY = pointer.y;
+        this.touchInput.currentX = pointer.x;
+        this.touchInput.currentY = pointer.y;
+        this.joystickGraphics.setVisible(true);
+        this.drawJoystick();
+      }
+    });
+
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (this.touchInput.active && pointer.isDown) {
+        this.touchInput.currentX = pointer.x;
+        this.touchInput.currentY = pointer.y;
+        this.drawJoystick();
+      }
+    });
+
+    this.input.on('pointerup', () => {
+      this.touchInput.active = false;
+      this.joystickGraphics.setVisible(false);
+      this.joystickGraphics.clear();
+    });
+  }
+
+  private getTouchDirection(): { up: boolean; down: boolean; left: boolean; right: boolean } {
+    if (!this.touchInput.active) {
+      return { up: false, down: false, left: false, right: false };
+    }
+    const dx = this.touchInput.currentX - this.touchInput.startX;
+    const dy = this.touchInput.currentY - this.touchInput.startY;
+    const deadzone = 12;
+    return {
+      up: dy < -deadzone,
+      down: dy > deadzone,
+      left: dx < -deadzone,
+      right: dx > deadzone,
+    };
+  }
+
+  private drawJoystick(): void {
+    const g = this.joystickGraphics;
+    g.clear();
+
+    const maxRadius = 50;
+    const dx = this.touchInput.currentX - this.touchInput.startX;
+    const dy = this.touchInput.currentY - this.touchInput.startY;
+    const dist = Math.hypot(dx, dy);
+    const clampedDist = Math.min(dist, maxRadius);
+    const angle = Math.atan2(dy, dx);
+    const knobX = this.touchInput.startX + Math.cos(angle) * clampedDist;
+    const knobY = this.touchInput.startY + Math.sin(angle) * clampedDist;
+
+    // Base ring
+    g.lineStyle(2, 0x73d8ff, 0.25);
+    g.strokeCircle(this.touchInput.startX, this.touchInput.startY, maxRadius);
+    g.fillStyle(0x73d8ff, 0.06);
+    g.fillCircle(this.touchInput.startX, this.touchInput.startY, maxRadius);
+
+    // Knob
+    g.lineStyle(2, 0x73d8ff, 0.55);
+    g.fillStyle(0x73d8ff, 0.35);
+    g.fillCircle(knobX, knobY, 16);
+    g.strokeCircle(knobX, knobY, 16);
+  }
+
   private handleSceneShutdown(): void {
     this.input.keyboard?.off('keydown-F3', this.handleDebugPanelToggle, this);
     this.input.keyboard?.off('keydown-F4', this.handleDebugPauseToggle, this);
     this.input.keyboard?.off('keydown-ESC', this.handlePauseToggle, this);
+    this.input.off('pointerdown');
+    this.input.off('pointermove');
+    this.input.off('pointerup');
     this.runtimePreviewImages.length = 0;
     this.runtimePreviewImageCursor = 0;
     this.services.debugPanel.unbind();
