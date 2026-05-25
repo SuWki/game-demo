@@ -418,10 +418,21 @@ main {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
   animation: fadeIn 0.3s ease;
+}
+
+/* Tabulator 表格容器 */
+.tabulator {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden !important;
+  min-width: 100%;
 }
 
 /* Table Toolbar */

@@ -678,7 +678,7 @@ function handleAddCol() {
   // 更新表格数据
   table.setData(newData);
 
-  // 添加新列定义
+  // 添加新列定义（在操作列之前）
   table.addColumn({
     title: trimmedName,
     field: trimmedName,
@@ -735,8 +735,36 @@ function handleAddCol() {
       container.appendChild(actionsWrap);
 
       return container;
+    },
+    formatter: function(cell) {
+      const value = cell.getValue();
+      const fieldName = cell.getField();
+      const displayValue = String(value ?? '');
+      const fullValue = displayValue.length > 50 ? displayValue.substring(0, 100) + (displayValue.length > 100 ? '...' : '') : displayValue;
+
+      if (value === null || value === undefined || value === '') {
+        const placeholderText = '请输入...';
+        return `<span class="cell-placeholder" title="${fieldName}: ${placeholderText}">${placeholderText}</span>`;
+      }
+
+      if (typeof value === 'boolean') {
+        const boolText = value ? 'true' : 'false';
+        return `<span class="cell-boolean cell-boolean-${boolText}" title="${fieldName}: ${boolText}">${value ? '✓ true' : '✗ false'}</span>`;
+      }
+
+      if (typeof value === 'object') {
+        const objStr = JSON.stringify(value);
+        const displayStr = objStr.substring(0, 40) + (objStr.length > 40 ? '...' : '');
+        return `<span class="cell-object" title="${fieldName}: ${objStr}">${displayStr}</span>`;
+      }
+
+      if (typeof value === 'number') {
+        return `<span class="cell-number" title="${fieldName}: ${value}">${value}</span>`;
+      }
+
+      return `<span class="cell-text" title="${fieldName}: ${fullValue}">${value}</span>`;
     }
-  });
+  }, false, '_actions');
 
   updateCurrentData();
   showToast('已添加新列：' + trimmedName, 'success');
@@ -938,6 +966,36 @@ function generateColumns(data) {
     const isEnumField = enumValues && Array.isArray(enumValues);
     const typeInfo = fieldTypes[key] || { icon: '🔤', label: '文本', color: '#6366f1', editor: 'input' };
 
+    // 获取字段描述（支持嵌套字段如 effects.0.type）
+    let fieldDesc = descriptions[key];
+    if (!fieldDesc && key.includes('.')) {
+      // 尝试解析嵌套字段描述
+      // 例如 effects.0.type -> effects.items.properties.type
+      const parts = key.split('.');
+      let currentSchema = schemaMap[currentConfigType];
+      if (currentSchema && currentSchema.items && currentSchema.items.properties) {
+        let props = currentSchema.items.properties;
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          // 如果是数字索引，使用 items
+          if (/^\d+$/.test(part) && props[parts[i-1]] && props[parts[i-1]].items) {
+            if (props[parts[i-1]].items.properties) {
+              props = props[parts[i-1]].items.properties;
+            }
+          } else if (props[part]) {
+            if (i === parts.length - 1) {
+              // 最后一个部分，获取描述
+              fieldDesc = props[part].description;
+            } else if (props[part].properties) {
+              props = props[part].properties;
+            } else if (props[part].items && props[part].items.properties) {
+              props = props[part].items.properties;
+            }
+          }
+        }
+      }
+    }
+
     // 根据字段类型确定编辑器
     let editor = 'input';
     let editorParams = {};
@@ -964,8 +1022,8 @@ function generateColumns(data) {
 
     // 构建标题，包含字段类型图标和描述
     let title = '';
-    const typeIcon = `<span class="field-type-icon" style="color: ${typeInfo.color}; font-size: 0.75rem; margin-right: 4px;" title="类型: ${typeInfo.label}\n${descriptions[key] || ''}">${typeInfo.icon}</span>`;
-    const desc = descriptions[key] || (hasRelation ? relation.relatesTo : '');
+    const typeIcon = `<span class="field-type-icon" style="color: ${typeInfo.color}; font-size: 0.75rem; margin-right: 4px;" title="类型: ${typeInfo.label}\n${fieldDesc || ''}">${typeInfo.icon}</span>`;
+    const desc = fieldDesc || (hasRelation ? relation.relatesTo : '');
 
     if (hasRelation) {
       title = `${typeIcon}<span title="${desc}">${key}</span><span class="relation-badge" data-relation="${relation.relatesTo}" data-target="${relation.targetTable}" title="关联: ${relation.relatesTo}">🔗</span>`;
@@ -1546,7 +1604,22 @@ function validateConfig(data) {
     }
   }
   
+  // 显示验证结果
   displayValidationResults(results);
+
+  // 强制滚动到验证面板
+  setTimeout(() => {
+    validationPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+
+  // 显示完成提示
+  if (results.success && results.errors.length === 0 && results.warnings.length === 0) {
+    showToast('✅ 验证通过！配置数据完全正确', 'success');
+  } else if (!results.success) {
+    showToast(`❌ 验证失败：发现 ${results.errors.length} 个错误`, 'error');
+  } else {
+    showToast(`⚠️ 验证通过：发现 ${results.warnings.length} 个警告`, 'warning');
+  }
 }
 
 function displayValidationResults(results) {
