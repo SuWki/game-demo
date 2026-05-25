@@ -129,7 +129,7 @@ export class OverlayController {
               <span class="action-icon">▶</span>
               <div class="action-content">
                 <strong>开始作战</strong>
-                <small>WASD移动 · 自动射击</small>
+                <small class="control-hint"></small>
               </div>
             </button>
 

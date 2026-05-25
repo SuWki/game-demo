@@ -2,6 +2,8 @@ import * as XLSX from 'xlsx';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { schemaMap, detectConfigType, fieldRelations, configDescriptions, enumFields, getFieldDescriptions, getFieldTypes } from './schemas.js';
+import { FormulaEngine, SUPPORTED_FORMULAS, getFormulaSuggestions } from './src/formulaEngine.js';
+import { ChartManager, CHART_TYPES, AGGREGATION_OPTIONS, CHART_PRESETS } from './src/chartEngine.js';
 
 // 全局状态
 let table = null;
@@ -12,6 +14,13 @@ let currentConfigType = null;
 let loadedConfigs = {}; // 存储已加载的配置表（用于跨表验证）
 let filterVisible = false; // 筛选器显示状态
 let nextAutoId = 0; // 自动 ID 计数器
+
+// 公式引擎
+let formulaEngine = null;
+let formulaColumns = new Set(); // 存储公式列
+
+// 图表管理器
+let chartManager = null;
 
 // 自动保存相关
 const AUTO_SAVE_KEY = 'config-editor-autosave';
@@ -262,7 +271,13 @@ function loadData(data) {
   if (table) {
     table.destroy();
   }
-  
+
+  // 重置公式列
+  formulaColumns.clear();
+
+  // 初始化公式引擎
+  initFormulaEngine();
+
   // 创建新表格
   const columns = generateColumns(data);
   
@@ -2628,3 +2643,532 @@ function showShortcutsModal() {
   };
   document.addEventListener('keydown', escHandler);
 }
+
+// ============================================================
+// Excel 公式功能
+// ============================================================
+
+// 初始化公式引擎
+function initFormulaEngine() {
+  if (!currentData.length) return;
+
+  const columns = Object.keys(currentData[0]).filter(key => key !== '_actions');
+  formulaEngine = new FormulaEngine(currentData, columns);
+}
+
+// 计算所有公式
+function calculateAllFormulas() {
+  if (!formulaEngine || formulaColumns.size === 0) return;
+
+  formulaColumns.forEach(colName => {
+    currentData.forEach((row, rowIndex) => {
+      const formula = row[colName];
+      if (formula && typeof formula === 'string' && formula.startsWith('=')) {
+        const result = formulaEngine.evaluate(formula, rowIndex);
+        // 存储计算结果到 _calc 前缀的字段
+        row[`_calc_${colName}`] = result;
+      }
+    });
+  });
+
+  if (table) {
+    table.setData(currentData);
+  }
+}
+
+// 添加公式列
+function addFormulaColumn() {
+  if (!table) {
+    showToast('请先加载数据', 'warning');
+    return;
+  }
+
+  const colName = prompt('请输入公式列名称（建议以"calc_"开头）:');
+  if (!colName || !colName.trim()) return;
+
+  const trimmedName = colName.trim();
+
+  // 检查是否已存在
+  const existingCols = table.getColumns();
+  if (existingCols.some(col => col.getField() === trimmedName)) {
+    showToast('该列名已存在', 'error');
+    return;
+  }
+
+  // 添加到公式列集合
+  formulaColumns.add(trimmedName);
+
+  // 初始化公式引擎
+  initFormulaEngine();
+
+  // 添加新列到所有数据
+  const newData = table.getData();
+  newData.forEach(row => {
+    row[trimmedName] = '=0'; // 默认公式
+  });
+
+  // 更新表格数据
+  table.setData(newData);
+
+  // 获取操作列的索引
+  const allCols = table.getColumns();
+  const actionColIndex = allCols.findIndex(col => col.getField() === '_actions');
+
+  // 添加新列定义
+  const columnDef = {
+    title: createFormulaColumnTitle(trimmedName),
+    field: trimmedName,
+    editor: 'input',
+    resizable: true,
+    headerSort: true,
+    headerFilter: 'input',
+    headerFilterPlaceholder: '筛选...',
+    cellEdited: function(cell) {
+      const value = cell.getValue();
+      if (value && typeof value === 'string' && value.startsWith('=')) {
+        // 是公式，重新计算
+        const rowIndex = cell.getRow().getPosition() - 1;
+        const result = formulaEngine.evaluate(value, rowIndex);
+        cell.getRow().update({ [`_calc_${trimmedName}`]: result });
+      }
+      updateCurrentData();
+      scheduleAutoSave();
+    },
+    formatter: function(cell) {
+      const value = cell.getValue();
+      const fieldName = cell.getField();
+
+      // 显示公式本身
+      if (value && typeof value === 'string' && value.startsWith('=')) {
+        const rowIndex = cell.getRow().getPosition() - 1;
+        const result = formulaEngine ? formulaEngine.evaluate(value, rowIndex) : value;
+
+        // 如果有计算结果，显示结果；否则显示公式
+        if (result !== value && !String(result).startsWith('#')) {
+          return `<span class="cell-formula" title="公式: ${value}\n结果: ${result}">${result}</span>`;
+        } else {
+          return `<span class="cell-formula-error" title="公式: ${value}">${value}</span>`;
+        }
+      }
+
+      return `<span class="cell-text">${value || ''}</span>`;
+    },
+  };
+
+  if (actionColIndex > 0) {
+    table.addColumn(columnDef, true, '_actions');
+  } else {
+    table.addColumn(columnDef);
+  }
+
+  showToast(`已添加公式列: ${trimmedName}，输入公式以=开头`, 'success');
+  showFormulaHelper();
+}
+
+// 创建公式列标题
+function createFormulaColumnTitle(colName) {
+  return `
+    <span class="formula-column-title">
+      <span class="formula-icon">🧮</span>
+      ${colName}
+      <span class="formula-badge">公式</span>
+    </span>
+  `;
+}
+
+// 显示公式帮助
+function showFormulaHelper() {
+  const modal = document.getElementById('formula-helper-modal');
+  if (!modal) {
+    createFormulaHelperModal();
+  }
+  document.getElementById('formula-helper-modal').style.display = 'flex';
+}
+
+// 创建公式帮助弹窗
+function createFormulaHelperModal() {
+  const modal = document.createElement('div');
+  modal.id = 'formula-helper-modal';
+  modal.className = 'modal formula-helper-modal';
+
+  let html = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🧮 Excel 公式帮助</h3>
+        <button class="modal-close" onclick="closeFormulaHelper()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="formula-intro">
+          <p>在公式列中输入以 <code>=</code> 开头的表达式，即可自动计算结果。</p>
+          <p>支持单元格引用 (A1, B2)、范围引用 (A1:A10) 和各种函数。</p>
+        </div>
+        <div class="formula-categories">
+  `;
+
+  Object.entries(SUPPORTED_FORMULAS).forEach(([category, formulas]) => {
+    html += `
+      <div class="formula-category">
+        <h4>${category}</h4>
+        <div class="formula-list">
+    `;
+    formulas.forEach(f => {
+      html += `
+        <div class="formula-item" onclick="insertFormula('${f.name}')">
+          <code class="formula-syntax">${f.syntax}</code>
+          <span class="formula-desc">${f.desc}</span>
+        </div>
+      `;
+    });
+    html += '</div></div>';
+  });
+
+  html += `
+        </div>
+        <div class="formula-examples">
+          <h4>常用示例</h4>
+          <ul>
+            <li><code>=SUM(A1:A10)</code> - 计算A1到A10的总和</li>
+            <li><code>=AVERAGE(B:B)</code> - 计算B列的平均值</li>
+            <li><code>=IF(A1>100, "高", "低")</code> - 条件判断</li>
+            <li><code>=MAX(C1:C20)</code> - 找出最大值</li>
+            <li><code>=CLAMP(A1, 0, 100)</code> - 限制数值范围(游戏专用)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeFormulaHelper()">关闭</button>
+      </div>
+    </div>
+  `;
+
+  modal.innerHTML = html;
+  document.body.appendChild(modal);
+
+  // 点击外部关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeFormulaHelper();
+  });
+}
+
+// 关闭公式帮助
+function closeFormulaHelper() {
+  const modal = document.getElementById('formula-helper-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 插入公式模板
+function insertFormula(funcName) {
+  showToast(`请复制使用: =${funcName}()`, 'info');
+}
+
+// ============================================================
+// 图表功能
+// ============================================================
+
+// 显示图表弹窗
+function showChartModal() {
+  if (!table || currentData.length === 0) {
+    showToast('请先加载数据', 'warning');
+    return;
+  }
+
+  // 初始化图表管理器
+  if (!chartManager) {
+    chartManager = new ChartManager('chart-container');
+  }
+
+  const modal = document.getElementById('chart-modal');
+  if (!modal) {
+    createChartModal();
+  }
+  document.getElementById('chart-modal').style.display = 'flex';
+
+  // 初始化图表配置
+  initChartConfig();
+}
+
+// 创建图表弹窗
+function createChartModal() {
+  const modal = document.createElement('div');
+  modal.id = 'chart-modal';
+  modal.className = 'modal chart-modal';
+
+  const columns = currentData.length > 0 ? Object.keys(currentData[0]).filter(k => k !== '_actions') : [];
+  const numericColumns = columns.filter(col => {
+    const sample = currentData[0]?.[col];
+    return typeof sample === 'number' || (typeof sample === 'string' && !isNaN(parseFloat(sample)));
+  });
+
+  modal.innerHTML = `
+    <div class="modal-content chart-modal-content">
+      <div class="modal-header">
+        <h3>📊 数据图表</h3>
+        <button class="modal-close" id="chart-modal-close">&times;</button>
+      </div>
+      <div class="modal-body chart-modal-body">
+        <div class="chart-sidebar">
+          <div class="chart-config-section">
+            <label>图表类型</label>
+            <select id="chart-type-select" class="chart-select">
+              ${CHART_TYPES.map(t => `<option value="${t.id}">${t.icon} ${t.name} - ${t.desc}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="chart-config-section">
+            <label>X轴字段</label>
+            <select id="chart-x-field" class="chart-select">
+              <option value="">行号</option>
+              ${columns.map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="chart-config-section">
+            <label>Y轴字段 (可多选)</label>
+            <div class="chart-field-list">
+              ${numericColumns.map(c => `
+                <label class="chart-field-item">
+                  <input type="checkbox" value="${c}" data-chart-field>
+                  ${c}
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="chart-config-section">
+            <label>数据聚合</label>
+            <select id="chart-aggregation" class="chart-select">
+              ${AGGREGATION_OPTIONS.map(a => `<option value="${a.id}">${a.name} - ${a.desc}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="chart-presets">
+            <label>预设模板</label>
+            <select id="chart-preset-select" class="chart-select">
+              <option value="">自定义</option>
+              ${Object.entries(CHART_PRESETS).flatMap(([type, presets]) =>
+                Object.entries(presets).map(([key, preset]) =>
+                  `<option value="${type}.${key}">${type} - ${preset.name}</option>`
+                )
+              ).join('')}
+            </select>
+          </div>
+
+          <div class="chart-actions">
+            <button class="btn btn-primary" id="btn-generate-chart">生成图表</button>
+            <button class="btn btn-secondary" id="btn-export-chart">导出图片</button>
+          </div>
+
+          <div class="chart-stats" id="chart-stats">
+            <!-- 统计摘要显示在这里 -->
+          </div>
+        </div>
+
+        <div class="chart-main">
+          <div class="chart-container" id="chart-container">
+            <div class="chart-placeholder">选择配置后点击"生成图表"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // 绑定事件
+  document.getElementById('chart-modal-close').onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  document.getElementById('btn-generate-chart').onclick = generateChart;
+  document.getElementById('btn-export-chart').onclick = exportChart;
+  document.getElementById('chart-preset-select').onchange = applyChartPreset;
+}
+
+// 初始化图表配置
+function initChartConfig() {
+  const columns = currentData.length > 0 ? Object.keys(currentData[0]).filter(k => k !== '_actions') : [];
+  const numericColumns = columns.filter(col => {
+    const sample = currentData[0]?.[col];
+    return typeof sample === 'number' || (typeof sample === 'string' && !isNaN(parseFloat(sample)));
+  });
+
+  // 更新字段列表
+  const xSelect = document.getElementById('chart-x-field');
+  if (xSelect) {
+    xSelect.innerHTML = '<option value="">行号</option>' +
+      columns.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  const yList = document.querySelector('.chart-field-list');
+  if (yList) {
+    yList.innerHTML = numericColumns.map(c => `
+      <label class="chart-field-item">
+        <input type="checkbox" value="${c}" data-chart-field>
+        ${c}
+      </label>
+    `).join('');
+  }
+}
+
+// 应用图表预设
+function applyChartPreset() {
+  const select = document.getElementById('chart-preset-select');
+  const value = select.value;
+  if (!value) return;
+
+  const [type, key] = value.split('.');
+  const preset = CHART_PRESETS[type]?.[key];
+  if (!preset) return;
+
+  // 应用预设配置
+  document.getElementById('chart-type-select').value = preset.type;
+  document.getElementById('chart-x-field').value = preset.xField || '';
+  document.getElementById('chart-aggregation').value = preset.aggregation || 'none';
+
+  // 选中Y轴字段
+  document.querySelectorAll('[data-chart-field]').forEach(cb => {
+    cb.checked = preset.yFields.includes(cb.value);
+  });
+
+  // 自动生成图表
+  generateChart();
+}
+
+// 生成图表
+function generateChart() {
+  if (!chartManager) return;
+
+  const chartType = document.getElementById('chart-type-select').value;
+  const xField = document.getElementById('chart-x-field').value;
+  const aggregation = document.getElementById('chart-aggregation').value;
+  const yFields = Array.from(document.querySelectorAll('[data-chart-field]:checked')).map(cb => cb.value);
+
+  if (yFields.length === 0) {
+    showToast('请至少选择一个Y轴字段', 'warning');
+    return;
+  }
+
+  // 准备数据
+  const chartData = chartManager.generateFromTable(currentData, {
+    chartType,
+    xField,
+    yFields,
+    aggregation,
+  });
+
+  // 生成统计摘要
+  const summary = chartManager.generateSummary(currentData, yFields);
+  displayChartStats(summary);
+
+  // 创建图表
+  const container = document.getElementById('chart-container');
+  container.innerHTML = '<canvas id="main-chart"></canvas>';
+
+  const { chart } = chartManager.createChart({
+    id: 'main-chart',
+    type: chartType,
+    data: chartData,
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: `${currentConfigType || '数据'} 图表分析`,
+        },
+      },
+    },
+  });
+
+  showToast('图表生成成功', 'success');
+}
+
+// 显示图表统计
+function displayChartStats(summary) {
+  const container = document.getElementById('chart-stats');
+  if (!container) return;
+
+  let html = '<h4>数据统计</h4>';
+  Object.entries(summary).forEach(([field, stats]) => {
+    html += `
+      <div class="chart-stat-item">
+        <strong>${field}</strong>
+        <div class="stat-row">
+          <span>总和: ${stats.sum}</span>
+          <span>平均: ${stats.avg}</span>
+        </div>
+        <div class="stat-row">
+          <span>最小: ${stats.min}</span>
+          <span>最大: ${stats.max}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// 导出图表
+function exportChart() {
+  if (!chartManager) return;
+
+  const imageData = chartManager.exportToImage('main-chart', 'png');
+  if (imageData) {
+    const a = document.createElement('a');
+    a.href = imageData;
+    a.download = `chart-${currentConfigType || 'data'}-${Date.now()}.png`;
+    a.click();
+    showToast('图表已导出', 'success');
+  }
+}
+
+// 添加工具栏按钮
+function addToolbarButtons() {
+  // 添加公式列按钮
+  const toolbar = document.querySelector('.table-toolbar');
+  if (toolbar) {
+    // 公式按钮
+    const formulaBtn = document.createElement('button');
+    formulaBtn.id = 'btn-add-formula';
+    formulaBtn.className = 'btn btn-secondary';
+    formulaBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        <line x1="8" y1="7" x2="16" y2="7"/>
+        <line x1="8" y1="11" x2="16" y2="11"/>
+        <line x1="8" y1="15" x2="12" y2="15"/>
+      </svg>
+      添加公式列
+    `;
+    formulaBtn.title = '添加Excel公式列';
+    formulaBtn.onclick = addFormulaColumn;
+    toolbar.appendChild(formulaBtn);
+
+    // 图表按钮
+    const chartBtn = document.createElement('button');
+    chartBtn.id = 'btn-show-chart';
+    chartBtn.className = 'btn btn-secondary';
+    chartBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      图表分析
+    `;
+    chartBtn.title = '打开图表分析';
+    chartBtn.onclick = showChartModal;
+    toolbar.appendChild(chartBtn);
+  }
+}
+
+// 在初始化时添加按钮
+const originalAddHistoryButton = addHistoryButton;
+addHistoryButton = function() {
+  originalAddHistoryButton();
+  addToolbarButtons();
+};
+
