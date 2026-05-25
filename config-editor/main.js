@@ -2522,7 +2522,7 @@ function handleCellMouseOver(e) {
 
   // 延迟显示 tooltip
   tooltipTimeout = setTimeout(() => {
-    showCellTooltip(title, cell);
+    showCellHoverTooltip(title, cell);
   }, 500);
 }
 
@@ -2547,7 +2547,7 @@ function handleCellMouseMove(e) {
   }
 }
 
-function showCellTooltip(content, cellElement) {
+function showCellHoverTooltip(content, cellElement) {
   // 移除现有的 tooltip
   hideCellTooltip();
 
