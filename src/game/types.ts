@@ -714,6 +714,11 @@ export interface RunState {
     critAfterglow?: boolean;
     critEmbershard?: boolean;
     critCrownfire?: boolean;
+    // 交叉联动标签
+    critPierce?: boolean; // 暴击爆点留下裂纹
+    pierceCrit?: boolean; // 穿透后下一次暴击率提高
+    dashCrit?: boolean; // 脉冲命中叠破绽
+    dashPierce?: boolean; // 脉冲命中附加裂纹
   };
 }
 

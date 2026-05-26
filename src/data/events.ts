@@ -1217,6 +1217,186 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
     ],
   },
+  // 高风险高收益异常节点 - Build爽感迭代
+  {
+    id: 'glass-crit-protocol',
+    name: '玻璃火力',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '生命上限降低，但暴击爆点会留下裂纹',
+    selection: {
+      baseWeight: 0.85,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.1,
+        late: 0.9,
+      },
+      dominantRouteBonus: 1.2,
+      offRouteMultiplier: 0.6,
+    },
+    options: [
+      {
+        id: 'glass-crit-accept',
+        label: '接入玻璃火力',
+        gameplayLabel: '玻璃大炮',
+        gainLabel: '暴击爆点留下裂纹，更容易清线',
+        costLabel: '生命上限大幅降低',
+        routeId: 'crit',
+        description: '生命上限降低，但暴击爆点会留下裂纹',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: -24,
+              critChance: 0.05,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'glass-crit-decline',
+        label: '拒绝改造',
+        description: '保持配置，少量通用强化',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              maxHp: 4,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'heavy-pierce-protocol',
+    name: '重炮模式',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '移动变慢，但穿透后的裂纹扩散更强',
+    selection: {
+      baseWeight: 0.82,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.0,
+        late: 1.1,
+      },
+      dominantRouteBonus: 1.2,
+      offRouteMultiplier: 0.6,
+    },
+    options: [
+      {
+        id: 'heavy-pierce-accept',
+        label: '接入重炮核心',
+        gameplayLabel: '重炮阵地',
+        gainLabel: '穿透裂纹扩散范围和伤害提高',
+        costLabel: '移速大幅降低',
+        routeId: 'pierce',
+        description: '移动变慢，但贯穿后的裂纹扩散更强',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: -35,
+              pierceEchoDamageBonus: 0.12,
+              crackSpreadRadius: 0.15,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
+        id: 'heavy-pierce-decline',
+        label: '拒绝改造',
+        description: '保持配置，少量通用强化',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              moveSpeed: 6,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'no-heal-pulse-protocol',
+    name: '断回血协议',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '不再自动回血，但脉冲命中会帮你叠破绽',
+    selection: {
+      baseWeight: 0.78,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.05,
+        late: 1.15,
+      },
+      dominantRouteBonus: 1.2,
+      offRouteMultiplier: 0.55,
+    },
+    options: [
+      {
+        id: 'no-heal-pulse-accept',
+        label: '接入断回血协议',
+        gameplayLabel: '以攻代守',
+        gainLabel: '脉冲命中叠破绽，更容易触发爆发',
+        costLabel: '无法自然回血',
+        routeId: 'dash',
+        description: '不再自动回血，但脉冲命中会帮你叠破绽',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              regeneration: -0.24,
+              dashPulseDamage: 8,
+              dashChargeSpeed: 0.1,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'no-heal-pulse-decline',
+        label: '拒绝改造',
+        description: '保持配置，少量通用强化',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              regeneration: 0.06,
+              maxHp: 4,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 12,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 function normalizeEventOptionEffects(

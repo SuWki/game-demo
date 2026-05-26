@@ -531,15 +531,15 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer'],
     selection: {
-      baseWeight: 4,
-      noDominantRouteBonus: 2,
-      finalPrepBonus: 2,
+      baseWeight: 3.2,
+      noDominantRouteBonus: 1.6,
+      finalPrepBonus: 1.6,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          damage: 3,
+          damage: 2.2,
         },
       },
     ],
@@ -552,15 +552,15 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer'],
     selection: {
-      baseWeight: 4,
-      noDominantRouteBonus: 2,
-      finalPrepBonus: 3,
+      baseWeight: 3.2,
+      noDominantRouteBonus: 1.6,
+      finalPrepBonus: 2.4,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          fireRate: 0.22,
+          fireRate: 0.16,
         },
       },
     ],
@@ -573,16 +573,16 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer'],
     selection: {
-      baseWeight: 3,
+      baseWeight: 2.4,
       minRound: 1,
-      finalPrepBonus: 2,
+      finalPrepBonus: 1.6,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          projectileSpeed: 26,
-          damage: 1.5,
+          projectileSpeed: 20,
+          damage: 1.2,
         },
       },
     ],
@@ -595,15 +595,15 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer'],
     selection: {
-      baseWeight: 3,
+      baseWeight: 2.4,
       maxRound: 3,
-      noDominantRouteBonus: 3,
+      noDominantRouteBonus: 2.4,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          critChance: 0.05,
+          critChance: 0.04,
         },
       },
     ],
@@ -3335,6 +3335,111 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       },
     ],
   },
+  // 交叉联动路线牌
+  {
+    id: 'crit-pierce-bridge',
+    name: '爆点裂纹',
+    description: '暴击爆点会留下裂纹，让敌人更容易被贯穿',
+    category: 'route',
+    routeId: 'crit',
+    tags: ['bridge', 'crit-pierce'],
+    selection: {
+      baseWeight: 2.8,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.8,
+      },
+      hintedRouteBonus: 1.5,
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.2,
+      offRouteMultiplier: 0.35,
+    },
+    effects: [
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'pierce-crit-bridge',
+    name: '贯穿追爆',
+    description: '穿透命中后，下一次暴击更容易触发',
+    category: 'route',
+    routeId: 'pierce',
+    tags: ['bridge', 'pierce-crit'],
+    selection: {
+      baseWeight: 2.8,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.8,
+      },
+      hintedRouteBonus: 1.5,
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.2,
+      offRouteMultiplier: 0.35,
+    },
+    effects: [
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'dash-crit-bridge',
+    name: '脉冲破绽',
+    description: '脉冲命中会帮你叠破绽，更容易触发爆发',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'dash-crit'],
+    selection: {
+      baseWeight: 2.8,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.8,
+      },
+      hintedRouteBonus: 1.5,
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.2,
+      offRouteMultiplier: 0.35,
+    },
+    effects: [
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-pierce-bridge',
+    name: '脉冲裂纹',
+    description: '脉冲命中附加裂纹，让敌人更容易被贯穿',
+    category: 'route',
+    routeId: 'dash',
+    tags: ['bridge', 'dash-pierce'],
+    selection: {
+      baseWeight: 2.8,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.2,
+        late: 0.8,
+      },
+      hintedRouteBonus: 1.5,
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.2,
+      offRouteMultiplier: 0.35,
+    },
+    effects: [
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
 ];
 
 const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
@@ -3407,6 +3512,12 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'dash-reentry': '脉冲反击和无伤时间强化',
   'dash-anchor': '脉冲反击完成收束',
   'dash-zero-window': '满层脉冲后打击标记敌人追加伤害',
+
+  // 交叉联动路线牌
+  'crit-pierce-bridge': '暴击爆点会留下裂纹',
+  'pierce-crit-bridge': '穿透后下一次暴击率提高',
+  'dash-crit-bridge': '脉冲命中帮你叠破绽',
+  'dash-pierce-bridge': '脉冲命中附加裂纹',
 };
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {

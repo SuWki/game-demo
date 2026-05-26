@@ -244,12 +244,11 @@ export function getEnemySpawnInterval(
   phase: PhaseId,
   elapsedSec: number,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.08 + getPhaseTier(phase) * 0.05;
-  // 使用对数曲线替代线性增长，避免30秒上限
-  // 对数曲线特点：前期增长快，后期增长慢但持续增长
-  const pressureFactor = 1 + Math.log(1 + elapsedSec / 10) * 0.35;
+  const depthFactor = 1 + (round - 1) * 0.1 + getPhaseTier(phase) * 0.07;
+  // 提高压力因子，让中后期刷怪更频繁
+  const pressureFactor = 1 + Math.log(1 + elapsedSec / 10) * 0.42;
   const interval = template.spawnIntervalSec / (depthFactor * pressureFactor);
-  return clamp(interval, template.spawnIntervalSec * 0.38, template.spawnIntervalSec);
+  return clamp(interval, template.spawnIntervalSec * 0.32, template.spawnIntervalSec);
 }
 
 export function getRegularEnemyCap(
@@ -259,8 +258,8 @@ export function getRegularEnemyCap(
   capMultiplier = 1,
 ): number {
   // 提高增长系数以增强后期压迫感
-  const depthFactor = 1 + (round - 1) * 0.12 + getPhaseTier(phase) * 0.09;
-  return Math.max(4, Math.round(template.regularEnemyCap * depthFactor * capMultiplier));
+  const depthFactor = 1 + (round - 1) * 0.15 + getPhaseTier(phase) * 0.12;
+  return Math.max(5, Math.round(template.regularEnemyCap * depthFactor * capMultiplier));
 }
 
 export function getSpawnBurstCount(template: BattleTemplateDefinition): number {

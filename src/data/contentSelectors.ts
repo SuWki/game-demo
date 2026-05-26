@@ -451,39 +451,101 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
 function buildLevelUpRouteWindowPool(
   context: ContentContext,
 ): Array<{ item: UpgradeArchetype; weight: number }> {
-  const openingLevelUp = context.phase === 'opening';
-  const earlyMidLevelUp = openingLevelUp || context.phase === 'mid';
-  const hasCommittedRoute = Boolean(context.committedRoute || context.maturedRoute);
-  if (!context.dominantRoute) {
-    return scaleWeightedPool(
-      buildWeightedUpgradePool(
-        context,
-        'levelUp',
-        (archetype) => Boolean(archetype.routeId) && Boolean(archetype.tags?.includes('starter')),
-      ),
-      openingLevelUp ? 1.16 : earlyMidLevelUp ? 0.92 : 0.62,
-    );
+  const phase = context.phase;
+  const isOpening = phase === 'opening';
+  const isMid = phase === 'mid';
+  const isLate = phase === 'late' || phase === 'finalPrep';
+  const routeCount = Math.max(...Object.values(context.selectedUpgradeIds).map((_, i) => i + 1), 0);
+  const dominantRoute = context.dominantRoute;
+  const committedRoute = context.committedRoute || context.maturedRoute;
+
+  // 阶段投放控制参数
+  const allowBridge = phase !== 'opening' || routeCount >= 1;
+  const allowEarlyPayoff = isMid && routeCount >= 2;
+  const allowFinisher = isLate && routeCount >= 4;
+
+  if (!dominantRoute) {
+    // 无主导路线时只出starter和少量bridge
+    return weightedMerge([
+      [
+        scaleWeightedPool(
+          filterPoolByTags(
+            buildWeightedUpgradePool(context, 'levelUp', (a) => Boolean(a.routeId)),
+            ['starter'],
+          ),
+          1.2,
+        ),
+        1.2,
+      ],
+      [
+        scaleWeightedPool(
+          filterPoolByTags(
+            buildWeightedUpgradePool(context, 'levelUp', (a) => Boolean(a.routeId)),
+            ['bridge'],
+          ),
+          0.35,
+        ),
+        0.35,
+      ],
+    ]);
   }
 
   const dominantRoutePool = buildWeightedUpgradePool(
     context,
     'levelUp',
-    (archetype) => archetype.routeId === context.dominantRoute,
+    (archetype) => archetype.routeId === dominantRoute,
   );
-  const dominantLevelUpPool = filterPoolByTags(
-    dominantRoutePool,
-    hasCommittedRoute ? ['starter', 'bridge', 'payoff'] : ['starter', 'bridge'],
-    ['finisher', 'redirect'],
-  );
-  const fallbackPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge', 'payoff'], ['finisher', 'redirect']);
-  const resolvedPool =
-    dominantLevelUpPool.length > 0
-      ? dominantLevelUpPool
-      : fallbackPool.length > 0
-        ? fallbackPool
-        : dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
 
-  return scaleWeightedPool(resolvedPool, hasCommittedRoute ? 1.02 : earlyMidLevelUp ? 1.2 : 0.9);
+  if (isOpening) {
+    // 开场：starter为主，少量bridge，不出payoff/finisher
+    return weightedMerge([
+      [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['starter']), 1.2), 1.2],
+      [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['bridge']), allowBridge ? 0.35 : 0), 0.35],
+      [
+        scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['payoff', 'finisher']), 0),
+        0,
+      ],
+    ]);
+  }
+
+  if (isMid) {
+    // 中段：bridge稳定出现，允许少量payoff提前
+    return weightedMerge([
+      [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['starter']), 0.35), 0.35],
+      [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['bridge']), 1.25), 1.25],
+      [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['payoff']), allowEarlyPayoff ? 0.55 : 0.15), 0.55],
+      [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['finisher']), 0), 0],
+    ]);
+  }
+
+  // 后段/最终整备：payoff和finisher更容易出现
+  return weightedMerge([
+    [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['bridge']), 0.65), 0.65],
+    [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['payoff']), 1.2), 1.2],
+    [scaleWeightedPool(filterPoolByTags(dominantRoutePool, ['finisher']), allowFinisher ? 0.85 : 0.25), 0.85],
+  ]);
+}
+
+function weightedMerge<T extends { id: string }>(
+  pools: [Array<{ item: T; weight: number }>, number][],
+): Array<{ item: T; weight: number }> {
+  const merged = new Map<string, { item: T; weight: number }>();
+
+  for (const [pool, weightMultiplier] of pools) {
+    for (const entry of pool) {
+      const existing = merged.get(entry.item.id);
+      if (existing) {
+        existing.weight += entry.weight * weightMultiplier;
+      } else {
+        merged.set(entry.item.id, {
+          item: entry.item,
+          weight: entry.weight * weightMultiplier,
+        });
+      }
+    }
+  }
+
+  return Array.from(merged.values()).filter((entry) => entry.weight > 0);
 }
 
 function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
