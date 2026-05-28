@@ -285,11 +285,12 @@ export function getBattleCompletionExperience(
   const phaseTier = getPhaseTier(phase);
   const baseValue =
     template.winCondition.type === 'elite'
-      ? 24
+      ? 45
       : template.winCondition.type === 'survive'
-        ? 20
-        : 16;
-  return Math.round(baseValue + round * 4 + phaseTier * 3);
+        ? 38
+        : 32;
+  // 大幅提高战斗完成经验，确保每次战斗都能触发升级（混合节点设计）
+  return Math.round(baseValue + round * 12 + phaseTier * 8);
 }
 
 export function getPressureSnapshot(

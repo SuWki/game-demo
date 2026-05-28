@@ -44,11 +44,30 @@ import {
 } from '../data/battleTemplates';
 import { rollEventDefinition, rollUpgradeChoices } from '../data/contentSelectors';
 import { getEnemyArchetype, pickEnemyArchetype } from '../data/enemyArchetypes';
-import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
-import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
+import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodesV2';
+import { BUILD_STAGE_CONFIG, ROUTES, ROUTE_NAME_MAP, getBuildStageInfo } from '../data/routes';
+import {
+  BUILD_MILESTONES,
+  type BuildMilestone,
+  getUpgradeStage,
+} from '../data/upgradeStages';
+import { UPGRADE_ARCHETYPES } from '../data/upgrades';
+import {
+  calculateEscortBatch,
+  calculateEscortMax,
+  calculateEscortRespawnSec,
+  type PressurePhase,
+} from './battle/helpers';
+import {
+  getDominantRoute,
+  calculateBuildStage,
+  calculateRouteBuildStage,
+  getResultRoute,
+} from './battle/buildSystem';
 import type {
   BattlePressurePhaseDefinition,
   BattleState,
+  BulletState,
   BattleDebugRuntimeConfig,
   BattleTemplateDefinition,
   BattleTemplateId,
@@ -79,6 +98,7 @@ import type {
   UpgradeArchetype,
   UpgradeDefinition,
   UpgradeSource,
+  VisualEffectType,
 } from '../game/types';
 
 interface EngineAnnouncement {
@@ -178,7 +198,7 @@ export class RunEngine {
       status: 'battle',
       phase: 'opening',
       round: 0,
-      totalRounds: 5,
+      totalRounds: 10,
       level: 1,
       experience: 0,
       experienceToNext: getExperienceToNextLevel(1),
@@ -195,6 +215,7 @@ export class RunEngine {
       maturedRoute: null,
       stats: createBaseStats(),
       selectedUpgrades: [],
+      buildMilestonesTriggered: [],
       eventHistory: [],
       traversedNodes: [],
       battleWins: 0,
@@ -208,6 +229,7 @@ export class RunEngine {
       battle: null,
       result: null,
       activeRoutePerks: {},
+      activeAnomalies: {},
     };
     this.enterBattle(openingNode);
   }
@@ -381,15 +403,20 @@ export class RunEngine {
     this.state.phase = node.phase;
     this.enqueueTip(`${getPhaseLabel(node.phase)}：${node.title}`);
 
-    if (node.type === 'battle' || node.type === 'boss') {
+    if (node.type === 'battle' || node.type === 'boss' || node.type === 'elite' || node.type === 'survival' || node.type === 'highPressure') {
       this.enterBattle(node);
       return;
     }
 
-    if (node.type === 'upgrade') {
+    if (node.type === 'upgrade' || node.type === 'buildNode') {
       this.state.status = 'upgradeChoice';
       this.state.upgradeSource = 'nodePrep';
-      this.state.upgradeChoices = this.rollUpgradeChoices('nodePrep');
+      // buildNode节点只提供当前流派相关的强化
+      if (node.type === 'buildNode') {
+        this.state.upgradeChoices = this.rollBuildNodeUpgrades();
+      } else {
+        this.state.upgradeChoices = this.rollUpgradeChoices('nodePrep');
+      }
       this.state.currentEvent = null;
       if (this.state.upgradeChoices.length === 0) {
         this.enqueueTip('本次没有可用强化，已继续前进。');
@@ -401,6 +428,23 @@ export class RunEngine {
         source: 'nodePrep',
       });
       this.recordRedirectUpgradeOffers(this.state.upgradeChoices);
+      return;
+    }
+
+    if (node.type === 'recovery') {
+      // 恢复生命值并前进
+      const healAmount = Math.floor(this.state.stats.maxHp * 0.4);
+      this.state.stats.hp = Math.min(this.state.stats.maxHp, this.state.stats.hp + healAmount);
+      this.enqueueTip(`恢复 ${healAmount} 点生命值`);
+      this.advanceRound();
+      return;
+    }
+
+    if (node.type === 'gamble') {
+      this.state.status = 'eventChoice';
+      this.state.currentEvent = this.rollGambleEvent();
+      this.state.upgradeSource = null;
+      this.state.upgradeChoices = [];
       return;
     }
 
@@ -439,6 +483,8 @@ export class RunEngine {
     if (!this.state.selectedUpgrades.includes(upgrade.sourceId)) {
       this.state.selectedUpgrades.push(upgrade.sourceId);
     }
+    // Build成长系统：检测里程碑
+    this.checkBuildMilestones();
     this.services.metrics.recordUpgradeSelected(
       upgrade.sourceId,
       upgrade.routeId,
@@ -518,13 +564,7 @@ export class RunEngine {
     const isHybridPick =
       isRedirectPick ||
       eventDef.id === 'signal-soften' ||
-      eventDef.id === 'phase-splitter' ||
-      eventDef.id === 'cross-branch-signal' ||
-      eventDef.id === 'route-handoff' ||
-      eventDef.id === 'relay-splice' ||
-      eventDef.id === 'null-lens' ||
-      eventDef.id === 'mirror-cache' ||
-      eventDef.id === 'carrier-breach';
+      eventDef.id === 'route-handoff';
     const isLatePayoff = this.isLatePayoffEvent(eventDef);
     this.state.eventHistory.push({
       eventId: eventDef.id,
@@ -673,6 +713,7 @@ export class RunEngine {
       battle.dashMomentumStacks = 0;
     }
     battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - dt);
+    battle.dashCritWindowSec = Math.max(0, battle.dashCritWindowSec - dt); // P2-2: 相位暴击窗口衰减
 
     if (battle.pickupFlowSec <= 0) {
       battle.pickupFlowCount = 0;
@@ -710,6 +751,8 @@ export class RunEngine {
     this.spawnEnemies(battle, simulationDt);
     this.updateShooting(battle, simulationDt);
     this.updateBullets(battle, simulationDt);
+    this.updateVisualEffects(battle, simulationDt);
+    this.updateCrackMarks(battle, simulationDt);
     this.updateEnemies(battle, simulationDt);
     if (this.state.battle !== battle) {
       return;
@@ -728,6 +771,12 @@ export class RunEngine {
         0,
         this.state.stats.maxHp,
       );
+    }
+
+    // 狂战士协议：每秒流失1%生命
+    if (this.state.activeAnomalies?.berserker) {
+      const hpDrain = this.state.stats.maxHp * 0.01 * dt;
+      this.state.stats.hp = Math.max(1, this.state.stats.hp - hpDrain);
     }
 
     if (this.finishBattleOnPlayerDefeat(battle)) {
@@ -768,9 +817,7 @@ export class RunEngine {
   }
 
   public getDominantRoute(): RouteId | null {
-    const entries = Object.entries(this.state.routeCounts) as Array<[RouteId, number]>;
-    const top = [...entries].sort((left, right) => right[1] - left[1])[0];
-    return top && top[1] > 0 ? top[0] : null;
+    return getDominantRoute(this.state.routeCounts);
   }
 
   private calculateStatChanges(before: PlayerStats, after: PlayerStats): StatModifiers {
@@ -794,7 +841,11 @@ export class RunEngine {
   }
 
   private getResultRoute(): RouteId | null {
-    return this.state.maturedRoute ?? this.state.committedRoute ?? this.getDominantRoute();
+    return getResultRoute(
+      this.state.routeCounts,
+      this.state.committedRoute,
+      this.state.maturedRoute,
+    );
   }
 
   private getCurrentBattleIndex(): number {
@@ -839,6 +890,34 @@ export class RunEngine {
 
   private rollAnomaly(): EventDefinition {
     return rollEventDefinition(this.state, 'anomaly');
+  }
+
+  private rollGambleEvent(): EventDefinition {
+    // 从异常事件中筛选高风险/高收益类型
+    const gambleEvent = rollEventDefinition(this.state, 'anomaly');
+    return gambleEvent;
+  }
+
+  private rollBuildNodeUpgrades() {
+    // buildNode节点只提供当前流派相关的Rare/Epic强化
+    const dominantRoute = this.getDominantRoute();
+    const allChoices = rollUpgradeChoices(this.state, 'nodePrep');
+
+    if (!dominantRoute) {
+      // 无主流派时，返回所有选择
+      return allChoices;
+    }
+
+    // 过滤出当前流派的强化，或稀有度较高的通用强化
+    const filtered = allChoices.filter((choice) => {
+      if (choice.routeId === dominantRoute) return true;
+      if (choice.rarity === 'epic' || choice.rarity === 'legendary') return true;
+      if (choice.rarity === 'rare' && !choice.routeId) return true;
+      return false;
+    });
+
+    // 保底：如果过滤后少于3个，补充原列表
+    return filtered.length >= 3 ? filtered : allChoices;
   }
 
   private enterBattle(node: NodeOption): void {
@@ -1001,6 +1080,21 @@ export class RunEngine {
       dashGhostStrikeReady: false,
       dashMomentumStacks: 0,
       dashMomentumDecaySec: 0,
+      dashCritWindowSec: 0,
+      visualEffects: [],
+      crackMarks: [],
+      playerTrail: [],
+      overdriveMode: {
+        active: false,
+        type: null,
+        remainingSec: 0,
+        cooldownSec: 0,
+      },
+      consecutiveCrits: 0,
+      piercePayoffCount: 0,
+      // 绞锁压制关卡机制
+      eliteSummonVulnerabilitySec: 0,
+      escortBossLinkActive: false,
     };
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
@@ -2177,10 +2271,22 @@ export class RunEngine {
 
     const focusRoute = this.getDominantRoute();
     const lastTraversedNode = this.state.traversedNodes[this.state.traversedNodes.length - 1] ?? null;
+
+    // 计算各流派选牌数量
+    const routeCardCounts: Record<RouteId, number> = { crit: 0, pierce: 0, dash: 0 };
+    for (const upgradeId of this.state.selectedUpgrades) {
+      const archetype = UPGRADE_ARCHETYPES.find((a) => a.id === upgradeId);
+      if (archetype?.routeId) {
+        routeCardCounts[archetype.routeId]++;
+      }
+    }
+
     const nextNodes = buildNodeOptions(this.state.round, focusRoute, {
       lastNodeType: lastTraversedNode?.type ?? this.state.currentNode?.type ?? null,
       battleWins: this.state.battleWins,
       hpRatio: this.state.stats.hp / Math.max(1, this.state.stats.maxHp),
+      selectedUpgrades: this.state.selectedUpgrades,
+      routeCardCounts,
     });
 
     this.state.phase = nextNodes[0]?.phase ?? this.state.phase;
@@ -2255,16 +2361,11 @@ export class RunEngine {
   }
 
   private getBuildStage(): RouteBuildStage {
-    if (this.state.maturedRoute) {
-      return 'matured';
-    }
-    if (this.state.committedRoute) {
-      return 'committed';
-    }
-    if (this.getDominantRoute()) {
-      return 'hinted';
-    }
-    return 'unformed';
+    return calculateBuildStage(
+      this.state.routeCounts,
+      this.state.committedRoute,
+      this.state.maturedRoute,
+    );
   }
 
   private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage): string {
@@ -2558,6 +2659,24 @@ export class RunEngine {
         continue;
       }
 
+      if (effect.type === 'anomaly') {
+        if (!this.state.activeAnomalies) {
+          this.state.activeAnomalies = {};
+        }
+        const anomalyMap: Record<string, keyof NonNullable<typeof this.state.activeAnomalies>> = {
+          'glass-cannon': 'glassCannon',
+          'berserker': 'berserker',
+          'overload': 'overload',
+          'curse-mark': 'curseMark',
+        };
+        const anomalyKey = anomalyMap[effect.anomalyId];
+        if (anomalyKey) {
+          this.state.activeAnomalies[anomalyKey] = true;
+          this.enqueueTip(`【异常协议】已激活：${this.getAnomalyName(anomalyKey)}`);
+        }
+        continue;
+      }
+
       const routeId = effect.routeId === 'dominant' ? this.getDominantRoute() : effect.routeId;
       if (routeId) {
         this.advanceRoute(routeId, meta);
@@ -2609,7 +2728,10 @@ export class RunEngine {
         phase: this.state.phase,
         pickId: meta?.pickId ?? `route:${routeId}`,
       });
-      this.enqueueTip(`${ROUTE_NAME_MAP[routeId]}流开始成型`);
+      const stageInfo = getBuildStageInfo(routeId, 'committed');
+      this.enqueueTip(`【${stageInfo.name}】${stageInfo.desc}`);
+      // 触发阶段升级视觉反馈
+      this.triggerStageUpgradeVisual(routeId, 'committed');
     }
 
     if (
@@ -2620,7 +2742,10 @@ export class RunEngine {
       this.state.maturedRoute = routeId;
       this.services.metrics.markRouteMatured(routeId);
       this.enqueueAudio('routeMatured');
-      this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.matureHint ?? '');
+      const stageInfo = getBuildStageInfo(routeId, 'matured');
+      this.enqueueTip(`【${stageInfo.name}】${stageInfo.desc}`);
+      // 触发阶段升级视觉反馈
+      this.triggerStageUpgradeVisual(routeId, 'matured');
     }
   }
 
@@ -2647,8 +2772,35 @@ export class RunEngine {
         if (!this.state.activeRoutePerks) {
           this.state.activeRoutePerks = {};
         }
-        this.state.activeRoutePerks[perkKey] = true;
+        // 只在首次激活时显示提示
+        if (!this.state.activeRoutePerks[perkKey]) {
+          this.state.activeRoutePerks[perkKey] = true;
+          this.showBuildReadyToast(tag);
+        }
       }
+    }
+  }
+
+  // Build成型UI提示 - 根据当前阶段显示不同风格
+  private showBuildReadyToast(tag: string): void {
+    const toastMap: Record<string, { title: string; desc: string; routeId: RouteId }> = {
+      'crit-afterglow': { title: '破绽掌控', desc: '暴击破绽持续时间延长', routeId: 'crit' },
+      'crit-embershard': { title: '爆点扩散', desc: '暴击产生范围爆点伤害', routeId: 'crit' },
+      'crit-crownfire': { title: '破绽爆发', desc: '破绽期间暴击伤害提升', routeId: 'crit' },
+      'pierce-seamkeep': { title: '裂纹留存', desc: '穿透裂纹持续时间延长', routeId: 'pierce' },
+      'pierce-floodgate': { title: '裂口洪泄', desc: '穿透后额外弹道', routeId: 'pierce' },
+      'pierce-riftbloom': { title: '裂纹绽放', desc: '裂纹扩散伤害', routeId: 'pierce' },
+      'dash-brush': { title: '脉冲刷印', desc: '脉冲更容易叠加标记', routeId: 'dash' },
+      'dash-sidestep-bank': { title: '侧步蓄能', desc: '回切窗口伤害提升', routeId: 'dash' },
+      'dash-zero-window': { title: '零窗打击', desc: '窗口内命中额外伤害', routeId: 'dash' },
+      'dash-afterimage': { title: '残影炮塔', desc: '回切后留下伤害残影', routeId: 'dash' },
+    };
+
+    const toast = toastMap[tag];
+    if (toast) {
+      const stage = this.getRouteBuildStage(toast.routeId);
+      const stageInfo = getBuildStageInfo(toast.routeId, stage === 'unformed' ? 'hinted' : stage);
+      this.enqueueTip(`【${stageInfo.name}】${toast.title}: ${toast.desc}`);
     }
   }
 
@@ -2769,6 +2921,29 @@ export class RunEngine {
     battle.playerX = nextPlayerX;
     battle.playerY = nextPlayerY;
 
+    // P1-2: 更新玩家拖尾（Dash或Crit Overdrive状态下）
+    const isHighSpeed = battle.dashDriveSec > 0 || battle.critOverdriveSec > 0;
+    if (isHighSpeed && battle.playerTrail) {
+      const trailColor = battle.dashDriveSec > 0 ? 0x00ff88 : 0xff6b2c;
+      battle.playerTrail.push({
+        x: battle.playerX,
+        y: battle.playerY,
+        lifeSec: 0.2,
+        color: trailColor,
+      });
+      // 更新拖尾点生命周期
+      for (let i = battle.playerTrail.length - 1; i >= 0; i--) {
+        battle.playerTrail[i].lifeSec -= dt;
+        if (battle.playerTrail[i].lifeSec <= 0) {
+          battle.playerTrail.splice(i, 1);
+        }
+      }
+      // 限制拖尾长度
+      if (battle.playerTrail.length > 8) {
+        battle.playerTrail.shift();
+      }
+    }
+
     battle.dashCooldownSec -= dt;
     if ((this.state.stats.dashPulseDamage <= 0 && this.state.routeCounts.dash <= 0) || battle.dashCooldownSec > 0) {
       return;
@@ -2813,6 +2988,13 @@ export class RunEngine {
     // Dash路线独特被动：幽灵打击 - Dash后下次攻击穿透并造成额外伤害
     if (dashStage === 'committed' || dashStage === 'matured') {
       battle.dashGhostStrikeReady = true;
+    }
+
+    // P2-2: Dash × Crit 联动 - 开启相位暴击窗口
+    const critStage = this.getRouteBuildStage('crit');
+    if ((dashStage === 'committed' || dashStage === 'matured') &&
+        (critStage === 'committed' || critStage === 'matured')) {
+      battle.dashCritWindowSec = 3.0; // 3秒相位暴击窗口
     }
 
     // Dash路线独特被动：动量 - 连续Dash叠加攻速和移速加成
@@ -2890,6 +3072,25 @@ export class RunEngine {
             growthPerSec: 150,
             innerRadiusRatio: 0.6,
           });
+
+          // P2-2: 残影爆点 - 如果Crit路线成型，残影触发小型爆点
+          const critStage = this.getRouteBuildStage('crit');
+          if (critStage === 'committed' || critStage === 'matured') {
+            this.createVisualEffect(battle, 'critExplosion', enemy.x, enemy.y, { scale: 0.6, color: 0x88ff88 });
+            this.createCombatPulse(battle, {
+              x: enemy.x,
+              y: enemy.y,
+              radius: 25,
+              lifeSec: 0.2,
+              color: 0x88ff88,
+              secondaryColor: 0xc8ffc8,
+              fillAlpha: 0.1,
+              strokeAlpha: 0.7,
+              strokeWidth: 2,
+              growthPerSec: 120,
+              innerRadiusRatio: 0.5,
+            });
+          }
         }
 
         this.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
@@ -2935,6 +3136,17 @@ export class RunEngine {
     }
     battle.enemySpawnTimerSec -= dt;
     battle.eliteSupportCooldownSec = Math.max(0, battle.eliteSupportCooldownSec - dt);
+    // 绞锁压制机制：更新Boss脆弱窗口
+    if (battle.eliteSummonVulnerabilitySec > 0) {
+      battle.eliteSummonVulnerabilitySec = Math.max(0, battle.eliteSummonVulnerabilitySec - dt);
+      if (battle.eliteSummonVulnerabilitySec <= 0) {
+        // 脆弱窗口结束，重新激活护卫-Boss链接（如果还有护卫存活）
+        const hasEscorts = battle.enemies.some((e) => !e.elite && e.role === 'escort' && e.hp > 0);
+        if (hasEscorts) {
+          battle.escortBossLinkActive = true;
+        }
+      }
+    }
     const regularEnemyCap = this.getRegularEnemyCap(battle);
     // Defensive: ensure regularEnemyCap is a valid finite number
     if (!Number.isFinite(regularEnemyCap)) {
@@ -3099,7 +3311,8 @@ export class RunEngine {
     battle: BattleState,
   ): number {
     const baseBatch = template.eliteRule?.escortBatch ?? 0;
-    return Math.max(0, baseBatch + (this.getActivePressurePhase(battle)?.escortBatchBonus ?? 0));
+    const phase = this.getActivePressurePhase(battle);
+    return calculateEscortBatch(baseBatch, phase as PressurePhase | null);
   }
 
   private getEliteEscortMax(
@@ -3108,7 +3321,8 @@ export class RunEngine {
   ): number {
     const eliteRule = template.eliteRule;
     const baseMax = eliteRule?.escortMax ?? eliteRule?.escortBatch ?? 0;
-    return Math.max(0, baseMax + (this.getActivePressurePhase(battle)?.escortMaxBonus ?? 0));
+    const phase = this.getActivePressurePhase(battle);
+    return calculateEscortMax(baseMax, phase as PressurePhase | null);
   }
 
   private getEliteEscortRespawnSec(
@@ -3116,8 +3330,8 @@ export class RunEngine {
     battle: BattleState,
   ): number {
     const baseRespawn = template.eliteRule?.escortRespawnSec ?? 5;
-    const multiplier = this.getActivePressurePhase(battle)?.escortRespawnMultiplier ?? 1;
-    return Math.max(0.75, baseRespawn * multiplier);
+    const phase = this.getActivePressurePhase(battle);
+    return calculateEscortRespawnSec(baseRespawn, phase as PressurePhase | null);
   }
 
   private spawnPhaseEscortBurst(battle: BattleState, requestedCount: number): void {
@@ -3130,6 +3344,11 @@ export class RunEngine {
       return;
     }
 
+    // 绞锁压制机制：召唤后脆弱窗口期间不再生成新护卫
+    if (battle.eliteSummonVulnerabilitySec > 0) {
+      return;
+    }
+
     const escortMax = this.getEliteEscortMax(template, battle);
     const currentEscorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
     const allowedCount = Math.min(requestedCount, Math.max(0, escortMax - currentEscorts));
@@ -3138,6 +3357,13 @@ export class RunEngine {
     }
 
     this.spawnEliteSupportEnemies(battle, allowedCount);
+
+    // 绞锁压制机制：召唤后触发Boss脆弱窗口
+    const vulnerabilitySec = template.eliteRule.summonVulnerabilitySec ?? 0;
+    if (vulnerabilitySec > 0) {
+      battle.eliteSummonVulnerabilitySec = vulnerabilitySec;
+      battle.escortBossLinkActive = false; // 脆弱窗口期间链接暂时中断
+    }
   }
 
   private spawnPatternEscortWave(
@@ -3993,6 +4219,15 @@ export class RunEngine {
       }
       battle.enemies.push(escort);
     }
+
+    // 绞锁压制机制：生成护卫后激活Boss-护卫链接，并给予脆弱窗口
+    const vulnerabilitySec = template.eliteRule?.summonVulnerabilitySec ?? 0;
+    if (vulnerabilitySec > 0 && battle.templateId === 'elite-vice') {
+      battle.eliteSummonVulnerabilitySec = vulnerabilitySec;
+      battle.escortBossLinkActive = false;
+    } else if (battle.templateId === 'elite-vice') {
+      battle.escortBossLinkActive = true;
+    }
   }
 
   private updateShooting(battle: BattleState, dt: number): void {
@@ -4040,6 +4275,10 @@ export class RunEngine {
     }
     if (battle.dashDriveSec > 0 && this.state.maturedRoute === 'dash') {
       shotCount += 1;
+    }
+    // 过载协议：每次攻击发射3发子弹
+    if (this.state.activeAnomalies?.overload) {
+      shotCount = 3;
     }
     let spreadStep = 0.18;
     let projectileSpeed = this.getProjectileSpeed();
@@ -4172,7 +4411,9 @@ export class RunEngine {
     for (let index = 0; index < shotCount; index += 1) {
       const offset = (index - spreadCenter) * spreadStep;
       const angle = baseAngle + offset;
-      battle.bullets.push({
+      // P1-2: 判断是否为高速子弹（Crit Overdrive 或 Dash Drive 状态）
+      const isHighSpeed = battle.critOverdriveSec > 0 || battle.dashDriveSec > 0;
+      const bullet: BulletState = {
         id: battle.nextBulletId++,
         x: battle.playerX,
         y: battle.playerY,
@@ -4184,7 +4425,13 @@ export class RunEngine {
         canEcho: this.state.routeCounts.pierce > 0,
         hitCount: 0,
         routeFocus: focusRoute ?? undefined,
-      });
+      };
+      // P1-2: 高速子弹添加拖尾
+      if (isHighSpeed) {
+        bullet.trail = [];
+        bullet.isCritBullet = battle.critOverdriveSec > 0;
+      }
+      battle.bullets.push(bullet);
     }
 
     // Dash路线独特被动：幽灵打击（额外发射一颗子弹）
@@ -4217,6 +4464,23 @@ export class RunEngine {
       bullet.y += bullet.vy * dt;
       bullet.lifeSec -= dt;
       let bulletActive = bullet.lifeSec > 0;
+
+      // P1-2: 更新子弹拖尾
+      if (bullet.trail) {
+        // 添加当前位置到拖尾
+        bullet.trail.push({ x: bullet.x, y: bullet.y, lifeSec: 0.15 });
+        // 更新拖尾点生命周期
+        for (let i = bullet.trail.length - 1; i >= 0; i--) {
+          bullet.trail[i].lifeSec -= dt;
+          if (bullet.trail[i].lifeSec <= 0) {
+            bullet.trail.splice(i, 1);
+          }
+        }
+        // 限制拖尾长度
+        if (bullet.trail.length > 5) {
+          bullet.trail.shift();
+        }
+      }
 
       for (const enemy of battle.enemies) {
         if (!bulletActive) {
@@ -4294,12 +4558,67 @@ export class RunEngine {
           enemy.routeHitFlashSec = 0.18;
         }
 
+        // P2-1: 裂纹穿透 - 敌人在裂纹上时伤害+50%
+        if (this.isEnemyOnCrack(battle, enemy)) {
+          const critStage = this.getRouteBuildStage('crit');
+          const pierceStage = this.getRouteBuildStage('pierce');
+          // 需要Crit和Pierce都达到一定阶段才触发联动
+          if ((critStage === 'committed' || critStage === 'matured') &&
+              (pierceStage === 'committed' || pierceStage === 'matured')) {
+            damage *= 1.5; // +50%伤害
+            enemy.routeHitFlashSec = 0.25;
+          }
+        }
+
+        // 狂战士协议：伤害随生命降低而增加（最高+150%）
+        if (this.state.activeAnomalies?.berserker) {
+          const hpRatio = 1 - this.state.stats.hp / this.state.stats.maxHp;
+          const damageBonus = hpRatio * 1.5; // 生命越低伤害越高，最高+150%
+          damage *= 1 + damageBonus;
+        }
+
+        // 绞锁压制机制：护卫-Boss链接减伤
+        if (enemy.elite && battle.escortBossLinkActive && battle.templateId === 'elite-vice') {
+          const template = this.getBattleTemplate(battle.templateId);
+          const damageReduction = template.eliteRule?.escortBossDamageReduction ?? 0.6;
+          damage *= (1 - damageReduction);
+        }
+
         enemy.hp -= damage;
         bullet.hitCount += 1;
 
         // 记录击杀类型用于路线特色击杀奖励
         enemy.lastHitWasCrit = critical;
         enemy.lastHitWasPierce = bullet.hitCount > 1 || bullet.routeFocus === 'pierce';
+
+        // P2-3: 暴击计数
+        if (critical) {
+          battle.consecutiveCrits = Math.min(5, battle.consecutiveCrits + 1);
+        } else {
+          battle.consecutiveCrits = 0;
+        }
+
+        // 触发视觉特效
+        if (critical) {
+          this.triggerCritExplosion(battle, enemy.x, enemy.y, 1);
+          // 玻璃大炮协议：暴击必定触发AOE
+          if (this.state.activeAnomalies?.glassCannon) {
+            this.triggerGlassCannonAoE(battle, enemy.x, enemy.y, damage * 0.5);
+          }
+          // P1-1: Crit路线留下裂纹
+          const critStage = this.getRouteBuildStage('crit');
+          if (critStage === 'committed' || critStage === 'matured') {
+            this.createCrackMark(battle, enemy.x, enemy.y, 'crit');
+          }
+        }
+        if (bullet.hitCount > 1 || bullet.routeFocus === 'pierce') {
+          this.triggerPierceShockwave(battle, enemy.x, enemy.y, battle.pierceChainStacks);
+          // P1-1: Pierce路线留下裂纹
+          const pierceStage = this.getRouteBuildStage('pierce');
+          if (pierceStage === 'committed' || pierceStage === 'matured') {
+            this.createCrackMark(battle, enemy.x, enemy.y, 'pierce');
+          }
+        }
 
         // Pierce路线独特被动
         const pierceStage = this.getRouteBuildStage('pierce');
@@ -6397,6 +6716,83 @@ export class RunEngine {
     });
   }
 
+  // Build成长系统：检测并触发Build里程碑
+  private checkBuildMilestones(): void {
+    if (!this.state.selectedUpgrades || this.state.selectedUpgrades.length === 0) {
+      return;
+    }
+
+    // 计算各流派已选牌数量
+    const routeCardCounts: Record<RouteId, number> = {
+      crit: 0,
+      pierce: 0,
+      dash: 0,
+    };
+    let hasPayoff = false;
+
+    for (const upgradeId of this.state.selectedUpgrades) {
+      const archetype = UPGRADE_ARCHETYPES.find((a) => a.id === upgradeId);
+      if (archetype?.routeId) {
+        routeCardCounts[archetype.routeId]++;
+        const stage = getUpgradeStage(upgradeId);
+        if (stage === 'payoff' || stage === 'legendary') {
+          hasPayoff = true;
+        }
+      }
+    }
+
+    // 检查每个里程碑
+    for (const milestone of BUILD_MILESTONES) {
+      const routeCount = routeCardCounts[milestone.routeId] ?? 0;
+
+      // 检查是否满足条件（牌数要求 + 阶段要求）
+      if (routeCount >= milestone.requiredCards) {
+        // 检查阶段要求（如果有）
+        if (milestone.minStage) {
+          // 检查玩家是否拥有该流派的minStage阶段的牌
+          let hasMinStageCard = false;
+          for (const upgradeId of this.state.selectedUpgrades) {
+            const archetype = UPGRADE_ARCHETYPES.find((a) => a.id === upgradeId);
+            if (archetype?.routeId === milestone.routeId) {
+              const stage = getUpgradeStage(upgradeId);
+              // 比较阶段：starter < bridge < amplifier < payoff < legendary
+              const stageOrder: Record<string, number> = {
+                starter: 0,
+                bridge: 1,
+                amplifier: 2,
+                payoff: 3,
+                legendary: 4,
+              };
+              if (stageOrder[stage] >= stageOrder[milestone.minStage]) {
+                hasMinStageCard = true;
+                break;
+              }
+            }
+          }
+          if (!hasMinStageCard) {
+            continue; // 不满足阶段要求，跳过此里程碑
+          }
+        }
+
+        // 检查是否已触发过
+        if (!this.state.buildMilestonesTriggered?.includes(milestone.id)) {
+          // 触发里程碑
+          if (!this.state.buildMilestonesTriggered) {
+            this.state.buildMilestonesTriggered = [];
+          }
+          this.state.buildMilestonesTriggered.push(milestone.id);
+
+          // 播放特效和提示
+          this.enqueueAudio('upgradeEquipped');
+          this.enqueueTip(`【${milestone.name}】${milestone.description}`);
+
+          // 屏幕闪光
+          this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.5);
+        }
+      }
+    }
+  }
+
   private createCombatPulse(
     battle: BattleState,
     config: {
@@ -6435,6 +6831,334 @@ export class RunEngine {
       spokeLength: config.spokeLength ?? 0,
       angle: config.angle ?? 0,
       spinRate: config.spinRate ?? 0,
+    });
+  }
+
+  // 视觉特效系统 - 创建暴击爆炸、闪电链、穿透冲击波等效果
+  private createVisualEffect(
+    battle: BattleState,
+    type: VisualEffectType,
+    x: number,
+    y: number,
+    options?: {
+      scale?: number;
+      targetX?: number;
+      targetY?: number;
+      chainDepth?: number;
+      color?: number;
+      duration?: number;
+    },
+  ): void {
+    const nextVisualEffectId = battle.visualEffects.length > 0
+      ? Math.max(...battle.visualEffects.map(v => v.id)) + 1
+      : 1;
+
+    const colors: Record<VisualEffectType, { primary: number; secondary: number }> = {
+      critExplosion: { primary: 0xff6b2c, secondary: 0xffaa5e },
+      pierceShockwave: { primary: 0x00ccff, secondary: 0xaaffff },
+      lightningChain: { primary: 0xffd700, secondary: 0xffffff },
+      buildReadyFlash: { primary: 0xffd700, secondary: 0xffffff },
+    };
+
+    const maxLifeSecMap: Record<VisualEffectType, number> = {
+      critExplosion: 0.35,
+      pierceShockwave: 0.5,
+      lightningChain: 0.25,
+      buildReadyFlash: options?.duration ?? 1.0,
+    };
+
+    const scaleMap: Record<VisualEffectType, number> = {
+      critExplosion: options?.scale ?? 1.5,
+      pierceShockwave: options?.scale ?? 2.0,
+      lightningChain: options?.scale ?? 1.0,
+      buildReadyFlash: options?.scale ?? 1.0,
+    };
+
+    battle.visualEffects.push({
+      id: nextVisualEffectId,
+      type,
+      x,
+      y,
+      lifeSec: maxLifeSecMap[type],
+      maxLifeSec: maxLifeSecMap[type],
+      scale: scaleMap[type],
+      alpha: 1.0,
+      rotation: Math.random() * Math.PI * 2,
+      color: options?.color ?? colors[type].primary,
+      secondaryColor: colors[type].secondary,
+      targetX: options?.targetX,
+      targetY: options?.targetY,
+      chainDepth: options?.chainDepth ?? 0,
+    });
+  }
+
+  // 在暴击时触发爆炸特效
+  private triggerCritExplosion(battle: BattleState, x: number, y: number, intensity: number = 1): void {
+    // P2-2: 相位暴击 - Dash后暴击范围+100%
+    const dashStage = this.getRouteBuildStage('dash');
+    const critStage = this.getRouteBuildStage('crit');
+    let rangeMultiplier = 1.0;
+    if ((dashStage === 'committed' || dashStage === 'matured') &&
+        (critStage === 'committed' || critStage === 'matured') &&
+        battle.dashCritWindowSec > 0) {
+      rangeMultiplier = 2.0; // 范围+100%
+    }
+
+    this.createVisualEffect(battle, 'critExplosion', x, y, { scale: (1.0 + intensity * 0.5) * rangeMultiplier });
+    this.createCombatPulse(battle, {
+      x,
+      y,
+      radius: (35 + intensity * 15) * rangeMultiplier,
+      lifeSec: 0.3,
+      color: 0xff6b2c,
+      secondaryColor: 0xffaa5e,
+      fillAlpha: 0.2,
+      strokeAlpha: 0.9,
+      strokeWidth: 3,
+      growthPerSec: 180,
+      innerRadiusRatio: 0.4,
+    });
+
+    // P2-2: 使用相位暴击后关闭窗口
+    if (rangeMultiplier > 1.0) {
+      battle.dashCritWindowSec = 0;
+    }
+  }
+
+  // 在穿透时触发冲击波特效
+  private triggerPierceShockwave(battle: BattleState, x: number, y: number, chainCount: number = 0): void {
+    this.createVisualEffect(battle, 'pierceShockwave', x, y, { scale: 1.0 + chainCount * 0.3 });
+    this.createCombatPulse(battle, {
+      x,
+      y,
+      radius: 45 + chainCount * 8,
+      lifeSec: 0.4,
+      color: 0x00ccff,
+      secondaryColor: 0xaaffff,
+      fillAlpha: 0.12,
+      strokeAlpha: 0.85,
+      strokeWidth: 2.5,
+      growthPerSec: 200,
+      innerRadiusRatio: 0.5,
+      spokeCount: 6 + chainCount,
+      spokeLength: 12,
+      spinRate: 3.0,
+    });
+  }
+
+  // 玻璃大炮协议：暴击AOE伤害
+  private triggerGlassCannonAoE(battle: BattleState, x: number, y: number, splashDamage: number): void {
+    const AOE_RADIUS = 80;
+    // 对范围内敌人造成伤害
+    for (const enemy of battle.enemies) {
+      if (enemy.hp <= 0) continue;
+      const distance = Math.hypot(enemy.x - x, enemy.y - y);
+      if (distance <= AOE_RADIUS + enemy.radius) {
+        const damageRatio = 1 - (distance / (AOE_RADIUS + enemy.radius)) * 0.5; // 距离越远伤害越低
+        enemy.hp -= splashDamage * damageRatio;
+      }
+    }
+    // 视觉特效
+    this.createVisualEffect(battle, 'critExplosion', x, y, { scale: 1.5, color: 0xff4500 });
+    this.createCombatPulse(battle, {
+      x,
+      y,
+      radius: AOE_RADIUS,
+      lifeSec: 0.35,
+      color: 0xff4500,
+      secondaryColor: 0xff8f70,
+      fillAlpha: 0.15,
+      strokeAlpha: 0.8,
+      strokeWidth: 4,
+      growthPerSec: 200,
+      innerRadiusRatio: 0.3,
+    });
+  }
+
+  // 触发闪电链特效
+  private triggerLightningChain(
+    battle: BattleState,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    depth: number = 0,
+  ): void {
+    if (depth > 3) return;
+    this.createVisualEffect(battle, 'lightningChain', fromX, fromY, {
+      targetX: toX,
+      targetY: toY,
+      chainDepth: depth,
+    });
+  }
+
+  // 更新视觉特效生命周期
+  private updateVisualEffects(battle: BattleState, dt: number): void {
+    if (!battle.visualEffects || battle.visualEffects.length === 0) return;
+
+    for (let i = battle.visualEffects.length - 1; i >= 0; i--) {
+      const effect = battle.visualEffects[i];
+      effect.lifeSec -= dt;
+
+      if (effect.lifeSec <= 0) {
+        battle.visualEffects.splice(i, 1);
+      }
+    }
+  }
+
+  // P1-1: 创建裂纹地面效果
+  private createCrackMark(
+    battle: BattleState,
+    x: number,
+    y: number,
+    routeId: RouteId,
+  ): void {
+    const stage = this.getRouteBuildStage(routeId);
+    if (stage === 'unformed') return;
+
+    const nextCrackId = battle.crackMarks.length > 0
+      ? Math.max(...battle.crackMarks.map(c => c.id)) + 1
+      : 1;
+
+    const colors: Record<RouteId, number> = {
+      crit: 0xff6b2c,
+      pierce: 0x00ccff,
+      dash: 0x00ff88,
+    };
+
+    const maxLifeSec = stage === 'matured' ? 4.0 : 3.0;
+    const radius = stage === 'matured' ? 35 : 28;
+
+    battle.crackMarks.push({
+      id: nextCrackId,
+      x,
+      y,
+      lifeSec: maxLifeSec,
+      maxLifeSec,
+      radius,
+      color: colors[routeId],
+      routeId,
+    });
+  }
+
+  // P1-1: 更新裂纹生命周期
+  private updateCrackMarks(battle: BattleState, dt: number): void {
+    if (!battle.crackMarks || battle.crackMarks.length === 0) return;
+
+    for (let i = battle.crackMarks.length - 1; i >= 0; i--) {
+      const crack = battle.crackMarks[i];
+      crack.lifeSec -= dt;
+
+      if (crack.lifeSec <= 0) {
+        battle.crackMarks.splice(i, 1);
+      }
+    }
+  }
+
+  // Build阶段升级视觉反馈
+  private triggerStageUpgradeVisual(
+    routeId: RouteId,
+    stage: 'committed' | 'matured',
+  ): void {
+    const battle = this.state.battle;
+    if (!battle) return;
+
+    const stageInfo = getBuildStageInfo(routeId, stage);
+    const colorHex = parseInt(stageInfo.color.replace('#', '0x'));
+
+    // 创建屏幕边缘闪烁效果
+    this.createVisualEffect(battle, 'buildReadyFlash', CENTER_X, CENTER_Y, {
+      color: colorHex,
+      scale: stage === 'matured' ? 1.5 : 1.0,
+      duration: stage === 'matured' ? 1.2 : 0.8,
+    });
+
+    // 在玩家周围创建脉冲效果
+    this.createCombatPulse(battle, {
+      x: battle.playerX,
+      y: battle.playerY,
+      radius: stage === 'matured' ? 180 : 120,
+      lifeSec: stage === 'matured' ? 0.6 : 0.4,
+      color: colorHex,
+      fillAlpha: stage === 'matured' ? 0.25 : 0.15,
+      strokeAlpha: stage === 'matured' ? 0.8 : 0.6,
+    });
+
+    // 成熟阶段额外触发粒子爆发
+    if (stage === 'matured') {
+      const particleCount = 12;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2;
+        const distance = 80 + Math.random() * 40;
+        this.createVisualEffect(battle, 'critExplosion',
+          battle.playerX + Math.cos(angle) * distance,
+          battle.playerY + Math.sin(angle) * distance,
+          { scale: 0.5 + Math.random() * 0.3, color: colorHex },
+        );
+      }
+    }
+  }
+
+  // P2-1: 检查敌人是否在裂纹上
+  private isEnemyOnCrack(battle: BattleState, enemy: BattleState['enemies'][number]): boolean {
+    if (!battle.crackMarks || battle.crackMarks.length === 0) return false;
+
+    for (const crack of battle.crackMarks) {
+      const distance = Math.hypot(enemy.x - crack.x, enemy.y - crack.y);
+      if (distance <= crack.radius + enemy.radius) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // P2-1: 暴击击杀后裂纹扩散
+  private spreadCracksOnCritKill(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+  ): void {
+    const critStage = this.getRouteBuildStage('crit');
+    const pierceStage = this.getRouteBuildStage('pierce');
+
+    // 需要Crit和Pierce都达到committed或matured才触发
+    if ((critStage !== 'committed' && critStage !== 'matured') ||
+        (pierceStage !== 'committed' && pierceStage !== 'matured')) {
+      return;
+    }
+
+    // 在敌人周围生成新的裂纹
+    const spreadCount = critStage === 'matured' ? 4 : 3;
+    const spreadRadius = 60;
+
+    for (let i = 0; i < spreadCount; i++) {
+      const angle = (i / spreadCount) * Math.PI * 2 + Math.random() * 0.5;
+      const distance = spreadRadius + Math.random() * 20;
+      const x = enemy.x + Math.cos(angle) * distance;
+      const y = enemy.y + Math.sin(angle) * distance;
+
+      // 混合颜色 - Crit和Pierce的混合
+      this.createCrackMark(battle, x, y, 'crit');
+      // 创建Pierce风格的次级裂纹
+      setTimeout(() => {
+        if (this.state.battle) {
+          this.createCrackMark(this.state.battle, x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30, 'pierce');
+        }
+      }, 100);
+    }
+
+    // 视觉效果
+    this.createCombatPulse(battle, {
+      x: enemy.x,
+      y: enemy.y,
+      radius: spreadRadius * 1.5,
+      lifeSec: 0.5,
+      color: 0xff6b2c, // Crit颜色
+      secondaryColor: 0x00ccff, // Pierce颜色
+      fillAlpha: 0.1,
+      strokeAlpha: 0.7,
+      strokeWidth: 3,
+      growthPerSec: spreadRadius * 3,
+      innerRadiusRatio: 0.4,
     });
   }
 
@@ -6691,6 +7415,16 @@ export class RunEngine {
   }
 
   private handleEnemyDefeated(battle: BattleState, enemy: BattleState['enemies'][number]): void {
+    // 绞锁压制机制：护卫死亡时检查是否还有存活护卫
+    if (enemy.role === 'escort' && battle.templateId === 'elite-vice') {
+      const remainingEscorts = battle.enemies.filter(
+        (e) => !e.elite && e.role === 'escort' && e.hp > 0 && e.id !== enemy.id
+      ).length;
+      if (remainingEscorts === 0) {
+        battle.escortBossLinkActive = false;
+      }
+    }
+
     const critStage = this.getRouteBuildStage('crit');
     const pierceStage = this.getRouteBuildStage('pierce');
     const dashStage = this.getRouteBuildStage('dash');
@@ -6806,6 +7540,10 @@ export class RunEngine {
           angle: Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x),
           spinRate: enemy.elite ? 6.8 : 5.2,
         });
+      }
+      // P2-1: 暴击击杀后裂纹扩散
+      if (enemy.lastHitWasCrit) {
+        this.spreadCracksOnCritKill(battle, enemy);
       }
     }
 
@@ -7062,37 +7800,50 @@ export class RunEngine {
       });
     }
 
-    // Pierce路线独特被动：穿透印记爆破
-    if (pierceStage === 'matured' && battle.pierceFractureMark.has(enemy.id)) {
-      // 击杀带穿透印记的敌人时，传播印记到附近敌人
-      const spreadRadius = 120;
-      battle.enemies.forEach((target) => {
-        if (target.id === enemy.id || target.hp <= 0) return;
-        const distance = Math.hypot(target.x - enemy.x, target.y - enemy.y);
-        if (distance <= spreadRadius) {
-          battle.pierceFractureMark.add(target.id);
-          target.hitFlashSec = 0.12;
-        }
-      });
+    // 诅咒标记：击杀后立即重置所有技能冷却，敌人死亡后生成诅咒区域
+    if (this.state.activeAnomalies?.curseMark) {
+      // 重置技能冷却
+      battle.fireCooldownSec = 0;
+      battle.dashCooldownSec = 0;
+      battle.critComboDecaySec = 0;
+      battle.critBurstChainSec = Math.max(battle.critBurstChainSec, 1.0);
 
-      // 创建传播视觉效果
+      // 创建诅咒区域（对敌人持续造成伤害）
+      const curseRadius = 60;
+      const curseDamage = this.state.stats.damage * 0.3;
+      const curseDuration = 3.0;
+
+      // 诅咒区域视觉效果
       this.createCombatPulse(battle, {
         x: enemy.x,
         y: enemy.y,
-        radius: 20,
-        lifeSec: 0.3,
-        color: 0x8844ff,
-        secondaryColor: 0xcc88ff,
-        fillAlpha: 0.12,
-        strokeAlpha: 0.65,
-        strokeWidth: 2.5,
-        growthPerSec: spreadRadius * 3,
-        innerRadiusRatio: 0.6,
-        spokeCount: 8,
-        spokeLength: 16,
-        angle: 0,
-        spinRate: 12,
+        radius: 15,
+        lifeSec: curseDuration,
+        color: 0x440066,
+        secondaryColor: 0x8800cc,
+        fillAlpha: 0.2,
+        strokeAlpha: 0.6,
+        strokeWidth: 2,
+        growthPerSec: curseRadius * 0.8,
+        innerRadiusRatio: 0.4,
+        spokeCount: 6,
+        spokeLength: curseRadius * 0.5,
+        angle: Math.random() * Math.PI * 2,
+        spinRate: -3,
       });
+
+      // 在诅咒区域效果结束时对敌人造成伤害
+      setTimeout(() => {
+        if (!this.state.battle) return;
+        for (const target of this.state.battle.enemies) {
+          if (target.hp <= 0) continue;
+          const distance = Math.hypot(target.x - enemy.x, target.y - enemy.y);
+          if (distance <= curseRadius) {
+            target.hp -= curseDamage;
+            target.hitFlashSec = 0.1;
+          }
+        }
+      }, curseDuration * 1000);
     }
   }
 
@@ -8945,4 +9696,91 @@ export class RunEngine {
   private getPierceCooldownRefund(): number {
     return getPierceCooldownRefund(this.getRouteBuildStage('pierce'));
   }
+
+  // 获取异常节点名称
+  private getAnomalyName(anomalyKey: keyof NonNullable<typeof this.state.activeAnomalies>): string {
+    const nameMap: Record<typeof anomalyKey, string> = {
+      glassCannon: '玻璃大炮协议',
+      berserker: '狂战士协议',
+      overload: '过载协议',
+      curseMark: '诅咒标记',
+    };
+    return nameMap[anomalyKey] ?? '未知协议';
+  }
+
+  // P2-3: 检查并触发胡局机制
+  private checkOverdriveTriggers(battle: BattleState): void {
+    if (!battle.overdriveMode || battle.overdriveMode.active) return;
+
+    const critStage = this.getRouteBuildStage('crit');
+    const pierceStage = this.getRouteBuildStage('pierce');
+    const dashStage = this.getRouteBuildStage('dash');
+
+    // 临界超频：连续暴击5次触发
+    if (critStage === 'matured' && battle.consecutiveCrits >= 5 && battle.overdriveMode.cooldownSec <= 0) {
+      this.triggerOverdrive(battle, 'crit-overdrive', 5);
+    }
+    // 无限裂界：Pierce payoff 3次触发
+    else if (pierceStage === 'matured' && battle.piercePayoffCount >= 3 && battle.overdriveMode.cooldownSec <= 0) {
+      this.triggerOverdrive(battle, 'infinite-pierce', 10);
+    }
+    // 相位超载：连续Dash 3次触发
+    else if (dashStage === 'matured' && battle.dashConsecutiveCount >= 3 && battle.overdriveMode.cooldownSec <= 0) {
+      this.triggerOverdrive(battle, 'phase-overload', 8);
+    }
+  }
+
+  // P2-3: 触发胡局模式
+  private triggerOverdrive(
+    battle: BattleState,
+    type: 'infinite-pierce' | 'crit-overdrive' | 'phase-overload',
+    durationSec: number,
+  ): void {
+    if (!battle.overdriveMode) return;
+
+    battle.overdriveMode.active = true;
+    battle.overdriveMode.type = type;
+    battle.overdriveMode.remainingSec = durationSec;
+    battle.overdriveMode.cooldownSec = 60; // 60秒冷却
+
+    // 视觉反馈
+    const colors: Record<typeof type, number> = {
+      'infinite-pierce': 0x0099ff,
+      'crit-overdrive': 0xff4500,
+      'phase-overload': 0x4aff4a,
+    };
+    const names: Record<typeof type, string> = {
+      'infinite-pierce': '无限裂界',
+      'crit-overdrive': '临界超频',
+      'phase-overload': '相位超载',
+    };
+
+    this.enqueueTip(`【胡局】${names[type]}启动！`);
+    this.createVisualEffect(battle, 'buildReadyFlash', CENTER_X, CENTER_Y, {
+      color: colors[type],
+      scale: 2,
+      duration: 1.5,
+    });
+  }
+
+  // P2-3: 更新胡局模式
+  private updateOverdriveMode(battle: BattleState, dt: number): void {
+    if (!battle.overdriveMode) return;
+
+    // 冷却计时
+    if (battle.overdriveMode.cooldownSec > 0) {
+      battle.overdriveMode.cooldownSec -= dt;
+    }
+
+    // 活跃模式计时
+    if (battle.overdriveMode.active) {
+      battle.overdriveMode.remainingSec -= dt;
+      if (battle.overdriveMode.remainingSec <= 0) {
+        battle.overdriveMode.active = false;
+        battle.overdriveMode.type = null;
+        this.enqueueTip('【胡局】模式结束');
+      }
+    }
+  }
 }
+

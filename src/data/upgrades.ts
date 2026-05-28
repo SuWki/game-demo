@@ -114,25 +114,13 @@ const GENERIC_PRIMARY_MODIFIER_MAP: Partial<Record<string, keyof StatModifiers>>
   'generic-frame': 'maxHp',
   'generic-thrusters': 'moveSpeed',
   'generic-overclock': 'regeneration',
-  'generic-vector-buffer': 'moveSpeed',
   'generic-pressure-bypass': 'regeneration',
-  'generic-sideband-cache': 'fireRate',
-  'generic-open-loop': 'maxHp',
-  'generic-crossfeed': 'fireRate',
-  'generic-reroute-buffer': 'moveSpeed',
-  'generic-relay-throttle': 'fireRate',
-  'generic-terminal-weave': 'damage',
-  'generic-sightline-cache': 'projectileSpeed',
-  'generic-terminal-baffle': 'maxHp',
   'generic-salvo-cache': 'damage',
   'generic-drift-anchor': 'moveSpeed',
-  'generic-branch-buffer': 'moveSpeed',
-  'generic-last-mile': 'damage',
-  'generic-mirror-lattice': 'critChance',
   'generic-borrowed-tail': 'multishot',
-  'generic-crown-pocket': 'maxHp',
-  'generic-tailfold': 'damage',
-  'generic-echo-stow': 'regeneration',
+  'generic-rapid-fire-module': 'fireRate',
+  'generic-cleanup-protocol': 'damage',
+  'generic-terminal-overload': 'fireRate',
 };
 
 const ROUTE_PRIMARY_MODIFIER_PRIORITY: Record<NonNullable<UpgradeArchetype['routeId']>, Array<keyof StatModifiers>> = {
@@ -510,7 +498,7 @@ export function describeContentEffects(
       continue;
     }
 
-    if (effect.routeId !== 'dominant') {
+    if (effect.type === 'route' && effect.routeId !== 'dominant') {
       segments.push(`${ROUTE_NAME_MAP[effect.routeId]}流 +1`);
     }
   }
@@ -698,35 +686,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'generic-vector-buffer',
-    name: '矢量缓冲',
-    description: '平衡提升射速、移速与弹速',
-    category: 'generic',
-    repeatable: true,
-    tags: ['stabilizer', 'bridge'],
-    selection: {
-      baseWeight: 3.4,
-      minRound: 1,
-      maxRound: 3,
-      phaseBonuses: {
-        opening: 0.8,
-        mid: 1.2,
-      },
-      noDominantRouteBonus: 2.4,
-      finalPrepBonus: 1.2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          fireRate: 0.12,
-          moveSpeed: 12,
-          projectileSpeed: 14,
-        },
-      },
-    ],
-  },
-  {
     id: 'generic-pressure-bypass',
     name: '压差旁路',
     description: '强化生存能力并修复损伤',
@@ -750,261 +709,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           maxHp: 8,
           regeneration: 0.09,
           moveSpeed: 8,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 10,
-      },
-    ],
-  },
-  {
-    id: 'generic-sideband-cache',
-    name: '侧频缓存',
-    description: '综合提升射速、弹速与机动',
-    category: 'generic',
-    repeatable: true,
-    tags: ['stabilizer', 'bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.6,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.4,
-        late: 1,
-        finalPrep: 0.8,
-      },
-      noDominantRouteBonus: 1.4,
-      finalPrepBonus: 1.4,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          fireRate: 0.1,
-          projectileSpeed: 18,
-          moveSpeed: 9,
-        },
-      },
-    ],
-  },
-  {
-    id: 'generic-open-loop',
-    name: '开环余量',
-    description: '提升耐久与恢复能力',
-    category: 'generic',
-    repeatable: true,
-    tags: ['stabilizer', 'bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.4,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.3,
-        late: 1,
-        finalPrep: 1,
-      },
-      finalPrepBonus: 1.6,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          maxHp: 6,
-          regeneration: 0.07,
-          moveSpeed: 7,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 8,
-      },
-    ],
-  },
-  {
-    id: 'generic-crossfeed',
-    name: '交叉回授',
-    description: '全面提升性能并修复损伤',
-    category: 'generic',
-    repeatable: true,
-    tags: ['stabilizer', 'bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.7,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.6,
-        late: 1.1,
-      },
-      noDominantRouteBonus: 0.8,
-      finalPrepBonus: 0.8,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          fireRate: 0.09,
-          projectileSpeed: 15,
-          moveSpeed: 9,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-    ],
-  },
-  {
-    id: 'generic-reroute-buffer',
-    name: '改道缓冲',
-    description: '均衡强化生存与机动',
-    category: 'generic',
-    repeatable: true,
-    tags: ['stabilizer', 'bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.7,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.5,
-        late: 0.8,
-      },
-      noDominantRouteBonus: 1.1,
-      finalPrepBonus: 0.8,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          maxHp: 4.5,
-          regeneration: 0.06,
-          moveSpeed: 9,
-          projectileSpeed: 12,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 10,
-      },
-    ],
-  },
-  {
-    id: 'generic-relay-throttle',
-    name: '并线节流',
-    description: '提升射速与弹道性能',
-    category: 'generic',
-    repeatable: true,
-    tags: ['stabilizer', 'bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.6,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.4,
-        late: 0.9,
-      },
-      finalPrepBonus: 0.9,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 2.2,
-          fireRate: 0.1,
-          projectileSpeed: 12,
-          moveSpeed: 6,
-        },
-      },
-    ],
-  },
-  {
-    id: 'generic-terminal-weave',
-    name: '终段并轨',
-    description: '全面强化战斗性能',
-    category: 'generic',
-    contentTier: 'rare',
-    repeatable: true,
-    tags: ['bridge', 'payoff', 'hybrid', 'rare'],
-    selection: {
-      baseWeight: 0.94,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.6,
-        finalPrep: 2.2,
-        finalBattle: 1.2,
-      },
-      finalPrepBonus: 2.2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 3,
-          fireRate: 0.16,
-          projectileSpeed: 24,
-          moveSpeed: 14,
-          regeneration: 0.12,
-        },
-      },
-    ],
-  },
-  {
-    id: 'generic-sightline-cache',
-    name: '视界缓存',
-    description: '提升火力与弹道精度',
-    category: 'generic',
-    repeatable: true,
-    tags: ['bridge', 'stabilizer'],
-    selection: {
-      baseWeight: 2.8,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.3,
-        late: 1.1,
-        finalPrep: 0.9,
-      },
-      noDominantRouteBonus: 1.2,
-      finalPrepBonus: 1.4,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 1.5,
-          projectileSpeed: 21,
-          moveSpeed: 8,
-        },
-      },
-    ],
-  },
-  {
-    id: 'generic-terminal-baffle',
-    name: '终端护幕',
-    description: '大幅强化生存与火力',
-    category: 'generic',
-    contentTier: 'rare',
-    repeatable: true,
-    tags: ['bridge', 'payoff', 'rare'],
-    selection: {
-      baseWeight: 0.92,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.3,
-        finalPrep: 2.3,
-        finalBattle: 1.1,
-      },
-      finalPrepBonus: 2.4,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          maxHp: 9,
-          regeneration: 0.09,
-          damage: 2.2,
-          projectileSpeed: 14,
         },
       },
       {
@@ -1078,101 +782,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'generic-branch-buffer',
-    name: '支路缓冲',
-    description: '提升火力、弹速与机动',
-    category: 'generic',
-    repeatable: true,
-    tags: ['bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.5,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.4,
-        late: 1,
-        finalPrep: 0.8,
-      },
-      noDominantRouteBonus: 1.5,
-      finalPrepBonus: 1.2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 1.5,
-          projectileSpeed: 15,
-          moveSpeed: 9,
-        },
-      },
-    ],
-  },
-  {
-    id: 'generic-last-mile',
-    name: '终段余量',
-    description: '大幅提升生存与火力',
-    category: 'generic',
-    contentTier: 'rare',
-    repeatable: true,
-    tags: ['bridge', 'payoff', 'rare'],
-    selection: {
-      baseWeight: 0.94,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.45,
-        finalPrep: 2.15,
-        finalBattle: 1.2,
-      },
-      finalPrepBonus: 2.2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          maxHp: 7.5,
-          damage: 3,
-          fireRate: 0.08,
-          regeneration: 0.11,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-    ],
-  },
-  {
-    id: 'generic-mirror-lattice',
-    name: '镜格并流',
-    description: '提升火力与暴击精度',
-    category: 'generic',
-    repeatable: true,
-    tags: ['bridge', 'hybrid'],
-    selection: {
-      baseWeight: 2.45,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.35,
-        late: 1.05,
-        finalPrep: 0.78,
-      },
-      noDominantRouteBonus: 0.9,
-      finalPrepBonus: 1,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 1.5,
-          critChance: 0.04,
-          projectileSpeed: 14,
-          moveSpeed: 8,
-        },
-      },
-    ],
-  },
-  {
     id: 'generic-borrowed-tail',
     name: '借尾并幅',
     description: '大幅强化火力与弹幕',
@@ -1202,135 +811,82 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       },
     ],
   },
+  // 特殊通用强化（玩法变化类）
   {
-    id: 'generic-crown-pocket',
-    name: '余波护仓',
-    description: '强化生存与恢复能力',
+    id: 'generic-rapid-fire-module',
+    name: '连射模块',
+    description: '持续攻击同一目标，伤害递增',
     category: 'generic',
-    contentTier: 'rare',
     repeatable: true,
-    tags: ['payoff', 'rare'],
+    tags: ['stabilizer'],
     selection: {
-      baseWeight: 0.88,
-      minRound: 3,
+      baseWeight: 2.5,
+      minRound: 2,
       phaseBonuses: {
-        late: 1.42,
-        finalPrep: 2.05,
-        finalBattle: 1.05,
+        mid: 1.2,
+        late: 0.8,
       },
-      finalPrepBonus: 2.1,
+      finalPrepBonus: 1.5,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          maxHp: 7.5,
-          regeneration: 0.12,
-          projectileSpeed: 14,
-          moveSpeed: 6,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 10,
-      },
-    ],
-  },
-  {
-    id: 'generic-tailfold',
-    name: '尾流归并',
-    description: '全面提升火力与射速',
-    category: 'generic',
-    contentTier: 'rare',
-    repeatable: true,
-    tags: ['bridge', 'payoff', 'hybrid', 'rare'],
-    selection: {
-      baseWeight: 0.86,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.72,
-        finalPrep: 2.12,
-        finalBattle: 1.12,
-      },
-      finalPrepBonus: 2.25,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          damage: 2,
-          fireRate: 0.09,
-          projectileSpeed: 14,
-          moveSpeed: 9,
+          damage: 2.5,
+          fireRate: 0.08,
         },
       },
     ],
   },
   {
-    id: 'generic-echo-stow',
-    name: '余响备压',
-    description: '提升生存与恢复能力',
+    id: 'generic-cleanup-protocol',
+    name: '清场协议',
+    description: '击杀敌人触发小范围爆炸',
     category: 'generic',
-    contentTier: 'rare',
     repeatable: true,
-    tags: ['payoff', 'rare'],
+    tags: ['stabilizer'],
     selection: {
-      baseWeight: 0.84,
-      minRound: 3,
+      baseWeight: 2.2,
+      minRound: 2,
       phaseBonuses: {
-        late: 1.48,
-        finalPrep: 2.08,
-        finalBattle: 1.05,
+        mid: 1.3,
+        late: 1.0,
       },
-      finalPrepBonus: 2.15,
+      finalPrepBonus: 1.2,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          maxHp: 6,
-          regeneration: 0.12,
-          projectileSpeed: 15,
-          moveSpeed: 7.5,
+          damage: 1.5,
+          critChance: 0.03,
         },
-      },
-      {
-        type: 'heal',
-        amount: 8,
       },
     ],
   },
   {
-    id: 'generic-last-lock',
-    name: '终段封板',
-    description: '大幅强化火力输出',
+    id: 'generic-terminal-overload',
+    name: '终端超载',
+    description: '停止移动时，射速持续提升',
     category: 'generic',
-    contentTier: 'rare',
     repeatable: true,
-    tags: ['payoff', 'rare'],
+    tags: ['stabilizer', 'bridge'],
     selection: {
-      baseWeight: 0.92,
-      minRound: 3,
+      baseWeight: 2.0,
+      minRound: 2,
       phaseBonuses: {
-        late: 1.56,
-        finalPrep: 2.36,
-        finalBattle: 1.08,
+        mid: 1.0,
+        late: 1.2,
       },
-      finalPrepBonus: 2.45,
+      finalPrepBonus: 1.8,
     },
     effects: [
       {
         type: 'stats',
         modifiers: {
-          maxHp: 8,
-          damage: 2.2,
-          regeneration: 0.08,
-          projectileSpeed: 12,
+          fireRate: 0.15,
+          damage: 1.5,
         },
-      },
-      {
-        type: 'heal',
-        amount: 8,
       },
     ],
   },
@@ -1514,120 +1070,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'crit-reroute-spark',
-    name: '借火切入',
-    description: '超频期间额外暴击率+4%，修复损伤',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'redirect'],
-    selection: {
-      baseWeight: 1.95,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.9,
-        late: 0.85,
-      },
-      hintedRouteBonus: 0.04,
-      dominantRouteBonus: 0.12,
-      committedRouteBonus: 0.08,
-      offRouteMultiplier: 2.3,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critOverdriveCritBonus: 0.04,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-    ],
-  },
-  {
-    id: 'crit-reroute-feed',
-    name: '借焰续拍',
-    description: '破绽持续时间+20%，修复损伤',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'redirect'],
-    selection: {
-      baseWeight: 1.78,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.82,
-        late: 0.92,
-      },
-      hintedRouteBonus: 0.04,
-      dominantRouteBonus: 0.12,
-      committedRouteBonus: 0.08,
-      offRouteMultiplier: 2.34,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          flawDurationBonus: 0.2,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-    ],
-  },
-  {
-    id: 'crit-branch-ignite',
-    name: '借爆并焰',
-    description: '暴击命中后概率触发额外破绽标记，为后续连击铺垫',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge'],
-    selection: {
-      baseWeight: 2.2,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.5,
-        late: 0.8,
-      },
-      hintedRouteBonus: 1.8,
-      dominantRouteBonus: 3.2,
-      committedRouteBonus: 2.4,
-      offRouteMultiplier: 0.35,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critSplashRadius: 0.08,
-        },
-      },
-    ],
-  },
-  {
     id: 'crit-embershard',
     name: '余烬爆点',
     description: '破绽爆发时产生小范围爆点（对精英/Boss降倍率）',
@@ -1690,67 +1132,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'crit-sparkline',
-    name: '火迹预压',
-    description: '暴击率与暴伤双重提升',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge'],
-    selection: {
-      baseWeight: 3.6,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.5,
-        late: 0.7,
-      },
-      hintedRouteBonus: 2.2,
-      dominantRouteBonus: 3.9,
-      committedRouteBonus: 1.8,
-      offRouteMultiplier: 0.38,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critOverdriveCritBonus: 0.04,
-        },
-      },
-    ],
-  },
-  {
-    id: 'crit-linekeep',
-    name: '压线留焰',
-    description: '暴击与弹道强化',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge'],
-    selection: {
-      baseWeight: 3.78,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.58,
-        late: 0.92,
-        finalPrep: 0.28,
-      },
-      hintedRouteBonus: 1.82,
-      dominantRouteBonus: 4.52,
-      committedRouteBonus: 3.88,
-      maturedRouteBonus: 1.56,
-      finalPrepBonus: 0.72,
-      offRouteMultiplier: 0.28,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critOverdriveDurationBonus: 0.22,
-        },
-      },
-    ],
-  },
-  {
     id: 'crit-crownfire',
     name: '冠火收束',
     description: '破绽爆发后短时间提高下一次暴击收益，不常驻',
@@ -1778,160 +1159,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           critSplashRadius: 0.15,
           critOverdriveCritBonus: 0.06,
-        },
-      },
-    ],
-  },
-  {
-    id: 'crit-ember-rail',
-    name: '灼链追爆',
-    description: '暴击与暴伤的强力组合',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.05,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.65,
-        finalPrep: 0.95,
-        finalBattle: 0.72,
-      },
-      hintedRouteBonus: 0.45,
-      dominantRouteBonus: 4.7,
-      committedRouteBonus: 4.1,
-      maturedRouteBonus: 2.1,
-      finalPrepBonus: 1.9,
-      offRouteMultiplier: 0.3,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          flawDurationBonus: 0.2,
-          critOverdriveCritBonus: 0.05,
-        },
-      },
-    ],
-  },
-  {
-    id: 'crit-redline',
-    name: '热区压缩',
-    description: '暴击与射速的极限压榨',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 2.9,
-      minRound: 2,
-      phaseBonuses: {
-        mid: 1.1,
-        late: 1.3,
-        finalPrep: 0.6,
-      },
-      hintedRouteBonus: 1.2,
-      dominantRouteBonus: 4.4,
-      committedRouteBonus: 3.2,
-      maturedRouteBonus: 1.4,
-      finalPrepBonus: 1.4,
-      offRouteMultiplier: 0.34,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critOverdriveDurationBonus: 0.35,
-        },
-      },
-    ],
-  },
-  {
-    id: 'crit-heat-rake',
-    name: '续热压线',
-    description: '暴击与弹道强化',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.08,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.32,
-        late: 1.28,
-        finalPrep: 0.5,
-      },
-      hintedRouteBonus: 1.18,
-      dominantRouteBonus: 4.48,
-      committedRouteBonus: 3.46,
-      maturedRouteBonus: 1.72,
-      finalPrepBonus: 1.32,
-      offRouteMultiplier: 0.32,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critSplashRadius: 0.1,
-          flawDurationBonus: 0.12,
-        },
-      },
-    ],
-  },
-  {
-    id: 'crit-heat',
-    name: '热区追击',
-    description: '暴击伤害的强力爆发',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.7,
-        finalPrep: 1,
-      },
-      hintedRouteBonus: 0.4,
-      dominantRouteBonus: 4.6,
-      committedRouteBonus: 4,
-      maturedRouteBonus: 2,
-      finalPrepBonus: 2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critOverdriveCritBonus: 0.08,
-        },
-      },
-    ],
-  },
-  {
-    id: 'crit-cascade',
-    name: '爆链灼流',
-    description: '暴击伤害的连锁爆发',
-    category: 'route',
-    routeId: 'crit',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.2,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.5,
-        finalPrep: 1,
-      },
-      hintedRouteBonus: 0.4,
-      dominantRouteBonus: 4.8,
-      committedRouteBonus: 4.2,
-      maturedRouteBonus: 2.2,
-      finalPrepBonus: 2.2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          critSplashRadius: 0.18,
         },
       },
     ],
@@ -2140,40 +1367,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'pierce-sidechannel',
-    name: '侧轨借线',
-    description: '穿透与弹道强化',
-    category: 'route',
-    routeId: 'pierce',
-    tags: ['bridge', 'redirect'],
-    selection: {
-      baseWeight: 2.25,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 2.1,
-        late: 1,
-      },
-      hintedRouteBonus: 0.05,
-      dominantRouteBonus: 0.15,
-      committedRouteBonus: 0.1,
-      offRouteMultiplier: 2.05,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          crackSpreadRadius: 0.15,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-    ],
-  },
-  {
     id: 'pierce-reroute-seam',
     name: '借线破层',
     description: '回响伤害+8%，修复损伤',
@@ -2340,37 +1533,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'dash-phasebank',
-    name: '相位蓄返',
-    description: '穿梭脉冲与冷却强化',
-    category: 'route',
-    routeId: 'dash',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.34,
-      minRound: 2,
-      phaseBonuses: {
-        mid: 1.2,
-        late: 1,
-        finalPrep: 0.5,
-      },
-      hintedRouteBonus: 1.1,
-      dominantRouteBonus: 4.1,
-      committedRouteBonus: 2.8,
-      maturedRouteBonus: 1.1,
-      finalPrepBonus: 1.2,
-      offRouteMultiplier: 0.34,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashChargeSpeed: 0.12,
-        },
-      },
-    ],
-  },
-  {
     id: 'pierce-fan',
     name: '裂轨分束',
     description: '穿透与弹道强化',
@@ -2428,39 +1590,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'pierce-ledger-fanout',
-    name: '拆账铺面',
-    description: '穿透与弹道平衡提升',
-    category: 'route',
-    routeId: 'pierce',
-    tags: ['bridge'],
-    selection: {
-      baseWeight: 3.82,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.6,
-        late: 0.94,
-        finalPrep: 0.26,
-      },
-      hintedRouteBonus: 1.86,
-      dominantRouteBonus: 4.5,
-      committedRouteBonus: 3.92,
-      maturedRouteBonus: 1.58,
-      finalPrepBonus: 0.68,
-      offRouteMultiplier: 0.28,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierceEchoDamageBonus: 0.05,
-          crackSpreadRadius: 0.08,
-        },
-      },
-    ],
-  },
-  {
     id: 'pierce-floodgate',
     name: '裂层清账',
     description: '裂纹扩散追加后方伤害',
@@ -2488,37 +1617,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           crackSpreadRadius: 0.2,
           pierceEchoDamageBonus: 0.08,
-        },
-      },
-    ],
-  },
-  {
-    id: 'pierce-seam-ledger',
-    name: '裂幕归账',
-    description: '穿透与弹道强化',
-    category: 'route',
-    routeId: 'pierce',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.62,
-        finalPrep: 0.92,
-        finalBattle: 0.72,
-      },
-      hintedRouteBonus: 0.45,
-      dominantRouteBonus: 4.65,
-      committedRouteBonus: 4.15,
-      maturedRouteBonus: 2.15,
-      finalPrepBonus: 1.9,
-      offRouteMultiplier: 0.3,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierceEchoDamageBonus: 0.09,
         },
       },
     ],
@@ -2581,96 +1679,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'stats',
         modifiers: {
           pierceCooldownRefundBonus: 0.01,
-        },
-      },
-    ],
-  },
-  {
-    id: 'pierce-ripple',
-    name: '回响切层',
-    description: '穿透与弹道强化',
-    category: 'route',
-    routeId: 'pierce',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.6,
-        finalPrep: 0.9,
-      },
-      hintedRouteBonus: 0.4,
-      dominantRouteBonus: 4.6,
-      committedRouteBonus: 4,
-      maturedRouteBonus: 2,
-      finalPrepBonus: 2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          crackSpreadRadius: 0.18,
-        },
-      },
-    ],
-  },
-  {
-    id: 'pierce-ledger-line',
-    name: '拆线归账',
-    description: '穿透与弹道强化',
-    category: 'route',
-    routeId: 'pierce',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.06,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.26,
-        late: 1.34,
-        finalPrep: 0.48,
-      },
-      hintedRouteBonus: 1.12,
-      dominantRouteBonus: 4.46,
-      committedRouteBonus: 3.42,
-      maturedRouteBonus: 1.74,
-      finalPrepBonus: 1.28,
-      offRouteMultiplier: 0.32,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          pierceEchoDamageBonus: 0.07,
-        },
-      },
-    ],
-  },
-  {
-    id: 'pierce-bloom',
-    name: '扇裂扩面',
-    description: '穿透强化',
-    category: 'route',
-    routeId: 'pierce',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.2,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.4,
-        finalPrep: 0.8,
-      },
-      hintedRouteBonus: 0.4,
-      dominantRouteBonus: 4.8,
-      committedRouteBonus: 4.2,
-      maturedRouteBonus: 2.2,
-      finalPrepBonus: 1.8,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          crackSpreadRadius: 0.22,
         },
       },
     ],
@@ -2815,41 +1823,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashChargeSpeed: 0.12,
           dashGrazeRadiusBonus: 5,
         },
-      },
-    ],
-  },
-  {
-    id: 'dash-sidechannel',
-    name: '错位取样',
-    description: '换一种流派接法，附带少量恢复',
-    category: 'route',
-    routeId: 'dash',
-    tags: ['bridge', 'redirect'],
-    selection: {
-      baseWeight: 2.25,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 2.1,
-        late: 1,
-      },
-      hintedRouteBonus: 0.05,
-      dominantRouteBonus: 0.15,
-      committedRouteBonus: 0.1,
-      offRouteMultiplier: 2.05,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashCounterDamageBonus: 0.18,
-          dashGrazeRadiusBonus: 8,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
       },
     ],
   },
@@ -3148,132 +2121,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
-    id: 'dash-return-snap',
-    name: '回摆取窗',
-    description: '穿梭冷却与无伤时间强化',
-    category: 'route',
-    routeId: 'dash',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.04,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.34,
-        late: 1.24,
-        finalPrep: 0.46,
-      },
-      hintedRouteBonus: 1.14,
-      dominantRouteBonus: 4.44,
-      committedRouteBonus: 3.38,
-      maturedRouteBonus: 1.68,
-      finalPrepBonus: 1.24,
-      offRouteMultiplier: 0.32,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashChargeSpeed: 0.08,
-          dashGrazeRadiusBonus: 8,
-        },
-      },
-    ],
-  },
-  {
-    id: 'dash-rebound-window',
-    name: '借窗回返',
-    description: '换一种流派接法，附带少量恢复',
-    category: 'route',
-    routeId: 'dash',
-    tags: ['bridge', 'redirect'],
-    selection: {
-      baseWeight: 1.88,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.75,
-        late: 1,
-      },
-      hintedRouteBonus: 0.04,
-      dominantRouteBonus: 0.12,
-      committedRouteBonus: 0.08,
-      offRouteMultiplier: 2.26,
-      excludeFromFinalPrep: true,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashChargeSpeed: 0.1,
-        },
-      },
-      {
-        type: 'heal',
-        amount: 6,
-      },
-    ],
-  },
-  {
-    id: 'dash-rethread',
-    name: '回线续拍',
-    description: '穿梭频率与脉冲伤害的短时机爆发组合',
-    category: 'route',
-    routeId: 'dash',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.6,
-        finalPrep: 0.9,
-      },
-      hintedRouteBonus: 0.4,
-      dominantRouteBonus: 4.6,
-      committedRouteBonus: 4,
-      maturedRouteBonus: 2,
-      finalPrepBonus: 2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashCounterDamageBonus: 0.18,
-        },
-      },
-    ],
-  },
-  {
-    id: 'dash-reentry',
-    name: '回环汲能',
-    description: '穿梭脉冲、冷却与无伤时间的强力组合',
-    category: 'route',
-    routeId: 'dash',
-    tags: ['bridge', 'payoff'],
-    selection: {
-      baseWeight: 3.2,
-      minRound: 3,
-      phaseBonuses: {
-        late: 1.5,
-        finalPrep: 0.9,
-      },
-      hintedRouteBonus: 0.4,
-      dominantRouteBonus: 4.8,
-      committedRouteBonus: 4.2,
-      maturedRouteBonus: 2.2,
-      finalPrepBonus: 2,
-    },
-    effects: [
-      {
-        type: 'stats',
-        modifiers: {
-          dashChargeSpeed: 0.1,
-          dashCounterDamageBonus: 0.15,
-        },
-      },
-    ],
-  },
-  {
     id: 'dash-anchor',
     name: '穿梭定标',
     description: '穿梭脉冲、生存与机动的终极封板',
@@ -3434,6 +2281,600 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       offRouteMultiplier: 0.35,
     },
     effects: [
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  // Legendary 传奇强化 - Crit流派
+  {
+    id: 'crit-meltdown',
+    name: '熔毁临界',
+    description: '暴击爆炸可再次暴击，产生连锁爆点',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.15,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.5,
+        finalPrep: 2.5,
+        finalBattle: 3.0,
+      },
+      dominantRouteBonus: 3.0,
+      committedRouteBonus: 2.5,
+      maturedRouteBonus: 2.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.35,
+          critOverdriveCritBonus: 0.12,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-crimson-storm',
+    name: '猩红风暴',
+    description: '连续暴击进入永久Overdrive状态',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.12,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 2.6,
+        finalBattle: 3.2,
+      },
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.8,
+      maturedRouteBonus: 2.2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critOverdriveDurationBonus: 0.8,
+          critOverdriveCritBonus: 0.1,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-ash-judgment',
+    name: '灰烬审判',
+    description: '满层破绽敌人死亡，引爆周围全部破绽',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.14,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.7,
+        finalPrep: 2.7,
+        finalBattle: 3.3,
+      },
+      dominantRouteBonus: 3.5,
+      committedRouteBonus: 3.0,
+      maturedRouteBonus: 2.5,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critSplashRadius: 0.45,
+          flawDurationBonus: 0.5,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-eternal-burn',
+    name: '灼痕永燃',
+    description: '破绽标记永久存在，敌人一旦标记终身破绽',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.13,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.5,
+        finalPrep: 2.5,
+        finalBattle: 3.0,
+      },
+      dominantRouteBonus: 3.0,
+      committedRouteBonus: 2.5,
+      maturedRouteBonus: 2.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          flawDurationBonus: 1.0,
+          critOverdriveCritBonus: 0.08,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  {
+    id: 'crit-core-resonance',
+    name: '爆心共鸣',
+    description: 'Crit伤害随破绽层数指数增长',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'crit',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.11,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.8,
+        finalPrep: 2.8,
+        finalBattle: 3.5,
+      },
+      dominantRouteBonus: 4.0,
+      committedRouteBonus: 3.5,
+      maturedRouteBonus: 3.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          critMultiplier: 0.5,
+          critOverdriveCritBonus: 0.15,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
+    ],
+  },
+  // Legendary 传奇强化 - Pierce流派
+  {
+    id: 'pierce-infinite-refraction',
+    name: '无限折射',
+    description: '裂纹传播不再有次数限制',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.15,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.5,
+        finalPrep: 2.5,
+        finalBattle: 3.0,
+      },
+      dominantRouteBonus: 3.0,
+      committedRouteBonus: 2.5,
+      maturedRouteBonus: 2.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.5,
+          pierceEchoDamageBonus: 0.25,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-deep-penetration',
+    name: '深层贯穿',
+    description: '每次穿透，子弹体积增加50%',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.13,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 2.6,
+        finalBattle: 3.2,
+      },
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.8,
+      maturedRouteBonus: 2.2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.3,
+          projectileSpeed: 40,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-fracture-storm',
+    name: '断面风暴',
+    description: '裂纹敌人死亡发射贯穿弹幕',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.14,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.7,
+        finalPrep: 2.7,
+        finalBattle: 3.3,
+      },
+      dominantRouteBonus: 3.5,
+      committedRouteBonus: 3.0,
+      maturedRouteBonus: 2.5,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.4,
+          pierceEchoDamageBonus: 0.35,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-singularity',
+    name: '裂缝奇点',
+    description: '裂纹可吸引敌人聚集',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.12,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.5,
+        finalPrep: 2.5,
+        finalBattle: 3.0,
+      },
+      dominantRouteBonus: 3.0,
+      committedRouteBonus: 2.5,
+      maturedRouteBonus: 2.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          crackSpreadRadius: 0.6,
+          pierceCooldownRefundBonus: 0.02,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  {
+    id: 'pierce-zero-cut',
+    name: '归零切割',
+    description: '贯穿后子弹返回攻击起点',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'pierce',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.11,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.8,
+        finalPrep: 2.8,
+        finalBattle: 3.5,
+      },
+      dominantRouteBonus: 4.0,
+      committedRouteBonus: 3.5,
+      maturedRouteBonus: 3.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          pierceEchoDamageBonus: 0.4,
+          multishot: 1,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
+    ],
+  },
+  // Legendary 传奇强化 - Dash流派
+  {
+    id: 'dash-phase-rampage',
+    name: '相位暴走',
+    description: '连续Dash生成永久残影，残影自动攻击',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.15,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.5,
+        finalPrep: 2.5,
+        finalBattle: 3.0,
+      },
+      dominantRouteBonus: 3.0,
+      committedRouteBonus: 2.5,
+      maturedRouteBonus: 2.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.4,
+          dashGrazeRadiusBonus: 20,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-overload-pulse',
+    name: '超载脉冲',
+    description: 'Dash脉冲覆盖半张地图',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.13,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 2.6,
+        finalBattle: 3.2,
+      },
+      dominantRouteBonus: 3.2,
+      committedRouteBonus: 2.8,
+      maturedRouteBonus: 2.2,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashPulseDamage: 25,
+          dashGrazeRadiusBonus: 35,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-time-slice',
+    name: '时滞切片',
+    description: 'Dash期间时间减速80%',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.12,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.7,
+        finalPrep: 2.7,
+        finalBattle: 3.3,
+      },
+      dominantRouteBonus: 3.5,
+      committedRouteBonus: 3.0,
+      maturedRouteBonus: 2.5,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInvulnerability: 0.25,
+          dashChargeSpeed: 0.2,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-infinite-phase',
+    name: '无限相位',
+    description: 'Dash无冷却，消耗生命代替',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.11,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.5,
+        finalPrep: 2.5,
+        finalBattle: 3.0,
+      },
+      dominantRouteBonus: 3.0,
+      committedRouteBonus: 2.5,
+      maturedRouteBonus: 2.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashInterval: -0.5,
+          dashPulseDamage: 15,
+          regeneration: -0.15,
+        },
+      },
+      {
+        type: 'heal',
+        amount: -15,
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
+    ],
+  },
+  {
+    id: 'dash-pulse-storm',
+    name: '脉冲风暴',
+    description: '每层脉冲提供独立伤害来源',
+    category: 'route',
+    contentTier: 'rare',
+    routeId: 'dash',
+    stage: 'legendary',
+    tags: ['legendary', 'payoff', 'finisher'],
+    selection: {
+      baseWeight: 0.14,
+      minRound: 8,
+      phaseBonuses: {
+        late: 1.8,
+        finalPrep: 2.8,
+        finalBattle: 3.5,
+      },
+      dominantRouteBonus: 4.0,
+      committedRouteBonus: 3.5,
+      maturedRouteBonus: 3.0,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          dashCounterDamageBonus: 0.35,
+          dashChargeSpeed: 0.25,
+          dashGrazeRadiusBonus: 25,
+        },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
       {
         type: 'route',
         routeId: 'dash',

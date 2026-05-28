@@ -1,6 +1,6 @@
 export type RouteId = 'crit' | 'pierce' | 'dash';
 export type RouteReference = RouteId | 'dominant';
-export type NodeType = 'battle' | 'upgrade' | 'anomaly' | 'boss';
+export type NodeType = 'battle' | 'upgrade' | 'anomaly' | 'boss' | 'buildNode' | 'recovery' | 'gamble' | 'elite' | 'survival' | 'highPressure';
 export type ContentTier = 'standard' | 'rare';
 export type BattleEncounterType = 'battle' | 'boss';
 export type EventContentKind = 'event' | 'anomaly';
@@ -75,6 +75,7 @@ export type UpgradeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary
 export type UpgradeValueBucket = 'low' | 'mid' | 'high' | 'spike';
 export type UpgradeSource = 'levelUp' | 'nodePrep';
 export type UpgradeCategory = 'generic' | 'route';
+export type UpgradeStage = 'starter' | 'bridge' | 'amplifier' | 'payoff' | 'legendary';
 export type SpawnPatternId = 'surround' | 'pincers' | 'lanes';
 export type EliteBehaviorId = 'frontline' | 'screened' | 'kiting' | 'summoner';
 export type EnemyRole = 'regular' | 'escort' | 'elite';
@@ -188,6 +189,9 @@ export interface BattleTemplateDefinition {
     escortBatch?: number;
     escortRespawnSec?: number;
     escortMax?: number;
+    // 绞锁压制关卡机制配置
+    summonVulnerabilitySec?: number; // 召唤护卫后的Boss脆弱窗口时长
+    escortBossDamageReduction?: number; // 有护卫时Boss的减伤比例（0-1）
     pressurePhases?: BattlePressurePhaseDefinition[];
   };
 }
@@ -248,6 +252,10 @@ export type ContentEffect =
   | {
       type: 'route';
       routeId: RouteReference;
+    }
+  | {
+      type: 'anomaly';
+      anomalyId: 'glass-cannon' | 'berserker' | 'overload' | 'curse-mark';
     };
 
 export interface UpgradeArchetype {
@@ -261,6 +269,10 @@ export interface UpgradeArchetype {
   tags?: string[];
   selection?: ContentSelectionProfile;
   effects: ContentEffect[];
+  // Build成长系统新增字段
+  stage?: UpgradeStage;
+  requires?: string[]; // 解锁此牌需要先拿到的牌ID
+  unlockAtRound?: number; // 解锁关卡
 }
 
 export interface UpgradeDefinition {
@@ -431,6 +443,9 @@ export interface BulletState {
   canEcho: boolean;
   hitCount: number;
   routeFocus?: RouteId;
+  // P1-2: 子弹拖尾
+  trail?: Array<{ x: number; y: number; lifeSec: number }>;
+  isCritBullet?: boolean; // 是否为暴击子弹（触发拖尾）
 }
 
 export interface PulseState {
@@ -627,7 +642,64 @@ export interface BattleState {
   dashGhostStrikeReady: boolean; // 幽灵打击就绪（Dash后下次攻击穿透+额外伤害）
   dashMomentumStacks: number; // 动量层数（连续Dash叠加攻速和移速）
   dashMomentumDecaySec: number; // 动量衰减计时器
+  // P2-2: Dash × Crit 联动状态
+  dashCritWindowSec: number; // Dash后暴击窗口（相位暴击）
+  // P1-2: 玩家拖尾效果
+  playerTrail?: Array<{ x: number; y: number; lifeSec: number; color: number }>;
+  // P2-3: 胡局机制状态
+  overdriveMode?: {
+    active: boolean;
+    type: 'infinite-pierce' | 'crit-overdrive' | 'phase-overload' | null;
+    remainingSec: number;
+    cooldownSec: number;
+  };
+  // 视觉特效系统
+  visualEffects: VisualEffectState[];
+  // P1-1: 裂纹地面效果
+  crackMarks: CrackMarkState[];
+  // P2-3: 胡局机制触发计数器
+  consecutiveCrits: number; // 连续暴击计数（临界超频）
+  piercePayoffCount: number; // Pierce payoff牌计数（无限裂界）
+  // 绞锁压制关卡机制
+  eliteSummonVulnerabilitySec: number; // 精英召唤后的脆弱窗口（玩家可以全力输出）
+  escortBossLinkActive: boolean; // 护卫-Boss链接是否激活（激活时Boss获得减伤）
 }
+
+// 裂纹地面状态
+export interface CrackMarkState {
+  id: number;
+  x: number;
+  y: number;
+  lifeSec: number;
+  maxLifeSec: number;
+  radius: number;
+  color: number;
+  routeId: RouteId;
+}
+
+// 视觉特效状态
+export interface VisualEffectState {
+  id: number;
+  type: VisualEffectType;
+  x: number;
+  y: number;
+  lifeSec: number;
+  maxLifeSec: number;
+  scale: number;
+  alpha: number;
+  rotation: number;
+  color: number;
+  secondaryColor?: number;
+  targetX?: number; // 用于闪电链的目标位置
+  targetY?: number;
+  chainDepth?: number; // 闪电链深度
+}
+
+export type VisualEffectType =
+  | 'critExplosion' // 暴击爆炸
+  | 'pierceShockwave' // 穿透冲击波
+  | 'lightningChain' // 闪电链
+  | 'buildReadyFlash'; // Build成型闪光
 
 export interface NodeRecord {
   id: string;
@@ -673,6 +745,8 @@ export interface RunState {
   maturedRoute: RouteId | null;
   stats: PlayerStats;
   selectedUpgrades: string[];
+  // Build成长系统：已触发的里程碑
+  buildMilestonesTriggered?: string[];
   eventHistory: PickedEventRecord[];
   traversedNodes: NodeRecord[];
   battleWins: number;
@@ -720,6 +794,13 @@ export interface RunState {
     dashCrit?: boolean; // 脉冲命中叠破绽
     dashPierce?: boolean; // 脉冲命中附加裂纹
   };
+  // P0-2: 高风险异常节点状态
+  activeAnomalies?: {
+    glassCannon?: boolean; // 玻璃大炮协议 - 生命-50%，伤害+100%，暴击AOE
+    berserker?: boolean; // 狂战士协议 - 无法回血，伤害随生命降低而增加
+    overload?: boolean; // 过载协议 - 攻速-50%，每次发射3发子弹
+    curseMark?: boolean; // 诅咒标记 - 击杀重置技能，敌人死亡生成诅咒区
+  };
 }
 
 export interface BattleDebugConfig {
@@ -744,6 +825,48 @@ export interface BattleDebugRuntimeConfig {
   freezeEnemySpawning: boolean;
   freezePlayerAutoFire: boolean;
   invulnerablePlayer: boolean;
+}
+
+// Build成长系统：里程碑定义
+export interface BuildMilestone {
+  id: string;
+  routeId: RouteId;
+  name: string; // 如"暴击回路已成型"
+  description: string;
+  requiredCards: number; // 需要多少张该流派牌
+  requiredStage?: UpgradeStage; // 需要至少一张什么阶段的牌
+  visualEffect?: VisualEffectType;
+  audioCue?: AudioCue;
+}
+
+// Build成长系统：玩家Build状态追踪
+export interface BuildProgressState {
+  // 各流派已选牌数量
+  routeCardCounts: Record<RouteId, number>;
+  // 各流派已解锁阶段
+  unlockedStages: Record<RouteId, UpgradeStage[]>;
+  // 已触发的里程碑
+  triggeredMilestones: string[];
+  // 当前Build强度评分（用于视觉反馈）
+  buildIntensity: number;
+  // 视觉成长阶段（0-3）
+  visualTier: number;
+}
+
+// Build定向权重配置
+export interface BuildDirectedWeights {
+  // 拿到N张后增加权重
+  starterBonus: { count: number; multiplier: number };
+  // 拿到N张后解锁Amplifier
+  amplifierUnlock: { count: number };
+  // 拿到N张后解锁Payoff
+  payoffUnlock: { count: number };
+  // 拿到N张后解锁Legendary
+  legendaryUnlock: { count: number };
+  // 其他流派惩罚
+  offRoutePenalty: number;
+  // 阶段解锁关卡
+  stageUnlockRounds: Record<UpgradeStage, number>;
 }
 
 export interface BattleDebugEnemySnapshot {
@@ -865,6 +988,9 @@ export interface OverlayHudSnapshot {
   objectiveDetail: string;
   objectiveProgressText: string;
   objectiveTone: 'flow' | 'battle' | 'elite' | 'survive' | 'boss';
+  // P1-3: Build阶段UI主题色
+  buildStageColor?: string;
+  buildStageName?: string;
 }
 
 export interface Services {

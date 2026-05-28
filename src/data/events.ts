@@ -593,146 +593,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
     ],
   },
-  {
-    id: 'overload-firecontrol',
-    name: '过载火控',
-    contentKind: 'anomaly',
-    anomalyClass: 'distortion',
-    description: '牺牲射速，换取伤害。',
-    selection: {
-      baseWeight: 0.95,
-      minRound: 2,
-      phaseBonuses: {
-        mid: 1.2,
-        late: 0.8,
-      },
-      noDominantRouteBonus: 1.1,
-    },
-    options: [
-      {
-        id: 'overload-firecontrol-accept',
-        label: '接受过载',
-        description: '射速降低40%，伤害提升80%',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              fireRate: -0.4,
-              damage: 8,
-            },
-          },
-        ],
-      },
-      {
-        id: 'overload-firecontrol-decline',
-        label: '拒绝过载',
-        description: '保持配置，少量通用强化',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              fireRate: 0.08,
-            },
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'compressed-cycle',
-    name: '压缩循环',
-    contentKind: 'anomaly',
-    anomalyClass: 'distortion',
-    description: '牺牲伤害，换取射速。',
-    selection: {
-      baseWeight: 0.92,
-      minRound: 2,
-      phaseBonuses: {
-        mid: 1.15,
-        late: 0.85,
-      },
-      noDominantRouteBonus: 1.05,
-    },
-    options: [
-      {
-        id: 'compressed-cycle-accept',
-        label: '接受压缩',
-        description: '伤害降低30%，射速提升70%',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: -3,
-              fireRate: 0.7,
-            },
-          },
-        ],
-      },
-      {
-        id: 'compressed-cycle-decline',
-        label: '拒绝压缩',
-        description: '保持配置，少量通用强化',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              fireRate: 0.08,
-            },
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'fixed-turret',
-    name: '固定炮台',
-    contentKind: 'anomaly',
-    anomalyClass: 'distortion',
-    description: '牺牲机动，换取火力',
-    selection: {
-      baseWeight: 0.88,
-      minRound: 2,
-      phaseBonuses: {
-        mid: 1.1,
-        late: 0.9,
-      },
-      noDominantRouteBonus: 1.15,
-    },
-    options: [
-      {
-        id: 'fixed-turret-accept',
-        label: '接受改造',
-        description: '移速降低50%，伤害和射速提升',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: -50,
-              damage: 4,
-              fireRate: 0.3,
-            },
-          },
-        ],
-      },
-      {
-        id: 'fixed-turret-decline',
-        label: '拒绝改造',
-        description: '保持配置，少量通用强化',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              moveSpeed: 8,
-            },
-          },
-        ],
-      },
-    ],
-  },
 ];
+
 
 const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
   {
@@ -1392,6 +1254,186 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
           {
             type: 'heal',
             amount: 12,
+          },
+        ],
+      },
+    ],
+  },
+  // 高风险高回报异常节点 - 可能起飞也可能崩盘
+  {
+    id: 'all-in-gamble',
+    name: '孤注一掷',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '随机获得大量强化或负面效果',
+    selection: {
+      baseWeight: 0.45,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 0.8,
+        late: 1.4,
+      },
+      noDominantRouteBonus: 1.2,
+    },
+    options: [
+      {
+        id: 'all-in-roll',
+        label: '掷骰子',
+        gameplayLabel: '赌徒',
+        gainLabel: '50%几率获得大量强化，50%几率获得负面效果',
+        costLabel: '完全随机，可能直接崩盘',
+        description: '随机决定命运',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 8,
+              fireRate: 0.25,
+              critChance: 0.08,
+              maxHp: -15,
+            },
+          },
+        ],
+      },
+      {
+        id: 'all-in-pass',
+        label: '放弃赌局',
+        description: '稳妥选择，少量通用强化',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              maxHp: 6,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'demonic-exchange',
+    name: '恶魔交易',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '用一个属性换取另一个属性的极限提升',
+    selection: {
+      baseWeight: 0.52,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.1,
+        late: 1.3,
+      },
+      dominantRouteBonus: 1.4,
+    },
+    options: [
+      {
+        id: 'demonic-damage-for-speed',
+        label: '以速换力',
+        gameplayLabel: '重炮手',
+        gainLabel: '伤害翻倍',
+        costLabel: '移速降至极限',
+        description: '伤害翻倍，但移速大幅降低',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 14,
+              moveSpeed: -80,
+            },
+          },
+        ],
+      },
+      {
+        id: 'demonic-speed-for-crit',
+        label: '以稳换敏',
+        gameplayLabel: '鬼影',
+        gainLabel: '移速和攻速大幅提升',
+        costLabel: '生命上限减半',
+        description: '移速和攻速大幅提升，但生命上限减半',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              moveSpeed: 45,
+              fireRate: 0.35,
+              maxHp: -55,
+            },
+          },
+        ],
+      },
+      {
+        id: 'demonic-decline',
+        label: '拒绝交易',
+        description: '保持现状，少量恢复',
+        effects: [
+          {
+            type: 'heal',
+            amount: 15,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'omega-overdrive',
+    name: '欧米伽超载',
+    contentKind: 'anomaly',
+    anomalyClass: 'distortion',
+    description: '所有属性全面提升，但持续受到伤害',
+    selection: {
+      baseWeight: 0.38,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.6,
+        finalPrep: 0.8,
+      },
+      dominantRouteBonus: 1.3,
+    },
+    options: [
+      {
+        id: 'omega-accept',
+        label: '接受超载',
+        gameplayLabel: '超载体',
+        gainLabel: '所有核心属性大幅提升',
+        costLabel: '无法自然回血，且持续受到伤害',
+        description: '伤害、攻速、移速、暴击全面提升，但无法回血',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 6,
+              fireRate: 0.3,
+              moveSpeed: 25,
+              critChance: 0.1,
+              regeneration: -0.5,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -10,
+          },
+        ],
+      },
+      {
+        id: 'omega-decline',
+        label: '拒绝超载',
+        description: '稳妥选择，少量强化',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 2,
+              maxHp: 4,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
           },
         ],
       },

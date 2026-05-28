@@ -39,3 +39,33 @@ export const ROUTE_COLOR_MAP: Record<RouteId, string> = ROUTES.reduce(
   },
   {} as Record<RouteId, string>,
 );
+
+// Build阶段配置 - 让玩家明确感知Build成长
+export const BUILD_STAGE_CONFIG: Record<
+  RouteId,
+  Record<'hinted' | 'committed' | 'matured', { name: string; desc: string; color: string }>
+> = {
+  crit: {
+    hinted: { name: '灼热', desc: '破绽开始累积', color: '#ff8f70' },
+    committed: { name: '超频', desc: '暴击进入高速状态', color: '#ff6b2c' },
+    matured: { name: '临界', desc: '暴击完全失控', color: '#ff4500' },
+  },
+  pierce: {
+    hinted: { name: '裂解', desc: '裂纹开始扩散', color: '#68d4ff' },
+    committed: { name: '裂潮', desc: '贯穿效率提升', color: '#00ccff' },
+    matured: { name: '裂界', desc: '空间完全撕裂', color: '#0099ff' },
+  },
+  dash: {
+    hinted: { name: '滑移', desc: '机动性增强', color: '#9cff97' },
+    committed: { name: '相位', desc: '穿梭进入高频', color: '#7aff7a' },
+    matured: { name: '超载', desc: '残影实体化', color: '#4aff4a' },
+  },
+};
+
+// 获取Build阶段显示信息
+export function getBuildStageInfo(
+  routeId: RouteId,
+  stage: 'hinted' | 'committed' | 'matured',
+): { name: string; desc: string; color: string } {
+  return BUILD_STAGE_CONFIG[routeId][stage];
+}

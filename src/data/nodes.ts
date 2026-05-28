@@ -1279,29 +1279,22 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
     weight += selection.battleCatchupBonus ?? 0;
   }
 
-  if (blueprint.type === 'upgrade' && offerContext.hpRatio <= 0.62) {
-    weight += selection.lowHpBonus ?? 0;
-  }
-
+  // 混合节点：战斗后自动升级，删除独立upgrade节点
+  // 大幅提高battle权重，anomaly保持惊喜感但降低基础概率
   if (round <= 3) {
     if (blueprint.type === 'battle') {
-      weight *= 1.18 + round * 0.05;
+      weight *= 2.5 + round * 0.3; // 大幅提高战斗权重
       if (offerContext.lastNodeType && offerContext.lastNodeType !== 'battle') {
-        weight += 2.2 + Math.max(0, round - offerContext.battleWins) * 0.55;
-      }
-    } else if (blueprint.type === 'upgrade') {
-      weight *= 0.55;
-      if (offerContext.lastNodeType === 'anomaly') {
-        weight *= 0.72;
+        weight += 3.5 + Math.max(0, round - offerContext.battleWins) * 0.8;
       }
     } else if (blueprint.type === 'anomaly') {
-      weight *= 0.08 + round * 0.04;
-      if (offerContext.lastNodeType === 'upgrade') {
-        weight *= 0.22;
+      weight *= 0.15 + round * 0.06; // 异常节点降低基础概率，保持稀有感
+      if (offerContext.lastNodeType === 'battle') {
+        weight *= 1.35; // 连续战斗后异常节点更有可能出现（惊喜感）
       }
     }
   } else if (blueprint.type === 'anomaly') {
-    weight *= Math.min(0.36, 0.08 + round * 0.04);
+    weight *= Math.min(0.55, 0.15 + round * 0.08);
   }
 
   return Math.max(0.1, weight);
@@ -1325,19 +1318,27 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
   }));
   const picks: NodeBlueprint[] = [];
 
+  // 混合节点：强制每回合至少1个战斗节点（保底验证机会）
+  const battlePool = pool.filter((entry) => entry.blueprint.type === 'battle');
+  if (battlePool.length > 0) {
+    const forcedBattle = battlePool[Math.floor(Math.random() * battlePool.length)];
+    picks.push(forcedBattle.blueprint);
+    const forcedIndex = pool.findIndex((e) => e.blueprint.id === forcedBattle.blueprint.id);
+    if (forcedIndex >= 0) pool.splice(forcedIndex, 1);
+  }
+
+  // 剩下的从池中选取（可以是battle或anomaly，但不能重复anomaly）
   while (pool.length > 0 && picks.length < choiceCount) {
     const anomalyPicked = picks.some((blueprint) => blueprint.type === 'anomaly');
-    const upgradePicked = picks.some((blueprint) => blueprint.type === 'upgrade');
     let eligiblePool = pool.filter((entry) => {
       if (anomalyPicked && entry.blueprint.type === 'anomaly') return false;
-      if (upgradePicked && entry.blueprint.type === 'upgrade') return false;
       return true;
     });
 
     if (eligiblePool.length <= 0) {
-      const battlePool = pool.filter((entry) => entry.blueprint.type === 'battle');
-      if (battlePool.length > 0) {
-        eligiblePool = battlePool;
+      const remainingBattlePool = pool.filter((entry) => entry.blueprint.type === 'battle');
+      if (remainingBattlePool.length > 0) {
+        eligiblePool = remainingBattlePool;
       } else {
         break;
       }
@@ -1355,7 +1356,7 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
       }
     }
 
-    const selectedIndex = pool.indexOf(selectedEntry);
+    const selectedIndex = pool.findIndex((e) => e.blueprint.id === selectedEntry.blueprint.id);
     picks.push(pool[selectedIndex].blueprint);
     pool.splice(selectedIndex, 1);
   }

@@ -2,6 +2,12 @@ import { getUpgradeRarityWeights } from './balance';
 import { EVENT_CATALOG, getEventCatalogByKind } from './events';
 import { ROUTES } from './routes';
 import { buildUpgradeChoice, getUpgradePrimaryModifierKey, UPGRADE_ARCHETYPES } from './upgrades';
+import {
+  getUpgradeStage,
+  isStageUnlocked,
+  UPGRADE_STAGE_MAP,
+  BUILD_DIRECTED_CONFIG,
+} from './upgradeStages';
 import type {
   AnomalyClassId,
   ContentEffect,
@@ -18,6 +24,7 @@ import type {
   UpgradeDefinition,
   UpgradeRarity,
   UpgradeSource,
+  UpgradeStage,
 } from '../game/types';
 
 interface ContentContext {
@@ -28,6 +35,8 @@ interface ContentContext {
   committedRoute: RouteId | null;
   maturedRoute: RouteId | null;
   selectedUpgradeIds: string[];
+  // Build成长系统：各流派已选牌数量
+  routeCardCounts: Record<RouteId, number>;
 }
 
 function pickWeightedUnique<T extends { id: string }>(
@@ -77,7 +86,8 @@ function pickWeightedOne<T>(entries: Array<{ item: T; weight: number }>): T {
   return filtered[filtered.length - 1].item;
 }
 
-function getSelectionWeight(
+// 为Event计算权重的简化版本（不包含阶段解锁等强化专属逻辑）
+function getSelectionWeightForEvent(
   profile: ContentSelectionProfile | undefined,
   routeId: RouteId | undefined,
   contentTier: ContentTier | undefined,
@@ -85,6 +95,7 @@ function getSelectionWeight(
   source: UpgradeSource,
 ): number {
   const rule = profile ?? {};
+
   if (rule.minRound && context.round < rule.minRound) {
     return 0;
   }
@@ -126,6 +137,106 @@ function getSelectionWeight(
     weight += rule.maturedRouteBonus ?? 0;
   }
 
+  return Math.max(0, weight);
+}
+
+function getSelectionWeight(
+  profile: ContentSelectionProfile | undefined,
+  archetype: UpgradeArchetype,
+  contentTier: ContentTier | undefined,
+  context: ContentContext,
+  source: UpgradeSource,
+): number {
+  const rule = profile ?? {};
+  const routeId = archetype.routeId;
+  const upgradeId = archetype.id;
+
+  // 阶段解锁检查
+  const stage = getUpgradeStage(upgradeId);
+  if (!isStageUnlocked(stage, context.round)) {
+    return 0;
+  }
+
+  // Build定向：检查阶段解锁阈值
+  if (routeId) {
+    const routeCount = context.routeCardCounts[routeId] ?? 0;
+
+    // Starter阶段：始终允许（第1关起始）
+    // Bridge阶段：需要至少2张该流派牌（第2关解锁）
+    if (stage === 'bridge' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.bridgeUnlock) {
+      return 0;
+    }
+    // Amplifier阶段：需要至少2张该流派牌（第3关解锁）
+    if (stage === 'amplifier' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.amplifierUnlock) {
+      return 0;
+    }
+    // Payoff阶段：需要至少5张该流派牌（第5关解锁）
+    if (stage === 'payoff' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.payoffUnlock) {
+      return 0;
+    }
+    // Legendary阶段：需要至少7张该流派牌（第7关解锁）
+    if (stage === 'legendary' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.legendaryUnlock) {
+      return 0;
+    }
+  }
+
+  if (rule.minRound && context.round < rule.minRound) {
+    return 0;
+  }
+  if (rule.maxRound && context.round > rule.maxRound) {
+    return 0;
+  }
+  if (rule.excludeFromFinalPrep && context.phase === 'finalPrep') {
+    return 0;
+  }
+
+  let weight = rule.baseWeight ?? 1;
+
+  if (rule.phaseBonuses?.[context.phase]) {
+    weight += rule.phaseBonuses[context.phase] ?? 0;
+  }
+
+  if (!context.dominantRoute) {
+    weight += rule.noDominantRouteBonus ?? 0;
+  }
+
+  if (source === 'nodePrep') {
+    weight += rule.finalPrepBonus ?? 0;
+  }
+
+  // Build定向权重系统
+  if (routeId && context.dominantRoute) {
+    const routeCount = context.routeCardCounts[routeId] ?? 0;
+
+    if (routeId === context.dominantRoute) {
+      // 同流派加成
+      const routeCommitted = context.committedRoute === routeId || context.maturedRoute === routeId;
+      weight += routeCommitted ? (rule.dominantRouteBonus ?? 0) : (rule.hintedRouteBonus ?? 0);
+
+      // 拿到2张后增加50%权重
+      if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.starterBonus) {
+        weight *= (1 + BUILD_DIRECTED_CONFIG.weights.sameRouteBonus);
+      }
+    } else {
+      // 其他流派惩罚
+      weight *= rule.offRouteMultiplier ?? 1;
+
+      // 如果主流派已有4张以上，其他流派概率大幅降低
+      const dominantCount = context.routeCardCounts[context.dominantRoute] ?? 0;
+      if (dominantCount >= 4) {
+        weight *= (1 - BUILD_DIRECTED_CONFIG.weights.offRoutePenalty);
+      }
+    }
+  }
+
+  if (routeId && context.committedRoute === routeId) {
+    weight += rule.committedRouteBonus ?? 0;
+  }
+
+  if (routeId && context.maturedRoute === routeId) {
+    weight += rule.maturedRouteBonus ?? 0;
+  }
+
   if (contentTier === 'rare') {
     const rarePhaseMultiplier: Record<PhaseId, number> = {
       opening: 0.02,
@@ -146,6 +257,11 @@ function getSelectionWeight(
       rareMultiplier *= 0.84;
     }
     weight *= rareMultiplier;
+  }
+
+  // Legendary稀有度额外降低出现率
+  if (archetype.tags?.includes('legendary')) {
+    weight *= BUILD_DIRECTED_CONFIG.weights.legendaryBaseRate ?? 0.08;
   }
 
   return Math.max(0, weight);
@@ -197,6 +313,20 @@ function buildContentContext(state: Readonly<RunState>): ContentContext {
   const dominantRoute = (Object.entries(state.routeCounts) as Array<[RouteId, number]>)
     .sort((left, right) => right[1] - left[1])[0];
 
+  // Build成长系统：计算各流派已选牌数量
+  const routeCardCounts: Record<RouteId, number> = {
+    crit: 0,
+    pierce: 0,
+    dash: 0,
+  };
+
+  for (const upgradeId of state.selectedUpgrades) {
+    const archetype = UPGRADE_ARCHETYPES.find((a) => a.id === upgradeId);
+    if (archetype?.routeId) {
+      routeCardCounts[archetype.routeId]++;
+    }
+  }
+
   return {
     round: Math.max(1, state.round || 1),
     level: state.level,
@@ -205,6 +335,7 @@ function buildContentContext(state: Readonly<RunState>): ContentContext {
     committedRoute: state.committedRoute,
     maturedRoute: state.maturedRoute,
     selectedUpgradeIds: state.selectedUpgrades,
+    routeCardCounts,
   };
 }
 
@@ -222,7 +353,7 @@ function buildWeightedUpgradePool(
 ): Array<{ item: UpgradeArchetype; weight: number }> {
   return UPGRADE_ARCHETYPES.filter((archetype) => canOfferUpgrade(archetype, context) && predicate(archetype)).map((archetype) => ({
     item: archetype,
-    weight: getSelectionWeight(archetype.selection, archetype.routeId, archetype.contentTier, context, source),
+    weight: getSelectionWeight(archetype.selection, archetype, archetype.contentTier, context, source),
   }));
 }
 
@@ -439,7 +570,7 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
           canOfferUpgrade(archetype, context),
       ).map((archetype) => ({
         item: archetype,
-        weight: getSelectionWeight(archetype.selection, archetype.routeId, archetype.contentTier, context, source),
+        weight: getSelectionWeight(archetype.selection, archetype, archetype.contentTier, context, source),
       })),
       1,
     )[0];
@@ -1046,7 +1177,7 @@ export function rollEventDefinition(
   const weightedEvents = catalog.map((eventDef) => ({
     item: eventDef,
     weight:
-      getSelectionWeight(
+      getSelectionWeightForEvent(
         eventDef.selection,
         eventDef.routeAffinity === 'dominant' ? dominantRoute ?? undefined : getEventRouteAffinity(eventDef),
         eventDef.contentTier,

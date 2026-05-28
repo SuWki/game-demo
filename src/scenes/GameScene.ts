@@ -2,7 +2,7 @@
 import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/balance';
 import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
-import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
+import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, getBuildStageInfo } from '../data/routes';
 import type {
   BattleDebugConfig,
   BattleDebugRuntimeConfig,
@@ -913,6 +913,19 @@ export class GameScene extends Phaser.Scene {
     const objectiveSnapshot = this.getObjectiveSnapshot();
     const statusText = this.getHudModeText(state);
 
+    // P1-3: 获取当前Build阶段颜色和名称
+    const dominantRoute = this.engine.getDominantRoute();
+    let buildStageColor: string | undefined;
+    let buildStageName: string | undefined;
+    if (dominantRoute) {
+      const stage = this.engine.getRouteBuildStage(dominantRoute);
+      if (stage !== 'unformed') {
+        const stageInfo = getBuildStageInfo(dominantRoute, stage);
+        buildStageColor = stageInfo.color;
+        buildStageName = stageInfo.name;
+      }
+    }
+
     return {
       phaseLabel: getPhaseLabel(state.phase),
       nodeLabel: state.currentNode?.title ?? '节点选择',
@@ -941,6 +954,8 @@ export class GameScene extends Phaser.Scene {
       objectiveDetail: objectiveSnapshot.objectiveDetail,
       objectiveProgressText: objectiveSnapshot.objectiveProgressText,
       objectiveTone: objectiveSnapshot.objectiveTone,
+      buildStageColor,
+      buildStageName,
     };
   }
 
@@ -1746,6 +1761,9 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // P1-1: 渲染裂纹地面效果
+    this.renderCrackMarks(battle, camera);
+
     this.renderEncounterBackdrop(battle, camera, accentColor);
   }
 
@@ -1850,6 +1868,64 @@ export class GameScene extends Phaser.Scene {
     g.lineBetween(center.x + 96, center.y + 46, center.x + 148, center.y + 74);
   }
 
+  // P1-1: 渲染裂纹地面效果
+  private renderCrackMarks(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    if (!battle.crackMarks || battle.crackMarks.length === 0) return;
+
+    const g = this.terrainGraphics;
+
+    for (const crack of battle.crackMarks) {
+      // 只渲染在视野内的裂纹
+      if (crack.x < camera.left - 50 || crack.x > camera.right + 50 ||
+          crack.y < camera.top - 50 || crack.y > camera.bottom + 50) {
+        continue;
+      }
+
+      const screen = this.worldToScreen(camera, crack.x, crack.y);
+      const lifeRatio = crack.lifeSec / crack.maxLifeSec;
+      const alpha = lifeRatio * 0.6; // 随时间淡出
+
+      // 绘制裂纹形状 - 放射状线条
+      const crackCount = crack.routeId === 'crit' ? 6 : 8;
+      const innerRadius = crack.radius * 0.3;
+      const outerRadius = crack.radius * (0.8 + lifeRatio * 0.2);
+
+      g.lineStyle(2, crack.color, alpha);
+
+      for (let i = 0; i < crackCount; i++) {
+        const angle = (i / crackCount) * Math.PI * 2 + crack.id * 0.5; // 根据ID偏移角度
+        const startX = screen.x + Math.cos(angle) * innerRadius;
+        const startY = screen.y + Math.sin(angle) * innerRadius;
+        const endX = screen.x + Math.cos(angle) * outerRadius;
+        const endY = screen.y + Math.sin(angle) * outerRadius;
+
+        // 主裂纹线
+        g.lineBetween(startX, startY, endX, endY);
+
+        // 分支裂纹
+        if (i % 2 === 0) {
+          const branchAngle = angle + 0.3;
+          const branchEndX = screen.x + Math.cos(branchAngle) * (outerRadius * 0.7);
+          const branchEndY = screen.y + Math.sin(branchAngle) * (outerRadius * 0.7);
+          g.lineStyle(1, crack.color, alpha * 0.6);
+          g.lineBetween(
+            screen.x + Math.cos(angle) * (outerRadius * 0.5),
+            screen.y + Math.sin(angle) * (outerRadius * 0.5),
+            branchEndX,
+            branchEndY,
+          );
+        }
+      }
+
+      // 中心裂纹核心
+      g.fillStyle(crack.color, alpha * 0.3);
+      g.fillCircle(screen.x, screen.y, innerRadius * 0.5);
+    }
+  }
+
   private renderLowHealthWarning(
     battle: BattleState,
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
@@ -1883,6 +1959,25 @@ export class GameScene extends Phaser.Scene {
       // 右边缘
       this.graphics.fillGradientStyle(0x000000, redColor, 0x000000, redColor, 0, finalAlpha, 0, finalAlpha);
       this.graphics.fillRect(camera.width - edgeThickness, 0, edgeThickness, camera.height);
+    }
+  }
+
+  // P1-2: 渲染玩家拖尾
+  private renderPlayerTrail(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    if (!battle.playerTrail || battle.playerTrail.length < 2) return;
+
+    for (let i = 0; i < battle.playerTrail.length - 1; i++) {
+      const point1 = battle.playerTrail[i];
+      const point2 = battle.playerTrail[i + 1];
+      const screen1 = this.worldToScreen(camera, point1.x, point1.y);
+      const screen2 = this.worldToScreen(camera, point2.x, point2.y);
+      const alpha = (i / battle.playerTrail.length) * 0.6 * (point1.lifeSec / 0.2);
+      const lineWidth = 4 - i * 0.4;
+      this.graphics.lineStyle(lineWidth, point1.color, alpha);
+      this.graphics.lineBetween(screen1.x, screen1.y, screen2.x, screen2.y);
     }
   }
 
@@ -2005,12 +2100,32 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // 渲染视觉特效系统
+    this.renderVisualEffects(battle, camera);
+
+    // P1-2: 渲染玩家拖尾
+    this.renderPlayerTrail(battle, camera);
+
     for (const bullet of battle.bullets) {
       if (!this.isVisibleInCamera(camera, bullet.x, bullet.y, 18)) {
         continue;
       }
 
       const screen = this.worldToScreen(camera, bullet.x, bullet.y);
+
+      // P1-2: 渲染子弹拖尾
+      if (bullet.trail && bullet.trail.length > 1) {
+        const trailColor = bullet.isCritBullet ? 0xff6b2c : 0x00ff88;
+        for (let i = 0; i < bullet.trail.length - 1; i++) {
+          const point1 = bullet.trail[i];
+          const point2 = bullet.trail[i + 1];
+          const screen1 = this.worldToScreen(camera, point1.x, point1.y);
+          const screen2 = this.worldToScreen(camera, point2.x, point2.y);
+          const alpha = (i / bullet.trail.length) * 0.5;
+          this.graphics.lineStyle(2 - i * 0.3, trailColor, alpha);
+          this.graphics.lineBetween(screen1.x, screen1.y, screen2.x, screen2.y);
+        }
+      }
 
       // Try to render preview image for bullet core
       const bulletCoreSize = 10 + (bullet.canEcho ? 2 : 0);
@@ -4642,6 +4757,193 @@ export class GameScene extends Phaser.Scene {
       default:
         return baseColor;
     }
+  }
+
+  // 视觉特效系统渲染
+  private renderVisualEffects(
+    battle: BattleState,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    if (!battle.visualEffects || battle.visualEffects.length === 0) return;
+
+    for (let i = battle.visualEffects.length - 1; i >= 0; i--) {
+      const effect = battle.visualEffects[i];
+
+      // 更新生命周期
+      effect.lifeSec -= 0.016; // 约60fps
+      if (effect.lifeSec <= 0) {
+        battle.visualEffects.splice(i, 1);
+        continue;
+      }
+
+      // 计算屏幕位置
+      const screen = this.worldToScreen(camera, effect.x, effect.y);
+      if (!this.isVisibleInCamera(camera, effect.x, effect.y, 100 * effect.scale)) {
+        continue;
+      }
+
+      const lifeRatio = effect.lifeSec / effect.maxLifeSec;
+      const fadeInRatio = Math.min(1, (effect.maxLifeSec - effect.lifeSec) / 0.1);
+      const fadeOutRatio = lifeRatio;
+      const alpha = effect.alpha * fadeInRatio * fadeOutRatio;
+
+      switch (effect.type) {
+        case 'critExplosion':
+          this.renderCritExplosion(screen, effect, alpha);
+          break;
+        case 'pierceShockwave':
+          this.renderPierceShockwave(screen, effect, alpha);
+          break;
+        case 'lightningChain':
+          this.renderLightningChain(screen, effect, alpha, camera);
+          break;
+        case 'buildReadyFlash':
+          this.renderBuildReadyFlash(screen, effect, alpha);
+          break;
+      }
+    }
+  }
+
+  // 暴击爆炸特效
+  private renderCritExplosion(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; scale: number; rotation: number },
+    alpha: number,
+  ): void {
+    const baseRadius = 25 * effect.scale;
+    const expansion = (1 - alpha) * 30;
+
+    // 外圈爆炸
+    this.graphics.fillStyle(effect.color, alpha * 0.3);
+    this.graphics.fillCircle(screen.x, screen.y, baseRadius + expansion);
+
+    // 内圈高亮
+    this.graphics.fillStyle(effect.secondaryColor ?? 0xffffff, alpha * 0.6);
+    this.graphics.fillCircle(screen.x, screen.y, baseRadius * 0.6);
+
+    // 爆炸碎片
+    const shardCount = 8;
+    this.graphics.lineStyle(3, effect.color, alpha * 0.8);
+    for (let i = 0; i < shardCount; i++) {
+      const angle = effect.rotation + (i / shardCount) * Math.PI * 2;
+      const inner = baseRadius * 0.3;
+      const outer = baseRadius * 0.9 + expansion * 0.5;
+      this.graphics.lineBetween(
+        screen.x + Math.cos(angle) * inner,
+        screen.y + Math.sin(angle) * inner,
+        screen.x + Math.cos(angle) * outer,
+        screen.y + Math.sin(angle) * outer,
+      );
+    }
+
+    // 中心闪光
+    this.graphics.fillStyle(0xffffff, alpha * 0.9);
+    this.graphics.fillCircle(screen.x, screen.y, baseRadius * 0.25);
+  }
+
+  // 穿透冲击波特效
+  private renderPierceShockwave(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; scale: number; rotation: number },
+    alpha: number,
+  ): void {
+    const baseRadius = 35 * effect.scale;
+    const expansion = (1 - alpha) * 50;
+
+    // 外圈冲击波
+    this.graphics.lineStyle(4, effect.color, alpha * 0.5);
+    this.graphics.strokeCircle(screen.x, screen.y, baseRadius + expansion);
+
+    // 内圈
+    this.graphics.lineStyle(2, effect.secondaryColor ?? 0xffffff, alpha * 0.7);
+    this.graphics.strokeCircle(screen.x, screen.y, baseRadius * 0.7 + expansion * 0.3);
+
+    // 冲击波线条
+    const lineCount = 12;
+    this.graphics.lineStyle(2, effect.color, alpha * 0.6);
+    for (let i = 0; i < lineCount; i++) {
+      const angle = effect.rotation + (i / lineCount) * Math.PI * 2;
+      const inner = baseRadius * 0.4;
+      const outer = baseRadius + expansion * 0.8;
+      this.graphics.lineBetween(
+        screen.x + Math.cos(angle) * inner,
+        screen.y + Math.sin(angle) * inner,
+        screen.x + Math.cos(angle) * outer,
+        screen.y + Math.sin(angle) * outer,
+      );
+    }
+
+    // 中心核心
+    this.graphics.fillStyle(effect.secondaryColor ?? 0xffffff, alpha * 0.5);
+    this.graphics.fillCircle(screen.x, screen.y, baseRadius * 0.3);
+  }
+
+  // 闪电链特效
+  private renderLightningChain(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; targetX?: number; targetY?: number; chainDepth?: number },
+    alpha: number,
+    camera: { left: number; right: number; top: number; bottom: number },
+  ): void {
+    if (effect.targetX === undefined || effect.targetY === undefined) return;
+
+    const targetScreen = this.worldToScreen(camera, effect.targetX, effect.targetY);
+    const chainDepth = effect.chainDepth ?? 0;
+    const segments = 6 + chainDepth * 2;
+    const jitter = 8 - chainDepth * 2;
+
+    // 绘制锯齿状闪电
+    this.graphics.lineStyle(3 - chainDepth, effect.color, alpha);
+    let currentX = screen.x;
+    let currentY = screen.y;
+
+    for (let i = 1; i <= segments; i++) {
+      const t = i / segments;
+      const targetX = screen.x + (targetScreen.x - screen.x) * t;
+      const targetY = screen.y + (targetScreen.y - screen.y) * t;
+
+      // 添加随机偏移
+      const offsetX = i < segments ? (Math.random() - 0.5) * jitter * 2 : 0;
+      const offsetY = i < segments ? (Math.random() - 0.5) * jitter * 2 : 0;
+
+      const nextX = targetX + offsetX;
+      const nextY = targetY + offsetY;
+
+      this.graphics.lineBetween(currentX, currentY, nextX, nextY);
+      currentX = nextX;
+      currentY = nextY;
+    }
+
+    // 发光效果
+    this.graphics.lineStyle(1, effect.secondaryColor ?? 0xffffff, alpha * 0.5);
+    this.graphics.lineBetween(screen.x, screen.y, targetScreen.x, targetScreen.y);
+  }
+
+  // Build成型闪光特效
+  private renderBuildReadyFlash(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; scale: number },
+    alpha: number,
+  ): void {
+    const radius = 60 * effect.scale;
+
+    // 大闪光
+    this.graphics.fillStyle(effect.color, alpha * 0.15);
+    this.graphics.fillCircle(screen.x, screen.y, radius);
+
+    // 中等光环
+    this.graphics.lineStyle(3, effect.secondaryColor ?? 0xffffff, alpha * 0.6);
+    this.graphics.strokeCircle(screen.x, screen.y, radius * 0.6);
+
+    // 小核心
+    this.graphics.fillStyle(0xffffff, alpha * 0.8);
+    this.graphics.fillCircle(screen.x, screen.y, radius * 0.2);
+
+    // 四角星芒
+    const starSize = radius * 0.8;
+    this.graphics.lineStyle(2, effect.color, alpha * 0.4);
+    this.graphics.lineBetween(screen.x - starSize, screen.y, screen.x + starSize, screen.y);
+    this.graphics.lineBetween(screen.x, screen.y - starSize, screen.x, screen.y + starSize);
   }
 
   private mixColor(base: number, target: number, amount: number): number {

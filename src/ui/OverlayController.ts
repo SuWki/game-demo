@@ -37,6 +37,12 @@ const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
   upgrade: '强化',
   anomaly: '异常',
   boss: 'Boss',
+  elite: '精英',
+  survival: '生存',
+  buildNode: '流派',
+  recovery: '恢复',
+  gamble: '赌博',
+  highPressure: '高压',
 };
 
 const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
@@ -44,6 +50,12 @@ const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
   upgrade: '#59baf3',
   anomaly: '#a773ff',
   boss: '#f06d56',
+  elite: '#ff6b6b',
+  survival: '#4ecdc4',
+  buildNode: '#95e1d3',
+  recovery: '#a8e6cf',
+  gamble: '#ffd93d',
+  highPressure: '#ff4757',
 };
 
 const TOAST_BADGES: Record<ToastTone, string> = {
@@ -289,28 +301,32 @@ export class OverlayController {
   public showHud(snapshot: OverlayHudSnapshot, onPause?: () => void): void {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
+    // P1-3: 根据Build阶段设置主题色
+    const themeColor = snapshot.buildStageColor ?? '#59baf3';
+    const stageName = snapshot.buildStageName ?? '';
     this.hudLayer.innerHTML = `
-      <div class="game-hud-fixed">
+      <div class="game-hud-fixed" style="--theme-color: ${themeColor}">
         <section class="game-hud-fixed__left">
-          <div class="hud-meter-card is-hp">
+          <div class="hud-meter-card is-hp" style="border-color: ${themeColor}">
             <div class="hud-meter-card__head">
               <span>HP</span>
               <strong>${snapshot.hpText}</strong>
             </div>
-            <div class="hud-meter-card__bar ${this.getMeterStateClass(snapshot.hpRatio)}">
+            <div class="hud-meter-card__bar ${this.getMeterStateClass(snapshot.hpRatio)}" style="--bar-color: ${themeColor}">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.hpRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
-          <div class="hud-meter-card is-exp">
+          <div class="hud-meter-card is-exp" style="border-color: ${themeColor}">
             <div class="hud-meter-card__head">
               <span>EXP</span>
               <strong>${snapshot.experienceText}</strong>
             </div>
-            <div class="hud-meter-card__bar is-exp">
+            <div class="hud-meter-card__bar is-exp" style="--bar-color: ${themeColor}">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
             <span class="hud-meter-card__level">${snapshot.levelText}</span>
           </div>
+          ${stageName ? `<div class="hud-build-stage" style="color: ${themeColor}">${stageName}</div>` : ''}
         </section>
         <section class="game-hud-fixed__center">
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
@@ -318,7 +334,7 @@ export class OverlayController {
           ${snapshot.statusSubtext ? `<span class="game-hud-fixed__reward">${snapshot.statusSubtext}</span>` : ''}
         </section>
         <section class="game-hud-fixed__right">
-          <button class="hud-pause-button" data-action="pause">暂停</button>
+          <button class="hud-pause-button" data-action="pause" style="border-color: ${themeColor}">暂停</button>
         </section>
       </div>
     `;
@@ -1149,14 +1165,32 @@ export class OverlayController {
       }
       return node.description;
     }
+    if (node.type === 'elite') {
+      return node.description || '敌军精英单位出现';
+    }
+    if (node.type === 'survival') {
+      return node.description || '限时坚守，敌军持续增援';
+    }
+    if (node.type === 'highPressure') {
+      return node.description || '敌军密度极高，风险极大';
+    }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '拿完直接进 Boss' : '补 1 项强化再继续';
+      return node.isFinalPrep ? '最终整备，直面首领' : '获取强化组件';
+    }
+    if (node.type === 'buildNode') {
+      return node.description || '获取核心强化组件';
+    }
+    if (node.type === 'recovery') {
+      return node.description || '机体修复，异常清除';
+    }
+    if (node.type === 'gamble') {
+      return node.description || '高回报伴随高风险';
     }
     if (node.type === 'anomaly') {
-      return '做一次异常处理';
+      return '检测到异常信号';
     }
     if (node.type === 'boss') {
-      return '直接进入首领战';
+      return '首领战入口';
     }
     return '继续前进';
   }
@@ -1165,8 +1199,26 @@ export class OverlayController {
     if (node.type === 'battle') {
       return getBattleEncounterLabel(node.templateId ?? 'elimination');
     }
+    if (node.type === 'elite') {
+      return '精英遭遇';
+    }
+    if (node.type === 'survival') {
+      return '生存挑战';
+    }
+    if (node.type === 'highPressure') {
+      return '高压战斗';
+    }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '最终整备' : '补 1 项强化';
+      return node.isFinalPrep ? '最终整备' : '补个强化';
+    }
+    if (node.type === 'buildNode') {
+      return '流派整备';
+    }
+    if (node.type === 'recovery') {
+      return '紧急修复';
+    }
+    if (node.type === 'gamble') {
+      return '风险赌局';
     }
     if (node.type === 'anomaly') {
       return '处理异常';
