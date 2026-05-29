@@ -13,6 +13,7 @@ import {
 } from './nodeStages';
 import { UPGRADE_ARCHETYPES } from './upgrades';
 import { getUpgradeStage, STAGE_UNLOCK_CONFIG } from './upgradeStages';
+import { rng } from '../utils/rng';
 
 // 节点蓝图定义
 interface NodeBlueprint {
@@ -141,7 +142,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
         { templateId: 'elite-lockdown', weight: 1.5 },
         { templateId: 'elite-screen', weight: 1.4 },
       ],
-      difficultyScale: 1.15,
+      difficultyScale: 1.0,
       tags: ['elite', 'rare'],
       selection: {
         baseWeight: 25,
@@ -155,7 +156,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '蓄势压制',
       description: '敌人有护盾间隙',
       templateId: 'elite-pressure-hold',
-      difficultyScale: 1.22,
+      difficultyScale: 1.05,
       tags: ['elite', 'rare', 'highPressure'],
       selection: {
         baseWeight: 18,
@@ -170,7 +171,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '感染压制',
       description: '击杀带印记的护卫',
       templateId: 'elite-contagion',
-      difficultyScale: 1.23,
+      difficultyScale: 1.05,
       tags: ['elite', 'rare', 'highPressure'],
       selection: {
         baseWeight: 17,
@@ -185,7 +186,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '夹道压制',
       description: '连续机动躲避',
       templateId: 'elite-gauntlet',
-      difficultyScale: 1.24,
+      difficultyScale: 1.07,
       tags: ['elite', 'rare', 'highPressure'],
       selection: {
         baseWeight: 16,
@@ -493,7 +494,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '极限夹道',
       description: '极高密度敌人，极高风险',
       templateId: 'elite-gauntlet',
-      difficultyScale: 1.4,
+      difficultyScale: 1.18,
       tags: ['highPressure', 'extremeAnomaly'],
       selection: {
         baseWeight: 15,
@@ -508,7 +509,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '感染风暴',
       description: '多层护盾，多层感染',
       templateId: 'elite-contagion',
-      difficultyScale: 1.45,
+      difficultyScale: 1.22,
       tags: ['highPressure', 'extremeAnomaly'],
       selection: {
         baseWeight: 12,
@@ -527,7 +528,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '追猎首领',
       description: '终局压迫战',
       templateId: 'boss-hunt',
-      difficultyScale: 1.38,
+      difficultyScale: 0.85,
       selection: {
         baseWeight: 1,
         minFloor: 10,
@@ -542,7 +543,22 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '锁域首领',
       description: '终局压迫战',
       templateId: 'boss-lockdown',
-      difficultyScale: 1.39,
+      difficultyScale: 0.85,
+      selection: {
+        baseWeight: 1,
+        minFloor: 10,
+        maxFloor: 10,
+        routeBonuses: { crit: 1.15 },
+      },
+    },
+    {
+      id: 'boss-lockdown',
+      type: 'boss',
+      phase: 'finalBattle',
+      title: '锁域首领',
+      description: '终局压迫战',
+      templateId: 'boss-lockdown',
+      difficultyScale: 0.85,
       selection: {
         baseWeight: 1,
         minFloor: 10,
@@ -557,7 +573,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '屏卫首领',
       description: '终局压迫战',
       templateId: 'boss-bastion',
-      difficultyScale: 1.4,
+      difficultyScale: 0.85,
       selection: {
         baseWeight: 1,
         minFloor: 10,
@@ -572,7 +588,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '处决首领',
       description: '终局爆发战',
       templateId: 'boss-executioner',
-      difficultyScale: 1.42,
+      difficultyScale: 0.85,
       selection: {
         baseWeight: 1,
         minFloor: 10,
@@ -587,7 +603,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '要塞首领',
       description: '终局穿透战',
       templateId: 'boss-fortress',
-      difficultyScale: 1.43,
+      difficultyScale: 0.85,
       selection: {
         baseWeight: 1,
         minFloor: 10,
@@ -602,7 +618,7 @@ const NODE_POOLS: Record<string, NodeBlueprint[]> = {
       title: '猎杀首领',
       description: '终局机动战',
       templateId: 'boss-predator',
-      difficultyScale: 1.44,
+      difficultyScale: 0.85,
       selection: {
         baseWeight: 1,
         minFloor: 10,
@@ -708,7 +724,7 @@ function pickWeightedCount(
   ];
 
   const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
-  let roll = Math.random() * totalWeight;
+  let roll = rng().next() * totalWeight;
 
   for (const entry of weights) {
     roll -= entry.weight;
@@ -733,7 +749,7 @@ function pickWeightedNodes(
 
   while (pool.length > 0 && picks.length < count) {
     const totalWeight = pool.reduce((sum, entry) => sum + entry.weight, 0);
-    let roll = Math.random() * totalWeight;
+    let roll = rng().next() * totalWeight;
 
     for (let i = 0; i < pool.length; i++) {
       roll -= pool[i].weight;
@@ -758,7 +774,7 @@ function pickTemplateId(
   }
 
   const totalWeight = candidates.reduce((sum, c) => sum + (c.weight ?? 1), 0);
-  let roll = Math.random() * totalWeight;
+  let roll = rng().next() * totalWeight;
 
   for (const candidate of candidates) {
     roll -= candidate.weight ?? 1;
@@ -796,7 +812,7 @@ export function buildNodeOptionsV2(
   // 第10关固定为Boss
   if (floor >= 10) {
     const bossNodes = NODE_POOLS.boss;
-    const selectedBoss = bossNodes[Math.floor(Math.random() * bossNodes.length)];
+    const selectedBoss = rng().pick(bossNodes);
     return [buildNodeOption(selectedBoss, focusRoute, 0)];
   }
 
@@ -862,7 +878,7 @@ export function buildNodeOptionsV2(
   if (!hasBattle && selectedNodes.length < 3) {
     const battleNodes = availableNodes.filter((n) => n.type === 'battle');
     if (battleNodes.length > 0) {
-      selectedNodes.push(battleNodes[Math.floor(Math.random() * battleNodes.length)]);
+      selectedNodes.push(rng().pick(battleNodes));
     }
   }
 

@@ -12,9 +12,11 @@ import { PilotAudio } from './systems/PilotAudio';
 import { ConfigLoader } from './systems/ConfigLoader';
 import { BattleDebugPanel } from './ui/BattleDebugPanel';
 import { OverlayController } from './ui/OverlayController';
+import { SeededRNG, setRNGSeed, getRNGSeed } from './utils/rng';
 
 declare global {
   interface Window {
+    __PHASER_GAME__?: Phaser.Game;
     __pilotAudioDebug?: () => ReturnType<PilotAudio['getDebugSnapshot']>;
     __pilotBattleDebug?: () => ReturnType<GameScene['getBattleDebugSnapshot']> | null;
     __pilotDebug?: {
@@ -32,6 +34,11 @@ declare global {
     __pilotQaForceBoss?: (templateId: BattleTemplateId) => void;
   }
 }
+
+// 全局暴露RNG种子用于debug/复现
+(window as any).__getSeed = getRNGSeed;
+(window as any).__setSeed = setRNGSeed;
+(window as any).__newSeed = () => setRNGSeed(Date.now() + performance.now());
 
 const uiRoot = document.getElementById('ui-root');
 const phaserRoot = document.getElementById('phaser-root');
@@ -96,6 +103,7 @@ const game = new Phaser.Game({
 });
 
 game.registry.set('services', services);
+(window as any).__PHASER_GAME__ = game;
 window.__pilotBattleDebug = () => {
   try {
     const scene = game.scene.getScene('GameScene');

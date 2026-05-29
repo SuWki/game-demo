@@ -1,13 +1,15 @@
 import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
 import { RARITY_COLOR_MAP } from '../data/balance';
-import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
+import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, getBuildStageInfo } from '../data/routes';
 import { describeContentEffects } from '../data/upgrades';
+import { ROUTE_INTRO_TEXT } from '../data/mechanicGlossary';
 import type {
   ContentEffect,
   EventDefinition,
   NodeOption,
   OverlayHudSnapshot,
   OverlayMetaSummary,
+  RouteId,
   RouteReference,
   RunResult,
   RunState,
@@ -487,6 +489,8 @@ export class OverlayController {
             </div>
           </div>
 
+          <div class="result-seed-display">#${result.runSeed}</div>
+
           ${
             result.selectedUpgrades && result.selectedUpgrades.length > 0
               ? `
@@ -761,6 +765,72 @@ export class OverlayController {
 
   public clearToasts(): void {
     this.toastLayer.innerHTML = '';
+  }
+
+  public showRouteIntro(routeId: RouteId, onDismiss: () => void): void {
+    const route = ROUTES.find((r) => r.id === routeId);
+    if (!route) return;
+    const colors: Record<RouteId, string> = { crit: '#ff6b2c', pierce: '#00ccff', dash: '#00ff88' };
+    const accent = colors[routeId];
+    this.screenLayer.classList.add('hidden');
+    this.panelLayer.className = 'panel-layer panel-layer-center';
+    this.panelLayer.classList.remove('hidden');
+    this.panelLayer.innerHTML = `
+      <section class="floating-panel" style="width: min(560px, calc(100vw - 40px)); background: rgba(6,12,18,0.92); border: 1px solid ${accent}44; border-radius: 8px; padding: 28px 32px; text-align: center;">
+        <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
+          <span style="font-size:12px;color:${accent};letter-spacing:0.15em;text-transform:uppercase;">首次获得流派牌</span>
+          <h2 style="margin:0;font-size:22px;color:${accent};text-shadow:0 0 12px ${accent}66;">${route.name}流</h2>
+          <div style="width:60px;height:2px;background:${accent}88;border-radius:1px;"></div>
+          <p style="margin:0;font-size:15px;color:#c8dae8;line-height:1.6;max-width:460px;">${ROUTE_INTRO_TEXT[routeId].coreIdea}</p>
+          <div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px;text-align:left;">
+            ${ROUTE_INTRO_TEXT[routeId].mechanics.map((m, i) => `
+              <div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span style="color:${accent};font-weight:700;min-width:18px;font-size:13px;line-height:1.6;">${i + 1}</span>
+                <span style="color:#b0c8d8;font-size:13px;line-height:1.6;">${m}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div style="margin-top:4px;padding:10px 18px;background:${accent}18;border:1px solid ${accent}44;border-radius:4px;">
+            <span style="font-size:13px;color:${accent};font-weight:600;">终局目标：</span>
+            <span style="font-size:13px;color:#c8dae8;">${ROUTE_INTRO_TEXT[routeId].goal}</span>
+          </div>
+          <button data-action="dismiss" style="margin-top:8px;padding:10px 36px;background:${accent};color:#061018;border:none;border-radius:4px;font-size:15px;font-weight:700;cursor:pointer;">知道了，开始作战</button>
+        </div>
+      </section>
+    `;
+    this.bindClick('[data-action="dismiss"]', () => {
+      this.hidePanel();
+      this.screenLayer.classList.remove('hidden');
+      onDismiss();
+    });
+  }
+
+  public showBuildMature(routeId: RouteId, onDismiss: () => void): void {
+    const route = ROUTES.find((r) => r.id === routeId);
+    if (!route) return;
+    const colors: Record<RouteId, string> = { crit: '#ff6b2c', pierce: '#00ccff', dash: '#00ff88' };
+    const accent = colors[routeId];
+    const stageInfo = getBuildStageInfo(routeId, 'matured');
+    this.screenLayer.classList.add('hidden');
+    this.panelLayer.className = 'panel-layer panel-layer-center';
+    this.panelLayer.classList.remove('hidden');
+    this.panelLayer.innerHTML = `
+      <section class="floating-panel" style="width: min(480px, calc(100vw - 40px)); background: rgba(6,12,18,0.92); border: 1px solid ${accent}66; border-radius: 8px; padding: 28px 32px; text-align: center;">
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
+          <span style="font-size:11px;color:${accent}88;letter-spacing:0.2em;text-transform:uppercase;">BUILD MATURE</span>
+          <h2 style="margin:0;font-size:24px;color:${accent};text-shadow:0 0 16px ${accent}88;">${route.name}流 · ${stageInfo.name}</h2>
+          <div style="width:60px;height:2px;background:${accent}88;border-radius:1px;"></div>
+          <p style="margin:0;font-size:14px;color:#c8dae8;line-height:1.6;">${stageInfo.desc}</p>
+          <p style="margin:0;font-size:13px;color:#90a8b8;line-height:1.5;max-width:400px;">${ROUTE_INTRO_TEXT[routeId].goal}</p>
+          <button data-action="dismiss" style="margin-top:8px;padding:10px 36px;background:${accent};color:#061018;border:none;border-radius:4px;font-size:15px;font-weight:700;cursor:pointer;">继续作战</button>
+        </div>
+      </section>
+    `;
+    this.bindClick('[data-action="dismiss"]', () => {
+      this.hidePanel();
+      this.screenLayer.classList.remove('hidden');
+      onDismiss();
+    });
   }
 
   private showPanel(config: {
@@ -1437,13 +1507,24 @@ export class OverlayController {
       ['脉冲伤害', this.getFocusTooltip('脉冲')],
       ['暴击率', this.getFocusTooltip('暴击')],
       ['暴击伤害', this.getFocusTooltip('爆伤')],
+      ['暴击连锁', this.getFocusTooltip('暴击连锁')],
       ['暴击', this.getFocusTooltip('暴击')],
       ['爆伤', this.getFocusTooltip('爆伤')],
+      ['穿透扩散', this.getFocusTooltip('穿透扩散')],
       ['穿透', this.getFocusTooltip('穿透')],
       ['穿梭', this.getFocusTooltip('穿梭')],
       ['脉冲', this.getFocusTooltip('脉冲')],
       ['无伤', this.getFocusTooltip('无伤')],
       ['射速', this.getFocusTooltip('射速')],
+      ['破绽', this.getFocusTooltip('破绽')],
+      ['裂纹', this.getFocusTooltip('裂纹')],
+      ['回响', this.getFocusTooltip('回响')],
+      ['超频', this.getFocusTooltip('超频')],
+      ['残影', this.getFocusTooltip('残影')],
+      ['反击', this.getFocusTooltip('反击')],
+      ['标记', this.getFocusTooltip('标记')],
+      ['叠层', this.getFocusTooltip('叠层')],
+      ['扩面', this.getFocusTooltip('扩面')],
     ];
     const pieces: string[] = [];
     let cursor = 0;
@@ -1465,11 +1546,11 @@ export class OverlayController {
   private getRouteTooltip(routeId?: RouteReference): string {
     switch (routeId) {
       case 'crit':
-        return '暴击流：子弹有几率造成更高伤害。';
+        return '暴击流：暴击叠加破绽标记，满3层触发爆点爆炸，进入超频状态加速循环。';
       case 'pierce':
-        return '穿透流：子弹可穿过敌人，命中后方目标。';
+        return '穿透流：穿透弹留下裂纹轨迹，裂纹自动扩散覆盖敌群，造成持续裂解伤害。';
       case 'dash':
-        return '穿梭流：自动闪动并释放近身范围攻击。';
+        return '穿梭流：自动穿梭闪避攻击，释放脉冲伤害并叠层，满层触发强力反击。';
       default:
         return '';
     }
@@ -1477,14 +1558,24 @@ export class OverlayController {
 
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
-      暴击: '子弹命中时有几率造成更高伤害。',
-      爆伤: '暴击时的伤害倍数。',
-      穿透: '子弹穿过敌人后继续向后飞行，可命中后方目标。',
-      穿梭: '自动触发的短距离闪动，同时释放近身范围攻击。',
-      脉冲: '穿梭触发时的范围伤害。',
-      无伤: '穿梭触发后的短暂无敌时间。',
-      扩面: '同时发射更多子弹。',
-      射速: '开火速度更快。',
+      暴击: '子弹命中时有几率造成更高伤害。暴击会留下破绽标记。',
+      爆伤: '暴击时的伤害倍数。爆伤越高，破绽爆点伤害越强。',
+      穿透: '子弹穿过敌人后继续向后飞行，可命中后方目标。穿透会在路径上留下裂纹。',
+      穿梭: '自动触发的短距离闪避位移。穿梭期间无敌，并释放脉冲攻击附近敌人。',
+      脉冲: '穿梭触发时释放的范围冲击波。脉冲命中敌人可叠层，满层触发反击。',
+      无伤: '穿梭触发后的短暂无敌时间。期间免疫所有伤害。',
+      扩面: '同时发射更多子弹，增加攻击覆盖面。更多子弹=更快叠加流派效果。',
+      射速: '开火速度更快。高射速=更快叠加流派标记=更快触发流派爆发。',
+      破绽: '暴击命中时在敌人身上留下的标记。累计3层后自动引爆，造成范围爆点伤害。',
+      裂纹: '穿透命中后留下的裂痕轨迹。裂纹会持续一段时间并向附近敌人扩散，造成持续伤害。',
+      回响: '穿透后的额外裂解伤害。对裂纹上的敌人造成追加伤害。',
+      超频: '触发爆点后进入的强化状态。超频期间射速提升、暴击收益增加，加速下一轮爆发。',
+      残影: '穿梭或反击后留下的短暂残像。残影会自动攻击附近的敌人。',
+      反击: '脉冲层数满后触发的加强版脉冲攻击。伤害和范围大幅提升，是Dash流的主要爆发手段。',
+      标记: '流派机制在敌人身上留下的效果标识。如破绽标记、裂纹标记。标记是流派联动的核心。',
+      叠层: '脉冲命中敌人累积层数。层数越高反击伤害越强。满层后自动触发反击。',
+      暴击连锁: '爆点爆炸波及附近敌人并施加新的破绽标记，可引发连环爆炸。',
+      穿透扩散: '裂纹向附近敌人自动传播。扩散后的裂纹可继续传播，形成连锁覆盖。',
     };
     return tooltipMap[label] ?? '';
   }

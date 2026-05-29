@@ -63,7 +63,8 @@ export class ConfigLoader {
     }
 
     try {
-      const response = await fetch(`/data/${name}.json`);
+      const base = (import.meta as any).env?.BASE_URL ?? '/';
+      const response = await fetch(`${base}data/${name}.json`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }

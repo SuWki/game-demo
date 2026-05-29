@@ -3,6 +3,7 @@ import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/ba
 import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, getBuildStageInfo } from '../data/routes';
+import { setRNGSeed } from '../utils/rng';
 import type {
   BattleDebugConfig,
   BattleDebugRuntimeConfig,
@@ -132,7 +133,6 @@ export class GameScene extends Phaser.Scene {
   private joystickGraphics!: Phaser.GameObjects.Graphics;
 
   private resultHandled = false;
-
   private lastHudKey = '';
 
   private lastPanelKey = '';
@@ -210,6 +210,8 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.services = this.game.registry.get('services') as Services;
+    // 每局新游戏生成新种子
+    setRNGSeed(Date.now() + Math.floor(performance.now() * 1000));
     this.services.audio.unlock();
     this.services.audio.setMusic('battle');
     this.engine = new RunEngine(this.services);
@@ -1435,7 +1437,6 @@ export class GameScene extends Phaser.Scene {
     this.renderBattleEntities(battle, camera, accentColor);
     this.renderEliteBossLabels(battle, camera);
     this.renderRouteAura(battle, camera);
-    this.renderUpgradeFlash();
     this.endRuntimePreviewImageFrame();
     this.endEnemyLabelFrame();
   }
@@ -1507,27 +1508,6 @@ export class GameScene extends Phaser.Scene {
     // 玩家周围常驻路线线条已取消；路线反馈改到敌人受击特效上。
     void battle;
     void camera;
-  }
-
-  private renderUpgradeFlash(): void {
-    const state = this.engine.getState();
-    const battle = state.battle;
-    if (state.upgradeFlashSec <= 0 || !battle) {
-      return;
-    }
-    const camera = this.getBattleCameraRect(battle);
-    const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
-    const flashRatio = Phaser.Math.Clamp(state.upgradeFlashSec / 0.4, 0, 1);
-    const pulse = 0.5 + Math.sin(battle.elapsedSec * 10) * 0.5;
-    const glowColor = this.mixColor(0x7af7d4, 0xffffff, 0.2);
-
-    // 升级反馈只围绕玩家出现，避免频繁全屏白光刺眼。
-    this.graphics.fillStyle(glowColor, 0.045 + flashRatio * 0.08);
-    this.graphics.fillCircle(playerScreen.x, playerScreen.y, 46 + flashRatio * 36 + pulse * 5);
-    this.graphics.lineStyle(2, glowColor, 0.18 + flashRatio * 0.22);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 38 + flashRatio * 28 + pulse * 4);
-    this.graphics.lineStyle(1.2, 0xffffff, 0.08 + flashRatio * 0.12);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 58 + flashRatio * 38);
   }
 
   private beginRuntimePreviewImageFrame(): void {
@@ -2106,6 +2086,24 @@ export class GameScene extends Phaser.Scene {
     // P1-2: 渲染玩家拖尾
     this.renderPlayerTrail(battle, camera);
 
+    // 渲染残影炮塔
+    if (battle.dashAfterimages && battle.dashAfterimages.length > 0) {
+      for (const afterimage of battle.dashAfterimages) {
+        if (!this.isVisibleInCamera(camera, afterimage.x, afterimage.y, 20)) continue;
+        const aiScreen = this.worldToScreen(camera, afterimage.x, afterimage.y);
+        const aiLifeRatio = afterimage.lifeSec / (battle.dashAfterimages[0]?.lifeSec ?? 0.6);
+        const aiAlpha = 0.2 + aiLifeRatio * 0.3;
+        const aiColor = 0x7aff7a;
+        this.graphics.fillStyle(aiColor, aiAlpha * 0.2);
+        this.graphics.fillCircle(aiScreen.x, aiScreen.y, 16 * aiLifeRatio);
+        this.graphics.lineStyle(1.5, aiColor, aiAlpha * 0.4);
+        this.graphics.strokeCircle(aiScreen.x, aiScreen.y, 12 * aiLifeRatio);
+        // 残影核心
+        this.graphics.fillStyle(aiColor, aiAlpha * 0.5);
+        this.graphics.fillCircle(aiScreen.x, aiScreen.y, 4);
+      }
+    }
+
     for (const bullet of battle.bullets) {
       if (!this.isVisibleInCamera(camera, bullet.x, bullet.y, 18)) {
         continue;
@@ -2656,49 +2654,94 @@ export class GameScene extends Phaser.Scene {
       }
 
       // 流派构筑第二轮：敌人状态标记可视化
-      // critMark: 橙色破绽环
+      // critMark: 橙色破绽裂焰纹
       if (enemy.critMarkSec > 0) {
         const critMarkRatio = Math.min(1, enemy.critMarkSec / 2.5);
         const critColor = 0xff8c42; // 橙色
-        this.graphics.lineStyle(2.5, critColor, 0.25 + critMarkRatio * 0.55);
-        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 8 + (1 - critMarkRatio) * 4);
-        // 短促爆闪效果
-        if (enemy.hitFlashSec > 0.08) {
-          this.graphics.fillStyle(critColor, 0.12 + critMarkRatio * 0.18);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 5);
+        const stacks = enemy.critMarkStacks ?? 1;
+        // 外层破绽环（层数越多越亮越厚）
+        const ringWidth = 1.5 + stacks * 0.5;
+        this.graphics.lineStyle(ringWidth, critColor, 0.2 + critMarkRatio * 0.5 + stacks * 0.08);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 6 + (1 - critMarkRatio) * 3);
+        // 层数指示：内层多个裂焰纹标记点
+        for (let i = 0; i < stacks; i++) {
+          const angle = (i / Math.max(1, stacks)) * Math.PI * 2 + critMarkRatio * 0.5;
+          const dist = enemy.radius + 2;
+          const dotSize = 2 + (stacks - i) * 0.8;
+          this.graphics.fillStyle(critColor, 0.4 + critMarkRatio * 0.3);
+          this.graphics.fillCircle(
+            screen.x + Math.cos(angle) * dist,
+            screen.y + Math.sin(angle) * dist,
+            dotSize,
+          );
+        }
+        // 满层闪烁（第3层高频脉冲）
+        if (stacks >= 3) {
+          const pulseBlink = 0.5 + Math.sin(enemy.critMarkSec * 12) * 0.5;
+          this.graphics.fillStyle(critColor, 0.1 + pulseBlink * 0.15);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 4);
         }
       }
-      // pierceMark: 蓝色贯穿裂纹
+      // pierceMark: 蓝色空间断层裂纹
       if (enemy.pierceMarkSec > 0) {
         const pierceMarkRatio = Math.min(1, enemy.pierceMarkSec / 1.8);
         const pierceColor = 0x5cb8ff; // 冷蓝色
-        const crackAlpha = 0.2 + pierceMarkRatio * 0.5;
-        this.graphics.lineStyle(1.5, pierceColor, crackAlpha);
-        // 绘制贯穿裂纹
-        const crackLen = enemy.radius * 0.8;
+        const crackAlpha = 0.15 + pierceMarkRatio * 0.5;
+        const crackLen = enemy.radius * 0.9;
+        // 外层裂纹环（空间断层感）
+        this.graphics.lineStyle(1.2, pierceColor, crackAlpha * 0.5);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 5 + (1 - pierceMarkRatio) * 3);
+        // 3条锯齿裂纹从中心向外扩散
         for (let i = 0; i < 3; i++) {
-          const angle = (i * Math.PI * 2) / 3 + pierceMarkRatio * 0.5;
+          const angle = (i * Math.PI * 2) / 3 + pierceMarkRatio * 0.3;
+          this.graphics.lineStyle(1.8 - i * 0.3, pierceColor, crackAlpha * (0.6 + i * 0.1));
+          // 每条裂纹分2段折线
+          const midDist = enemy.radius * 0.4 + crackLen * 0.5;
+          const midX = screen.x + Math.cos(angle + 0.08) * midDist;
+          const midY = screen.y + Math.sin(angle + 0.08) * midDist;
           this.graphics.lineBetween(
-            screen.x + Math.cos(angle) * enemy.radius * 0.4,
-            screen.y + Math.sin(angle) * enemy.radius * 0.4,
-            screen.x + Math.cos(angle) * (enemy.radius * 0.4 + crackLen),
-            screen.y + Math.sin(angle) * (enemy.radius * 0.4 + crackLen),
+            screen.x + Math.cos(angle) * enemy.radius * 0.3,
+            screen.y + Math.sin(angle) * enemy.radius * 0.3,
+            midX, midY,
+          );
+          this.graphics.lineBetween(midX, midY,
+            screen.x + Math.cos(angle - 0.08) * (enemy.radius * 0.3 + crackLen),
+            screen.y + Math.sin(angle - 0.08) * (enemy.radius * 0.3 + crackLen),
           );
         }
+        // 中心空间裂隙亮点
+        this.graphics.fillStyle(0xffffff, crackAlpha * 0.2);
+        this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.15);
       }
-      // dashMark: 绿色脉冲残影
+      // dashMark: 绿色脉冲冲击标记
       if (enemy.dashMarkSec > 0) {
         const dashMarkRatio = Math.min(1, enemy.dashMarkSec / 1.5);
         const dashColor = 0x7aff7a; // 脉冲绿
-        const pulseAlpha = 0.15 + dashMarkRatio * 0.4;
+        const pulseAlpha = 0.1 + dashMarkRatio * 0.4;
+        // 外层脉冲环（扩散感）
+        this.graphics.lineStyle(1.5, dashColor, pulseAlpha * 0.6);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 5 + (1 - dashMarkRatio) * 8);
+        // 内层冲击标记
         this.graphics.lineStyle(2, dashColor, pulseAlpha);
-        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 6 + (1 - dashMarkRatio) * 6);
-        // 残影点
-        this.graphics.fillStyle(dashColor, pulseAlpha * 0.6);
-        for (let i = 0; i < 4; i++) {
-          const angle = (i * Math.PI) / 2 + dashMarkRatio;
-          const dist = enemy.radius + 10 + (1 - dashMarkRatio) * 4;
-          this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 2);
+        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 3);
+        // 4个残影追踪点（旋转扩散）
+        const dotCount = 4;
+        this.graphics.fillStyle(dashColor, pulseAlpha * 0.5);
+        for (let i = 0; i < dotCount; i++) {
+          const angle = (i / dotCount) * Math.PI * 2 + dashMarkRatio * 2;
+          const dist = enemy.radius + 8 + (1 - dashMarkRatio) * 6;
+          this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 2.5);
+        }
+        // 叠层指示
+        const stacks = enemy.dashPulseStacks ?? 0;
+        if (stacks > 0) {
+          const stackColor = this.mixColor(dashColor, 0xffffff, stacks * 0.15);
+          for (let i = 0; i < stacks; i++) {
+            const sx = screen.x - 8 + i * 5;
+            const sy = screen.y + enemy.radius + 10;
+            this.graphics.fillStyle(stackColor, 0.5 + i * 0.12);
+            this.graphics.fillCircle(sx, sy, 2);
+          }
         }
       }
 
@@ -3121,8 +3164,6 @@ export class GameScene extends Phaser.Scene {
 
     this.graphics.fillStyle(0x000000, 0.22);
     this.graphics.fillEllipse(bodyX, bodyY + 18, 34, 14);
-    this.graphics.fillStyle(liveFocusColor, 0.015 + combatReadRatio * 0.025);
-    this.graphics.fillEllipse(bodyX, bodyY, 30 + combatReadRatio * 5, 30 + combatReadRatio * 5);
     if (impactRatio > 0) {
       this.graphics.fillStyle(0xff6964, 0.12 + impactRatio * 0.16);
       this.graphics.fillCircle(playerScreen.x, playerScreen.y, 66 + impactRatio * 10);
@@ -4791,14 +4832,23 @@ export class GameScene extends Phaser.Scene {
         case 'critExplosion':
           this.renderCritExplosion(screen, effect, alpha);
           break;
+        case 'critFlawBurst':
+          this.renderCritFlawBurst(screen, effect, alpha);
+          break;
         case 'pierceShockwave':
           this.renderPierceShockwave(screen, effect, alpha);
+          break;
+        case 'pierceCrackSpread':
+          this.renderPierceCrackSpread(screen, effect, alpha);
           break;
         case 'lightningChain':
           this.renderLightningChain(screen, effect, alpha, camera);
           break;
-        case 'buildReadyFlash':
-          this.renderBuildReadyFlash(screen, effect, alpha);
+        case 'dashAfterimagePulse':
+          this.renderDashAfterimagePulse(screen, effect, alpha);
+          break;
+        case 'buildMatureFlash':
+          this.renderBuildMatureFlash(screen, effect, alpha, camera);
           break;
       }
     }
@@ -4919,31 +4969,148 @@ export class GameScene extends Phaser.Scene {
     this.graphics.lineBetween(screen.x, screen.y, targetScreen.x, targetScreen.y);
   }
 
-  // Build成型闪光特效
-  private renderBuildReadyFlash(
+  // 破绽爆点：先塌缩再爆炸 + 热能跳跃线
+  private renderCritFlawBurst(
     screen: { x: number; y: number },
-    effect: { color: number; secondaryColor?: number; scale: number },
+    effect: { color: number; secondaryColor?: number; scale: number; rotation: number },
     alpha: number,
   ): void {
-    const radius = 60 * effect.scale;
+    const lifeRatio = 1 - alpha;
+    const implodePhase = Math.min(1, lifeRatio * 2.5);
+    const explodePhase = Math.max(0, (lifeRatio - 0.4) / 0.6);
+    const baseRadius = 22 * effect.scale;
 
-    // 大闪光
-    this.graphics.fillStyle(effect.color, alpha * 0.15);
-    this.graphics.fillCircle(screen.x, screen.y, radius);
+    // 第1阶段：塌缩（向内收缩 + 内核闪烁）
+    if (explodePhase <= 0) {
+      const shrinkRadius = baseRadius * (1 - implodePhase * 0.5);
+      this.graphics.fillStyle(effect.color, alpha * 0.4 * (1 - implodePhase));
+      this.graphics.fillCircle(screen.x, screen.y, shrinkRadius);
+      this.graphics.fillStyle(0xffffff, alpha * 0.6 * implodePhase);
+      this.graphics.fillCircle(screen.x, screen.y, shrinkRadius * 0.2);
+    }
 
-    // 中等光环
-    this.graphics.lineStyle(3, effect.secondaryColor ?? 0xffffff, alpha * 0.6);
-    this.graphics.strokeCircle(screen.x, screen.y, radius * 0.6);
+    // 第2阶段：爆炸扩散 + 高温冲击波
+    if (implodePhase >= 0.85) {
+      const burstRadius = baseRadius * 0.6 + explodePhase * 30;
+      this.graphics.fillStyle(effect.color, alpha * 0.25 * (1 - explodePhase * 0.5));
+      this.graphics.fillCircle(screen.x, screen.y, burstRadius);
+      this.graphics.lineStyle(2.5, effect.secondaryColor ?? 0xffaa5e, alpha * 0.5 * (1 - explodePhase));
+      this.graphics.strokeCircle(screen.x, screen.y, burstRadius);
+      // 爆炸碎片
+      const shardCount = 6;
+      this.graphics.lineStyle(2, effect.color, alpha * 0.6 * (1 - explodePhase));
+      for (let i = 0; i < shardCount; i++) {
+        const angle = effect.rotation + (i / shardCount) * Math.PI * 2 + explodePhase * 0.5;
+        const inner = baseRadius * 0.2;
+        const outer = burstRadius * 0.9;
+        this.graphics.lineBetween(
+          screen.x + Math.cos(angle) * inner,
+          screen.y + Math.sin(angle) * inner,
+          screen.x + Math.cos(angle) * outer,
+          screen.y + Math.sin(angle) * outer,
+        );
+      }
+    }
+  }
 
-    // 小核心
-    this.graphics.fillStyle(0xffffff, alpha * 0.8);
-    this.graphics.fillCircle(screen.x, screen.y, radius * 0.2);
+  // 裂纹传播：蓝色折线切割轨迹
+  private renderPierceCrackSpread(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; scale: number; rotation: number },
+    alpha: number,
+  ): void {
+    const expansion = (1 - alpha) * 35;
+    const baseRadius = 20 * effect.scale;
+    const crackAlpha = alpha * 0.7;
 
-    // 四角星芒
-    const starSize = radius * 0.8;
-    this.graphics.lineStyle(2, effect.color, alpha * 0.4);
-    this.graphics.lineBetween(screen.x - starSize, screen.y, screen.x + starSize, screen.y);
-    this.graphics.lineBetween(screen.x, screen.y - starSize, screen.x, screen.y + starSize);
+    // 外层裂纹环
+    this.graphics.lineStyle(1.5, effect.color, crackAlpha * 0.4);
+    this.graphics.strokeCircle(screen.x, screen.y, baseRadius + expansion);
+
+    // 锯齿状裂纹线（3条从中心向外扩散的折线）
+    for (let i = 0; i < 3; i++) {
+      const angle = effect.rotation + (i / 3) * Math.PI * 2 + alpha * 0.3;
+      this.graphics.lineStyle(2, effect.color, crackAlpha * (0.5 + i * 0.15));
+      const segments = 4;
+      let prevX = screen.x;
+      let prevY = screen.y;
+      for (let j = 1; j <= segments; j++) {
+        const t = j / segments;
+        const dist = (baseRadius + expansion) * t;
+        const offset = (j % 2 === 0 ? 1 : -1) * 5 * t;
+        const segX = screen.x + Math.cos(angle + offset * 0.08) * dist;
+        const segY = screen.y + Math.sin(angle + offset * 0.08) * dist;
+        this.graphics.lineBetween(prevX, prevY, segX, segY);
+        prevX = segX;
+        prevY = segY;
+      }
+    }
+
+    // 中心亮点
+    this.graphics.fillStyle(effect.secondaryColor ?? 0xffffff, alpha * 0.3);
+    this.graphics.fillCircle(screen.x, screen.y, baseRadius * 0.25);
+  }
+
+  // 残影脉冲：半透明绿色脉冲波
+  private renderDashAfterimagePulse(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; scale: number; rotation: number },
+    alpha: number,
+  ): void {
+    const expansion = (1 - alpha) * 25;
+    const baseRadius = 18 * effect.scale;
+    const pulseColor = effect.color;
+
+    // 幽灵外层
+    this.graphics.lineStyle(2, pulseColor, alpha * 0.3);
+    this.graphics.strokeCircle(screen.x, screen.y, baseRadius + expansion);
+
+    // 内层填充（半透明鬼影）
+    this.graphics.fillStyle(pulseColor, alpha * 0.08);
+    this.graphics.fillCircle(screen.x, screen.y, baseRadius + expansion * 0.6);
+
+    // 残影点阵
+    const dotCount = 4;
+    this.graphics.fillStyle(effect.secondaryColor ?? 0xccffcc, alpha * 0.4);
+    for (let i = 0; i < dotCount; i++) {
+      const angle = effect.rotation + (i / dotCount) * Math.PI * 2;
+      const dist = baseRadius * 0.5 + expansion * 0.3;
+      this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 2 + alpha * 1.5);
+    }
+  }
+
+  // Build成熟演出：路线色扫描线 + 对角线扫过
+  private renderBuildMatureFlash(
+    screen: { x: number; y: number },
+    effect: { color: number; secondaryColor?: number; scale: number; rotation: number },
+    alpha: number,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    const sweep = 1 - alpha;
+    const color = effect.color;
+
+    // 水平扫描线（从左上到右下扫过）
+    const scanY = camera.top + camera.height * sweep;
+    this.graphics.lineStyle(1.5, color, alpha * 0.2);
+    this.graphics.lineBetween(camera.left, scanY, camera.right, scanY);
+
+    // 左上到右下对角线扫描
+    const diagX = camera.left + camera.width * sweep;
+    const diagY = camera.top + camera.height * sweep;
+    this.graphics.lineStyle(2, color, alpha * 0.15);
+    this.graphics.lineBetween(camera.left, camera.top, diagX, diagY);
+
+    // 右下到左上对角线扫描
+    this.graphics.lineBetween(camera.right, camera.bottom, diagX, diagY);
+
+    // 中心爆发点（不是角色位置，而是屏幕中心附近）
+    if (sweep > 0.5 && sweep < 0.85) {
+      const centerX = camera.left + camera.width * 0.5;
+      const centerY = camera.top + camera.height * 0.5;
+      const pulseRadius = 30 * (sweep - 0.5) * 6;
+      this.graphics.lineStyle(1, color, alpha * 0.15 * (1 - (sweep - 0.5) * 2));
+      this.graphics.strokeCircle(centerX, centerY, pulseRadius);
+    }
   }
 
   private mixColor(base: number, target: number, amount: number): number {

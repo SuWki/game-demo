@@ -515,34 +515,21 @@
 }
 
 .is-defeat .result-core-stats {
-  border-color: rgba(255, 68, 68, 0.3);
+  grid-template-columns: repeat(2, 1fr);
 }
 
-.core-stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+/* 种子号 */
+.result-seed-display {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: rgba(111, 231, 255, 0.4);
+  letter-spacing: 0.15em;
+  user-select: all;
+  cursor: pointer;
+  transition: color 0.2s;
 }
-
-.core-stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: rgba(111, 231, 255, 0.6);
-  text-transform: uppercase;
-}
-
-.core-stat-value {
-  font-size: 24px;
-  font-weight: 900;
-  color: #00d4ff;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
-}
-
-.core-stat-sub {
-  font-size: 11px;
-  color: rgba(238, 248, 255, 0.5);
+.result-seed-display:hover {
+  color: rgba(111, 231, 255, 0.8);
 }
 
 /* 升级时间轴 */

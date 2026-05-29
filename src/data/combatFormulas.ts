@@ -4,6 +4,7 @@
  */
 
 import type { PlayerStats, RouteBuildStage } from '../game/types';
+import { rng } from '../utils/rng';
 
 /**
  * 1. 暴击伤害计算
@@ -18,7 +19,7 @@ export function calculateCritDamage(baseDamage: number, critMultiplier: number):
  * 根据暴击率随机判定是否暴击
  */
 export function rollCritical(critChance: number): boolean {
-  return Math.random() < Math.min(0.95, Math.max(0, critChance));
+  return rng().next() < Math.min(0.95, Math.max(0, critChance));
 }
 
 /**

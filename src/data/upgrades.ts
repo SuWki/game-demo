@@ -916,6 +916,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critOverdriveCritBonus: 0.03,
         },
       },
+      { type: 'route', routeId: 'crit' },
     ],
   },
   {
@@ -944,7 +945,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           flawDurationBonus: 0.15,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-afterglow',
@@ -973,7 +975,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           flawDurationBonus: 0.25,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-heat-latch',
@@ -1002,7 +1005,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critOverdriveDurationBonus: 0.3,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-flare-path',
@@ -1033,7 +1037,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critOverdriveCritBonus: 0.05,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-sidechannel',
@@ -1067,7 +1072,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'heal',
         amount: 6,
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-embershard',
@@ -1129,7 +1135,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           flawDurationBonus: 0.18,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-crownfire',
@@ -1161,7 +1168,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critOverdriveCritBonus: 0.06,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'crit-finish',
@@ -1190,7 +1198,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critOverdriveDurationBonus: 0.4,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'pierce-core',
@@ -1218,7 +1227,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.05,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-rail',
@@ -1246,7 +1256,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.08,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-seamline',
@@ -1274,7 +1285,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceCooldownRefundBonus: 0.005,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-vector',
@@ -1303,7 +1315,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.12,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-seamkeep',
@@ -1333,7 +1346,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.06,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-shearline',
@@ -1364,7 +1378,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceCooldownRefundBonus: 0.008,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-reroute-seam',
@@ -1436,7 +1451,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.06,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-sidestitch',
@@ -1466,7 +1482,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.1,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-riftbloom',
@@ -1498,7 +1515,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.1,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'crit-superheat',
@@ -1530,7 +1548,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           flawDurationBonus: 0.15,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'crit' },],
   },
   {
     id: 'pierce-fan',
@@ -1558,7 +1577,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.04,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-relay-spine',
@@ -1587,7 +1607,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.14,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-floodgate',
@@ -1619,7 +1640,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.08,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'dash-cutback',
@@ -1650,7 +1672,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashCounterDamageBonus: 0.25,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'pierce-echo',
@@ -1681,7 +1704,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceCooldownRefundBonus: 0.01,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'pierce-chain',
@@ -1710,7 +1734,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.12,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'dash-brush',
@@ -1738,7 +1763,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashChargeSpeed: 0.08,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-feint',
@@ -1766,7 +1792,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 6,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-lanebreak',
@@ -1794,7 +1821,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashCounterDamageBonus: 0.12,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-slipstream',
@@ -1824,7 +1852,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 5,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-reroute-cutin',
@@ -1900,7 +1929,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'heal',
         amount: 6,
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'pierce-prism',
@@ -1931,7 +1961,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.3,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'pierce' },],
   },
   {
     id: 'dash-loop',
@@ -1961,7 +1992,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 6,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-sidestep-bank',
@@ -1990,7 +2022,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashCounterDamageBonus: 0.14,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-return-hold',
@@ -2023,7 +2056,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashCounterDamageBonus: 0.1,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-afterimage',
@@ -2055,7 +2089,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 12,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-retrace-beat',
@@ -2087,7 +2122,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashCounterDamageBonus: 0.12,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-counterline',
@@ -2118,7 +2154,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashCounterDamageBonus: 0.15,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-anchor',
@@ -2148,7 +2185,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 10,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   {
     id: 'dash-zero-window',
@@ -2180,7 +2218,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 15,
         },
       },
-    ],
+    
+      { type: 'route', routeId: 'dash' },],
   },
   // 交叉联动路线牌
   {
@@ -2959,6 +2998,28 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'pierce-crit-bridge': '穿透后下一次暴击率提高',
   'dash-crit-bridge': '脉冲命中帮你叠破绽',
   'dash-pierce-bridge': '脉冲命中附加裂纹',
+
+  // ===== Legendary：玩法改变级升级 =====
+  // Crit Legendary
+  'crit-meltdown': '爆点爆炸可再次暴击，产生连锁爆点——整个战场连续爆炸',
+  'crit-crimson-storm': '连续暴击进入永久超频状态——超频不再中断',
+  'crit-ash-judgment': '满层破绽敌人死亡时引爆周围全部破绽——连锁清场',
+  'crit-eternal-burn': '破绽标记永久存在——敌人一旦被标记终身带破绽',
+  'crit-core-resonance': '暴击伤害随破绽层数指数增长——层数越高伤害越恐怖',
+
+  // Pierce Legendary
+  'pierce-infinite-refraction': '裂纹链可无限传播，不再有扩散次数限制——空间完全撕裂',
+  'pierce-deep-penetration': '每次穿透子弹体积增加50%——越穿越大，一发清屏',
+  'pierce-fracture-storm': '裂纹敌人死亡时发射贯穿弹幕——死亡触发弹幕风暴',
+  'pierce-singularity': '裂纹可吸引附近敌人聚集——聚怪后一发穿全屏',
+  'pierce-zero-cut': '贯穿后子弹返回攻击起点——二次穿透双倍伤害',
+
+  // Dash Legendary
+  'dash-phase-rampage': '连续穿梭生成永久残影，残影自动攻击——残影大军',
+  'dash-overload-pulse': '脉冲范围覆盖半张地图——全屏脉冲风暴',
+  'dash-time-slice': '穿梭期间时间减速80%——子弹时间，从容反击',
+  'dash-infinite-phase': '穿梭无冷却，消耗生命代替——无限闪避，代价是血',
+  'dash-pulse-storm': '每层脉冲层数提供独立伤害来源——层数越多伤害越密集',
 };
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {

@@ -9,8 +9,9 @@ import type { RouteId, RouteBuildStage } from '../../game/types';
 // 阶段阈值常量
 // ============================================================
 
-export const ROUTE_COMMIT_THRESHOLD = 3;
-export const ROUTE_MATURE_THRESHOLD = 5;
+export const ROUTE_LEANING_THRESHOLD = 2;   // 2张同流派 → leaning
+export const ROUTE_COMMIT_THRESHOLD = 4;     // 4张同流派 → committed
+export const ROUTE_MATURE_THRESHOLD = 7;     // 7张同流派 → matured (payoff)
 
 // 路线计数的类型
 type RouteCounts = Record<RouteId, number>;
@@ -48,7 +49,8 @@ export function calculateBuildStage(
 
   if (count >= ROUTE_MATURE_THRESHOLD) return 'matured';
   if (count >= ROUTE_COMMIT_THRESHOLD) return 'committed';
-  return 'hinted';
+  if (count >= ROUTE_LEANING_THRESHOLD) return 'hinted';
+  return 'unformed';
 }
 
 /**
@@ -66,6 +68,7 @@ export function calculateRouteBuildStage(
   if (committedRoute === routeId) return 'committed';
   if (count >= ROUTE_MATURE_THRESHOLD) return 'matured';
   if (count >= ROUTE_COMMIT_THRESHOLD) return 'committed';
+  if (count >= ROUTE_LEANING_THRESHOLD) return 'hinted';
   return count > 0 ? 'hinted' : 'unformed';
 }
 

@@ -1,0 +1,354 @@
+[
+  {
+    "isVictory": false,
+    "route": "暴击",
+    "buildStage": "已成型",
+    "upgradeCount": 12,
+    "upgrades": [
+      {
+        "name": "聚焦瞄准"
+      },
+      {
+        "name": "升温预热"
+      },
+      {
+        "name": "压缩射频"
+      },
+      {
+        "name": "火控强化"
+      },
+      {
+        "name": "矢量喷口"
+      },
+      {
+        "name": "精密镜组"
+      },
+      {
+        "name": "连发校准"
+      },
+      {
+        "name": "灼迹导火"
+      },
+      {
+        "name": "旁路升温"
+      },
+      {
+        "name": "余烬爆点"
+      },
+      {
+        "name": "灼区归档"
+      },
+      {
+        "name": "冠火收束"
+      }
+    ],
+    "rich": {
+      "outcome": "defeat",
+      "routeId": "crit",
+      "buildStage": "matured",
+      "endingKind": "hpDepleted",
+      "endingReason": "猎杀首领中机体耐久归零",
+      "finalNodeTitle": "猎杀首领",
+      "finalNodeType": "boss",
+      "durationSec": 64.07,
+      "battleWins": 6,
+      "nodesCleared": 10,
+      "rareSeenCount": 5,
+      "routeUpgradePickCount": 10
+    },
+    "wallSec": 62.4,
+    "runIndex": 1
+  },
+  {
+    "isVictory": false,
+    "route": "超时",
+    "buildStage": "",
+    "upgradeCount": 0,
+    "wallSec": 150.008,
+    "rich": null,
+    "timeout": true,
+    "runIndex": 2
+  },
+  {
+    "isVictory": true,
+    "route": "穿透",
+    "buildStage": "未成型",
+    "upgradeCount": 3,
+    "upgrades": [
+      {
+        "name": "火控强化"
+      },
+      {
+        "name": "压缩射频"
+      },
+      {
+        "name": "裂轨分束"
+      }
+    ],
+    "rich": {
+      "outcome": "victory",
+      "routeId": "pierce",
+      "buildStage": "unformed",
+      "endingKind": "victory",
+      "endingReason": "锁域首领已完成收束",
+      "finalNodeTitle": "锁域首领",
+      "finalNodeType": "boss",
+      "durationSec": 90.03,
+      "battleWins": 8,
+      "nodesCleared": 10,
+      "rareSeenCount": 1,
+      "routeUpgradePickCount": 1
+    },
+    "wallSec": 88.3,
+    "runIndex": 3
+  },
+  {
+    "isVictory": false,
+    "route": "超时",
+    "buildStage": "",
+    "upgradeCount": 0,
+    "wallSec": 150.011,
+    "rich": null,
+    "timeout": true,
+    "runIndex": 4
+  },
+  {
+    "isVictory": false,
+    "route": "未成线",
+    "buildStage": "未成型",
+    "upgradeCount": 11,
+    "upgrades": [
+      {
+        "name": "强化骨架"
+      },
+      {
+        "name": "弹道校正"
+      },
+      {
+        "name": "火控强化"
+      },
+      {
+        "name": "齐射缓存"
+      },
+      {
+        "name": "精密镜组"
+      },
+      {
+        "name": "漂移定舵"
+      },
+      {
+        "name": "矢量喷口"
+      },
+      {
+        "name": "爆伤蓄能"
+      },
+      {
+        "name": "压差旁路"
+      },
+      {
+        "name": "循环稳态"
+      },
+      {
+        "name": "借尾并幅"
+      }
+    ],
+    "rich": {
+      "outcome": "defeat",
+      "routeId": null,
+      "buildStage": "unformed",
+      "endingKind": "hpDepleted",
+      "endingReason": "屏卫首领中机体耐久归零",
+      "finalNodeTitle": "屏卫首领",
+      "finalNodeType": "boss",
+      "durationSec": 114.34,
+      "battleWins": 7,
+      "nodesCleared": 10,
+      "rareSeenCount": 2,
+      "routeUpgradePickCount": 0
+    },
+    "wallSec": 112.7,
+    "runIndex": 5
+  },
+  {
+    "isVictory": false,
+    "route": "穿透",
+    "buildStage": "有倾向",
+    "upgradeCount": 4,
+    "upgrades": [
+      {
+        "name": "压缩射频"
+      },
+      {
+        "name": "火控强化"
+      },
+      {
+        "name": "贯穿轨校"
+      },
+      {
+        "name": "切层折返"
+      }
+    ],
+    "rich": {
+      "outcome": "defeat",
+      "routeId": "pierce",
+      "buildStage": "hinted",
+      "endingKind": "hpDepleted",
+      "endingReason": "夹道压制中机体耐久归零",
+      "finalNodeTitle": "夹道压制",
+      "finalNodeType": "elite",
+      "durationSec": 63.84,
+      "battleWins": 6,
+      "nodesCleared": 8,
+      "rareSeenCount": 1,
+      "routeUpgradePickCount": 2
+    },
+    "wallSec": 62.2,
+    "runIndex": 6
+  },
+  {
+    "isVictory": false,
+    "route": "超时",
+    "buildStage": "",
+    "upgradeCount": 0,
+    "wallSec": 150.038,
+    "rich": null,
+    "timeout": true,
+    "runIndex": 7
+  },
+  {
+    "isVictory": false,
+    "route": "未成线",
+    "buildStage": "未成型",
+    "upgradeCount": 7,
+    "upgrades": [
+      {
+        "name": "矢量喷口"
+      },
+      {
+        "name": "压缩射频"
+      },
+      {
+        "name": "齐射缓存"
+      },
+      {
+        "name": "精密镜组"
+      },
+      {
+        "name": "循环稳态"
+      },
+      {
+        "name": "火控强化"
+      },
+      {
+        "name": "强化骨架"
+      }
+    ],
+    "rich": {
+      "outcome": "defeat",
+      "routeId": null,
+      "buildStage": "unformed",
+      "endingKind": "hpDepleted",
+      "endingReason": "锁域首领中机体耐久归零",
+      "finalNodeTitle": "锁域首领",
+      "finalNodeType": "boss",
+      "durationSec": 107.8,
+      "battleWins": 6,
+      "nodesCleared": 10,
+      "rareSeenCount": 1,
+      "routeUpgradePickCount": 0
+    },
+    "wallSec": 106.1,
+    "runIndex": 8
+  },
+  {
+    "isVictory": false,
+    "route": "超时",
+    "buildStage": "",
+    "upgradeCount": 0,
+    "wallSec": 150.029,
+    "rich": null,
+    "timeout": true,
+    "runIndex": 9
+  },
+  {
+    "isVictory": false,
+    "route": "暴击",
+    "buildStage": "已成型",
+    "upgradeCount": 19,
+    "upgrades": [
+      {
+        "name": "聚焦瞄准"
+      },
+      {
+        "name": "升温预热"
+      },
+      {
+        "name": "精密镜组"
+      },
+      {
+        "name": "矢量喷口"
+      },
+      {
+        "name": "齐射缓存"
+      },
+      {
+        "name": "连发校准"
+      },
+      {
+        "name": "余热描边"
+      },
+      {
+        "name": "旁路升温"
+      },
+      {
+        "name": "灼迹导火"
+      },
+      {
+        "name": "续热点火"
+      },
+      {
+        "name": "强化骨架"
+      },
+      {
+        "name": "火控强化"
+      },
+      {
+        "name": "弹道校正"
+      },
+      {
+        "name": "压缩射频"
+      },
+      {
+        "name": "循环稳态"
+      },
+      {
+        "name": "压差旁路"
+      },
+      {
+        "name": "灼区归档"
+      },
+      {
+        "name": "冠火收束"
+      },
+      {
+        "name": "余烬爆点"
+      }
+    ],
+    "rich": {
+      "outcome": "defeat",
+      "routeId": "crit",
+      "buildStage": "matured",
+      "endingKind": "hpDepleted",
+      "endingReason": "屏卫首领中机体耐久归零",
+      "finalNodeTitle": "屏卫首领",
+      "finalNodeType": "boss",
+      "durationSec": 95.06,
+      "battleWins": 9,
+      "nodesCleared": 10,
+      "rareSeenCount": 4,
+      "routeUpgradePickCount": 11
+    },
+    "wallSec": 93.3,
+    "runIndex": 10
+  }
+]

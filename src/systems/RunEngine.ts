@@ -36,6 +36,7 @@
   getRegularEnemyCap,
   getSpawnBurstCount,
 } from '../data/balance';
+import { getRNGSeed, rng, setRNGSeed } from '../utils/rng';
 import {
   getBattleActiveEliteBehavior,
   getBattleTargetKills,
@@ -113,8 +114,9 @@ interface RouteAdvanceMeta {
 
 const CENTER_X = ARENA_WIDTH / 2;
 const CENTER_Y = ARENA_HEIGHT / 2;
-const ROUTE_COMMIT_THRESHOLD = 3;
-const ROUTE_MATURE_THRESHOLD = 5;
+const ROUTE_LEANING_THRESHOLD = 2;
+const ROUTE_COMMIT_THRESHOLD = 4;
+const ROUTE_MATURE_THRESHOLD = 7;
 const BOSS_SAFE_WINDOW_REACTION_SEC = 0.82;
 const BOSS_SAFE_WINDOW_POCKET_REACTION_SEC = 0.64;
 const BASE_PLAYER_MOVE_SPEED = createBaseStats().moveSpeed;
@@ -193,6 +195,8 @@ export class RunEngine {
 
   public constructor(services: Services) {
     this.services = services;
+    // 每次新run生成新种子，确保每局不同
+    setRNGSeed(Date.now() + performance.now());
     const openingNode = createOpeningBattleNode();
     this.state = {
       status: 'battle',
@@ -222,7 +226,6 @@ export class RunEngine {
       nodeOptions: [],
       currentNode: openingNode,
       lastUpgradeChanges: null,
-      upgradeFlashSec: 0,
       levelUpPanelDelaySec: 0,
       upgradeChoices: [],
       currentEvent: null,
@@ -516,7 +519,6 @@ export class RunEngine {
 
     this.enqueueAudio('upgradeEquipped');
     this.enqueueTip(`${upgrade.rarityLabel}品 ${upgrade.name}`);
-    this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.22);
 
     this.state.upgradeChoices = [];
     this.state.upgradeSource = null;
@@ -632,10 +634,7 @@ export class RunEngine {
     const battle = this.state.battle;
     const dt = deltaMs / 1000;
 
-    // 升级闪光计时器衰减
-    if (this.state.upgradeFlashSec > 0) {
-      this.state.upgradeFlashSec = Math.max(0, this.state.upgradeFlashSec - dt);
-    }
+    // 升级闪光计时器已移除
     if (this.state.levelUpPanelDelaySec > 0) {
       this.state.levelUpPanelDelaySec = Math.max(0, this.state.levelUpPanelDelaySec - dt);
       if (this.state.levelUpPanelDelaySec === 0 && this.state.queuedLevelUps > 0) {
@@ -2343,6 +2342,7 @@ export class RunEngine {
       selectedUpgrades: this.state.selectedUpgrades
         .map((id) => this.getAllUpgradeArchetypes().find((u) => u.id === id))
         .filter((u): u is UpgradeDefinition => u !== undefined),
+      runSeed: getRNGSeed(),
     };
     this.services.metrics.finishRun({
       outcome,
@@ -2711,12 +2711,21 @@ export class RunEngine {
     if (!this.firstRouteHintRecorded) {
       this.firstRouteHintRecorded = true;
       this.services.metrics.markFirstRouteHint(routeId);
-      this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.shortHint ?? '');
+      this.services.overlay.showRouteIntro(routeId, () => {});
     }
 
     const otherCounts = Object.entries(this.state.routeCounts)
       .filter(([candidateRouteId]) => candidateRouteId !== routeId)
       .map(([, value]) => value);
+
+    if (
+      !this.state.committedRoute &&
+      count >= ROUTE_LEANING_THRESHOLD &&
+      otherCounts.every((value) => count >= value + 1)
+    ) {
+      const stageInfo = getBuildStageInfo(routeId, this.state.committedRoute ? 'committed' : 'hinted');
+      this.enqueueTip(`【${stageInfo.name}】${stageInfo.desc}`);
+    }
 
     if (
       !this.state.committedRoute &&
@@ -2730,8 +2739,6 @@ export class RunEngine {
       });
       const stageInfo = getBuildStageInfo(routeId, 'committed');
       this.enqueueTip(`【${stageInfo.name}】${stageInfo.desc}`);
-      // 触发阶段升级视觉反馈
-      this.triggerStageUpgradeVisual(routeId, 'committed');
     }
 
     if (
@@ -2743,9 +2750,8 @@ export class RunEngine {
       this.services.metrics.markRouteMatured(routeId);
       this.enqueueAudio('routeMatured');
       const stageInfo = getBuildStageInfo(routeId, 'matured');
-      this.enqueueTip(`【${stageInfo.name}】${stageInfo.desc}`);
-      // 触发阶段升级视觉反馈
-      this.triggerStageUpgradeVisual(routeId, 'matured');
+      this.triggerBuildMaturePresentation(routeId);
+      this.services.overlay.showBuildMature(routeId, () => {});
     }
   }
 
@@ -4114,7 +4120,7 @@ export class RunEngine {
       guardSec: 0,
       guardDamageMultiplier: 1,
       grazeCooldownSec: 0,
-      rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.45 + Math.random() * this.getRangedShotIntervalSec(archetypeDef, battle) : 0,
+      rangedCooldownSec: archetypeDef.shotIntervalSec ? 0.45 + rng().next() * this.getRangedShotIntervalSec(archetypeDef, battle) : 0,
       recoverySec: 0,
       hitFlashSec: 0,
       spawnFlashSec: role === 'escort' ? 0.28 : 0.22,
@@ -4437,7 +4443,7 @@ export class RunEngine {
     // Dash路线独特被动：幽灵打击（额外发射一颗子弹）
     if ((dashStage === 'committed' || dashStage === 'matured') && battle.dashGhostStrikeReady) {
       battle.dashGhostStrikeReady = false;
-      const ghostAngle = baseAngle + (Math.random() - 0.5) * 0.3;
+      const ghostAngle = baseAngle + (rng().next() - 0.5) * 0.3;
       battle.bullets.push({
         id: battle.nextBulletId++,
         x: battle.playerX,
@@ -4491,7 +4497,7 @@ export class RunEngine {
           continue;
         }
 
-        const critical = Math.random() < this.getEffectiveCritChance(battle);
+        const critical = rng().next() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
 
         // Crit路线独特被动：破绽累积 + 终结打击 + 爆发连锁
@@ -6627,7 +6633,6 @@ export class RunEngine {
       this.enqueueAudio('levelUpReady');
       this.enqueueTip(`等级提升 Lv.${this.state.level}`);
       if (this.state.status === 'battle') {
-        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.4);
         this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.55);
       } else {
         this.openQueuedLevelUpPanel();
@@ -6785,9 +6790,6 @@ export class RunEngine {
           // 播放特效和提示
           this.enqueueAudio('upgradeEquipped');
           this.enqueueTip(`【${milestone.name}】${milestone.description}`);
-
-          // 屏幕闪光
-          this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.5);
         }
       }
     }
@@ -6855,23 +6857,32 @@ export class RunEngine {
 
     const colors: Record<VisualEffectType, { primary: number; secondary: number }> = {
       critExplosion: { primary: 0xff6b2c, secondary: 0xffaa5e },
+      critFlawBurst: { primary: 0xff6b2c, secondary: 0xffaa5e },
       pierceShockwave: { primary: 0x00ccff, secondary: 0xaaffff },
+      pierceCrackSpread: { primary: 0x00ccff, secondary: 0xffffff },
       lightningChain: { primary: 0xffd700, secondary: 0xffffff },
-      buildReadyFlash: { primary: 0xffd700, secondary: 0xffffff },
+      dashAfterimagePulse: { primary: 0x7aff7a, secondary: 0xccffcc },
+      buildMatureFlash: { primary: 0xffffff, secondary: 0xffffff },
     };
 
     const maxLifeSecMap: Record<VisualEffectType, number> = {
       critExplosion: 0.35,
+      critFlawBurst: 0.5,
       pierceShockwave: 0.5,
+      pierceCrackSpread: 0.4,
       lightningChain: 0.25,
-      buildReadyFlash: options?.duration ?? 1.0,
+      dashAfterimagePulse: 0.35,
+      buildMatureFlash: 0.8,
     };
 
     const scaleMap: Record<VisualEffectType, number> = {
       critExplosion: options?.scale ?? 1.5,
+      critFlawBurst: options?.scale ?? 1.2,
       pierceShockwave: options?.scale ?? 2.0,
+      pierceCrackSpread: options?.scale ?? 1.3,
       lightningChain: options?.scale ?? 1.0,
-      buildReadyFlash: options?.scale ?? 1.0,
+      dashAfterimagePulse: options?.scale ?? 1.0,
+      buildMatureFlash: options?.scale ?? 1.0,
     };
 
     battle.visualEffects.push({
@@ -6883,13 +6894,49 @@ export class RunEngine {
       maxLifeSec: maxLifeSecMap[type],
       scale: scaleMap[type],
       alpha: 1.0,
-      rotation: Math.random() * Math.PI * 2,
+      rotation: rng().next() * Math.PI * 2,
       color: options?.color ?? colors[type].primary,
       secondaryColor: colors[type].secondary,
       targetX: options?.targetX,
       targetY: options?.targetY,
       chainDepth: options?.chainDepth ?? 0,
     });
+  }
+
+  // Build成熟演出：路线色的全屏flash + 敌人施加标记
+  private triggerBuildMaturePresentation(routeId: RouteId): void {
+    const battle = this.state.battle;
+    if (!battle) return;
+
+    const routeColors: Record<RouteId, number> = {
+      crit: 0xff6b2c,
+      pierce: 0x00ccff,
+      dash: 0x7aff7a,
+    };
+    const color = routeColors[routeId] ?? 0xffffff;
+
+    // 全屏Build成熟扫描flash
+    this.createVisualEffect(battle, 'buildMatureFlash', 0, 0, {
+      color,
+      duration: 0.8,
+    });
+
+    // 对战场中所有敌人施加路线标记（Build成型瞬间全屏标记）
+    for (const enemy of battle.enemies) {
+      switch (routeId) {
+        case 'crit':
+          enemy.critMarkSec = Math.max(enemy.critMarkSec, 2.0);
+          enemy.critMarkStacks = Math.min(3, (enemy.critMarkStacks ?? 0) + 1);
+          break;
+        case 'pierce':
+          enemy.pierceMarkSec = Math.max(enemy.pierceMarkSec, 1.5);
+          break;
+        case 'dash':
+          enemy.dashMarkSec = Math.max(enemy.dashMarkSec, 1.2);
+          enemy.dashPulseStacks = Math.min(3, (enemy.dashPulseStacks ?? 0) + 1);
+          break;
+      }
+    }
   }
 
   // 在暴击时触发爆炸特效
@@ -7055,50 +7102,6 @@ export class RunEngine {
     }
   }
 
-  // Build阶段升级视觉反馈
-  private triggerStageUpgradeVisual(
-    routeId: RouteId,
-    stage: 'committed' | 'matured',
-  ): void {
-    const battle = this.state.battle;
-    if (!battle) return;
-
-    const stageInfo = getBuildStageInfo(routeId, stage);
-    const colorHex = parseInt(stageInfo.color.replace('#', '0x'));
-
-    // 创建屏幕边缘闪烁效果
-    this.createVisualEffect(battle, 'buildReadyFlash', CENTER_X, CENTER_Y, {
-      color: colorHex,
-      scale: stage === 'matured' ? 1.5 : 1.0,
-      duration: stage === 'matured' ? 1.2 : 0.8,
-    });
-
-    // 在玩家周围创建脉冲效果
-    this.createCombatPulse(battle, {
-      x: battle.playerX,
-      y: battle.playerY,
-      radius: stage === 'matured' ? 180 : 120,
-      lifeSec: stage === 'matured' ? 0.6 : 0.4,
-      color: colorHex,
-      fillAlpha: stage === 'matured' ? 0.25 : 0.15,
-      strokeAlpha: stage === 'matured' ? 0.8 : 0.6,
-    });
-
-    // 成熟阶段额外触发粒子爆发
-    if (stage === 'matured') {
-      const particleCount = 12;
-      for (let i = 0; i < particleCount; i++) {
-        const angle = (i / particleCount) * Math.PI * 2;
-        const distance = 80 + Math.random() * 40;
-        this.createVisualEffect(battle, 'critExplosion',
-          battle.playerX + Math.cos(angle) * distance,
-          battle.playerY + Math.sin(angle) * distance,
-          { scale: 0.5 + Math.random() * 0.3, color: colorHex },
-        );
-      }
-    }
-  }
-
   // P2-1: 检查敌人是否在裂纹上
   private isEnemyOnCrack(battle: BattleState, enemy: BattleState['enemies'][number]): boolean {
     if (!battle.crackMarks || battle.crackMarks.length === 0) return false;
@@ -7131,8 +7134,8 @@ export class RunEngine {
     const spreadRadius = 60;
 
     for (let i = 0; i < spreadCount; i++) {
-      const angle = (i / spreadCount) * Math.PI * 2 + Math.random() * 0.5;
-      const distance = spreadRadius + Math.random() * 20;
+      const angle = (i / spreadCount) * Math.PI * 2 + rng().next() * 0.5;
+      const distance = spreadRadius + rng().next() * 20;
       const x = enemy.x + Math.cos(angle) * distance;
       const y = enemy.y + Math.sin(angle) * distance;
 
@@ -7141,7 +7144,7 @@ export class RunEngine {
       // 创建Pierce风格的次级裂纹
       setTimeout(() => {
         if (this.state.battle) {
-          this.createCrackMark(this.state.battle, x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30, 'pierce');
+          this.createCrackMark(this.state.battle, x + (rng().next() - 0.5) * 30, y + (rng().next() - 0.5) * 30, 'pierce');
         }
       }, 100);
     }
@@ -7662,15 +7665,15 @@ export class RunEngine {
       const shardValue = baseOrbValue + (orbRemainder > 0 ? 1 : 0);
       orbRemainder = Math.max(0, orbRemainder - 1);
       const fan = orbIndex - (orbBurstCount - 1) * 0.5;
-      const angle = playerAngle + fan * spreadStep + (Math.random() - 0.5) * 0.12;
+      const angle = playerAngle + fan * spreadStep + (rng().next() - 0.5) * 0.12;
       const launchSpeed = (enemy.elite ? 170 : 120) + Math.abs(fan) * (enemy.elite ? 22 : 16);
       battle.experienceOrbs.push({
         id: enemy.id * 10 + orbIndex,
         x: enemy.x + Math.cos(angle) * (enemy.elite ? 8 : 4),
         y: enemy.y + Math.sin(angle) * (enemy.elite ? 8 : 4),
         value: shardValue,
-        velocityX: Math.cos(angle) * launchSpeed + (Math.random() - 0.5) * 26,
-        velocityY: Math.sin(angle) * launchSpeed + (Math.random() - 0.5) * 26,
+        velocityX: Math.cos(angle) * launchSpeed + (rng().next() - 0.5) * 26,
+        velocityY: Math.sin(angle) * launchSpeed + (rng().next() - 0.5) * 26,
       });
     }
 
@@ -7828,7 +7831,7 @@ export class RunEngine {
         innerRadiusRatio: 0.4,
         spokeCount: 6,
         spokeLength: curseRadius * 0.5,
-        angle: Math.random() * Math.PI * 2,
+        angle: rng().next() * Math.PI * 2,
         spinRate: -3,
       });
 
@@ -9756,11 +9759,6 @@ export class RunEngine {
     };
 
     this.enqueueTip(`【胡局】${names[type]}启动！`);
-    this.createVisualEffect(battle, 'buildReadyFlash', CENTER_X, CENTER_Y, {
-      color: colors[type],
-      scale: 2,
-      duration: 1.5,
-    });
   }
 
   // P2-3: 更新胡局模式

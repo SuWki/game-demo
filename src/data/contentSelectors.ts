@@ -8,6 +8,7 @@ import {
   UPGRADE_STAGE_MAP,
   BUILD_DIRECTED_CONFIG,
 } from './upgradeStages';
+import { rng } from '../utils/rng';
 import type {
   AnomalyClassId,
   ContentEffect,
@@ -55,7 +56,7 @@ function pickWeightedUnique<T extends { id: string }>(
 
   while (pool.length > 0 && picks.length < count) {
     const totalWeight = pool.reduce((sum, entry) => sum + entry.weight, 0);
-    let roll = Math.random() * totalWeight;
+    let roll = rng().next() * totalWeight;
     let selectedIndex = 0;
 
     for (let index = 0; index < pool.length; index += 1) {
@@ -76,7 +77,7 @@ function pickWeightedUnique<T extends { id: string }>(
 function pickWeightedOne<T>(entries: Array<{ item: T; weight: number }>): T {
   const filtered = entries.filter((entry) => entry.weight > 0);
   const totalWeight = filtered.reduce((sum, entry) => sum + entry.weight, 0);
-  let roll = Math.random() * totalWeight;
+  let roll = rng().next() * totalWeight;
   for (const entry of filtered) {
     roll -= entry.weight;
     if (roll <= 0) {
@@ -157,25 +158,21 @@ function getSelectionWeight(
     return 0;
   }
 
-  // Build定向：检查阶段解锁阈值
+  // Build定向：检查阶段解锁阈值（2026-05-28重构版）
   if (routeId) {
     const routeCount = context.routeCardCounts[routeId] ?? 0;
 
-    // Starter阶段：始终允许（第1关起始）
-    // Bridge阶段：需要至少2张该流派牌（第2关解锁）
-    if (stage === 'bridge' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.bridgeUnlock) {
+    // Starter/Bridge：始终允许（第1关起始）
+    // Amplifier：需要至少2张该流派牌（第4关解锁）或 stage解锁
+    if (stage === 'amplifier' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.leaningBonus && !isStageUnlocked('amplifier', context.round)) {
       return 0;
     }
-    // Amplifier阶段：需要至少2张该流派牌（第3关解锁）
-    if (stage === 'amplifier' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.amplifierUnlock) {
+    // Payoff：需要至少4张该流派牌
+    if (stage === 'payoff' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.commitBonus) {
       return 0;
     }
-    // Payoff阶段：需要至少5张该流派牌（第5关解锁）
-    if (stage === 'payoff' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.payoffUnlock) {
-      return 0;
-    }
-    // Legendary阶段：需要至少7张该流派牌（第7关解锁）
-    if (stage === 'legendary' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.legendaryUnlock) {
+    // Legendary：需要至少7张该流派牌
+    if (stage === 'legendary' && routeCount < BUILD_DIRECTED_CONFIG.thresholds.payoffUnlock) {
       return 0;
     }
   }
@@ -204,26 +201,29 @@ function getSelectionWeight(
     weight += rule.finalPrepBonus ?? 0;
   }
 
-  // Build定向权重系统
+  // Build定向权重系统（2026-05-28重构版）
   if (routeId && context.dominantRoute) {
     const routeCount = context.routeCardCounts[routeId] ?? 0;
+    const dominantCount = context.routeCardCounts[context.dominantRoute] ?? 0;
 
     if (routeId === context.dominantRoute) {
-      // 同流派加成
       const routeCommitted = context.committedRoute === routeId || context.maturedRoute === routeId;
       weight += routeCommitted ? (rule.dominantRouteBonus ?? 0) : (rule.hintedRouteBonus ?? 0);
 
-      // 拿到2张后增加50%权重
-      if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.starterBonus) {
-        weight *= (1 + BUILD_DIRECTED_CONFIG.weights.sameRouteBonus);
+      // leaning(2+张): 同流派+80%
+      if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.leaningBonus) {
+        weight *= BUILD_DIRECTED_CONFIG.weights.sameRouteBoost;
+      }
+      // commit(4+张): 同流派再+200%
+      if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.commitBonus) {
+        weight *= BUILD_DIRECTED_CONFIG.weights.committedRouteBoost;
       }
     } else {
       // 其他流派惩罚
       weight *= rule.offRouteMultiplier ?? 1;
 
-      // 如果主流派已有4张以上，其他流派概率大幅降低
-      const dominantCount = context.routeCardCounts[context.dominantRoute] ?? 0;
-      if (dominantCount >= 4) {
+      // 如果主流派已有2张以上，其他流派概率大幅降低
+      if (dominantCount >= BUILD_DIRECTED_CONFIG.thresholds.leaningBonus) {
         weight *= (1 - BUILD_DIRECTED_CONFIG.weights.offRoutePenalty);
       }
     }
@@ -684,6 +684,11 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const earlyMidLevelUp = openingLevelUp || context.phase === 'mid';
   const hasCommittedRoute = Boolean(context.committedRoute || context.maturedRoute);
   const dominantHintedEarlyMid = Boolean(context.dominantRoute) && !hasCommittedRoute && earlyMidLevelUp;
+
+  // 确保前5次升级至少出4张流派牌（2026-05-28重构）
+  const totalRouteCards = Object.values(context.routeCardCounts).reduce((a, b) => a + b, 0);
+  const needsGuaranteedRoute = totalRouteCards < 4;
+
   const picks: UpgradeArchetype[] = [];
   const genericPool = buildWeightedUpgradePool(context, 'levelUp', (archetype) => !archetype.routeId);
   const genericCorePool = filterPoolByTags(genericPool, ['stabilizer', 'bridge'], ['payoff', 'rare']);
@@ -693,30 +698,38 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
     scaleWeightedPool(genericPool, 1.05),
   );
   const routeWindowPool = buildLevelUpRouteWindowPool(context);
-  const flexPool = mergeWeightedPools(
-    scaleWeightedPool(
-      genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool,
-      hasCommittedRoute ? 1.24 : dominantHintedEarlyMid ? 1.18 : openingLevelUp ? 1.24 : earlyMidLevelUp ? 1.28 : 1.28,
-      0.1,
-    ),
-    scaleWeightedPool(
-      routeWindowPool,
-      hasCommittedRoute ? 0.82 : context.dominantRoute ? (earlyMidLevelUp ? 0.92 : 0.78) : openingLevelUp ? 0.88 : earlyMidLevelUp ? 0.82 : 0.68,
-    ),
-  );
 
-  if (context.dominantRoute && routeWindowPool.length > 0) {
+  if (needsGuaranteedRoute && routeWindowPool.length > 0) {
+    // 强制第1张出流派牌
     appendUniquePicks(picks, routeWindowPool, 1);
     appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
-    appendUniquePicks(picks, flexPool.length > 0 ? flexPool : routeWindowPool, 3 - picks.length);
+    appendUniquePicks(picks, routeWindowPool, 1);
   } else {
-    appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
-    appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
-    appendUniquePicks(picks, flexPool.length > 0 ? flexPool : genericPool, 1);
-  }
+    const flexPool = mergeWeightedPools(
+      scaleWeightedPool(
+        genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool,
+        hasCommittedRoute ? 1.24 : dominantHintedEarlyMid ? 1.18 : openingLevelUp ? 1.24 : earlyMidLevelUp ? 1.28 : 1.28,
+        0.1,
+      ),
+      scaleWeightedPool(
+        routeWindowPool,
+        hasCommittedRoute ? 0.82 : context.dominantRoute ? (earlyMidLevelUp ? 0.92 : 0.78) : openingLevelUp ? 0.88 : earlyMidLevelUp ? 0.82 : 0.68,
+      ),
+    );
 
-  if (picks.length < 3) {
-    appendUniquePicks(picks, genericPool, 3 - picks.length);
+    if (context.dominantRoute && routeWindowPool.length > 0) {
+      appendUniquePicks(picks, routeWindowPool, 1);
+      appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
+      appendUniquePicks(picks, flexPool.length > 0 ? flexPool : routeWindowPool, 3 - picks.length);
+    } else {
+      appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
+      appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
+      appendUniquePicks(picks, flexPool.length > 0 ? flexPool : genericPool, 1);
+    }
+
+    if (picks.length < 3) {
+      appendUniquePicks(picks, genericPool, 3 - picks.length);
+    }
   }
 
   stabilizeUpgradeChoicePicks(picks, genericPool, context);

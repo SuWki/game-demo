@@ -65,25 +65,30 @@ export interface NodeStageConfig {
   };
 }
 
-// 阶段配置映射
-// 短局结构：9~10节点，分为4个阶段
+// 阶段配置映射（2026-05-28重构版）
+// 11节点结构，三阶段：
+//   Stage1（1~3关）：Build启动期 — 禁止高压，让玩家安全启动
+//   Stage2（4~7关）：Build成型期 — 开始上压力，精英出现
+//   Stage3（8~10关）：Build爆发期 — 高压拉满，为最终Boss铺垫
+//   Node 11: Boss战
 export const STAGE_CONFIGS: Record<StageId, NodeStageConfig> = {
-  // Stage1（1~2关）：Build启动期
-  // 目标：玩家快速进入某个流派
+  // Stage1（1~3关）：Build启动期
+  // 目标：玩家安全启动Build，前3关不出现精英/高压
+  // 禁止：高压精英、弹幕封锁、crossfireWave
   stage1: {
     stageId: 'stage1',
     startFloor: 1,
-    endFloor: 2,
+    endFloor: 3,
     name: '启动期',
-    description: '认识流派，开始构筑',
+    description: '安全构筑流派',
     nodeWeights: {
       battle: 50,
-      survival: 25,
-      elite: 5,
-      anomaly: 20,
-      upgrade: 30,
-      buildNode: 0,
-      recovery: 0,
+      survival: 20,
+      elite: 0,
+      anomaly: 18,
+      upgrade: 25,
+      buildNode: 10,
+      recovery: 8,
       gamble: 0,
       highPressure: 0,
     },
@@ -92,125 +97,127 @@ export const STAGE_CONFIGS: Record<StageId, NodeStageConfig> = {
       count2: 50,
       count3: 40,
     },
-    forbiddenTags: ['boss', 'legendary', 'highPressure', 'extremeAnomaly', 'payoff'],
+    forbiddenTags: ['boss', 'legendary', 'highPressure', 'extremeAnomaly', 'payoff', 'elite'],
     preferredTags: ['starter', 'bridge'],
     difficultyScale: 1.0,
     buildProgress: {
-      minCardsExpected: 2,
+      minCardsExpected: 3,
       allowPayoff: false,
       allowLegendary: false,
     },
   },
 
-  // Stage2（3~5关）：Build成型期
-  // 目标：玩家明显知道自己是Crit/Pierce/Dash
+  // Stage2（4~7关）：Build成型期
+  // 目标：玩家开始commit，出现精英/Build节点
+  // 允许：普通精英，buildNode，中压战斗
+  // 禁止：highPressure精英（如laneCrush）
   stage2: {
     stageId: 'stage2',
-    startFloor: 3,
-    endFloor: 5,
+    startFloor: 4,
+    endFloor: 7,
     name: '成型期',
-    description: '构筑成型，开始联动',
+    description: '流派成型开始联动',
     nodeWeights: {
       battle: 30,
-      survival: 15,
-      elite: 25,
+      survival: 12,
+      elite: 20,
       anomaly: 15,
-      upgrade: 25,
-      buildNode: 15,
-      recovery: 0,
-      gamble: 0,
-      highPressure: 10,
+      upgrade: 20,
+      buildNode: 18,
+      recovery: 5,
+      gamble: 5,
+      highPressure: 5,
     },
     countWeights: {
       count1: 5,
-      count2: 50,
-      count3: 45,
+      count2: 35,
+      count3: 60,
     },
-    forbiddenTags: ['legendary', 'extremeAnomaly'],
-    preferredTags: ['amplifier', 'bridge', 'rare'],
-    difficultyScale: 1.15,
+    forbiddenTags: ['boss', 'legendary', 'extremeAnomaly'],
+    preferredTags: ['amplifier'],
+    difficultyScale: 1.12,
     buildProgress: {
-      minCardsExpected: 4,
+      minCardsExpected: 5,
       allowPayoff: false,
       allowLegendary: false,
     },
   },
 
-  // Stage3（6~8关）：Build爆发期
-  // 目标：进入割草爽感阶段
+  // Stage3（8~10关）：Build爆发期
+  // 目标：Build进入Payoff，高压拉满
+  // 允许：所有类型，稀有Build节点
   stage3: {
     stageId: 'stage3',
-    startFloor: 6,
-    endFloor: 8,
+    startFloor: 8,
+    endFloor: 10,
     name: '爆发期',
-    description: '构筑完成，爆发输出',
+    description: '流派爆发火力全开',
     nodeWeights: {
       battle: 15,
-      survival: 10,
-      elite: 30,
-      anomaly: 10,
-      upgrade: 15,
-      buildNode: 20,
-      recovery: 5,
-      gamble: 15,
-      highPressure: 15,
+      survival: 5,
+      elite: 25,
+      anomaly: 18,
+      upgrade: 12,
+      buildNode: 22,
+      recovery: 8,
+      gamble: 5,
+      highPressure: 18,
     },
     countWeights: {
-      count1: 5,
-      count2: 45,
-      count3: 50,
+      count1: 2,
+      count2: 30,
+      count3: 68,
     },
-    forbiddenTags: [],
-    preferredTags: ['payoff', 'legendary', 'rareElite', 'highPressure', 'advancedAnomaly'],
-    difficultyScale: 1.3,
+    forbiddenTags: ['starter', 'boss'],
+    preferredTags: ['payoff', 'legendary'],
+    difficultyScale: 1.15,
     buildProgress: {
-      minCardsExpected: 6,
+      minCardsExpected: 8,
       allowPayoff: true,
-      allowLegendary: true,
+      allowLegendary: false,
     },
   },
 
-  // Stage4（第9关）：终局准备
-  // 第9关：Boss前最终整备
+  // Node 10: 最终整备（Boss前最后一站）
   stage4: {
     stageId: 'stage4',
-    startFloor: 9,
-    endFloor: 9,
-    name: '终局准备',
-    description: 'Boss前最终整备',
+    startFloor: 10,
+    endFloor: 10,
+    name: '最终整备',
+    description: '迎接最终决战',
     nodeWeights: {
-      battle: 0,
+      battle: 5,
       survival: 0,
       elite: 10,
-      anomaly: 30,
-      upgrade: 20,
+      anomaly: 10,
+      upgrade: 35,
       buildNode: 30,
-      recovery: 10,
-      gamble: 20,
-      highPressure: 0,
+      recovery: 20,
+      gamble: 10,
+      highPressure: 5,
     },
     countWeights: {
       count1: 0,
-      count2: 20,
-      count3: 80,
+      count2: 15,
+      count3: 85,
     },
-    forbiddenTags: [],
-    preferredTags: ['legendary', 'extremeAnomaly', 'doubleRare', 'finalPrep'],
-    difficultyScale: 1.0,
+    forbiddenTags: ['starter', 'bridge'],
+    preferredTags: ['payoff', 'legendary'],
+    difficultyScale: 1.45,
     buildProgress: {
-      minCardsExpected: 7,
+      minCardsExpected: 10,
       allowPayoff: true,
       allowLegendary: true,
     },
   },
 
-  // Stage5（第10关）：Final Boss
+  // Node 11: Boss战
   stage5: {
     stageId: 'stage5',
-    startFloor: 10,
-    endFloor: 10,
-    name: '终局之战',
-    description: 'Final Boss',
+    startFloor: 11,
+    endFloor: 11,
+    name: '决战期',
+    description: '最终决战',
     nodeWeights: {
       battle: 0,
       survival: 0,
@@ -218,33 +225,33 @@ export const STAGE_CONFIGS: Record<StageId, NodeStageConfig> = {
       anomaly: 0,
       upgrade: 0,
       buildNode: 0,
-      recovery: 0,
+      recovery: 20,
       gamble: 0,
       highPressure: 0,
     },
     countWeights: {
-      count1: 100,
+      count1: 0,
       count2: 0,
-      count3: 0,
+      count3: 100,
     },
     forbiddenTags: [],
-    preferredTags: ['boss'],
-    difficultyScale: 1.4,
+    preferredTags: ['payoff', 'legendary'],
+    difficultyScale: 1.5,
     buildProgress: {
-      minCardsExpected: 7,
+      minCardsExpected: 10,
       allowPayoff: true,
       allowLegendary: true,
     },
   },
 };
 
-// 根据关卡获取所属阶段
+// 根据关卡获取所属阶段（2026-05-28重构版·11节点三阶段）
 export function getStageByFloor(floor: number): StageId {
-  if (floor >= 10) return 'stage5';
-  if (floor >= 9) return 'stage4';
-  if (floor >= 6) return 'stage3';
-  if (floor >= 3) return 'stage2';
-  return 'stage1';
+  if (floor >= 11) return 'stage5';  // Boss
+  if (floor >= 10) return 'stage4';  // 最终整备
+  if (floor >= 8) return 'stage3';   // 爆发期
+  if (floor >= 4) return 'stage2';   // 成型期
+  return 'stage1';                   // 启动期
 }
 
 // 获取阶段配置
@@ -322,8 +329,8 @@ export function checkBuildReadiness(
   // 检查是否有payoff牌
   const hasPayoff = selectedUpgrades.some(id => payoffCardIds.includes(id));
 
-  // 检查是否有核心流派牌（3张以上）
-  const hasCoreRoute = dominantCount >= 3;
+  // 检查是否有核心流派牌（2张以上=leaning）
+  const hasCoreRoute = dominantCount >= 2;
 
   // 计算缺失的牌数
   const expectedCards = stageConfig.buildProgress.minCardsExpected;
@@ -335,15 +342,17 @@ export function checkBuildReadiness(
     recommendations.push(`建议补充${missingCards}张强化`);
   }
 
-  if (!hasPayoff && floor >= 7) {
+  if (!hasPayoff && floor >= 8) {
     recommendations.push('建议获取Payoff级强化');
   }
 
-  if (!hasCoreRoute) {
-    recommendations.push('建议确定核心流派（至少3张）');
+  if (dominantCount < 2) {
+    recommendations.push('建议确定核心流派（至少2张）');
+  } else if (dominantCount < 4) {
+    recommendations.push('建议继续堆叠流派牌至4张Commit');
   }
 
-  const isReady = missingCards === 0 && hasCoreRoute && (floor < 7 || hasPayoff);
+  const isReady = !hasCoreRoute ? false : dominantCount >= 4 && (floor < 8 || hasPayoff);
 
   return {
     isReady,

@@ -1,11 +1,10 @@
 // Build成长系统：强化阶段配置
 // 为所有流派强化定义stage分层
-// 适配11关结构：
-//   starter: Floor 1 起始可出现
-//   bridge: Floor 2 解锁
-//   amplifier: Floor 4 解锁
-//   payoff: Floor 7 解锁
-//   legendary: Floor 9 解锁
+// 适配11关结构（2026-05-28重构版）：
+//   starter:   第1关起始可出现，持续到第10关
+//   amplifier: 第4关解锁
+//   payoff:    第7关解锁
+//   legendary: 第10关解锁
 
 export type UpgradeStage = 'starter' | 'bridge' | 'amplifier' | 'payoff' | 'legendary';
 
@@ -128,21 +127,19 @@ export const UPGRADE_STAGE_MAP: Record<string, UpgradeStage> = {
   'dash-pulse-storm': 'legendary',
 };
 
-// 阶段解锁配置
-// 适配短局高密度Build结构（9~10节点）：
-//   starter: Floor 1 起始可出现
-//   bridge: Floor 2 解锁
-//   amplifier: Floor 3 解锁
-//   payoff: Floor 5 解锁
-//   legendary: Floor 7 解锁
+// 阶段解锁配置（2026-05-28重构版）
+// 适配11节点结构，让玩家有更多时间Build：
+//   starter:    第1关开始（覆盖整个游戏）
+//   amplifier:  第4关解锁（开始有联动）
+//   payoff:     第7关解锁（开始成型）
+//   legendary:  第10关解锁（终局爆发）
 export const STAGE_UNLOCK_CONFIG = {
-  // 第几关开始解锁某个阶段
   unlockRounds: {
     starter: 1,
-    bridge: 2,
-    amplifier: 3,
-    payoff: 5,
-    legendary: 7,
+    bridge: 1,      // bridge与starter合并，第1关就可用
+    amplifier: 4,
+    payoff: 7,
+    legendary: 10,
   },
   // 每个阶段的基础出现权重
   stageBaseWeights: {
@@ -150,34 +147,36 @@ export const STAGE_UNLOCK_CONFIG = {
     bridge: 0.9,
     amplifier: 0.8,
     payoff: 0.5,
-    legendary: 0.08, // 8%基础概率
+    legendary: 0.08,
   },
   // 阶段稀有度偏好
   stageRarity: {
-    starter: ['common', 'uncommon'],
-    bridge: ['uncommon'],
+    starter: ['common', 'uncommon', 'rare'],
+    bridge: ['common', 'uncommon', 'rare'],
     amplifier: ['uncommon', 'rare'],
     payoff: ['rare', 'epic'],
     legendary: ['epic', 'legendary'],
   },
 };
 
-// Build定向权重配置
+// Build定向权重配置（2026-05-28重构版）
+// 新的阈值匹配 BuildStage 系统：
+//   leaning:  2张 → 权重提升
+//   commit:   4张 → 大幅提升
+//   payoff:   7张 → 解锁终局强度
 export const BUILD_DIRECTED_CONFIG = {
-  // 拿到N张后触发
   thresholds: {
-    starterBonus: 2,      // 2张后增加权重
-    bridgeUnlock: 2,      // 2张后解锁Bridge
-    amplifierUnlock: 3, // 3张后解锁Amplifier（对应第3关）
-    payoffUnlock: 5,    // 5张后解锁Payoff（对应第5关）
-    legendaryUnlock: 7, // 7张后解锁Legendary（对应第7关）
+    leaningBonus: 2,       // 2张后增加同流派权重
+    commitBonus: 4,        // 4张后大幅增加同流派权重
+    payoffUnlock: 7,       // 7张后解锁Payoff
+    legacyUnlock: 10,      // 10张后解锁legendary
   },
-  // 权重调整
   weights: {
-    sameRouteBonus: 0.5,      // 同流派+50%
-    offRoutePenalty: 0.3,     // 其他流派-30%
-    stageSynergyBonus: 0.25,  // 阶段协同+25%
-    legendaryBaseRate: 0.08,  // Legendary基础出现率8%
+    sameRouteBoost: 1.8,      // 同流派+80%（比以前50%更高）
+    committedRouteBoost: 3.0, // commit后同流派+200%
+    offRoutePenalty: 0.3,     // 其他流派-70%
+    stageSynergyBonus: 0.25,
+    legendaryBaseRate: 0.08,
   },
 };
 
@@ -194,11 +193,20 @@ export interface BuildMilestone {
 
 export const BUILD_MILESTONES: BuildMilestone[] = [
   {
+    id: 'crit-leaning',
+    routeId: 'crit',
+    name: '暴击倾向出现',
+    description: '获得2张暴击牌，暴击流派出现率提升',
+    requiredCards: 2,
+    minStage: 'starter',
+    uiEffect: 'glow',
+  },
+  {
     id: 'crit-established',
     routeId: 'crit',
     name: '暴击回路已成型',
-    description: '获得3张暴击流核心牌后，破绽系统正式启动',
-    requiredCards: 3,
+    description: '获得4张暴击流核心牌后，破绽系统正式启动',
+    requiredCards: 4,
     minStage: 'amplifier',
     uiEffect: 'glow',
   },
@@ -206,17 +214,26 @@ export const BUILD_MILESTONES: BuildMilestone[] = [
     id: 'crit-matured',
     routeId: 'crit',
     name: '暴击风暴已激活',
-    description: '获得5张暴击流牌后，进入超模状态',
-    requiredCards: 5,
+    description: '获得7张暴击流牌后，进入超模状态',
+    requiredCards: 7,
     minStage: 'payoff',
     uiEffect: 'transform',
+  },
+  {
+    id: 'pierce-leaning',
+    routeId: 'pierce',
+    name: '穿透倾向出现',
+    description: '获得2张穿透牌，穿透流派出现率提升',
+    requiredCards: 2,
+    minStage: 'starter',
+    uiEffect: 'glow',
   },
   {
     id: 'pierce-established',
     routeId: 'pierce',
     name: '裂纹扩散系统启动',
-    description: '获得3张穿透流核心牌后，裂纹系统正式启动',
-    requiredCards: 3,
+    description: '获得4张穿透流核心牌后，裂纹系统正式启动',
+    requiredCards: 4,
     minStage: 'amplifier',
     uiEffect: 'glow',
   },
@@ -224,17 +241,26 @@ export const BUILD_MILESTONES: BuildMilestone[] = [
     id: 'pierce-matured',
     routeId: 'pierce',
     name: '贯穿风暴已激活',
-    description: '获得5张穿透流牌后，进入超模状态',
-    requiredCards: 5,
+    description: '获得7张穿透流牌后，进入超模状态',
+    requiredCards: 7,
     minStage: 'payoff',
     uiEffect: 'transform',
+  },
+  {
+    id: 'dash-leaning',
+    routeId: 'dash',
+    name: '穿梭倾向出现',
+    description: '获得2张穿梭牌，穿梭流派出现率提升',
+    requiredCards: 2,
+    minStage: 'starter',
+    uiEffect: 'glow',
   },
   {
     id: 'dash-established',
     routeId: 'dash',
     name: '相位风暴已激活',
-    description: '获得3张穿梭流核心牌后，脉冲系统正式启动',
-    requiredCards: 3,
+    description: '获得4张穿梭流核心牌后，脉冲系统正式启动',
+    requiredCards: 4,
     minStage: 'amplifier',
     uiEffect: 'glow',
   },
@@ -242,8 +268,8 @@ export const BUILD_MILESTONES: BuildMilestone[] = [
     id: 'dash-matured',
     routeId: 'dash',
     name: '相位暴走已启动',
-    description: '获得5张穿梭流牌后，进入超模状态',
-    requiredCards: 5,
+    description: '获得7张穿梭流牌后，进入超模状态',
+    requiredCards: 7,
     minStage: 'payoff',
     uiEffect: 'transform',
   },
@@ -259,33 +285,49 @@ export function isStageUnlocked(stage: UpgradeStage, currentRound: number): bool
   return currentRound >= STAGE_UNLOCK_CONFIG.unlockRounds[stage];
 }
 
-// 计算Build定向权重
+// 计算Build定向权重（2026-05-28重构版）
+// 根据流派牌数量动态调整权重：
+//   0-1张: 基础权重
+//   2-3张: leaning → 同流派+80%
+//   4-6张: commit  → 同流派+200%
+//   7+张:  payoff  → 同流派+300%
 export function calculateDirectedWeight(
   upgradeId: string,
   routeId: string | undefined,
   routeCardCounts: Record<string, number>,
   currentRound: number,
+  dominantRoute: string | null,
 ): number {
   const stage = getUpgradeStage(upgradeId);
 
-  // 检查阶段是否解锁
   if (!isStageUnlocked(stage, currentRound)) {
     return 0;
   }
 
   let weight = STAGE_UNLOCK_CONFIG.stageBaseWeights[stage];
 
-  // 如果属于某个流派
   if (routeId) {
     const routeCount = routeCardCounts[routeId] ?? 0;
+    const isDominant = dominantRoute === routeId;
 
-    // 同流派加成
-    if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.starterBonus) {
-      weight *= (1 + BUILD_DIRECTED_CONFIG.weights.sameRouteBonus);
+    // leaning级加成（2+张）
+    if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.leaningBonus) {
+      if (isDominant) {
+        weight *= BUILD_DIRECTED_CONFIG.weights.sameRouteBoost;
+      } else {
+        weight *= (1 + BUILD_DIRECTED_CONFIG.weights.offRoutePenalty);
+      }
     }
 
-    // 阶段协同：如果已有同阶段牌，再增加权重
-    // 这里简化处理，实际应该追踪已选牌的stage
+    // commit级大幅加成（4+张）
+    if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.commitBonus && isDominant) {
+      weight *= BUILD_DIRECTED_CONFIG.weights.committedRouteBoost;
+    }
+
+    // payoff级终局加成（7+张）
+    if (routeCount >= BUILD_DIRECTED_CONFIG.thresholds.payoffUnlock && isDominant) {
+      weight *= 1.5;
+    }
   }
 
   return weight;

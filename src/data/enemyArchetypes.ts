@@ -1,4 +1,5 @@
 import type { EnemyArchetypeDefinition, EnemyArchetypeId } from '../game/types';
+import { rng } from '../utils/rng';
 
 const DEFAULT_REGULAR_ARCHETYPE_WEIGHTS: Record<EnemyArchetypeId, number> = {
   standard: 2.4,
@@ -63,7 +64,7 @@ export const ENEMY_ARCHETYPES: Record<EnemyArchetypeId, EnemyArchetypeDefinition
 function pickWeightedArchetype(weights: Record<EnemyArchetypeId, number>): EnemyArchetypeId {
   const entries = Object.entries(weights) as Array<[EnemyArchetypeId, number]>;
   const totalWeight = entries.reduce((sum, [, weight]) => sum + weight, 0);
-  let roll = Math.random() * totalWeight;
+  let roll = rng().next() * totalWeight;
 
   for (const [archetypeId, weight] of entries) {
     roll -= weight;

@@ -697,9 +697,12 @@ export interface VisualEffectState {
 
 export type VisualEffectType =
   | 'critExplosion' // 暴击爆炸
+  | 'critFlawBurst' // 破绽爆点爆发（先塌缩再爆炸）
   | 'pierceShockwave' // 穿透冲击波
+  | 'pierceCrackSpread' // 裂纹传播折线切割
   | 'lightningChain' // 闪电链
-  | 'buildReadyFlash'; // Build成型闪光
+  | 'dashAfterimagePulse' // 残影脉冲
+  | 'buildMatureFlash'; // Build成熟全屏演出
 
 export interface NodeRecord {
   id: string;
@@ -726,6 +729,7 @@ export interface RunResult {
   routeTrace: NodeRecord[];
   replayPrompt: string;
   selectedUpgrades: UpgradeDefinition[];
+  runSeed: number;
 }
 
 export interface RunState {
@@ -769,8 +773,7 @@ export interface RunState {
     elapsedSec: number;
     durationSec: number;
   } | null;
-  // 升级生效屏幕闪光
-  upgradeFlashSec: number;
+  // 升级生效屏幕闪光已移除（原 upgradeFlashSec）
   // 战斗中升级时先播放短提示，再弹出选择面板，避免遮住升级反馈
   levelUpPanelDelaySec: number;
   // 升级能力变化显示

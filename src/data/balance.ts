@@ -88,8 +88,8 @@ export function getPhaseTier(phase: PhaseId): number {
 
 export function createBaseStats(): PlayerStats {
   return {
-    maxHp: 110,
-    hp: 110,
+    maxHp: 120,
+    hp: 120,
     damage: 18,
     fireRate: 2.2,
     projectileSpeed: 360,
@@ -97,7 +97,7 @@ export function createBaseStats(): PlayerStats {
     critMultiplier: 1.65,
     pierce: 0,
     multishot: 1,
-    moveSpeed: 248,
+    moveSpeed: 240,
     dashInterval: 5.4,
     dashPulseDamage: 0,
     dashInvulnerability: 0.24,
@@ -212,8 +212,11 @@ export function getEnemyHealth(
   difficultyScale: number,
   eliteMultiplier = 1,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.2 + getPhaseTier(phase) * 0.12;
-  return Math.round(template.enemyHp * depthFactor * difficultyScale * eliteMultiplier);
+  const depthFactor = 1 + (round - 1) * 0.18 + getPhaseTier(phase) * 0.12;
+  // 前3节点降低敌人HP
+  const earlyPenalty = round <= 3 ? 0.55 : 1;
+  const midPenalty = (round >= 4 && round <= 7) ? 0.85 : 1;
+  return Math.round(template.enemyHp * depthFactor * difficultyScale * eliteMultiplier * earlyPenalty * midPenalty);
 }
 
 export function getEnemyMoveSpeed(
@@ -234,8 +237,9 @@ export function getEnemyContactDamage(
   difficultyScale: number,
   damageMultiplier = 1,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.14 + getPhaseTier(phase) * 0.1;
-  return Math.round(template.enemyDamage * depthFactor * difficultyScale * damageMultiplier);
+  const depthFactor = 1 + (round - 1) * 0.13 + getPhaseTier(phase) * 0.09;
+  const midPenalty = (round >= 4 && round <= 7) ? 0.85 : 1;
+  return Math.round(template.enemyDamage * depthFactor * difficultyScale * midPenalty * damageMultiplier);
 }
 
 export function getEnemySpawnInterval(
@@ -244,10 +248,11 @@ export function getEnemySpawnInterval(
   phase: PhaseId,
   elapsedSec: number,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.1 + getPhaseTier(phase) * 0.07;
-  // 提高压力因子，让中后期刷怪更频繁
+  const depthFactor = 1 + (round - 1) * 0.12 + getPhaseTier(phase) * 0.09;
+  // 前5节点降低刷怪频率
+  const earlySlow = round <= 5 ? 0.65 : 1;
   const pressureFactor = 1 + Math.log(1 + elapsedSec / 10) * 0.42;
-  const interval = template.spawnIntervalSec / (depthFactor * pressureFactor);
+  const interval = template.spawnIntervalSec / (depthFactor * pressureFactor * earlySlow);
   return clamp(interval, template.spawnIntervalSec * 0.32, template.spawnIntervalSec);
 }
 
@@ -257,9 +262,11 @@ export function getRegularEnemyCap(
   phase: PhaseId,
   capMultiplier = 1,
 ): number {
-  // 提高增长系数以增强后期压迫感
-  const depthFactor = 1 + (round - 1) * 0.15 + getPhaseTier(phase) * 0.12;
-  return Math.max(5, Math.round(template.regularEnemyCap * depthFactor * capMultiplier));
+  const depthFactor = 1 + (round - 1) * 0.12 + getPhaseTier(phase) * 0.1;
+  // 前3节点降低敌人上限（2026-05-28重构）
+  const earlyCap = round <= 3 ? 0.8 : 1;
+  const midCap = (round >= 4 && round <= 7) ? 0.8 : 1;
+  return Math.max(5, Math.round(template.regularEnemyCap * depthFactor * capMultiplier * earlyCap * midCap));
 }
 
 export function getSpawnBurstCount(template: BattleTemplateDefinition): number {
@@ -274,7 +281,9 @@ export function getEnemyExperienceValue(
 ): number {
   const phaseTier = getPhaseTier(phase);
   const baseValue = 4 + round * 2.5 + phaseTier * 2.5 + template.enemyHp * 0.09;
-  return Math.round(isElite ? baseValue * 4.5 : baseValue);
+  // 前10节点提高经验获取（2026-05-28重构: xpGainMultiplierEarly = 2.5）
+  const xpBoost = round <= 10 ? 1.8 : 1;
+  return Math.round((isElite ? baseValue * 4.5 : baseValue) * xpBoost);
 }
 
 export function getBattleCompletionExperience(
@@ -290,7 +299,8 @@ export function getBattleCompletionExperience(
         ? 38
         : 32;
   // 大幅提高战斗完成经验，确保每次战斗都能触发升级（混合节点设计）
-  return Math.round(baseValue + round * 12 + phaseTier * 8);
+  const xpBoost = round <= 10 ? 1.8 : 1;
+  return Math.round((baseValue + round * 12 + phaseTier * 8) * xpBoost);
 }
 
 export function getPressureSnapshot(
