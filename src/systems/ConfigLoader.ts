@@ -28,10 +28,12 @@ export interface ConfigMap {
 export class ConfigLoader {
   private configs: Partial<ConfigMap> = {};
   private isDev: boolean;
+  private readonly assetBaseUrl: string;
   private loaded: boolean = false;
 
   constructor(isDev?: boolean) {
     this.isDev = isDev ?? (import.meta as any).env?.DEV ?? false;
+    this.assetBaseUrl = this.resolveAssetBaseUrl();
   }
 
   /**
@@ -63,8 +65,7 @@ export class ConfigLoader {
     }
 
     try {
-      const base = (import.meta as any).env?.BASE_URL ?? '/';
-      const response = await fetch(`${base}data/${name}.json`);
+      const response = await fetch(new URL(`data/${name}.json`, this.assetBaseUrl).toString());
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -178,5 +179,29 @@ export class ConfigLoader {
       default:
         throw new Error(`[ConfigLoader] 未知的配置名称: ${name}`);
     }
+  }
+
+  private resolveAssetBaseUrl(): string {
+    const envBase = this.normalizeBasePath((import.meta as any).env?.BASE_URL ?? '/');
+    if (envBase !== '/') {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+      return new URL(envBase, origin).toString();
+    }
+
+    if (typeof document !== 'undefined' && document.baseURI) {
+      return document.baseURI;
+    }
+
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    return new URL('/', origin).toString();
+  }
+
+  private normalizeBasePath(basePath: string): string {
+    if (!basePath || basePath === '.' || basePath === './') {
+      return '/';
+    }
+
+    const trimmed = basePath.startsWith('/') ? basePath : `/${basePath}`;
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
   }
 }
