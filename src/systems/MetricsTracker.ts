@@ -42,8 +42,15 @@ interface MetricRunSummary {
   durationSec?: number;
   battleWins?: number;
   nodesCleared?: number;
+  runSeed?: number;
   firstCommitStage?: PhaseId;
   firstCommitPick?: string;
+  firstStarterStage?: PhaseId;
+  firstStarterRound?: number;
+  firstStarterPick?: string;
+  firstBridgeStage?: PhaseId;
+  firstBridgeRound?: number;
+  firstBridgePick?: string;
   branchSwitchCount?: number;
   branchSwitchPhaseCounts?: Partial<Record<PhaseId, number>>;
   rareSeenCount?: number;
@@ -83,6 +90,7 @@ interface BattleMonitoringSummary {
 
 interface ContentMetricMeta {
   phase?: PhaseId;
+  round?: number;
   source?: UpgradeSource;
   rarity?: UpgradeRarity;
   category?: UpgradeCategory;
@@ -137,6 +145,18 @@ export class MetricsTracker {
   private firstCommitStageInRun: PhaseId | null = null;
 
   private firstCommitPickInRun: string | null = null;
+
+  private firstStarterStageInRun: PhaseId | null = null;
+
+  private firstStarterRoundInRun: number | null = null;
+
+  private firstStarterPickInRun: string | null = null;
+
+  private firstBridgeStageInRun: PhaseId | null = null;
+
+  private firstBridgeRoundInRun: number | null = null;
+
+  private firstBridgePickInRun: string | null = null;
 
   private branchSwitchCountInRun = 0;
 
@@ -341,17 +361,29 @@ export class MetricsTracker {
     contentTier?: ContentTier,
     meta?: ContentMetricMeta,
   ): void {
+    const tags = meta?.tags ?? [];
+    if (tags.includes('starter') && !this.firstStarterStageInRun) {
+      this.firstStarterStageInRun = meta?.phase ?? null;
+      this.firstStarterRoundInRun = meta?.round ?? null;
+      this.firstStarterPickInRun = upgradeId;
+    }
+    if (tags.includes('bridge') && !this.firstBridgeStageInRun) {
+      this.firstBridgeStageInRun = meta?.phase ?? null;
+      this.firstBridgeRoundInRun = meta?.round ?? null;
+      this.firstBridgePickInRun = upgradeId;
+    }
     this.record('upgrade_selected', {
       upgradeId,
       routeId,
       contentTier,
       phase: meta?.phase,
+      round: meta?.round,
       source: meta?.source,
       rarity: meta?.rarity,
       category: meta?.category,
       valueScore: meta?.valueScore,
       valueBucket: meta?.valueBucket,
-      tags: meta?.tags,
+      tags,
     });
     this.trackContentCounters(contentTier, meta);
     if (routeId) {
@@ -557,6 +589,7 @@ export class MetricsTracker {
     outcome: RunOutcome;
     routeId: RouteId | null;
     durationSec: number;
+    runSeed: number;
     buildStage: RouteBuildStage;
     buildSummary: string;
     endingKind: RunEndingKind;
@@ -592,8 +625,15 @@ export class MetricsTracker {
     currentRun.durationSec = result.durationSec;
     currentRun.battleWins = result.battleWins;
     currentRun.nodesCleared = result.nodesCleared;
+    currentRun.runSeed = result.runSeed;
     currentRun.firstCommitStage = this.firstCommitStageInRun ?? undefined;
     currentRun.firstCommitPick = this.firstCommitPickInRun ?? undefined;
+    currentRun.firstStarterStage = this.firstStarterStageInRun ?? undefined;
+    currentRun.firstStarterRound = this.firstStarterRoundInRun ?? undefined;
+    currentRun.firstStarterPick = this.firstStarterPickInRun ?? undefined;
+    currentRun.firstBridgeStage = this.firstBridgeStageInRun ?? undefined;
+    currentRun.firstBridgeRound = this.firstBridgeRoundInRun ?? undefined;
+    currentRun.firstBridgePick = this.firstBridgePickInRun ?? undefined;
     currentRun.branchSwitchCount = this.branchSwitchCountInRun;
     currentRun.branchSwitchPhaseCounts = this.branchSwitchPhaseCountsInRun;
     currentRun.rareSeenCount = this.rareSeenCountInRun;
@@ -630,10 +670,17 @@ export class MetricsTracker {
       finalNodeTitle: result.finalNodeTitle,
       finalNodeType: result.finalNodeType,
       durationSec: result.durationSec,
+      runSeed: result.runSeed,
       battleWins: result.battleWins,
       nodesCleared: result.nodesCleared,
       firstCommitStage: this.firstCommitStageInRun,
       firstCommitPick: this.firstCommitPickInRun,
+      firstStarterStage: this.firstStarterStageInRun,
+      firstStarterRound: this.firstStarterRoundInRun,
+      firstStarterPick: this.firstStarterPickInRun,
+      firstBridgeStage: this.firstBridgeStageInRun,
+      firstBridgeRound: this.firstBridgeRoundInRun,
+      firstBridgePick: this.firstBridgePickInRun,
       branchSwitchCount: this.branchSwitchCountInRun,
       branchSwitchPhaseCounts: this.branchSwitchPhaseCountsInRun,
       rareSeenCount: this.rareSeenCountInRun,
@@ -682,6 +729,12 @@ export class MetricsTracker {
     this.maturedRouteInRun = null;
     this.firstCommitStageInRun = null;
     this.firstCommitPickInRun = null;
+    this.firstStarterStageInRun = null;
+    this.firstStarterRoundInRun = null;
+    this.firstStarterPickInRun = null;
+    this.firstBridgeStageInRun = null;
+    this.firstBridgeRoundInRun = null;
+    this.firstBridgePickInRun = null;
     this.branchSwitchCountInRun = 0;
     this.branchSwitchPhaseCountsInRun = {};
     this.rareSeenCountInRun = 0;

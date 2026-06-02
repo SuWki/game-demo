@@ -36,7 +36,7 @@
   getRegularEnemyCap,
   getSpawnBurstCount,
 } from '../data/balance';
-import { getRNGSeed, rng, setRNGSeed } from '../utils/rng';
+import { getRNGSeed, rng } from '../utils/rng';
 import {
   getBattleActiveEliteBehavior,
   getBattleTargetKills,
@@ -195,8 +195,6 @@ export class RunEngine {
 
   public constructor(services: Services) {
     this.services = services;
-    // 每次新run生成新种子，确保每局不同
-    setRNGSeed(Date.now() + performance.now());
     const openingNode = createOpeningBattleNode();
     this.state = {
       status: 'battle',
@@ -494,6 +492,7 @@ export class RunEngine {
       upgrade.contentTier,
       {
         phase: this.state.phase,
+        round: this.state.round,
         source: source ?? undefined,
         rarity: upgrade.rarity,
         category: upgrade.category,
@@ -2348,6 +2347,7 @@ export class RunEngine {
       outcome,
       routeId,
       durationSec: runDurationSec,
+      runSeed: getRNGSeed(),
       buildStage,
       buildSummary,
       endingKind,

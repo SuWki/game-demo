@@ -4,7 +4,13 @@ import { chromium } from 'playwright';
 
 const APP_URL = process.env.PILOT_QA_URL ?? 'http://127.0.0.1:4201/game-demo/';
 const OUT_DIR = path.resolve(process.env.PILOT_QA_OUT_DIR ?? 'output/qa/retest-natural-long-boss-pass');
-const RUN_COUNT = Number(process.env.PILOT_QA_RUNS ?? '10');
+const FIXED_SEEDS = (process.env.PILOT_QA_SEEDS ?? '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => Number(value))
+  .filter((value) => Number.isFinite(value));
+const RUN_COUNT = Number(process.env.PILOT_QA_RUNS ?? (FIXED_SEEDS.length > 0 ? String(FIXED_SEEDS.length) : '10'));
 const MAX_STEPS = Number(process.env.PILOT_QA_MAX_STEPS ?? '240');
 const executableCandidates = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -14,6 +20,14 @@ const executablePath = executableCandidates.find((candidate) => fs.existsSync(ca
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+function buildRunUrl(seed) {
+  const url = new URL(APP_URL);
+  if (Number.isFinite(seed)) {
+    url.searchParams.set('seed', String(seed));
+  }
+  return url.toString();
 }
 
 function normalize(value) {
@@ -80,10 +94,11 @@ async function exportMetrics(page) {
   return page.evaluate(() => JSON.parse(window.__exportPilotMetrics()));
 }
 
-async function runScenario(browser, index) {
+async function runScenario(browser, index, seed) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
   const summary = {
     runIndex: index,
+    seed: Number.isFinite(seed) ? seed : null,
     consoleErrors: [],
     failed404: [],
     panels: 0,
@@ -105,7 +120,7 @@ async function runScenario(browser, index) {
     }
   });
 
-  await page.goto(APP_URL, { waitUntil: 'networkidle' });
+  await page.goto(buildRunUrl(seed), { waitUntil: 'networkidle' });
   if (index === 1) {
     await page.screenshot({ path: path.join(OUT_DIR, 'run-01-menu.png'), fullPage: true });
   }
@@ -173,7 +188,11 @@ async function main() {
 
   const runs = [];
   for (let index = 1; index <= RUN_COUNT; index += 1) {
-    runs.push(await runScenario(browser, index));
+    const seed = FIXED_SEEDS.length > 0 ? FIXED_SEEDS[index - 1] : undefined;
+    if (FIXED_SEEDS.length > 0 && !Number.isFinite(seed)) {
+      throw new Error(`PILOT_QA_SEEDS length must match PILOT_QA_RUNS (${RUN_COUNT})`);
+    }
+    runs.push(await runScenario(browser, index, seed));
   }
   await browser.close();
 
@@ -191,12 +210,14 @@ async function main() {
     avgPanels: Number((runs.reduce((sum, run) => sum + run.panels, 0) / runs.length).toFixed(2)),
     consoleErrorRuns: runs.filter((run) => run.consoleErrors.length > 0).length,
     failed404Urls: [...new Set(runs.flatMap((run) => run.failed404))],
+    runSeeds: runs.map((run) => run.seed),
   };
 
   const report = {
     sourceScript: path.relative(process.cwd(), new URL(import.meta.url).pathname.replace(/^\//, '')).replace(/\\/g, '/'),
     aggregate,
     runs,
+    fixedSeeds: FIXED_SEEDS,
   };
 
   fs.writeFileSync(path.join(OUT_DIR, 'summary.json'), JSON.stringify(report, null, 2));

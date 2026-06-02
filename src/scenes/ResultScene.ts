@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import type { RunResult, Services } from '../game/types';
-import { setRNGSeed } from '../utils/rng';
 
 export class ResultScene extends Phaser.Scene {
   public constructor() {
@@ -18,8 +17,6 @@ export class ResultScene extends Phaser.Scene {
         services.audio.unlock();
         services.audio.play('start');
         services.metrics.beginRunFromRestart();
-        // 确保每局使用不同种子
-        setRNGSeed(Date.now() + Math.floor(performance.now() * 1000));
         this.cameras.main.fadeOut(160, 6, 12, 18);
         this.time.delayedCall(170, () => {
           this.scene.start('GameScene');

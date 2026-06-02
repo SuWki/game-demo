@@ -3,7 +3,7 @@ import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/ba
 import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, getBuildStageInfo } from '../data/routes';
-import { setRNGSeed } from '../utils/rng';
+import { resolveRunSeed, setRNGSeed } from '../utils/rng';
 import type {
   BattleDebugConfig,
   BattleDebugRuntimeConfig,
@@ -210,8 +210,9 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.services = this.game.registry.get('services') as Services;
-    // 每局新游戏生成新种子
-    setRNGSeed(Date.now() + Math.floor(performance.now() * 1000));
+    // 每局新游戏按固定样本或时间种子初始化
+    const runSeed = resolveRunSeed();
+    setRNGSeed(runSeed.seed, { stable: runSeed.fixed });
     this.services.audio.unlock();
     this.services.audio.setMusic('battle');
     this.engine = new RunEngine(this.services);

@@ -53,7 +53,44 @@ export class SeededRNG {
 const defaultRNG = new SeededRNG();
 let restartCounter = 0;
 
-export function setRNGSeed(seed: number): void {
+export interface RunSeedResolution {
+  seed: number;
+  fixed: boolean;
+}
+
+export function resolveRunSeed(fallbackSeed = Date.now() + Math.floor(performance.now() * 1000)): RunSeedResolution {
+  if (typeof window !== 'undefined') {
+    try {
+      const searchParams = new URL(window.location.href).searchParams;
+      const seedParam = searchParams.get('seed') ?? searchParams.get('qaSeed') ?? searchParams.get('pilotSeed');
+      if (seedParam !== null) {
+        const parsed = Number(seedParam);
+        if (Number.isFinite(parsed)) {
+          return {
+            seed: Math.trunc(parsed),
+            fixed: true,
+          };
+        }
+      }
+    } catch {
+      // Ignore malformed URLs and fall back to a time-based seed.
+    }
+  }
+
+  return {
+    seed: Math.trunc(fallbackSeed),
+    fixed: false,
+  };
+}
+
+export function setRNGSeed(seed: number, options?: { stable?: boolean }): void {
+  if (options?.stable) {
+    restartCounter = 0;
+    defaultRNG['seed'] = seed;
+    defaultRNG['originalSeed'] = seed;
+    return;
+  }
+
   restartCounter++;
   // 混合种子与重启计数器，确保即使快速重启也有不同种子
   const mixedSeed = seed ^ (restartCounter * 0x9e3779b9);
