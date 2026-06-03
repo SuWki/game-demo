@@ -4154,6 +4154,18 @@ export class RunEngine {
     }
 
     const template = this.getBattleTemplate(battle.templateId);
+    const eliteRule = template.eliteRule;
+    if (!eliteRule) {
+      return;
+    }
+
+    const escortMax = this.getEliteEscortMax(template, battle);
+    const currentEscorts = this.getActiveEscortCount(battle);
+    const allowedCount = Math.min(count, Math.max(0, escortMax - currentEscorts));
+    if (allowedCount <= 0) {
+      return;
+    }
+
     const eliteEnemy = this.getEliteEnemy(battle);
     const activeBehavior = this.getActiveEliteBehavior(battle, template);
     const battleIndex = this.getCurrentBattleIndex();
@@ -4164,8 +4176,8 @@ export class RunEngine {
       ? Math.atan2(eliteEnemy.y - battle.playerY, eliteEnemy.x - battle.playerX)
       : -Math.PI / 2;
 
-    for (let index = 0; index < count; index += 1) {
-      const spread = count === 1 ? 0 : ((index / Math.max(1, count - 1)) - 0.5) * 0.95;
+    for (let index = 0; index < allowedCount; index += 1) {
+      const spread = allowedCount === 1 ? 0 : ((index / Math.max(1, allowedCount - 1)) - 0.5) * 0.95;
       const distance =
         activeBehavior === 'screened'
           ? 42 + index * 8
