@@ -4602,6 +4602,43 @@ button:hover {
   gap: 16px;
 }
 
+.detail-narrative-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-narrative-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  padding: 16px 18px;
+  background: rgba(233, 243, 250, 0.06);
+  border: 1px solid rgba(221, 236, 248, 0.12);
+  border-radius: 6px;
+}
+
+.detail-narrative-card span {
+  color: rgba(222, 235, 242, 0.62);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.detail-narrative-card strong {
+  color: rgba(245, 252, 255, 0.94);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.detail-narrative-card small {
+  color: rgba(222, 235, 242, 0.64);
+  font-size: 12px;
+}
+
 .detail-section-title {
   color: rgba(245, 252, 255, 0.92);
   font-size: 16px;
@@ -4761,6 +4798,10 @@ button:hover {
 
   .detail-stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .detail-narrative-grid {
+    grid-template-columns: 1fr;
   }
 
   .detail-section-title {

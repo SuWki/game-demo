@@ -406,7 +406,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '暴击转接窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '暴击成型，可切换其他打法',
+    description: '先把暴击方向锁住，再决定要不要换线',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 1.22,
@@ -426,8 +426,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-hold',
         routeId: 'crit',
-        label: '先稳当前火力',
-        description: '不转向，先补火力和耐久',
+        label: '先锁暴击方向',
+        gameplayLabel: '方向锁定',
+        gainLabel: '暴击窗口更稳，后面更容易接核心件',
+        costLabel: '少量通用强化让位',
+        description: '不转向，先把暴击路站稳',
         effects: [
           {
             type: 'stats',
@@ -1017,7 +1020,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'crit',
-    description: '清怪变慢，但对强敌爆发更高',
+    description: '把暴击做成真正的核心回路，清怪慢一点也值',
     selection: {
       baseWeight: 0.9,
       minRound: 2,
@@ -1033,11 +1036,11 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-lock-focus',
         label: '接入暴击锁定',
-        gameplayLabel: '单体爆发',
-        gainLabel: '暴击率和暴击伤害提高',
-        costLabel: '射速降低',
+        gameplayLabel: '核心回路',
+        gainLabel: '暴击更稳，破绽更容易叠满',
+        costLabel: '射速会慢一点',
         routeId: 'crit',
-        description: '清怪变慢，但对强敌爆发更高',
+        description: '让暴击先稳住，后面更容易连续爆点',
         effects: [
           {
             type: 'stats',
@@ -1056,11 +1059,11 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-lock-redline',
         label: '接入红线锁定',
-        gameplayLabel: '低容错爆发',
-        gainLabel: '伤害和暴击伤害提高',
-        costLabel: '生命上限降低，射速降低',
+        gameplayLabel: '高压爆发',
+        gainLabel: '伤害更高，爆点更容易炸开',
+        costLabel: '血更薄，出手更慢',
         routeId: 'crit',
-        description: '压低耐久和频率，换短窗口高伤',
+        description: '把容错压低，换一口更狠的爆发',
         effects: [
           {
             type: 'stats',
@@ -1085,7 +1088,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     name: '玻璃火力',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-    description: '生命上限降低，但暴击爆点会留下裂纹',
+    description: '把暴击做成玻璃大炮，成了就一路收，没成就很脆',
     selection: {
       baseWeight: 0.85,
       minRound: 2,
@@ -1104,7 +1107,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         gainLabel: '暴击爆点留下裂纹，更容易清线',
         costLabel: '生命上限大幅降低',
         routeId: 'crit',
-        description: '生命上限降低，但暴击爆点会留下裂纹',
+        description: '换成高风险高回报的暴击玩法',
         effects: [
           {
             type: 'stats',

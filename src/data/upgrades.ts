@@ -892,8 +892,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-aim',
-    name: '聚焦瞄准',
-    description: '命中时概率触发高伤，适合抓短时机爆发',
+    name: '先手瞄准',
+    description: '先把暴击窗口锁住，让这把先有方向',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -921,8 +921,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-primer',
-    name: '升温预热',
-    description: '命中时概率触发高伤，适合抓短时机爆发',
+    name: '破绽预热',
+    description: '先把破绽烧热，后面更容易连着炸',
     category: 'route',
     routeId: 'crit',
     tags: ['starter'],
@@ -950,8 +950,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-afterglow',
-    name: '余热描边',
-    description: '延长破绽持续时间，更容易连续命中同一目标叠加破绽',
+    name: '余热留痕',
+    description: '让破绽更久不散，方便你连着把同一批敌人打穿',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'crit-afterglow'],
@@ -980,8 +980,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-heat-latch',
-    name: '续热点火',
-    description: '暴击与暴伤核心提升',
+    name: '热锁成环',
+    description: '把暴击窗口续住，打起来更像一套回路',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1010,8 +1010,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-flare-path',
-    name: '灼迹导火',
-    description: '暴击与弹速强化',
+    name: '灼线爆口',
+    description: '爆点更容易接到下一轮，打穿和清线都更快',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'payoff'],
@@ -1043,7 +1043,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-sidechannel',
     name: '旁路升温',
-    description: '暴击与弹速提升',
+    description: '如果这把还没完全锁死，就先给暴击补一段缓冲',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
@@ -1077,8 +1077,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-embershard',
-    name: '余烬爆点',
-    description: '破绽爆发时产生小范围爆点（对精英/Boss降倍率）',
+    name: '爆点余烬',
+    description: '爆点炸开后会顺手留一团余烬，后面更容易继续收线',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -1110,8 +1110,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-burst',
-    name: '连发校准',
-    description: '暴击率与暴伤提升',
+    name: '破绽连发',
+    description: '让暴击更密，破绽更快接上下一层',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge'],
@@ -1141,7 +1141,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-crownfire',
     name: '冠火收束',
-    description: '破绽爆发后短时间提高下一次暴击收益，不常驻',
+    description: '爆点后下一轮更狠，适合把局面直接收住',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -1173,8 +1173,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-finish',
-    name: '终端爆发',
-    description: '暴击流的终局强化',
+    name: '终场收割',
+    description: '暴击流最后那一下，专门用来收场',
     category: 'route',
     routeId: 'crit',
     tags: ['finisher'],
@@ -2330,7 +2330,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-meltdown',
     name: '熔毁临界',
-    description: '暴击爆炸可再次暴击，产生连锁爆点',
+    description: '爆点炸开后还能继续炸，清场会一层层滚下去',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2369,7 +2369,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-crimson-storm',
     name: '猩红风暴',
-    description: '连续暴击进入永久Overdrive状态',
+    description: '连续暴击时，暴击窗口几乎不会断',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2408,7 +2408,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-ash-judgment',
     name: '灰烬审判',
-    description: '满层破绽敌人死亡，引爆周围全部破绽',
+    description: '满层破绽倒下时，把周围一起带走',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2447,7 +2447,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-eternal-burn',
     name: '灼痕永燃',
-    description: '破绽标记永久存在，敌人一旦标记终身破绽',
+    description: '破绽会一直挂着，后面越打越省事',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2486,7 +2486,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-core-resonance',
     name: '爆心共鸣',
-    description: 'Crit伤害随破绽层数指数增长',
+    description: '破绽越多，暴击越狠',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2994,10 +2994,10 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'dash-zero-window': '满层脉冲后打击标记敌人追加伤害',
 
   // 交叉联动路线牌
-  'crit-pierce-bridge': '暴击爆点会留下裂纹',
-  'pierce-crit-bridge': '穿透后下一次暴击率提高',
-  'dash-crit-bridge': '脉冲命中帮你叠破绽',
-  'dash-pierce-bridge': '脉冲命中附加裂纹',
+  'crit-pierce-bridge': '爆点炸开时顺手留一条裂纹，后面更好清线',
+  'pierce-crit-bridge': '穿透打穿后，暴击窗口更容易接上',
+  'dash-crit-bridge': '穿梭命中顺手把破绽叠起来',
+  'dash-pierce-bridge': '穿梭命中顺手留下一条裂纹',
 
   // ===== Legendary：玩法改变级升级 =====
   // Crit Legendary
@@ -3024,7 +3024,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
   if (archetype.category === 'route') {
-    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '路线强化：推进当前流派机制。';
+    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '这张牌会把你现在这条路往前推一截。';
   }
 
   return archetype.description ?? describeContentEffects(effects, archetype.routeId);

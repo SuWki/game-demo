@@ -4,22 +4,22 @@ export const ROUTES: RouteDefinition[] = [
   {
     id: 'crit',
     name: '暴击',
-    shortHint: '火力开始偏向暴击爆发。',
-    matureHint: '暴击路线已经站稳，终局爆发成型。',
+    shortHint: '先把火力拧成一个稳定窗口。',
+    matureHint: '暴击已经能一路连爆，后面就是收尾。',
     color: '#ff8f70',
   },
   {
     id: 'pierce',
     name: '穿透',
-    shortHint: '火力开始偏向贯穿清线。',
-    matureHint: '穿透路线已经站稳，贯穿效率成型。',
+    shortHint: '先把敌线切开，再往后穿。',
+    matureHint: '穿透已经能撑起整条清线，后面就是控场。',
     color: '#68d4ff',
   },
   {
     id: 'dash',
     name: '穿梭',
-    shortHint: '机体开始偏向穿梭规避。',
-    matureHint: '穿梭路线已经站稳，节奏循环成型。',
+    shortHint: '先把节奏抓住，边躲边打。',
+    matureHint: '穿梭已经能反过来压场，后面就是收割。',
     color: '#9cff97',
   },
 ];
@@ -46,19 +46,19 @@ export const BUILD_STAGE_CONFIG: Record<
   Record<'hinted' | 'committed' | 'matured', { name: string; desc: string; color: string }>
 > = {
   crit: {
-    hinted: { name: '灼热', desc: '破绽开始累积', color: '#ff8f70' },
-    committed: { name: '超频', desc: '暴击进入高速状态', color: '#ff6b2c' },
-    matured: { name: '临界', desc: '暴击完全失控', color: '#ff4500' },
+    hinted: { name: '灼热', desc: '已经能看出是暴击路了', color: '#ff8f70' },
+    committed: { name: '超频', desc: '暴击开始滚起来了', color: '#ff6b2c' },
+    matured: { name: '临界', desc: '这套已经能直接收尾', color: '#ff4500' },
   },
   pierce: {
-    hinted: { name: '裂解', desc: '裂纹开始扩散', color: '#68d4ff' },
-    committed: { name: '裂潮', desc: '贯穿效率提升', color: '#00ccff' },
-    matured: { name: '裂界', desc: '空间完全撕裂', color: '#0099ff' },
+    hinted: { name: '裂解', desc: '已经能看出是穿透路了', color: '#68d4ff' },
+    committed: { name: '裂潮', desc: '穿透开始顺着一条线滚', color: '#00ccff' },
+    matured: { name: '裂界', desc: '这套能把整片敌群切开', color: '#0099ff' },
   },
   dash: {
-    hinted: { name: '滑移', desc: '机动性增强', color: '#9cff97' },
-    committed: { name: '相位', desc: '穿梭进入高频', color: '#7aff7a' },
-    matured: { name: '超载', desc: '残影实体化', color: '#4aff4a' },
+    hinted: { name: '滑移', desc: '已经能看出是穿梭路了', color: '#9cff97' },
+    committed: { name: '相位', desc: '穿梭开始接上节奏', color: '#7aff7a' },
+    matured: { name: '超载', desc: '这套已经能反打收场', color: '#4aff4a' },
   },
 };
 

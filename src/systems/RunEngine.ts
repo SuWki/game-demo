@@ -126,24 +126,24 @@ const BOSS_SAFE_WINDOW_EDGE_MARGIN_Y = 10;
 function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
     case 'hinted':
-      return '已出倾向';
+      return '有方向';
     case 'committed':
-      return '开始站稳';
+      return '开始成型';
     case 'matured':
-      return '已经成型';
+      return '已经胡了';
     default:
-      return '未站稳';
+      return '还没站稳';
   }
 }
 
 function getEndingLabel(endingKind: RunEndingKind): string {
   switch (endingKind) {
     case 'hpDepleted':
-      return '耐久归零';
+      return '耐久打空';
     case 'timeOut':
-      return '压力失守';
+      return '压力顶不住';
     default:
-      return '完成试飞';
+      return '顺利收束';
   }
 }
 
@@ -2370,19 +2370,19 @@ export class RunEngine {
 
   private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage): string {
     if (!routeId) {
-      return '本局还没有形成清晰打法';
+      return '本局还没有站出清晰路子。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
     switch (buildStage) {
       case 'matured':
-        return `${routeName}流已经成型`;
+        return `${routeName}流已经胡了，后面就是收尾。`;
       case 'committed':
-        return `${routeName}流已经开始站稳`;
+        return `${routeName}流已经站稳，开始能打穿了。`;
       case 'hinted':
-        return `${routeName}倾向已经出现`;
+        return `${routeName}流已经有方向了。`;
       default:
-        return '本局还没有形成清晰打法';
+        return '本局还没有站出清晰路子。';
     }
   }
 
@@ -2411,11 +2411,11 @@ export class RunEngine {
   private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
     switch (endingKind) {
       case 'hpDepleted':
-        return `${finalNodeTitle}中机体耐久归零`;
+        return `${finalNodeTitle}里机体耐久被打空了`;
       case 'timeOut':
-        return `${finalNodeTitle}的压力没能顶住`;
+        return `${finalNodeTitle}这段压力没顶住`;
       default:
-        return `${finalNodeTitle}已完成收束`;
+        return `${finalNodeTitle}已经收束完成`;
     }
   }
 
@@ -2426,37 +2426,37 @@ export class RunEngine {
     endingKind: RunEndingKind,
   ): string {
     if (!routeId) {
-      return '再来一局先稳住前几场战斗，打法会更容易成型。';
+      return '再来一局先把前几张方向牌拿稳，后面会顺很多。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        return `${routeName}流已经完整打通。再开一局可以试试另一条流派。`;
+        return `${routeName}流已经胡了。再开一局可以试试另一条路。`;
       }
       if (buildStage === 'committed') {
-        return `${routeName}流已经站稳。再来一局可以继续补最后一段输出。`;
+        return `${routeName}流已经打通。再来一局可以把收尾补得更狠。`;
       }
-      return `${routeName}流已经冒头。再来一局可以优先补它的关键牌。`;
+      return `${routeName}流已经冒头。再来一局优先补关键件。`;
     }
 
     if (endingKind === 'timeOut') {
-      return `${routeName}流已经起势，但最后一段压力还没顶住。下局优先补输出或生存。`;
+      return `${routeName}流已经起势，但最后一段还差一口。下局优先补兑现和收尾。`;
     }
     if (buildStage === 'matured' || buildStage === 'committed') {
-      return `${routeName}流已经成型，但这局被打断了。下局注意精英和 Boss 的安全窗口。`;
+      return `${routeName}流已经成了，但这局被打断了。下局把后半段压力提前化开。`;
     }
-    return `${routeName}流刚出现苗头，这局先被打断了。下局早点补关键牌。`;
+    return `${routeName}流刚出现苗头，这局先被打断了。下局早点补方向和核心件。`;
   }
   private getResultSummary(outcome: RunOutcome, routeId: RouteId | null, buildStage: RouteBuildStage): string {
     if (!routeId) {
-      return outcome === 'victory' ? '这轮试飞已经顺利完成。' : '这局打法还没站稳，就先被打断了。';
+      return outcome === 'victory' ? '这轮试飞已经顺利完成。' : '这局还没站稳就先被打断了。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        return `${routeName}流已经完整撑到了最后。`;
+        return `${routeName}流已经一路胡到最后。`;
       }
       if (buildStage === 'committed') {
         return `${routeName}流已经站稳，并顺利撑到了最后。`;

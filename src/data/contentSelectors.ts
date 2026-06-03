@@ -586,14 +586,13 @@ function buildLevelUpRouteWindowPool(
   const isOpening = phase === 'opening';
   const isMid = phase === 'mid';
   const isLate = phase === 'late' || phase === 'finalPrep';
-  const routeCount = Math.max(...Object.values(context.selectedUpgradeIds).map((_, i) => i + 1), 0);
   const dominantRoute = context.dominantRoute;
-  const committedRoute = context.committedRoute || context.maturedRoute;
+  const dominantRouteCount = dominantRoute ? (context.routeCardCounts[dominantRoute] ?? 0) : 0;
 
   // 阶段投放控制参数
-  const allowBridge = phase !== 'opening' || routeCount >= 1;
-  const allowEarlyPayoff = isMid && routeCount >= 2;
-  const allowFinisher = isLate && routeCount >= 4;
+  const allowBridge = phase !== 'opening' || dominantRouteCount >= 1;
+  const allowEarlyPayoff = isMid && dominantRouteCount >= 2;
+  const allowFinisher = isLate && dominantRouteCount >= 4;
 
   if (!dominantRoute) {
     // 无主导路线时只出starter和少量bridge

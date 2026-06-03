@@ -1262,14 +1262,20 @@ export class GameScene extends Phaser.Scene {
   private getRouteStatusText(): string {
     const state = this.engine.getState();
     if (state.maturedRoute) {
-      return `${ROUTE_NAME_MAP[state.maturedRoute]}流已成型`;
+      const stageInfo = getBuildStageInfo(state.maturedRoute, 'matured');
+      return `${ROUTE_NAME_MAP[state.maturedRoute]}流 · ${stageInfo.name}：${stageInfo.desc}`;
     }
     if (state.committedRoute) {
-      return `${ROUTE_NAME_MAP[state.committedRoute]}流正在成型`;
+      const stageInfo = getBuildStageInfo(state.committedRoute, 'committed');
+      return `${ROUTE_NAME_MAP[state.committedRoute]}流 · ${stageInfo.name}：${stageInfo.desc}`;
     }
 
     const dominantRoute = this.engine.getDominantRoute();
-    return dominantRoute ? `正在走${ROUTE_NAME_MAP[dominantRoute]}流` : '选择强化';
+    if (dominantRoute) {
+      const stageInfo = getBuildStageInfo(dominantRoute, 'hinted');
+      return `${ROUTE_NAME_MAP[dominantRoute]}流 · ${stageInfo.name}：${stageInfo.desc}`;
+    }
+    return '先拿一张方向牌';
   }
 
   private getToastTone(text: string): ToastTone {

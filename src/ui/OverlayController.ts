@@ -194,7 +194,7 @@ export class OverlayController {
       <section class="floating-panel dock-panel commercial-choice-panel commercial-pause-panel">
         <div class="tray-header">
           <div class="tray-title-group">
-            <span class="panel-eyebrow">RUN PAUSED</span>
+            <span class="panel-eyebrow">暂停中</span>
             <h2 class="panel-title">暂停中</h2>
           </div>
         </div>
@@ -450,14 +450,7 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
     const isVictory = result.outcome === 'victory';
-    const buildStageLabel =
-      result.buildStage === 'unformed'
-        ? '未成型'
-        : result.buildStage === 'hinted'
-          ? '有倾向'
-          : result.buildStage === 'committed'
-            ? '开始成型'
-            : '已成型';
+    const buildStageLabel = result.buildLabel;
     this.screenLayer.innerHTML = `
       <section class="screen-minimal result-screen space-combat-result-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
         <div class="space-scanlines" aria-hidden="true"></div>
@@ -469,7 +462,7 @@ export class OverlayController {
               ${isVictory ? '✓' : '✗'}
             </div>
             <h1 class="result-title">${isVictory ? '任务完成' : '任务失败'}</h1>
-            <p class="result-subtitle">${isVictory ? 'MISSION COMPLETE' : 'MISSION FAILED'}</p>
+            <p class="result-subtitle">${isVictory ? '这把打通了' : '这把没撑住'}</p>
             ${!isVictory ? `<p class="result-reason">${result.endingReason}</p>` : ''}
           </div>
 
@@ -490,6 +483,23 @@ export class OverlayController {
           </div>
 
           <div class="result-seed-display">#${result.runSeed}</div>
+
+          <div class="result-narrative-grid">
+            <div class="result-narrative-card">
+              <span class="result-narrative-label">${isVictory ? '这把怎么成的' : '这把怎么打的'}</span>
+              <strong>${result.summary}</strong>
+              <small>${result.buildSummary}</small>
+            </div>
+            <div class="result-narrative-card">
+              <span class="result-narrative-label">${isVictory ? '这把怎么赢的' : '这把为什么没成'}</span>
+              <strong>${isVictory ? result.buildLabel : result.endingReason}</strong>
+              <small>${result.replayPrompt}</small>
+            </div>
+          </div>
+
+          <div class="result-layer-strip">
+            ${this.renderBuildLayerSummary(result.selectedUpgrades ?? [])}
+          </div>
 
           ${
             result.selectedUpgrades && result.selectedUpgrades.length > 0
@@ -631,6 +641,7 @@ export class OverlayController {
     this.panelLayer.className = 'panel-layer panel-layer-center';
     this.panelLayer.classList.remove('hidden');
 
+    const isVictory = result.outcome === 'victory';
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
 
     // 本局选择记录
@@ -652,23 +663,57 @@ export class OverlayController {
       <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
         <div class="tray-header">
           <div class="tray-title-group">
-            <span class="panel-eyebrow">BATTLE ANALYSIS</span>
-            <h2 class="panel-title">战斗数据详情</h2>
+            <span class="panel-eyebrow">本局复盘</span>
+            <h2 class="panel-title">这局怎么打成的</h2>
           </div>
         </div>
 
         <div class="result-details-content">
           <div class="result-details-section">
-            <h3 class="detail-section-title">📊 数据可视化</h3>
-            <div class="detail-placeholder">
-              <div class="placeholder-icon">📈</div>
-              <p><strong>DPS曲线图</strong></p>
-              <small>本局暂未记录详细曲线</small>
+            <h3 class="detail-section-title">本局复盘</h3>
+            <div class="detail-narrative-grid">
+              <div class="detail-narrative-card">
+                <span>${isVictory ? '这把怎么成的' : '这把怎么打的'}</span>
+                <strong>${result.summary}</strong>
+                <small>${result.buildSummary}</small>
+              </div>
+              <div class="detail-narrative-card">
+                <span>${isVictory ? '这把为什么能赢' : '这把为什么没成'}</span>
+                <strong>${isVictory ? result.buildLabel : result.endingReason}</strong>
+                <small>${result.replayPrompt}</small>
+              </div>
             </div>
-            <div class="detail-placeholder">
-              <div class="placeholder-icon">🎯</div>
-              <p><strong>伤害构成分析</strong></p>
-              <small>本局暂未记录详细构成</small>
+          </div>
+
+          <div class="result-details-section">
+            <h3 class="detail-section-title">路线拆分</h3>
+            <div class="result-layer-strip">
+              ${this.renderBuildLayerSummary(result.selectedUpgrades ?? [])}
+            </div>
+          </div>
+
+          <div class="result-details-section">
+            <h3 class="detail-section-title">节点轨迹</h3>
+            <div class="detail-timeline-scroll">
+              ${
+                result.routeTrace && result.routeTrace.length > 0
+                  ? result.routeTrace
+                      .map(
+                        (node, index) => `
+                          <div class="detail-timeline-item">
+                            <div class="detail-timeline-marker" style="background: ${index === result.routeTrace.length - 1 ? '#ff8f70' : '#6b86a8'};">
+                              ${index + 1}
+                            </div>
+                            <div class="detail-timeline-content">
+                              <strong>${node.title}</strong>
+                              <small>${NODE_TYPE_LABEL_MAP[node.type]}</small>
+                            </div>
+                          </div>
+                        `,
+                      )
+                      .join('')
+                  : '<p style="text-align: center; color: rgba(255,255,255,0.5);">没有记录到节点轨迹</p>'
+              }
             </div>
           </div>
 
@@ -680,7 +725,7 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">📈 本局数据</h3>
+            <h3 class="detail-section-title">本局数据</h3>
             <div class="detail-stats-grid">
               <div class="detail-stat-card">
                 <span>存活时间</span>
@@ -710,11 +755,11 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">🏆 历史对比</h3>
+            <h3 class="detail-section-title">下一把提示</h3>
             <div class="detail-placeholder">
-              <div class="placeholder-icon">📊</div>
-              <p><strong>历史最佳对比</strong></p>
-              <small>本局暂未记录历史对比</small>
+              <div class="placeholder-icon">↗</div>
+              <p><strong>${result.replayPrompt}</strong></p>
+              <small>这局的路数已经说清楚了，下一把照着补就行。</small>
             </div>
           </div>
         </div>
@@ -732,6 +777,51 @@ export class OverlayController {
       this.hidePanel();
       this.screenLayer.classList.remove('hidden');
     });
+  }
+
+  private renderBuildLayerSummary(upgrades: UpgradeDefinition[]): string {
+    const counts = {
+      starter: 0,
+      bridge: 0,
+      payoff: 0,
+      finisher: 0,
+      generic: 0,
+    };
+
+    for (const upgrade of upgrades) {
+      const tags = upgrade.tags ?? [];
+      if (tags.includes('finisher')) {
+        counts.finisher += 1;
+      } else if (tags.includes('payoff')) {
+        counts.payoff += 1;
+      } else if (tags.includes('bridge')) {
+        counts.bridge += 1;
+      } else if (tags.includes('starter')) {
+        counts.starter += 1;
+      } else {
+        counts.generic += 1;
+      }
+    }
+
+    const layers = [
+      { key: 'starter', label: '方向', note: '先看见路', count: counts.starter, tone: 'route' },
+      { key: 'bridge', label: '成型', note: '开始接上', count: counts.bridge, tone: 'accent' },
+      { key: 'payoff', label: '兑现', note: '开始打穿', count: counts.payoff, tone: 'success' },
+      { key: 'finisher', label: '收尾', note: '最后一口', count: counts.finisher, tone: 'danger' },
+      { key: 'generic', label: '通用', note: '补位牌', count: counts.generic, tone: 'neutral' },
+    ];
+
+    return layers
+      .map(
+        (layer) => `
+          <span class="result-layer-chip tone-${layer.tone}">
+            <small>${layer.label}</small>
+            <strong>${layer.count}</strong>
+            <em>${layer.note}</em>
+          </span>
+        `,
+      )
+      .join('');
   }
 
   public pushToast(message: string, tone: ToastTone = 'neutral'): void {
@@ -778,8 +868,8 @@ export class OverlayController {
     this.panelLayer.innerHTML = `
       <section class="floating-panel" style="width: min(560px, calc(100vw - 40px)); background: rgba(6,12,18,0.92); border: 1px solid ${accent}44; border-radius: 8px; padding: 28px 32px; text-align: center;">
         <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
-          <span style="font-size:12px;color:${accent};letter-spacing:0.15em;text-transform:uppercase;">首次获得流派牌</span>
-          <h2 style="margin:0;font-size:22px;color:${accent};text-shadow:0 0 12px ${accent}66;">${route.name}流</h2>
+          <span style="font-size:12px;color:${accent};letter-spacing:0.15em;text-transform:uppercase;">这把已经有方向了</span>
+          <h2 style="margin:0;font-size:22px;color:${accent};text-shadow:0 0 12px ${accent}66;">${ROUTE_INTRO_TEXT[routeId].title}</h2>
           <div style="width:60px;height:2px;background:${accent}88;border-radius:1px;"></div>
           <p style="margin:0;font-size:15px;color:#c8dae8;line-height:1.6;max-width:460px;">${ROUTE_INTRO_TEXT[routeId].coreIdea}</p>
           <div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px;text-align:left;">
@@ -817,7 +907,7 @@ export class OverlayController {
     this.panelLayer.innerHTML = `
       <section class="floating-panel" style="width: min(480px, calc(100vw - 40px)); background: rgba(6,12,18,0.92); border: 1px solid ${accent}66; border-radius: 8px; padding: 28px 32px; text-align: center;">
         <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
-          <span style="font-size:11px;color:${accent}88;letter-spacing:0.2em;text-transform:uppercase;">BUILD MATURE</span>
+          <span style="font-size:11px;color:${accent}88;letter-spacing:0.2em;text-transform:uppercase;">这把开始能打穿了</span>
           <h2 style="margin:0;font-size:24px;color:${accent};text-shadow:0 0 16px ${accent}88;">${route.name}流 · ${stageInfo.name}</h2>
           <div style="width:60px;height:2px;background:${accent}88;border-radius:1px;"></div>
           <p style="margin:0;font-size:14px;color:#c8dae8;line-height:1.6;">${stageInfo.desc}</p>
@@ -874,6 +964,11 @@ export class OverlayController {
           <span>当前关卡</span>
           <strong>${stageLabel}</strong>
           <small>${phaseLabel || '选择下一站'}</small>
+        </div>
+        <div class="route-context-copy">
+          <span>当前路子</span>
+          <strong>${progress.routeStatusText}</strong>
+          <small>这局正在养哪条线</small>
         </div>
         <div class="route-context-copy route-context-rule">
           <span>选择规则</span>

@@ -340,7 +340,8 @@
   align-items: center;
   justify-content: center;
   background: radial-gradient(ellipse at center, #1a0e2e 0%, #0a1428 100%);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .space-combat-result-screen.is-victory {
@@ -532,6 +533,103 @@
   color: rgba(111, 231, 255, 0.8);
 }
 
+.result-narrative-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  animation: stats-appear 0.8s ease-out 0.5s both;
+}
+
+.result-narrative-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  padding: 18px 20px;
+  background: rgba(18, 30, 44, 0.58);
+  border: 1px solid rgba(170, 204, 228, 0.18);
+  border-radius: 4px;
+}
+
+.result-narrative-card span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(111, 231, 255, 0.62);
+  text-transform: uppercase;
+}
+
+.result-narrative-card strong {
+  font-size: 18px;
+  line-height: 1.5;
+  color: rgba(245, 252, 255, 0.94);
+}
+
+.result-narrative-card small {
+  font-size: 12px;
+  color: rgba(222, 235, 242, 0.7);
+}
+
+.result-layer-strip {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  animation: timeline-appear 0.8s ease-out 0.55s both;
+}
+
+.result-layer-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 92px;
+  padding: 14px 14px 12px;
+  background: rgba(18, 30, 44, 0.58);
+  border: 1px solid rgba(170, 204, 228, 0.18);
+  border-radius: 4px;
+}
+
+.result-layer-chip small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(222, 235, 242, 0.66);
+  text-transform: uppercase;
+}
+
+.result-layer-chip strong {
+  font-size: 22px;
+  line-height: 1;
+  color: rgba(245, 252, 255, 0.96);
+}
+
+.result-layer-chip em {
+  font-style: normal;
+  font-size: 11px;
+  color: rgba(222, 235, 242, 0.58);
+}
+
+.result-layer-chip.tone-route {
+  border-color: rgba(111, 231, 255, 0.24);
+}
+
+.result-layer-chip.tone-accent {
+  border-color: rgba(255, 143, 112, 0.24);
+}
+
+.result-layer-chip.tone-success {
+  border-color: rgba(126, 255, 191, 0.24);
+}
+
+.result-layer-chip.tone-danger {
+  border-color: rgba(255, 104, 104, 0.24);
+}
+
+.result-layer-chip.tone-neutral {
+  border-color: rgba(170, 204, 228, 0.18);
+}
+
 /* 升级时间轴 */
 .result-upgrade-timeline {
   width: 100%;
@@ -718,6 +816,11 @@
   .result-core-stats {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .result-narrative-grid,
+  .result-layer-strip {
+    grid-template-columns: 1fr;
   }
 
   .result-title {
