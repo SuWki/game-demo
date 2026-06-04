@@ -11,6 +11,8 @@ import type {
   DebugBattlePhaseId,
   OverlayHudSnapshot,
   PlayerStats,
+  RouteBuildStage,
+  RouteId,
   RunState,
   Services,
   ToastTone,
@@ -996,52 +998,56 @@ export class GameScene extends Phaser.Scene {
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     if (liveFocusRoute) {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
-      const routeName = ROUTE_NAME_MAP[liveFocusRoute];
       if (liveFocusRoute === 'crit') {
         if (battle.critBurstBonusSec > 0) {
-          return `${routeName}收口窗口还在：现在就是爆点。`;
+          return '暴击收口窗口还在：现在就是爆点。';
         }
         if (battle.critFinisherReady) {
-          return `${routeName}终结已经就绪：下一次暴击会很狠。`;
+          return `暴击终结已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
         }
         if (routeStage === 'matured') {
-          return `${routeName}已经成型：抓住窗口就能打穿。`;
+          return battle.critComboStacks > 0
+            ? `暴击已经成型：破绽 ${battle.critComboStacks}/5，下一次会很狠。`
+            : '暴击已经成型：抓住窗口就能打穿。';
         }
         if (routeStage === 'committed') {
-          return `${routeName}开始站稳：先把爆点打出来。`;
+          return '暴击开始成线：先把爆点打出来。';
         }
         if (routeStage === 'hinted') {
-          return `${routeName}开始冒头：先盯住输出窗。`;
+          return '暴击开始冒头：先盯住输出窗。';
         }
       }
 
       if (liveFocusRoute === 'pierce') {
         if (battle.pierceFlowSec > 0) {
-          return `${routeName}回响还在：后排正在被拆。`;
+          if (battle.pierceFlowCount >= 3) {
+            return `穿透拆线连起来了：第 ${battle.pierceFlowCount} 段正在往后走。`;
+          }
+          return '穿透回响还在：后排正在被拆。';
         }
         if (routeStage === 'matured') {
-          return `${routeName}已经成型：一条线会一路穿过去。`;
+          return '穿透已经成型：一条线会一路穿过去。';
         }
         if (routeStage === 'committed') {
-          return `${routeName}开始站稳：先把后排打开。`;
+          return '穿透开始接上了：先把后排打开。';
         }
         if (routeStage === 'hinted') {
-          return `${routeName}开始冒头：先找拆线位置。`;
+          return '穿透开始冒头：先找拆线位置。';
         }
       }
 
       if (liveFocusRoute === 'dash') {
         if (battle.dashDriveSec > 0) {
-          return `${routeName}收口窗口还在：贴身就能反打。`;
+          return '穿梭回切窗口还在：贴身就能反打。';
         }
         if (routeStage === 'matured') {
-          return `${routeName}已经成型：靠节奏就能收割。`;
+          return '穿梭已经成型：靠节奏就能收割。';
         }
         if (routeStage === 'committed') {
-          return `${routeName}开始站稳：先把换位节奏接上。`;
+          return '穿梭开始站稳：先把换位节奏接上。';
         }
         if (routeStage === 'hinted') {
-          return `${routeName}开始冒头：先找回切拍子。`;
+          return '穿梭开始冒头：先找回切拍子。';
         }
       }
     }
@@ -1296,15 +1302,53 @@ export class GameScene extends Phaser.Scene {
 
   private getRouteStatusText(): string {
     const state = this.engine.getState();
-    if (state.maturedRoute) {
-      return `${ROUTE_NAME_MAP[state.maturedRoute]}流已成型`;
-    }
-    if (state.committedRoute) {
-      return `${ROUTE_NAME_MAP[state.committedRoute]}流正在成型`;
+    const routeId = state.maturedRoute ?? state.committedRoute ?? this.engine.getDominantRoute();
+    if (routeId) {
+      const stage = this.engine.getRouteBuildStage(routeId);
+      return this.getRouteStageStatusText(routeId, stage);
     }
 
-    const dominantRoute = this.engine.getDominantRoute();
-    return dominantRoute ? `正在走${ROUTE_NAME_MAP[dominantRoute]}流` : '选择强化';
+    return '选择强化';
+  }
+
+  private getRouteStageStatusText(routeId: RouteId, stage: RouteBuildStage): string {
+    switch (routeId) {
+      case 'crit':
+        if (stage === 'matured') {
+          return '暴击已成型：现在就是抓窗收口。';
+        }
+        if (stage === 'committed') {
+          return '暴击开始成线：窗口正在接上。';
+        }
+        if (stage === 'hinted') {
+          return '暴击开始找窗：先盯住爆点。';
+        }
+        return '暴击还没站稳。';
+      case 'pierce':
+        if (stage === 'matured') {
+          return '穿透已成型：一条线会一路穿过去。';
+        }
+        if (stage === 'committed') {
+          return '穿透开始接上：前排会往后排让路。';
+        }
+        if (stage === 'hinted') {
+          return '穿透开始拆线：先找一条能贯通的路。';
+        }
+        return '穿透还没站稳。';
+      case 'dash':
+        if (stage === 'matured') {
+          return '穿梭已成型：贴身就能收割。';
+        }
+        if (stage === 'committed') {
+          return '穿梭开始成线：节奏会更顺。';
+        }
+        if (stage === 'hinted') {
+          return '穿梭开始找反打节奏：先把换位接上。';
+        }
+        return '穿梭还没站稳。';
+      default:
+        return '选择强化';
+    }
   }
 
   private getToastTone(text: string): ToastTone {
@@ -3460,6 +3504,10 @@ export class GameScene extends Phaser.Scene {
       impactRatio > 0 ? this.mixColor(0xf8fbff, 0xff8c86, impactRatio * 0.8) : battle.invulnerableSec > 0 ? 0x9cff97 : 0xf8fbff,
       1,
     );
+    if (liveFocusRoute === 'crit' && battle.critFinisherReady) {
+      this.graphics.lineStyle(1.8, this.mixColor(0xffd46f, liveFocusColor, 0.2), 0.14 + critAuraRatio * 0.22);
+      this.graphics.strokeCircle(bodyX, bodyY, 24 + critAuraRatio * 14);
+    }
     if (shotFlashRatio > 0) {
       // Spawn shell casing on new shot
       if (battle.playerShotFlashSec > this.lastShotFlashSec) {
@@ -3532,7 +3580,30 @@ export class GameScene extends Phaser.Scene {
         bodyX - aimOrthoX * (5 + shotFlashRatio * 8 * sizeMultiplier),
         bodyY - aimOrthoY * (5 + shotFlashRatio * 8 * sizeMultiplier),
       );
-      if (liveFocusRoute !== 'pierce') {
+      if (liveFocusRoute === 'pierce') {
+        const pierceRailColor = this.mixColor(0x98dcff, 0xffffff, 0.28);
+        const railOffset = 8 + shotFlashRatio * 6;
+        this.graphics.lineStyle(2, pierceRailColor, 0.12 + shotFlashRatio * 0.22);
+        this.graphics.lineBetween(
+          bodyX + aimOrthoX * railOffset,
+          bodyY + aimOrthoY * railOffset,
+          muzzleX + aimDirX * (20 + shotFlashRatio * 18 * sizeMultiplier) + aimOrthoX * railOffset,
+          muzzleY + aimDirY * (20 + shotFlashRatio * 18 * sizeMultiplier) + aimOrthoY * railOffset,
+        );
+        this.graphics.lineBetween(
+          bodyX - aimOrthoX * railOffset,
+          bodyY - aimOrthoY * railOffset,
+          muzzleX + aimDirX * (20 + shotFlashRatio * 18 * sizeMultiplier) - aimOrthoX * railOffset,
+          muzzleY + aimDirY * (20 + shotFlashRatio * 18 * sizeMultiplier) - aimOrthoY * railOffset,
+        );
+        this.graphics.lineStyle(1.4, pierceRailColor, 0.08 + shotFlashRatio * 0.16);
+        this.graphics.lineBetween(
+          bodyX,
+          bodyY,
+          muzzleX + aimDirX * (28 + shotFlashRatio * 20 * sizeMultiplier),
+          muzzleY + aimDirY * (28 + shotFlashRatio * 20 * sizeMultiplier),
+        );
+      } else {
         this.graphics.lineStyle(2, flashColor, 0.14 + shotFlashRatio * 0.24);
         this.graphics.lineBetween(
           bodyX + aimOrthoX * 7,

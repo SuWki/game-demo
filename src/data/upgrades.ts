@@ -1968,7 +1968,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-core',
     name: '穿甲校正',
-    description: '弹体穿过多个目标时获得拆线收益，依赖站位和敌线',
+    description: '先把穿透火力钉住，子弹穿过多目标时更容易拆线。',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -1996,7 +1996,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-rail',
     name: '贯穿轨校',
-    description: '弹体穿过多个目标时获得拆线收益，依赖站位和敌线',
+    description: '把贯通路线拉直，后排更容易被顺手带掉。',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2024,7 +2024,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamline',
     name: '拆线起幅',
-    description: '弹体穿过多个目标时获得拆线收益，依赖站位和敌线',
+    description: '命中越稳，拆线越容易连起来。',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2052,7 +2052,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-vector',
     name: '折线导程',
-    description: '穿透与弹道精准强化',
+    description: '穿透和弹道开始对齐，清线会更顺。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2111,7 +2111,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-shearline',
     name: '切层折返',
-    description: '穿透与弹道强化',
+    description: '裂纹留得更久，穿过一层后更容易继续往后走。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2142,7 +2142,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidechannel',
     name: '侧轨借线',
-    description: '穿透与弹道强化',
+    description: '穿透和弧线一起发力，拆线会更快。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2218,7 +2218,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-ledger',
     name: '借层回收',
-    description: '穿透与弹道强化',
+    description: '穿透桥件再补一截，后排会更早露出来。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2401,7 +2401,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-relay-spine',
     name: '并轨穿脊',
-    description: '穿透与弹道的核心强化',
+    description: '穿透的中段接上后，后排会更容易被顺着带掉。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2430,7 +2430,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ledger-fanout',
     name: '拆账铺面',
-    description: '穿透与弹道平衡提升',
+    description: '把穿透的中后段补齐，整条线会更顺。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2463,7 +2463,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-floodgate',
     name: '裂层清账',
-    description: '裂纹扩散追加后方伤害',
+    description: '一旦穿透接住线，后排会自己松开。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2495,7 +2495,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seam-ledger',
     name: '裂幕归账',
-    description: '穿透与弹道强化',
+    description: '把穿透的收尾补稳，整条线会一路顺下去。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],

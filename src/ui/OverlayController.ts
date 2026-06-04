@@ -474,6 +474,7 @@ export class OverlayController {
 
           <div class="result-story">
             <p class="result-story__summary">${result.summary}</p>
+            <p class="result-story__route">${this.getResultRouteRecap(result)}</p>
             <p class="result-story__build">${result.buildSummary}</p>
             <p class="result-story__prompt">${result.replayPrompt}</p>
           </div>
@@ -684,10 +685,10 @@ export class OverlayController {
           <div class="result-details-section">
             <h3 class="detail-section-title">异常转折</h3>
             <div class="detail-anomaly-strip">
-              <span><small>方向</small><strong>${anomalyRoleCounts.direction}</strong></span>
-              <span><small>核心</small><strong>${anomalyRoleCounts.core}</strong></span>
-              <span><small>质变</small><strong>${anomalyRoleCounts.transform}</strong></span>
-              <span><small>收尾</small><strong>${anomalyRoleCounts.finisher}</strong></span>
+              <span><small>方向件</small><strong>${anomalyRoleCounts.direction}</strong></span>
+              <span><small>核心件</small><strong>${anomalyRoleCounts.core}</strong></span>
+              <span><small>质变件</small><strong>${anomalyRoleCounts.transform}</strong></span>
+              <span><small>收尾件</small><strong>${anomalyRoleCounts.finisher}</strong></span>
             </div>
             <div class="detail-timeline-scroll">
               ${anomalyTimeline}
@@ -1632,6 +1633,24 @@ export class OverlayController {
     }
 
     return counts;
+  }
+
+  private getResultRouteRecap(result: RunResult): string {
+    if (!result.routeId) {
+      return '这局还没有形成明确路线。';
+    }
+
+    const routeName = ROUTE_NAME_MAP[result.routeId];
+    switch (result.buildStage) {
+      case 'matured':
+        return `这局走的是${routeName}线，已经成型。`;
+      case 'committed':
+        return `这局走的是${routeName}线，已经开始成型。`;
+      case 'hinted':
+        return `这局走的是${routeName}线，已经有倾向。`;
+      default:
+        return `这局走的是${routeName}线，但还没站稳。`;
+    }
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {

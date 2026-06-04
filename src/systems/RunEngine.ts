@@ -47,6 +47,7 @@ import { getEnemyArchetype, pickEnemyArchetype } from '../data/enemyArchetypes';
 import { buildNodeOptions, createOpeningBattleNode, getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_NAME_MAP } from '../data/routes';
 import type {
+  AnomalyRoleId,
   BattlePressurePhaseDefinition,
   BattleState,
   BattleDebugRuntimeConfig,
@@ -569,7 +570,7 @@ export class RunEngine {
       });
     }
     this.enqueueAudio(eventDef.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
-    this.enqueueTip(`${eventDef.name}：${option.label}`);
+    this.enqueueTip(this.getEventSelectionTip(eventDef, option, optionRouteId));
     this.advanceRound();
   }
 
@@ -2291,18 +2292,9 @@ export class RunEngine {
       return '本局还没有形成清晰打法';
     }
 
-    const routeName = ROUTE_NAME_MAP[routeId];
+    const routeLine = this.getRouteStageNarrative(routeId, buildStage);
     const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
-    switch (buildStage) {
-      case 'matured':
-        return anomalyRecap ? `${routeName}流已经成型，${anomalyRecap}` : `${routeName}流已经成型`;
-      case 'committed':
-        return anomalyRecap ? `${routeName}流已经开始站稳，${anomalyRecap}` : `${routeName}流已经开始站稳`;
-      case 'hinted':
-        return anomalyRecap ? `${routeName}倾向已经出现，${anomalyRecap}` : `${routeName}倾向已经出现`;
-      default:
-        return '本局还没有形成清晰打法';
-    }
+    return anomalyRecap ? `${routeLine} ${anomalyRecap}` : routeLine;
   }
 
   private buildRouteTrace(): NodeRecord[] {
@@ -2338,6 +2330,89 @@ export class RunEngine {
     }
   }
 
+  private getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildStage): string {
+    const routeName = ROUTE_NAME_MAP[routeId];
+    switch (routeId) {
+      case 'crit':
+        switch (buildStage) {
+          case 'hinted':
+            return `${routeName}开始找窗了：先盯住爆点。`;
+          case 'committed':
+            return `${routeName}开始成线了：窗口能接上。`;
+          case 'matured':
+            return `${routeName}已经成型：现在就是抓窗收口。`;
+          default:
+            return `${routeName}还没站稳。`;
+        }
+      case 'pierce':
+        switch (buildStage) {
+          case 'hinted':
+            return `${routeName}开始拆线了：先找一条能贯通的路。`;
+          case 'committed':
+            return `${routeName}开始接上了：前排会往后排让路。`;
+          case 'matured':
+            return `${routeName}已经成型：一条线会一路穿过去。`;
+          default:
+            return `${routeName}还没站稳。`;
+        }
+      case 'dash':
+        switch (buildStage) {
+          case 'hinted':
+            return `${routeName}开始找反打节奏了：先把换位接上。`;
+          case 'committed':
+            return `${routeName}开始成线了：节奏会更顺。`;
+          case 'matured':
+            return `${routeName}已经成型：贴身就能收割。`;
+          default:
+            return `${routeName}还没站稳。`;
+        }
+      default:
+        return `${routeName}已成型。`;
+    }
+  }
+
+  private getAnomalyRoleCallout(role?: AnomalyRoleId): string {
+    switch (role) {
+      case 'direction':
+        return '方向';
+      case 'core':
+        return '核心';
+      case 'transform':
+        return '质变';
+      case 'finisher':
+        return '收尾';
+      default:
+        return '';
+    }
+  }
+
+  private getEventSelectionTip(
+    eventDef: EventDefinition,
+    option: EventOption,
+    routeId: RouteId | undefined,
+  ): string {
+    if (eventDef.contentKind !== 'anomaly') {
+      return `${eventDef.name}：${option.label}`;
+    }
+
+    const routeName = routeId ? ROUTE_NAME_MAP[routeId] : '当前流派';
+    const role = this.getAnomalyRoleCallout(option.anomalyRole);
+    const roleSuffix = role ? `·${role}` : '';
+
+    switch (eventDef.anomalyClass) {
+      case 'routeWindow':
+        return `${routeName}转折${roleSuffix}：${option.label}`;
+      case 'hybrid':
+        return `${routeName}拐点${roleSuffix}：${option.label}`;
+      case 'bossEcho':
+        return `${routeName}收尾预演${roleSuffix}：${option.label}`;
+      case 'distortion':
+        return `${routeName}变招${roleSuffix}：${option.label}`;
+      default:
+        return `${eventDef.name}：${option.label}`;
+    }
+  }
+
   private getReplayPrompt(
     outcome: RunOutcome,
     routeId: RouteId | null,
@@ -2349,25 +2424,49 @@ export class RunEngine {
       return '再来一局先稳住前几场战斗，打法会更容易成型。';
     }
 
-    const routeName = ROUTE_NAME_MAP[routeId];
+    const routeLine = this.getRouteStageNarrative(routeId, buildStage);
     const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     if (outcome === 'victory') {
-      if (buildStage === 'matured') {
-        return anomalyRecap ? `${routeName}流已经完整打通。${anomalyRecap} 再开一局可以试试另一条流派。` : `${routeName}流已经完整打通。再开一局可以试试另一条流派。`;
-      }
-      if (buildStage === 'committed') {
-        return anomalyRecap ? `${routeName}流已经站稳。${anomalyRecap} 再来一局可以继续补最后一段输出。` : `${routeName}流已经站稳。再来一局可以继续补最后一段输出。`;
-      }
-      return anomalyRecap ? `${routeName}流已经冒头。${anomalyRecap} 再来一局可以优先补它的关键牌。` : `${routeName}流已经冒头。再来一局可以优先补它的关键牌。`;
+      const routeAdvice =
+        routeId === 'crit'
+          ? '下局可以把暴击窗口再提前一拍，先把方向和核心接稳。'
+          : routeId === 'pierce'
+            ? '下局可以把拆线桥件再提前一点，让后排更早掉。'
+            : '下局可以把换位节奏再提前一点，让收割更顺。';
+      return anomalyRecap ? `${routeLine} ${anomalyRecap} ${routeAdvice}` : `${routeLine} ${routeAdvice}`;
     }
 
     if (endingKind === 'timeOut') {
-      return anomalyRecap ? `${routeName}流已经起势，但最后一段压力还没顶住。${anomalyRecap} 下局优先补收尾或生存。` : `${routeName}流已经起势，但最后一段压力还没顶住。下局优先补输出或生存。`;
+      const routeAdvice =
+        routeId === 'crit'
+          ? '下局优先补收口和容错。'
+          : routeId === 'pierce'
+            ? '下局优先补贯通和后排处理。'
+            : '下局优先补换位和收尾。';
+      return anomalyRecap
+        ? `${routeLine} 但最后一段压力还没顶住。${anomalyRecap} ${routeAdvice}`
+        : `${routeLine} 但最后一段压力还没顶住。${routeAdvice}`;
     }
     if (buildStage === 'matured' || buildStage === 'committed') {
-      return anomalyRecap ? `${routeName}流已经成型，但这局被打断了。${anomalyRecap} 下局注意精英和 Boss 的安全窗口。` : `${routeName}流已经成型，但这局被打断了。下局注意精英和 Boss 的安全窗口。`;
+      const routeAdvice =
+        routeId === 'crit'
+          ? '下局注意精英和 Boss 的安全窗口。'
+          : routeId === 'pierce'
+            ? '下局注意别让最后一段线被掐断。'
+            : '下局注意贴身时机和回切节奏。';
+      return anomalyRecap
+        ? `${routeLine} 但这局被打断了。${anomalyRecap} ${routeAdvice}`
+        : `${routeLine} 但这局被打断了。${routeAdvice}`;
     }
-    return anomalyRecap ? `${routeName}流刚出现苗头，这局先被打断了。${anomalyRecap} 下局早点补关键牌。` : `${routeName}流刚出现苗头，这局先被打断了。下局早点补关键牌。`;
+    const routeAdvice =
+      routeId === 'crit'
+        ? '下局早点补方向件。'
+        : routeId === 'pierce'
+          ? '下局早点补拆线桥件。'
+          : '下局早点补反打件。';
+    return anomalyRecap
+      ? `${routeLine} 这局先被打断了。${anomalyRecap} ${routeAdvice}`
+      : `${routeLine} 这局先被打断了。${routeAdvice}`;
   }
 
   private getResultSummary(
@@ -2380,22 +2479,16 @@ export class RunEngine {
       return outcome === 'victory' ? '这轮试飞已经顺利完成。' : '这局打法还没站稳，就先被打断了。';
     }
 
-    const routeName = ROUTE_NAME_MAP[routeId];
+    const routeLine = this.getRouteStageNarrative(routeId, buildStage);
     const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     if (outcome === 'victory') {
-      if (buildStage === 'matured') {
-        return anomalyRecap ? `${routeName}流已经完整撑到了最后。${anomalyRecap}` : `${routeName}流已经完整撑到了最后。`;
-      }
-      if (buildStage === 'committed') {
-        return anomalyRecap ? `${routeName}流已经站稳，并顺利撑到了最后。${anomalyRecap}` : `${routeName}流已经站稳，并顺利撑到了最后。`;
-      }
-      return anomalyRecap ? `${routeName}流把这轮试飞带到了最后。${anomalyRecap}` : `${routeName}流把这轮试飞带到了最后。`;
+      return anomalyRecap ? `${routeLine} ${anomalyRecap}` : routeLine;
     }
 
     if (buildStage === 'matured' || buildStage === 'committed') {
-      return anomalyRecap ? `${routeName}流已经起势，但这局还是在最后被打断了。${anomalyRecap}` : `${routeName}流已经起势，但这局还是在最后被打断了。`;
+      return anomalyRecap ? `${routeLine}，但这局还是在最后被打断了。${anomalyRecap}` : `${routeLine}，但这局还是在最后被打断了。`;
     }
-    return anomalyRecap ? `${routeName}流刚露出倾向，这局就先被打断了。${anomalyRecap}` : `${routeName}流刚露出倾向，这局就先被打断了。`;
+    return anomalyRecap ? `${routeLine}，这局就先被打断了。${anomalyRecap}` : `${routeLine}，这局就先被打断了。`;
   }
 
   private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {
@@ -2460,16 +2553,16 @@ export class RunEngine {
   private getAnomalyRoleRecap(profile: ReplayProfile): string {
     const parts: string[] = [];
     if (profile.anomalyDirectionHits > 0) {
-      parts.push(`方向 ${profile.anomalyDirectionHits}`);
+      parts.push(`方向件 ${profile.anomalyDirectionHits}`);
     }
     if (profile.anomalyCoreHits > 0) {
-      parts.push(`核心 ${profile.anomalyCoreHits}`);
+      parts.push(`核心件 ${profile.anomalyCoreHits}`);
     }
     if (profile.anomalyTransformHits > 0) {
-      parts.push(`质变 ${profile.anomalyTransformHits}`);
+      parts.push(`质变件 ${profile.anomalyTransformHits}`);
     }
     if (profile.anomalyFinisherHits > 0) {
-      parts.push(`收尾 ${profile.anomalyFinisherHits}`);
+      parts.push(`收尾件 ${profile.anomalyFinisherHits}`);
     }
 
     return parts.length > 0 ? `异常：${parts.join(' / ')}` : '';
@@ -2656,7 +2749,7 @@ export class RunEngine {
         phase: this.state.phase,
         pickId: meta?.pickId ?? `route:${routeId}`,
       });
-      this.enqueueTip(`${ROUTE_NAME_MAP[routeId]}流开始成型`);
+      this.enqueueTip(this.getRouteStageNarrative(routeId, 'committed'));
     }
 
     if (

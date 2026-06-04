@@ -488,7 +488,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿透转接窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿透成型，可切换其他打法',
+    description: '穿透已经有雏形，这一拍决定是继续拆线，还是把后排直接打穿。',
     routeAffinity: 'pierce',
     selection: {
       baseWeight: 1.45,
@@ -508,8 +508,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'pierce-reroute-window-hold',
         routeId: 'pierce',
-        label: '先稳当前清线',
-        description: '不转向，先补火力和耐久',
+        label: '先稳穿透火力',
+        description: '不转向，先把穿透火力和拆线节奏稳住。',
         effects: [
           {
             type: 'stats',

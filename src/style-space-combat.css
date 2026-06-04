@@ -567,6 +567,12 @@
   line-height: 1.5;
 }
 
+.result-story__route {
+  color: rgba(176, 228, 255, 0.84);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .result-story__build,
 .result-story__prompt {
   color: rgba(238, 248, 255, 0.72);
