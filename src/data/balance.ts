@@ -20,16 +20,16 @@ export const PLAYER_COLLISION_RADIUS = 18;
 
 const RARITY_MULTIPLIERS: Record<UpgradeRarity, number> = {
   common: 1,
-  uncommon: 1.2,
-  rare: 1.45,
-  epic: 1.75,
-  legendary: 2.15,
+  uncommon: 1.22,
+  rare: 1.58,
+  epic: 1.96,
+  legendary: 2.38,
 };
 
 export const UPGRADE_VALUE_BUCKET_THRESHOLDS = {
-  mid: 65,
-  high: 105,
-  spike: 150,
+  mid: 42,
+  high: 74,
+  spike: 110,
 } as const;
 
 export const RARITY_LABEL_MAP: Record<UpgradeRarity, string> = {
@@ -174,11 +174,11 @@ export function getUpgradeRarityWeights(
   const phaseTier = getPhaseTier(phase);
   const depthScore = (round - 1) * 1.15 + phaseTier * 0.9 + Math.max(0, level - 1) * 0.18 + (source === 'nodePrep' ? 1.1 : 0);
 
-  const common = Math.max(12, 78 - depthScore * 12);
-  const uncommon = 18 + depthScore * 6;
-  const rare = Math.max(3, 4 + depthScore * 5);
-  const epic = Math.max(0, depthScore > 1 ? 1 + (depthScore - 1) * 3 : 0);
-  const legendary = Math.max(0, depthScore > 2 ? (depthScore - 2) * 2.2 : 0);
+  const common = Math.max(10, 76 - depthScore * 12.5);
+  const uncommon = 18 + depthScore * 6.2;
+  const rare = Math.max(4, 5 + depthScore * 5.8 + (phaseTier >= 1 ? 1.2 : 0));
+  const epic = Math.max(0, depthScore > 0.9 ? 1.2 + (depthScore - 0.9) * 3.6 : 0);
+  const legendary = Math.max(0, depthScore > 1.9 ? 0.5 + (depthScore - 1.9) * 2.8 : 0);
 
   return {
     common,
@@ -212,7 +212,7 @@ export function getEnemyHealth(
   difficultyScale: number,
   eliteMultiplier = 1,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.2 + getPhaseTier(phase) * 0.12;
+  const depthFactor = 1 + (round - 1) * 0.17 + getPhaseTier(phase) * 0.1;
   return Math.round(template.enemyHp * depthFactor * difficultyScale * eliteMultiplier);
 }
 
@@ -223,7 +223,7 @@ export function getEnemyMoveSpeed(
   difficultyScale: number,
   speedMultiplier = 1,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.06 + getPhaseTier(phase) * 0.03;
+  const depthFactor = 1 + (round - 1) * 0.05 + getPhaseTier(phase) * 0.02;
   return Math.round(template.enemySpeed * depthFactor * difficultyScale * speedMultiplier);
 }
 
@@ -234,7 +234,7 @@ export function getEnemyContactDamage(
   difficultyScale: number,
   damageMultiplier = 1,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.14 + getPhaseTier(phase) * 0.1;
+  const depthFactor = 1 + (round - 1) * 0.12 + getPhaseTier(phase) * 0.08;
   return Math.round(template.enemyDamage * depthFactor * difficultyScale * damageMultiplier);
 }
 
@@ -244,12 +244,12 @@ export function getEnemySpawnInterval(
   phase: PhaseId,
   elapsedSec: number,
 ): number {
-  const depthFactor = 1 + (round - 1) * 0.08 + getPhaseTier(phase) * 0.05;
+  const depthFactor = 1 + (round - 1) * 0.06 + getPhaseTier(phase) * 0.04;
   // 使用对数曲线替代线性增长，避免30秒上限
   // 对数曲线特点：前期增长快，后期增长慢但持续增长
-  const pressureFactor = 1 + Math.log(1 + elapsedSec / 10) * 0.35;
+  const pressureFactor = 1 + Math.log(1 + elapsedSec / 10) * 0.3;
   const interval = template.spawnIntervalSec / (depthFactor * pressureFactor);
-  return clamp(interval, template.spawnIntervalSec * 0.38, template.spawnIntervalSec);
+  return clamp(interval, template.spawnIntervalSec * 0.44, template.spawnIntervalSec);
 }
 
 export function getRegularEnemyCap(
@@ -259,8 +259,9 @@ export function getRegularEnemyCap(
   capMultiplier = 1,
 ): number {
   // 提高增长系数以增强后期压迫感
-  const depthFactor = 1 + (round - 1) * 0.12 + getPhaseTier(phase) * 0.09;
-  return Math.max(4, Math.round(template.regularEnemyCap * depthFactor * capMultiplier));
+  const depthFactor = 1 + (round - 1) * 0.1 + getPhaseTier(phase) * 0.08;
+  const earlyBuffer = round <= 2 ? 0.92 : 1;
+  return Math.max(3, Math.round(template.regularEnemyCap * depthFactor * capMultiplier * earlyBuffer));
 }
 
 export function getSpawnBurstCount(template: BattleTemplateDefinition): number {
@@ -275,7 +276,8 @@ export function getEnemyExperienceValue(
 ): number {
   const phaseTier = getPhaseTier(phase);
   const baseValue = 4 + round * 2.5 + phaseTier * 2.5 + template.enemyHp * 0.09;
-  return Math.round(isElite ? baseValue * 4.5 : baseValue);
+  const earlyBoost = round <= 2 ? 1.12 : 1;
+  return Math.round((isElite ? baseValue * 4.5 : baseValue) * earlyBoost);
 }
 
 export function getBattleCompletionExperience(
@@ -290,7 +292,7 @@ export function getBattleCompletionExperience(
       : template.winCondition.type === 'survive'
         ? 20
         : 16;
-  return Math.round(baseValue + round * 4 + phaseTier * 3);
+  return Math.round(baseValue + round * 4 + phaseTier * 3 + (round <= 2 ? 2 : 0));
 }
 
 export function getPressureSnapshot(

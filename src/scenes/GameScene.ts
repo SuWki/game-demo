@@ -993,6 +993,59 @@ export class GameScene extends Phaser.Scene {
       return '';
     }
 
+    const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
+    if (liveFocusRoute) {
+      const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
+      const routeName = ROUTE_NAME_MAP[liveFocusRoute];
+      if (liveFocusRoute === 'crit') {
+        if (battle.critBurstBonusSec > 0) {
+          return `${routeName}收口窗口还在：现在就是爆点。`;
+        }
+        if (battle.critFinisherReady) {
+          return `${routeName}终结已经就绪：下一次暴击会很狠。`;
+        }
+        if (routeStage === 'matured') {
+          return `${routeName}已经成型：抓住窗口就能打穿。`;
+        }
+        if (routeStage === 'committed') {
+          return `${routeName}开始站稳：先把爆点打出来。`;
+        }
+        if (routeStage === 'hinted') {
+          return `${routeName}开始冒头：先盯住输出窗。`;
+        }
+      }
+
+      if (liveFocusRoute === 'pierce') {
+        if (battle.pierceFlowSec > 0) {
+          return `${routeName}回响还在：后排正在被拆。`;
+        }
+        if (routeStage === 'matured') {
+          return `${routeName}已经成型：一条线会一路穿过去。`;
+        }
+        if (routeStage === 'committed') {
+          return `${routeName}开始站稳：先把后排打开。`;
+        }
+        if (routeStage === 'hinted') {
+          return `${routeName}开始冒头：先找拆线位置。`;
+        }
+      }
+
+      if (liveFocusRoute === 'dash') {
+        if (battle.dashDriveSec > 0) {
+          return `${routeName}收口窗口还在：贴身就能反打。`;
+        }
+        if (routeStage === 'matured') {
+          return `${routeName}已经成型：靠节奏就能收割。`;
+        }
+        if (routeStage === 'committed') {
+          return `${routeName}开始站稳：先把换位节奏接上。`;
+        }
+        if (routeStage === 'hinted') {
+          return `${routeName}开始冒头：先找回切拍子。`;
+        }
+      }
+    }
+
     if (this.getBattleTemplate(battle.templateId).winCondition.type === 'survive') {
       return `生存倒计时：${Math.max(0, Math.ceil(battle.remainingSec))}秒`;
     }

@@ -4,22 +4,22 @@ export const ROUTES: RouteDefinition[] = [
   {
     id: 'crit',
     name: '暴击',
-    shortHint: '火力开始偏向暴击爆发。',
-    matureHint: '暴击路线已经站稳，终局爆发成型。',
+    shortHint: '暴击开始找窗口了。',
+    matureHint: '暴击已经会收口了，后面会越打越狠。',
     color: '#ff8f70',
   },
   {
     id: 'pierce',
     name: '穿透',
-    shortHint: '火力开始偏向贯穿清线。',
-    matureHint: '穿透路线已经站稳，贯穿效率成型。',
+    shortHint: '穿透开始拆线了。',
+    matureHint: '穿透已经能一路穿过去，后排会自己掉。',
     color: '#68d4ff',
   },
   {
     id: 'dash',
     name: '穿梭',
-    shortHint: '机体开始偏向穿梭规避。',
-    matureHint: '穿梭路线已经站稳，节奏循环成型。',
+    shortHint: '穿梭开始找反打节奏了。',
+    matureHint: '穿梭已经能贴身收割，节奏会自己接上。',
     color: '#9cff97',
   },
 ];

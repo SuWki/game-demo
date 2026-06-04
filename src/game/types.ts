@@ -5,6 +5,7 @@ export type ContentTier = 'standard' | 'rare';
 export type BattleEncounterType = 'battle' | 'boss';
 export type EventContentKind = 'event' | 'anomaly';
 export type AnomalyClassId = 'routeWindow' | 'distortion' | 'hybrid' | 'bossEcho';
+export type AnomalyRoleId = 'direction' | 'core' | 'transform' | 'finisher';
 export type BattleTemplateId =
   | 'elimination'
   | 'elimination-pincer'
@@ -296,6 +297,7 @@ export interface EventOption {
   gainLabel?: string;
   costLabel?: string;
   routeId?: RouteReference;
+  anomalyRole?: AnomalyRoleId;
   effects?: ContentEffect[];
 }
 
@@ -313,9 +315,12 @@ export interface EventDefinition {
 
 export interface PickedEventRecord {
   eventId: string;
+  eventName?: string;
   optionId: string;
+  optionLabel?: string;
   routeId?: RouteId;
   anomalyClass?: AnomalyClassId;
+  anomalyRole?: AnomalyRoleId;
   contentTier?: ContentTier;
   isHybridPick?: boolean;
   isLatePayoff?: boolean;
@@ -652,6 +657,7 @@ export interface RunResult {
   battleWins: number;
   levelReached: number;
   routeTrace: NodeRecord[];
+  eventHistory: PickedEventRecord[];
   replayPrompt: string;
   selectedUpgrades: UpgradeDefinition[];
 }

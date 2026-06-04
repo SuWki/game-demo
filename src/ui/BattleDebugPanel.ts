@@ -12,6 +12,16 @@ export interface BattleDebugTemplateOption {
   group: string;
 }
 
+export interface BattleDebugPanelLike {
+  bind: (templateOptions: BattleDebugTemplateOption[], bindings: BattleDebugPanelBindings) => void;
+  unbind: () => void;
+  show: () => void;
+  hide: () => void;
+  setVisible: (visible: boolean) => void;
+  isVisible: () => boolean;
+  sync: (config: BattleDebugConfig, snapshot: BattleDebugSnapshot | null) => void;
+}
+
 interface BattleDebugPanelBindings {
   onConfigChange: (patch: Partial<BattleDebugConfig>) => void;
   onRestartBattle: (templateId: BattleTemplateId, phase: DebugBattlePhaseId) => void;

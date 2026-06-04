@@ -403,10 +403,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'crit-reroute-window',
-    name: '暴击转接窗',
+    name: '暴击转折窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '暴击成型，可切换其他打法',
+    description: '这一拍会决定暴击是只会冒头，还是直接开始收口。',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 1.22,
@@ -422,23 +422,58 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       offRouteMultiplier: 0.05,
     },
     options: [
-      ...getAnomalyRoutePoolOptions('critRerouteWindow', ['pierce', 'dash']),
       {
-        id: 'crit-reroute-window-hold',
+        id: 'crit-reroute-window-direction',
+        label: '钉住暴击方向',
+        gameplayLabel: '方向件',
+        gainLabel: '暴击更容易连上窗口',
+        costLabel: '先少一点容错',
         routeId: 'crit',
-        label: '先稳当前火力',
-        description: '不转向，先补火力和耐久',
+        anomalyRole: 'direction',
+        description: '先把暴击方向钉住，后面更容易接成一条线。',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              damage: 4,
-              fireRate: 0.1,
+              critChance: 0.06,
+              fireRate: 0.08,
             },
           },
           {
             type: 'heal',
-            amount: 10,
+            amount: 6,
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
+      {
+        id: 'crit-reroute-window-core',
+        label: '补进暴击核心',
+        gameplayLabel: '核心件',
+        gainLabel: '暴击率和暴伤一起抬',
+        costLabel: '清场会慢一点',
+        routeId: 'crit',
+        anomalyRole: 'core',
+        description: '把暴击主轴补实，后面更容易把窗口打穿。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              critChance: 0.08,
+              critMultiplier: 0.28,
+              fireRate: 0.04,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
           },
           {
             type: 'route',
@@ -1080,11 +1115,11 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'dash-charge-protocol',
-    name: '穿梭蓄能协议',
+    name: '穿梭回切窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'dash',
-    description: '普通射击变弱，穿梭后爆发',
+    description: '普通射击会变弱，但穿梭后的收口会更狠。',
     selection: {
       baseWeight: 0.95,
       minRound: 2,
@@ -1098,20 +1133,20 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'dash-charge-pulse',
-        label: '接入穿梭脉冲',
-        gameplayLabel: '换位爆发',
-        gainLabel: '穿梭脉冲伤害提高，穿梭流 +1',
-        costLabel: '基础伤害降低',
+        id: 'dash-charge-direction',
+        label: '钉住穿梭方向',
+        gameplayLabel: '方向件',
+        gainLabel: '穿梭更容易起手',
+        costLabel: '基础火力会弱一点',
         routeId: 'dash',
-        description: '普通射击变弱，穿梭后反击更强',
+        anomalyRole: 'direction',
+        description: '先把穿梭的起手抬起来，后面更容易接反打。',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              damage: -3,
-              dashPulseDamage: 10,
-              dashInterval: -0.22,
+              moveSpeed: 12,
+              dashInterval: -0.18,
             },
           },
           {
@@ -1125,21 +1160,89 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         ],
       },
       {
-        id: 'dash-charge-graze',
-        label: '接入擦身蓄能',
-        gameplayLabel: '擦身反打',
-        gainLabel: '移速和穿梭窗口提高',
-        costLabel: '生命上限降低',
+        id: 'dash-charge-core',
+        label: '补进穿梭核心',
+        gameplayLabel: '核心件',
+        gainLabel: '脉冲伤害和无伤窗提高',
+        costLabel: '耐久会少一点',
         routeId: 'dash',
-        description: '容错下降，擦身反击更强',
+        anomalyRole: 'core',
+        description: '把穿梭的核心拍补实，擦身会更稳。',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              maxHp: -12,
-              moveSpeed: 16,
-              dashInvulnerability: 0.12,
+              dashPulseDamage: 8,
+              dashInvulnerability: 0.1,
+              moveSpeed: 6,
             },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'dash-charge-transform',
+        label: '压上换位爆发',
+        gameplayLabel: '质变件',
+        gainLabel: '换位后爆发更狠',
+        costLabel: '容错明显下降',
+        routeId: 'dash',
+        anomalyRole: 'transform',
+        description: '把穿梭从躲和追，推到能直接收口。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              dashPulseDamage: 10,
+              dashInterval: -0.22,
+              maxHp: -10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+        ],
+      },
+      {
+        id: 'dash-charge-finisher',
+        label: '接入收割回路',
+        gameplayLabel: '收尾件',
+        gainLabel: '脉冲后更容易收口',
+        costLabel: '普通射击更弱',
+        routeId: 'dash',
+        anomalyRole: 'finisher',
+        description: '不是多一层数值，是把收尾节奏拉起来。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              dashPulseDamage: 12,
+              dashChargeSpeed: 0.12,
+              dashCounterDamageBonus: 0.22,
+              dashGrazeRadiusBonus: 8,
+              fireRate: -0.08,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
+          },
+          {
+            type: 'route',
+            routeId: 'dash',
           },
           {
             type: 'route',
@@ -1151,11 +1254,11 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'crit-lock-protocol',
-    name: '暴击锁定协议',
+    name: '暴击收尾窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'crit',
-    description: '清怪变慢，但对强敌爆发更高',
+    description: '暴击已经站稳，这一拍决定是继续补强，还是直接收口。',
     selection: {
       baseWeight: 0.9,
       minRound: 2,
@@ -1169,21 +1272,28 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'crit-lock-focus',
-        label: '接入暴击锁定',
-        gameplayLabel: '单体爆发',
-        gainLabel: '暴击率和暴击伤害提高',
-        costLabel: '射速降低',
+        id: 'crit-lock-transform',
+        label: '压上红线爆发',
+        gameplayLabel: '质变件',
+        gainLabel: '短窗口爆发和收口能力大涨',
+        costLabel: '容错明显下降',
         routeId: 'crit',
-        description: '清怪变慢，但对强敌爆发更高',
+        anomalyRole: 'transform',
+        description: '压掉容错，换更狠的爆发窗口。',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              fireRate: -0.22,
-              critChance: 0.08,
-              critMultiplier: 0.35,
+              maxHp: -12,
+              damage: 4,
+              fireRate: 0.12,
+              critMultiplier: 0.42,
+              critOverdriveDurationBonus: 0.24,
             },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
           },
           {
             type: 'route',
@@ -1192,22 +1302,30 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         ],
       },
       {
-        id: 'crit-lock-redline',
-        label: '接入红线锁定',
-        gameplayLabel: '低容错爆发',
-        gainLabel: '伤害和暴击伤害提高',
-        costLabel: '生命上限降低，射速降低',
+        id: 'crit-lock-finisher',
+        label: '接入终结回路',
+        gameplayLabel: '收尾件',
+        gainLabel: '破绽爆发后更容易收口',
+        costLabel: '后续补强变少',
         routeId: 'crit',
-        description: '压低耐久和频率，换短窗口高伤',
+        anomalyRole: 'finisher',
+        description: '这一手不是补属性，是把收尾拉起来。',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              maxHp: -14,
-              damage: 4,
-              fireRate: -0.16,
-              critMultiplier: 0.42,
+              critSplashRadius: 0.12,
+              critOverdriveCritBonus: 0.05,
+              critOverdriveDurationBonus: 0.35,
             },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
           },
           {
             type: 'route',

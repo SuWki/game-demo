@@ -91,6 +91,20 @@ interface RouteAdvanceMeta {
   pickId: string;
 }
 
+interface ReplayProfile {
+  anomalyVisits: number;
+  hybridHits: number;
+  redirectHits: number;
+  latePayoffHits: number;
+  rarePayoffHits: number;
+  bossEchoHits: number;
+  routeRareHits: number;
+  anomalyDirectionHits: number;
+  anomalyCoreHits: number;
+  anomalyTransformHits: number;
+  anomalyFinisherHits: number;
+}
+
 const CENTER_X = ARENA_WIDTH / 2;
 const CENTER_Y = ARENA_HEIGHT / 2;
 const ROUTE_COMMIT_THRESHOLD = 3;
@@ -528,9 +542,12 @@ export class RunEngine {
     const isLatePayoff = this.isLatePayoffEvent(eventDef);
     this.state.eventHistory.push({
       eventId: eventDef.id,
+      eventName: eventDef.name,
       optionId: option.id,
+      optionLabel: option.label,
       routeId: optionRouteId,
       anomalyClass: eventDef.anomalyClass,
+      anomalyRole: option.anomalyRole,
       contentTier: eventDef.contentTier,
       isHybridPick,
       isLatePayoff,
@@ -2197,15 +2214,16 @@ export class RunEngine {
   private finishRun(outcome: RunOutcome, endingKind: RunEndingKind): void {
     const routeId = this.getResultRoute();
     const buildStage = this.getBuildStage();
+    const replayProfile = this.getReplayProfile(routeId);
     const buildLabel = getBuildStageLabel(buildStage);
-    const buildSummary = this.getBuildSummary(routeId, buildStage);
+    const buildSummary = this.getBuildSummary(routeId, buildStage, replayProfile);
     const endingLabel = getEndingLabel(endingKind);
     const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
     const finalNodeType = this.state.currentNode?.type ?? null;
     const endingReason = this.getEndingReason(endingKind, finalNodeTitle);
-    const summary = this.getResultSummary(outcome, routeId, buildStage);
+    const summary = this.getResultSummary(outcome, routeId, buildStage, replayProfile);
     const routeTrace = this.buildRouteTrace();
-    const replayPrompt = this.getReplayPrompt(outcome, routeId, buildStage, endingKind);
+    const replayPrompt = this.getReplayPrompt(outcome, routeId, buildStage, endingKind, replayProfile);
     const runDurationSec = Number(((performance.now() - this.runStartedAtMs) / 1000).toFixed(2));
     const nodesCleared = Math.min(this.state.round, this.state.totalRounds);
     this.state.status = 'result';
@@ -2233,6 +2251,7 @@ export class RunEngine {
       battleWins: this.state.battleWins,
       levelReached: this.state.level,
       routeTrace,
+      eventHistory: [...this.state.eventHistory],
       replayPrompt,
       selectedUpgrades: this.state.selectedUpgrades
         .map((id) => this.getAllUpgradeArchetypes().find((u) => u.id === id))
@@ -2267,19 +2286,20 @@ export class RunEngine {
     return 'unformed';
   }
 
-  private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage): string {
+  private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage, replayProfile: ReplayProfile): string {
     if (!routeId) {
       return '本局还没有形成清晰打法';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
+    const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     switch (buildStage) {
       case 'matured':
-        return `${routeName}流已经成型`;
+        return anomalyRecap ? `${routeName}流已经成型，${anomalyRecap}` : `${routeName}流已经成型`;
       case 'committed':
-        return `${routeName}流已经开始站稳`;
+        return anomalyRecap ? `${routeName}流已经开始站稳，${anomalyRecap}` : `${routeName}流已经开始站稳`;
       case 'hinted':
-        return `${routeName}倾向已经出现`;
+        return anomalyRecap ? `${routeName}倾向已经出现，${anomalyRecap}` : `${routeName}倾向已经出现`;
       default:
         return '本局还没有形成清晰打法';
     }
@@ -2323,50 +2343,59 @@ export class RunEngine {
     routeId: RouteId | null,
     buildStage: RouteBuildStage,
     endingKind: RunEndingKind,
+    replayProfile: ReplayProfile,
   ): string {
     if (!routeId) {
       return '再来一局先稳住前几场战斗，打法会更容易成型。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
+    const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        return `${routeName}流已经完整打通。再开一局可以试试另一条流派。`;
+        return anomalyRecap ? `${routeName}流已经完整打通。${anomalyRecap} 再开一局可以试试另一条流派。` : `${routeName}流已经完整打通。再开一局可以试试另一条流派。`;
       }
       if (buildStage === 'committed') {
-        return `${routeName}流已经站稳。再来一局可以继续补最后一段输出。`;
+        return anomalyRecap ? `${routeName}流已经站稳。${anomalyRecap} 再来一局可以继续补最后一段输出。` : `${routeName}流已经站稳。再来一局可以继续补最后一段输出。`;
       }
-      return `${routeName}流已经冒头。再来一局可以优先补它的关键牌。`;
+      return anomalyRecap ? `${routeName}流已经冒头。${anomalyRecap} 再来一局可以优先补它的关键牌。` : `${routeName}流已经冒头。再来一局可以优先补它的关键牌。`;
     }
 
     if (endingKind === 'timeOut') {
-      return `${routeName}流已经起势，但最后一段压力还没顶住。下局优先补输出或生存。`;
+      return anomalyRecap ? `${routeName}流已经起势，但最后一段压力还没顶住。${anomalyRecap} 下局优先补收尾或生存。` : `${routeName}流已经起势，但最后一段压力还没顶住。下局优先补输出或生存。`;
     }
     if (buildStage === 'matured' || buildStage === 'committed') {
-      return `${routeName}流已经成型，但这局被打断了。下局注意精英和 Boss 的安全窗口。`;
+      return anomalyRecap ? `${routeName}流已经成型，但这局被打断了。${anomalyRecap} 下局注意精英和 Boss 的安全窗口。` : `${routeName}流已经成型，但这局被打断了。下局注意精英和 Boss 的安全窗口。`;
     }
-    return `${routeName}流刚出现苗头，这局先被打断了。下局早点补关键牌。`;
+    return anomalyRecap ? `${routeName}流刚出现苗头，这局先被打断了。${anomalyRecap} 下局早点补关键牌。` : `${routeName}流刚出现苗头，这局先被打断了。下局早点补关键牌。`;
   }
-  private getResultSummary(outcome: RunOutcome, routeId: RouteId | null, buildStage: RouteBuildStage): string {
+
+  private getResultSummary(
+    outcome: RunOutcome,
+    routeId: RouteId | null,
+    buildStage: RouteBuildStage,
+    replayProfile: ReplayProfile,
+  ): string {
     if (!routeId) {
       return outcome === 'victory' ? '这轮试飞已经顺利完成。' : '这局打法还没站稳，就先被打断了。';
     }
 
     const routeName = ROUTE_NAME_MAP[routeId];
+    const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     if (outcome === 'victory') {
       if (buildStage === 'matured') {
-        return `${routeName}流已经完整撑到了最后。`;
+        return anomalyRecap ? `${routeName}流已经完整撑到了最后。${anomalyRecap}` : `${routeName}流已经完整撑到了最后。`;
       }
       if (buildStage === 'committed') {
-        return `${routeName}流已经站稳，并顺利撑到了最后。`;
+        return anomalyRecap ? `${routeName}流已经站稳，并顺利撑到了最后。${anomalyRecap}` : `${routeName}流已经站稳，并顺利撑到了最后。`;
       }
-      return `${routeName}流把这轮试飞带到了最后。`;
+      return anomalyRecap ? `${routeName}流把这轮试飞带到了最后。${anomalyRecap}` : `${routeName}流把这轮试飞带到了最后。`;
     }
 
     if (buildStage === 'matured' || buildStage === 'committed') {
-      return `${routeName}流已经起势，但这局还是在最后被打断了。`;
+      return anomalyRecap ? `${routeName}流已经起势，但这局还是在最后被打断了。${anomalyRecap}` : `${routeName}流已经起势，但这局还是在最后被打断了。`;
     }
-    return `${routeName}流刚露出倾向，这局就先被打断了。`;
+    return anomalyRecap ? `${routeName}流刚露出倾向，这局就先被打断了。${anomalyRecap}` : `${routeName}流刚露出倾向，这局就先被打断了。`;
   }
 
   private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {
@@ -2385,15 +2414,7 @@ export class RunEngine {
     );
   }
 
-  private getReplayProfile(routeId: RouteId | null): {
-    anomalyVisits: number;
-    hybridHits: number;
-    redirectHits: number;
-    latePayoffHits: number;
-    rarePayoffHits: number;
-    bossEchoHits: number;
-    routeRareHits: number;
-  } {
+  private getReplayProfile(routeId: RouteId | null): ReplayProfile {
     const pickedUpgrades = this.getSelectedUpgradeArchetypes();
     const pickedEvents = this.state.eventHistory;
 
@@ -2416,6 +2437,10 @@ export class RunEngine {
       routeId === null
         ? 0
         : pickedUpgrades.filter((archetype) => archetype.routeId === routeId && archetype.contentTier === 'rare').length;
+    const anomalyDirectionHits = pickedEvents.filter((record) => record.anomalyRole === 'direction').length;
+    const anomalyCoreHits = pickedEvents.filter((record) => record.anomalyRole === 'core').length;
+    const anomalyTransformHits = pickedEvents.filter((record) => record.anomalyRole === 'transform').length;
+    const anomalyFinisherHits = pickedEvents.filter((record) => record.anomalyRole === 'finisher').length;
 
     return {
       anomalyVisits: this.getAnomalyVisitCount(),
@@ -2425,7 +2450,29 @@ export class RunEngine {
       rarePayoffHits,
       bossEchoHits,
       routeRareHits,
+      anomalyDirectionHits,
+      anomalyCoreHits,
+      anomalyTransformHits,
+      anomalyFinisherHits,
     };
+  }
+
+  private getAnomalyRoleRecap(profile: ReplayProfile): string {
+    const parts: string[] = [];
+    if (profile.anomalyDirectionHits > 0) {
+      parts.push(`方向 ${profile.anomalyDirectionHits}`);
+    }
+    if (profile.anomalyCoreHits > 0) {
+      parts.push(`核心 ${profile.anomalyCoreHits}`);
+    }
+    if (profile.anomalyTransformHits > 0) {
+      parts.push(`质变 ${profile.anomalyTransformHits}`);
+    }
+    if (profile.anomalyFinisherHits > 0) {
+      parts.push(`收尾 ${profile.anomalyFinisherHits}`);
+    }
+
+    return parts.length > 0 ? `异常：${parts.join(' / ')}` : '';
   }
 
   private isHybridTagged(tags: string[] | undefined): boolean {
@@ -2922,7 +2969,7 @@ export class RunEngine {
 
     if (dashCharge >= 2 && !this.routeMomentShown.dash) {
       this.routeMomentShown.dash = true;
-      this.enqueueTip('穿梭节奏开始接上了');
+      this.enqueueTip('穿梭开始回切了');
     }
 
     battle.dashCharge = 0;
@@ -4572,7 +4619,7 @@ export class RunEngine {
           }
           if (battle.critChain >= 2 && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
-            this.enqueueTip('暴击节奏开始升温');
+            this.enqueueTip('暴击开始找收口了');
           }
         } else if (battle.critChain > 0) {
           battle.critChain = Math.max(0, battle.critChain - 1);
@@ -6686,7 +6733,7 @@ export class RunEngine {
     this.enqueueAudio('pierceEcho');
     if (!this.routeMomentShown.pierce) {
       this.routeMomentShown.pierce = true;
-      this.enqueueTip('穿透火力开始扇裂');
+      this.enqueueTip('穿透开始拆线了');
     }
   }
 

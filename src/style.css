@@ -1203,6 +1203,12 @@ button:hover {
   background: rgba(233, 243, 250, 0.05);
 }
 
+.choice-effect-tag.is-anomaly-role {
+  border-color: rgba(127, 217, 255, 0.24);
+  background: rgba(127, 217, 255, 0.08);
+  color: rgba(239, 247, 252, 0.96);
+}
+
 .choice-prompt {
   color: rgba(236, 245, 252, 0.64);
   font-size: 11px;
@@ -1709,6 +1715,35 @@ button:hover {
 .choice-event-class {
   border-color: rgba(255, 255, 255, 0.06);
   background: color-mix(in srgb, var(--choice-accent, var(--accent-violet)) 16%, rgba(255, 255, 255, 0.03));
+}
+
+.choice-event-role {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.choice-event-role.role-direction {
+  border-color: rgba(127, 217, 255, 0.32);
+  background: rgba(127, 217, 255, 0.12);
+  color: rgba(235, 250, 255, 0.96);
+}
+
+.choice-event-role.role-core {
+  border-color: rgba(255, 204, 116, 0.34);
+  background: rgba(255, 204, 116, 0.12);
+  color: rgba(255, 246, 223, 0.96);
+}
+
+.choice-event-role.role-transform {
+  border-color: rgba(255, 143, 112, 0.34);
+  background: rgba(255, 143, 112, 0.12);
+  color: rgba(255, 240, 233, 0.96);
+}
+
+.choice-event-role.role-finisher {
+  border-color: rgba(156, 255, 151, 0.34);
+  background: rgba(156, 255, 151, 0.12);
+  color: rgba(239, 255, 237, 0.96);
 }
 
 .choice-event-route.active {
@@ -4613,6 +4648,66 @@ button:hover {
   border-bottom: 1px solid rgba(221, 236, 248, 0.12);
 }
 
+.detail-summary-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-summary-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid rgba(221, 236, 248, 0.12);
+  background: rgba(233, 243, 250, 0.06);
+  border-radius: 6px;
+}
+
+.detail-summary-card.is-muted {
+  background: rgba(5, 15, 20, 0.44);
+}
+
+.detail-summary-card strong {
+  color: rgba(245, 252, 255, 0.94);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.detail-summary-card small {
+  color: rgba(222, 235, 242, 0.62);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.detail-anomaly-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.detail-anomaly-strip span {
+  display: grid;
+  gap: 4px;
+  padding: 12px 10px;
+  text-align: center;
+  border: 1px solid rgba(221, 236, 248, 0.12);
+  background: rgba(233, 243, 250, 0.05);
+}
+
+.detail-anomaly-strip small {
+  color: rgba(222, 235, 242, 0.58);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.detail-anomaly-strip strong {
+  color: rgba(245, 252, 255, 0.94);
+  font-size: 20px;
+  font-weight: 800;
+}
+
 /* 占位符样式 */
 .detail-placeholder {
   display: flex;
@@ -4668,9 +4763,18 @@ button:hover {
   transition: all 0.2s ease;
 }
 
+.detail-timeline-item.is-anomaly {
+  border-color: rgba(187, 138, 255, 0.18);
+  background: rgba(233, 243, 250, 0.07);
+}
+
 .detail-timeline-item:hover {
   background: rgba(233, 243, 250, 0.1);
   border-color: rgba(221, 236, 248, 0.2);
+}
+
+.detail-timeline-item.is-anomaly:hover {
+  border-color: rgba(187, 138, 255, 0.36);
 }
 
 .detail-timeline-marker {
@@ -4704,6 +4808,13 @@ button:hover {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
+}
+
+.detail-timeline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 /* 数据卡片网格 */
@@ -4757,6 +4868,10 @@ button:hover {
   .panel-result-details {
     width: calc(100vw - 28px);
     padding: 20px;
+  }
+
+  .detail-anomaly-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .detail-stats-grid {

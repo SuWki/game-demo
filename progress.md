@@ -1604,3 +1604,89 @@ TODO
 
 TODO
 - ç”¨æˆ·éœ€è¦å®æœºç¡®è®¤ï¼šå„æµæ´¾å¼ºåŒ–æ˜¯å¦æ­£å¸¸è§¦å‘ã€æœºåˆ¶æè¿°æ˜¯å¦æ˜“æ‡‚ã€æ•°å€¼å¹³è¡¡æ˜¯å¦åˆç†
+2026-05-29
+- Self-test report: output/qa/selftest-20260529/summary.json
+- 6 autoplay runs; clear rate 0/6; avg duration 56.63s; avg nodes selected 2.17; avg upgrades chosen 7.
+- All runs ended unformed; routeId never locked; avg route-upgrade offers 2.67 and picks 1.0 per run.
+- Mid/late battle nodes remain the main fail points.
+- Preview also logs repeated 404s for /data/*.json under the /game-demo/ base path.
+
+2026-05-29 balance pass
+- Fixed ConfigLoader JSON fetch base handling for /game-demo/ by resolving data URLs from document.baseURI / BASE_URL.
+- Route upgrades now apply real route progress again; starter route cards provide a stronger first signal; instant-heal upgrade effects are preserved at runtime.
+- Early/mid level-up selectors now surface starter route cards in the first 2-3 panels and bias follow-up offers toward the first hinted route.
+- Reduced early battle-only pacing pressure in node selection and lowered difficulty / selection weight on the repeated mid-late fail nodes.
+- Softened elite-pressure-hold, elite-contagion, elite-gauntlet, survival-rush, and survival-gauntlet density / escort pressure.
+- Raised rare+ payoff separation with stronger rarity multipliers / baselines and lower value-bucket thresholds.
+- Added browser QA runner: tools/qa-selftest-balance-pass.mjs
+- Validation:
+  - npm run build passed.
+  - Local preview verified at http://127.0.0.1:4188/game-demo/
+  - New report: output/qa/selftest-balance-pass/summary.json
+  - 404s cleared: consoleErrors=[] and failedUrlCounts={}
+  - 6 runs: clear rate 1/6, avg duration 101.08s, avg nodes selected 4.0, avg upgrades chosen 11.5
+  - buildStage distribution: matured 6/6
+  - routeId distribution: crit 3 / pierce 2 / dash 1
+  - Failures are no longer concentrated in the same two mid-pressure nodes; samples spread across multiple late battles and boss endpoints.
+- Next step if another pass is needed:
+  - route lock is now reliable but overtuned for autoplay, so the next pass should trim early follow-up route bias and keep more runs in hinted/committed before matured.
+2026-05-29
+- Added tools/qa-smart-natural-fullrun.mjs: full-run smart QA script combining route-aware choice logic and live battle steering from __pilotBattleDebug.
+- Smart script sample (6 runs, 720-step cap): bossReached 4/6, matured 3/6, routeId formed in 4/6, avg nodesCleared 3.0, but clears still 0 and boss fights remain lethal.
+- Current regression signal versus older natural runs: simple natural-long now yields only 2/10 formed runs and 0/10 boss reaches, so route reinforcement and midgame/boss survivability both regressed.
+
+## 2026-05-29 Â·Ïß³ÉĞÍÈİ´í + Boss ¶Î¿ÉÇåĞÔĞŞÕı
+- ±¾ÂÖ¼ÌĞøÑØÓÃÏÖÓĞÂ·Ïß/½Úµã/Ä£°åÏµÍ³£¬ÖØµãÏÂµ÷¼òµ¥×ÔÈ»½Å±¾µÄÎ´³ÉÏß·çÏÕ£¬²¢Ñ¹µÍ Boss Óëºó¶ÎÄ£°åµÄ¹ıÁ¿Ñ¹Á¦¡£
+- ´úÂë²àÖ÷Òªµ÷Õû£º
+  - `src/systems/RunEngine.ts`
+    - Â·ÏßÍÆ½ø¸ÄÎª°´µ¥´ÎÉı¼¶¾ÛºÏÍ¬Â·Ïß½ø¶ÈºóÔÙ½áËã£¬±ÜÃâÍ¬Ò»¿¨¶à¶Î route effect ±»Öğ´ÎÅĞ¶¨Ê±ËğÊ§ËøÏß»ú»á¡£
+    - `matured` ãĞÖµÓÉ 5 ½µµ½ 4£¬²¢·Å¿íÒÑ committed ºóµÄ matured ÅĞ¶¨Ìõ¼ş¡£
+  - `src/data/contentSelectors.ts`
+    - Ç°ÖĞ¶ÎÄÃµ½ 2~3 ÕÅÍ¬Â·ÏßÅÆºó£¬Ìá¸ßÍ¬Â·ÏßºóĞø³öÏÖÈ¨ÖØ²¢½øÒ»²½Ñ¹µÍ off-route¡£
+    - ÔÚ hinted ½×¶Î»ù±¾¹Ø±Õ redirect/hybrid ¸ÉÈÅ£¬ÓÅÏÈÈÃÂ·ÏßÑÓĞø³ÉĞÍ¡£
+  - `src/data/upgrades.ts`
+    - route Àà payoff/finisher Ò²Ç¿ÖÆ²¹×ãÂ·Ïß½ø¶È effect£¬ÈÃ¡°ÄÃµ½Í¬Â·Ïß¹Ø¼üÅÆ¡±¸üÎÈ¶¨×ª³ÉÕæÊµ³ÉÏß¡£
+  - `src/data/nodes.ts`
+    - round 1~2 Ã÷ÏÔÌá¸ß upgrade ½ÚµãÈ¨ÖØ¡¢ÏÂÑ¹ anomaly ºÍ¹ıÔç¸ßÑ¹ battle¡£
+    - ÏÂµ÷ mid/late ¶à¸ö¸ßÑ¹½ÚµãµÄ difficultyScale£¬Boss ½Úµã difficultyScale Í³Ò»»ØÂä¡£
+  - `src/data/battleTemplates.ts`
+    - ÏÂµ÷ `elite-pressure-hold` / `elite-contagion` / `elite-gauntlet`¡£
+    - ÏÂµ÷ `survival-rush` / `survival-gauntlet` / `survival-sieve`¡£
+    - ÏÂµ÷ `boss-executioner` / `boss-fortress` / `boss-predator` µÄ±¾ÌåÄÍ¾Ã¡¢Ë¢¹ÖÃÜ¶È¡¢»¤ÎÀÁ¿Óë phase Ñ¹Á¦¡£
+- ¹¹½¨ÑéÖ¤£º`npm run build` Í¨¹ı¡£
+- Ô¤ÀÀÑéÖ¤£º`http://127.0.0.1:4201/game-demo/`
+- ĞÂ½á¹û£º
+  - ¼òµ¥×ÔÈ»ÖØ²â£º`output/qa/retest-natural-long-boss-pass-20260529/summary.json`
+    - 10 ¾Ö 1 Í¨¹Ø£¬2 ¾Öµ½ Boss¡£
+    - `buildStage`: matured 10/10¡£
+    - `routeId`: crit 4 / dash 4 / pierce 2¡£
+    - Æ½¾ùºÄÊ± 65.76s£¬Æ½¾ùÕ½¶·Ê¤³¡ 3.2£¬Æ½¾ùÇå½Úµã 3.3¡£
+    - 404 È«²¿ÏûÊ§¡£
+    - Ê§°Ü½ÚµãÒÑ·ÖÉ¢µ½ `²ğÆÁ¹ÒÕË / ÁÑÃæÇåÕË / ±¬µã×·ÊÕ / ½»»ğ¼Ğ²ã / »Ø°Ú×·»Ø / Éú´æÑ¹ÖÆ / ÁÔÉ±Ê×Áì`£¬²»ÔÙÊÇ´óÁ¿Î´³ÉÏßºó¿¨ÔÚÍ¬Ò»ÖĞ¶Îµã¡£
+  - ÖÇÄÜÕû¾ÖÖØ²â£º`output/qa/smart-natural-fullrun-boss-pass-20260529/summary.json`
+    - 6 ¾Ö 2 Í¨¹Ø£¬4 ¾Öµ½ Boss¡£
+    - ÓĞ 1 ¾Ö `committed` Í¨¹Ø¡¢1 ¾Ö `matured` Í¨¹Ø¡¢1 ¾Ö `matured` Boss Ê§°Ü¡£
+    - Ê§°ÜÒÑ¸ß¶ÈÑ¹Ëõµ½ Boss£º`ÒªÈûÊ×Áì` ¿ÉÍ¨£¬Ê£ÓàÖ÷ÒªÓ²µãÊÇ `´¦¾öÊ×Áì`¡£
+- ½áÂÛ£ºÕâÂÖÒÑ¾­´ïµ½¡°¼òµ¥×ÔÈ»²»ÔÙ´óÁ¿ unformed£¬ÖÇÄÜ½Å±¾ÓĞ¿ÉÑéÖ¤Çå¹ØÑù±¾¡±µÄÑéÊÕÄ¿±ê¡£ÏÂÒ»²½×î¸Ã¼ÌĞøÑ¹µÄÊÇ `boss-executioner`£¬Æä´ÎÊÇ late µÄ `±¬µã×·ÊÕ / ÁÑÃæÇåÕË`¡£
+2026-05-30
+- Continued the late-gameæ”¶å£ pass on top of the current rebuild and kept the work inside the existing `src/data/*` + `src/systems/RunEngine.ts` layer.
+- This round focused on:
+  - boss safe-window readability and blocker clearance in `RunEngine`
+  - late round-3 battle nodes (`ç”Ÿå­˜å‹åˆ¶`, `ç­›ç«æ±‚ç”Ÿ`, `å¤¹é“æ±‚ç”Ÿ`, `çˆ†ç‚¹è¿½æ”¶`, `å›çº¿åå‹` etc.)
+  - boss templates for `boss-lockdown`, `boss-bastion`, `boss-predator`, `boss-fortress`, and a light touch on `boss-executioner`
+  - a small round-2 reduction on `è“„åŠ¿å‹åˆ¶ / å¤¹é“å‹åˆ¶ / è„‰å†²å‹çº¿`
+- Validation after the final rollback / settle pass:
+  - `npm run build` passes
+  - `PILOT_QA_RUNS=5 node tools/qa-smart-natural-fullrun.mjs` -> wins 2/5, bossReachedRuns 5/5, timedOutRuns 1, failed404Urls=[]
+  - `PILOT_QA_RUNS=5 node tools/qa-natural-long-retest.mjs` -> wins 0/5, bossReachedRuns 2/5, failed404Urls=[]
+- QA texté‡‡é›† remained clean; `/data/*.json` 404s stayed cleared.
+- Remaining hot spots:
+  - natural flow still tends to die before or inside `ç­›ç«æ±‚ç”Ÿ / å¤¹é“å‹åˆ¶`
+  - smart flow can still time out on `boss-predator / boss-executioner` style long fights
+- Next best follow-up, if needed:
+  - do a very small boss HP / escort pressure trim only for `boss-predator` and `boss-executioner`
+  - if natural still stalls, shave a little more from `round-2-battle-dash-gauntlet` and `round-3-battle-sieve`
+2026-05-30
+- Fifth roundæ”¶å£ pass in progress: widened boss safe-window linger / grace, reduced phase-switch re-clamp pressure, and trimmed boss-executioner / boss-predator final-phase pressure.
+- Also lowered round-2-battle-dash-gauntlet and round-3-battle-sieve pressure a little more, plus slight final-boss node scale trims for the two stubborn end bosses.
+- Next: run npm run build, then PILOT_QA_RUNS=5 node tools/qa-smart-natural-fullrun.mjs and PILOT_QA_RUNS=5 node tools/qa-natural-long-retest.mjs to verify boss wins recover without losing boss reach.

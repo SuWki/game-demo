@@ -3,6 +3,7 @@ import { RARITY_COLOR_MAP } from '../data/balance';
 import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
 import { describeContentEffects } from '../data/upgrades';
 import type {
+  AnomalyRoleId,
   ContentEffect,
   EventDefinition,
   NodeOption,
@@ -471,6 +472,12 @@ export class OverlayController {
             </div>
           </div>
 
+          <div class="result-story">
+            <p class="result-story__summary">${result.summary}</p>
+            <p class="result-story__build">${result.buildSummary}</p>
+            <p class="result-story__prompt">${result.replayPrompt}</p>
+          </div>
+
           ${
             result.selectedUpgrades && result.selectedUpgrades.length > 0
               ? `
@@ -612,6 +619,9 @@ export class OverlayController {
     this.panelLayer.classList.remove('hidden');
 
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
+    const eventHistory = result.eventHistory ?? [];
+    const anomalyHistory = eventHistory.filter((record) => record.anomalyClass);
+    const anomalyRoleCounts = this.getAnomalyRoleCounts(eventHistory);
 
     // 本局选择记录
     const upgradeTimeline = result.selectedUpgrades && result.selectedUpgrades.length > 0
@@ -628,6 +638,25 @@ export class OverlayController {
         `).join('')
       : '<p style="text-align: center; color: rgba(255,255,255,0.5);">无升级记录</p>';
 
+    const anomalyTimeline = anomalyHistory.length > 0
+      ? anomalyHistory.map((record, index) => `
+          <div class="detail-timeline-item is-anomaly">
+            <div class="detail-timeline-marker" style="background: ${this.getAnomalyRoleColor(record.anomalyRole)};">
+              ${index + 1}
+            </div>
+            <div class="detail-timeline-content">
+              <strong>${record.eventName ?? record.eventId}</strong>
+              <small>${record.optionLabel ?? record.optionId}</small>
+              <div class="detail-timeline-tags">
+                ${record.anomalyRole ? `<span class="choice-effect-tag is-anomaly-role">${this.getAnomalyRoleLabel(record.anomalyRole)}</span>` : ''}
+                ${record.routeId ? `<span class="choice-effect-tag">${ROUTE_NAME_MAP[record.routeId]}</span>` : ''}
+                ${record.anomalyClass ? `<span class="choice-effect-tag">${this.getEventClassLabel({ anomalyClass: record.anomalyClass } as EventDefinition)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')
+      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">本局没有明显异常转折</p>';
+
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
         <div class="tray-header">
@@ -639,16 +668,29 @@ export class OverlayController {
 
         <div class="result-details-content">
           <div class="result-details-section">
-            <h3 class="detail-section-title">📊 数据可视化</h3>
-            <div class="detail-placeholder">
-              <div class="placeholder-icon">📈</div>
-              <p><strong>DPS曲线图</strong></p>
-              <small>本局暂未记录详细曲线</small>
+            <h3 class="detail-section-title">本局摘要</h3>
+            <div class="detail-summary-stack">
+              <div class="detail-summary-card">
+                <strong>${result.summary}</strong>
+                <small>${result.buildSummary}</small>
+              </div>
+              <div class="detail-summary-card is-muted">
+                <strong>${result.replayPrompt}</strong>
+                <small>${result.endingReason}</small>
+              </div>
             </div>
-            <div class="detail-placeholder">
-              <div class="placeholder-icon">🎯</div>
-              <p><strong>伤害构成分析</strong></p>
-              <small>本局暂未记录详细构成</small>
+          </div>
+
+          <div class="result-details-section">
+            <h3 class="detail-section-title">异常转折</h3>
+            <div class="detail-anomaly-strip">
+              <span><small>方向</small><strong>${anomalyRoleCounts.direction}</strong></span>
+              <span><small>核心</small><strong>${anomalyRoleCounts.core}</strong></span>
+              <span><small>质变</small><strong>${anomalyRoleCounts.transform}</strong></span>
+              <span><small>收尾</small><strong>${anomalyRoleCounts.finisher}</strong></span>
+            </div>
+            <div class="detail-timeline-scroll">
+              ${anomalyTimeline}
             </div>
           </div>
 
@@ -891,14 +933,14 @@ export class OverlayController {
   private renderAnomalyChoiceContext(eventDef: EventDefinition, progress: PanelProgress): string {
     return `
       <aside class="choice-context choice-context-anomaly" aria-label="异常风险摘要">
-        <span class="anomaly-warning-label">RISK AUTHORIZATION</span>
+        <span class="anomaly-warning-label">异常转折</span>
         <strong>${eventDef.name}</strong>
         <p>${eventDef.description}</p>
         <div class="anomaly-risk-grid">
-          <span><small>风险类型</small><b>${this.getEventClassLabel(eventDef)}</b></span>
+          <span><small>转折类型</small><b>${this.getEventClassLabel(eventDef)}</b></span>
           <span><small>当前进度</small><b>${progress.progressLabel}</b></span>
         </div>
-        <div class="anomaly-warning-strip">奖励与代价同时显示，确认前请看清处理结果</div>
+        <div class="anomaly-warning-strip">这一下会改掉这一局的走法，选前先看清代价。</div>
       </aside>
     `;
   }
@@ -1031,11 +1073,13 @@ export class OverlayController {
     const detailTags = this.getEventChoiceTags(eventDef, option);
     const anomalyGain = isAnomaly ? this.getAnomalyGainLabel(option) : '';
     const anomalyCost = isAnomaly ? this.getAnomalyCostLabel(option) : '';
+    const anomalyRoleLabel = isAnomaly ? this.getAnomalyRoleLabel(option.anomalyRole) : '';
     return `
       <button class="choice-strip choice-strip-event${anomalyClass}" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
         <div class="choice-strip-head">
-          <span class="choice-type">${isAnomaly ? '处理方案' : '事件'}</span>
+          <span class="choice-type">${isAnomaly ? '异常转折' : '事件'}</span>
           ${isAnomaly ? `<span class="choice-mode-badge choice-event-class">${this.getEventClassLabel(eventDef)}</span>` : ''}
+          ${anomalyRoleLabel ? `<span class="choice-mode-badge choice-event-role role-${option.anomalyRole}" style="--route-pill: ${routeAccent}">${anomalyRoleLabel}</span>` : ''}
           <span class="choice-mode-badge choice-event-route ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
         </div>
         <div class="choice-strip-body choice-strip-body-event">
@@ -1174,6 +1218,51 @@ export class OverlayController {
     return '首领战';
   }
 
+  private getAnomalyRoleLabel(role?: AnomalyRoleId): string {
+    switch (role) {
+      case 'direction':
+        return '方向件';
+      case 'core':
+        return '核心件';
+      case 'transform':
+        return '质变件';
+      case 'finisher':
+        return '收尾件';
+      default:
+        return '';
+    }
+  }
+
+  private getAnomalyRoleActionLabel(role?: AnomalyRoleId): string {
+    switch (role) {
+      case 'direction':
+        return '接入方向件';
+      case 'core':
+        return '接入核心件';
+      case 'transform':
+        return '接入质变件';
+      case 'finisher':
+        return '接入收尾件';
+      default:
+        return '';
+    }
+  }
+
+  private getAnomalyRoleColor(role?: AnomalyRoleId): string {
+    switch (role) {
+      case 'direction':
+        return '#7fd9ff';
+      case 'core':
+        return '#ffcc74';
+      case 'transform':
+        return '#ff8f70';
+      case 'finisher':
+        return '#9cff97';
+      default:
+        return '#a773ff';
+    }
+  }
+
   private getEventRouteLabel(routeId: RouteReference | undefined, eventDef: EventDefinition): string {
     if (!routeId || routeId === 'dominant') {
       if (eventDef.contentKind !== 'anomaly') {
@@ -1181,11 +1270,11 @@ export class OverlayController {
       }
       switch (eventDef.anomalyClass) {
         case 'hybrid':
-          return '多流派混合';
+          return '双线拐点';
         case 'bossEcho':
-          return 'Boss 战前奖励';
+          return '收尾预演';
         case 'distortion':
-          return '异常效果';
+          return '异常变招';
         default:
           return '当前流派';
       }
@@ -1459,13 +1548,13 @@ export class OverlayController {
   private getEventClassLabel(eventDef: EventDefinition): string {
     switch (eventDef.anomalyClass) {
       case 'routeWindow':
-        return '切换流派';
+        return '流派转折';
       case 'hybrid':
-        return '混合流派';
+        return '双线拐点';
       case 'bossEcho':
-        return '提前奖励';
+        return '收尾预演';
       case 'distortion':
-        return '效果变异';
+        return '规则变招';
       default:
         return '异常';
     }
@@ -1476,9 +1565,13 @@ export class OverlayController {
       return '执行';
     }
 
+    const anomalyRoleLabel = this.getAnomalyRoleActionLabel(option.anomalyRole);
     const routeRef = this.getEventRouteReference(eventDef, option);
     const routeSummary = this.getRouteEffectSummary(option.effects);
     if (eventDef.anomalyClass === 'routeWindow') {
+      if (anomalyRoleLabel) {
+        return anomalyRoleLabel;
+      }
       if (routeRef && eventDef.routeAffinity && routeRef !== eventDef.routeAffinity) {
         return '确认切换';
       }
@@ -1486,11 +1579,11 @@ export class OverlayController {
     }
 
     if (eventDef.anomalyClass === 'hybrid') {
-      return '混合流派';
+      return '双线拐点';
     }
 
     if (eventDef.anomalyClass === 'bossEcho') {
-      return 'Boss 奖励';
+      return '收尾预演';
     }
 
     const hasPressure = option.effects?.some((effect) => effect.type === 'heal' && effect.amount < 0);
@@ -1502,6 +1595,11 @@ export class OverlayController {
     const focusLabel = this.getEffectFocusLabel(option.effects);
     if (focusLabel) {
       tags.push(focusLabel);
+    }
+
+    const anomalyRoleLabel = this.getAnomalyRoleLabel(option.anomalyRole);
+    if (anomalyRoleLabel) {
+      tags.push(anomalyRoleLabel);
     }
 
     const routeSummary = this.getRouteEffectSummary(option.effects);
@@ -1517,6 +1615,23 @@ export class OverlayController {
     }
 
     return tags.slice(0, 2);
+  }
+
+  private getAnomalyRoleCounts(records: RunResult['eventHistory']): Record<AnomalyRoleId, number> {
+    const counts: Record<AnomalyRoleId, number> = {
+      direction: 0,
+      core: 0,
+      transform: 0,
+      finisher: 0,
+    };
+
+    for (const record of records) {
+      if (record.anomalyRole) {
+        counts[record.anomalyRole] += 1;
+      }
+    }
+
+    return counts;
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {

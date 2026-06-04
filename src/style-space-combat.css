@@ -545,6 +545,43 @@
   color: rgba(238, 248, 255, 0.5);
 }
 
+.result-story {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  background: rgba(18, 30, 44, 0.58);
+  border: 1px solid rgba(170, 204, 228, 0.16);
+  border-radius: 4px;
+  animation: stats-appear 0.8s ease-out 0.52s both;
+}
+
+.result-story p {
+  margin: 0;
+}
+
+.result-story__summary {
+  color: rgba(245, 252, 255, 0.92);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.result-story__build,
+.result-story__prompt {
+  color: rgba(238, 248, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.result-story__build {
+  color: rgba(255, 215, 140, 0.82);
+}
+
+.result-story__prompt {
+  color: rgba(111, 231, 255, 0.74);
+}
+
 /* 升级时间轴 */
 .result-upgrade-timeline {
   width: 100%;
