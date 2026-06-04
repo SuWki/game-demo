@@ -312,6 +312,7 @@ export class OverlayController {
             </div>
             <span class="hud-meter-card__level">${snapshot.levelText}</span>
           </div>
+          <span class="game-hud-fixed__route">${snapshot.routeStatusText}</span>
         </section>
         <section class="game-hud-fixed__center">
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>

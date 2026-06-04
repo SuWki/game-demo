@@ -1000,39 +1000,39 @@ export class GameScene extends Phaser.Scene {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
         if (battle.critBurstBonusSec > 0) {
-          return '暴击收口窗口还在：现在就是爆点。';
+          return '暴击爆点已经打开：现在就是收口。';
         }
         if (battle.critFinisherReady) {
-          return `暴击终结已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
+          return `暴击收口已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
         }
         if (routeStage === 'matured') {
           return battle.critComboStacks > 0
-            ? `暴击已经成型：破绽 ${battle.critComboStacks}/5，下一次会很狠。`
-            : '暴击已经成型：抓住窗口就能打穿。';
+            ? `暴击已经收口：破绽 ${battle.critComboStacks}/5，下一次会直接点爆。`
+            : '暴击已经收口：抓住窗口就能点爆。';
         }
         if (routeStage === 'committed') {
-          return '暴击开始成线：先把爆点打出来。';
+          return '暴击开始起爆：先把爆点打出来。';
         }
         if (routeStage === 'hinted') {
-          return '暴击开始冒头：先盯住输出窗。';
+          return '暴击开始预热：先盯住输出窗。';
         }
       }
 
       if (liveFocusRoute === 'pierce') {
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
-            return `穿透拆线连起来了：第 ${battle.pierceFlowCount} 段正在往后走。`;
+            return `穿透贯通已经连起来了：第 ${battle.pierceFlowCount} 段正在往后走。`;
           }
-          return '穿透回响还在：后排正在被拆。';
+          return '穿透线已经打开：后排正在被拆。';
         }
         if (routeStage === 'matured') {
-          return '穿透已经成型：一条线会一路穿过去。';
+          return '穿透已经打穿：一条线会一路穿过去。';
         }
         if (routeStage === 'committed') {
-          return '穿透开始接上了：先把后排打开。';
+          return '穿透开始拆线：前排会给后排让路。';
         }
         if (routeStage === 'hinted') {
-          return '穿透开始冒头：先找拆线位置。';
+          return '穿透开始找线：先找能贯通的路。';
         }
       }
 
@@ -1315,24 +1315,24 @@ export class GameScene extends Phaser.Scene {
     switch (routeId) {
       case 'crit':
         if (stage === 'matured') {
-          return '暴击已成型：现在就是抓窗收口。';
+          return '暴击已收口：现在就是点爆口。';
         }
         if (stage === 'committed') {
-          return '暴击开始成线：窗口正在接上。';
+          return '暴击开始起爆：窗口正在接上。';
         }
         if (stage === 'hinted') {
-          return '暴击开始找窗：先盯住爆点。';
+          return '暴击开始预热：先盯住爆点。';
         }
         return '暴击还没站稳。';
       case 'pierce':
         if (stage === 'matured') {
-          return '穿透已成型：一条线会一路穿过去。';
+          return '穿透已打穿：一条线会一路穿过去。';
         }
         if (stage === 'committed') {
-          return '穿透开始接上：前排会往后排让路。';
+          return '穿透开始拆线：前排会往后排让路。';
         }
         if (stage === 'hinted') {
-          return '穿透开始拆线：先找一条能贯通的路。';
+          return '穿透开始找线：先找一条能贯通的路。';
         }
         return '穿透还没站稳。';
       case 'dash':
@@ -1348,6 +1348,181 @@ export class GameScene extends Phaser.Scene {
         return '穿梭还没站稳。';
       default:
         return '选择强化';
+    }
+  }
+
+  private renderCritBurstFocus(
+    battle: BattleState,
+    bodyX: number,
+    bodyY: number,
+    aimDirX: number,
+    aimDirY: number,
+    aimOrthoX: number,
+    aimOrthoY: number,
+    liveFocusColor: number,
+    critAuraRatio: number,
+    critBurstRatio: number,
+    critChainRatio: number,
+  ): void {
+    if (critAuraRatio <= 0 && critBurstRatio <= 0 && !battle.critFinisherReady && critChainRatio <= 0) {
+      return;
+    }
+
+    const warmColor = this.mixColor(0xffd06c, liveFocusColor, 0.18);
+    const burstColor = this.mixColor(0xff9f58, 0xfff0bf, 0.2);
+    const finisherColor = this.mixColor(0xfff0a4, 0xffd46f, 0.12);
+    const aimAngle = Math.atan2(aimDirY, aimDirX);
+    const spin = battle.elapsedSec * (2.8 + critBurstRatio * 1.2);
+
+    if (critAuraRatio > 0) {
+      this.graphics.lineStyle(1.8 + critAuraRatio * 0.8, warmColor, 0.14 + critAuraRatio * 0.16);
+      this.graphics.strokeCircle(bodyX, bodyY, 24 + critAuraRatio * 14);
+      this.graphics.lineStyle(1.15, warmColor, 0.09 + critAuraRatio * 0.08);
+      for (let index = 0; index < 4; index += 1) {
+        const angle = spin + (Math.PI / 2) * index;
+        const inner = 24 + critAuraRatio * 8;
+        const outer = 35 + critAuraRatio * 12;
+        this.graphics.lineBetween(
+          bodyX + Math.cos(angle) * inner,
+          bodyY + Math.sin(angle) * inner,
+          bodyX + Math.cos(angle) * outer,
+          bodyY + Math.sin(angle) * outer,
+        );
+      }
+    }
+
+    if (critBurstRatio > 0) {
+      const burstRadius = 30 + critBurstRatio * 16;
+      this.graphics.lineStyle(2.6 + critBurstRatio * 0.8, burstColor, 0.18 + critBurstRatio * 0.22);
+      this.graphics.strokeCircle(bodyX, bodyY, burstRadius);
+      this.graphics.lineStyle(1.2 + critBurstRatio * 0.4, burstColor, 0.12 + critBurstRatio * 0.18);
+      const spikeCount = battle.critFinisherReady ? 6 : 4;
+      for (let index = 0; index < spikeCount; index += 1) {
+        const angle = spin * 1.4 + (Math.PI * 2 * index) / spikeCount;
+        const inner = burstRadius - 5;
+        const outer = burstRadius + 12 + critBurstRatio * 6;
+        this.graphics.lineBetween(
+          bodyX + Math.cos(angle) * inner,
+          bodyY + Math.sin(angle) * inner,
+          bodyX + Math.cos(angle) * outer,
+          bodyY + Math.sin(angle) * outer,
+        );
+      }
+      this.graphics.lineStyle(1.5, burstColor, 0.14 + critBurstRatio * 0.16);
+      this.graphics.lineBetween(
+        bodyX + aimDirX * 10,
+        bodyY + aimDirY * 10,
+        bodyX + aimDirX * (38 + critBurstRatio * 18) + aimOrthoX * (5 + critChainRatio * 2),
+        bodyY + aimDirY * (38 + critBurstRatio * 18) + aimOrthoY * (5 + critChainRatio * 2),
+      );
+      this.graphics.lineBetween(
+        bodyX + aimDirX * 10,
+        bodyY + aimDirY * 10,
+        bodyX + aimDirX * (38 + critBurstRatio * 18) - aimOrthoX * (5 + critChainRatio * 2),
+        bodyY + aimDirY * (38 + critBurstRatio * 18) - aimOrthoY * (5 + critChainRatio * 2),
+      );
+    }
+
+    if (critChainRatio > 0) {
+      const chainColor = this.mixColor(0xffe6a9, finisherColor, 0.18);
+      const chainCount = Math.min(3, Math.max(1, battle.critBurstChainCount));
+      this.graphics.lineStyle(1.4, chainColor, 0.14 + critChainRatio * 0.14);
+      for (let index = 0; index < chainCount; index += 1) {
+        const chainReach = 30 + index * 12 + critChainRatio * 10;
+        this.renderDirectionalChevron(
+          bodyX + aimDirX * chainReach,
+          bodyY + aimDirY * chainReach,
+          aimAngle,
+          8 + index * 2,
+          8 + critChainRatio * 4,
+          3 + critChainRatio * 1.5,
+          chainColor,
+          0.12 + critChainRatio * 0.08,
+          0.01 + critChainRatio * 0.02,
+        );
+      }
+    }
+
+    if (battle.critFinisherReady) {
+      this.graphics.lineStyle(2.2, finisherColor, 0.2 + critAuraRatio * 0.18);
+      this.graphics.strokeCircle(bodyX, bodyY, 36 + critAuraRatio * 12);
+      this.renderDirectionalChevron(bodyX, bodyY, aimAngle, 28 + critAuraRatio * 6, 16 + critAuraRatio * 4, 5 + critAuraRatio * 2, finisherColor, 0.18 + critAuraRatio * 0.08, 0.02 + critAuraRatio * 0.03);
+    }
+  }
+
+  private renderPierceFlowFocus(
+    battle: BattleState,
+    bodyX: number,
+    bodyY: number,
+    aimDirX: number,
+    aimDirY: number,
+    aimOrthoX: number,
+    aimOrthoY: number,
+    liveFocusColor: number,
+    pierceFlowRatio: number,
+    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
+  ): void {
+    if (pierceFlowRatio <= 0 && battle.pierceFlowCount <= 0) {
+      return;
+    }
+
+    const laneColor = this.mixColor(0x8fd8ff, liveFocusColor, 0.24);
+    const laneCoreColor = this.mixColor(0xdff6ff, laneColor, 0.18);
+    const laneReach = Math.max(camera.width, camera.height) * (0.78 + pierceFlowRatio * 0.08);
+    const laneStartX = bodyX - aimDirX * 24;
+    const laneStartY = bodyY - aimDirY * 24;
+    const laneEndX = bodyX + aimDirX * laneReach;
+    const laneEndY = bodyY + aimDirY * laneReach;
+    const laneWidth = 2.1 + pierceFlowRatio * 1.2;
+
+    this.graphics.lineStyle(laneWidth, laneColor, 0.08 + pierceFlowRatio * 0.16);
+    this.graphics.lineBetween(laneStartX, laneStartY, laneEndX, laneEndY);
+
+    this.graphics.lineStyle(1.25 + pierceFlowRatio * 0.4, laneCoreColor, 0.08 + pierceFlowRatio * 0.1);
+    const tickCount = Math.min(6, 2 + battle.pierceFlowCount);
+    for (let index = 1; index <= tickCount; index += 1) {
+      const t = index / (tickCount + 1);
+      const tickX = laneStartX + (laneEndX - laneStartX) * t;
+      const tickY = laneStartY + (laneEndY - laneStartY) * t;
+      const tickHalf = 8 + pierceFlowRatio * 6 + battle.pierceFlowCount * 1.2;
+      this.graphics.lineBetween(
+        tickX - aimOrthoX * tickHalf,
+        tickY - aimOrthoY * tickHalf,
+        tickX + aimOrthoX * tickHalf,
+        tickY + aimOrthoY * tickHalf,
+      );
+    }
+
+    this.graphics.lineStyle(1.8, laneCoreColor, 0.12 + pierceFlowRatio * 0.12);
+    this.graphics.strokeCircle(bodyX, bodyY, 24 + pierceFlowRatio * 12 + Math.min(8, battle.pierceFlowCount * 1.4));
+
+    if (battle.pierceFlowCount >= 3) {
+      const railGap = 10 + pierceFlowRatio * 4;
+      this.graphics.lineStyle(1.4, laneColor, 0.08 + pierceFlowRatio * 0.14);
+      this.graphics.lineBetween(
+        laneStartX + aimOrthoX * railGap,
+        laneStartY + aimOrthoY * railGap,
+        laneEndX + aimOrthoX * railGap,
+        laneEndY + aimOrthoY * railGap,
+      );
+      this.graphics.lineBetween(
+        laneStartX - aimOrthoX * railGap,
+        laneStartY - aimOrthoY * railGap,
+        laneEndX - aimOrthoX * railGap,
+        laneEndY - aimOrthoY * railGap,
+      );
+      this.graphics.lineStyle(1.1, laneCoreColor, 0.1 + pierceFlowRatio * 0.12);
+      this.renderDirectionalChevron(
+        bodyX + aimDirX * (34 + battle.pierceFlowCount * 4),
+        bodyY + aimDirY * (34 + battle.pierceFlowCount * 4),
+        Math.atan2(aimDirY, aimDirX),
+        12 + pierceFlowRatio * 4,
+        12 + pierceFlowRatio * 4,
+        4 + pierceFlowRatio * 1.5,
+        laneCoreColor,
+        0.14 + pierceFlowRatio * 0.08,
+        0.015 + pierceFlowRatio * 0.015,
+      );
     }
   }
 
@@ -3026,6 +3201,8 @@ export class GameScene extends Phaser.Scene {
     const impactRatio = Math.min(1, battle.playerImpactSec / 0.34);
     const recoveryRatio = Math.min(1, battle.playerRecoverySec / 0.26);
     const critAuraRatio = battle.critOverdriveSec > 0 ? Math.min(1, battle.critOverdriveSec / 4.2) : 0;
+    const critBurstRatio = battle.critBurstBonusSec > 0 ? Math.min(1, battle.critBurstBonusSec / 2.5) : 0;
+    const critChainRatio = battle.critBurstChainSec > 0 ? Math.min(1, battle.critBurstChainSec / 2.0) : 0;
     const dashDriveRatio = battle.dashDriveSec > 0 ? Math.min(1, battle.dashDriveSec / 1.15) : 0;
     const freezeRatio = battle.impactFreezeSec > 0 ? Math.min(1, battle.impactFreezeSec / 0.09) : 0;
     const shotFlashRatio = battle.playerShotFlashSec > 0 ? Math.min(1, battle.playerShotFlashSec / 0.08) : 0;
@@ -3079,6 +3256,7 @@ export class GameScene extends Phaser.Scene {
       tempoRatio,
       shotFlashRatio,
       critAuraRatio,
+      critBurstRatio,
       dashDriveRatio,
       nearMissRatio,
       killFlowRatio,
@@ -3087,6 +3265,7 @@ export class GameScene extends Phaser.Scene {
       moveBoostRatio,
       turnBurstRatio,
       velocityRatio * 0.8,
+      liveFocusRoute === 'pierce' ? pierceFlowRatio : 0,
     );
     const liveFocusColor =
       liveFocusRoute === 'crit'
@@ -3504,9 +3683,33 @@ export class GameScene extends Phaser.Scene {
       impactRatio > 0 ? this.mixColor(0xf8fbff, 0xff8c86, impactRatio * 0.8) : battle.invulnerableSec > 0 ? 0x9cff97 : 0xf8fbff,
       1,
     );
-    if (liveFocusRoute === 'crit' && battle.critFinisherReady) {
-      this.graphics.lineStyle(1.8, this.mixColor(0xffd46f, liveFocusColor, 0.2), 0.14 + critAuraRatio * 0.22);
-      this.graphics.strokeCircle(bodyX, bodyY, 24 + critAuraRatio * 14);
+    if (liveFocusRoute === 'crit') {
+      this.renderCritBurstFocus(
+        battle,
+        bodyX,
+        bodyY,
+        aimDirX,
+        aimDirY,
+        aimOrthoX,
+        aimOrthoY,
+        liveFocusColor,
+        critAuraRatio,
+        critBurstRatio,
+        critChainRatio,
+      );
+    } else if (liveFocusRoute === 'pierce') {
+      this.renderPierceFlowFocus(
+        battle,
+        bodyX,
+        bodyY,
+        aimDirX,
+        aimDirY,
+        aimOrthoX,
+        aimOrthoY,
+        liveFocusColor,
+        pierceFlowRatio,
+        camera,
+      );
     }
     if (shotFlashRatio > 0) {
       // Spawn shell casing on new shot

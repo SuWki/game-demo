@@ -2336,22 +2336,22 @@ export class RunEngine {
       case 'crit':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始找窗了：先盯住爆点。`;
+            return `${routeName}开始预热了：先盯住爆点。`;
           case 'committed':
-            return `${routeName}开始成线了：窗口能接上。`;
+            return `${routeName}开始起爆了：窗口已经接上。`;
           case 'matured':
-            return `${routeName}已经成型：现在就是抓窗收口。`;
+            return `${routeName}已经收口了：现在就是点爆口。`;
           default:
             return `${routeName}还没站稳。`;
         }
       case 'pierce':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始拆线了：先找一条能贯通的路。`;
+            return `${routeName}开始找线了：先找一条能贯通的路。`;
           case 'committed':
-            return `${routeName}开始接上了：前排会往后排让路。`;
+            return `${routeName}开始拆线了：前排会往后排让路。`;
           case 'matured':
-            return `${routeName}已经成型：一条线会一路穿过去。`;
+            return `${routeName}已经打穿了：一条线会一路穿过去。`;
           default:
             return `${routeName}还没站稳。`;
         }
@@ -2429,9 +2429,9 @@ export class RunEngine {
     if (outcome === 'victory') {
       const routeAdvice =
         routeId === 'crit'
-          ? '下局可以把暴击窗口再提前一拍，先把方向和核心接稳。'
+          ? '下局可以把爆点再提前一拍，先把预热和收口接稳。'
           : routeId === 'pierce'
-            ? '下局可以把拆线桥件再提前一点，让后排更早掉。'
+            ? '下局可以把贯通桥件再提前一点，让后排更早掉。'
             : '下局可以把换位节奏再提前一点，让收割更顺。';
       return anomalyRecap ? `${routeLine} ${anomalyRecap} ${routeAdvice}` : `${routeLine} ${routeAdvice}`;
     }
@@ -2460,9 +2460,9 @@ export class RunEngine {
     }
     const routeAdvice =
       routeId === 'crit'
-        ? '下局早点补方向件。'
+        ? '下局早点补爆点方向件。'
         : routeId === 'pierce'
-          ? '下局早点补拆线桥件。'
+          ? '下局早点补贯通桥件。'
           : '下局早点补反打件。';
     return anomalyRecap
       ? `${routeLine} 这局先被打断了。${anomalyRecap} ${routeAdvice}`
@@ -4712,7 +4712,7 @@ export class RunEngine {
           }
           if (battle.critChain >= 2 && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
-            this.enqueueTip('暴击开始找收口了');
+            this.enqueueTip('暴击爆点已经起来了');
           }
         } else if (battle.critChain > 0) {
           battle.critChain = Math.max(0, battle.critChain - 1);
@@ -6826,7 +6826,7 @@ export class RunEngine {
     this.enqueueAudio('pierceEcho');
     if (!this.routeMomentShown.pierce) {
       this.routeMomentShown.pierce = true;
-      this.enqueueTip('穿透开始拆线了');
+      this.enqueueTip('穿透线已经打通了');
     }
   }
 

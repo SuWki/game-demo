@@ -2788,6 +2788,26 @@ button:hover {
   line-height: 1.1;
 }
 
+.game-hud-fixed__route {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 214, 128, 0.18);
+  border-radius: 999px;
+  background: rgba(10, 17, 24, 0.58);
+  color: rgba(255, 214, 128, 0.94);
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.62),
+    0 0 14px rgba(255, 184, 90, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
 .hud-meter-card {
   position: relative;
   display: grid;
