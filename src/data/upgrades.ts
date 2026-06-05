@@ -1393,7 +1393,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-afterglow',
     name: '余热描边',
-    description: '延长破绽持续时间，更容易连续命中同一目标叠加破绽',
+    description: '破绽留得更久，下一轮更容易接上窗口。',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'crit-afterglow'],
@@ -1630,7 +1630,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-embershard',
     name: '余烬爆点',
-    description: '破绽爆发时产生小范围爆点（对精英/Boss降倍率）',
+    description: '爆点炸开时，会顺手带到附近敌人。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -1753,7 +1753,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-crownfire',
     name: '冠火收束',
-    description: '破绽爆发后短时间提高下一次暴击收益，不常驻',
+    description: '爆点炸开后，下一次更容易继续起爆。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2081,7 +2081,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamkeep',
     name: '拆缝续程',
-    description: '穿透命中带裂纹敌人时，裂纹持续时间延长，帮助更稳定累积层数',
+    description: '裂纹留得更久，后排更容易被一路带出来。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'pierce-seamkeep'],
@@ -2278,7 +2278,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-riftbloom',
     name: '裂面回响',
-    description: '裂纹扩散范围强化',
+    description: '裂纹散得更开，后排更容易被带出来。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2463,7 +2463,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-floodgate',
     name: '裂层清账',
-    description: '一旦穿透接住线，后排会自己松开。',
+    description: '一旦接上线，后排会跟着松开。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2932,7 +2932,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-prism',
     name: '棱镜破轨',
-    description: '裂纹扩散范围强化',
+    description: '裂纹扩得更大，更容易一条线贯过去。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',

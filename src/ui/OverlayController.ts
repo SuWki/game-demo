@@ -290,6 +290,7 @@ export class OverlayController {
   public showHud(snapshot: OverlayHudSnapshot, onPause?: () => void): void {
     this.screenLayer.classList.add('hidden');
     this.hudLayer.classList.remove('hidden');
+    const routeMomentColor = snapshot.routeMomentRouteId ? ROUTE_COLOR_MAP[snapshot.routeMomentRouteId] : undefined;
     this.hudLayer.innerHTML = `
       <div class="game-hud-fixed">
         <section class="game-hud-fixed__left">
@@ -312,7 +313,10 @@ export class OverlayController {
             </div>
             <span class="hud-meter-card__level">${snapshot.levelText}</span>
           </div>
-          <span class="game-hud-fixed__route">${snapshot.routeStatusText}</span>
+          <div class="game-hud-fixed__route-stack"${routeMomentColor ? ` style="--route-pill: ${routeMomentColor}"` : ''}>
+            <span class="game-hud-fixed__route">${snapshot.routeStatusText}</span>
+            ${snapshot.routeMomentText ? `<span class="game-hud-fixed__route-moment">${snapshot.routeMomentText}</span>` : ''}
+          </div>
         </section>
         <section class="game-hud-fixed__center">
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
@@ -434,14 +438,7 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
     const isVictory = result.outcome === 'victory';
-    const buildStageLabel =
-      result.buildStage === 'unformed'
-        ? '未成型'
-        : result.buildStage === 'hinted'
-          ? '有倾向'
-          : result.buildStage === 'committed'
-            ? '开始成型'
-            : '已成型';
+    const buildStageLabel = this.getRouteResultStageLabel(result.routeId, result.buildStage);
     this.screenLayer.innerHTML = `
       <section class="screen-minimal result-screen space-combat-result-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
         <div class="space-scanlines" aria-hidden="true"></div>
@@ -644,11 +641,11 @@ export class OverlayController {
       ? anomalyHistory.map((record, index) => `
           <div class="detail-timeline-item is-anomaly">
             <div class="detail-timeline-marker" style="background: ${this.getAnomalyRoleColor(record.anomalyRole)};">
-              ${index + 1}
+              ${record.nodeIndex ?? index + 1}
             </div>
             <div class="detail-timeline-content">
               <strong>${record.eventName ?? record.eventId}</strong>
-              <small>${record.optionLabel ?? record.optionId}</small>
+              <small>${record.optionLabel ?? record.optionId}${record.nodeIndex ? ` · 第 ${record.nodeIndex} 节点` : ''}</small>
               <div class="detail-timeline-tags">
                 ${record.anomalyRole ? `<span class="choice-effect-tag is-anomaly-role">${this.getAnomalyRoleLabel(record.anomalyRole)}</span>` : ''}
                 ${record.routeId ? `<span class="choice-effect-tag">${ROUTE_NAME_MAP[record.routeId]}</span>` : ''}
@@ -1642,20 +1639,193 @@ export class OverlayController {
     }
 
     const routeName = ROUTE_NAME_MAP[result.routeId];
-    switch (result.buildStage) {
-      case 'matured':
-        return `这局走的是${routeName}线，已经成型。`;
-      case 'committed':
-        return `这局走的是${routeName}线，已经开始成型。`;
-      case 'hinted':
-        return `这局走的是${routeName}线，已经有倾向。`;
-      default:
-        return `这局走的是${routeName}线，但还没站稳。`;
+    const anomalyRoleCounts = this.getAnomalyRoleCounts(result.eventHistory ?? []);
+    const chronology = this.getResultAnomalyChronology(result);
+    const anomalyParts: string[] = [];
+    if (anomalyRoleCounts.direction > 0) {
+      anomalyParts.push(`方向 ${anomalyRoleCounts.direction}`);
     }
+    if (anomalyRoleCounts.core > 0) {
+      anomalyParts.push(`核心 ${anomalyRoleCounts.core}`);
+    }
+    if (anomalyRoleCounts.transform > 0) {
+      anomalyParts.push(`质变 ${anomalyRoleCounts.transform}`);
+    }
+    if (anomalyRoleCounts.finisher > 0) {
+      anomalyParts.push(`收尾 ${anomalyRoleCounts.finisher}`);
+    }
+    const stageTail =
+      result.outcome === 'victory'
+        ? result.routeId === 'pierce'
+          ? result.buildStage === 'matured'
+            ? '已经打穿了。'
+            : result.buildStage === 'committed'
+              ? '已经进入拆线。'
+              : result.buildStage === 'hinted'
+                ? '已经有方向了。'
+                : '还没真正站稳。'
+          : result.buildStage === 'matured'
+            ? '已经打穿了。'
+            : result.buildStage === 'committed'
+              ? '已经开始成型了。'
+              : result.buildStage === 'hinted'
+                ? '已经有方向了。'
+                : '还没真正站稳。'
+        : result.routeId === 'pierce'
+          ? result.buildStage === 'matured'
+            ? `已经打穿了，但最后没守住，停在「${result.finalNodeTitle}」。`
+            : result.buildStage === 'committed'
+              ? `已经拆线了，但最后没打穿，停在「${result.finalNodeTitle}」。`
+              : result.buildStage === 'hinted'
+                ? `有方向但还没成型，停在「${result.finalNodeTitle}」。`
+                : `还没真正站稳，停在「${result.finalNodeTitle}」。`
+          : result.buildStage === 'matured' || result.buildStage === 'committed'
+            ? `但最后没兑现，停在「${result.finalNodeTitle}」。`
+            : `但还没真正站稳，停在「${result.finalNodeTitle}」。`;
+
+    const parts = [`这局走的是${routeName}线，${stageTail}`];
+    if (chronology) {
+      parts.push(chronology);
+    }
+    if (anomalyParts.length > 0) {
+      parts.push(`异常节点：${anomalyParts.join(' / ')}`);
+    }
+    return parts.join(' ');
+  }
+
+  private getResultAnomalyChronology(result: RunResult): string {
+    const routeId = result.routeId;
+    if (!routeId) {
+      return '';
+    }
+
+    const anomalyHistory = (result.eventHistory ?? []).filter((record) => record.anomalyClass);
+    if (anomalyHistory.length === 0) {
+      return '';
+    }
+
+    return anomalyHistory
+      .slice(0, 2)
+      .map((record, index) => {
+        const nodeIndex = record.nodeIndex ?? index + 1;
+        return `第 ${nodeIndex} 节点：${this.describeResultAnomalyPush(routeId, record, result.buildStage, result.outcome)}`;
+      })
+      .join('；');
+  }
+
+  private describeResultAnomalyPush(
+    routeId: NonNullable<RunResult['routeId']>,
+    record: NonNullable<RunResult['eventHistory']>[number],
+    buildStage: RunResult['buildStage'],
+    outcome: RunResult['outcome'],
+  ): string {
+    const routeName = ROUTE_NAME_MAP[routeId];
+    if (record.anomalyClass === 'bossEcho') {
+      return `${routeName}收尾预演到手，但还没完全兑现`;
+    }
+
+    if (record.anomalyClass === 'hybrid') {
+      return `${routeName}转折到位，把路往成型那边推了一层`;
+    }
+
+    const roleMap: Record<AnomalyRoleId, { from: string; to: string }> = {
+      direction: {
+        from: this.getRouteLayerLabel(routeId, 'direction'),
+        to: this.getRouteLayerLabel(routeId, 'core'),
+      },
+      core: {
+        from: this.getRouteLayerLabel(routeId, 'core'),
+        to: this.getRouteLayerLabel(routeId, 'transform'),
+      },
+      transform: {
+        from: this.getRouteLayerLabel(routeId, 'transform'),
+        to: this.getRouteLayerLabel(routeId, 'finisher'),
+      },
+      finisher: {
+        from: this.getRouteLayerLabel(routeId, 'transform'),
+        to: this.getRouteLayerLabel(routeId, 'finisher'),
+      },
+    };
+
+    const role = record.anomalyRole ?? 'direction';
+    const lane = roleMap[role];
+    if (lane.from && lane.to) {
+      return `异常转折，把${routeName}从${lane.from}推到${lane.to}`;
+    }
+
+    if (outcome !== 'victory' && (buildStage === 'matured' || buildStage === 'committed')) {
+      return `${routeName}拿到了关键件，但最后一段还是没兑现`;
+    }
+
+    return `${routeName}往前推了一层`;
+  }
+
+  private getRouteLayerLabel(routeId: NonNullable<RunResult['routeId']>, role?: AnomalyRoleId): string {
+    if (!role) {
+      return '';
+    }
+
+    const layerMap: Record<NonNullable<RunResult['routeId']>, Record<AnomalyRoleId, string>> = {
+      crit: {
+        direction: '起势',
+        core: '成型',
+        transform: '起爆',
+        finisher: '收口',
+      },
+      pierce: {
+        direction: '找线',
+        core: '拆线',
+        transform: '打穿',
+        finisher: '收尾',
+      },
+      dash: {
+        direction: '起势',
+        core: '回切',
+        transform: '收割',
+        finisher: '收口',
+      },
+    };
+
+    return layerMap[routeId][role];
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
     return routeId ? ROUTE_NAME_MAP[routeId] : '未成线';
+  }
+
+  private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
+    const genericStageMap: Record<RunResult['buildStage'], string> = {
+      unformed: '未成型',
+      hinted: '有倾向',
+      committed: '开始成型',
+      matured: '已成型',
+    };
+    if (!routeId) {
+      return genericStageMap[buildStage];
+    }
+
+    const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
+      crit: {
+        unformed: '未成型',
+        hinted: '起势',
+        committed: '成型',
+        matured: '起爆',
+      },
+      pierce: {
+        unformed: '未成线',
+        hinted: '找线',
+        committed: '拆线',
+        matured: '打穿',
+      },
+      dash: {
+        unformed: '未成型',
+        hinted: '起势',
+        committed: '回切',
+        matured: '收割',
+      },
+    };
+
+    return stageMap[routeId][buildStage];
   }
 
   private getMeterStateClass(ratio: number): string {

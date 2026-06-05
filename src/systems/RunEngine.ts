@@ -92,6 +92,8 @@ interface RouteAdvanceMeta {
   pickId: string;
 }
 
+type RoutePerkKey = keyof NonNullable<RunState['activeRoutePerks']>;
+
 interface ReplayProfile {
   anomalyVisits: number;
   hybridHits: number;
@@ -222,6 +224,9 @@ export class RunEngine {
       currentEvent: null,
       battle: null,
       result: null,
+      routeMomentText: null,
+      routeMomentRouteId: null,
+      routeMomentSec: 0,
       activeRoutePerks: {},
     };
     this.enterBattle(openingNode);
@@ -333,6 +338,9 @@ export class RunEngine {
     this.state.result = null;
     this.state.queuedLevelUps = 0;
     this.state.levelUpPanelDelaySec = 0;
+    this.state.routeMomentText = null;
+    this.state.routeMomentRouteId = null;
+    this.state.routeMomentSec = 0;
     this.state.stats.hp = this.state.stats.maxHp;
     this.enterBattle(debugNode);
   }
@@ -546,6 +554,7 @@ export class RunEngine {
       eventName: eventDef.name,
       optionId: option.id,
       optionLabel: option.label,
+      nodeIndex: this.state.traversedNodes.length,
       routeId: optionRouteId,
       anomalyClass: eventDef.anomalyClass,
       anomalyRole: option.anomalyRole,
@@ -609,6 +618,14 @@ export class RunEngine {
 
     const battle = this.state.battle;
     const dt = deltaMs / 1000;
+
+    if (this.state.routeMomentSec > 0) {
+      this.state.routeMomentSec = Math.max(0, this.state.routeMomentSec - dt);
+      if (this.state.routeMomentSec === 0) {
+        this.state.routeMomentText = null;
+        this.state.routeMomentRouteId = null;
+      }
+    }
 
     // 升级闪光计时器衰减
     if (this.state.upgradeFlashSec > 0) {
@@ -812,7 +829,83 @@ export class RunEngine {
   }
 
   private getResultRoute(): RouteId | null {
-    return this.state.maturedRoute ?? this.state.committedRoute ?? this.getDominantRoute();
+    return this.state.maturedRoute ?? this.state.committedRoute ?? this.getInferredResultRoute();
+  }
+
+  private getInferredResultRoute(): RouteId | null {
+    const counts = this.getResultRouteEvidenceCounts(
+      this.state.selectedUpgrades
+        .map((id) => this.getAllUpgradeArchetypes().find((upgrade) => upgrade.id === id))
+        .filter((upgrade): upgrade is UpgradeDefinition => upgrade !== undefined),
+      this.state.eventHistory,
+    );
+    const dominantRoute = this.getDominantRoute();
+    const rankedRoutes = (Object.entries(counts) as Array<[RouteId, number]>).sort((left, right) => {
+      if (right[1] !== left[1]) {
+        return right[1] - left[1];
+      }
+      return left[0].localeCompare(right[0]);
+    });
+    const [bestRoute, bestCount] = rankedRoutes[0] ?? [null, 0];
+    if (bestRoute && bestCount > 0) {
+      return bestRoute;
+    }
+    return dominantRoute;
+  }
+
+  private getResultRouteEvidenceCounts(
+    selectedUpgrades: UpgradeDefinition[],
+    eventHistory: PickedEventRecord[],
+  ): Record<RouteId, number> {
+    const counts: Record<RouteId, number> = {
+      crit: 0,
+      pierce: 0,
+      dash: 0,
+    };
+
+    for (const upgrade of selectedUpgrades) {
+      if (upgrade.routeId) {
+        counts[upgrade.routeId] += upgrade.rarity === 'rare' ? 2 : 1;
+      }
+    }
+
+    for (const record of eventHistory) {
+      if (record.routeId) {
+        counts[record.routeId] += record.anomalyClass ? 2 : 1;
+      }
+    }
+
+    return counts;
+  }
+
+  private getResultBuildStage(
+    routeId: RouteId | null,
+    selectedUpgrades: UpgradeDefinition[],
+    eventHistory: PickedEventRecord[],
+  ): RouteBuildStage {
+    if (!routeId) {
+      return this.getBuildStage();
+    }
+
+    if (this.state.maturedRoute === routeId) {
+      return 'matured';
+    }
+    if (this.state.committedRoute === routeId) {
+      return 'committed';
+    }
+
+    const counts = this.getResultRouteEvidenceCounts(selectedUpgrades, eventHistory);
+    const evidence = counts[routeId];
+    if (evidence >= 5) {
+      return 'matured';
+    }
+    if (evidence >= 2) {
+      return 'committed';
+    }
+    if (evidence >= 1) {
+      return 'hinted';
+    }
+    return 'unformed';
   }
 
   private getCurrentBattleIndex(): number {
@@ -2213,11 +2306,14 @@ export class RunEngine {
   }
 
   private finishRun(outcome: RunOutcome, endingKind: RunEndingKind): void {
+    const selectedUpgrades = this.state.selectedUpgrades
+      .map((id) => this.getAllUpgradeArchetypes().find((u) => u.id === id))
+      .filter((u): u is UpgradeDefinition => u !== undefined);
     const routeId = this.getResultRoute();
-    const buildStage = this.getBuildStage();
+    const buildStage = this.getResultBuildStage(routeId, selectedUpgrades, [...this.state.eventHistory]);
     const replayProfile = this.getReplayProfile(routeId);
     const buildLabel = getBuildStageLabel(buildStage);
-    const buildSummary = this.getBuildSummary(routeId, buildStage, replayProfile);
+    const buildSummary = this.getBuildSummary(routeId, buildStage, replayProfile, outcome, [...this.state.eventHistory]);
     const endingLabel = getEndingLabel(endingKind);
     const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
     const finalNodeType = this.state.currentNode?.type ?? null;
@@ -2254,9 +2350,7 @@ export class RunEngine {
       routeTrace,
       eventHistory: [...this.state.eventHistory],
       replayPrompt,
-      selectedUpgrades: this.state.selectedUpgrades
-        .map((id) => this.getAllUpgradeArchetypes().find((u) => u.id === id))
-        .filter((u): u is UpgradeDefinition => u !== undefined),
+      selectedUpgrades,
     };
     this.services.metrics.finishRun({
       outcome,
@@ -2287,14 +2381,120 @@ export class RunEngine {
     return 'unformed';
   }
 
-  private getBuildSummary(routeId: RouteId | null, buildStage: RouteBuildStage, replayProfile: ReplayProfile): string {
+  private getBuildSummary(
+    routeId: RouteId | null,
+    buildStage: RouteBuildStage,
+    replayProfile: ReplayProfile,
+    outcome: RunOutcome,
+    eventHistory: PickedEventRecord[],
+  ): string {
     if (!routeId) {
       return '本局还没有形成清晰打法';
     }
 
     const routeLine = this.getRouteStageNarrative(routeId, buildStage);
+    const chronology = this.getAnomalyChronology(routeId, eventHistory);
     const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
-    return anomalyRecap ? `${routeLine} ${anomalyRecap}` : routeLine;
+    const failureTail =
+      outcome === 'victory'
+        ? ''
+        : buildStage === 'matured' || buildStage === 'committed'
+          ? ' 但最后一段还是没兑现。'
+          : ' 但这把还没真正站稳。';
+    const parts = [routeLine];
+    if (chronology) {
+      parts.push(chronology);
+    }
+    if (anomalyRecap) {
+      parts.push(anomalyRecap);
+    }
+    if (failureTail) {
+      parts.push(failureTail.trim());
+    }
+    return parts.join(' ');
+  }
+
+  private getAnomalyChronology(routeId: RouteId, eventHistory: PickedEventRecord[]): string {
+    const anomalyHistory = eventHistory.filter((record) => record.anomalyClass);
+    if (anomalyHistory.length === 0) {
+      return '';
+    }
+
+    const keyRecords = anomalyHistory.slice(0, 2);
+    return keyRecords
+      .map((record, index) => {
+        const nodeIndex = record.nodeIndex ?? index + 1;
+        const detail = this.getAnomalyChronologyDetail(routeId, record);
+        return `第 ${nodeIndex} 节点：${detail}`;
+      })
+      .join('；');
+  }
+
+  private getAnomalyChronologyDetail(routeId: RouteId, record: PickedEventRecord): string {
+    const activeRouteId = record.routeId ?? routeId;
+    const routeName = ROUTE_NAME_MAP[activeRouteId];
+
+    if (record.anomalyClass === 'bossEcho') {
+      return `${routeName}收尾预演到手，但还没完全兑现`;
+    }
+
+    if (record.anomalyClass === 'hybrid') {
+      return `${routeName}转折到位，把路往成型那边推了一层`;
+    }
+
+    const fromLayer = this.getRouteLayerLabel(activeRouteId, record.anomalyRole);
+    const toLayer = this.getRouteLayerLabel(activeRouteId, this.getNextRouteLayer(record.anomalyRole));
+    if (fromLayer && toLayer) {
+      return `异常转折，把${routeName}从${fromLayer}推到${toLayer}`;
+    }
+
+    if (record.anomalyRole === 'finisher') {
+      return `${routeName}收尾件接上了`;
+    }
+
+    return `${routeName}推进了一层`;
+  }
+
+  private getRouteLayerLabel(routeId: RouteId, role?: AnomalyRoleId): string {
+    if (!role) {
+      return '';
+    }
+
+    const layerMap: Record<RouteId, Record<AnomalyRoleId, string>> = {
+      crit: {
+        direction: '起势',
+        core: '成型',
+        transform: '起爆',
+        finisher: '收口',
+      },
+      pierce: {
+        direction: '找线',
+        core: '拆线',
+        transform: '打穿',
+        finisher: '收尾',
+      },
+      dash: {
+        direction: '起势',
+        core: '回切',
+        transform: '收割',
+        finisher: '收口',
+      },
+    };
+
+    return layerMap[routeId][role];
+  }
+
+  private getNextRouteLayer(role?: AnomalyRoleId): AnomalyRoleId | undefined {
+    switch (role) {
+      case 'direction':
+        return 'core';
+      case 'core':
+        return 'transform';
+      case 'transform':
+        return 'finisher';
+      default:
+        return undefined;
+    }
   }
 
   private buildRouteTrace(): NodeRecord[] {
@@ -2336,9 +2536,9 @@ export class RunEngine {
       case 'crit':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始预热了：先盯住爆点。`;
+            return `${routeName}开始起势了：先盯住爆点。`;
           case 'committed':
-            return `${routeName}开始起爆了：窗口已经接上。`;
+            return `${routeName}开始成型了：窗口已经接上。`;
           case 'matured':
             return `${routeName}已经收口了：现在就是点爆口。`;
           default:
@@ -2347,20 +2547,20 @@ export class RunEngine {
       case 'pierce':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始找线了：先找一条能贯通的路。`;
+            return `${routeName}开始起势了：先找一条能贯通的路。`;
           case 'committed':
             return `${routeName}开始拆线了：前排会往后排让路。`;
           case 'matured':
-            return `${routeName}已经打穿了：一条线会一路穿过去。`;
+            return `${routeName}已经打穿了：一条线会一路穿过去，后排会自己掉。`;
           default:
             return `${routeName}还没站稳。`;
         }
       case 'dash':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始找反打节奏了：先把换位接上。`;
+            return `${routeName}开始起势了：先把换位接上。`;
           case 'committed':
-            return `${routeName}开始成线了：节奏会更顺。`;
+            return `${routeName}开始成型了：节奏会更顺。`;
           case 'matured':
             return `${routeName}已经成型：贴身就能收割。`;
           default:
@@ -2368,6 +2568,56 @@ export class RunEngine {
         }
       default:
         return `${routeName}已成型。`;
+    }
+  }
+
+  private queueRouteMoment(routeId: RouteId, text: string): void {
+    if (!text) {
+      return;
+    }
+
+    this.state.routeMomentRouteId = routeId;
+    this.state.routeMomentText = text;
+    this.state.routeMomentSec = 2;
+  }
+
+  private getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'bridge' | 'payoff'): string {
+    switch (routeId) {
+      case 'crit':
+        switch (stage) {
+          case 'starter':
+            return '暴击线起势了';
+          case 'bridge':
+            return '暴击线开始成型了';
+          case 'payoff':
+            return '暴击线已经能收口了';
+          default:
+            return '暴击线有动静了';
+        }
+      case 'pierce':
+        switch (stage) {
+          case 'starter':
+            return '穿透线起势了';
+          case 'bridge':
+            return '穿透线开始拆线了';
+          case 'payoff':
+            return '穿透线已经打穿前排了';
+          default:
+            return '穿透线有动静了';
+        }
+      case 'dash':
+        switch (stage) {
+          case 'starter':
+            return '穿梭线起势了';
+          case 'bridge':
+            return '穿梭线开始回切了';
+          case 'payoff':
+            return '穿梭线已经能收了';
+          default:
+            return '穿梭线有动静了';
+        }
+      default:
+        return '路线开始推进了';
     }
   }
 
@@ -2482,10 +2732,16 @@ export class RunEngine {
     const routeLine = this.getRouteStageNarrative(routeId, buildStage);
     const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     if (outcome === 'victory') {
+      if (routeId === 'pierce') {
+        return anomalyRecap ? `${routeLine} 已经把前排拆开了，后排也跟着掉了。${anomalyRecap}` : `${routeLine} 已经把前排拆开了，后排也跟着掉了。`;
+      }
       return anomalyRecap ? `${routeLine} ${anomalyRecap}` : routeLine;
     }
 
     if (buildStage === 'matured' || buildStage === 'committed') {
+      if (routeId === 'pierce') {
+        return anomalyRecap ? `${routeLine}，但最后一段线还是被掐断了。${anomalyRecap}` : `${routeLine}，但最后一段线还是被掐断了。`;
+      }
       return anomalyRecap ? `${routeLine}，但这局还是在最后被打断了。${anomalyRecap}` : `${routeLine}，但这局还是在最后被打断了。`;
     }
     return anomalyRecap ? `${routeLine}，这局就先被打断了。${anomalyRecap}` : `${routeLine}，这局就先被打断了。`;
@@ -2727,6 +2983,7 @@ export class RunEngine {
     const count = this.state.routeCounts[routeId];
     if (count === 1) {
       this.services.metrics.markRouteHint(routeId);
+      this.queueRouteMoment(routeId, this.getRouteStageMomentText(routeId, 'starter'));
     }
 
     if (!this.firstRouteHintRecorded) {
@@ -2749,6 +3006,7 @@ export class RunEngine {
         phase: this.state.phase,
         pickId: meta?.pickId ?? `route:${routeId}`,
       });
+      this.queueRouteMoment(routeId, this.getRouteStageMomentText(routeId, 'bridge'));
       this.enqueueTip(this.getRouteStageNarrative(routeId, 'committed'));
     }
 
@@ -2760,6 +3018,7 @@ export class RunEngine {
       this.state.maturedRoute = routeId;
       this.services.metrics.markRouteMatured(routeId);
       this.enqueueAudio('routeMatured');
+      this.queueRouteMoment(routeId, this.getRouteStageMomentText(routeId, 'payoff'));
       this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.matureHint ?? '');
     }
   }
@@ -2767,7 +3026,7 @@ export class RunEngine {
   private activateRoutePerkFromTags(tags?: string[]): void {
     if (!tags || tags.length === 0) return;
 
-    const perkMap: Record<string, keyof NonNullable<typeof this.state.activeRoutePerks>> = {
+    const perkMap: Record<string, RoutePerkKey> = {
       'pierce-seamkeep': 'pierceSeamkeep',
       'pierce-floodgate': 'pierceFloodgate',
       'pierce-riftbloom': 'pierceRiftbloom',
@@ -2781,6 +3040,24 @@ export class RunEngine {
       'crit-crownfire': 'critCrownfire',
     };
 
+    const cueMap: Partial<
+      Record<RoutePerkKey, { routeId: RouteId; text: string; priority: number }>
+    > = {
+      pierceSeamkeep: { routeId: 'pierce', text: '穿透线起势了', priority: 1 },
+      pierceFloodgate: { routeId: 'pierce', text: '穿透线开始拆线了', priority: 2 },
+      pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经打穿前排了', priority: 3 },
+      piercePrism: { routeId: 'pierce', text: '穿透线已经打穿前排了', priority: 4 },
+      dashBrush: { routeId: 'dash', text: '穿梭线起势了', priority: 1 },
+      dashSidestepBank: { routeId: 'dash', text: '穿梭线开始回切了', priority: 2 },
+      dashZeroWindow: { routeId: 'dash', text: '穿梭线开始收口了', priority: 3 },
+      dashAfterimage: { routeId: 'dash', text: '收尾件到手，这把能收了', priority: 4 },
+      critAfterglow: { routeId: 'crit', text: '暴击线起势了', priority: 1 },
+      critEmbershard: { routeId: 'crit', text: '暴击线开始成型了', priority: 2 },
+      critCrownfire: { routeId: 'crit', text: '收尾件到手，这把能收了', priority: 4 },
+    };
+
+    let bestCue: { routeId: RouteId; text: string; priority: number } | null = null;
+
     for (const tag of tags) {
       const perkKey = perkMap[tag];
       if (perkKey) {
@@ -2788,7 +3065,15 @@ export class RunEngine {
           this.state.activeRoutePerks = {};
         }
         this.state.activeRoutePerks[perkKey] = true;
+        const cue = cueMap[perkKey];
+        if (cue && (!bestCue || cue.priority >= bestCue.priority)) {
+          bestCue = cue;
+        }
       }
+    }
+
+    if (bestCue) {
+      this.queueRouteMoment(bestCue.routeId, bestCue.text);
     }
   }
 
@@ -4712,6 +4997,7 @@ export class RunEngine {
           }
           if (battle.critChain >= 2 && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
+            this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
             this.enqueueTip('暴击爆点已经起来了');
           }
         } else if (battle.critChain > 0) {
@@ -6826,6 +7112,7 @@ export class RunEngine {
     this.enqueueAudio('pierceEcho');
     if (!this.routeMomentShown.pierce) {
       this.routeMomentShown.pierce = true;
+      this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
       this.enqueueTip('穿透线已经打通了');
     }
   }

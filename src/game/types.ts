@@ -318,6 +318,7 @@ export interface PickedEventRecord {
   eventName?: string;
   optionId: string;
   optionLabel?: string;
+  nodeIndex?: number;
   routeId?: RouteId;
   anomalyClass?: AnomalyClassId;
   anomalyRole?: AnomalyRoleId;
@@ -688,6 +689,9 @@ export interface RunState {
   currentEvent: EventDefinition | null;
   battle: BattleState | null;
   result: RunResult | null;
+  routeMomentText: string | null;
+  routeMomentRouteId: RouteId | null;
+  routeMomentSec: number;
   // Boss 战结束过渡
   bossEnding?: {
     outcome: 'victory' | 'defeat';
@@ -840,6 +844,8 @@ export interface OverlayHudSnapshot {
   experienceText: string;
   experienceRatio: number;
   routeStatusText: string;
+  routeMomentText?: string;
+  routeMomentRouteId?: RouteId | null;
   routeProgress: Array<{
     routeId: RouteId;
     label: string;

@@ -914,6 +914,7 @@ export class GameScene extends Phaser.Scene {
     const progressSnapshot = this.getRunProgressSnapshot();
     const objectiveSnapshot = this.getObjectiveSnapshot();
     const statusText = this.getHudModeText(state);
+    const routeMomentText = state.routeMomentSec > 0 ? state.routeMomentText ?? undefined : undefined;
 
     return {
       phaseLabel: getPhaseLabel(state.phase),
@@ -924,6 +925,8 @@ export class GameScene extends Phaser.Scene {
       experienceText: `${Math.round(state.experience)} / ${Math.round(state.experienceToNext)}`,
       experienceRatio: state.experience / Math.max(1, state.experienceToNext),
       routeStatusText,
+      routeMomentText,
+      routeMomentRouteId: routeMomentText ? state.routeMomentRouteId ?? undefined : undefined,
       routeProgress: ROUTES.map((route) => ({
         routeId: route.id,
         label: route.name,
@@ -1000,39 +1003,42 @@ export class GameScene extends Phaser.Scene {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
         if (battle.critBurstBonusSec > 0) {
-          return '暴击爆点已经打开：现在就是收口。';
+          return '暴击线已经起爆：现在就是收口。';
         }
         if (battle.critFinisherReady) {
-          return `暴击收口已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
+          return `暴击线收口已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
         }
         if (routeStage === 'matured') {
           return battle.critComboStacks > 0
-            ? `暴击已经收口：破绽 ${battle.critComboStacks}/5，下一次会直接点爆。`
-            : '暴击已经收口：抓住窗口就能点爆。';
+            ? `暴击线已经收口：破绽 ${battle.critComboStacks}/5，下一次会直接点爆。`
+            : '暴击线已经收口：抓住窗口就能点爆。';
         }
         if (routeStage === 'committed') {
-          return '暴击开始起爆：先把爆点打出来。';
+          return '暴击线开始成型：先把爆点打出来。';
         }
         if (routeStage === 'hinted') {
-          return '暴击开始预热：先盯住输出窗。';
+          return '暴击线起势：先盯住输出窗。';
         }
       }
 
       if (liveFocusRoute === 'pierce') {
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
-            return `穿透贯通已经连起来了：第 ${battle.pierceFlowCount} 段正在往后走。`;
+            return `穿透线已经打穿：第 ${battle.pierceFlowCount} 段正在往后走。`;
+          }
+          if (battle.pierceFlowCount >= 2) {
+            return `穿透线开始拆线：第 ${battle.pierceFlowCount} 段已经接上。`;
           }
           return '穿透线已经打开：后排正在被拆。';
         }
         if (routeStage === 'matured') {
-          return '穿透已经打穿：一条线会一路穿过去。';
+          return '穿透线已经打穿：一条线会一路穿过去。';
         }
         if (routeStage === 'committed') {
-          return '穿透开始拆线：前排会给后排让路。';
+          return '穿透线开始拆线：前排会给后排让路。';
         }
         if (routeStage === 'hinted') {
-          return '穿透开始找线：先找能贯通的路。';
+          return '穿透线起势：先找能贯通的路。';
         }
       }
 
@@ -1315,214 +1321,39 @@ export class GameScene extends Phaser.Scene {
     switch (routeId) {
       case 'crit':
         if (stage === 'matured') {
-          return '暴击已收口：现在就是点爆口。';
+          return '暴击线收口：现在就是点爆口。';
         }
         if (stage === 'committed') {
-          return '暴击开始起爆：窗口正在接上。';
+          return '暴击线成型：窗口正在接上。';
         }
         if (stage === 'hinted') {
-          return '暴击开始预热：先盯住爆点。';
+          return '暴击线起势：先盯住爆点。';
         }
         return '暴击还没站稳。';
       case 'pierce':
         if (stage === 'matured') {
-          return '穿透已打穿：一条线会一路穿过去。';
+          return '穿透线打穿：一条线会一路穿过去。';
         }
         if (stage === 'committed') {
-          return '穿透开始拆线：前排会往后排让路。';
+          return '穿透线拆线：前排会往后排让路。';
         }
         if (stage === 'hinted') {
-          return '穿透开始找线：先找一条能贯通的路。';
+          return '穿透线起势：先找一条能贯通的路。';
         }
         return '穿透还没站稳。';
       case 'dash':
         if (stage === 'matured') {
-          return '穿梭已成型：贴身就能收割。';
+          return '穿梭线成型：贴身就能收割。';
         }
         if (stage === 'committed') {
-          return '穿梭开始成线：节奏会更顺。';
+          return '穿梭线回切：节奏会更顺。';
         }
         if (stage === 'hinted') {
-          return '穿梭开始找反打节奏：先把换位接上。';
+          return '穿梭线起势：先把换位接上。';
         }
         return '穿梭还没站稳。';
       default:
         return '选择强化';
-    }
-  }
-
-  private renderCritBurstFocus(
-    battle: BattleState,
-    bodyX: number,
-    bodyY: number,
-    aimDirX: number,
-    aimDirY: number,
-    aimOrthoX: number,
-    aimOrthoY: number,
-    liveFocusColor: number,
-    critAuraRatio: number,
-    critBurstRatio: number,
-    critChainRatio: number,
-  ): void {
-    if (critAuraRatio <= 0 && critBurstRatio <= 0 && !battle.critFinisherReady && critChainRatio <= 0) {
-      return;
-    }
-
-    const warmColor = this.mixColor(0xffd06c, liveFocusColor, 0.18);
-    const burstColor = this.mixColor(0xff9f58, 0xfff0bf, 0.2);
-    const finisherColor = this.mixColor(0xfff0a4, 0xffd46f, 0.12);
-    const aimAngle = Math.atan2(aimDirY, aimDirX);
-    const spin = battle.elapsedSec * (2.8 + critBurstRatio * 1.2);
-
-    if (critAuraRatio > 0) {
-      this.graphics.lineStyle(1.8 + critAuraRatio * 0.8, warmColor, 0.14 + critAuraRatio * 0.16);
-      this.graphics.strokeCircle(bodyX, bodyY, 24 + critAuraRatio * 14);
-      this.graphics.lineStyle(1.15, warmColor, 0.09 + critAuraRatio * 0.08);
-      for (let index = 0; index < 4; index += 1) {
-        const angle = spin + (Math.PI / 2) * index;
-        const inner = 24 + critAuraRatio * 8;
-        const outer = 35 + critAuraRatio * 12;
-        this.graphics.lineBetween(
-          bodyX + Math.cos(angle) * inner,
-          bodyY + Math.sin(angle) * inner,
-          bodyX + Math.cos(angle) * outer,
-          bodyY + Math.sin(angle) * outer,
-        );
-      }
-    }
-
-    if (critBurstRatio > 0) {
-      const burstRadius = 30 + critBurstRatio * 16;
-      this.graphics.lineStyle(2.6 + critBurstRatio * 0.8, burstColor, 0.18 + critBurstRatio * 0.22);
-      this.graphics.strokeCircle(bodyX, bodyY, burstRadius);
-      this.graphics.lineStyle(1.2 + critBurstRatio * 0.4, burstColor, 0.12 + critBurstRatio * 0.18);
-      const spikeCount = battle.critFinisherReady ? 6 : 4;
-      for (let index = 0; index < spikeCount; index += 1) {
-        const angle = spin * 1.4 + (Math.PI * 2 * index) / spikeCount;
-        const inner = burstRadius - 5;
-        const outer = burstRadius + 12 + critBurstRatio * 6;
-        this.graphics.lineBetween(
-          bodyX + Math.cos(angle) * inner,
-          bodyY + Math.sin(angle) * inner,
-          bodyX + Math.cos(angle) * outer,
-          bodyY + Math.sin(angle) * outer,
-        );
-      }
-      this.graphics.lineStyle(1.5, burstColor, 0.14 + critBurstRatio * 0.16);
-      this.graphics.lineBetween(
-        bodyX + aimDirX * 10,
-        bodyY + aimDirY * 10,
-        bodyX + aimDirX * (38 + critBurstRatio * 18) + aimOrthoX * (5 + critChainRatio * 2),
-        bodyY + aimDirY * (38 + critBurstRatio * 18) + aimOrthoY * (5 + critChainRatio * 2),
-      );
-      this.graphics.lineBetween(
-        bodyX + aimDirX * 10,
-        bodyY + aimDirY * 10,
-        bodyX + aimDirX * (38 + critBurstRatio * 18) - aimOrthoX * (5 + critChainRatio * 2),
-        bodyY + aimDirY * (38 + critBurstRatio * 18) - aimOrthoY * (5 + critChainRatio * 2),
-      );
-    }
-
-    if (critChainRatio > 0) {
-      const chainColor = this.mixColor(0xffe6a9, finisherColor, 0.18);
-      const chainCount = Math.min(3, Math.max(1, battle.critBurstChainCount));
-      this.graphics.lineStyle(1.4, chainColor, 0.14 + critChainRatio * 0.14);
-      for (let index = 0; index < chainCount; index += 1) {
-        const chainReach = 30 + index * 12 + critChainRatio * 10;
-        this.renderDirectionalChevron(
-          bodyX + aimDirX * chainReach,
-          bodyY + aimDirY * chainReach,
-          aimAngle,
-          8 + index * 2,
-          8 + critChainRatio * 4,
-          3 + critChainRatio * 1.5,
-          chainColor,
-          0.12 + critChainRatio * 0.08,
-          0.01 + critChainRatio * 0.02,
-        );
-      }
-    }
-
-    if (battle.critFinisherReady) {
-      this.graphics.lineStyle(2.2, finisherColor, 0.2 + critAuraRatio * 0.18);
-      this.graphics.strokeCircle(bodyX, bodyY, 36 + critAuraRatio * 12);
-      this.renderDirectionalChevron(bodyX, bodyY, aimAngle, 28 + critAuraRatio * 6, 16 + critAuraRatio * 4, 5 + critAuraRatio * 2, finisherColor, 0.18 + critAuraRatio * 0.08, 0.02 + critAuraRatio * 0.03);
-    }
-  }
-
-  private renderPierceFlowFocus(
-    battle: BattleState,
-    bodyX: number,
-    bodyY: number,
-    aimDirX: number,
-    aimDirY: number,
-    aimOrthoX: number,
-    aimOrthoY: number,
-    liveFocusColor: number,
-    pierceFlowRatio: number,
-    camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
-  ): void {
-    if (pierceFlowRatio <= 0 && battle.pierceFlowCount <= 0) {
-      return;
-    }
-
-    const laneColor = this.mixColor(0x8fd8ff, liveFocusColor, 0.24);
-    const laneCoreColor = this.mixColor(0xdff6ff, laneColor, 0.18);
-    const laneReach = Math.max(camera.width, camera.height) * (0.78 + pierceFlowRatio * 0.08);
-    const laneStartX = bodyX - aimDirX * 24;
-    const laneStartY = bodyY - aimDirY * 24;
-    const laneEndX = bodyX + aimDirX * laneReach;
-    const laneEndY = bodyY + aimDirY * laneReach;
-    const laneWidth = 2.1 + pierceFlowRatio * 1.2;
-
-    this.graphics.lineStyle(laneWidth, laneColor, 0.08 + pierceFlowRatio * 0.16);
-    this.graphics.lineBetween(laneStartX, laneStartY, laneEndX, laneEndY);
-
-    this.graphics.lineStyle(1.25 + pierceFlowRatio * 0.4, laneCoreColor, 0.08 + pierceFlowRatio * 0.1);
-    const tickCount = Math.min(6, 2 + battle.pierceFlowCount);
-    for (let index = 1; index <= tickCount; index += 1) {
-      const t = index / (tickCount + 1);
-      const tickX = laneStartX + (laneEndX - laneStartX) * t;
-      const tickY = laneStartY + (laneEndY - laneStartY) * t;
-      const tickHalf = 8 + pierceFlowRatio * 6 + battle.pierceFlowCount * 1.2;
-      this.graphics.lineBetween(
-        tickX - aimOrthoX * tickHalf,
-        tickY - aimOrthoY * tickHalf,
-        tickX + aimOrthoX * tickHalf,
-        tickY + aimOrthoY * tickHalf,
-      );
-    }
-
-    this.graphics.lineStyle(1.8, laneCoreColor, 0.12 + pierceFlowRatio * 0.12);
-    this.graphics.strokeCircle(bodyX, bodyY, 24 + pierceFlowRatio * 12 + Math.min(8, battle.pierceFlowCount * 1.4));
-
-    if (battle.pierceFlowCount >= 3) {
-      const railGap = 10 + pierceFlowRatio * 4;
-      this.graphics.lineStyle(1.4, laneColor, 0.08 + pierceFlowRatio * 0.14);
-      this.graphics.lineBetween(
-        laneStartX + aimOrthoX * railGap,
-        laneStartY + aimOrthoY * railGap,
-        laneEndX + aimOrthoX * railGap,
-        laneEndY + aimOrthoY * railGap,
-      );
-      this.graphics.lineBetween(
-        laneStartX - aimOrthoX * railGap,
-        laneStartY - aimOrthoY * railGap,
-        laneEndX - aimOrthoX * railGap,
-        laneEndY - aimOrthoY * railGap,
-      );
-      this.graphics.lineStyle(1.1, laneCoreColor, 0.1 + pierceFlowRatio * 0.12);
-      this.renderDirectionalChevron(
-        bodyX + aimDirX * (34 + battle.pierceFlowCount * 4),
-        bodyY + aimDirY * (34 + battle.pierceFlowCount * 4),
-        Math.atan2(aimDirY, aimDirX),
-        12 + pierceFlowRatio * 4,
-        12 + pierceFlowRatio * 4,
-        4 + pierceFlowRatio * 1.5,
-        laneCoreColor,
-        0.14 + pierceFlowRatio * 0.08,
-        0.015 + pierceFlowRatio * 0.015,
-      );
     }
   }
 
@@ -2169,21 +2000,12 @@ export class GameScene extends Phaser.Scene {
     // Boss fireline texture overlay disabled - it was blocking the gameplay view
     // Only programmatic indicators (safe zones, danger indicators) are shown now
 
-    const tempoRatio = Math.min(1, battle.tempoPulseSec / 0.3);
     const dominantRoute = this.engine.getDominantRoute();
     const engineState = this.engine.getState();
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     const flowChainRatio =
       battle.killFlowSec > 0
         ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
-        : 0;
-    const pickupFlowRatio =
-      battle.pickupFlowSec > 0
-        ? Math.min(
-            1,
-            battle.pickupFlowSec /
-              (battle.pickupFlowCount >= 4 ? 0.88 : battle.pickupFlowCount === 3 ? 0.8 : battle.pickupFlowCount === 2 ? 0.72 : 0.62),
-          )
         : 0;
     const pierceFlowRatio =
       battle.pierceFlowSec > 0
@@ -2193,11 +2015,10 @@ export class GameScene extends Phaser.Scene {
       liveFocusRoute === 'crit'
         ? this.mixColor(accentColor, 0xffd882, 0.24)
         : liveFocusRoute === 'pierce'
-          ? this.mixColor(accentColor, 0xdff6ff, 0.22)
-          : liveFocusRoute === 'dash'
-            ? this.mixColor(accentColor, 0xbfffea, 0.22)
-            : this.mixColor(accentColor, 0xfff2c3, 0.18);
-    const pickupGuideColor = this.mixColor(0x9df7c5, liveFocusRoute === 'dash' ? 0xdffff6 : 0xffffff, 0.18);
+            ? this.mixColor(accentColor, 0xdff6ff, 0.22)
+            : liveFocusRoute === 'dash'
+              ? this.mixColor(accentColor, 0xbfffea, 0.22)
+              : this.mixColor(accentColor, 0xfff2c3, 0.18);
     const pierceSignatureRatio = pierceFlowRatio;
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
     for (const orb of battle.experienceOrbs) {
@@ -3210,10 +3031,6 @@ export class GameScene extends Phaser.Scene {
     const moveBoostRatio = battle.playerMoveBoostSec > 0 ? Math.min(1, battle.playerMoveBoostSec / 0.18) : 0;
     const turnBurstRatio = battle.playerTurnBurstSec > 0 ? Math.min(1, battle.playerTurnBurstSec / 0.14) : 0;
     const nearMissRatio = battle.playerNearMissSec > 0 ? Math.min(1, battle.playerNearMissSec / 0.14) : 0;
-    const killFlowRatio =
-      battle.killFlowSec > 0
-        ? Math.min(1, battle.killFlowSec / (battle.killFlowCount >= 3 ? 1 : battle.killFlowCount >= 2 ? 0.86 : 0.72))
-        : 0;
     const damageFlashRatio = battle.playerDamageFlashSec > 0 ? Math.min(1, battle.playerDamageFlashSec / 0.34) : 0;
     const hpRatio = engineState.stats.hp / Math.max(1, engineState.stats.maxHp);
     const lowHpRatio = Phaser.Math.Clamp((0.46 - hpRatio) / 0.46, 0, 1);
@@ -3239,34 +3056,11 @@ export class GameScene extends Phaser.Scene {
     const hurtDirY = knockbackSpeed > 0.01 ? battle.playerKnockbackVY / knockbackSpeed : -aimDirY;
     const hurtOrthoX = -hurtDirY;
     const hurtOrthoY = hurtDirX;
-    const pickupGuideEnemy =
-      battle.pickupLeadEnemyId === null
-        ? null
-        : battle.enemies.find((enemy) => enemy.id === battle.pickupLeadEnemyId && enemy.hp > 0) ?? null;
-    const pickupGuideDirX = pickupGuideEnemy ? (pickupGuideEnemy.x - battle.playerX) / Math.max(1, Math.hypot(pickupGuideEnemy.x - battle.playerX, pickupGuideEnemy.y - battle.playerY)) : moveMagnitude > 0.08 ? moveDirX : aimDirX;
-    const pickupGuideDirY = pickupGuideEnemy ? (pickupGuideEnemy.y - battle.playerY) / Math.max(1, Math.hypot(pickupGuideEnemy.x - battle.playerX, pickupGuideEnemy.y - battle.playerY)) : moveMagnitude > 0.08 ? moveDirY : aimDirY;
-    const pickupGuideOrthoX = -pickupGuideDirY;
-    const pickupGuideOrthoY = pickupGuideDirX;
     const recoilOffset = shotRecoilRatio * battle.playerShotRecoilStrength;
     const bodyX = playerScreen.x - aimDirX * recoilOffset;
     const bodyY = playerScreen.y - aimDirY * recoilOffset;
     const muzzleX = bodyX + aimDirX * (16 + shotFlashRatio * 10);
     const muzzleY = bodyY + aimDirY * (16 + shotFlashRatio * 10);
-    const combatReadRatio = Math.max(
-      tempoRatio,
-      shotFlashRatio,
-      critAuraRatio,
-      critBurstRatio,
-      dashDriveRatio,
-      nearMissRatio,
-      killFlowRatio,
-      damageFlashRatio * 0.9,
-      0,
-      moveBoostRatio,
-      turnBurstRatio,
-      velocityRatio * 0.8,
-      liveFocusRoute === 'pierce' ? pierceFlowRatio : 0,
-    );
     const liveFocusColor =
       liveFocusRoute === 'crit'
         ? this.mixColor(accentColor, 0xffd882, 0.34)
@@ -3282,8 +3076,6 @@ export class GameScene extends Phaser.Scene {
 
     this.graphics.fillStyle(0x000000, 0.22);
     this.graphics.fillEllipse(bodyX, bodyY + 18, 34, 14);
-    this.graphics.fillStyle(liveFocusColor, 0.015 + combatReadRatio * 0.025);
-    this.graphics.fillEllipse(bodyX, bodyY, 30 + combatReadRatio * 5, 30 + combatReadRatio * 5);
     if (impactRatio > 0) {
       this.graphics.fillStyle(0xff6964, 0.12 + impactRatio * 0.16);
       this.graphics.fillCircle(playerScreen.x, playerScreen.y, 66 + impactRatio * 10);
@@ -3375,93 +3167,6 @@ export class GameScene extends Phaser.Scene {
         0.1 + damageFlashRatio * 0.16,
         0,
       );
-    }
-    if (tempoRatio > 0) {
-      const surgeDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
-      const surgeDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
-      const surgeOrthoX = -surgeDirY;
-      const surgeOrthoY = surgeDirX;
-      const surgeColor = this.mixColor(liveFocusColor, 0xffffff, 0.18);
-      for (let streak = 0; streak < 1; streak += 1) {
-        const offset = 18 + streak * 12 + tempoRatio * 10;
-        const width = 8 + streak * 2;
-        this.graphics.fillStyle(surgeColor, 0.025 + tempoRatio * 0.035);
-        this.graphics.fillTriangle(
-          bodyX - surgeDirX * (offset + 12) + surgeOrthoX * width,
-          bodyY - surgeDirY * (offset + 12) + surgeOrthoY * width,
-          bodyX - surgeDirX * offset,
-          bodyY - surgeDirY * offset,
-          bodyX - surgeDirX * (offset + 12) - surgeOrthoX * width,
-          bodyY - surgeDirY * (offset + 12) - surgeOrthoY * width,
-        );
-      }
-    }
-    if (killFlowRatio > 0) {
-      const flowDirX = moveMagnitude > 0.08 ? moveDirX : aimDirX;
-      const flowDirY = moveMagnitude > 0.08 ? moveDirY : aimDirY;
-      const flowOrthoX = -flowDirY;
-      const flowOrthoY = flowDirX;
-      const flowColor = this.mixColor(liveFocusColor, 0xfff2c3, 0.26 + killFlowRatio * 0.16);
-      const chainCount = Math.max(1, battle.killFlowCount);
-      for (let streak = 0; streak < Math.min(2, chainCount + 1); streak += 1) {
-        const offset = 14 + streak * 10 + killFlowRatio * 8;
-        const width = 8 + streak * 2 + killFlowRatio * 4;
-        this.graphics.fillStyle(flowColor, 0.025 + killFlowRatio * 0.035 - streak * 0.006);
-        this.graphics.fillTriangle(
-          bodyX - flowDirX * (offset + 14) + flowOrthoX * width,
-          bodyY - flowDirY * (offset + 14) + flowOrthoY * width,
-          bodyX - flowDirX * offset,
-          bodyY - flowDirY * offset,
-          bodyX - flowDirX * (offset + 14) - flowOrthoX * width,
-          bodyY - flowDirY * (offset + 14) - flowOrthoY * width,
-        );
-      }
-    }
-    if (pickupFlowRatio > 0) {
-      for (let streak = 0; streak < Math.min(2, Math.max(1, battle.pickupFlowCount)); streak += 1) {
-        const offset = 10 + streak * 9 + pickupFlowRatio * 7;
-        const width = 6 + streak * 2 + pickupFlowRatio * 3;
-        this.graphics.fillStyle(pickupGuideColor, 0.018 + pickupFlowRatio * 0.03 - streak * 0.006);
-        this.graphics.fillTriangle(
-          bodyX + pickupGuideDirX * (offset + 16) + pickupGuideOrthoX * width,
-          bodyY + pickupGuideDirY * (offset + 16) + pickupGuideOrthoY * width,
-          bodyX + pickupGuideDirX * offset,
-          bodyY + pickupGuideDirY * offset,
-          bodyX + pickupGuideDirX * (offset + 16) - pickupGuideOrthoX * width,
-          bodyY + pickupGuideDirY * (offset + 16) - pickupGuideOrthoY * width,
-        );
-      }
-
-      const pipCount = Math.min(2, Math.max(1, battle.pickupFlowCount));
-      for (let index = 0; index < pipCount; index += 1) {
-        const angle = battle.elapsedSec * 6.4 + index * 0.5 - 0.55;
-        const radius = 22 + index * 5 + pickupFlowRatio * 6;
-        this.graphics.fillStyle(pickupGuideColor, 0.035 + pickupFlowRatio * 0.055 - index * 0.012);
-        this.graphics.fillCircle(
-          bodyX + pickupGuideDirX * 8 + pickupGuideOrthoX * Math.sin(angle) * 10,
-          bodyY + pickupGuideDirY * 8 + pickupGuideOrthoY * Math.cos(angle) * (radius * 0.18),
-          2.6 + pickupFlowRatio * 1.8 - index * 0.2,
-        );
-      }
-
-      if (
-        pickupGuideEnemy &&
-        this.isVisibleInCamera(camera, pickupGuideEnemy.x, pickupGuideEnemy.y, pickupGuideEnemy.radius + 18)
-      ) {
-        const guideTargetScreen = this.worldToScreen(camera, pickupGuideEnemy.x, pickupGuideEnemy.y);
-        this.graphics.fillStyle(pickupGuideColor, 0.06 + pickupFlowRatio * 0.08);
-        this.graphics.fillCircle(
-          guideTargetScreen.x,
-          guideTargetScreen.y,
-          pickupGuideEnemy.radius + 9 + pickupFlowRatio * 4,
-        );
-        this.graphics.lineStyle(1.2, pickupGuideColor, 0.12 + pickupFlowRatio * 0.16);
-        this.graphics.strokeCircle(
-          guideTargetScreen.x,
-          guideTargetScreen.y,
-          pickupGuideEnemy.radius + 10 + pickupFlowRatio * 5,
-        );
-      }
     }
     if (velocityRatio > 0.08 || moveBoostRatio > 0.08) {
       const trailDirX = moveMagnitude > 0.08 ? moveDirX : -aimDirX;
@@ -3683,34 +3388,6 @@ export class GameScene extends Phaser.Scene {
       impactRatio > 0 ? this.mixColor(0xf8fbff, 0xff8c86, impactRatio * 0.8) : battle.invulnerableSec > 0 ? 0x9cff97 : 0xf8fbff,
       1,
     );
-    if (liveFocusRoute === 'crit') {
-      this.renderCritBurstFocus(
-        battle,
-        bodyX,
-        bodyY,
-        aimDirX,
-        aimDirY,
-        aimOrthoX,
-        aimOrthoY,
-        liveFocusColor,
-        critAuraRatio,
-        critBurstRatio,
-        critChainRatio,
-      );
-    } else if (liveFocusRoute === 'pierce') {
-      this.renderPierceFlowFocus(
-        battle,
-        bodyX,
-        bodyY,
-        aimDirX,
-        aimDirY,
-        aimOrthoX,
-        aimOrthoY,
-        liveFocusColor,
-        pierceFlowRatio,
-        camera,
-      );
-    }
     if (shotFlashRatio > 0) {
       // Spawn shell casing on new shot
       if (battle.playerShotFlashSec > this.lastShotFlashSec) {
@@ -3845,10 +3522,6 @@ export class GameScene extends Phaser.Scene {
         );
       }
 
-      if (killFlowRatio > 0.08) {
-        this.graphics.lineStyle(1.4, this.mixColor(flashColor, 0xffffff, 0.18), 0.08 + killFlowRatio * 0.18);
-        this.graphics.strokeCircle(muzzleX, muzzleY, 10 + killFlowRatio * 10 + shotFlashRatio * 6);
-      }
     }
 
     // 不再在玩家周围生成常驻移动圆环，避免与敌方预警线混淆。
@@ -4211,6 +3884,7 @@ export class GameScene extends Phaser.Scene {
       const chaseDirY = chaseDy / chaseDistance;
       const chaseOrthoX = -chaseDirY;
       const chaseOrthoY = chaseDirX;
+      const chaseAngle = Math.atan2(chaseDirY, chaseDirX);
       const breachLength = Math.max(
         28,
         Math.min(chaseDistance - 12, elite.radius + 86 + displayedRecovery * 42 + battle.eliteCrackEscortCount * 4),
@@ -4267,18 +3941,6 @@ export class GameScene extends Phaser.Scene {
               ? this.mixColor(0x9bddff, 0xffffff, 0.18)
               : this.mixColor(crackColor, 0xffffff, 0.16);
         const focusAlpha = 0.08 + eliteCrackRatio * 0.22;
-        const chaseAngle = Math.atan2(eliteScreen.y - playerScreen.y, eliteScreen.x - playerScreen.x);
-        this.renderDirectionalChevron(
-          playerScreen.x,
-          playerScreen.y,
-          chaseAngle,
-          42 + eliteCrackRatio * 10,
-          20 + eliteCrackRatio * 14,
-          8 + eliteCrackRatio * 4,
-          focusColor,
-          focusAlpha,
-          0.03 + eliteCrackRatio * 0.06,
-        );
 
         if (liveFocusRoute === 'crit') {
           const bracketReach = elite.radius + 18 + eliteCrackRatio * 10;
