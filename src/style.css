@@ -1209,6 +1209,12 @@ button:hover {
   color: rgba(239, 247, 252, 0.96);
 }
 
+.choice-effect-tag.is-route-turn {
+  border-color: rgba(255, 213, 109, 0.28);
+  background: rgba(255, 213, 109, 0.12);
+  color: rgba(255, 232, 171, 0.96);
+}
+
 .choice-prompt {
   color: rgba(236, 245, 252, 0.64);
   font-size: 11px;
