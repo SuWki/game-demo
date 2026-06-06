@@ -931,6 +931,7 @@ export class OverlayController {
   }
 
   private renderAnomalyChoiceContext(eventDef: EventDefinition, progress: PanelProgress): string {
+    const roleSummary = this.getAnomalyRoleSummary(eventDef);
     return `
       <aside class="choice-context choice-context-anomaly" aria-label="异常风险摘要">
         <span class="anomaly-warning-label">异常转折</span>
@@ -941,6 +942,7 @@ export class OverlayController {
           <span><small>当前进度</small><b>${progress.progressLabel}</b></span>
         </div>
         <div class="anomaly-warning-strip">这一下会改掉这局走法，代价也不轻。</div>
+        ${roleSummary ? `<div class="choice-strip-event-meta">${roleSummary}</div>` : ''}
       </aside>
     `;
   }
@@ -1617,6 +1619,18 @@ export class OverlayController {
     return tags.slice(0, 2);
   }
 
+  private getAnomalyRoleSummary(eventDef: EventDefinition): string {
+    if (eventDef.contentKind !== 'anomaly') {
+      return '';
+    }
+
+    const order: AnomalyRoleId[] = ['direction', 'core', 'transform', 'finisher'];
+    return order
+      .filter((role) => eventDef.options.some((option) => option.anomalyRole === role))
+      .map((role) => `<span class="choice-effect-tag is-anomaly-role">${this.getAnomalyRoleLabel(role)}</span>`)
+      .join('');
+  }
+
   private getAnomalyRoleCounts(records: RunResult['eventHistory']): Record<AnomalyRoleId, number> {
     const counts: Record<AnomalyRoleId, number> = {
       direction: 0,
@@ -1794,7 +1808,18 @@ export class OverlayController {
     const role = record.anomalyRole ?? 'direction';
     const lane = roleMap[role];
     if (lane.from && lane.to) {
-      return `把${routeName}从${lane.from}推到${lane.to}`;
+      switch (role) {
+        case 'direction':
+          return `先把${routeName}方向钉住，从${lane.from}推到${lane.to}`;
+        case 'core':
+          return `把${routeName}主轴拧紧，从${lane.from}推到${lane.to}`;
+        case 'transform':
+          return `直接把${routeName}改成${lane.to}打法`;
+        case 'finisher':
+          return `把${routeName}的${lane.to}手接上了`;
+        default:
+          return `把${routeName}从${lane.from}推到${lane.to}`;
+      }
     }
 
     if (outcome !== 'victory') {

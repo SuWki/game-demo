@@ -509,6 +509,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'pierce-reroute-window-hold',
         routeId: 'pierce',
         label: '先稳穿透火力',
+        gameplayLabel: '核心件',
+        gainLabel: '拆线火力和后排压制更稳',
+        costLabel: '不直接切成别的路线',
+        anomalyRole: 'core',
         description: '不转向，先把穿透火力和拆线节奏稳住。',
         effects: [
           {
@@ -555,7 +559,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-reroute-window-hold',
         label: '先稳当前机动',
-        description: '不转向，先补移速、恢复和耐久',
+        gameplayLabel: '方向件',
+        gainLabel: '先把机动底子垫稳',
+        costLabel: '不直接切成别的路线',
+        anomalyRole: 'direction',
+        description: '不转向，先补移速、恢复和耐久。',
         effects: [
           {
             type: 'stats',

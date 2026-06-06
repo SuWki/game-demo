@@ -1008,6 +1008,9 @@ export class GameScene extends Phaser.Scene {
         if (battle.critFinisherReady) {
           return `暴击线收口已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
         }
+        if (battle.critChain >= 1) {
+          return `暴击线正在预热：${battle.critComboStacks}/5 破绽已经挂上。`;
+        }
         if (routeStage === 'matured') {
           return battle.critComboStacks > 0
             ? `暴击线已经收口：破绽 ${battle.critComboStacks}/5，下一次会直接点爆。`
@@ -1030,6 +1033,9 @@ export class GameScene extends Phaser.Scene {
             return `穿透线开始拆线：第 ${battle.pierceFlowCount} 段已经接上。`;
           }
           return '穿透线已经打开：后排正在被拆。';
+        }
+        if (battle.enemies.some((enemy) => (enemy.pierceMarkStacks ?? 0) >= 1)) {
+          return '穿透线正在找线：裂纹已经挂上，等下一段接进来。';
         }
         if (routeStage === 'matured') {
           return '穿透线已经打穿：一条线会一路穿过去。';

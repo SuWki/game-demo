@@ -1,4 +1,4 @@
-Original prompt: è¯·å…ˆè¯»å– `docs/` ç›®å½•ä¸‹çš„å…¨éƒ¨é¡¹ç›®æ–‡æ¡£å’Œæœ€è¿‘å¼€å‘è®°å½•ï¼Œå†å¼€å§‹å¤„ç†ï¼›å¦‚æœæ–‡æ¡£ä¹‹é—´å­˜åœ¨é˜¶æ®µå£å¾„å·®å¼‚ï¼Œè¯·ä»¥æœ€æ–°é˜¶æ®µæ–‡æ¡£å’Œæœ€è¿‘å¼€å‘è®°å½•ä¸ºå‡†ï¼Œå¹¶åœ¨è¾“å‡ºä¸­è¯´æ˜ä½ çš„å–èˆä¾æ®ã€‚
+ï»¿Original prompt: è¯·å…ˆè¯»å– `docs/` ç›®å½•ä¸‹çš„å…¨éƒ¨é¡¹ç›®æ–‡æ¡£å’Œæœ€è¿‘å¼€å‘è®°å½•ï¼Œå†å¼€å§‹å¤„ç†ï¼›å¦‚æœæ–‡æ¡£ä¹‹é—´å­˜åœ¨é˜¶æ®µå£å¾„å·®å¼‚ï¼Œè¯·ä»¥æœ€æ–°é˜¶æ®µæ–‡æ¡£å’Œæœ€è¿‘å¼€å‘è®°å½•ä¸ºå‡†ï¼Œå¹¶åœ¨è¾“å‡ºä¸­è¯´æ˜ä½ çš„å–èˆä¾æ®ã€‚
 
 2026-04-01
 - å·²é‡æ–°è¯»å– `doc/docs` å…¨éƒ¨æ–‡æ¡£ï¼Œå¹¶ä»¥ `PROJECT_STATUS.md` ä¸æœ€æ–° `DEV_ISSUE_LOG.md` ä½œä¸ºæœ¬è½®å£å¾„ä¼˜å…ˆçº§ã€‚
@@ -138,6 +138,17 @@ TODO
 - `doc/docs/DEV_ISSUE_LOG.md`
 - `doc/docs/NODES_AND_TEMPLATES.md`
 - `doc/docs/ROUTES_SPEC.md`
+
+2026-06-05
+- æœ¬è½®å¼€å§‹æŠŠè·¯çº¿æ¨è¿›æç¤ºæ”¶å£åˆ° HUD å·¦ä¾§è·¯çº¿ chip é™„è¿‘ï¼ŒçŸ­æç¤ºç”±è·¯çº¿é˜¶æ®µæ¨è¿›å’Œå…³é”®è·¯çº¿ç‰Œæ¿€æ´»å…±åŒé©±åŠ¨ã€‚
+- ç»“æœé¡µç°åœ¨ä¼šå¸¦ä¸ŠæŒ‰èŠ‚ç‚¹ç¼–å·æ’åˆ—çš„å¼‚å¸¸æ¨è¿›å¤ç›˜ï¼Œé‡ç‚¹è®© crit / pierce èƒ½ç›´æ¥çœ‹å‡ºâ€œç¬¬å‡ èŠ‚ç‚¹æŠŠè·¯æ¨åˆ°äº†å“ªä¸€å±‚â€ã€‚
+- è¿˜åœ¨åšæµè§ˆå™¨éªŒè¯ï¼Œæ¥ä¸‹æ¥è¦ç¡®è®¤æç¤ºä¸åµã€pierce æˆ˜æ–—è¯æ®è¶³å¤Ÿæ¸…æ¥šã€ç»“æœé¡µä¸å†åªç»™æ¦‚å¿µåŒ–æè¿°ã€‚
+
+2026-06-05
+- ç»§ç»­æ”¶å£ç©å®¶å¯è§æ–‡æœ¬ï¼šç»“æœé¡µä¸»æ–‡æ¡ˆæ”¹æˆä¸‰æ®µå¼å¤ç›˜ï¼Œå»æ‰ä¸»å±é‡å¤çš„ replay promptï¼Œé¿å… summary / route / build äº’ç›¸å¤è¯»ã€‚
+- æŠŠæ˜æ˜¾çš„ç³»ç»Ÿå‘³ã€æŠ€æœ¯å‘³å’ŒæŒ‡å¯¼å‘³æ–‡æ¡ˆä¸€èµ·æ¢æ‰äº†ï¼ŒåŒ…æ‹¬èœå•å‰¯æ ‡é¢˜ã€å¼‚å¸¸é¢æ¿æ ‡ç­¾ã€èŠ‚ç‚¹å¡è¯´æ˜ã€éƒ¨åˆ†ç›®æ ‡æç¤ºã€ç»“å±€æ ‡ç­¾å’Œç»“ç®—å›é¡¾æ ‡é¢˜ã€‚
+- å·²æŠŠâ€œç»“ç®—/å¤ç›˜æ–‡æœ¬ä¸è¦é‡å¤ã€ä¸è¦åƒç³»ç»Ÿè¯´æ˜ã€ä¸è¦ç”¨æŒ‡å¯¼å£å»â€çš„è§„åˆ™è¡¥è¿› `doc/10_è®¾è®¡æ–‡æ¡£/ç©å®¶å¯è§æ–‡æœ¬è§„èŒƒ.md`ã€‚
+- æ¥ä¸‹æ¥è¦è·‘ build + æµè§ˆå™¨ smokeï¼Œç¡®è®¤ä¸»å±ã€è¯¦æƒ…é¡µå’Œå¼‚å¸¸é€‰æ‹©é¡µçš„æ–‡æœ¬éƒ½ç»Ÿä¸€åˆ°åŒä¸€å¥—è¯­æ°”ã€‚
 
 TODO
 - Before commit, exclude `output/playwright/content-density-pass/*` helper scripts and screenshots from staging.
@@ -1225,9 +1236,11 @@ TODO
 - Build rerun pending, then browser screenshot verification for battle opening / pressure / panel readability.
 
 - Validation after the new battle render pass:
-  - 
+  -
 pm run build passed.
-  - Preview on http://127.0.0.1:4182 passed full-flow browser smoke with esultSeen: true, eplaySeen: true, consoleErrors: [].
+  - Preview on http://127.0.0.1:4182 passed full-flow browser smoke with
+esultSeen: true,
+eplaySeen: true, consoleErrors: [].
   - Reviewed fresh screenshots under output/playwright/battle-feel-pass/round9/full-flow-v2/; battlefield now reads cooler and more energetic, and the command-tray style from the interrupted CSS pass remains stable.
 
 
@@ -1236,7 +1249,7 @@ pm run build passed.
 - In src/systems/RunEngine.ts: kills now burst XP into multi-shard drops, pickups accelerate harder, nearby XP gets chain-vacuum nudges, and pickups feed a tiny cadence carry.
 - In src/scenes/GameScene.ts: XP orbs now render motion trails and short magnet links so pickup flow is readable on screen.
 - In src/systems/PilotAudio.ts: kill / pickup cues were lifted to better match the stronger reward chain.
-- Synced /doc truth docs for current handoff, risks, targets, priorities, and added doc/30_³ÖĞøÓÅ»¯/¿ª·¢¸´ÅÌ/2026-04-14_ºËĞÄÑ­»·ÓëÕ½¶·»Ø±¨Á´´òÄ¥.md.
+- Synced /doc truth docs for current handoff, risks, targets, priorities, and added doc/30_ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/2026-04-14_ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½Õ½ï¿½ï¿½ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½Ä¥.md.
 - Next step: rerun build + browser smoke and inspect whether the pickup chase loop really reads better in combat.
 
 
@@ -1296,10 +1309,10 @@ TODO
   - `output/playwright/battle-feel-pass/round16/elite-check/summary.json` still shows `eliteRouteChosen=true`, `eliteBattleSeen=true`
   - `window.__pilotAudioDebug()` snapshot during battle showed `currentMusicMode='battle'` and real cue counts including `shoot`
 - Docs synced:
-  - `doc/00_½ÓÊÖÈë¿Ú/µ±Ç°½»½Ó¿¨.md`
-  - `doc/10_Éè¼ÆÎÄµµ/Õ½¶·ÓëÊ×ÁìÉè¼Æ.md`
-  - `doc/30_³ÖĞøÓÅ»¯/µ±Ç°´ı°ìÓëÓÅÏÈ¼¶.md`
-  - `doc/30_³ÖĞøÓÅ»¯/¿ª·¢¸´ÅÌ/2026-04-15_Õ½¶·Ö±¹ÛÊÖ¸Ğ²¹Ç¿.md`
+  - `doc/00_ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ó¿ï¿½.md`
+  - `doc/10_ï¿½ï¿½ï¿½ï¿½Äµï¿½/Õ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.md`
+  - `doc/30_ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½/ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¼ï¿½.md`
+  - `doc/30_ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/2026-04-15_Õ½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½Ö¸Ğ²ï¿½Ç¿.md`
 TODO
 - Before commit, keep `progress.md`, `output/`, `tools/`, and unrelated doc migration files out of staging.
 - Next pass should continue on hit-confirm / hurt-confirm / battle-family feel, not map visualization or new systems.
@@ -1342,15 +1355,17 @@ TODO
 - Tightened ordinary battle reward-chain continuity in src/systems/RunEngine.ts by extending killFlow carry, making XP magnet / chain vacuum more aggressive during streaks, and pushing pickup -> next-pressure pacing harder.
 - Tightened elite crack follow-through by boosting elite-body target priority during recovery, delaying escort refill slightly after cracks, and adding generic crack follow-through carry for fire / move / tempo.
 - Added small readability overlays in src/scenes/GameScene.ts for XP flow links and elite chase guide chevrons.
-- Validation this round: 
+- Validation this round:
 pm run build passed; Playwright full flow reached result; elite quick-check confirmed eliteSeen = true and crackSeen = true.
-- Residual risk: the old replay detector in output/playwright/.../full-flow/summary.json still reports eplaySeen = false, but the captured eplay.png shows battle restarted correctly, so the script heuristic needs cleanup later.
+- Residual risk: the old replay detector in output/playwright/.../full-flow/summary.json still reports
+eplaySeen = false, but the captured
+eplay.png shows battle restarted correctly, so the script heuristic needs cleanup later.
 2026-04-16
 - Continued gameplay polish on codex-dev with a regular-enemy pressure pass instead of reopening map work, new systems, or a Boss-only round.
 - In src/systems/RunEngine.ts, regular enemies now use small pressure-beat helpers so standard / brute / skirmisher / ranged read more differently during opening and mid battle.
 - Opening intent now leans on existing spawnFlashSec / pressurePulseSec / tacticCooldownSec instead of a new combat system: pack pushes, brute front-load, skirmisher cut-ins, and ranged screen-up all surface earlier.
 - In src/scenes/GameScene.ts, added lighter in-world family intent cues so each enemy family telegraphs its next beat more clearly without adding UI boxes.
-- Validation this round: 
+- Validation this round:
 pm run build passed; Playwright full-flow reached result with consoleErrors=[]; ordinary pressure screenshot looked good; elite natural recheck was inconclusive and should stay a monitoring item.
 - Residual risk: output/playwright/battle-feel-pass/round20/elite-quick-check/summary.json did not reliably hit crackSeen, so elite natural-sample stability still needs follow-up rather than signoff.
 
@@ -1404,7 +1419,7 @@ TODO
   - Full-flow browser smoke at output/playwright/battle-feel-pass/round23/summary.json -> resultSeen=true, replaySeen=false (same stale detector pattern), consoleErrors=[].
   - output/playwright/battle-feel-pass/round23/audio-debug.json confirmed active combat cues including shoot / hit / kill / enemyShot / nearMiss / hurt / pressure.
   - Reviewed output/playwright/battle-feel-pass/round23/damage-check/battle-damage.png and the new impact layer reads harder without adding HUD clutter.
-- Added a matching recap doc at doc/30_³ÖĞøÓÅ»¯/¿ª·¢¸´ÅÌ/2026-04-18_Õ½¶·ÒôĞ§³å»÷ÓëÊÜ»÷·´À¡²¹Ç¿.md.
+- Added a matching recap doc at doc/30_ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/2026-04-18_Õ½ï¿½ï¿½ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¿.md.
 TODO
 - If the next pass stays on combat feel, prioritize natural-sample hurt readability and ordinary-family live pressure personality before opening any new theme.
 2026-04-18
@@ -1520,7 +1535,7 @@ TODO
   - stripped-down HUD layout
 - Updated `src/scenes/ResultScene.ts` to remove the third export action from the result page.
 - Updated `src/scenes/GameScene.ts` so:
-  - HUD mode text reads as gameplay mode words like `¼ßÃğ / Éú´æ / ¾«Ó¢ / BossÕ½`
+  - HUD mode text reads as gameplay mode words like `ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½Ó¢ / BossÕ½`
   - the player now renders with a small overhead HP bar
 - Validation:
   - `npm run build` passes
@@ -1635,39 +1650,39 @@ TODO
 - Smart script sample (6 runs, 720-step cap): bossReached 4/6, matured 3/6, routeId formed in 4/6, avg nodesCleared 3.0, but clears still 0 and boss fights remain lethal.
 - Current regression signal versus older natural runs: simple natural-long now yields only 2/10 formed runs and 0/10 boss reaches, so route reinforcement and midgame/boss survivability both regressed.
 
-## 2026-05-29 Â·Ïß³ÉĞÍÈİ´í + Boss ¶Î¿ÉÇåĞÔĞŞÕı
-- ±¾ÂÖ¼ÌĞøÑØÓÃÏÖÓĞÂ·Ïß/½Úµã/Ä£°åÏµÍ³£¬ÖØµãÏÂµ÷¼òµ¥×ÔÈ»½Å±¾µÄÎ´³ÉÏß·çÏÕ£¬²¢Ñ¹µÍ Boss Óëºó¶ÎÄ£°åµÄ¹ıÁ¿Ñ¹Á¦¡£
-- ´úÂë²àÖ÷Òªµ÷Õû£º
+## 2026-05-29 Â·ï¿½ß³ï¿½ï¿½ï¿½ï¿½İ´ï¿½ + Boss ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+- ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½/ï¿½Úµï¿½/Ä£ï¿½ï¿½ÏµÍ³ï¿½ï¿½ï¿½Øµï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½Å±ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ß·ï¿½ï¿½Õ£ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ Boss ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½
+- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   - `src/systems/RunEngine.ts`
-    - Â·ÏßÍÆ½ø¸ÄÎª°´µ¥´ÎÉı¼¶¾ÛºÏÍ¬Â·Ïß½ø¶ÈºóÔÙ½áËã£¬±ÜÃâÍ¬Ò»¿¨¶à¶Î route effect ±»Öğ´ÎÅĞ¶¨Ê±ËğÊ§ËøÏß»ú»á¡£
-    - `matured` ãĞÖµÓÉ 5 ½µµ½ 4£¬²¢·Å¿íÒÑ committed ºóµÄ matured ÅĞ¶¨Ìõ¼ş¡£
+    - Â·ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ûºï¿½Í¬Â·ï¿½ß½ï¿½ï¿½Èºï¿½ï¿½Ù½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ route effect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¶ï¿½Ê±ï¿½ï¿½Ê§ï¿½ï¿½ï¿½ß»ï¿½ï¿½á¡£
+    - `matured` ï¿½ï¿½Öµï¿½ï¿½ 5 ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½ï¿½Å¿ï¿½ï¿½ï¿½ committed ï¿½ï¿½ï¿½ matured ï¿½Ğ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   - `src/data/contentSelectors.ts`
-    - Ç°ÖĞ¶ÎÄÃµ½ 2~3 ÕÅÍ¬Â·ÏßÅÆºó£¬Ìá¸ßÍ¬Â·ÏßºóĞø³öÏÖÈ¨ÖØ²¢½øÒ»²½Ñ¹µÍ off-route¡£
-    - ÔÚ hinted ½×¶Î»ù±¾¹Ø±Õ redirect/hybrid ¸ÉÈÅ£¬ÓÅÏÈÈÃÂ·ÏßÑÓĞø³ÉĞÍ¡£
+    - Ç°ï¿½Ğ¶ï¿½ï¿½Ãµï¿½ 2~3 ï¿½ï¿½Í¬Â·ï¿½ï¿½ï¿½Æºï¿½ï¿½ï¿½ï¿½Í¬Â·ï¿½ßºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¨ï¿½Ø²ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ñ¹ï¿½ï¿½ off-routeï¿½ï¿½
+    - ï¿½ï¿½ hinted ï¿½×¶Î»ï¿½ï¿½ï¿½ï¿½Ø±ï¿½ redirect/hybrid ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
   - `src/data/upgrades.ts`
-    - route Àà payoff/finisher Ò²Ç¿ÖÆ²¹×ãÂ·Ïß½ø¶È effect£¬ÈÃ¡°ÄÃµ½Í¬Â·Ïß¹Ø¼üÅÆ¡±¸üÎÈ¶¨×ª³ÉÕæÊµ³ÉÏß¡£
+    - route ï¿½ï¿½ payoff/finisher Ò²Ç¿ï¿½Æ²ï¿½ï¿½ï¿½Â·ï¿½ß½ï¿½ï¿½ï¿½ effectï¿½ï¿½ï¿½Ã¡ï¿½ï¿½Ãµï¿½Í¬Â·ï¿½ß¹Ø¼ï¿½ï¿½Æ¡ï¿½ï¿½ï¿½ï¿½È¶ï¿½×ªï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ß¡ï¿½
   - `src/data/nodes.ts`
-    - round 1~2 Ã÷ÏÔÌá¸ß upgrade ½ÚµãÈ¨ÖØ¡¢ÏÂÑ¹ anomaly ºÍ¹ıÔç¸ßÑ¹ battle¡£
-    - ÏÂµ÷ mid/late ¶à¸ö¸ßÑ¹½ÚµãµÄ difficultyScale£¬Boss ½Úµã difficultyScale Í³Ò»»ØÂä¡£
+    - round 1~2 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ upgrade ï¿½Úµï¿½È¨ï¿½Ø¡ï¿½ï¿½ï¿½Ñ¹ anomaly ï¿½Í¹ï¿½ï¿½ï¿½ï¿½Ñ¹ battleï¿½ï¿½
+    - ï¿½Âµï¿½ mid/late ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½Úµï¿½ï¿½ difficultyScaleï¿½ï¿½Boss ï¿½Úµï¿½ difficultyScale Í³Ò»ï¿½ï¿½ï¿½ä¡£
   - `src/data/battleTemplates.ts`
-    - ÏÂµ÷ `elite-pressure-hold` / `elite-contagion` / `elite-gauntlet`¡£
-    - ÏÂµ÷ `survival-rush` / `survival-gauntlet` / `survival-sieve`¡£
-    - ÏÂµ÷ `boss-executioner` / `boss-fortress` / `boss-predator` µÄ±¾ÌåÄÍ¾Ã¡¢Ë¢¹ÖÃÜ¶È¡¢»¤ÎÀÁ¿Óë phase Ñ¹Á¦¡£
-- ¹¹½¨ÑéÖ¤£º`npm run build` Í¨¹ı¡£
-- Ô¤ÀÀÑéÖ¤£º`http://127.0.0.1:4201/game-demo/`
-- ĞÂ½á¹û£º
-  - ¼òµ¥×ÔÈ»ÖØ²â£º`output/qa/retest-natural-long-boss-pass-20260529/summary.json`
-    - 10 ¾Ö 1 Í¨¹Ø£¬2 ¾Öµ½ Boss¡£
-    - `buildStage`: matured 10/10¡£
-    - `routeId`: crit 4 / dash 4 / pierce 2¡£
-    - Æ½¾ùºÄÊ± 65.76s£¬Æ½¾ùÕ½¶·Ê¤³¡ 3.2£¬Æ½¾ùÇå½Úµã 3.3¡£
-    - 404 È«²¿ÏûÊ§¡£
-    - Ê§°Ü½ÚµãÒÑ·ÖÉ¢µ½ `²ğÆÁ¹ÒÕË / ÁÑÃæÇåÕË / ±¬µã×·ÊÕ / ½»»ğ¼Ğ²ã / »Ø°Ú×·»Ø / Éú´æÑ¹ÖÆ / ÁÔÉ±Ê×Áì`£¬²»ÔÙÊÇ´óÁ¿Î´³ÉÏßºó¿¨ÔÚÍ¬Ò»ÖĞ¶Îµã¡£
-  - ÖÇÄÜÕû¾ÖÖØ²â£º`output/qa/smart-natural-fullrun-boss-pass-20260529/summary.json`
-    - 6 ¾Ö 2 Í¨¹Ø£¬4 ¾Öµ½ Boss¡£
-    - ÓĞ 1 ¾Ö `committed` Í¨¹Ø¡¢1 ¾Ö `matured` Í¨¹Ø¡¢1 ¾Ö `matured` Boss Ê§°Ü¡£
-    - Ê§°ÜÒÑ¸ß¶ÈÑ¹Ëõµ½ Boss£º`ÒªÈûÊ×Áì` ¿ÉÍ¨£¬Ê£ÓàÖ÷ÒªÓ²µãÊÇ `´¦¾öÊ×Áì`¡£
-- ½áÂÛ£ºÕâÂÖÒÑ¾­´ïµ½¡°¼òµ¥×ÔÈ»²»ÔÙ´óÁ¿ unformed£¬ÖÇÄÜ½Å±¾ÓĞ¿ÉÑéÖ¤Çå¹ØÑù±¾¡±µÄÑéÊÕÄ¿±ê¡£ÏÂÒ»²½×î¸Ã¼ÌĞøÑ¹µÄÊÇ `boss-executioner`£¬Æä´ÎÊÇ late µÄ `±¬µã×·ÊÕ / ÁÑÃæÇåÕË`¡£
+    - ï¿½Âµï¿½ `elite-pressure-hold` / `elite-contagion` / `elite-gauntlet`ï¿½ï¿½
+    - ï¿½Âµï¿½ `survival-rush` / `survival-gauntlet` / `survival-sieve`ï¿½ï¿½
+    - ï¿½Âµï¿½ `boss-executioner` / `boss-fortress` / `boss-predator` ï¿½Ä±ï¿½ï¿½ï¿½ï¿½Í¾Ã¡ï¿½Ë¢ï¿½ï¿½ï¿½Ü¶È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ phase Ñ¹ï¿½ï¿½ï¿½ï¿½
+- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½`npm run build` Í¨ï¿½ï¿½ï¿½ï¿½
+- Ô¤ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½`http://127.0.0.1:4201/game-demo/`
+- ï¿½Â½ï¿½ï¿½ï¿½ï¿½
+  - ï¿½ï¿½ï¿½ï¿½È»ï¿½Ø²â£º`output/qa/retest-natural-long-boss-pass-20260529/summary.json`
+    - 10 ï¿½ï¿½ 1 Í¨ï¿½Ø£ï¿½2 ï¿½Öµï¿½ Bossï¿½ï¿½
+    - `buildStage`: matured 10/10ï¿½ï¿½
+    - `routeId`: crit 4 / dash 4 / pierce 2ï¿½ï¿½
+    - Æ½ï¿½ï¿½ï¿½ï¿½Ê± 65.76sï¿½ï¿½Æ½ï¿½ï¿½Õ½ï¿½ï¿½Ê¤ï¿½ï¿½ 3.2ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Úµï¿½ 3.3ï¿½ï¿½
+    - 404 È«ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½
+    - Ê§ï¿½Ü½Úµï¿½ï¿½Ñ·ï¿½É¢ï¿½ï¿½ `ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½ / ï¿½ï¿½ï¿½ï¿½Ğ²ï¿½ / ï¿½Ø°ï¿½×·ï¿½ï¿½ / ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ / ï¿½ï¿½É±ï¿½ï¿½ï¿½ï¿½`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ßºï¿½ï¿½ï¿½Í¬Ò»ï¿½Ğ¶Îµã¡£
+  - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø²â£º`output/qa/smart-natural-fullrun-boss-pass-20260529/summary.json`
+    - 6 ï¿½ï¿½ 2 Í¨ï¿½Ø£ï¿½4 ï¿½Öµï¿½ Bossï¿½ï¿½
+    - ï¿½ï¿½ 1 ï¿½ï¿½ `committed` Í¨ï¿½Ø¡ï¿½1 ï¿½ï¿½ `matured` Í¨ï¿½Ø¡ï¿½1 ï¿½ï¿½ `matured` Boss Ê§ï¿½Ü¡ï¿½
+    - Ê§ï¿½ï¿½ï¿½Ñ¸ß¶ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ Bossï¿½ï¿½`Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½` ï¿½ï¿½Í¨ï¿½ï¿½Ê£ï¿½ï¿½ï¿½ï¿½ÒªÓ²ï¿½ï¿½ï¿½ï¿½ `ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½`ï¿½ï¿½
+- ï¿½ï¿½ï¿½Û£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ïµ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½Ù´ï¿½ï¿½ï¿½ unformedï¿½ï¿½ï¿½ï¿½ï¿½Ü½Å±ï¿½ï¿½Ğ¿ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ê¡£ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ `boss-executioner`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ late ï¿½ï¿½ `ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½ / ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½`ï¿½ï¿½
 2026-05-30
 - Continued the late-gameæ”¶å£ pass on top of the current rebuild and kept the work inside the existing `src/data/*` + `src/systems/RunEngine.ts` layer.
 - This round focused on:
@@ -1690,3 +1705,11 @@ TODO
 - Fifth roundæ”¶å£ pass in progress: widened boss safe-window linger / grace, reduced phase-switch re-clamp pressure, and trimmed boss-executioner / boss-predator final-phase pressure.
 - Also lowered round-2-battle-dash-gauntlet and round-3-battle-sieve pressure a little more, plus slight final-boss node scale trims for the two stubborn end bosses.
 - Next: run npm run build, then PILOT_QA_RUNS=5 node tools/qa-smart-natural-fullrun.mjs and PILOT_QA_RUNS=5 node tools/qa-natural-long-retest.mjs to verify boss wins recover without losing boss reach.
+## 2026-06-06 å¼‚å¸¸èŠ‚ç‚¹è´¨å˜æ„Ÿ + å±€å†…å‘åŠ›è¯æ®
+
+- å¼‚å¸¸èŠ‚ç‚¹é¡µé¢è¡¥ä¸Šäº†æ›´æ˜ç¡®çš„ä¸‰åˆ†æ³•é”šç‚¹ï¼ŒçœŸå®é€‰é¡¹ç°åœ¨ä¼šç›´æ¥éœ²å‡ºâ€œæ–¹å‘ä»¶ / æ ¸å¿ƒä»¶ / è´¨å˜ä»¶ / æ”¶å°¾ä»¶â€ã€‚
+- å¼‚å¸¸é€‰ä¸­åä¼šç«‹åˆ»ç»™ä¸€æ¬¡è·¯çº¿è½¬æŠ˜æç¤ºï¼Œä¸å†åªæ˜¯è®°å½•æ‹¿äº†å“ªå¼ ï¼Œè€Œæ˜¯ç›´æ¥å‘Šè¯‰ç©å®¶è¿™ä¸€ä¸‹åœ¨â€œè¡¥æ–¹å‘ / æ‹§æ ¸å¿ƒ / æ”¹æ‰“æ³• / æ¥æ”¶å°¾â€ã€‚
+- `crit` æˆ˜æ–—å†…è¡¥å¼ºäº†é¢„çƒ­åˆ°æ”¶å£çš„çŸ­åé¦ˆï¼šé¢„çƒ­ã€çˆ†ç‚¹æ¥ä¸Šã€æ”¶å£å°±ç»ªä¼šæ›´ç¨³å®šå‡ºç°åœ¨ HUD / route momentã€‚
+- `pierce` æˆ˜æ–—å†…è¡¥å¼ºäº†æ‰¾çº¿åˆ°æ‰“ç©¿çš„çŸ­åé¦ˆï¼šæŒ‚è£‚çº¹ã€æ¥ç¬¬äºŒæ®µã€æ‰“ç©¿æ•´åˆ—ä¼šæ›´ç¨³å®šå‡ºç°åœ¨ HUD / route momentã€‚
+- ç»“æœé¡µå¼‚å¸¸å¤ç›˜æ”¹æˆæ›´æ˜ç¡®åœ°æè¿°â€œè¿™ä¸€ä¸‹æ”¹å˜äº†ä»€ä¹ˆâ€ï¼Œå°¤å…¶ä¼šåŒºåˆ†é’‰æ–¹å‘ã€æ‹§ä¸»è½´ã€ç›´æ¥æ”¹æ‰“æ³•ã€æ¥æ”¶å°¾ã€‚
+- æœ¬è½®æœªè§¦ç¢° `src/data/nodes.ts`ã€`src/data/battleTemplates.ts` ä»¥åŠå¼ºåº¦å¹³è¡¡ï¼›åªåšå¼‚å¸¸èŠ‚ç‚¹è¡¨è¾¾å’Œå±€å†…è¯æ®è¡¥å¼ºã€‚

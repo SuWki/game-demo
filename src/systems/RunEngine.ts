@@ -580,6 +580,10 @@ export class RunEngine {
     }
     this.enqueueAudio(eventDef.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
     this.enqueueTip(this.getEventSelectionTip(eventDef, option, optionRouteId));
+    if (eventDef.contentKind === 'anomaly' && optionRouteId) {
+      this.queueRouteMoment(optionRouteId, this.getAnomalyTurnMomentText(optionRouteId, option));
+      this.enqueueTip(`${ROUTE_NAME_MAP[optionRouteId]}被这一下改写了`);
+    }
     this.advanceRound();
   }
 
@@ -2736,22 +2740,22 @@ export class RunEngine {
       case 'crit':
         switch (stage) {
           case 'starter':
-            return '暴击线起势了';
+            return '暴击线起势了：开始预热爆点';
           case 'bridge':
-            return '暴击线开始成型了';
+            return '暴击线开始成型了：爆点已经接上';
           case 'payoff':
-            return '暴击线已经能收口了';
+            return '暴击线已经能收口了：下一次会直接点爆';
           default:
             return '暴击线有动静了';
         }
       case 'pierce':
         switch (stage) {
           case 'starter':
-            return '穿透线起势了';
+            return '穿透线起势了：开始找线';
           case 'bridge':
-            return '穿透线开始拆线了';
+            return '穿透线开始拆线了：后排已经露出来';
           case 'payoff':
-            return '穿透线已经打穿了';
+            return '穿透线已经打穿了：整列会一路裂开';
           default:
             return '穿透线有动静了';
         }
@@ -2784,6 +2788,28 @@ export class RunEngine {
       default:
         return '';
     }
+  }
+
+  private getAnomalyRoleTurnVerb(role?: AnomalyRoleId): string {
+    switch (role) {
+      case 'direction':
+        return '补方向';
+      case 'core':
+        return '拧核心';
+      case 'transform':
+        return '改打法';
+      case 'finisher':
+        return '接收尾';
+      default:
+        return '推进路线';
+    }
+  }
+
+  private getAnomalyTurnMomentText(routeId: RouteId, option: EventOption): string {
+    const routeName = ROUTE_NAME_MAP[routeId];
+    const verb = this.getAnomalyRoleTurnVerb(option.anomalyRole);
+    const gameplayLabel = option.gameplayLabel?.trim();
+    return gameplayLabel ? `${routeName}转折：${verb} · ${gameplayLabel}` : `${routeName}转折：${verb}`;
   }
 
   private getEventSelectionTip(
@@ -5112,8 +5138,14 @@ export class RunEngine {
               innerRadiusRatio: 0.68,
             });
           }
-          if (battle.critChain >= 2 && !this.routeMomentShown.crit) {
+          if (battle.critChain >= 1 && this.getRouteBuildStage('crit') !== 'unformed' && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
+            this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'starter'));
+            this.enqueueTip('暴击线开始预热了');
+          }
+          if (battle.critFinisherReady) {
+            this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'payoff'));
+          } else if (battle.critChain >= 2) {
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
             this.enqueueTip('暴击爆点已经起来了');
           }
@@ -5176,6 +5208,16 @@ export class RunEngine {
               angle: Math.atan2(bullet.vy, bullet.vx),
               spinRate: 5.2,
             });
+            if (!this.routeMomentShown.pierce && this.getRouteBuildStage('pierce') !== 'unformed') {
+              this.routeMomentShown.pierce = true;
+              this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'starter'));
+              this.enqueueTip('穿透线开始找线了');
+            }
+            if (pierceChain >= 3) {
+              this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'payoff'));
+            } else if (pierceChain >= 2) {
+              this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
+            }
           }
         }
 
