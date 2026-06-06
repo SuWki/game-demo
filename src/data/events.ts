@@ -532,6 +532,36 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
           },
         ],
       },
+      {
+        id: 'pierce-reroute-window-breakthrough',
+        routeId: 'pierce',
+        label: '压上穿透打穿',
+        gameplayLabel: '质变件',
+        gainLabel: '整列拆线会直接推成打穿',
+        costLabel: '容错和站桩空间明显下降',
+        anomalyRole: 'transform',
+        description: '不再只稳拆线，直接把穿透推到打穿后排的打法。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              projectileSpeed: 22,
+              pierce: 1,
+              fireRate: -0.06,
+              maxHp: -10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
     ],
   },
   {
@@ -1379,6 +1409,11 @@ export const EVENT_CATALOG: EventDefinition[] = RAW_EVENT_CATALOG.filter(
 export const STANDARD_EVENT_CATALOG = EVENT_CATALOG;
 
 export const ANOMALY_EVENT_CATALOG: EventDefinition[] = RAW_ANOMALY_EVENT_CATALOG.map((eventDef) => ({
+  ...eventDef,
+  options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef, eventDef.id, option)),
+}));
+
+export const ALL_EVENT_CATALOG: EventDefinition[] = [...RAW_EVENT_CATALOG, ...RAW_ANOMALY_EVENT_CATALOG].map((eventDef) => ({
   ...eventDef,
   options: eventDef.options.map((option) => normalizeEventOptionEffects(eventDef, eventDef.id, option)),
 }));

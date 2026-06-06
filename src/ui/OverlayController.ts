@@ -289,6 +289,8 @@ export class OverlayController {
 
   public showHud(snapshot: OverlayHudSnapshot, onPause?: () => void): void {
     this.screenLayer.classList.add('hidden');
+    this.hidePanel();
+    this.hideTooltip();
     this.hudLayer.classList.remove('hidden');
     const routeMomentColor = snapshot.routeMomentRouteId ? ROUTE_COLOR_MAP[snapshot.routeMomentRouteId] : undefined;
     this.hudLayer.innerHTML = `

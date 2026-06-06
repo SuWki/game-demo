@@ -82,7 +82,7 @@ import type {
   UpgradeSource,
   QaSmokeScenarioConfig,
 } from '../game/types';
-import { ANOMALY_EVENT_CATALOG } from '../data/events';
+import { ALL_EVENT_CATALOG, ANOMALY_EVENT_CATALOG } from '../data/events';
 import { UPGRADE_ARCHETYPES, buildUpgradeChoice } from '../data/upgrades';
 
 interface EngineAnnouncement {
@@ -359,7 +359,7 @@ export class RunEngine {
         this.setupQaSmokeUpgradeStage(config.routeId);
         return;
       case 'anomaly':
-        this.setupQaSmokeAnomalyStage(config.routeId);
+        this.setupQaSmokeAnomalyStage(config.routeId, config.anomalyRole);
         return;
       case 'battle':
         this.setupQaSmokeBattleStage(config.routeId);
@@ -2519,7 +2519,10 @@ export class RunEngine {
       .map((upgrade, index) => buildUpgradeChoice(upgrade, index === 2 ? 'rare' : 'uncommon'));
   }
 
-  private setupQaSmokeAnomalyStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+  private setupQaSmokeAnomalyStage(
+    routeId: QaSmokeScenarioConfig['routeId'],
+    requestedRole?: AnomalyRoleId,
+  ): void {
     this.seedQaSmokeRoute(routeId);
     this.state.status = 'eventChoice';
     this.state.phase = 'mid';
@@ -2530,8 +2533,22 @@ export class RunEngine {
       description: '稳定展示异常节点。',
       phase: 'mid',
     };
-    const eventId = routeId === 'crit' ? 'crit-lock-protocol' : 'pierce-reroute-window';
-    this.state.currentEvent = ANOMALY_EVENT_CATALOG.find((eventDef) => eventDef.id === eventId) ?? null;
+    const sample = this.getQaSmokeAnomalySample(routeId, requestedRole);
+    const eventDef = this.getQaSmokeEventDefinition(sample.eventId);
+    this.state.currentEvent = eventDef
+      ? {
+          ...eventDef,
+          options: [...eventDef.options].sort((left, right) => {
+            if (left.id === sample.optionId) {
+              return -1;
+            }
+            if (right.id === sample.optionId) {
+              return 1;
+            }
+            return 0;
+          }),
+        }
+      : null;
   }
 
   private setupQaSmokeBattleStage(routeId: QaSmokeScenarioConfig['routeId']): void {
@@ -2564,6 +2581,7 @@ export class RunEngine {
 
   private setupQaSmokeResultStage(routeId: QaSmokeScenarioConfig['routeId']): void {
     this.seedQaSmokeRoute(routeId);
+    this.applyQaSmokeResultRouteClosure(routeId);
     this.state.phase = 'ended';
     this.state.round = 5;
     this.state.traversedNodes = [
@@ -2579,19 +2597,98 @@ export class RunEngine {
       description: 'QA 结果页演示。',
       phase: 'finalBattle',
     };
-    this.state.eventHistory = [
-      {
-        eventId: routeId === 'crit' ? 'crit-lock-protocol' : 'pierce-reroute-window',
-        eventName: routeId === 'crit' ? '暴击收尾窗' : '穿透转接窗',
-        optionId: routeId === 'crit' ? 'crit-lock-transform' : 'pierce-reroute-window-hold',
-        optionLabel: routeId === 'crit' ? '压上红线爆发' : '先稳穿透火力',
-        nodeIndex: 2,
-        routeId,
-        anomalyClass: 'routeWindow',
-        anomalyRole: routeId === 'crit' ? 'transform' : 'core',
-      },
-    ];
+    this.state.eventHistory = this.buildQaSmokeResultEventHistory(routeId);
     this.finishRun('victory', 'victory');
+  }
+
+  private getQaSmokeAnomalySample(
+    routeId: QaSmokeScenarioConfig['routeId'],
+    requestedRole?: AnomalyRoleId,
+  ): {
+    eventId: string;
+    optionId: string;
+    role: AnomalyRoleId;
+  } {
+    const defaultRole: AnomalyRoleId = 'transform';
+    const role = requestedRole ?? defaultRole;
+    const sampleMap: Record<QaSmokeScenarioConfig['routeId'], Record<'direction' | 'core' | 'transform', {
+      eventId: string;
+      optionId: string;
+    }>> = {
+      crit: {
+        direction: {
+          eventId: 'crit-reroute-window',
+          optionId: 'crit-reroute-window-direction',
+        },
+        core: {
+          eventId: 'crit-reroute-window',
+          optionId: 'crit-reroute-window-core',
+        },
+        transform: {
+          eventId: 'crit-lock-protocol',
+          optionId: 'crit-lock-transform',
+        },
+      },
+      pierce: {
+        direction: {
+          eventId: 'route-handoff',
+          optionId: 'route-handoff-pierce',
+        },
+        core: {
+          eventId: 'pierce-reroute-window',
+          optionId: 'pierce-reroute-window-hold',
+        },
+        transform: {
+          eventId: 'pierce-reroute-window',
+          optionId: 'pierce-reroute-window-breakthrough',
+        },
+      },
+    };
+
+    return {
+      ...sampleMap[routeId][role as 'direction' | 'core' | 'transform'],
+      role,
+    };
+  }
+
+  private buildQaSmokeResultEventHistory(routeId: QaSmokeScenarioConfig['routeId']): PickedEventRecord[] {
+    const roles: Array<'direction' | 'core' | 'transform'> = ['direction', 'core', 'transform'];
+    return roles
+      .map((role, index) => {
+        const sample = this.getQaSmokeAnomalySample(routeId, role);
+        const eventDef = this.getQaSmokeEventDefinition(sample.eventId);
+        const option = eventDef?.options.find((candidate) => candidate.id === sample.optionId);
+        return {
+          eventId: sample.eventId,
+          eventName: eventDef?.name,
+          optionId: sample.optionId,
+          optionLabel: option?.label,
+          nodeIndex: index + 1,
+          routeId,
+          anomalyClass: eventDef?.anomalyClass,
+          anomalyRole: sample.role,
+        } satisfies PickedEventRecord;
+      })
+      .filter((record) => Boolean(record.eventId));
+  }
+
+  private applyQaSmokeResultRouteClosure(routeId: QaSmokeScenarioConfig['routeId']): void {
+    for (const role of ['direction', 'core', 'transform'] as const) {
+      const sample = this.getQaSmokeAnomalySample(routeId, role);
+      const eventDef = this.getQaSmokeEventDefinition(sample.eventId);
+      const option = eventDef?.options.find((candidate) => candidate.id === sample.optionId);
+      if (!option?.effects?.length) {
+        continue;
+      }
+      this.applyEffects(option.effects, {
+        pickId: `qa-anomaly:${routeId}:${role}:${option.id}`,
+      });
+    }
+  }
+
+  private getQaSmokeEventDefinition(eventId: string): EventDefinition | undefined {
+    return ANOMALY_EVENT_CATALOG.find((candidate) => candidate.id === eventId)
+      ?? ALL_EVENT_CATALOG.find((candidate) => candidate.id === eventId);
   }
 
   private seedQaSmokeRoute(routeId: QaSmokeScenarioConfig['routeId']): void {
@@ -2627,16 +2724,20 @@ export class RunEngine {
       return '';
     }
 
-    const primaryRecord = this.getPrimaryAnomalyRecord(routeId, anomalyHistory);
     const keyRecords: PickedEventRecord[] = [];
     const addRecord = (record?: PickedEventRecord | null) => {
       if (record && !keyRecords.includes(record)) {
         keyRecords.push(record);
       }
     };
+    const rolePriority: AnomalyRoleId[] = ['direction', 'core', 'transform', 'finisher'];
+    for (const role of rolePriority) {
+      addRecord(anomalyHistory.find((record) => record.anomalyRole === role));
+    }
 
-    addRecord(anomalyHistory[0]);
+    const primaryRecord = this.getPrimaryAnomalyRecord(routeId, anomalyHistory);
     addRecord(primaryRecord);
+    addRecord(anomalyHistory[0]);
     addRecord(anomalyHistory[anomalyHistory.length - 1]);
 
     return keyRecords

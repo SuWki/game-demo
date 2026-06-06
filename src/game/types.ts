@@ -890,4 +890,5 @@ export type QaSmokeStageId = 'upgrade' | 'anomaly' | 'battle' | 'result';
 export interface QaSmokeScenarioConfig {
   routeId: QaSmokeRouteId;
   stage: QaSmokeStageId;
+  anomalyRole?: AnomalyRoleId;
 }

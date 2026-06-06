@@ -153,6 +153,31 @@ TODO
 TODO
 - Before commit, exclude `output/playwright/content-density-pass/*` helper scripts and screenshots from staging.
 - If there is a next round, observe whether route-specific events are now common enough in real runs without locking builds too early.
+
+2026-06-06
+- 本轮目标切到“stable smoke 的双路线样板闭环”，不回到平衡调参，也没有再扩一套并行 QA 入口。
+- QA-only 入口仍然沿用 `window.__pilotQaSmoke` / `pilot-qa-smoke-scenario`，只是在 `QaSmokeScenarioConfig` 上加了 `anomalyRole`，用于稳定命中真实异常样本，不影响正式玩家流程。
+- 为了让 pierce 也能和 crit 一样完整验收，本轮补了两层内容：
+- `route-handoff` 的 route pool 方向件元信息，便于异常页和结果页把“补方向”说准。
+- `pierce-reroute-window-breakthrough` 这个穿透质变样板，用来稳定证明“拆线 -> 打穿”的异常转折。
+- `RunEngine` 的 QA smoke 结果页现在会按 `direction -> core -> transform` 优先复盘，不再只挑“首个 / 主转折 / 最后一个”，这样结果页详情能稳定看出哪一下是钉方向、哪一下是拧核心、哪一下是改打法。
+- `tools/qa-stable-smoke.mjs` 现在默认一趟跑 `crit + pierce` 两条路线，输出 6 张关键截图：
+- `crit-anomaly.png`
+- `crit-battle-route-moment.png`
+- `crit-result-detail.png`
+- `pierce-anomaly.png`
+- `pierce-battle-route-moment.png`
+- `pierce-result-detail.png`
+- smoke 摘要补了最小对账字段：`routeId`、`stage`、`anomalyRole`、`routeMomentText`、`pageSegment`，另外带上了 `anomalyTripletByRoute` 方便以后直接核对 direction/core/transform 样本。
+- 额外修了一处真实 UI 问题：`OverlayController.showHud()` 进入战斗时会主动收掉旧 panel，避免 anomaly 面板残留在 battle 截图里。
+- 验证结果：
+- `npm run build` 通过。
+- 本地 preview 跑在 `http://127.0.0.1:4175/game-demo/`。
+- `output/qa/stable-smoke-dual-route-20260606/final-pass/summary.json` 中：
+  - `failed404Urls: []`
+  - `consoleErrors: []`
+  - `consoleWarns: []`
+  - `crit / pierce` 的 anomaly、battle route moment、result detail 都稳定命中。
 2026-04-04
 - Re-read all docs, `DEV_ISSUE_LOG`, current content data, selector config, route definitions, rare-related config, and metrics before editing.
 - This round follows the latest user brief on top of the docs baseline: replay motivation + rare content + payoff anti-bleed, not skeleton rebuild and not new systems.

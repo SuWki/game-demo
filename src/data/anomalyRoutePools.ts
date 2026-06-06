@@ -176,6 +176,10 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     crit: {
       id: 'route-handoff-crit',
       label: '改道暴击侧频',
+      gameplayLabel: '方向件',
+      gainLabel: '先把暴击方向钉清',
+      costLabel: '还没直接接成收口',
+      anomalyRole: 'direction',
       description: '补一段暴击火力，并借这拍把路线切向暴击。',
       routeId: 'crit',
       effects: [
@@ -207,6 +211,10 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     pierce: {
       id: 'route-handoff-pierce',
       label: '改道穿透侧频',
+      gameplayLabel: '方向件',
+      gainLabel: '先把穿透方向钉清',
+      costLabel: '后排还不会立刻打穿',
+      anomalyRole: 'direction',
       description: '补一段穿透火力，并借这拍把路线切向穿透。',
       routeId: 'pierce',
       effects: [
@@ -238,6 +246,10 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'route-handoff-dash',
       label: '改道穿梭侧频',
+      gameplayLabel: '方向件',
+      gainLabel: '先把穿梭方向钉清',
+      costLabel: '收口还得往后接',
+      anomalyRole: 'direction',
       description: '补一段穿梭节奏，并借这拍把路线切向穿梭。',
       routeId: 'dash',
       effects: [

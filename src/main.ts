@@ -179,7 +179,10 @@ window.__pilotDebug = {
 window.__pilotQaSmoke = (config) => {
   const validRoute = config?.routeId === 'crit' || config?.routeId === 'pierce';
   const validStage = ['upgrade', 'anomaly', 'battle', 'result'].includes(config?.stage ?? '');
-  if (!validRoute || !validStage) {
+  const validRole =
+    config?.anomalyRole == null ||
+    ['direction', 'core', 'transform', 'finisher'].includes(config.anomalyRole);
+  if (!validRoute || !validStage || !validRole) {
     console.warn('[QA] Invalid smoke scenario config', config);
     return false;
   }
