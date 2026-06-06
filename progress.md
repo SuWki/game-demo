@@ -1713,3 +1713,16 @@ TODO
 - `pierce` 战斗内补强了找线到打穿的短反馈：挂裂纹、接第二段、打穿整列会更稳定出现在 HUD / route moment。
 - 结果页异常复盘改成更明确地描述“这一下改变了什么”，尤其会区分钉方向、拧主轴、直接改打法、接收尾。
 - 本轮未触碰 `src/data/nodes.ts`、`src/data/battleTemplates.ts` 以及强度平衡；只做异常节点表达和局内证据补强。
+
+## 2026-06-06 稳定验收入口
+
+- 新增 QA-only 的 smoke 场景入口，不改正式玩家流程；入口只用于稳定命中升级面板、异常节点、route moment 战斗片段和结果页详情。
+- `__pilotQaSmoke()` / `runQaSmokeScenario()` 现在支持受控切到 `upgrade / anomaly / battle / result` 四段页面，避免继续依赖自然流程随机命中。
+- 新增 `tools/qa-stable-smoke.mjs`，一次执行即可稳定产出：
+  - 首页
+  - 一次升级选择
+  - 一次异常节点
+  - 一次已触发 route moment 的战斗片段
+  - 结果页主屏
+  - 结果页详情页
+- 这条链路当前默认走 `crit`，可以切到 `pierce`；它只服务 QA / smoke，不参与正式平衡和普通玩家流程。

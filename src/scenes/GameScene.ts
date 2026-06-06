@@ -11,6 +11,7 @@ import type {
   DebugBattlePhaseId,
   OverlayHudSnapshot,
   PlayerStats,
+  QaSmokeScenarioConfig,
   RouteBuildStage,
   RouteId,
   RunState,
@@ -271,6 +272,22 @@ export class GameScene extends Phaser.Scene {
         });
       }
     }
+
+    const storedQaSmokeScenario = window.localStorage.getItem('pilot-qa-smoke-scenario');
+    if (storedQaSmokeScenario) {
+      window.localStorage.removeItem('pilot-qa-smoke-scenario');
+      try {
+        const config = JSON.parse(storedQaSmokeScenario) as QaSmokeScenarioConfig;
+        this.time.delayedCall(320, () => {
+          this.runQaSmokeScenario(config);
+          // eslint-disable-next-line no-console
+          console.log(`[QA] Auto-triggered smoke scenario: ${storedQaSmokeScenario}`);
+        });
+      } catch {
+        // eslint-disable-next-line no-console
+        console.warn(`[QA] Invalid smoke scenario payload: ${storedQaSmokeScenario}`);
+      }
+    }
   }
 
   public update(_: number, delta: number): void {
@@ -335,6 +352,19 @@ export class GameScene extends Phaser.Scene {
     this.lastPanelKey = '';
     this.lastPauseKey = '';
     this.engine.restartDebugBattle(templateId, normalizedPhase);
+    this.engine.setDebugConfig(this.getRuntimeDebugConfig());
+    this.processAnnouncements();
+    this.syncOverlay();
+    this.syncDebugPanel(true);
+  }
+
+  public runQaSmokeScenario(config: QaSmokeScenarioConfig): void {
+    this.resultHandled = false;
+    this.gamePaused = false;
+    this.lastHudKey = '';
+    this.lastPanelKey = '';
+    this.lastPauseKey = '';
+    this.engine.configureQaSmokeScenario(config);
     this.engine.setDebugConfig(this.getRuntimeDebugConfig());
     this.processAnnouncements();
     this.syncOverlay();

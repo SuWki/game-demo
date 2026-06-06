@@ -882,3 +882,12 @@ export interface Services {
   audio: import('../systems/PilotAudio').PilotAudio;
   configLoader: import('../systems/ConfigLoader').ConfigLoader;
 }
+
+export type QaSmokeRouteId = 'crit' | 'pierce';
+
+export type QaSmokeStageId = 'upgrade' | 'anomaly' | 'battle' | 'result';
+
+export interface QaSmokeScenarioConfig {
+  routeId: QaSmokeRouteId;
+  stage: QaSmokeStageId;
+}

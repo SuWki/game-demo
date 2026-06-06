@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import './style.css';
 import './style-space-combat.css';
-import type { BattleTemplateId, Services } from './game/types';
+import type { BattleTemplateId, QaSmokeScenarioConfig, Services } from './game/types';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
@@ -22,6 +22,7 @@ declare global {
       getSnapshot: () => ReturnType<GameScene['getBattleDebugSnapshot']> | null;
       setConfig: (patch: Partial<ReturnType<GameScene['getDebugConfig']>>) => void;
       restartBattle: (options?: Partial<Pick<ReturnType<GameScene['getDebugConfig']>, 'templateId' | 'phase'>>) => void;
+      runQaSmoke: (config: QaSmokeScenarioConfig) => boolean;
       setPressureState: (options: {
         eliteHpRatio?: number;
         remainingSec?: number;
@@ -30,6 +31,7 @@ declare global {
       togglePanel: () => void;
     };
     __pilotQaForceBoss?: (templateId: BattleTemplateId) => void;
+    __pilotQaSmoke?: (config: QaSmokeScenarioConfig) => boolean;
   }
 }
 
@@ -142,6 +144,18 @@ window.__pilotDebug = {
       // Ignore when GameScene is not active.
     }
   },
+  runQaSmoke: (config) => {
+    try {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene && scene.scene.isActive()) {
+        scene.runQaSmokeScenario(config);
+        return true;
+      }
+    } catch {
+      // Ignore when GameScene is not active.
+    }
+    return false;
+  },
   setPressureState: (options) => {
     try {
       const scene = game.scene.getScene('GameScene');
@@ -160,6 +174,41 @@ window.__pilotDebug = {
       // Ignore when GameScene is not active.
     }
   },
+};
+
+window.__pilotQaSmoke = (config) => {
+  const validRoute = config?.routeId === 'crit' || config?.routeId === 'pierce';
+  const validStage = ['upgrade', 'anomaly', 'battle', 'result'].includes(config?.stage ?? '');
+  if (!validRoute || !validStage) {
+    console.warn('[QA] Invalid smoke scenario config', config);
+    return false;
+  }
+
+  const payload = JSON.stringify(config);
+  window.localStorage.setItem('pilot-qa-smoke-scenario', payload);
+  const gameScene = game.scene.getScene('GameScene');
+  if (gameScene instanceof GameScene && gameScene.scene.isActive()) {
+    gameScene.runQaSmokeScenario(config);
+    console.log(`[QA] Triggered smoke scenario: ${payload}`);
+    return true;
+  }
+
+  const menuScene = game.scene.getScene('MainMenuScene');
+  if (menuScene) {
+    menuScene.scene.start('GameScene');
+    console.log(`[QA] Starting GameScene with smoke scenario: ${payload}`);
+    return true;
+  }
+
+  const resultScene = game.scene.getScene('ResultScene');
+  if (resultScene) {
+    resultScene.scene.start('GameScene');
+    console.log(`[QA] Restarting GameScene with smoke scenario: ${payload}`);
+    return true;
+  }
+
+  console.log(`[QA] Stored smoke scenario. Start the game to trigger: ${payload}`);
+  return true;
 };
 
 window.__pilotQaForceBoss = (templateId) => {

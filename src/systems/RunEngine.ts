@@ -80,7 +80,10 @@ import type {
   UpgradeArchetype,
   UpgradeDefinition,
   UpgradeSource,
+  QaSmokeScenarioConfig,
 } from '../game/types';
+import { ANOMALY_EVENT_CATALOG } from '../data/events';
+import { UPGRADE_ARCHETYPES, buildUpgradeChoice } from '../data/upgrades';
 
 interface EngineAnnouncement {
   kind: 'tip' | 'audio';
@@ -343,6 +346,30 @@ export class RunEngine {
     this.state.routeMomentSec = 0;
     this.state.stats.hp = this.state.stats.maxHp;
     this.enterBattle(debugNode);
+  }
+
+  public configureQaSmokeScenario(config: QaSmokeScenarioConfig | null): void {
+    if (!config) {
+      return;
+    }
+
+    this.resetQaSmokeState();
+    switch (config.stage) {
+      case 'upgrade':
+        this.setupQaSmokeUpgradeStage(config.routeId);
+        return;
+      case 'anomaly':
+        this.setupQaSmokeAnomalyStage(config.routeId);
+        return;
+      case 'battle':
+        this.setupQaSmokeBattleStage(config.routeId);
+        return;
+      case 'result':
+        this.setupQaSmokeResultStage(config.routeId);
+        return;
+      default:
+        return;
+    }
   }
 
   public setDebugBattlePressureState(options: {
@@ -2430,6 +2457,162 @@ export class RunEngine {
       return `已经摸到${stageLabel}，还没真正站稳`;
     }
     return `还在${stageLabel}外面打转`;
+  }
+
+  private resetQaSmokeState(): void {
+    this.state.status = 'nodeChoice';
+    this.state.phase = 'mid';
+    this.state.round = 2;
+    this.state.nodeOptions = [];
+    this.state.currentNode = null;
+    this.state.currentEvent = null;
+    this.state.upgradeChoices = [];
+    this.state.upgradeSource = null;
+    this.state.battle = null;
+    this.state.result = null;
+    this.state.routeMomentText = null;
+    this.state.routeMomentRouteId = null;
+    this.state.routeMomentSec = 0;
+    this.state.traversedNodes = [];
+    this.state.eventHistory = [];
+    this.state.selectedUpgrades = [];
+    this.state.routeCounts = { crit: 0, pierce: 0, dash: 0 };
+    this.state.committedRoute = null;
+    this.state.maturedRoute = null;
+    this.state.activeRoutePerks = {};
+    this.state.battleWins = 0;
+    this.state.level = 1;
+    this.state.experience = 0;
+    this.state.experienceToNext = getExperienceToNextLevel(1);
+    this.state.queuedLevelUps = 0;
+    this.state.queuedRewardUpgrades = 0;
+    this.state.currentUpgradeIsReward = false;
+    this.state.levelUpPanelDelaySec = 0;
+    this.state.lastUpgradeChanges = null;
+    this.state.stats = createBaseStats();
+    this.firstUpgradeRecorded = false;
+    this.firstRouteHintRecorded = false;
+    this.advanceAfterPendingUpgrades = false;
+    this.routeMomentShown.crit = false;
+    this.routeMomentShown.pierce = false;
+    this.routeMomentShown.dash = false;
+  }
+
+  private setupQaSmokeUpgradeStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+    this.state.status = 'upgradeChoice';
+    this.state.phase = 'opening';
+    this.state.upgradeSource = 'nodePrep';
+    this.state.currentNode = {
+      id: 'qa-smoke-upgrade',
+      type: 'upgrade',
+      title: 'QA 升级演示',
+      description: '稳定展示升级选择。',
+      phase: 'opening',
+    };
+    const routeUpgradeIds =
+      routeId === 'crit'
+        ? ['crit-primer', 'crit-aim', 'crit-embershard']
+        : ['pierce-core', 'pierce-rail', 'pierce-riftbloom'];
+    this.state.upgradeChoices = routeUpgradeIds
+      .map((id) => UPGRADE_ARCHETYPES.find((upgrade) => upgrade.id === id))
+      .filter((upgrade): upgrade is UpgradeArchetype => Boolean(upgrade))
+      .map((upgrade, index) => buildUpgradeChoice(upgrade, index === 2 ? 'rare' : 'uncommon'));
+  }
+
+  private setupQaSmokeAnomalyStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+    this.seedQaSmokeRoute(routeId);
+    this.state.status = 'eventChoice';
+    this.state.phase = 'mid';
+    this.state.currentNode = {
+      id: 'qa-smoke-anomaly',
+      type: 'anomaly',
+      title: 'QA 异常转折',
+      description: '稳定展示异常节点。',
+      phase: 'mid',
+    };
+    const eventId = routeId === 'crit' ? 'crit-lock-protocol' : 'pierce-reroute-window';
+    this.state.currentEvent = ANOMALY_EVENT_CATALOG.find((eventDef) => eventDef.id === eventId) ?? null;
+  }
+
+  private setupQaSmokeBattleStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+    this.seedQaSmokeRoute(routeId);
+    const templateId = routeId === 'crit' ? 'elite-lockdown' : 'elite-screen';
+    const phase: DebugBattlePhaseId = 'late';
+    this.restartDebugBattle(templateId, phase);
+    const battle = this.state.battle;
+    if (!battle) {
+      return;
+    }
+    this.state.phase = phase;
+    this.state.round = 4;
+    this.state.traversedNodes = [
+      { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
+      { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
+      { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '爆点验证' : '拆线验证' },
+    ];
+    if (routeId === 'crit') {
+      battle.critChain = 2;
+      battle.critComboStacks = 3;
+      battle.critComboDecaySec = 1.8;
+      this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
+    } else {
+      battle.pierceFlowCount = 2;
+      battle.pierceFlowSec = 0.68;
+      this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
+    }
+  }
+
+  private setupQaSmokeResultStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+    this.seedQaSmokeRoute(routeId);
+    this.state.phase = 'ended';
+    this.state.round = 5;
+    this.state.traversedNodes = [
+      { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
+      { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
+      { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '爆点验证' : '拆线验证' },
+      { id: 'qa-boss', type: 'boss', title: 'QA 收尾' },
+    ];
+    this.state.currentNode = {
+      id: 'qa-result-node',
+      type: 'boss',
+      title: routeId === 'crit' ? '爆点验证结束' : '拆线验证结束',
+      description: 'QA 结果页演示。',
+      phase: 'finalBattle',
+    };
+    this.state.eventHistory = [
+      {
+        eventId: routeId === 'crit' ? 'crit-lock-protocol' : 'pierce-reroute-window',
+        eventName: routeId === 'crit' ? '暴击收尾窗' : '穿透转接窗',
+        optionId: routeId === 'crit' ? 'crit-lock-transform' : 'pierce-reroute-window-hold',
+        optionLabel: routeId === 'crit' ? '压上红线爆发' : '先稳穿透火力',
+        nodeIndex: 2,
+        routeId,
+        anomalyClass: 'routeWindow',
+        anomalyRole: routeId === 'crit' ? 'transform' : 'core',
+      },
+    ];
+    this.finishRun('victory', 'victory');
+  }
+
+  private seedQaSmokeRoute(routeId: QaSmokeScenarioConfig['routeId']): void {
+    const sourceIds =
+      routeId === 'crit'
+        ? ['crit-primer', 'crit-aim', 'crit-embershard']
+        : ['pierce-core', 'pierce-rail', 'pierce-riftbloom'];
+    this.state.selectedUpgrades = [...sourceIds];
+    for (const sourceId of sourceIds) {
+      const archetype = UPGRADE_ARCHETYPES.find((upgrade) => upgrade.id === sourceId);
+      if (!archetype) {
+        continue;
+      }
+      this.advanceRoute(routeId, {
+        pickId: `qa-route:${sourceId}`,
+      });
+      this.applyEffects(archetype.effects, {
+        pickId: `qa:${sourceId}`,
+      });
+      this.activateRoutePerkFromTags(archetype.tags);
+    }
   }
 
   private getAnomalyChronology(routeId: RouteId, eventHistory: PickedEventRecord[]): string {

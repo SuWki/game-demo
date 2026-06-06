@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { runStableSmoke } from './qa-stable-smoke.mjs';
 
 const APP_URL = process.env.PILOT_QA_URL ?? 'http://127.0.0.1:4201/game-demo/';
 const OUT_DIR = path.resolve(process.env.PILOT_QA_OUT_DIR ?? 'output/qa/retest-natural-long-boss-pass');
@@ -11,6 +12,15 @@ const executableCandidates = [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
 ];
 const executablePath = executableCandidates.find((candidate) => fs.existsSync(candidate));
+
+if (process.env.PILOT_QA_MODE === 'stable_smoke') {
+  await runStableSmoke({
+    appUrl: APP_URL,
+    outDir: OUT_DIR,
+    routeId: process.env.PILOT_QA_ROUTE ?? 'crit',
+  });
+  process.exit(0);
+}
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
