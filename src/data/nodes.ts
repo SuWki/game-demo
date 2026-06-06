@@ -139,7 +139,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '方向定标',
-        description: '顺着这条线再往前推一手',
+        description: '顺着这条线再压一手',
         selection: {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
@@ -378,7 +378,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '方向定标',
-        description: '顺着这条线再往前推一手',
+        description: '顺着这条线再压一手',
         selection: {
           baseWeight: 3.8,
           soloMultiplier: 0.92,
@@ -882,7 +882,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '方向定标',
-        description: '顺着这条线再往前推一手',
+        description: '顺着这条线再压一手',
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.82,

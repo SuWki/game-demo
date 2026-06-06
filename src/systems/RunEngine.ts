@@ -2396,20 +2396,20 @@ export class RunEngine {
     eventHistory: PickedEventRecord[],
   ): string {
     if (!routeId) {
-      return '还没摸到路子';
+      return '火力和机体都补了点，但没拧成一套';
     }
 
     const stageLabel = this.getRouteStageLabel(routeId, buildStage);
     if (outcome === 'victory') {
-      return `已经走到${stageLabel}`;
+      return `这把收在${stageLabel}`;
     }
 
     if (routeId === 'pierce') {
       if (buildStage === 'matured') {
-        return `已经走到${stageLabel}，收尾差一口`;
+        return `已经打到${stageLabel}，收尾还差一口`;
       }
       if (buildStage === 'committed') {
-        return `已经走到${stageLabel}，后排还差一层`;
+        return `已经打到${stageLabel}，后排还没彻底穿开`;
       }
       if (buildStage === 'hinted') {
         return `已经摸到${stageLabel}，前排还没拆开`;
@@ -2417,15 +2417,15 @@ export class RunEngine {
     }
 
     if (buildStage === 'matured') {
-      return `已经走到${stageLabel}，最后没守住`;
+      return `已经打到${stageLabel}，最后没守住`;
     }
     if (buildStage === 'committed') {
-      return `已经走到${stageLabel}，最后差一口`;
+      return `已经打到${stageLabel}，最后差一口`;
     }
     if (buildStage === 'hinted') {
       return `已经摸到${stageLabel}，还没真正站稳`;
     }
-    return `还在${stageLabel}前面晃`;
+    return `还在${stageLabel}外面打转`;
   }
 
   private getAnomalyChronology(routeId: RouteId, eventHistory: PickedEventRecord[]): string {
@@ -2821,11 +2821,11 @@ export class RunEngine {
     replayProfile: ReplayProfile,
     eventHistory: PickedEventRecord[],
   ): string {
+    const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
     if (!routeId) {
-      return '这局还没有形成清晰打法';
+      return outcome === 'victory' ? `收在「${finalNodeTitle}」` : `停在「${finalNodeTitle}」`;
     }
 
-    const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
     if (outcome === 'victory') {
       return `收在「${finalNodeTitle}」`;
     }
@@ -2845,7 +2845,7 @@ export class RunEngine {
     eventHistory: PickedEventRecord[],
   ): string {
     if (!routeId) {
-      return outcome === 'victory' ? '这局顺顺当当打完了' : '这局还没站稳就被打断了';
+      return outcome === 'victory' ? '这局顺顺当当地收住了' : '这局还没站稳就断了';
     }
 
     if (outcome === 'victory') {
@@ -2861,8 +2861,7 @@ export class RunEngine {
       }
     }
 
-    const routeName = ROUTE_NAME_MAP[routeId];
-    return `${routeName}线停住了`;
+    return this.getRouteFailureReason(routeId, buildStage, outcome, replayProfile, eventHistory);
   }
 
   private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {

@@ -672,11 +672,11 @@ export class OverlayController {
             <div class="detail-summary-stack">
               <div class="detail-summary-card">
                 <strong>${result.summary}</strong>
-                <small>${result.buildSummary}</small>
+                <small>${this.getResultRouteRecap(result)}</small>
               </div>
               <div class="detail-summary-card is-muted">
-                <strong>${result.replayPrompt}</strong>
-                <small>${result.endingReason}</small>
+                <strong>${result.buildSummary}</strong>
+                <small>${result.replayPrompt}</small>
               </div>
             </div>
           </div>
@@ -1636,7 +1636,7 @@ export class OverlayController {
 
   private getResultRouteRecap(result: RunResult): string {
     if (!result.routeId) {
-      return '这局还没有形成明确路线。';
+      return '这局还没走出一条清楚的线。';
     }
 
     const anomalyRoleCounts = this.getAnomalyRoleCounts(result.eventHistory ?? []);
@@ -1660,12 +1660,9 @@ export class OverlayController {
       parts.push(chronology);
     }
     if (anomalyParts.length > 0) {
-      parts.push(`异常节点：${anomalyParts.join(' / ')}`);
+      parts.push(`异常里拿了 ${anomalyParts.join(' / ')}`);
     }
-    if (result.outcome !== 'victory' && result.finalNodeTitle) {
-      parts.push(`停在「${result.finalNodeTitle}」`);
-    }
-    return parts.length > 0 ? parts.join('；') : '这局没有特别明显的异常转折。';
+    return parts.length > 0 ? parts.join('；') : '这局没有特别明显的转折点。';
   }
 
   private getResultAnomalyChronology(
@@ -1768,11 +1765,11 @@ export class OverlayController {
   ): string {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}收尾预演到了，但还差最后一口`;
+      return `${routeName}提前摸到收尾手，但还没完全接住`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}转折到位，路往成型那边推了一层`;
+      return `${routeName}在这里拐顺了，整条线往前推了一层`;
     }
 
     const roleMap: Record<AnomalyRoleId, { from: string; to: string }> = {

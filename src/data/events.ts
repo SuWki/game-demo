@@ -141,8 +141,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'route-calibration-focus',
-        label: '继续压当前方向',
-        description: '强化核心能力',
+        label: '顺着这条线再压一手',
+        description: '把这套核心再拧紧一点',
         routeId: 'dominant',
         effects: [
           {
@@ -161,7 +161,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'route-calibration-stabilize',
         label: '补一个稳态',
-        description: '恢复耐久并提高射速',
+        description: '缓一口气，顺手把射速提起来',
         effects: [
           {
             type: 'stats',
