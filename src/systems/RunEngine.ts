@@ -2396,7 +2396,7 @@ export class RunEngine {
     eventHistory: PickedEventRecord[],
   ): string {
     if (!routeId) {
-      return '火力和机体都补了点，但没拧成一套';
+      return '东一手西一手拿了些，但还是没拧成一路';
     }
 
     const stageLabel = this.getRouteStageLabel(routeId, buildStage);

@@ -940,7 +940,7 @@ export class OverlayController {
           <span><small>转折类型</small><b>${this.getEventClassLabel(eventDef)}</b></span>
           <span><small>当前进度</small><b>${progress.progressLabel}</b></span>
         </div>
-        <div class="anomaly-warning-strip">这一下会改掉这一局的走法，选前先看清代价。</div>
+        <div class="anomaly-warning-strip">这一下会改掉这局走法，代价也不轻。</div>
       </aside>
     `;
   }
@@ -1636,7 +1636,7 @@ export class OverlayController {
 
   private getResultRouteRecap(result: RunResult): string {
     if (!result.routeId) {
-      return '这局还没走出一条清楚的线。';
+      return '这把一直没连成一路。';
     }
 
     const anomalyRoleCounts = this.getAnomalyRoleCounts(result.eventHistory ?? []);
