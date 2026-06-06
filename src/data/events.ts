@@ -124,7 +124,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'route-calibration',
     name: '读数校准',
-    description: '强化打法，或恢复状态',
+    description: '要么把这套继续拧紧，要么先缓一口气',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.3,
@@ -180,7 +180,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'targeted-telemetry',
     name: '定向遥测',
-    description: '发现适合的数据，强化或防御',
+    description: '发现合适的路数，补火力或防护',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.2,
@@ -198,7 +198,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'targeted-telemetry-press',
         label: '追当前窗口',
-        description: '流派更稳，基础火力更高',
+        description: '这条线会更稳，火力也更扎实',
         routeId: 'dominant',
         effects: [
           {

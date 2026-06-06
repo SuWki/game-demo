@@ -2526,7 +2526,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-cutback',
     name: '脉冲留影',
-    description: '穿梭系统的终极强化',
+    description: '让穿梭更容易收口。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -2821,7 +2821,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidechannel',
     name: '错位取样',
-    description: '换一种流派接法，附带少量恢复',
+    description: '换个接法继续打，顺手回一口',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2898,7 +2898,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-recall',
     name: '借位追回',
-    description: '换一种流派接法，附带少量恢复',
+    description: '换个接法继续打，顺手回一口',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3183,7 +3183,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rebound-window',
     name: '借窗回返',
-    description: '换一种流派接法，附带少量恢复',
+    description: '换个接法继续打，顺手回一口',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3411,7 +3411,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
   if (archetype.category === 'route') {
-    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '路线强化：推进当前流派机制。';
+    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '顺着这条线继续往前推。';
   }
 
   return archetype.description ?? describeContentEffects(effects, archetype.routeId);

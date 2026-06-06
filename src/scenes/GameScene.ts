@@ -964,7 +964,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'eventChoice') {
-      return state.currentEvent?.contentKind === 'anomaly' ? '异常处理' : '选择事件';
+      return state.currentEvent?.contentKind === 'anomaly' ? '异常转折' : '选择事件';
     }
 
     if (state.status === 'nodeChoice') {
@@ -1167,7 +1167,7 @@ export class GameScene extends Phaser.Scene {
         return {
           objectiveLabel: 'Boss 目标',
           objectiveText: '击败 Boss 本体',
-          objectiveDetail: '优先盯住金色血条，小怪只是干扰。',
+          objectiveDetail: '先把金色血条打下来，旁边的小怪会跟着散。',
           objectiveProgressText: battle.eliteAlive ? `目标 ${targetTitle}` : '首领即将进场',
           objectiveTone: 'boss',
         };
@@ -1204,8 +1204,8 @@ export class GameScene extends Phaser.Scene {
       if (state.phase === 'finalBattle' || hasBossNode) {
         return {
           objectiveLabel: '当前目标',
-          objectiveText: '确认最终战',
-          objectiveDetail: '选定后立刻进入 Boss。',
+          objectiveText: '选定最终战',
+          objectiveDetail: '选定后马上进 Boss。',
           objectiveProgressText: 'Boss 战入口',
           objectiveTone: 'flow',
         };
@@ -1233,8 +1233,8 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'upgradeChoice') {
       return {
         objectiveLabel: '当前目标',
-        objectiveText: state.currentNode?.isFinalPrep ? '完成最终整备' : '完成强化选择',
-        objectiveDetail: state.upgradeSource === 'levelUp' ? '选完立刻回战斗。' : '选完继续。',
+        objectiveText: state.currentNode?.isFinalPrep ? '完成最终整备' : '把这手强化选完',
+        objectiveDetail: state.upgradeSource === 'levelUp' ? '选完马上回场。' : '选完接着打。',
         objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
         objectiveTone: 'flow',
       };
@@ -1243,8 +1243,8 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'eventChoice') {
       return {
         objectiveLabel: '当前目标',
-        objectiveText: state.currentEvent?.contentKind === 'anomaly' ? '完成异常处理' : '完成事件选择',
-        objectiveDetail: '处理完就继续往下走。',
+        objectiveText: state.currentEvent?.contentKind === 'anomaly' ? '接住这个转折' : '把这步选完',
+        objectiveDetail: '选完就继续前进。',
         objectiveProgressText: bossDistanceText,
         objectiveTone: 'flow',
       };

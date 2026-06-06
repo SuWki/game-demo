@@ -112,7 +112,7 @@ export class OverlayController {
           <div class="start-screen-header">
             <div class="title-glitch-wrapper">
               <h1 class="space-title">PROJECT ORBITAL</h1>
-              <div class="title-subtitle">轨道计划 - 自主战斗无人机系统</div>
+              <div class="title-subtitle">轨道计划 - 自动出击编队</div>
             </div>
           </div>
 
@@ -393,9 +393,9 @@ export class OverlayController {
     this.showPanel({
       panelClassName: `panel-event-choice${isAnomaly ? ' panel-event-choice-anomaly' : ''}`,
       panelLayerClassName: isAnomaly ? 'panel-layer-center' : undefined,
-      modeLabel: isAnomaly ? '异常处理' : '事件选择',
-      eyebrow: isAnomaly ? 'ANOMALY EVENT' : 'FIELD EVENT',
-      title: isAnomaly ? '异常接入' : eventDef.name,
+      modeLabel: isAnomaly ? '异常转折' : '事件选择',
+      eyebrow: isAnomaly ? '转折' : '事件',
+      title: isAnomaly ? '异常转折' : eventDef.name,
       contextHtml: isAnomaly ? this.renderAnomalyChoiceContext(eventDef, progress) : undefined,
       items: eventDef.options.map((option) => this.renderEventChoiceCard(eventDef, option)),
       progress,
@@ -450,7 +450,7 @@ export class OverlayController {
               ${isVictory ? '✓' : '✗'}
             </div>
             <h1 class="result-title">${isVictory ? '任务完成' : '任务失败'}</h1>
-            <p class="result-subtitle">${isVictory ? 'MISSION COMPLETE' : 'MISSION FAILED'}</p>
+            <p class="result-subtitle">${isVictory ? '本局收住了' : '本局断在这里'}</p>
             ${!isVictory ? `<p class="result-reason">${result.endingReason}</p>` : ''}
           </div>
 
@@ -474,7 +474,6 @@ export class OverlayController {
             <p class="result-story__summary">${result.summary}</p>
             <p class="result-story__route">${this.getResultRouteRecap(result)}</p>
             <p class="result-story__build">${result.buildSummary}</p>
-            <p class="result-story__prompt">${result.replayPrompt}</p>
           </div>
 
           ${
@@ -512,11 +511,11 @@ export class OverlayController {
               <span class="action-icon">▶</span>
               <div class="action-content">
                 <strong>再来一局</strong>
-                <small>按 R 快速重开</small>
+                <small>立刻重开</small>
               </div>
             </button>
             <button class="combat-action-small" data-action="details">
-              <span>查看详情</span>
+              <span>看复盘</span>
             </button>
             <button class="combat-action-small" data-action="menu">
               <span>返回机库</span>
@@ -621,6 +620,7 @@ export class OverlayController {
     const eventHistory = result.eventHistory ?? [];
     const anomalyHistory = eventHistory.filter((record) => record.anomalyClass);
     const anomalyRoleCounts = this.getAnomalyRoleCounts(eventHistory);
+    const turnRecord = this.getResultAnomalyTurnRecord(result);
 
     // 本局选择记录
     const upgradeTimeline = result.selectedUpgrades && result.selectedUpgrades.length > 0
@@ -647,6 +647,7 @@ export class OverlayController {
               <strong>${record.eventName ?? record.eventId}</strong>
               <small>${record.optionLabel ?? record.optionId}${record.nodeIndex ? ` · 第 ${record.nodeIndex} 节点` : ''}</small>
               <div class="detail-timeline-tags">
+                ${record === turnRecord ? '<span class="choice-effect-tag is-route-turn">转折点</span>' : ''}
                 ${record.anomalyRole ? `<span class="choice-effect-tag is-anomaly-role">${this.getAnomalyRoleLabel(record.anomalyRole)}</span>` : ''}
                 ${record.routeId ? `<span class="choice-effect-tag">${ROUTE_NAME_MAP[record.routeId]}</span>` : ''}
                 ${record.anomalyClass ? `<span class="choice-effect-tag">${this.getEventClassLabel({ anomalyClass: record.anomalyClass } as EventDefinition)}</span>` : ''}
@@ -660,14 +661,14 @@ export class OverlayController {
       <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
         <div class="tray-header">
           <div class="tray-title-group">
-            <span class="panel-eyebrow">BATTLE ANALYSIS</span>
-            <h2 class="panel-title">战斗数据详情</h2>
+            <span class="panel-eyebrow">这一局</span>
+            <h2 class="panel-title">怎么打到这里的</h2>
           </div>
         </div>
 
         <div class="result-details-content">
           <div class="result-details-section">
-            <h3 class="detail-section-title">本局摘要</h3>
+            <h3 class="detail-section-title">这局怎么停下来的</h3>
             <div class="detail-summary-stack">
               <div class="detail-summary-card">
                 <strong>${result.summary}</strong>
@@ -681,7 +682,7 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">异常转折</h3>
+            <h3 class="detail-section-title">转折点</h3>
             <div class="detail-anomaly-strip">
               <span><small>方向件</small><strong>${anomalyRoleCounts.direction}</strong></span>
               <span><small>核心件</small><strong>${anomalyRoleCounts.core}</strong></span>
@@ -694,14 +695,14 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">本局选择记录</h3>
+            <h3 class="detail-section-title">拿过哪些关键件</h3>
             <div class="detail-timeline-scroll">
               ${upgradeTimeline}
             </div>
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">📈 本局数据</h3>
+            <h3 class="detail-section-title">📈 这一局的数据</h3>
             <div class="detail-stats-grid">
               <div class="detail-stat-card">
                 <span>存活时间</span>
@@ -731,19 +732,19 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">🏆 历史对比</h3>
+            <h3 class="detail-section-title">🏆 过去的对照</h3>
             <div class="detail-placeholder">
               <div class="placeholder-icon">📊</div>
-              <p><strong>历史最佳对比</strong></p>
-              <small>本局暂未记录历史对比</small>
+              <p><strong>暂时没有对照局</strong></p>
+              <small>这局还没有可对照的旧记录</small>
             </div>
           </div>
         </div>
 
         <div class="result-details-actions">
           <button class="text-action text-action-primary" data-action="close">
-            <span>关闭详情</span>
-            <small>返回结算页面</small>
+            <span>收起复盘</span>
+            <small>回到结算页</small>
           </button>
         </div>
       </section>
@@ -952,7 +953,7 @@ export class OverlayController {
       <button class="choice-strip choice-strip-node" style="--choice-accent: ${accent}" data-choice="${node.id}">
         <div class="choice-node-top">
           <span class="choice-mode-badge choice-node-mode">${NODE_TYPE_LABEL_MAP[node.type]}</span>
-          <span class="choice-node-step">下一步</span>
+          <span class="choice-node-step">接下来</span>
         </div>
         <div class="choice-strip-body choice-strip-body-node">
           <strong>${node.title}</strong>
@@ -1065,7 +1066,7 @@ export class OverlayController {
     const routeAccent = this.getEventChoiceAccent(eventDef, option);
     const routeRef = this.getEventRouteReference(eventDef, option);
     const routeLabel = this.getEventRouteLabel(routeRef, eventDef);
-    const prompt = isAnomaly ? '处理' : '执行';
+    const prompt = isAnomaly ? '接' : '选';
     const anomalyClass = eventDef.contentKind === 'anomaly' ? ' is-anomaly-event' : '';
     const effectText = this.getEventOptionDescription(eventDef, option);
     const actionLabel = this.getEventChoiceActionLabel(eventDef, option);
@@ -1104,7 +1105,7 @@ export class OverlayController {
           <span class="choice-route-boost ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${actionLabel}</span>
           <div class="choice-foot-trail">
             <span class="choice-side-label">${prompt}</span>
-            <span class="choice-prompt">确认</span>
+            <span class="choice-prompt">就这个</span>
           </div>
         </div>
       </button>
@@ -1193,10 +1194,10 @@ export class OverlayController {
       return node.description;
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '拿完直接进 Boss' : '补 1 项强化再继续';
+      return node.isFinalPrep ? '拿完直接进 Boss' : '先补一项强化再继续';
     }
     if (node.type === 'anomaly') {
-      return '做一次异常处理';
+      return '接一次异常转折';
     }
     if (node.type === 'boss') {
       return '直接进入首领战';
@@ -1209,10 +1210,10 @@ export class OverlayController {
       return getBattleEncounterLabel(node.templateId ?? 'elimination');
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '最终整备' : '补 1 项强化';
+      return node.isFinalPrep ? '最终整备' : '补一手强化';
     }
     if (node.type === 'anomaly') {
-      return '处理异常';
+      return '异常转折';
     }
     return '首领战';
   }
@@ -1235,13 +1236,13 @@ export class OverlayController {
   private getAnomalyRoleActionLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '接入方向件';
+        return '接方向件';
       case 'core':
-        return '接入核心件';
+        return '接核心件';
       case 'transform':
-        return '接入质变件';
+        return '接质变件';
       case 'finisher':
-        return '接入收尾件';
+        return '接收尾件';
       default:
         return '';
     }
@@ -1265,7 +1266,7 @@ export class OverlayController {
   private getEventRouteLabel(routeId: RouteReference | undefined, eventDef: EventDefinition): string {
     if (!routeId || routeId === 'dominant') {
       if (eventDef.contentKind !== 'anomaly') {
-        return '当前处理';
+        return '当前这步';
       }
       switch (eventDef.anomalyClass) {
         case 'hybrid':
@@ -1501,11 +1502,11 @@ export class OverlayController {
   private getRouteTooltip(routeId?: RouteReference): string {
     switch (routeId) {
       case 'crit':
-        return '暴击流：子弹有几率造成更高伤害。';
+        return '暴击流：更容易打出爆点。';
       case 'pierce':
-        return '穿透流：子弹可穿过敌人，命中后方目标。';
+        return '穿透流：子弹会一路往后穿。';
       case 'dash':
-        return '穿梭流：自动闪动并释放近身范围攻击。';
+        return '穿梭流：贴身一闪，顺手打一圈。';
       default:
         return '';
     }
@@ -1513,14 +1514,14 @@ export class OverlayController {
 
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
-      暴击: '子弹命中时有几率造成更高伤害。',
-      爆伤: '暴击时的伤害倍数。',
-      穿透: '子弹穿过敌人后继续向后飞行，可命中后方目标。',
-      穿梭: '自动触发的短距离闪动，同时释放近身范围攻击。',
-      脉冲: '穿梭触发时的范围伤害。',
-      无伤: '穿梭触发后的短暂无敌时间。',
+      暴击: '命中时更容易打出高伤。',
+      爆伤: '暴击时打得更狠。',
+      穿透: '子弹穿过去后还能继续飞。',
+      穿梭: '自动闪一下，顺手打一圈。',
+      脉冲: '穿梭触发的范围伤害。',
+      无伤: '穿梭后的短暂无敌。',
       扩面: '同时发射更多子弹。',
-      射速: '开火速度更快。',
+      射速: '开火更快。',
     };
     return tooltipMap[label] ?? '';
   }
@@ -1561,7 +1562,7 @@ export class OverlayController {
 
   private getEventChoiceActionLabel(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
     if (eventDef.contentKind !== 'anomaly') {
-      return '执行';
+      return '选这个';
     }
 
     const anomalyRoleLabel = this.getAnomalyRoleActionLabel(option.anomalyRole);
@@ -1572,9 +1573,9 @@ export class OverlayController {
         return anomalyRoleLabel;
       }
       if (routeRef && eventDef.routeAffinity && routeRef !== eventDef.routeAffinity) {
-        return '确认切换';
+        return '切到这条';
       }
-      return routeSummary ? '继续当前流派' : '保持选择';
+      return routeSummary ? '继续这条线' : '先不动';
     }
 
     if (eventDef.anomalyClass === 'hybrid') {
@@ -1586,7 +1587,7 @@ export class OverlayController {
     }
 
     const hasPressure = option.effects?.some((effect) => effect.type === 'heal' && effect.amount < 0);
-    return hasPressure ? '承受压力' : '执行异常';
+    return hasPressure ? '承受压力' : '接这个转折';
   }
 
   private getEventChoiceTags(eventDef: EventDefinition, option: EventDefinition['options'][number]): string[] {
@@ -1638,9 +1639,9 @@ export class OverlayController {
       return '这局还没有形成明确路线。';
     }
 
-    const routeName = ROUTE_NAME_MAP[result.routeId];
     const anomalyRoleCounts = this.getAnomalyRoleCounts(result.eventHistory ?? []);
-    const chronology = this.getResultAnomalyChronology(result);
+    const turnRecord = this.getResultAnomalyTurnRecord(result);
+    const chronology = this.getResultAnomalyChronology(result, turnRecord);
     const anomalyParts: string[] = [];
     if (anomalyRoleCounts.direction > 0) {
       anomalyParts.push(`方向 ${anomalyRoleCounts.direction}`);
@@ -1654,63 +1655,109 @@ export class OverlayController {
     if (anomalyRoleCounts.finisher > 0) {
       anomalyParts.push(`收尾 ${anomalyRoleCounts.finisher}`);
     }
-    const stageTail =
-      result.outcome === 'victory'
-        ? result.routeId === 'pierce'
-          ? result.buildStage === 'matured'
-            ? '已经打穿了。'
-            : result.buildStage === 'committed'
-              ? '已经进入拆线。'
-              : result.buildStage === 'hinted'
-                ? '已经有方向了。'
-                : '还没真正站稳。'
-          : result.buildStage === 'matured'
-            ? '已经打穿了。'
-            : result.buildStage === 'committed'
-              ? '已经开始成型了。'
-              : result.buildStage === 'hinted'
-                ? '已经有方向了。'
-                : '还没真正站稳。'
-        : result.routeId === 'pierce'
-          ? result.buildStage === 'matured'
-            ? `已经打穿了，但最后没守住，停在「${result.finalNodeTitle}」。`
-            : result.buildStage === 'committed'
-              ? `已经拆线了，但最后没打穿，停在「${result.finalNodeTitle}」。`
-              : result.buildStage === 'hinted'
-                ? `有方向但还没成型，停在「${result.finalNodeTitle}」。`
-                : `还没真正站稳，停在「${result.finalNodeTitle}」。`
-          : result.buildStage === 'matured' || result.buildStage === 'committed'
-            ? `但最后没兑现，停在「${result.finalNodeTitle}」。`
-            : `但还没真正站稳，停在「${result.finalNodeTitle}」。`;
-
-    const parts = [`这局走的是${routeName}线，${stageTail}`];
+    const parts: string[] = [];
     if (chronology) {
       parts.push(chronology);
     }
     if (anomalyParts.length > 0) {
       parts.push(`异常节点：${anomalyParts.join(' / ')}`);
     }
-    return parts.join(' ');
+    if (result.outcome !== 'victory' && result.finalNodeTitle) {
+      parts.push(`停在「${result.finalNodeTitle}」`);
+    }
+    return parts.length > 0 ? parts.join('；') : '这局没有特别明显的异常转折。';
   }
 
-  private getResultAnomalyChronology(result: RunResult): string {
+  private getResultAnomalyChronology(
+    result: RunResult,
+    turnRecord?: NonNullable<RunResult['eventHistory']>[number] | null,
+  ): string {
     const routeId = result.routeId;
     if (!routeId) {
       return '';
     }
 
-    const anomalyHistory = (result.eventHistory ?? []).filter((record) => record.anomalyClass);
+    const anomalyHistory = (result.eventHistory ?? []).filter((record) => {
+      if (!record.anomalyClass) {
+        return false;
+      }
+      const activeRouteId = record.routeId ?? routeId;
+      return activeRouteId === routeId;
+    });
     if (anomalyHistory.length === 0) {
       return '';
     }
 
-    return anomalyHistory
-      .slice(0, 2)
+    const primaryRecord = turnRecord ?? this.getResultAnomalyTurnRecord(result);
+    const keyRecords: NonNullable<RunResult['eventHistory']>[number][] = [];
+    const addRecord = (record?: NonNullable<RunResult['eventHistory']>[number] | null) => {
+      if (record && !keyRecords.includes(record)) {
+        keyRecords.push(record);
+      }
+    };
+
+    addRecord(anomalyHistory[0]);
+    addRecord(primaryRecord);
+    addRecord(anomalyHistory[anomalyHistory.length - 1]);
+
+    return keyRecords
       .map((record, index) => {
         const nodeIndex = record.nodeIndex ?? index + 1;
-        return `第 ${nodeIndex} 节点：${this.describeResultAnomalyPush(routeId, record, result.buildStage, result.outcome)}`;
+        const turnPointLabel = record === primaryRecord ? '（转折点）' : '';
+        return `第 ${nodeIndex} 节点${turnPointLabel}${this.describeResultAnomalyPush(routeId, record, result.buildStage, result.outcome)}`;
       })
       .join('；');
+  }
+
+  private getResultAnomalyTurnRecord(
+    result: RunResult,
+  ): NonNullable<RunResult['eventHistory']>[number] | null {
+    if (!result.routeId) {
+      return null;
+    }
+
+    const anomalyHistory = (result.eventHistory ?? []).filter((record) => {
+      if (!record.anomalyClass) {
+        return false;
+      }
+      const activeRouteId = record.routeId ?? result.routeId;
+      return activeRouteId === result.routeId;
+    });
+    if (anomalyHistory.length === 0) {
+      return null;
+    }
+
+    const roleRank = (record: NonNullable<RunResult['eventHistory']>[number]): number => {
+      if (record.anomalyClass === 'bossEcho') {
+        return 5;
+      }
+      if (record.anomalyClass === 'hybrid') {
+        return 4;
+      }
+
+      switch (record.anomalyRole) {
+        case 'finisher':
+          return 4;
+        case 'transform':
+          return 3;
+        case 'core':
+          return 2;
+        case 'direction':
+          return 1;
+        default:
+          return 0;
+      }
+    };
+
+    return [...anomalyHistory].sort((left, right) => {
+      const roleDiff = roleRank(right) - roleRank(left);
+      if (roleDiff !== 0) {
+        return roleDiff;
+      }
+      const leftIndex = left.nodeIndex ?? Number.MAX_SAFE_INTEGER;
+      const rightIndex = right.nodeIndex ?? Number.MAX_SAFE_INTEGER;
+      return leftIndex - rightIndex;
+    })[0] ?? null;
   }
 
   private describeResultAnomalyPush(
@@ -1721,11 +1768,11 @@ export class OverlayController {
   ): string {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}收尾预演到手，但还没完全兑现`;
+      return `${routeName}收尾预演到了，但还差最后一口`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}转折到位，把路往成型那边推了一层`;
+      return `${routeName}转折到位，路往成型那边推了一层`;
     }
 
     const roleMap: Record<AnomalyRoleId, { from: string; to: string }> = {
@@ -1750,14 +1797,74 @@ export class OverlayController {
     const role = record.anomalyRole ?? 'direction';
     const lane = roleMap[role];
     if (lane.from && lane.to) {
-      return `异常转折，把${routeName}从${lane.from}推到${lane.to}`;
+      return `把${routeName}从${lane.from}推到${lane.to}`;
     }
 
-    if (outcome !== 'victory' && (buildStage === 'matured' || buildStage === 'committed')) {
-      return `${routeName}拿到了关键件，但最后一段还是没兑现`;
+    if (outcome !== 'victory') {
+      if (routeId === 'pierce') {
+        if (buildStage === 'matured') {
+          return `${routeName}已经打穿了，但收尾没守住`;
+        }
+        if (buildStage === 'committed') {
+          return `${routeName}已经拆线了，但最后没打穿`;
+        }
+        if (buildStage === 'hinted') {
+          return `${routeName}有方向了，但还没拆开前排`;
+        }
+      }
+      if (buildStage === 'matured' || buildStage === 'committed') {
+        return `${routeName}拿到了关键件，但最后一段还是没兑现`;
+      }
     }
 
     return `${routeName}往前推了一层`;
+  }
+
+  private getResultFailureReason(
+    result: RunResult,
+    turnRecord?: NonNullable<RunResult['eventHistory']>[number] | null,
+  ): string {
+    if (!result.routeId || result.outcome === 'victory') {
+      return '';
+    }
+
+    const anomalyCounts = this.getAnomalyRoleCounts(result.eventHistory ?? []);
+    const primaryRecord = turnRecord ?? this.getResultAnomalyTurnRecord(result);
+    const turnNodeIndex = primaryRecord?.nodeIndex ?? (result.eventHistory ?? []).find((record) => record.anomalyClass)?.nodeIndex ?? 0;
+    const isLateTurn = turnNodeIndex >= 5;
+    const hasFinisherSupport =
+      anomalyCounts.finisher > 0 ||
+      (result.selectedUpgrades ?? []).some((upgrade) => upgrade.tags?.includes('finisher') || upgrade.tags?.includes('payoff'));
+
+    if (result.routeId === 'pierce') {
+      if (isLateTurn) {
+        return '异常来得偏晚，前面那一下没把局面推开';
+      }
+      if (result.buildStage === 'matured') {
+        return hasFinisherSupport ? '已经进入打穿阶段，但收割不稳' : '已经打穿了，但收尾件没来';
+      }
+      if (result.buildStage === 'committed') {
+        return hasFinisherSupport ? '已经拆线了，但火力还差一口' : '已经拆线了，但最后没打穿';
+      }
+      if (result.buildStage === 'hinted') {
+        return '有方向了，但还没拆开前排';
+      }
+      return '这局还差一层关键件';
+    }
+
+    if (isLateTurn) {
+      return '异常来得偏晚，局面没来得及推起来';
+    }
+    if (result.buildStage === 'matured') {
+      return '已经成型了，但最后没守住';
+    }
+    if (result.buildStage === 'committed') {
+      return '已经接上了，但爆点还差一口';
+    }
+    if (result.buildStage === 'hinted') {
+      return '有方向了，但成型还不够快';
+    }
+    return '这局还差一层关键件';
   }
 
   private getRouteLayerLabel(routeId: NonNullable<RunResult['routeId']>, role?: AnomalyRoleId): string {

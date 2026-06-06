@@ -134,11 +134,11 @@ function getBuildStageLabel(buildStage: RouteBuildStage): string {
 function getEndingLabel(endingKind: RunEndingKind): string {
   switch (endingKind) {
     case 'hpDepleted':
-      return '耐久归零';
+      return '机体撑不住了';
     case 'timeOut':
-      return '压力失守';
+      return '压力没顶住';
     default:
-      return '完成试飞';
+      return '打完了';
   }
 }
 
@@ -2318,9 +2318,16 @@ export class RunEngine {
     const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
     const finalNodeType = this.state.currentNode?.type ?? null;
     const endingReason = this.getEndingReason(endingKind, finalNodeTitle);
-    const summary = this.getResultSummary(outcome, routeId, buildStage, replayProfile);
+    const summary = this.getResultSummary(outcome, routeId, buildStage, replayProfile, [...this.state.eventHistory]);
     const routeTrace = this.buildRouteTrace();
-    const replayPrompt = this.getReplayPrompt(outcome, routeId, buildStage, endingKind, replayProfile);
+    const replayPrompt = this.getReplayPrompt(
+      outcome,
+      routeId,
+      buildStage,
+      endingKind,
+      replayProfile,
+      [...this.state.eventHistory],
+    );
     const runDurationSec = Number(((performance.now() - this.runStartedAtMs) / 1000).toFixed(2));
     const nodesCleared = Math.min(this.state.round, this.state.totalRounds);
     this.state.status = 'result';
@@ -2389,45 +2396,110 @@ export class RunEngine {
     eventHistory: PickedEventRecord[],
   ): string {
     if (!routeId) {
-      return '本局还没有形成清晰打法';
+      return '还没摸到路子';
     }
 
-    const routeLine = this.getRouteStageNarrative(routeId, buildStage);
-    const chronology = this.getAnomalyChronology(routeId, eventHistory);
-    const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
-    const failureTail =
-      outcome === 'victory'
-        ? ''
-        : buildStage === 'matured' || buildStage === 'committed'
-          ? ' 但最后一段还是没兑现。'
-          : ' 但这把还没真正站稳。';
-    const parts = [routeLine];
-    if (chronology) {
-      parts.push(chronology);
+    const stageLabel = this.getRouteStageLabel(routeId, buildStage);
+    if (outcome === 'victory') {
+      return `已经走到${stageLabel}`;
     }
-    if (anomalyRecap) {
-      parts.push(anomalyRecap);
+
+    if (routeId === 'pierce') {
+      if (buildStage === 'matured') {
+        return `已经走到${stageLabel}，收尾差一口`;
+      }
+      if (buildStage === 'committed') {
+        return `已经走到${stageLabel}，后排还差一层`;
+      }
+      if (buildStage === 'hinted') {
+        return `已经摸到${stageLabel}，前排还没拆开`;
+      }
     }
-    if (failureTail) {
-      parts.push(failureTail.trim());
+
+    if (buildStage === 'matured') {
+      return `已经走到${stageLabel}，最后没守住`;
     }
-    return parts.join(' ');
+    if (buildStage === 'committed') {
+      return `已经走到${stageLabel}，最后差一口`;
+    }
+    if (buildStage === 'hinted') {
+      return `已经摸到${stageLabel}，还没真正站稳`;
+    }
+    return `还在${stageLabel}前面晃`;
   }
 
   private getAnomalyChronology(routeId: RouteId, eventHistory: PickedEventRecord[]): string {
-    const anomalyHistory = eventHistory.filter((record) => record.anomalyClass);
+    const anomalyHistory = eventHistory.filter((record) => {
+      if (!record.anomalyClass) {
+        return false;
+      }
+      const activeRouteId = record.routeId ?? routeId;
+      return activeRouteId === routeId;
+    });
     if (anomalyHistory.length === 0) {
       return '';
     }
 
-    const keyRecords = anomalyHistory.slice(0, 2);
+    const primaryRecord = this.getPrimaryAnomalyRecord(routeId, anomalyHistory);
+    const keyRecords: PickedEventRecord[] = [];
+    const addRecord = (record?: PickedEventRecord | null) => {
+      if (record && !keyRecords.includes(record)) {
+        keyRecords.push(record);
+      }
+    };
+
+    addRecord(anomalyHistory[0]);
+    addRecord(primaryRecord);
+    addRecord(anomalyHistory[anomalyHistory.length - 1]);
+
     return keyRecords
       .map((record, index) => {
         const nodeIndex = record.nodeIndex ?? index + 1;
         const detail = this.getAnomalyChronologyDetail(routeId, record);
-        return `第 ${nodeIndex} 节点：${detail}`;
+        const turnPointLabel = record === primaryRecord ? '（转折点）' : '';
+        return `第 ${nodeIndex} 节点${turnPointLabel}：${detail}`;
       })
       .join('；');
+  }
+
+  private getPrimaryAnomalyRecord(routeId: RouteId, eventHistory: PickedEventRecord[]): PickedEventRecord | null {
+    if (eventHistory.length === 0) {
+      return null;
+    }
+
+    const roleRank = (record: PickedEventRecord): number => {
+      if (record.anomalyClass === 'bossEcho') {
+        return 5;
+      }
+      if (record.anomalyClass === 'hybrid') {
+        return 4;
+      }
+
+      switch (record.anomalyRole) {
+        case 'finisher':
+          return 4;
+        case 'transform':
+          return 3;
+        case 'core':
+          return 2;
+        case 'direction':
+          return 1;
+        default:
+          return 0;
+      }
+    };
+
+    return [...eventHistory]
+      .filter((record) => (record.routeId ?? routeId) === routeId)
+      .sort((left, right) => {
+        const roleDiff = roleRank(right) - roleRank(left);
+        if (roleDiff !== 0) {
+          return roleDiff;
+        }
+        const leftIndex = left.nodeIndex ?? Number.MAX_SAFE_INTEGER;
+        const rightIndex = right.nodeIndex ?? Number.MAX_SAFE_INTEGER;
+        return leftIndex - rightIndex;
+      })[0] ?? null;
   }
 
   private getAnomalyChronologyDetail(routeId: RouteId, record: PickedEventRecord): string {
@@ -2435,11 +2507,11 @@ export class RunEngine {
     const routeName = ROUTE_NAME_MAP[activeRouteId];
 
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}收尾预演到手，但还没完全兑现`;
+      return `${routeName}提前摸到了收尾手，但还没完全打出来`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}转折到位，把路往成型那边推了一层`;
+      return `${routeName}在这里拐了个弯，整条线顺了不少`;
     }
 
     const fromLayer = this.getRouteLayerLabel(activeRouteId, record.anomalyRole);
@@ -2449,10 +2521,10 @@ export class RunEngine {
     }
 
     if (record.anomalyRole === 'finisher') {
-      return `${routeName}收尾件接上了`;
+      return `${routeName}的收尾手接上了`;
     }
 
-    return `${routeName}推进了一层`;
+    return `${routeName}又往前走了一步`;
   }
 
   private getRouteLayerLabel(routeId: RouteId, role?: AnomalyRoleId): string {
@@ -2522,11 +2594,11 @@ export class RunEngine {
   private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
     switch (endingKind) {
       case 'hpDepleted':
-        return `${finalNodeTitle}中机体耐久归零`;
+        return `${finalNodeTitle}这关把机体磨没了`;
       case 'timeOut':
-        return `${finalNodeTitle}的压力没能顶住`;
+        return `${finalNodeTitle}这一段压力没顶住`;
       default:
-        return `${finalNodeTitle}已完成收束`;
+        return `${finalNodeTitle}这一局打完了`;
     }
   }
 
@@ -2536,39 +2608,117 @@ export class RunEngine {
       case 'crit':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始起势了：先盯住爆点。`;
+            return `${routeName}起势了，先盯住爆点`;
           case 'committed':
-            return `${routeName}开始成型了：窗口已经接上。`;
+            return `${routeName}开始成型，爆点已经接上`;
           case 'matured':
-            return `${routeName}已经收口了：现在就是点爆口。`;
+            return `${routeName}已经收口，等着点爆`;
           default:
-            return `${routeName}还没站稳。`;
+            return `${routeName}还没站稳`;
         }
       case 'pierce':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始起势了：先找一条能贯通的路。`;
+            return `${routeName}起势了，先找一条能打穿的路`;
           case 'committed':
-            return `${routeName}开始拆线了：前排会往后排让路。`;
+            return `${routeName}开始拆线，前排已经在让路`;
           case 'matured':
-            return `${routeName}已经打穿了：一条线会一路穿过去，后排会自己掉。`;
+            return `${routeName}已经打穿，后排会跟着掉`;
           default:
-            return `${routeName}还没站稳。`;
+            return `${routeName}还没站稳`;
         }
       case 'dash':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始起势了：先把换位接上。`;
+            return `${routeName}起势了，先把换位接上`;
           case 'committed':
-            return `${routeName}开始成型了：节奏会更顺。`;
+            return `${routeName}开始成型，节奏已经顺了`;
           case 'matured':
-            return `${routeName}已经成型：贴身就能收割。`;
+            return `${routeName}已经能收割，贴身就有回响`;
           default:
-            return `${routeName}还没站稳。`;
+            return `${routeName}还没站稳`;
         }
       default:
-        return `${routeName}已成型。`;
+        return `${routeName}已成型`;
     }
+  }
+
+  private getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
+    const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
+      crit: {
+        unformed: '未成线',
+        hinted: '起势',
+        committed: '成型',
+        matured: '收口',
+      },
+      pierce: {
+        unformed: '未成线',
+        hinted: '找线',
+        committed: '拆线',
+        matured: '打穿',
+      },
+      dash: {
+        unformed: '未成线',
+        hinted: '起势',
+        committed: '回切',
+        matured: '收割',
+      },
+    };
+
+    return labelMap[routeId][buildStage];
+  }
+
+  private getRouteFailureReason(
+    routeId: RouteId,
+    buildStage: RouteBuildStage,
+    outcome: RunOutcome,
+    replayProfile: ReplayProfile,
+    eventHistory: PickedEventRecord[],
+  ): string {
+    if (outcome === 'victory') {
+      return '';
+    }
+
+    const anomalyHistory = eventHistory.filter((record) => (record.routeId ?? routeId) === routeId && record.anomalyClass);
+    const primaryRecord = this.getPrimaryAnomalyRecord(routeId, anomalyHistory);
+    const turnNodeIndex = primaryRecord?.nodeIndex ?? anomalyHistory[0]?.nodeIndex ?? 0;
+    const isLateTurn = turnNodeIndex >= 5;
+
+    if (routeId === 'pierce') {
+      if (isLateTurn) {
+        return '异常来得偏晚，前面那一下没把局面推开。';
+      }
+      if (buildStage === 'matured') {
+        if (replayProfile.anomalyFinisherHits === 0) {
+          return '已经打穿了，但收尾件没来。';
+        }
+        return '已经进入打穿阶段，但收割不稳。';
+      }
+      if (buildStage === 'committed') {
+        if (replayProfile.anomalyFinisherHits === 0) {
+          return '已经拆线了，但最后没打穿。';
+        }
+        return '已经拆线了，但火力还差一口。';
+      }
+      if (buildStage === 'hinted') {
+        return '有方向了，但还没拆开前排。';
+      }
+      return '这局还差一层关键件。';
+    }
+
+    if (isLateTurn) {
+      return '异常来得偏晚，局面没来得及推起来。';
+    }
+    if (buildStage === 'matured') {
+      return '已经成型了，但最后没守住。';
+    }
+    if (buildStage === 'committed') {
+      return '已经接上了，但爆点还差一口。';
+    }
+    if (buildStage === 'hinted') {
+      return '有方向了，但成型还不够快。';
+    }
+    return '这局还差一层关键件。';
   }
 
   private queueRouteMoment(routeId: RouteId, text: string): void {
@@ -2578,7 +2728,7 @@ export class RunEngine {
 
     this.state.routeMomentRouteId = routeId;
     this.state.routeMomentText = text;
-    this.state.routeMomentSec = 2;
+    this.state.routeMomentSec = 2.6;
   }
 
   private getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'bridge' | 'payoff'): string {
@@ -2601,7 +2751,7 @@ export class RunEngine {
           case 'bridge':
             return '穿透线开始拆线了';
           case 'payoff':
-            return '穿透线已经打穿前排了';
+            return '穿透线已经打穿了';
           default:
             return '穿透线有动静了';
         }
@@ -2669,54 +2819,22 @@ export class RunEngine {
     buildStage: RouteBuildStage,
     endingKind: RunEndingKind,
     replayProfile: ReplayProfile,
+    eventHistory: PickedEventRecord[],
   ): string {
     if (!routeId) {
-      return '再来一局先稳住前几场战斗，打法会更容易成型。';
+      return '这局还没有形成清晰打法';
     }
 
-    const routeLine = this.getRouteStageNarrative(routeId, buildStage);
-    const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
+    const finalNodeTitle = this.state.currentNode?.title ?? getPhaseLabel(this.state.phase);
     if (outcome === 'victory') {
-      const routeAdvice =
-        routeId === 'crit'
-          ? '下局可以把爆点再提前一拍，先把预热和收口接稳。'
-          : routeId === 'pierce'
-            ? '下局可以把贯通桥件再提前一点，让后排更早掉。'
-            : '下局可以把换位节奏再提前一点，让收割更顺。';
-      return anomalyRecap ? `${routeLine} ${anomalyRecap} ${routeAdvice}` : `${routeLine} ${routeAdvice}`;
+      return `收在「${finalNodeTitle}」`;
     }
 
-    if (endingKind === 'timeOut') {
-      const routeAdvice =
-        routeId === 'crit'
-          ? '下局优先补收口和容错。'
-          : routeId === 'pierce'
-            ? '下局优先补贯通和后排处理。'
-            : '下局优先补换位和收尾。';
-      return anomalyRecap
-        ? `${routeLine} 但最后一段压力还没顶住。${anomalyRecap} ${routeAdvice}`
-        : `${routeLine} 但最后一段压力还没顶住。${routeAdvice}`;
+    if (endingKind === 'timeOut' || outcome === 'defeat') {
+      return `停在「${finalNodeTitle}」`;
     }
-    if (buildStage === 'matured' || buildStage === 'committed') {
-      const routeAdvice =
-        routeId === 'crit'
-          ? '下局注意精英和 Boss 的安全窗口。'
-          : routeId === 'pierce'
-            ? '下局注意别让最后一段线被掐断。'
-            : '下局注意贴身时机和回切节奏。';
-      return anomalyRecap
-        ? `${routeLine} 但这局被打断了。${anomalyRecap} ${routeAdvice}`
-        : `${routeLine} 但这局被打断了。${routeAdvice}`;
-    }
-    const routeAdvice =
-      routeId === 'crit'
-        ? '下局早点补爆点方向件。'
-        : routeId === 'pierce'
-          ? '下局早点补贯通桥件。'
-          : '下局早点补反打件。';
-    return anomalyRecap
-      ? `${routeLine} 这局先被打断了。${anomalyRecap} ${routeAdvice}`
-      : `${routeLine} 这局先被打断了。${routeAdvice}`;
+
+    return ROUTE_NAME_MAP[routeId];
   }
 
   private getResultSummary(
@@ -2724,27 +2842,27 @@ export class RunEngine {
     routeId: RouteId | null,
     buildStage: RouteBuildStage,
     replayProfile: ReplayProfile,
+    eventHistory: PickedEventRecord[],
   ): string {
     if (!routeId) {
-      return outcome === 'victory' ? '这轮试飞已经顺利完成。' : '这局打法还没站稳，就先被打断了。';
+      return outcome === 'victory' ? '这局顺顺当当打完了' : '这局还没站稳就被打断了';
     }
 
-    const routeLine = this.getRouteStageNarrative(routeId, buildStage);
-    const anomalyRecap = this.getAnomalyRoleRecap(replayProfile);
     if (outcome === 'victory') {
-      if (routeId === 'pierce') {
-        return anomalyRecap ? `${routeLine} 已经把前排拆开了，后排也跟着掉了。${anomalyRecap}` : `${routeLine} 已经把前排拆开了，后排也跟着掉了。`;
+      switch (routeId) {
+        case 'crit':
+          return '暴击线已经收口';
+        case 'pierce':
+          return '穿透线已经打通';
+        case 'dash':
+          return '穿梭线已经跑顺';
+        default:
+          return '这条线已经跑顺';
       }
-      return anomalyRecap ? `${routeLine} ${anomalyRecap}` : routeLine;
     }
 
-    if (buildStage === 'matured' || buildStage === 'committed') {
-      if (routeId === 'pierce') {
-        return anomalyRecap ? `${routeLine}，但最后一段线还是被掐断了。${anomalyRecap}` : `${routeLine}，但最后一段线还是被掐断了。`;
-      }
-      return anomalyRecap ? `${routeLine}，但这局还是在最后被打断了。${anomalyRecap}` : `${routeLine}，但这局还是在最后被打断了。`;
-    }
-    return anomalyRecap ? `${routeLine}，这局就先被打断了。${anomalyRecap}` : `${routeLine}，这局就先被打断了。`;
+    const routeName = ROUTE_NAME_MAP[routeId];
+    return `${routeName}线停住了`;
   }
 
   private getSelectedUpgradeArchetypes(): UpgradeArchetype[] {
@@ -3045,8 +3163,8 @@ export class RunEngine {
     > = {
       pierceSeamkeep: { routeId: 'pierce', text: '穿透线起势了', priority: 1 },
       pierceFloodgate: { routeId: 'pierce', text: '穿透线开始拆线了', priority: 2 },
-      pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经打穿前排了', priority: 3 },
-      piercePrism: { routeId: 'pierce', text: '穿透线已经打穿前排了', priority: 4 },
+      pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经打穿了', priority: 3 },
+      piercePrism: { routeId: 'pierce', text: '穿透线已经打穿了', priority: 4 },
       dashBrush: { routeId: 'dash', text: '穿梭线起势了', priority: 1 },
       dashSidestepBank: { routeId: 'dash', text: '穿梭线开始回切了', priority: 2 },
       dashZeroWindow: { routeId: 'dash', text: '穿梭线开始收口了', priority: 3 },

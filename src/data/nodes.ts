@@ -139,7 +139,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '方向定标',
-        description: '强化当前流派',
+        description: '顺着这条线再往前推一手',
         selection: {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
@@ -155,7 +155,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '机体整备',
-        description: '提升生存和机动',
+        description: '把机体稳一稳，顺手补点机动',
         selection: {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.78,
@@ -170,8 +170,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event',
         type: 'anomaly',
         phase: 'opening',
-        title: '系统改写',
-        description: '改变玩法的特殊事件',
+        title: '局面改写',
+        description: '这一步会把局面拐一下',
         selection: {
           baseWeight: 1.8,
           soloMultiplier: 0.25,
@@ -197,7 +197,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '流派混接',
-        description: '改变流派之间的配合',
+        description: '让不同流派接得更顺',
         selection: {
           baseWeight: 1.45,
           soloMultiplier: 0.2,
@@ -378,7 +378,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '方向定标',
-        description: '强化当前流派',
+        description: '顺着这条线再往前推一手',
         selection: {
           baseWeight: 3.8,
           soloMultiplier: 0.92,
@@ -391,7 +391,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '机体整备',
-        description: '提升生存和机动',
+        description: '把机体稳一稳，顺手补点机动',
         selection: {
           baseWeight: 3.4,
           soloMultiplier: 0.9,
@@ -465,8 +465,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event',
         type: 'anomaly',
         phase: 'mid',
-        title: '系统改写',
-        description: '改变玩法的特殊事件',
+        title: '局面改写',
+        description: '这一步会把局面拐一下',
         selection: {
           baseWeight: 2.9,
           soloMultiplier: 0.45,
@@ -882,7 +882,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '方向定标',
-        description: '强化当前流派',
+        description: '顺着这条线再往前推一手',
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.82,
