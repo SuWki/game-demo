@@ -2535,15 +2535,25 @@ export class RunEngine {
     };
     const sample = this.getQaSmokeAnomalySample(routeId, requestedRole);
     const eventDef = this.getQaSmokeEventDefinition(sample.eventId);
+    const tripletOptionIds = (['direction', 'core', 'transform'] as const)
+      .map((role) => this.getQaSmokeAnomalySample(routeId, role))
+      .filter((candidate) => candidate.eventId === sample.eventId)
+      .map((candidate) => candidate.optionId);
+    const preferredOptionIds = [sample.optionId, ...tripletOptionIds.filter((optionId) => optionId !== sample.optionId)];
     this.state.currentEvent = eventDef
       ? {
           ...eventDef,
           options: [...eventDef.options].sort((left, right) => {
-            if (left.id === sample.optionId) {
-              return -1;
-            }
-            if (right.id === sample.optionId) {
-              return 1;
+            const leftOrder = preferredOptionIds.indexOf(left.id);
+            const rightOrder = preferredOptionIds.indexOf(right.id);
+            if (leftOrder !== -1 || rightOrder !== -1) {
+              if (leftOrder === -1) {
+                return 1;
+              }
+              if (rightOrder === -1) {
+                return -1;
+              }
+              return leftOrder - rightOrder;
             }
             return 0;
           }),
@@ -2653,8 +2663,8 @@ export class RunEngine {
       },
       pierce: {
         direction: {
-          eventId: 'route-handoff',
-          optionId: 'route-handoff-pierce',
+          eventId: 'pierce-reroute-window',
+          optionId: 'pierce-reroute-window-direction',
         },
         core: {
           eventId: 'pierce-reroute-window',

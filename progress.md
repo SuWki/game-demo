@@ -1768,3 +1768,19 @@ TODO
   - `consoleErrors: []`
   - `consoleWarns: []`
   - `crit / pierce` 两条路线都稳定覆盖了 `anomaly / battleBridge / battlePayoff / resultDetail`
+
+## 2026-06-07 pierce 样板收紧
+
+- 本轮没有扩 stable smoke 基建，也没有碰 `nodes.ts` / `battleTemplates.ts`；只把 `pierce` 的样板展示层补到和 `crit` 更接近的完成度。
+- `src/data/events.ts` 给 `pierce-reroute-window` 补上了真实的 `direction` 选项 `pierce-reroute-window-direction`，现在 `pierce` 的 `direction / core / transform` 也能落在同一张真实异常页里。
+- `src/systems/RunEngine.ts` 的 QA anomaly 样板排序改成：如果同一事件里存在 `direction / core / transform`，就把这组三分法稳定排到前面，避免 `pierce` 再被混到别的转向选项后面。
+- `tools/qa-stable-smoke.mjs` 的 `pierce` triplet 映射切到同一张 `pierce-reroute-window`，summary 继续沿用已有的 `stageLevel / routeId / anomalyRole / pageSegment` 最小对账字段，没有新增新的 QA 入口。
+- 验证结果：
+  - `npm run build` 通过
+  - 预览地址：`http://127.0.0.1:4178/game-demo/`
+  - `output/qa/stable-smoke-pierce-tighten-20260607/final/summary.json`
+  - `failed404Urls: []`
+  - `consoleErrors: []`
+  - `consoleWarns: []`
+  - `crit / pierce` 两条路线继续稳定覆盖 `anomaly / battlePayoff / resultDetail`
+  - `pierce` 结果页复盘现在能稳定读到：第 1 节点钉方向，第 2 节点补核心，第 3 节点直接推到 `打穿兑现态`

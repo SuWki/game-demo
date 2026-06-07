@@ -536,6 +536,37 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       ...getAnomalyRoutePoolOptions('pierceRerouteWindow', ['crit', 'dash']),
       {
+        id: 'pierce-reroute-window-direction',
+        routeId: 'pierce',
+        label: '钉住穿透走线',
+        gameplayLabel: '方向件',
+        gainLabel: '前排更容易被拆开，后排更容易露线',
+        costLabel: '先不改打法，只把穿透主轴钉稳',
+        anomalyRole: 'direction',
+        description: '先把穿透的走线感钉住，后面每次裂口都更容易接成拆线。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              projectileSpeed: 14,
+              fireRate: 0.06,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+          {
+            type: 'route',
+            routeId: 'pierce',
+          },
+        ],
+      },
+      {
         id: 'pierce-reroute-window-hold',
         routeId: 'pierce',
         label: '先稳穿透火力',

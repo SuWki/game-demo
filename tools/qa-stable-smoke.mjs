@@ -18,34 +18,34 @@ const anomalyTripletByRoute = {
     direction: {
       eventId: 'crit-reroute-window',
       optionId: 'crit-reroute-window-direction',
-      label: '钉住暴击方向',
+      label: 'crit-direction',
     },
     core: {
       eventId: 'crit-reroute-window',
       optionId: 'crit-reroute-window-core',
-      label: '补进暴击核心',
+      label: 'crit-core',
     },
     transform: {
       eventId: 'crit-reroute-window',
       optionId: 'crit-reroute-window-transform',
-      label: '压上爆点收口',
+      label: 'crit-transform',
     },
   },
   pierce: {
     direction: {
-      eventId: 'route-handoff',
-      optionId: 'route-handoff-pierce',
-      label: '改道穿透侧频',
+      eventId: 'pierce-reroute-window',
+      optionId: 'pierce-reroute-window-direction',
+      label: 'pierce-direction',
     },
     core: {
       eventId: 'pierce-reroute-window',
       optionId: 'pierce-reroute-window-hold',
-      label: '先稳穿透火力',
+      label: 'pierce-core',
     },
     transform: {
       eventId: 'pierce-reroute-window',
       optionId: 'pierce-reroute-window-breakthrough',
-      label: '压上穿透打穿',
+      label: 'pierce-transform',
     },
   },
 };
