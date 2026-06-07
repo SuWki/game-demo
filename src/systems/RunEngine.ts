@@ -362,7 +362,7 @@ export class RunEngine {
         this.setupQaSmokeAnomalyStage(config.routeId, config.anomalyRole);
         return;
       case 'battle':
-        this.setupQaSmokeBattleStage(config.routeId);
+        this.setupQaSmokeBattleStage(config.routeId, config.battleLevel);
         return;
       case 'result':
         this.setupQaSmokeResultStage(config.routeId);
@@ -2551,8 +2551,15 @@ export class RunEngine {
       : null;
   }
 
-  private setupQaSmokeBattleStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+  private setupQaSmokeBattleStage(
+    routeId: QaSmokeScenarioConfig['routeId'],
+    requestedLevel?: QaSmokeScenarioConfig['battleLevel'],
+  ): void {
+    const battleLevel = requestedLevel ?? 'bridge';
     this.seedQaSmokeRoute(routeId);
+    if (battleLevel === 'payoff') {
+      this.applyQaSmokeResultRouteClosure(routeId);
+    }
     const templateId = routeId === 'crit' ? 'elite-lockdown' : 'elite-screen';
     const phase: DebugBattlePhaseId = 'late';
     this.restartDebugBattle(templateId, phase);
@@ -2565,17 +2572,32 @@ export class RunEngine {
     this.state.traversedNodes = [
       { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
       { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
-      { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '爆点验证' : '拆线验证' },
+      {
+        id: `qa-battle-${routeId}-${battleLevel}`,
+        type: 'battle',
+        title:
+          routeId === 'crit'
+            ? battleLevel === 'payoff'
+              ? '收口兑现'
+              : '爆点验证'
+            : battleLevel === 'payoff'
+              ? '打穿兑现'
+              : '拆线验证',
+      },
     ];
     if (routeId === 'crit') {
-      battle.critChain = 2;
-      battle.critComboStacks = 3;
-      battle.critComboDecaySec = 1.8;
-      this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
+      battle.critChain = battleLevel === 'payoff' ? 4 : 2;
+      battle.critComboStacks = battleLevel === 'payoff' ? 5 : 3;
+      battle.critComboDecaySec = battleLevel === 'payoff' ? 2.4 : 1.8;
+      battle.critFinisherReady = battleLevel === 'payoff';
+      battle.critBurstChainSec = battleLevel === 'payoff' ? 1.4 : battle.critBurstChainSec;
+      this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', battleLevel));
     } else {
-      battle.pierceFlowCount = 2;
-      battle.pierceFlowSec = 0.68;
-      this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
+      battle.pierceFlowCount = battleLevel === 'payoff' ? 4 : 2;
+      battle.pierceFlowSec = battleLevel === 'payoff' ? 1.1 : 0.68;
+      battle.pierceChainStacks = battleLevel === 'payoff' ? 3 : 2;
+      battle.pierceChainDecaySec = battleLevel === 'payoff' ? 2.2 : 1.3;
+      this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', battleLevel));
     }
   }
 
@@ -2625,8 +2647,8 @@ export class RunEngine {
           optionId: 'crit-reroute-window-core',
         },
         transform: {
-          eventId: 'crit-lock-protocol',
-          optionId: 'crit-lock-transform',
+          eventId: 'crit-reroute-window',
+          optionId: 'crit-reroute-window-transform',
         },
       },
       pierce: {
@@ -2805,6 +2827,13 @@ export class RunEngine {
     const fromLayer = this.getRouteLayerLabel(activeRouteId, record.anomalyRole);
     const toLayer = this.getRouteLayerLabel(activeRouteId, this.getNextRouteLayer(record.anomalyRole));
     if (fromLayer && toLayer) {
+      if (record.anomalyRole === 'transform') {
+        return activeRouteId === 'crit'
+          ? `异常转折，把${routeName}直接推到收口兑现态`
+          : activeRouteId === 'pierce'
+            ? `异常转折，把${routeName}直接推到打穿兑现态`
+            : `异常转折，把${routeName}从${fromLayer}推到${toLayer}`;
+      }
       return `异常转折，把${routeName}从${fromLayer}推到${toLayer}`;
     }
 

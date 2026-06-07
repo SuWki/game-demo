@@ -26,9 +26,9 @@ const anomalyTripletByRoute = {
       label: '补进暴击核心',
     },
     transform: {
-      eventId: 'crit-lock-protocol',
-      optionId: 'crit-lock-transform',
-      label: '压上红线爆发',
+      eventId: 'crit-reroute-window',
+      optionId: 'crit-reroute-window-transform',
+      label: '压上爆点收口',
     },
   },
   pierce: {
@@ -97,7 +97,8 @@ async function triggerScenario(page, config) {
 function createRouteCoverage() {
   return {
     anomaly: false,
-    battleRouteMoment: false,
+    battleBridge: false,
+    battlePayoff: false,
     resultDetail: false,
   };
 }
@@ -106,10 +107,34 @@ function pushCapture(summary, captureMeta) {
   summary.captures.push({
     routeId: captureMeta.routeId ?? null,
     stage: captureMeta.stage,
+    stageLevel: captureMeta.stageLevel ?? null,
     anomalyRole: captureMeta.anomalyRole ?? null,
     routeMomentText: captureMeta.routeMomentText ?? null,
     pageSegment: captureMeta.pageSegment,
     screenshot: captureMeta.screenshot,
+  });
+}
+
+async function captureBattleStage(page, routeId, battleLevel, routeScreenshots, routeTextChecks, routeCoverage, summary, outDir) {
+  await triggerScenario(page, { routeId, stage: 'battle', battleLevel });
+  await page.evaluate(() => window.__pilotDebug?.setConfig?.({ invulnerablePlayer: true }));
+  await waitForVisible(page.locator('.game-hud-fixed__route-moment'));
+  await page.waitForTimeout(900);
+
+  const screenshotKey = battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge';
+  const textKey = battleLevel === 'payoff' ? 'routeMomentPayoff' : 'routeMomentBridge';
+  const pageSegment = battleLevel === 'payoff' ? 'battle-route-moment-payoff' : 'battle-route-moment-bridge';
+  const filename = `${routeId}-battle-${battleLevel}.png`;
+  routeCoverage[battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge'] = true;
+  routeScreenshots[screenshotKey] = await capture(page, outDir, filename);
+  routeTextChecks[textKey] = normalize(await page.locator('.game-hud-fixed__route-moment').innerText());
+  pushCapture(summary, {
+    routeId,
+    stage: 'battle',
+    stageLevel: battleLevel,
+    routeMomentText: routeTextChecks[textKey],
+    pageSegment,
+    screenshot: routeScreenshots[screenshotKey],
   });
 }
 
@@ -215,19 +240,8 @@ export async function runStableSmoke(options = {}) {
         screenshot: routeScreenshots.anomaly,
       });
 
-      await triggerScenario(page, { routeId, stage: 'battle' });
-      await page.evaluate(() => window.__pilotDebug?.setConfig?.({ invulnerablePlayer: true }));
-      await waitForVisible(page.locator('.game-hud-fixed__route-moment'));
-      routeCoverage.battleRouteMoment = true;
-      routeScreenshots.battle = await capture(page, outDir, `${routeId}-battle-route-moment.png`);
-      routeTextChecks.routeMoment = normalize(await page.locator('.game-hud-fixed__route-moment').innerText());
-      pushCapture(summary, {
-        routeId,
-        stage: 'battle',
-        routeMomentText: routeTextChecks.routeMoment,
-        pageSegment: 'battle-route-moment',
-        screenshot: routeScreenshots.battle,
-      });
+      await captureBattleStage(page, routeId, 'bridge', routeScreenshots, routeTextChecks, routeCoverage, summary, outDir);
+      await captureBattleStage(page, routeId, 'payoff', routeScreenshots, routeTextChecks, routeCoverage, summary, outDir);
 
       await triggerScenario(page, { routeId, stage: 'result' });
       await waitForVisible(page.locator('[data-action="details"]'), 6000);
@@ -239,6 +253,7 @@ export async function runStableSmoke(options = {}) {
       pushCapture(summary, {
         routeId,
         stage: 'result',
+        stageLevel: 'payoff',
         anomalyRole: ['direction', 'core', 'transform'],
         pageSegment: 'result-detail',
         screenshot: routeScreenshots.result,

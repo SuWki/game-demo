@@ -1816,7 +1816,11 @@ export class OverlayController {
         case 'core':
           return `把${routeName}主轴拧紧，从${lane.from}推到${lane.to}`;
         case 'transform':
-          return `直接把${routeName}改成${lane.to}打法`;
+          return routeId === 'crit'
+            ? `直接把${routeName}推到收口兑现态`
+            : routeId === 'pierce'
+              ? `直接把${routeName}推到打穿兑现态`
+              : `直接把${routeName}改成${lane.to}打法`;
         case 'finisher':
           return `把${routeName}的${lane.to}手接上了`;
         default:

@@ -481,6 +481,36 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
           },
         ],
       },
+      {
+        id: 'crit-reroute-window-transform',
+        label: '压上爆点收口',
+        gameplayLabel: '质变件',
+        gainLabel: '爆点会直接开始兑现',
+        costLabel: '容错和续航明显下降',
+        routeId: 'crit',
+        anomalyRole: 'transform',
+        description: '不再只是补主轴，直接把暴击推到开始兑现的收口态。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              fireRate: 0.1,
+              critMultiplier: 0.36,
+              critOverdriveDurationBonus: 0.2,
+              maxHp: -10,
+            },
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
     ],
   },
   {

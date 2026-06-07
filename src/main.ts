@@ -182,7 +182,10 @@ window.__pilotQaSmoke = (config) => {
   const validRole =
     config?.anomalyRole == null ||
     ['direction', 'core', 'transform', 'finisher'].includes(config.anomalyRole);
-  if (!validRoute || !validStage || !validRole) {
+  const validBattleLevel =
+    config?.battleLevel == null ||
+    ['bridge', 'payoff'].includes(config.battleLevel);
+  if (!validRoute || !validStage || !validRole || !validBattleLevel) {
     console.warn('[QA] Invalid smoke scenario config', config);
     return false;
   }

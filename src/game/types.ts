@@ -886,9 +886,11 @@ export interface Services {
 export type QaSmokeRouteId = 'crit' | 'pierce';
 
 export type QaSmokeStageId = 'upgrade' | 'anomaly' | 'battle' | 'result';
+export type QaSmokeBattleLevelId = 'bridge' | 'payoff';
 
 export interface QaSmokeScenarioConfig {
   routeId: QaSmokeRouteId;
   stage: QaSmokeStageId;
   anomalyRole?: AnomalyRoleId;
+  battleLevel?: QaSmokeBattleLevelId;
 }

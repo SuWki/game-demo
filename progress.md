@@ -1751,3 +1751,20 @@ TODO
   - 结果页主屏
   - 结果页详情页
 - 这条链路当前默认走 `crit`，可以切到 `pierce`；它只服务 QA / smoke，不参与正式平衡和普通玩家流程。
+
+## 2026-06-07 payoff 样板收口
+
+- stable smoke 继续沿用既有 QA-only 入口，没有新增正式玩家可见的调试流程；本轮只在现有 smoke 参数上补了 `battleLevel`，用于稳定区分 `bridge` 和 `payoff` 两级战斗样板。
+- `crit` 的异常三分法样板收紧到同一张真实异常页 `暴击转折窗`，现在可以在一次真实异常面板里连续看到 `方向件 / 核心件 / 质变件`。
+- `RunEngine` 的 QA battle 样板现在支持 payoff 命中：进入战斗前先用既有 QA 路线收口辅助把路线推到更接近兑现态，再注入更强的 `crit / pierce` 路线状态，保证 payoff 截图不再只停在 bridge 级。
+- 结果页异常复盘继续只做小修，transform 现在会明确写成：
+  - `crit`：直接把暴击推到收口兑现态
+  - `pierce`：直接把穿透推到打穿兑现态
+- `tools/qa-stable-smoke.mjs` 的 summary 补了最小对账字段 `stageLevel`，用于标记当前截图是 `bridge` 还是 `payoff`。
+- 验证结果：
+  - `npm run build` 通过
+  - 预览地址：`http://127.0.0.1:4177/game-demo/`
+  - `output/qa/stable-smoke-payoff-20260607/final/summary.json` 中 `failed404Urls: []`
+  - `consoleErrors: []`
+  - `consoleWarns: []`
+  - `crit / pierce` 两条路线都稳定覆盖了 `anomaly / battleBridge / battlePayoff / resultDetail`
