@@ -1033,48 +1033,48 @@ export class GameScene extends Phaser.Scene {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
         if (battle.critBurstBonusSec > 0) {
-          return '暴击线已经起爆：现在就是收口。';
+          return '暴击已经压住了：现在就是连着重击。';
         }
         if (battle.critFinisherReady) {
-          return `暴击线收口已经就绪：${battle.critComboStacks}/5 破绽已经攒满。`;
+          return `暴击已经压住了：${battle.critComboStacks}/5 层破绽已经挂满。`;
         }
         if (battle.critChain >= 1) {
-          return `暴击线正在预热：${battle.critComboStacks}/5 破绽已经挂上。`;
+          return `暴击开始顺手了：${battle.critComboStacks}/5 层破绽已经挂上。`;
         }
         if (routeStage === 'matured') {
           return battle.critComboStacks > 0
-            ? `暴击线已经收口：破绽 ${battle.critComboStacks}/5，下一次会直接点爆。`
-            : '暴击线已经收口：抓住窗口就能点爆。';
+            ? `暴击已经连起来了：破绽 ${battle.critComboStacks}/5，下一次会直接炸开。`
+            : '暴击已经连起来了：抓住时机就能打出一串重击。';
         }
         if (routeStage === 'committed') {
-          return '暴击线开始成型：先把爆点打出来。';
+          return '暴击已经连起来了：先把破绽叠高。';
         }
         if (routeStage === 'hinted') {
-          return '暴击线起势：先盯住输出窗。';
+          return '暴击开始顺手了：先盯住能连打的目标。';
         }
       }
 
       if (liveFocusRoute === 'pierce') {
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
-            return `穿透线已经打穿：第 ${battle.pierceFlowCount} 段正在往后走。`;
+            return `穿透已经打到后排了：第 ${battle.pierceFlowCount} 段还在往后带。`;
           }
           if (battle.pierceFlowCount >= 2) {
-            return `穿透线开始拆线：第 ${battle.pierceFlowCount} 段已经接上。`;
+            return `穿透已经连起来了：第 ${battle.pierceFlowCount} 段已经接上。`;
           }
-          return '穿透线已经打开：后排正在被拆。';
+          return '穿透已经打开口子：后排正在掉血。';
         }
         if (battle.enemies.some((enemy) => (enemy.pierceMarkStacks ?? 0) >= 1)) {
-          return '穿透线正在找线：裂纹已经挂上，等下一段接进来。';
+          return '穿透开始顺手了：裂纹已经挂上，等下一串接进来。';
         }
         if (routeStage === 'matured') {
-          return '穿透线已经打穿：一条线会一路穿过去。';
+          return '穿透已经打到后排了：子弹会一路带过去。';
         }
         if (routeStage === 'committed') {
-          return '穿透线开始拆线：前排会给后排让路。';
+          return '穿透已经连起来了：前排会慢慢给后排让路。';
         }
         if (routeStage === 'hinted') {
-          return '穿透线起势：先找能贯通的路。';
+          return '穿透开始顺手了：先把前排穿开。';
         }
       }
 
@@ -1083,10 +1083,10 @@ export class GameScene extends Phaser.Scene {
           return '穿梭回切窗口还在：贴身就能反打。';
         }
         if (routeStage === 'matured') {
-          return '穿梭已经成型：靠节奏就能收割。';
+          return '穿梭已经打顺了：贴身一圈就能收人。';
         }
         if (routeStage === 'committed') {
-          return '穿梭开始站稳：先把换位节奏接上。';
+          return '穿梭已经连起来了：先把换位和回打接上。';
         }
         if (routeStage === 'hinted') {
           return '穿梭开始冒头：先找回切拍子。';
@@ -1142,7 +1142,7 @@ export class GameScene extends Phaser.Scene {
       return '战斗里立刻补一项强化。';
     }
     if (state.currentNode?.isFinalPrep) {
-      return '最后一手补强，选完直接进 Boss。';
+      return '最后补一手，选完直接进 Boss。';
     }
     return '补当前打法最缺的一拍。';
   }
@@ -1357,35 +1357,35 @@ export class GameScene extends Phaser.Scene {
     switch (routeId) {
       case 'crit':
         if (stage === 'matured') {
-          return '暴击线收口：现在就是点爆口。';
+          return '暴击已经连起来了：现在就等着一串重击。';
         }
         if (stage === 'committed') {
-          return '暴击线成型：窗口正在接上。';
+          return '暴击已经连起来了：破绽正在接上。';
         }
         if (stage === 'hinted') {
-          return '暴击线起势：先盯住爆点。';
+          return '暴击开始顺手了：先盯住能连打的目标。';
         }
         return '暴击还没站稳。';
       case 'pierce':
         if (stage === 'matured') {
-          return '穿透线打穿：一条线会一路穿过去。';
+          return '穿透已经打到后排了：一条线会一路带过去。';
         }
         if (stage === 'committed') {
-          return '穿透线拆线：前排会往后排让路。';
+          return '穿透已经连起来了：前排会往后排让路。';
         }
         if (stage === 'hinted') {
-          return '穿透线起势：先找一条能贯通的路。';
+          return '穿透开始顺手了：先把前排穿开。';
         }
         return '穿透还没站稳。';
       case 'dash':
         if (stage === 'matured') {
-          return '穿梭线成型：贴身就能收割。';
+          return '穿梭已经打顺了：贴身就能收人。';
         }
         if (stage === 'committed') {
-          return '穿梭线回切：节奏会更顺。';
+          return '穿梭已经连起来了：贴身后更容易回打。';
         }
         if (stage === 'hinted') {
-          return '穿梭线起势：先把换位接上。';
+          return '穿梭开始顺手了：先把换位接上。';
         }
         return '穿梭还没站稳。';
       default:
@@ -1397,7 +1397,7 @@ export class GameScene extends Phaser.Scene {
     if (text.includes('精英') || text.includes('高压') || text.includes('压力') || text.includes('Boss')) {
       return 'danger';
     }
-    if (text.includes('成型') || text.includes('成线') || text.includes('暴击') || text.includes('穿透') || text.includes('穿梭')) {
+    if (text.includes('打顺') || text.includes('连起来') || text.includes('暴击') || text.includes('穿透') || text.includes('穿梭')) {
       return 'route';
     }
     if (text.includes('完成') || text.includes('接入') || text.includes('收住')) {

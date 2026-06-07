@@ -317,7 +317,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pressurePhases: [
         {
           id: 'seal-in',
-          label: '收口',
+          label: '压上来',
           triggerHpRatio: 0.6,
           triggerRemainingSec: 15,
           spawnIntervalMultiplier: 0.9,
@@ -911,7 +911,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pressurePhases: [
         {
           id: 'wall-formation',
-          label: '壁垒成型',
+          label: '护卫成墙',
           signatureLabel: '护卫成墙',
           signatureDurationSec: 4.0,
           signaturePulseIntervalSec: 1.8,

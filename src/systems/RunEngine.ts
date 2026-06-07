@@ -128,7 +128,7 @@ function getBuildStageLabel(buildStage: RouteBuildStage): string {
     case 'committed':
       return '开始站稳';
     case 'matured':
-      return '已经成型';
+      return '已经打顺';
     default:
       return '未站稳';
   }
@@ -2437,7 +2437,7 @@ export class RunEngine {
 
     if (routeId === 'pierce') {
       if (buildStage === 'matured') {
-        return `已经打到${stageLabel}，收尾还差一口`;
+        return `已经打到${stageLabel}，最后那下还差一点`;
       }
       if (buildStage === 'committed') {
         return `已经打到${stageLabel}，后排还没彻底穿开`;
@@ -2588,11 +2588,11 @@ export class RunEngine {
         title:
           routeId === 'crit'
             ? battleLevel === 'payoff'
-              ? '收口兑现'
-              : '爆点验证'
+              ? '暴击强攻'
+              : '暴击实战'
             : battleLevel === 'payoff'
-              ? '打穿兑现'
-              : '拆线验证',
+              ? '穿透强攻'
+              : '穿透实战',
       },
     ];
     if (routeId === 'crit') {
@@ -2619,13 +2619,13 @@ export class RunEngine {
     this.state.traversedNodes = [
       { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
       { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
-      { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '爆点验证' : '拆线验证' },
+      { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '暴击实战' : '穿透实战' },
       { id: 'qa-boss', type: 'boss', title: 'QA 收尾' },
     ];
     this.state.currentNode = {
       id: 'qa-result-node',
       type: 'boss',
-      title: routeId === 'crit' ? '爆点验证结束' : '拆线验证结束',
+      title: routeId === 'crit' ? '暴击实战结束' : '穿透实战结束',
       description: 'QA 结果页演示。',
       phase: 'finalBattle',
     };
@@ -2827,31 +2827,37 @@ export class RunEngine {
     const routeName = ROUTE_NAME_MAP[activeRouteId];
 
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}提前摸到了收尾手，但还没完全打出来`;
+      return `${routeName}提前摸到了补刀那下，但还没完全打出来`;
     }
 
     if (record.anomalyClass === 'hybrid') {
       return `${routeName}在这里拐了个弯，整条线顺了不少`;
     }
 
-    const fromLayer = this.getRouteLayerLabel(activeRouteId, record.anomalyRole);
-    const toLayer = this.getRouteLayerLabel(activeRouteId, this.getNextRouteLayer(record.anomalyRole));
-    if (fromLayer && toLayer) {
-      if (record.anomalyRole === 'transform') {
+    switch (record.anomalyRole) {
+      case 'direction':
+        return activeRouteId === 'pierce'
+          ? `这一手先把${routeName}的前排打穿了`
+          : activeRouteId === 'dash'
+            ? `这一手先把${routeName}的贴身节奏拉起来了`
+            : `这一手先把${routeName}打顺了`;
+      case 'core':
+        return activeRouteId === 'pierce'
+          ? `这一手让${routeName}穿前排更稳，后排也开始掉血`
+          : activeRouteId === 'dash'
+            ? `这一手让${routeName}贴身后更容易补回打`
+            : `这一手让${routeName}连打更疼了`;
+      case 'transform':
         return activeRouteId === 'crit'
-          ? `异常转折，把${routeName}直接推到收口兑现态`
+          ? `这一手把${routeName}直接打成连爆`
           : activeRouteId === 'pierce'
-            ? `异常转折，把${routeName}直接推到打穿兑现态`
-            : `异常转折，把${routeName}从${fromLayer}推到${toLayer}`;
-      }
-      return `异常转折，把${routeName}从${fromLayer}推到${toLayer}`;
+            ? `这一手让${routeName}直接穿到后排`
+            : `这一手让${routeName}直接变成贴身收人`;
+      case 'finisher':
+        return `${routeName}补上了最后那一下`;
+      default:
+        return `${routeName}又打顺了一点`;
     }
-
-    if (record.anomalyRole === 'finisher') {
-      return `${routeName}的收尾手接上了`;
-    }
-
-    return `${routeName}又往前走了一步`;
   }
 
   private getRouteLayerLabel(routeId: RouteId, role?: AnomalyRoleId): string {
@@ -2861,22 +2867,22 @@ export class RunEngine {
 
     const layerMap: Record<RouteId, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '起势',
-        core: '成型',
-        transform: '起爆',
-        finisher: '收口',
+        direction: '起手',
+        core: '连打',
+        transform: '连爆',
+        finisher: '补刀',
       },
       pierce: {
-        direction: '找线',
-        core: '拆线',
-        transform: '打穿',
-        finisher: '收尾',
+        direction: '穿前排',
+        core: '开口',
+        transform: '穿后排',
+        finisher: '补刀',
       },
       dash: {
-        direction: '起势',
-        core: '回切',
-        transform: '收割',
-        finisher: '收口',
+        direction: '贴身',
+        core: '回打',
+        transform: '收人',
+        finisher: '补刀',
       },
     };
 
@@ -2935,60 +2941,60 @@ export class RunEngine {
       case 'crit':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}起势了，先盯住爆点`;
+            return `${routeName}开始顺手了，先把破绽挂稳`;
           case 'committed':
-            return `${routeName}开始成型，爆点已经接上`;
+            return `${routeName}已经连起来了，连着打会更疼`;
           case 'matured':
-            return `${routeName}已经收口，等着点爆`;
+            return `${routeName}已经压住了，连打时会一串串炸开`;
           default:
             return `${routeName}还没站稳`;
         }
       case 'pierce':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}起势了，先找一条能打穿的路`;
+            return `${routeName}开始顺手了，子弹能先穿开前排`;
           case 'committed':
-            return `${routeName}开始拆线，前排已经在让路`;
+            return `${routeName}已经连起来了，前排一散后排就露出来`;
           case 'matured':
-            return `${routeName}已经打穿，后排会跟着掉`;
+            return `${routeName}已经压住了，子弹会直接带到后排`;
           default:
             return `${routeName}还没站稳`;
         }
       case 'dash':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}起势了，先把换位接上`;
+            return `${routeName}开始顺手了，先贴上去再拉开`;
           case 'committed':
-            return `${routeName}开始成型，节奏已经顺了`;
+            return `${routeName}已经连起来了，换位后还能补一圈`;
           case 'matured':
-            return `${routeName}已经能收割，贴身就有回响`;
+            return `${routeName}已经压住了，贴身一圈就能收人`;
           default:
             return `${routeName}还没站稳`;
         }
       default:
-        return `${routeName}已成型`;
+        return `${routeName}已经打顺了`;
     }
   }
 
   private getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
     const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
       crit: {
-        unformed: '未成线',
-        hinted: '起势',
-        committed: '成型',
-        matured: '收口',
+        unformed: '没打顺',
+        hinted: '起手',
+        committed: '连上了',
+        matured: '连爆',
       },
       pierce: {
-        unformed: '未成线',
-        hinted: '找线',
-        committed: '拆线',
-        matured: '打穿',
+        unformed: '没打顺',
+        hinted: '穿前排',
+        committed: '压火力',
+        matured: '穿后排',
       },
       dash: {
-        unformed: '未成线',
-        hinted: '起势',
-        committed: '回切',
-        matured: '收割',
+        unformed: '没打顺',
+        hinted: '贴身',
+        committed: '回打',
+        matured: '收人',
       },
     };
 
@@ -3017,35 +3023,35 @@ export class RunEngine {
       }
       if (buildStage === 'matured') {
         if (replayProfile.anomalyFinisherHits === 0) {
-          return '已经打穿了，但收尾件没来。';
+          return '已经能穿到后排了，但最后那下不够。';
         }
-        return '已经进入打穿阶段，但收割不稳。';
+        return '已经能穿到后排了，但还清不干净。';
       }
       if (buildStage === 'committed') {
         if (replayProfile.anomalyFinisherHits === 0) {
-          return '已经拆线了，但最后没打穿。';
+          return '前排已经打散了，但还没穿到后排。';
         }
-        return '已经拆线了，但火力还差一口。';
+        return '前排已经打散了，但火力还差一点。';
       }
       if (buildStage === 'hinted') {
-        return '有方向了，但还没拆开前排。';
+        return '已经往穿透上靠了，但前排还没打开。';
       }
-      return '这局还差一层关键件。';
+      return '这把还缺一手硬的。';
     }
 
     if (isLateTurn) {
       return '异常来得偏晚，局面没来得及推起来。';
     }
     if (buildStage === 'matured') {
-      return '已经成型了，但最后没守住。';
+      return '已经打顺了，但最后那波没扛住。';
     }
     if (buildStage === 'committed') {
-      return '已经接上了，但爆点还差一口。';
+      return '已经连起来了，但伤害还差一点。';
     }
     if (buildStage === 'hinted') {
-      return '有方向了，但成型还不够快。';
+      return '已经往这条路上靠了，但火力还没跟上。';
     }
-    return '这局还差一层关键件。';
+    return '这把还缺一手硬的。';
   }
 
   private queueRouteMoment(routeId: RouteId, text: string): void {
@@ -3063,51 +3069,51 @@ export class RunEngine {
       case 'crit':
         switch (stage) {
           case 'starter':
-            return '暴击线起势了：开始预热爆点';
+            return '暴击有感觉了：先把破绽挂上';
           case 'bridge':
-            return '暴击线开始成型了：爆点已经接上';
+            return '暴击连起来了：一断点就会炸开';
           case 'payoff':
-            return '暴击线已经能收口了：下一次会直接点爆';
+            return '暴击压住了：连打时会一串串炸开';
           default:
             return '暴击线有动静了';
         }
       case 'pierce':
         switch (stage) {
           case 'starter':
-            return '穿透线起势了：开始找线';
+            return '穿透有感觉了：子弹开始穿开前排';
           case 'bridge':
-            return '穿透线开始拆线了：后排已经露出来';
+            return '穿透连起来了：前排一散，后排就露出来';
           case 'payoff':
-            return '穿透线已经打穿了：整列会一路裂开';
+            return '穿透压住了：子弹会直接带到后排';
           default:
             return '穿透线有动静了';
         }
       case 'dash':
         switch (stage) {
           case 'starter':
-            return '穿梭线起势了';
+            return '穿梭有感觉了：先贴上去再拉开';
           case 'bridge':
-            return '穿梭线开始回切了';
+            return '穿梭顺起来了：贴身后能马上回打';
           case 'payoff':
-            return '穿梭线已经能收了';
+            return '穿梭压住了：贴身一圈就能收人';
           default:
             return '穿梭线有动静了';
         }
       default:
-        return '路线开始推进了';
+        return '这套开始有手感了';
     }
   }
 
   private getAnomalyRoleCallout(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '方向';
+        return '起手';
       case 'core':
-        return '核心';
+        return '加压';
       case 'transform':
-        return '质变';
+        return '换打法';
       case 'finisher':
-        return '收尾';
+        return '补刀';
       default:
         return '';
     }
@@ -3116,15 +3122,15 @@ export class RunEngine {
   private getAnomalyRoleTurnVerb(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '补方向';
+        return '先起手';
       case 'core':
-        return '拧核心';
+        return '继续加压';
       case 'transform':
-        return '改打法';
+        return '直接换打法';
       case 'finisher':
-        return '接收尾';
+        return '准备补刀';
       default:
-        return '推进路线';
+        return '往前推一手';
     }
   }
 
@@ -3144,7 +3150,7 @@ export class RunEngine {
       return `${eventDef.name}：${option.label}`;
     }
 
-    const routeName = routeId ? ROUTE_NAME_MAP[routeId] : '当前流派';
+    const routeName = routeId ? ROUTE_NAME_MAP[routeId] : '当前打法';
     const role = this.getAnomalyRoleCallout(option.anomalyRole);
     const roleSuffix = role ? `·${role}` : '';
 
@@ -3154,7 +3160,7 @@ export class RunEngine {
       case 'hybrid':
         return `${routeName}拐点${roleSuffix}：${option.label}`;
       case 'bossEcho':
-        return `${routeName}收尾预演${roleSuffix}：${option.label}`;
+        return `${routeName}首领前试手${roleSuffix}：${option.label}`;
       case 'distortion':
         return `${routeName}变招${roleSuffix}：${option.label}`;
       default:
@@ -3200,13 +3206,13 @@ export class RunEngine {
     if (outcome === 'victory') {
       switch (routeId) {
         case 'crit':
-          return '暴击线已经收口';
+          return '暴击已经连起来了';
         case 'pierce':
-          return '穿透线已经打通';
+          return '穿透已经打到后排了';
         case 'dash':
-          return '穿梭线已经跑顺';
+          return '穿梭已经贴身打顺了';
         default:
-          return '这条线已经跑顺';
+          return '这套已经打顺了';
       }
     }
 
@@ -3275,16 +3281,16 @@ export class RunEngine {
   private getAnomalyRoleRecap(profile: ReplayProfile): string {
     const parts: string[] = [];
     if (profile.anomalyDirectionHits > 0) {
-      parts.push(`方向件 ${profile.anomalyDirectionHits}`);
+      parts.push(`起手 ${profile.anomalyDirectionHits}`);
     }
     if (profile.anomalyCoreHits > 0) {
-      parts.push(`核心件 ${profile.anomalyCoreHits}`);
+      parts.push(`加压 ${profile.anomalyCoreHits}`);
     }
     if (profile.anomalyTransformHits > 0) {
-      parts.push(`质变件 ${profile.anomalyTransformHits}`);
+      parts.push(`换打法 ${profile.anomalyTransformHits}`);
     }
     if (profile.anomalyFinisherHits > 0) {
-      parts.push(`收尾件 ${profile.anomalyFinisherHits}`);
+      parts.push(`补刀 ${profile.anomalyFinisherHits}`);
     }
 
     return parts.length > 0 ? `异常：${parts.join(' / ')}` : '';
@@ -3509,17 +3515,17 @@ export class RunEngine {
     const cueMap: Partial<
       Record<RoutePerkKey, { routeId: RouteId; text: string; priority: number }>
     > = {
-      pierceSeamkeep: { routeId: 'pierce', text: '穿透线起势了', priority: 1 },
-      pierceFloodgate: { routeId: 'pierce', text: '穿透线开始拆线了', priority: 2 },
-      pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经打穿了', priority: 3 },
-      piercePrism: { routeId: 'pierce', text: '穿透线已经打穿了', priority: 4 },
-      dashBrush: { routeId: 'dash', text: '穿梭线起势了', priority: 1 },
+      pierceSeamkeep: { routeId: 'pierce', text: '穿透线开始顺手了', priority: 1 },
+      pierceFloodgate: { routeId: 'pierce', text: '穿透线开始压前排了', priority: 2 },
+      pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经穿到后排了', priority: 3 },
+      piercePrism: { routeId: 'pierce', text: '穿透线已经穿到后排了', priority: 4 },
+      dashBrush: { routeId: 'dash', text: '穿梭线开始顺手了', priority: 1 },
       dashSidestepBank: { routeId: 'dash', text: '穿梭线开始回切了', priority: 2 },
-      dashZeroWindow: { routeId: 'dash', text: '穿梭线开始收口了', priority: 3 },
-      dashAfterimage: { routeId: 'dash', text: '收尾件到手，这把能收了', priority: 4 },
-      critAfterglow: { routeId: 'crit', text: '暴击线起势了', priority: 1 },
-      critEmbershard: { routeId: 'crit', text: '暴击线开始成型了', priority: 2 },
-      critCrownfire: { routeId: 'crit', text: '收尾件到手，这把能收了', priority: 4 },
+      dashZeroWindow: { routeId: 'dash', text: '穿梭线开始贴身收人了', priority: 3 },
+      dashAfterimage: { routeId: 'dash', text: '最后那下到手了，这把能收', priority: 4 },
+      critAfterglow: { routeId: 'crit', text: '暴击线开始顺手了', priority: 1 },
+      critEmbershard: { routeId: 'crit', text: '暴击线已经连起来了', priority: 2 },
+      critCrownfire: { routeId: 'crit', text: '最后那下到手了，这把能收', priority: 4 },
     };
 
     let bestCue: { routeId: RouteId; text: string; priority: number } | null = null;
@@ -5464,13 +5470,13 @@ export class RunEngine {
           if (battle.critChain >= 1 && this.getRouteBuildStage('crit') !== 'unformed' && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'starter'));
-            this.enqueueTip('暴击线开始预热了');
+            this.enqueueTip('暴击开始顺手了');
           }
           if (battle.critFinisherReady) {
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'payoff'));
           } else if (battle.critChain >= 2) {
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
-            this.enqueueTip('暴击爆点已经起来了');
+            this.enqueueTip('暴击已经连起来了');
           }
         } else if (battle.critChain > 0) {
           battle.critChain = Math.max(0, battle.critChain - 1);
@@ -5534,7 +5540,7 @@ export class RunEngine {
             if (!this.routeMomentShown.pierce && this.getRouteBuildStage('pierce') !== 'unformed') {
               this.routeMomentShown.pierce = true;
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'starter'));
-              this.enqueueTip('穿透线开始找线了');
+              this.enqueueTip('穿透开始穿前排了');
             }
             if (pierceChain >= 3) {
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'payoff'));
@@ -7272,7 +7278,7 @@ export class RunEngine {
         this.enqueueAudio('confirm');
         return;
       case 'late':
-        this.enqueueTip('进入后段：准备把本局收尾节奏立住。');
+        this.enqueueTip('进入后段：准备打完最后几波。');
         this.enqueueAudio('confirm');
         return;
       case 'finalPrep':

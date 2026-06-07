@@ -196,8 +196,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event-ripple',
         type: 'anomaly',
         phase: 'opening',
-        title: '流派混接',
-        description: '让不同流派接得更顺',
+        title: '临时改路',
+        description: '让不同打法更容易接上',
         selection: {
           baseWeight: 1.45,
           soloMultiplier: 0.2,
@@ -771,7 +771,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-pierce-soft-closeout',
         type: 'battle',
         phase: 'late',
-        title: '拆线回收',
+        title: '破阵追击',
         description: '突破多层防线',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 1.4 },
@@ -815,7 +815,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-crit-closeout',
         type: 'battle',
         phase: 'late',
-        title: '爆点追收',
+        title: '重击追杀',
         description: '积蓄火力一击制胜',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.6 },

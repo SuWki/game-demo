@@ -1364,7 +1364,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-primer',
-    name: '升温预热',
+    name: '热枪起手',
     description: '命中时概率触发高伤，适合抓短时机爆发',
     category: 'route',
     routeId: 'crit',
@@ -1629,8 +1629,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-embershard',
-    name: '余烬爆点',
-    description: '爆点炸开时，会顺手带到附近敌人。',
+    name: '余烬飞溅',
+    description: '重击炸开时，会顺手带到附近敌人。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -1752,8 +1752,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-crownfire',
-    name: '冠火收束',
-    description: '爆点炸开后，下一次更容易继续起爆。',
+    name: '冠火连炸',
+    description: '重击炸开后，下一次更容易继续连上。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -1939,7 +1939,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-finish',
     name: '终端爆发',
-    description: '暴击流的终局强化',
+    description: '把连续重击再往上抬一截。',
     category: 'route',
     routeId: 'crit',
     tags: ['finisher'],
@@ -1968,7 +1968,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-core',
     name: '穿甲校正',
-    description: '先把穿透火力钉住，子弹穿过多目标时更容易拆线。',
+    description: '先把前排穿开，子弹更容易带到后排。',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2023,8 +2023,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'pierce-seamline',
-    name: '拆线起幅',
-    description: '命中越稳，拆线越容易连起来。',
+    name: '穿甲开口',
+    description: '命中越稳，前排越容易被穿开。',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2142,7 +2142,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidechannel',
     name: '侧轨借线',
-    description: '穿透和弧线一起发力，拆线会更快。',
+    description: '穿透和弧线一起压过去，前排会散得更快。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2526,7 +2526,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-cutback',
     name: '脉冲留影',
-    description: '让穿梭更容易收口。',
+    description: '让穿梭更容易补掉残血。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -2616,8 +2616,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'pierce-ledger-line',
-    name: '拆线归账',
-    description: '穿透与弹道强化',
+    name: '贯穿追伤',
+    description: '穿过去后，后排也会继续掉血。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -3347,28 +3347,28 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'crit-sidechannel': '破绽触发概率和爆发伤害提升',
   'crit-reroute-spark': '超频状态下暴击强化，修复损伤',
   'crit-reroute-feed': '破绽机制效率提升，修复损伤',
-  'crit-branch-ignite': '破绽叠加更快，准备多层爆发',
-  'crit-embershard': '破绽爆发会波及附近敌人',
-  'crit-burst': '连续破绽更容易成型',
-  'crit-sparkline': '更容易盯住目标连续叠加',
+  'crit-branch-ignite': '破绽叠得更快，连打更容易炸开',
+  'crit-embershard': '破绽炸开会带到附近敌人',
+  'crit-burst': '连续命中更容易把破绽叠满',
+  'crit-sparkline': '更容易盯住一个目标连续重击',
   'crit-linekeep': '破绽链维持更稳定',
-  'crit-crownfire': '破绽爆发后，下一次爆发更强',
+  'crit-crownfire': '破绽炸开后，下一次更容易接上',
   'crit-ember-rail': '多层破绽爆发伤害更高',
   'crit-redline': '短时间内压制能力更强',
   'crit-heat-rake': '破绽目标追击更容易',
   'crit-heat': '破绽爆发单体输出强化',
-  'crit-cascade': '破绽爆发后更容易继续清场',
-  'crit-superheat': '破绽连击集中成更强爆发',
+  'crit-cascade': '破绽炸开后更容易继续连杀',
+  'crit-superheat': '连续重击会压出更狠的一波伤害',
   'crit-finish': '破绽爆发完成最后输出',
 
   // 穿透流 - 裂纹机制
-  'pierce-core': '子弹可穿透命中后排',
-  'pierce-rail': '穿透命中留下裂纹路径',
-  'pierce-seamline': '裂纹触发扩散机制',
-  'pierce-vector': '更容易命中后排并叠加裂纹',
-  'pierce-seamkeep': '裂纹持续时间延长',
-  'pierce-shearline': '穿透和裂纹扩散更稳定',
-  'pierce-sidechannel': '裂纹扩散范围和效率提升',
+  'pierce-core': '子弹穿过去后更容易带到后排',
+  'pierce-rail': '更容易一路穿过前排',
+  'pierce-seamline': '连续命中更容易把前排打散',
+  'pierce-vector': '弹道更直，更容易穿到后排',
+  'pierce-seamkeep': '裂纹留得更久，后排更容易跟着掉血',
+  'pierce-shearline': '穿过前排后，更容易继续带到后排',
+  'pierce-sidechannel': '弧线会帮你一起刮开前排',
   'pierce-reroute-seam': '裂纹回响伤害提升，修复损伤',
   'pierce-reroute-ledger': '穿透后排命中强化，修复损伤',
   'pierce-sidestitch': '穿透后排收益更高',
@@ -3380,10 +3380,10 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'pierce-seam-ledger': '裂纹目标连续命中收益更高',
   'pierce-echo': '穿透命中后回响效率更高',
   'pierce-ripple': '裂纹扩散更容易传到后方',
-  'pierce-ledger-line': '一条线上清怪能力强化',
-  'pierce-bloom': '裂纹扩散适合密集敌群',
-  'pierce-chain': '裂纹扩散完成清线',
-  'pierce-prism': '裂纹扩散范围扩大',
+  'pierce-ledger-line': '穿过去后，后排也会继续掉血',
+  'pierce-bloom': '裂纹范围更大，容易一串带掉多人',
+  'pierce-chain': '穿得更远，后排更容易连续掉血',
+  'pierce-prism': '裂纹会蔓得更开，更容易一路打到后排',
 
   // 穿梭流 - 脉冲机制
   'dash-brush': '自动脉冲命中叠层，满层后反击',
@@ -3411,7 +3411,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
   if (archetype.category === 'route') {
-    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '顺着这条线继续往前推。';
+    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '拿上这张，打法会更顺。';
   }
 
   return archetype.description ?? describeContentEffects(effects, archetype.routeId);

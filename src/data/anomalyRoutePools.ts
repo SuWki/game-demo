@@ -176,11 +176,11 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     crit: {
       id: 'route-handoff-crit',
       label: '改道暴击侧频',
-      gameplayLabel: '方向件',
-      gainLabel: '先把暴击方向钉清',
-      costLabel: '还没直接接成收口',
+      gameplayLabel: '起手',
+      gainLabel: '先把暴击打顺',
+      costLabel: '还没到连着重击的时候',
       anomalyRole: 'direction',
-      description: '补一段暴击火力，并借这拍把路线切向暴击。',
+      description: '补一段暴击火力，顺手把打法带到暴击上。',
       routeId: 'crit',
       effects: [
         {
@@ -211,11 +211,11 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     pierce: {
       id: 'route-handoff-pierce',
       label: '改道穿透侧频',
-      gameplayLabel: '方向件',
-      gainLabel: '先把穿透方向钉清',
-      costLabel: '后排还不会立刻打穿',
+      gameplayLabel: '起手',
+      gainLabel: '先把前排穿开',
+      costLabel: '还不能立刻带到后排',
       anomalyRole: 'direction',
-      description: '补一段穿透火力，并借这拍把路线切向穿透。',
+      description: '补一段穿透火力，顺手把打法带到穿透上。',
       routeId: 'pierce',
       effects: [
         {
@@ -246,11 +246,11 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'route-handoff-dash',
       label: '改道穿梭侧频',
-      gameplayLabel: '方向件',
-      gainLabel: '先把穿梭方向钉清',
-      costLabel: '收口还得往后接',
+      gameplayLabel: '起手',
+      gainLabel: '先把贴身节奏拉起来',
+      costLabel: '还不能马上贴身收人',
       anomalyRole: 'direction',
-      description: '补一段穿梭节奏，并借这拍把路线切向穿梭。',
+      description: '补一段穿梭节奏，顺手把打法带到贴身快打上。',
       routeId: 'dash',
       effects: [
         {
@@ -302,7 +302,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     pierce: {
       id: 'crit-reroute-window-pierce',
       label: '改道穿透清线',
-      description: '恢复 8 点耐久，接入穿透清线并切向穿透。',
+      description: '修复 8 点损伤，顺手把打法带到穿透上。',
       routeId: 'pierce',
       effects: [
         {
@@ -330,7 +330,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'crit-reroute-window-dash',
       label: '改道穿梭反打',
-      description: '恢复 8 点耐久，接入穿梭反打并切向穿梭。',
+      description: '修复 8 点损伤，顺手把打法带到穿梭上。',
       routeId: 'dash',
       effects: [
         {
@@ -360,7 +360,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     crit: {
       id: 'pierce-reroute-window-crit',
       label: '改道暴击收束',
-      description: '恢复 8 点耐久，接入暴击火力并切向暴击。',
+      description: '修复 8 点损伤，顺手把打法带到暴击上。',
       routeId: 'crit',
       effects: [
         {
@@ -411,7 +411,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'pierce-reroute-window-dash',
       label: '改道穿梭反打',
-      description: '恢复 8 点耐久，接入穿梭反打并切向穿梭。',
+      description: '修复 8 点损伤，顺手把打法带到穿梭上。',
       routeId: 'dash',
       effects: [
         {
@@ -445,7 +445,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     crit: {
       id: 'dash-reroute-window-crit',
       label: '改道暴击爆发',
-      description: '恢复 8 点耐久，接入暴击爆发并切向暴击。',
+      description: '修复 8 点损伤，顺手把打法带到暴击上。',
       routeId: 'crit',
       effects: [
         {
@@ -477,7 +477,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     pierce: {
       id: 'dash-reroute-window-pierce',
       label: '改道穿透清线',
-      description: '恢复 8 点耐久，接入穿透清线并切向穿透。',
+      description: '修复 8 点损伤，顺手把打法带到穿透上。',
       routeId: 'pierce',
       effects: [
         {
@@ -529,8 +529,8 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
   crossBranchSignal: {
     crit: {
       id: 'cross-branch-signal-crit',
-      label: '接入暴击样本',
-      description: '补一段暴击升温，顺手把路线切向暴击。',
+      label: '改打暴击',
+      description: '补一段暴击火力，顺手把打法带到暴击上。',
       routeId: 'crit',
       effects: [
         {
@@ -552,8 +552,8 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     },
     pierce: {
       id: 'cross-branch-signal-pierce',
-      label: '接入穿透样本',
-      description: '补一段穿透火力，顺手把路线切向穿透。',
+      label: '改打穿透',
+      description: '补一段穿透火力，顺手把打法带到穿透上。',
       routeId: 'pierce',
       effects: [
         {
@@ -575,8 +575,8 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     },
     dash: {
       id: 'cross-branch-signal-dash',
-      label: '接入穿梭样本',
-      description: '补一段穿梭节奏，顺手把路线切向穿梭。',
+      label: '改打穿梭',
+      description: '补一段穿梭节奏，顺手把打法带到穿梭上。',
       routeId: 'dash',
       effects: [
         {
