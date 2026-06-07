@@ -686,10 +686,10 @@ export class OverlayController {
           <div class="result-details-section">
             <h3 class="detail-section-title">转折点</h3>
             <div class="detail-anomaly-strip">
-              <span><small>起手</small><strong>${anomalyRoleCounts.direction}</strong></span>
-              <span><small>加压</small><strong>${anomalyRoleCounts.core}</strong></span>
-              <span><small>换打法</small><strong>${anomalyRoleCounts.transform}</strong></span>
-              <span><small>补刀</small><strong>${anomalyRoleCounts.finisher}</strong></span>
+              <span><small>先打顺</small><strong>${anomalyRoleCounts.direction}</strong></span>
+              <span><small>火力更重</small><strong>${anomalyRoleCounts.core}</strong></span>
+              <span><small>直接压上</small><strong>${anomalyRoleCounts.transform}</strong></span>
+              <span><small>补最后一下</small><strong>${anomalyRoleCounts.finisher}</strong></span>
             </div>
             <div class="detail-timeline-scroll">
               ${anomalyTimeline}
@@ -697,7 +697,7 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">拿过哪些关键件</h3>
+            <h3 class="detail-section-title">一路拿过什么</h3>
             <div class="detail-timeline-scroll">
               ${upgradeTimeline}
             </div>
@@ -940,7 +940,7 @@ export class OverlayController {
         <strong>${eventDef.name}</strong>
         <p>${eventDef.description}</p>
         <div class="anomaly-risk-grid">
-          <span><small>转折类型</small><b>${this.getEventClassLabel(eventDef)}</b></span>
+          <span><small>这一下会</small><b>${this.getEventClassLabel(eventDef)}</b></span>
           <span><small>当前进度</small><b>${progress.progressLabel}</b></span>
         </div>
         <div class="anomaly-warning-strip">这一下会改掉这局走法，代价也不轻。</div>
@@ -1225,13 +1225,13 @@ export class OverlayController {
   private getAnomalyRoleLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '起手';
+        return '先打顺';
       case 'core':
-        return '加压';
+        return '火力更重';
       case 'transform':
-        return '换打法';
+        return '直接压上';
       case 'finisher':
-        return '补刀';
+        return '补最后一下';
       default:
         return '';
     }
@@ -1240,13 +1240,13 @@ export class OverlayController {
   private getAnomalyRoleActionLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '先起手';
+        return '先打顺';
       case 'core':
-        return '继续加压';
+        return '把火力提上来';
       case 'transform':
-        return '直接换打法';
+        return '直接压上';
       case 'finisher':
-        return '准备补刀';
+        return '补最后一下';
       default:
         return '';
     }
@@ -1552,13 +1552,13 @@ export class OverlayController {
   private getEventClassLabel(eventDef: EventDefinition): string {
     switch (eventDef.anomalyClass) {
       case 'routeWindow':
-        return '打法转折';
+        return '改掉这局打法';
       case 'hybrid':
-        return '双线拐点';
+        return '把两路拧到一起';
       case 'bossEcho':
-        return '首领前试手';
+        return '先试最后那一下';
       case 'distortion':
-        return '规则变招';
+        return '临时换个规矩';
       default:
         return '异常';
     }
@@ -1652,33 +1652,12 @@ export class OverlayController {
 
   private getResultRouteRecap(result: RunResult): string {
     if (!result.routeId) {
-      return '这把一直没连成一路。';
+      return '这把一直没能把路数接顺。';
     }
 
-    const anomalyRoleCounts = this.getAnomalyRoleCounts(result.eventHistory ?? []);
     const turnRecord = this.getResultAnomalyTurnRecord(result);
     const chronology = this.getResultAnomalyChronology(result, turnRecord);
-    const anomalyParts: string[] = [];
-    if (anomalyRoleCounts.direction > 0) {
-      anomalyParts.push(`起手 ${anomalyRoleCounts.direction}`);
-    }
-    if (anomalyRoleCounts.core > 0) {
-      anomalyParts.push(`加压 ${anomalyRoleCounts.core}`);
-    }
-    if (anomalyRoleCounts.transform > 0) {
-      anomalyParts.push(`换打法 ${anomalyRoleCounts.transform}`);
-    }
-    if (anomalyRoleCounts.finisher > 0) {
-      anomalyParts.push(`补刀 ${anomalyRoleCounts.finisher}`);
-    }
-    const parts: string[] = [];
-    if (chronology) {
-      parts.push(chronology);
-    }
-    if (anomalyParts.length > 0) {
-      parts.push(`异常里拿了 ${anomalyParts.join(' / ')}`);
-    }
-    return parts.length > 0 ? parts.join('；') : '这局没有特别明显的转折点。';
+    return chronology || '这局没有特别明显的转折点。';
   }
 
   private getResultAnomalyChronology(
@@ -1781,11 +1760,11 @@ export class OverlayController {
   ): string {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}提前摸到补刀那下，但还没完全接住`;
+      return `${routeName}提前摸到补最后一下，但还没完全接住`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}在这里拐顺了，整条线往前推了一层`;
+      return `${routeName}在这里拐顺了，整条线顺了不少`;
     }
 
     switch (record.anomalyRole ?? 'direction') {
@@ -1803,14 +1782,14 @@ export class OverlayController {
             : `这一手让${routeName}连打更疼了`;
       case 'transform':
         return routeId === 'crit'
-          ? `直接把${routeName}打成连爆`
+          ? `这一手把${routeName}直接打成连爆`
           : routeId === 'pierce'
-            ? `直接把${routeName}打到后排`
-            : `直接把${routeName}改成贴身收人`;
+            ? `这一手让${routeName}直接打到后排`
+            : `这一手让${routeName}直接变成贴身收人`;
       case 'finisher':
-        return `把${routeName}最后那下补上了`;
+        return `这一手把${routeName}最后那下补上了`;
       default:
-        return `${routeName}又往前走了一点`;
+        break;
     }
 
     if (outcome !== 'victory') {
@@ -1819,18 +1798,18 @@ export class OverlayController {
           return `${routeName}已经打到后排了，但最后那波没收住`;
         }
         if (buildStage === 'committed') {
-          return `${routeName}已经打散前排了，但还没压到后排`;
+          return `${routeName}已经打散前排了，但还没把后排带走`;
         }
         if (buildStage === 'hinted') {
           return `${routeName}已经往这条路上靠了，但前排还没打开`;
         }
       }
       if (buildStage === 'matured' || buildStage === 'committed') {
-        return `${routeName}已经拿到关键强化，但最后那波没打出来`;
+        return `${routeName}已经拿到关键火力了，但最后那波没打出来`;
       }
     }
 
-    return `${routeName}往前推了一层`;
+    return `${routeName}又往前走了一步`;
   }
 
   private getResultFailureReason(
@@ -1862,7 +1841,7 @@ export class OverlayController {
       if (result.buildStage === 'hinted') {
         return '有方向了，但还没拆开前排';
       }
-      return '这局还差一层关键件';
+      return '这局还差最后一手';
     }
 
     if (isLateTurn) {
@@ -1877,7 +1856,7 @@ export class OverlayController {
     if (result.buildStage === 'hinted') {
       return '已经往这条路上靠了，但火力还没跟上';
     }
-    return '这局还差一层关键件';
+    return '这局还差最后一手';
   }
 
   private getRouteLayerLabel(routeId: NonNullable<RunResult['routeId']>, role?: AnomalyRoleId): string {
@@ -1887,22 +1866,22 @@ export class OverlayController {
 
     const layerMap: Record<NonNullable<RunResult['routeId']>, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '起手',
-        core: '连打',
-        transform: '连爆',
-        finisher: '补刀',
+        direction: '先打顺',
+        core: '火力更重',
+        transform: '直接压上',
+        finisher: '补最后一下',
       },
       pierce: {
-        direction: '穿前排',
-        core: '开口',
-        transform: '穿后排',
-        finisher: '补刀',
+        direction: '先打开路',
+        core: '火力更重',
+        transform: '直接压上',
+        finisher: '补最后一下',
       },
       dash: {
-        direction: '贴身',
-        core: '回打',
-        transform: '收人',
-        finisher: '补刀',
+        direction: '先贴上去',
+        core: '火力更重',
+        transform: '直接压上',
+        finisher: '补最后一下',
       },
     };
 
@@ -1915,10 +1894,10 @@ export class OverlayController {
 
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
     const genericStageMap: Record<RunResult['buildStage'], string> = {
-      unformed: '没打顺',
-      hinted: '有倾向',
-      committed: '开始连上',
-      matured: '已经打顺',
+      unformed: '还没打顺',
+      hinted: '刚摸到感觉',
+      committed: '开始压住了',
+      matured: '已经打出来了',
     };
     if (!routeId) {
       return genericStageMap[buildStage];
@@ -1926,22 +1905,22 @@ export class OverlayController {
 
     const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
       crit: {
-        unformed: '没打顺',
-        hinted: '起手',
-        committed: '连上了',
-        matured: '连爆',
+        unformed: '还没打顺',
+        hinted: '开始连上',
+        committed: '火力压住了',
+        matured: '一串串炸开',
       },
       pierce: {
-        unformed: '没打顺',
-        hinted: '穿前排',
-        committed: '压火力',
-        matured: '穿后排',
+        unformed: '还没打顺',
+        hinted: '前排开始松动',
+        committed: '火力压到后排',
+        matured: '一路穿过去了',
       },
       dash: {
-        unformed: '没打顺',
-        hinted: '贴身',
-        committed: '回打',
-        matured: '收人',
+        unformed: '还没打顺',
+        hinted: '开始贴上去',
+        committed: '贴身能回打',
+        matured: '贴身就能收人',
       },
     };
 

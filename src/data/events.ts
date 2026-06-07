@@ -406,7 +406,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '暴击抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '这一下会决定暴击是先稳住，还是直接改成重击快打。',
+    description: '这一拍会决定暴击是先稳着打，还是直接压上去。',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 1.22,
@@ -425,7 +425,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-direction',
         label: '先走暴击',
-        gameplayLabel: '起手',
+        gameplayLabel: '先打顺',
         gainLabel: '更容易连着打出暴击',
         costLabel: '先少一点容错',
         routeId: 'crit',
@@ -456,7 +456,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-core',
         label: '补暴击火力',
-        gameplayLabel: '加压',
+        gameplayLabel: '火力更重',
         gainLabel: '暴击更疼，连发更快',
         costLabel: '清杂会慢一点',
         routeId: 'crit',
@@ -484,8 +484,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-transform',
         label: '压上暴击',
-        gameplayLabel: '换打法',
-        gainLabel: '连续暴击会把旁边也一起炸到',
+        gameplayLabel: '直接压上',
+        gainLabel: '连续暴击会把旁边也一起炸掉',
         costLabel: '容错和血量都会掉',
         routeId: 'crit',
         anomalyRole: 'transform',
@@ -518,7 +518,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿透抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '这一下决定穿透是先稳着打，还是直接穿到后排。',
+    description: '这一拍决定穿透是先稳着打，还是直接穿到后排。',
     routeAffinity: 'pierce',
     selection: {
       baseWeight: 1.45,
@@ -539,9 +539,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'pierce-reroute-window-direction',
         routeId: 'pierce',
         label: '先走穿透',
-        gameplayLabel: '起手',
+        gameplayLabel: '先打开路',
         gainLabel: '更容易穿开前排',
-        costLabel: '先不换打法',
+        costLabel: '先不冒更大风险',
         anomalyRole: 'direction',
         description: '先把前排穿开，后面更容易一路带到后排。',
         effects: [
@@ -570,7 +570,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'pierce-reroute-window-hold',
         routeId: 'pierce',
         label: '补穿透火力',
-        gameplayLabel: '加压',
+        gameplayLabel: '火力更重',
         gainLabel: '穿前排更稳，后排掉血更快',
         costLabel: '这手不改别的打法',
         anomalyRole: 'core',
@@ -597,7 +597,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'pierce-reroute-window-breakthrough',
         routeId: 'pierce',
         label: '压上穿透',
-        gameplayLabel: '换打法',
+        gameplayLabel: '直接压上',
         gainLabel: '子弹会直接带到后排',
         costLabel: '站位和血量更吃紧',
         anomalyRole: 'transform',
@@ -630,7 +630,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿梭转接窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿梭已经跑顺了，可以临时换打法',
+    description: '穿梭已经跑顺了，可以临时改成贴身强打',
     routeAffinity: 'dash',
     selection: {
       baseWeight: 1.45,
@@ -650,7 +650,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-reroute-window-hold',
         label: '先稳当前机动',
-        gameplayLabel: '起手',
+        gameplayLabel: '先贴上去',
         gainLabel: '先把机动底子垫稳',
         costLabel: '不直接切成别的路线',
         anomalyRole: 'direction',
@@ -1234,12 +1234,12 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-charge-direction',
         label: '钉住穿梭方向',
-        gameplayLabel: '起手',
-        gainLabel: '穿梭更容易起手',
+        gameplayLabel: '先贴上去',
+        gainLabel: '穿梭更容易先贴上去',
         costLabel: '基础火力会弱一点',
         routeId: 'dash',
         anomalyRole: 'direction',
-        description: '先把穿梭的起手抬起来，后面更容易接反打。',
+        description: '先把穿梭贴身那一下抬起来，后面更容易接反打。',
         effects: [
           {
             type: 'stats',
@@ -1261,7 +1261,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-charge-core',
         label: '补进穿梭核心',
-        gameplayLabel: '加压',
+        gameplayLabel: '火力更重',
         gainLabel: '脉冲伤害和无伤窗提高',
         costLabel: '耐久会少一点',
         routeId: 'dash',
@@ -1289,7 +1289,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-charge-transform',
         label: '压上换位爆发',
-        gameplayLabel: '换打法',
+        gameplayLabel: '直接压上',
         gainLabel: '换位后爆发更狠',
         costLabel: '容错明显下降',
         routeId: 'dash',
@@ -1318,7 +1318,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-charge-finisher',
         label: '接入收割回路',
-        gameplayLabel: '补刀',
+        gameplayLabel: '补最后一下',
         gainLabel: '脉冲后更容易补掉残血',
         costLabel: '普通射击更弱',
         routeId: 'dash',
@@ -1373,7 +1373,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-lock-transform',
         label: '压上重击',
-        gameplayLabel: '换打法',
+        gameplayLabel: '直接压上',
         gainLabel: '短时间里会打得特别狠',
         costLabel: '容错明显下降',
         routeId: 'crit',
@@ -1403,7 +1403,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-lock-finisher',
         label: '接入终结回路',
-        gameplayLabel: '补刀',
+        gameplayLabel: '补最后一下',
         gainLabel: '破绽炸开后更容易补掉残血',
         costLabel: '后面能补的会少',
         routeId: 'crit',

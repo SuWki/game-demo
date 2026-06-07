@@ -1784,3 +1784,11 @@ TODO
   - `consoleWarns: []`
   - `crit / pierce` 两条路线继续稳定覆盖 `anomaly / battlePayoff / resultDetail`
   - `pierce` 结果页复盘现在能稳定读到：第 1 节点钉方向，第 2 节点补核心，第 3 节点直接推到 `打穿兑现态`
+
+## 2026-06-07 stable smoke 玩家语言收口
+
+- 本轮没有碰 `E:\codex\auto-shooter-demo\src\data\nodes.ts`、`E:\codex\auto-shooter-demo\src\data\battleTemplates.ts`，也没有扩 stable smoke 基建；只清理 `crit / pierce` 样板链里残留的设计口吻。
+- `E:\codex\auto-shooter-demo\src\data\events.ts` 把 `crit-reroute-window` / `pierce-reroute-window` 的异常页标签和收益代价改成玩家语言，去掉了 `方向件 / 核心件 / 质变件` 这一类抽象叫法。
+- `E:\codex\auto-shooter-demo\src\systems\RunEngine.ts` 把 battle payoff 的 `route moment`、异常转折提示、结果摘要里的角色标签统一成“先打顺 / 火力更重 / 直接压上 / 补最后一下”这一组说法。
+- `E:\codex\auto-shooter-demo\src\ui\OverlayController.ts` 清掉了结果页里“钉方向 / 补核心 / 收口兑现态”这类残留口吻，结果复盘现在直接写这一手让战斗发生了什么。
+- `E:\codex\auto-shooter-demo\doc\10_设计文档\玩家可见文本规范.md` 追加了硬规则：stable smoke / QA 页面也算玩家可见文本，不能因为是样板链路就保留内部设计语言。

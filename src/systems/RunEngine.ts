@@ -2827,7 +2827,7 @@ export class RunEngine {
     const routeName = ROUTE_NAME_MAP[activeRouteId];
 
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}提前摸到了补刀那下，但还没完全打出来`;
+      return `${routeName}提前摸到了补最后一下，但还没完全打出来`;
     }
 
     if (record.anomalyClass === 'hybrid') {
@@ -2854,7 +2854,7 @@ export class RunEngine {
             ? `这一手让${routeName}直接穿到后排`
             : `这一手让${routeName}直接变成贴身收人`;
       case 'finisher':
-        return `${routeName}补上了最后那一下`;
+        return `${routeName}把最后那一下补上了`;
       default:
         return `${routeName}又打顺了一点`;
     }
@@ -2867,22 +2867,22 @@ export class RunEngine {
 
     const layerMap: Record<RouteId, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '起手',
-        core: '连打',
-        transform: '连爆',
-        finisher: '补刀',
+        direction: '先打顺',
+        core: '火力更重',
+        transform: '直接压上',
+        finisher: '补最后一下',
       },
       pierce: {
-        direction: '穿前排',
-        core: '开口',
-        transform: '穿后排',
-        finisher: '补刀',
+        direction: '先打开路',
+        core: '火力更重',
+        transform: '直接压上',
+        finisher: '补最后一下',
       },
       dash: {
-        direction: '贴身',
-        core: '回打',
-        transform: '收人',
-        finisher: '补刀',
+        direction: '先贴上去',
+        core: '火力更重',
+        transform: '直接压上',
+        finisher: '补最后一下',
       },
     };
 
@@ -2980,21 +2980,21 @@ export class RunEngine {
     const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
       crit: {
         unformed: '没打顺',
-        hinted: '起手',
-        committed: '连上了',
-        matured: '连爆',
+        hinted: '开始连上',
+        committed: '火力压住了',
+        matured: '一串串炸开',
       },
       pierce: {
         unformed: '没打顺',
-        hinted: '穿前排',
-        committed: '压火力',
-        matured: '穿后排',
+        hinted: '前排开始松动',
+        committed: '火力压到后排',
+        matured: '一路穿过去了',
       },
       dash: {
         unformed: '没打顺',
-        hinted: '贴身',
-        committed: '回打',
-        matured: '收人',
+        hinted: '开始贴上去',
+        committed: '贴身能回打',
+        matured: '贴身就能收人',
       },
     };
 
@@ -3069,51 +3069,51 @@ export class RunEngine {
       case 'crit':
         switch (stage) {
           case 'starter':
-            return '暴击有感觉了：先把破绽挂上';
+            return '暴击开始连上了：破绽会越挂越稳';
           case 'bridge':
-            return '暴击连起来了：一断点就会炸开';
+            return '暴击越打越快了：下一串会接得更紧';
           case 'payoff':
-            return '暴击压住了：连打时会一串串炸开';
+            return '暴击打疯了：连打会一串串炸开';
           default:
-            return '暴击线有动静了';
+            return '暴击开始起势了';
         }
       case 'pierce':
         switch (stage) {
           case 'starter':
-            return '穿透有感觉了：子弹开始穿开前排';
+            return '穿透开始找上线了：前排会先被打散';
           case 'bridge':
-            return '穿透连起来了：前排一散，后排就露出来';
+            return '穿透接起来了：前排一散，后排就会掉血';
           case 'payoff':
-            return '穿透压住了：子弹会直接带到后排';
+            return '穿透打穿了：子弹会直接带到后排';
           default:
-            return '穿透线有动静了';
+            return '穿透开始起势了';
         }
       case 'dash':
         switch (stage) {
           case 'starter':
-            return '穿梭有感觉了：先贴上去再拉开';
+            return '穿梭开始贴上去了：先近身，再拉开';
           case 'bridge':
-            return '穿梭顺起来了：贴身后能马上回打';
+            return '穿梭接顺了：贴身后马上能回打';
           case 'payoff':
             return '穿梭压住了：贴身一圈就能收人';
           default:
-            return '穿梭线有动静了';
+            return '穿梭开始起势了';
         }
       default:
-        return '这套开始有手感了';
+        return '这套开始打顺了';
     }
   }
 
   private getAnomalyRoleCallout(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '起手';
+        return '先打顺';
       case 'core':
-        return '加压';
+        return '火力更重';
       case 'transform':
-        return '换打法';
+        return '直接压上';
       case 'finisher':
-        return '补刀';
+        return '补最后一下';
       default:
         return '';
     }
@@ -3122,13 +3122,13 @@ export class RunEngine {
   private getAnomalyRoleTurnVerb(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '先起手';
+        return '先打顺';
       case 'core':
-        return '继续加压';
+        return '把火力提上来';
       case 'transform':
-        return '直接换打法';
+        return '直接压上';
       case 'finisher':
-        return '准备补刀';
+        return '补最后一下';
       default:
         return '往前推一手';
     }
@@ -3281,16 +3281,16 @@ export class RunEngine {
   private getAnomalyRoleRecap(profile: ReplayProfile): string {
     const parts: string[] = [];
     if (profile.anomalyDirectionHits > 0) {
-      parts.push(`起手 ${profile.anomalyDirectionHits}`);
+      parts.push(`先打顺 ${profile.anomalyDirectionHits}`);
     }
     if (profile.anomalyCoreHits > 0) {
-      parts.push(`加压 ${profile.anomalyCoreHits}`);
+      parts.push(`火力更重 ${profile.anomalyCoreHits}`);
     }
     if (profile.anomalyTransformHits > 0) {
-      parts.push(`换打法 ${profile.anomalyTransformHits}`);
+      parts.push(`直接压上 ${profile.anomalyTransformHits}`);
     }
     if (profile.anomalyFinisherHits > 0) {
-      parts.push(`补刀 ${profile.anomalyFinisherHits}`);
+      parts.push(`补最后一下 ${profile.anomalyFinisherHits}`);
     }
 
     return parts.length > 0 ? `异常：${parts.join(' / ')}` : '';
