@@ -126,40 +126,45 @@ export class OverlayController {
           </div>
 
           <div class="start-screen-actions">
-            <button class="combat-action combat-action-primary" data-action="start">
-              <span class="action-icon">▶</span>
-              <div class="action-content">
-                <strong>开始作战</strong>
-                <small class="control-hint"></small>
-              </div>
-            </button>
-
-            <div class="start-screen-stats">
-              <div class="stat-item">
-                <span class="stat-label">出击</span>
-                <strong class="stat-value">${summary.totalRuns}</strong>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">胜利</span>
-                <strong class="stat-value">${summary.wins}</strong>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">上次</span>
-                <strong class="stat-value">${summary.lastDurationSec > 0 ? this.formatDuration(summary.lastDurationSec) : '--:--'}</strong>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">上把路子</span>
-                <strong class="stat-value">${summary.lastRouteName || '无'}</strong>
-              </div>
+            <div class="start-screen-primary">
+              <button class="combat-action combat-action-primary" data-action="start">
+                <span class="action-icon">▶</span>
+                <div class="action-content">
+                  <strong>开始作战</strong>
+                  <small>直接开一把</small>
+                </div>
+              </button>
+              <p class="start-screen-callout">先开战，战报和设置往后放。</p>
             </div>
 
-            <div class="start-screen-secondary">
-              <button class="combat-action-small" data-action="export">
-                <span>旧战报</span>
-              </button>
-              <button class="combat-action-small" data-action="volume">
-                <span>调音量</span>
-              </button>
+            <div class="start-screen-meta">
+              <div class="start-screen-stats">
+                <div class="stat-item">
+                  <span class="stat-label">出击</span>
+                  <strong class="stat-value">${summary.totalRuns}</strong>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">胜利</span>
+                  <strong class="stat-value">${summary.wins}</strong>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">上次</span>
+                  <strong class="stat-value">${summary.lastDurationSec > 0 ? this.formatDuration(summary.lastDurationSec) : '--:--'}</strong>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">上把路子</span>
+                  <strong class="stat-value">${summary.lastRouteName || '无'}</strong>
+                </div>
+              </div>
+
+              <div class="start-screen-secondary">
+                <button class="combat-action-small" data-action="export">
+                  <span>旧战报</span>
+                </button>
+                <button class="combat-action-small" data-action="volume">
+                  <span>调音量</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -212,6 +217,10 @@ export class OverlayController {
             </div>
           </aside>
           <div class="pause-panel-actions">
+            <div class="pause-panel-action-lead">
+              <strong>先看左边，再决定停多久。</strong>
+              <small>继续是主操作，其他都往后退。</small>
+            </div>
             <button class="text-action text-action-primary" data-action="resume">
               <span>接着打</span>
               <small>回到刚才那一下</small>
@@ -456,6 +465,30 @@ export class OverlayController {
             ${!isVictory ? `<p class="result-reason">${result.endingReason}</p>` : ''}
           </div>
 
+          <div class="result-story">
+            <p class="result-story__summary">${result.summary}</p>
+            <p class="result-story__route">${this.getResultRouteRecap(result)}</p>
+            <p class="result-story__build">${result.buildSummary}</p>
+          </div>
+
+          <div class="result-screen-actions">
+            <button class="combat-action combat-action-primary" data-action="restart">
+              <span class="action-icon">▶</span>
+              <div class="action-content">
+                <strong>再来一局</strong>
+                <small>立刻重开</small>
+              </div>
+            </button>
+            <div class="result-secondary-actions">
+              <button class="combat-action-small" data-action="details">
+                <span>看这局怎么断的</span>
+              </button>
+              <button class="combat-action-small" data-action="menu">
+                <span>回到机库</span>
+              </button>
+            </div>
+          </div>
+
           <div class="result-core-stats">
             <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="0">
               <span class="core-stat-label">存活时间</span>
@@ -470,12 +503,6 @@ export class OverlayController {
               <strong class="core-stat-value">${routeLabel}</strong>
               <small class="core-stat-sub">${buildStageLabel}</small>
             </div>
-          </div>
-
-          <div class="result-story">
-            <p class="result-story__summary">${result.summary}</p>
-            <p class="result-story__route">${this.getResultRouteRecap(result)}</p>
-            <p class="result-story__build">${result.buildSummary}</p>
           </div>
 
           ${
@@ -507,22 +534,6 @@ export class OverlayController {
           `
               : ''
           }
-
-          <div class="result-screen-actions">
-            <button class="combat-action combat-action-primary" data-action="restart">
-              <span class="action-icon">▶</span>
-              <div class="action-content">
-                <strong>再来一局</strong>
-                <small>立刻重开</small>
-              </div>
-            </button>
-            <button class="combat-action-small" data-action="details">
-              <span>看这一局</span>
-            </button>
-            <button class="combat-action-small" data-action="menu">
-              <span>回到机库</span>
-            </button>
-          </div>
 
           <div class="result-detail-stats">
             <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="240">
@@ -672,7 +683,7 @@ export class OverlayController {
           <div class="result-details-section">
             <h3 class="detail-section-title">${result.outcome === 'victory' ? '最后收在哪' : '最后断在哪'}</h3>
             <div class="detail-summary-stack">
-              <div class="detail-summary-card">
+              <div class="detail-summary-card detail-summary-card-focus">
                 <strong>${result.summary}</strong>
                 <small>${this.getResultRouteRecap(result)}</small>
               </div>
@@ -704,7 +715,7 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">📈 这局打成了什么样</h3>
+            <h3 class="detail-section-title">📈 这局最后长什么样</h3>
             <div class="detail-stats-grid">
               <div class="detail-stat-card">
                 <span>存活时间</span>
@@ -730,15 +741,6 @@ export class OverlayController {
                 <span>拿牌数</span>
                 <strong>${result.selectedUpgrades?.length ?? 0}</strong>
               </div>
-            </div>
-          </div>
-
-          <div class="result-details-section">
-            <h3 class="detail-section-title">🏆 跟以前比</h3>
-            <div class="detail-placeholder">
-              <div class="placeholder-icon">📊</div>
-              <p><strong>现在还没有旧局能对照</strong></p>
-              <small>等多打几局，这里就能看差别了</small>
             </div>
           </div>
         </div>
@@ -829,13 +831,14 @@ export class OverlayController {
     return `
       <aside class="choice-context choice-context-route" aria-label="下一站怎么选">
         <div class="route-context-copy">
-          <span>打到哪了</span>
+          <span>先看这段</span>
           <strong>${stageLabel}</strong>
           <small>${phaseLabel || '下一站走哪条'}</small>
         </div>
         <div class="route-context-copy route-context-rule">
-          <span>这次给你</span>
-          <strong>${optionCount} 条路，选 1 条</strong>
+          <span>这一轮怎么选</span>
+          <strong>${optionCount} 条路里挑 1 条</strong>
+          <small>先看节点名，再看进去会碰上什么。</small>
         </div>
       </aside>
     `;
@@ -916,7 +919,7 @@ export class OverlayController {
   }
 
   private renderUpgradeChoiceContext(progress: PanelProgress): string {
-    const stats = progress.statSummary.slice(0, 10);
+    const stats = progress.statSummary.slice(0, 6);
     const statItems = stats
       .map((stat) => `<span class="upgrade-stat-item tone-${stat.tone}"><small>${stat.label}</small><strong>${stat.value}</strong></span>`)
       .join('');
@@ -926,7 +929,10 @@ export class OverlayController {
           <span>机体现在这样</span>
           <strong>${progress.levelText}</strong>
         </div>
-        <div class="upgrade-context-route">${progress.routeStatusText}</div>
+        <div class="upgrade-context-route">
+          <small>这把现在</small>
+          <strong>${progress.routeStatusText}</strong>
+        </div>
         <div class="upgrade-stat-grid">${statItems}</div>
       </aside>
     `;
@@ -943,7 +949,7 @@ export class OverlayController {
           <span><small>拿了会变成</small><b>${this.getEventClassLabel(eventDef)}</b></span>
           <span><small>现在打到</small><b>${progress.progressLabel}</b></span>
         </div>
-        <div class="anomaly-warning-strip">这一下劲很大，拿了就得照着打。</div>
+        <div class="anomaly-warning-strip">拿了就别回头，这把会换走法。</div>
         ${roleSummary ? `<div class="choice-strip-event-meta">${roleSummary}</div>` : ''}
       </aside>
     `;
@@ -960,11 +966,11 @@ export class OverlayController {
           <span class="choice-node-step">这一站</span>
         </div>
         <div class="choice-strip-body choice-strip-body-node">
+          <span class="choice-node-kicker">${detail}</span>
           <strong>${node.title}</strong>
           <small>${this.getNodeCardDescription(node)}</small>
         </div>
         <div class="choice-strip-foot choice-strip-foot-node">
-          <span class="choice-node-detail">${detail}</span>
           <span class="choice-node-enter">走这条</span>
         </div>
       </button>
@@ -1003,7 +1009,7 @@ export class OverlayController {
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${nameHtml}</strong>
-          <small>${effectTextHtml}</small>
+          <p class="choice-main-copy">${effectTextHtml}</p>
         </div>
       </button>
     `;
@@ -1086,10 +1092,6 @@ export class OverlayController {
           ${anomalyRoleLabel ? `<span class="choice-mode-badge choice-event-role role-${option.anomalyRole}" style="--route-pill: ${routeAccent}">${anomalyRoleLabel}</span>` : ''}
           <span class="choice-mode-badge choice-event-route ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
         </div>
-        <div class="choice-strip-body choice-strip-body-event">
-          <strong>${option.label}</strong>
-          <small>${effectText}</small>
-        </div>
         ${
           isAnomaly
             ? `<div class="choice-anomaly-breakdown">
@@ -1098,6 +1100,10 @@ export class OverlayController {
               </div>`
             : ''
         }
+        <div class="choice-strip-body choice-strip-body-event">
+          <strong>${option.label}</strong>
+          <small>${effectText}</small>
+        </div>
         ${
           detailTags.length > 0
             ? `<div class="choice-strip-event-meta">${detailTags
