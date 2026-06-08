@@ -857,7 +857,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-reroute-buffer',
-    name: '改道缓冲',
+    name: '稳路缓冲',
     description: '均衡强化生存与机动',
     category: 'generic',
     repeatable: true,
@@ -1364,7 +1364,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-primer',
-    name: '热枪起手',
+    name: '热枪预热',
     description: '命中时概率触发高伤，适合抓短时机爆发',
     category: 'route',
     routeId: 'crit',
@@ -3405,13 +3405,13 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'dash-rebound-window': '脉冲频率和反击伤害提升',
   'dash-rethread': '脉冲节奏缩短，反击更强',
   'dash-reentry': '脉冲反击和无伤时间强化',
-  'dash-anchor': '脉冲反击完成收束',
+  'dash-anchor': '脉冲反击把最后那一下补上',
   'dash-zero-window': '满层脉冲后打击标记敌人追加伤害',
 };
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
   if (archetype.category === 'route') {
-    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '拿上这张，打法会更顺。';
+    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '拿上这张，这一路会更顺。';
   }
 
   return archetype.description ?? describeContentEffects(effects, archetype.routeId);

@@ -765,8 +765,8 @@ export class GameScene extends Phaser.Scene {
             onVolume: () => {
               this.services.audio.play('click');
               this.services.overlay.showVolumePanel(
-                '音量设置',
-                '调整整体播放音量。',
+                '调音量',
+                '把这一局的声音调顺一点。',
                 this.services.audio.getVolume(),
                 (volume) => {
                   this.services.audio.setVolume(volume);
@@ -829,7 +829,7 @@ export class GameScene extends Phaser.Scene {
           state.upgradeSource === 'levelUp'
             ? `等级提升 Lv.${state.level}`
             : state.currentNode?.isFinalPrep
-              ? '最终整备'
+              ? '最后整备'
               : `${getPhaseLabel(state.phase)}强化`;
         this.services.overlay.showUpgradePanel(
           panelTitle,
@@ -990,19 +990,19 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'upgradeChoice') {
-      return state.currentNode?.isFinalPrep ? '最终整备' : '选择强化';
+      return state.currentNode?.isFinalPrep ? '最后整备' : '挑强化';
     }
 
     if (state.status === 'eventChoice') {
-      return state.currentEvent?.contentKind === 'anomaly' ? '异常转折' : '选择事件';
+      return state.currentEvent?.contentKind === 'anomaly' ? '异常机会' : '选事件';
     }
 
     if (state.status === 'nodeChoice') {
-      return '选择下一站';
+      return '下一站走哪条';
     }
 
     if (state.status === 'result') {
-      return '本局结算';
+      return '这一局收尾';
     }
 
     return this.getRouteStatusText();
@@ -1142,9 +1142,9 @@ export class GameScene extends Phaser.Scene {
       return '战斗里立刻补一项强化。';
     }
     if (state.currentNode?.isFinalPrep) {
-      return '最后补一手，选完直接进 Boss。';
+      return '最后补一手，选完就进 Boss。';
     }
-    return '补当前打法最缺的一拍。';
+    return '补上现在最缺的那一下。';
   }
 
   private getRunProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
@@ -1201,7 +1201,7 @@ export class GameScene extends Phaser.Scene {
       const targetTitle = this.getBattleIdentityLabel(battle);
       if (battle.encounterType === 'boss') {
         return {
-          objectiveLabel: 'Boss 目标',
+          objectiveLabel: '先盯 Boss',
           objectiveText: '击败 Boss 本体',
           objectiveDetail: '先把金色血条打下来，旁边的小怪会跟着散。',
           objectiveProgressText: battle.eliteAlive ? `目标 ${targetTitle}` : '首领即将进场',
@@ -1216,7 +1216,7 @@ export class GameScene extends Phaser.Scene {
 
       if (winCondition === 'survive') {
         return {
-          objectiveLabel: '生存目标',
+          objectiveLabel: '先活下来',
           objectiveText: '撑到倒计时结束',
           objectiveDetail: '只要活到计时归零就能过关。',
           objectiveProgressText: `剩余 ${Math.ceil(battle.remainingSec)}s`,
@@ -1225,10 +1225,10 @@ export class GameScene extends Phaser.Scene {
       }
 
       return {
-        objectiveLabel: '战斗目标',
+        objectiveLabel: '先清这一波',
         objectiveText: '清掉这一波敌人',
-        objectiveDetail: `击破 ${battle.targetKills} 个敌人后进入下一站。奖励倒计时内完成可多选 1 个强化。`,
-        objectiveProgressText: `进度 ${battle.kills} / ${battle.targetKills}`,
+        objectiveDetail: `打掉 ${battle.targetKills} 个敌人后就能往前走。奖励倒计时内打完还能多拿 1 张强化。`,
+        objectiveProgressText: `已打掉 ${battle.kills} / ${battle.targetKills}`,
         objectiveTone: 'battle',
       };
     }
@@ -1239,7 +1239,7 @@ export class GameScene extends Phaser.Scene {
 
       if (state.phase === 'finalBattle' || hasBossNode) {
         return {
-          objectiveLabel: '当前目标',
+          objectiveLabel: '眼下先做',
           objectiveText: '选定最终战',
           objectiveDetail: '选定后马上进 Boss。',
           objectiveProgressText: 'Boss 战入口',
@@ -1249,18 +1249,18 @@ export class GameScene extends Phaser.Scene {
 
       if (state.phase === 'finalPrep' || hasFinalPrepNode) {
         return {
-          objectiveLabel: '当前目标',
-          objectiveText: '进入最终整备',
-          objectiveDetail: '补最后一手，再进 Boss。',
-          objectiveProgressText: '整备后进入 Boss',
+          objectiveLabel: '眼下先做',
+          objectiveText: '先进最后整备',
+          objectiveDetail: '补最后一手，然后直接进 Boss。',
+          objectiveProgressText: '补完就进 Boss',
           objectiveTone: 'flow',
         };
       }
 
       return {
-        objectiveLabel: '当前目标',
-        objectiveText: '选择下一站',
-        objectiveDetail: `当前第 ${currentStep} / ${state.totalRounds} 站。`,
+        objectiveLabel: '眼下先做',
+        objectiveText: '挑下一站',
+        objectiveDetail: `现在打到第 ${currentStep} / ${state.totalRounds} 站。`,
         objectiveProgressText: bossDistanceText,
         objectiveTone: 'flow',
       };
@@ -1268,8 +1268,8 @@ export class GameScene extends Phaser.Scene {
 
     if (state.status === 'upgradeChoice') {
       return {
-        objectiveLabel: '当前目标',
-        objectiveText: state.currentNode?.isFinalPrep ? '完成最终整备' : '把这手强化选完',
+        objectiveLabel: '眼下先做',
+        objectiveText: state.currentNode?.isFinalPrep ? '把最后整备补完' : '把这张强化挑好',
         objectiveDetail: state.upgradeSource === 'levelUp' ? '选完马上回场。' : '选完接着打。',
         objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
         objectiveTone: 'flow',
@@ -1278,18 +1278,18 @@ export class GameScene extends Phaser.Scene {
 
     if (state.status === 'eventChoice') {
       return {
-        objectiveLabel: '当前目标',
+        objectiveLabel: '眼下先做',
         objectiveText: state.currentEvent?.contentKind === 'anomaly' ? '接住这个转折' : '把这步选完',
-        objectiveDetail: '选完就继续前进。',
+        objectiveDetail: '选完就接着往前打。',
         objectiveProgressText: bossDistanceText,
         objectiveTone: 'flow',
       };
     }
 
     return {
-      objectiveLabel: '当前目标',
+      objectiveLabel: '眼下先做',
       objectiveText: '准备进入下一局',
-      objectiveDetail: '换一种打法再试一次。',
+      objectiveDetail: '换个路子，再试一次。',
       objectiveProgressText: bossDistanceText,
       objectiveTone: 'flow',
     };
@@ -1350,7 +1350,7 @@ export class GameScene extends Phaser.Scene {
       return this.getRouteStageStatusText(routeId, stage);
     }
 
-    return '选择强化';
+    return '先挑强化';
   }
 
   private getRouteStageStatusText(routeId: RouteId, stage: RouteBuildStage): string {
@@ -1389,7 +1389,7 @@ export class GameScene extends Phaser.Scene {
         }
         return '穿梭还没站稳。';
       default:
-        return '选择强化';
+        return '先挑强化';
     }
   }
 

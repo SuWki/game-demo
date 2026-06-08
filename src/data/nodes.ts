@@ -138,7 +138,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-upgrade',
         type: 'upgrade',
         phase: 'opening',
-        title: '方向定标',
+        title: '补路火力',
         description: '顺着这条线再压一手',
         selection: {
           baseWeight: 4,
@@ -154,7 +154,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-upgrade-fireline',
         type: 'upgrade',
         phase: 'opening',
-        title: '机体整备',
+        title: '补一手',
         description: '把机体稳一稳，顺手补点机动',
         selection: {
           baseWeight: 3.2,
@@ -197,7 +197,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '临时改路',
-        description: '让不同打法更容易接上',
+        description: '让别的路子也更容易接进来',
         selection: {
           baseWeight: 1.45,
           soloMultiplier: 0.2,
@@ -377,7 +377,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade',
         type: 'upgrade',
         phase: 'mid',
-        title: '方向定标',
+        title: '补路火力',
         description: '顺着这条线再压一手',
         selection: {
           baseWeight: 3.8,
@@ -390,7 +390,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-bridge',
         type: 'upgrade',
         phase: 'mid',
-        title: '机体整备',
+        title: '补一手',
         description: '把机体稳一稳，顺手补点机动',
         selection: {
           baseWeight: 3.4,
@@ -421,8 +421,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-reroute',
         type: 'upgrade',
         phase: 'mid',
-        title: '改道整备',
-        description: '重新选择方向',
+        title: '补路整备',
+        description: '重新挑一边补火力',
         selection: {
           baseWeight: 2.7,
           soloMultiplier: 0.9,
@@ -564,8 +564,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-reroute',
         type: 'anomaly',
         phase: 'mid',
-        title: '改道失真',
-        description: '是否改变方向',
+        title: '路数偏转',
+        description: '看看要不要临时改路',
         selection: {
           baseWeight: 2.8,
           soloMultiplier: 0.48,
@@ -881,7 +881,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade',
         type: 'upgrade',
         phase: 'late',
-        title: '方向定标',
+        title: '补路火力',
         description: '顺着这条线再压一手',
         selection: {
           baseWeight: 3.4,
@@ -922,7 +922,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-payoff',
         type: 'upgrade',
         phase: 'late',
-        title: '收束筹码',
+        title: '压上筹码',
         description: '获得强力升级',
         selection: {
           baseWeight: 2.7,
@@ -1093,8 +1093,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'final-prep',
         type: 'upgrade',
         phase: 'finalPrep',
-        title: '最终整备',
-        description: '最终整备',
+        title: '最后整备',
+        description: '最后整备',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1372,7 +1372,7 @@ export function getPhaseLabel(phase: PhaseId): string {
     case 'late':
       return '后段';
     case 'finalPrep':
-      return '最终整备';
+      return '最后整备';
     case 'finalBattle':
       return '最终战';
     case 'ended':

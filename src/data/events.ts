@@ -572,7 +572,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         label: '补穿透火力',
         gameplayLabel: '火力更重',
         gainLabel: '穿前排更稳，后排掉血更快',
-        costLabel: '这手不改别的打法',
+        costLabel: '这手先不顾别的路子',
         anomalyRole: 'core',
         description: '先把穿透火力补上，打散前排会更稳。',
         effects: [
@@ -601,7 +601,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         gainLabel: '子弹会直接带到后排',
         costLabel: '站位和血量更吃紧',
         anomalyRole: 'transform',
-        description: '直接走穿后排的打法，子弹一串过去会带倒整排。',
+        description: '直接照着后排打，子弹一串过去会带倒整排。',
         effects: [
           {
             type: 'stats',

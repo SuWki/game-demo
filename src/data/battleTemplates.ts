@@ -540,7 +540,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         },
         {
           id: 'kill-window',
-          label: '收束',
+          label: '最后一压',
           behaviorOverride: 'screened',
           triggerHpRatio: 0.38,
           triggerRemainingSec: 12,
@@ -746,7 +746,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         },
         {
           id: 'fireline',
-          label: '火线收束',
+          label: '火线压上',
           behaviorOverride: 'kiting',
           signatureLabel: '压边迁火',
           signatureDurationSec: 2.8,

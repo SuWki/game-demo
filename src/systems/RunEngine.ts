@@ -3150,7 +3150,7 @@ export class RunEngine {
       return `${eventDef.name}：${option.label}`;
     }
 
-    const routeName = routeId ? ROUTE_NAME_MAP[routeId] : '当前打法';
+    const routeName = routeId ? ROUTE_NAME_MAP[routeId] : '这把路子';
     const role = this.getAnomalyRoleCallout(option.anomalyRole);
     const roleSuffix = role ? `·${role}` : '';
 
@@ -7274,7 +7274,7 @@ export class RunEngine {
 
     switch (nextPhase) {
       case 'mid':
-        this.enqueueTip('进入中段：开始稳住当前打法。');
+        this.enqueueTip('进到中段了：先把这套路子稳住。');
         this.enqueueAudio('confirm');
         return;
       case 'late':
@@ -7282,7 +7282,7 @@ export class RunEngine {
         this.enqueueAudio('confirm');
         return;
       case 'finalPrep':
-        this.enqueueTip('进入最终整备：补完这一手后将直面 Boss。');
+        this.enqueueTip('进到最后整备了：补完这一手就直面 Boss。');
         this.enqueueAudio('upgrade');
         return;
       case 'finalBattle':

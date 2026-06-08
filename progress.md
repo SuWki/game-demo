@@ -1792,3 +1792,20 @@ TODO
 - `E:\codex\auto-shooter-demo\src\systems\RunEngine.ts` 把 battle payoff 的 `route moment`、异常转折提示、结果摘要里的角色标签统一成“先打顺 / 火力更重 / 直接压上 / 补最后一下”这一组说法。
 - `E:\codex\auto-shooter-demo\src\ui\OverlayController.ts` 清掉了结果页里“钉方向 / 补核心 / 收口兑现态”这类残留口吻，结果复盘现在直接写这一手让战斗发生了什么。
 - `E:\codex\auto-shooter-demo\doc\10_设计文档\玩家可见文本规范.md` 追加了硬规则：stable smoke / QA 页面也算玩家可见文本，不能因为是样板链路就保留内部设计语言。
+
+## 2026-06-08 全局玩家可见文本清扫
+
+- 这轮没有回到平衡、路线掉落或 stable smoke 基建，只把范围从 QA 样板链扩到正式玩家会看到的整套页面。
+- `E:\codex\auto-shooter-demo\src\ui\OverlayController.ts` 统一清掉首页菜单、暂停页、节点页、升级页、异常页、结果页主屏和详情页里的说明腔 / 表头味，把 `当前关卡 / 选择规则 / 当前机体 / 当前目标 / 升级历程 / 过去的对照` 这类后台口吻改成更像游戏内自然说话的版本。
+- `E:\codex\auto-shooter-demo\src\scenes\GameScene.ts` 把 HUD 状态、战斗目标和升级提示改成同一套玩家语言，避免战斗内继续冒出“当前目标 / 进入最终整备”这种系统说明句式。
+- `E:\codex\auto-shooter-demo\src\scenes\MainMenuScene.ts` 把首页音量面板和复制提示也收进同一口径，避免菜单还停在工具面板语气。
+- `E:\codex\auto-shooter-demo\src\data\events.ts`、`E:\codex\auto-shooter-demo\src\data\upgrades.ts`、`E:\codex\auto-shooter-demo\src\data\nodes.ts`、`E:\codex\auto-shooter-demo\src\data\anomalyRoutePools.ts`、`E:\codex\auto-shooter-demo\src\data\battleTemplates.ts` 继续压掉节点名、异常选项名、强化名和战斗标题里残留的设计词，让普通页面不再只有 stable smoke 那 6 张样板图是干净的。
+- `E:\codex\auto-shooter-demo\src\systems\RunEngine.ts` 补齐阶段提示和兜底路线名的玩家语言，避免页面里出现一套自然说法、系统层吐出另一套硬标签。
+- `E:\codex\auto-shooter-demo\doc\10_设计文档\玩家可见文本规范.md` 新增“表头味 / 面板说明味 / 后台字段味”硬规则，明确首页、暂停页、按钮、tooltip、QA 页面都按同一标准执行。
+- 验证结果：
+  - `npm run build` 通过
+  - 实页审查覆盖：首页、暂停页、节点选择、普通升级、普通异常、结果页主屏、结果页详情
+  - `E:\codex\auto-shooter-demo\output\qa\ui-copy-audit-20260608\final\summary.json`
+  - `failed404Urls: []`
+  - `consoleErrors: []`
+  - `consoleWarns: []`
