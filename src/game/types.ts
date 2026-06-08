@@ -717,6 +717,7 @@ export interface RunState {
     pierceFloodgate?: boolean;
     pierceRiftbloom?: boolean;
     piercePrism?: boolean;
+    pierceBreakthrough?: boolean;
     dashBrush?: boolean;
     dashSidestepBank?: boolean;
     dashZeroWindow?: boolean;
@@ -724,6 +725,7 @@ export interface RunState {
     critAfterglow?: boolean;
     critEmbershard?: boolean;
     critCrownfire?: boolean;
+    critLockProtocol?: boolean;
   };
 }
 

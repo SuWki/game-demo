@@ -564,6 +564,7 @@ export class RunEngine {
     this.applyEffects(option.effects ?? [], {
       pickId: `event:${eventDef.id}:${option.id}`,
     });
+    const anomalyPerkMoment = this.activateAnomalyOptionPerks(option.id);
     const isRedirectPick = Boolean(optionRouteId && previousDominantRoute && optionRouteId !== previousDominantRoute);
     const isHybridPick =
       isRedirectPick ||
@@ -608,7 +609,15 @@ export class RunEngine {
     this.enqueueAudio(eventDef.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
     this.enqueueTip(this.getEventSelectionTip(eventDef, option, optionRouteId));
     if (eventDef.contentKind === 'anomaly' && optionRouteId) {
-      this.queueRouteMoment(optionRouteId, this.getAnomalyTurnMomentText(optionRouteId, option));
+      this.queueRouteMoment(
+        optionRouteId,
+        anomalyPerkMoment?.routeId === optionRouteId
+          ? anomalyPerkMoment.momentText
+          : this.getAnomalyTurnMomentText(optionRouteId, option),
+      );
+      if (anomalyPerkMoment?.routeId === optionRouteId) {
+        this.enqueueTip(anomalyPerkMoment.tipText);
+      }
       this.enqueueTip(`${ROUTE_NAME_MAP[optionRouteId]}被这一下改写了`);
     }
     this.advanceRound();
@@ -2807,6 +2816,7 @@ export class RunEngine {
       this.applyEffects(option.effects, {
         pickId: `qa-anomaly:${routeId}:${role}:${option.id}`,
       });
+      this.activateAnomalyOptionPerks(option.id);
     }
   }
 
@@ -3595,6 +3605,7 @@ export class RunEngine {
       'pierce-floodgate': 'pierceFloodgate',
       'pierce-riftbloom': 'pierceRiftbloom',
       'pierce-prism': 'piercePrism',
+      'pierce-breakthrough': 'pierceBreakthrough',
       'dash-brush': 'dashBrush',
       'dash-sidestep-bank': 'dashSidestepBank',
       'dash-zero-window': 'dashZeroWindow',
@@ -3602,6 +3613,7 @@ export class RunEngine {
       'crit-afterglow': 'critAfterglow',
       'crit-embershard': 'critEmbershard',
       'crit-crownfire': 'critCrownfire',
+      'crit-lock-protocol': 'critLockProtocol',
     };
 
     const cueMap: Partial<
@@ -3611,6 +3623,7 @@ export class RunEngine {
       pierceFloodgate: { routeId: 'pierce', text: '穿透线开始压前排了', priority: 2 },
       pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经穿到后排了', priority: 3 },
       piercePrism: { routeId: 'pierce', text: '穿透线已经穿到后排了', priority: 4 },
+      pierceBreakthrough: { routeId: 'pierce', text: '找一条直线：这把已经能穿到后排了', priority: 5 },
       dashBrush: { routeId: 'dash', text: '穿梭线开始顺手了', priority: 1 },
       dashSidestepBank: { routeId: 'dash', text: '穿梭线开始回切了', priority: 2 },
       dashZeroWindow: { routeId: 'dash', text: '穿梭线开始贴身收人了', priority: 3 },
@@ -3618,6 +3631,7 @@ export class RunEngine {
       critAfterglow: { routeId: 'crit', text: '暴击线开始顺手了', priority: 1 },
       critEmbershard: { routeId: 'crit', text: '暴击线已经连起来了', priority: 2 },
       critCrownfire: { routeId: 'crit', text: '最后那下到手了，这把能收', priority: 4 },
+      critLockProtocol: { routeId: 'crit', text: '盯住厚血目标：这把已经能连着压爆了', priority: 5 },
     };
 
     let bestCue: { routeId: RouteId; text: string; priority: number } | null = null;
@@ -3638,6 +3652,40 @@ export class RunEngine {
 
     if (bestCue) {
       this.queueRouteMoment(bestCue.routeId, bestCue.text);
+    }
+  }
+
+  private activateRoutePerks(
+    perkKeys: RoutePerkKey[],
+  ): void {
+    if (!this.state.activeRoutePerks) {
+      this.state.activeRoutePerks = {};
+    }
+    for (const perkKey of perkKeys) {
+      this.state.activeRoutePerks[perkKey] = true;
+    }
+  }
+
+  private activateAnomalyOptionPerks(
+    optionId: string,
+  ): { routeId: RouteId; momentText: string; tipText: string } | null {
+    switch (optionId) {
+      case 'crit-reroute-window-transform':
+        this.activateRoutePerks(['critEmbershard', 'critCrownfire', 'critLockProtocol']);
+        return {
+          routeId: 'crit',
+          momentText: '盯住厚血目标：连着重击会把周围一起炸开',
+          tipText: '暴击改打法了：先盯住厚血目标，把重击链压到底。',
+        };
+      case 'pierce-reroute-window-breakthrough':
+        this.activateRoutePerks(['pierceRiftbloom', 'pierceFloodgate', 'pierceBreakthrough']);
+        return {
+          routeId: 'pierce',
+          momentText: '找一条直线：穿开前排就会把后排一起带走',
+          tipText: '穿透改打法了：先找直线，前排一裂开就顺着带后排。',
+        };
+      default:
+        return null;
     }
   }
 
@@ -4359,6 +4407,77 @@ export class RunEngine {
     }
 
     return Math.min(1, battle.pierceFlowSec / (0.46 + Math.min(0.28, battle.pierceFlowCount * 0.06)));
+  }
+
+  private applyPierceBreakthroughCarry(
+    battle: BattleState,
+    sourceEnemy: BattleState['enemies'][number],
+    bullet: BattleState['bullets'][number],
+    laneScore: number,
+  ): boolean {
+    if (!(this.state.activeRoutePerks?.pierceBreakthrough)) {
+      return false;
+    }
+
+    const velocityLength = Math.hypot(bullet.vx, bullet.vy);
+    if (velocityLength <= 0.001) {
+      return false;
+    }
+    const dirX = bullet.vx / velocityLength;
+    const dirY = bullet.vy / velocityLength;
+
+    let bestTarget: BattleState['enemies'][number] | null = null;
+    let bestProjection = Number.POSITIVE_INFINITY;
+    for (const candidate of battle.enemies) {
+      if (candidate.id === sourceEnemy.id || candidate.hp <= 0) {
+        continue;
+      }
+      const toX = candidate.x - sourceEnemy.x;
+      const toY = candidate.y - sourceEnemy.y;
+      const projection = toX * dirX + toY * dirY;
+      if (projection <= sourceEnemy.radius + 12 || projection >= 220) {
+        continue;
+      }
+      const perpendicular = Math.abs(toX * dirY - toY * dirX);
+      const tolerance = candidate.radius + 18 + Math.min(18, laneScore * 8);
+      if (perpendicular > tolerance) {
+        continue;
+      }
+      if (projection < bestProjection) {
+        bestProjection = projection;
+        bestTarget = candidate;
+      }
+    }
+
+    if (!bestTarget) {
+      return false;
+    }
+
+    const carryDamageRatio = Math.min(0.54, 0.26 + Math.max(0, laneScore - 1) * 0.1 + bullet.hitCount * 0.06);
+    bestTarget.hp -= bullet.damage * carryDamageRatio;
+    bestTarget.routeHitKind = 'pierce';
+    bestTarget.routeHitFlashSec = Math.max(bestTarget.routeHitFlashSec ?? 0, 0.16);
+    bestTarget.pierceMarkSec = Math.max(bestTarget.pierceMarkSec, 1.15);
+    bestTarget.pierceMarkStacks = Math.max(bestTarget.pierceMarkStacks ?? 0, 1);
+    bestTarget.pierceChainHits = Math.max(bestTarget.pierceChainHits ?? 0, bullet.hitCount + 2);
+    this.createCombatPulse(battle, {
+      x: bestTarget.x,
+      y: bestTarget.y,
+      radius: bestTarget.radius + 14,
+      lifeSec: 0.12,
+      color: 0x8fdcff,
+      secondaryColor: 0xf6fcff,
+      fillAlpha: 0.04,
+      strokeAlpha: 0.42,
+      strokeWidth: 2,
+      growthPerSec: 170,
+      innerRadiusRatio: 0.72,
+      spokeCount: 4,
+      spokeLength: 12 + Math.min(10, laneScore * 3),
+      angle: Math.atan2(bullet.vy, bullet.vx),
+      spinRate: 4.8,
+    });
+    return true;
   }
 
   private getPickupLeadRatio(battle: BattleState): number {
@@ -5419,6 +5538,7 @@ export class RunEngine {
           dashStage,
         );
         if (critical) {
+          const critLockActive = this.state.activeRoutePerks?.critLockProtocol ?? false;
           battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + this.getCritOverdriveDurationGain());
           battle.critChain += 1;
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
@@ -5522,6 +5642,32 @@ export class RunEngine {
             const bonusDamage = bullet.damage * 0.10;
             enemy.hp -= bonusDamage;
           }
+          if (critLockActive && (enemy.elite || hadCritMark || battle.critFinisherReady)) {
+            enemy.hp -= bullet.damage * (battle.critFinisherReady ? 0.22 : 0.14);
+            battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + 0.32);
+            battle.critBurstChainSec = Math.max(battle.critBurstChainSec, 0.78);
+            battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.12);
+            this.createCombatPulse(battle, {
+              x: enemy.x,
+              y: enemy.y,
+              radius: enemy.radius + 22,
+              lifeSec: 0.14,
+              color: 0xffb14f,
+              secondaryColor: 0xfff1bf,
+              fillAlpha: 0.08,
+              strokeAlpha: 0.82,
+              strokeWidth: 2.5,
+              growthPerSec: 192,
+              innerRadiusRatio: 0.58,
+              spokeCount: 5,
+              spokeLength: 10,
+              angle: Math.atan2(bullet.vy, bullet.vx),
+              spinRate: 6.8,
+            });
+            if (battle.critChain >= 2) {
+              this.queueRouteMoment('crit', '重击窗口开了：盯住这一只压到底');
+            }
+          }
           if (critStage === 'committed' || critStage === 'matured') {
             const cadenceRefund = critStage === 'matured' ? 0.05 : 0.032;
             battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - cadenceRefund);
@@ -5576,6 +5722,7 @@ export class RunEngine {
 
         if (bullet.routeFocus === 'pierce') {
           const laneScore = this.getPierceLaneScore(battle, enemy);
+          const pierceBreakthroughActive = this.state.activeRoutePerks?.pierceBreakthrough ?? false;
           // 流派构筑第三轮：穿透裂纹承接机制
           const wasMarked = enemy.pierceMarkSec > 0;
           const oldStacks = enemy.pierceMarkStacks ?? 0;
@@ -5608,6 +5755,8 @@ export class RunEngine {
               hitCount: bullet.hitCount,
               eliteCrackRatio,
             });
+            const carriedBackline =
+              pierceBreakthroughActive && this.applyPierceBreakthroughCarry(battle, enemy, bullet, laneScore);
             const refund = Math.min(0.028, 0.01 + laneScore * 0.005 + Math.max(0, bullet.hitCount - 1) * 0.004);
             battle.fireCooldownSec = Math.max(0.035, battle.fireCooldownSec - refund);
             battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2 + Math.min(0.08, pierceChain * 0.014));
@@ -5638,6 +5787,9 @@ export class RunEngine {
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'payoff'));
             } else if (pierceChain >= 2) {
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
+            }
+            if (carriedBackline && pierceChain >= 2) {
+              this.queueRouteMoment('pierce', '这一条线通了：前排一裂开，后排也会跟着掉');
             }
           }
         }

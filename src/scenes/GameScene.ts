@@ -1030,8 +1030,12 @@ export class GameScene extends Phaser.Scene {
 
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     if (liveFocusRoute) {
+      const activeRoutePerks = this.engine.getState().activeRoutePerks;
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
+        if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
+          return '重击窗口开了：盯住厚血目标，一口气把这一只压到底。';
+        }
         if (battle.critBurstBonusSec > 0) {
           return '暴击已经压住了：现在就是连着重击。';
         }
@@ -1055,6 +1059,9 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (liveFocusRoute === 'pierce') {
+        if (activeRoutePerks?.pierceBreakthrough && battle.pierceFlowSec > 0 && battle.pierceFlowCount >= 2) {
+          return '这一条线已经通了：前排一裂开，后排会跟着掉。';
+        }
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
             return `穿透已经打到后排了：第 ${battle.pierceFlowCount} 段还在往后带。`;
@@ -2670,12 +2677,23 @@ export class GameScene extends Phaser.Scene {
       }
 
       // 流派构筑第二轮：敌人状态标记可视化
+      const activeRoutePerks = this.engine.getState().activeRoutePerks;
       // critMark: 橙色破绽环
       if (enemy.critMarkSec > 0) {
         const critMarkRatio = Math.min(1, enemy.critMarkSec / 2.5);
         const critColor = 0xff8c42; // 橙色
         this.graphics.lineStyle(2.5, critColor, 0.25 + critMarkRatio * 0.55);
         this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 8 + (1 - critMarkRatio) * 4);
+        if (activeRoutePerks?.critLockProtocol) {
+          const bracketRadius = enemy.radius + 15 + (1 - critMarkRatio) * 4;
+          const bracketGap = 4;
+          const bracketWidth = 6;
+          this.graphics.lineStyle(2, 0xffd58a, 0.3 + critMarkRatio * 0.5);
+          this.graphics.lineBetween(screen.x - bracketRadius, screen.y - bracketGap, screen.x - bracketRadius + bracketWidth, screen.y - bracketGap);
+          this.graphics.lineBetween(screen.x - bracketRadius, screen.y - bracketGap, screen.x - bracketRadius, screen.y + bracketGap);
+          this.graphics.lineBetween(screen.x + bracketRadius, screen.y - bracketGap, screen.x + bracketRadius - bracketWidth, screen.y - bracketGap);
+          this.graphics.lineBetween(screen.x + bracketRadius, screen.y - bracketGap, screen.x + bracketRadius, screen.y + bracketGap);
+        }
         // 短促爆闪效果
         if (enemy.hitFlashSec > 0.08) {
           this.graphics.fillStyle(critColor, 0.12 + critMarkRatio * 0.18);
@@ -2698,6 +2716,13 @@ export class GameScene extends Phaser.Scene {
             screen.x + Math.cos(angle) * (enemy.radius * 0.4 + crackLen),
             screen.y + Math.sin(angle) * (enemy.radius * 0.4 + crackLen),
           );
+        }
+        if (activeRoutePerks?.pierceBreakthrough) {
+          this.graphics.lineStyle(1.8, 0xa7e9ff, 0.18 + pierceMarkRatio * 0.28);
+          this.graphics.lineBetween(screen.x - enemy.radius * 1.6, screen.y, screen.x + enemy.radius * 1.6, screen.y);
+          this.graphics.fillStyle(0xbdefff, 0.18 + pierceMarkRatio * 0.2);
+          this.graphics.fillCircle(screen.x + enemy.radius * 1.1, screen.y, 2.4);
+          this.graphics.fillCircle(screen.x + enemy.radius * 1.55, screen.y, 1.8);
         }
       }
       // dashMark: 绿色脉冲残影
@@ -2757,6 +2782,11 @@ export class GameScene extends Phaser.Scene {
           this.graphics.lineBetween(screen.x - slashLen * 0.55, screen.y + split * 1.5, screen.x + slashLen * 0.55, screen.y - split * 1.5);
           this.graphics.lineStyle(1.8, pierceBrightColor, 0.9 * flashRatio);
           this.graphics.lineBetween(screen.x - slashLen * 0.74, screen.y, screen.x + slashLen * 0.74, screen.y);
+          if (this.engine.getState().activeRoutePerks?.pierceBreakthrough) {
+            this.graphics.lineStyle(2.4, 0xcdf7ff, 0.45 * flashRatio);
+            this.graphics.lineBetween(screen.x - slashLen * 0.2, screen.y - split * 2.1, screen.x + slashLen * 1.1, screen.y - split * 0.4);
+            this.graphics.lineBetween(screen.x - slashLen * 0.2, screen.y + split * 2.1, screen.x + slashLen * 1.1, screen.y + split * 0.4);
+          }
           this.graphics.fillStyle(0xffffff, 0.7 * flashRatio);
           this.graphics.fillCircle(screen.x, screen.y, 3);
         } else if (enemy.routeHitKind === 'dash') {

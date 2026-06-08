@@ -485,11 +485,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'crit-reroute-window-transform',
         label: '压上暴击',
         gameplayLabel: '直接压上',
-        gainLabel: '连续暴击会把旁边也一起炸掉',
+        gainLabel: '盯住厚血目标，连着重击会把旁边一起炸掉',
         costLabel: '容错和血量都会掉',
         routeId: 'crit',
         anomalyRole: 'transform',
-        description: '直接走高爆发，连着打中时会把附近敌人一起带走。',
+        description: '这一下开始别再均着打了。先盯住厚血目标，把重击链压到底，旁边会跟着一起炸。',
         effects: [
           {
             type: 'stats',
@@ -598,10 +598,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         routeId: 'pierce',
         label: '压上穿透',
         gameplayLabel: '直接压上',
-        gainLabel: '子弹会直接带到后排',
+        gainLabel: '找一条直线，穿开前排就会把后排一起带走',
         costLabel: '站位和血量更吃紧',
         anomalyRole: 'transform',
-        description: '直接照着后排打，子弹一串过去会带倒整排。',
+        description: '拿了这一手就别只看前排了。先找一条直线，穿开前排以后，后排会顺着这条线一起掉。',
         effects: [
           {
             type: 'stats',
