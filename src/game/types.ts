@@ -616,6 +616,8 @@ export interface BattleState {
   // Crit 破绽爆发后短收益窗口
   critBurstBonusSec: number;
   critBurstBonusRatio: number;
+  critFocusTargetId: number | null;
+  critFocusLockSec: number;
   // Crit路线独特被动状态
   critComboStacks: number; // 破绽累积层数（最多5层）
   critComboDecaySec: number; // 破绽累积衰减计时器
@@ -722,6 +724,7 @@ export interface RunState {
     dashSidestepBank?: boolean;
     dashZeroWindow?: boolean;
     dashAfterimage?: boolean;
+    critBridgeFocus?: boolean;
     critAfterglow?: boolean;
     critEmbershard?: boolean;
     critCrownfire?: boolean;

@@ -1042,6 +1042,9 @@ export class GameScene extends Phaser.Scene {
         if (battle.critFinisherReady) {
           return `暴击已经压住了：${battle.critComboStacks}/5 层破绽已经挂满。`;
         }
+        if (activeRoutePerks?.critBridgeFocus && battle.critFocusLockSec > 0) {
+          return '先压厚血目标：破绽链往这只身上挂，旁边会跟着炸。';
+        }
         if (battle.critChain >= 1) {
           return `暴击开始顺手了：${battle.critComboStacks}/5 层破绽已经挂上。`;
         }
@@ -1051,10 +1054,14 @@ export class GameScene extends Phaser.Scene {
             : '暴击已经连起来了：抓住时机就能打出一串重击。';
         }
         if (routeStage === 'committed') {
-          return '暴击已经连起来了：先把破绽叠高。';
+          return activeRoutePerks?.critBridgeFocus
+            ? '先盯厚血目标：破绽会越挂越紧，下一串更容易接上。'
+            : '暴击已经连起来了：先把破绽叠高。';
         }
         if (routeStage === 'hinted') {
-          return '暴击开始顺手了：先盯住能连打的目标。';
+          return activeRoutePerks?.critBridgeFocus
+            ? '先找厚血目标：破绽链开始往重的身上挂。'
+            : '暴击开始顺手了：先盯住能连打的目标。';
         }
       }
 
@@ -3067,6 +3074,32 @@ export class GameScene extends Phaser.Scene {
         this.graphics.lineBetween(screen.x - enemy.radius - 12, screen.y + enemy.radius + 8, screen.x - enemy.radius - 12, screen.y + enemy.radius);
         this.graphics.lineBetween(screen.x + enemy.radius + 12, screen.y + enemy.radius + 8, screen.x + enemy.radius + 4, screen.y + enemy.radius + 8);
         this.graphics.lineBetween(screen.x + enemy.radius + 12, screen.y + enemy.radius + 8, screen.x + enemy.radius + 12, screen.y + enemy.radius);
+      }
+
+      if (liveFocusRoute === 'crit' && activeRoutePerks?.critBridgeFocus && battle.critFocusTargetId === enemy.id && battle.critFocusLockSec > 0) {
+        const focusAlpha = Phaser.Math.Clamp(battle.critFocusLockSec / 1.8, 0.12, 0.55);
+        const focusPulse = 0.5 + Math.sin(battle.elapsedSec * 5.2) * 0.5;
+        const focusColor = this.mixColor(0xff9050, accentColor, 0.3 + focusPulse * 0.15);
+        const focusReach = enemy.radius + 8 + focusPulse * 3;
+        this.graphics.lineStyle(2.5, focusColor, focusAlpha);
+        this.graphics.strokeCircle(screen.x, screen.y, focusReach);
+        this.graphics.lineStyle(1.5, focusColor, focusAlpha * 0.6);
+        const focusAngle = Math.atan2(battle.playerY - enemy.y, battle.playerX - enemy.x);
+        for (let tick = 0; tick < 4; tick += 1) {
+          const a = focusAngle + tick * Math.PI * 0.5 + battle.elapsedSec * 1.8;
+          const innerR = focusReach - 4;
+          const outerR = focusReach + 4;
+          this.graphics.lineBetween(
+            screen.x + Math.cos(a) * innerR,
+            screen.y + Math.sin(a) * innerR,
+            screen.x + Math.cos(a) * outerR,
+            screen.y + Math.sin(a) * outerR,
+          );
+        }
+        if (enemy.elite || (enemy.critMarkSec > 0 && (enemy.critMarkStacks ?? 0) >= 2)) {
+          this.graphics.lineStyle(2, focusColor, focusAlpha * 0.8);
+          this.graphics.strokeCircle(screen.x, screen.y, focusReach + 6);
+        }
       }
 
       if (liveFocusRoute === 'dash') {

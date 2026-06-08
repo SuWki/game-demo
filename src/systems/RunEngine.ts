@@ -690,6 +690,7 @@ export class RunEngine {
     battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - simulationDt);
     // crit-crownfire: 破绽爆发后短时收益窗口递减
     battle.critBurstBonusSec = Math.max(0, battle.critBurstBonusSec - simulationDt);
+    battle.critFocusLockSec = Math.max(0, battle.critFocusLockSec - simulationDt);
     battle.eliteCrackWindowSec = Math.max(0, battle.eliteCrackWindowSec - simulationDt);
     battle.eliteBreachFlashSec = Math.max(0, battle.eliteBreachFlashSec - simulationDt);
     battle.eliteBreachCalloutCooldownSec = Math.max(0, battle.eliteBreachCalloutCooldownSec - simulationDt);
@@ -734,6 +735,13 @@ export class RunEngine {
     battle.critBurstChainSec = Math.max(0, battle.critBurstChainSec - dt);
     if (battle.critBurstChainSec === 0) {
       battle.critBurstChainCount = 0;
+    }
+    if (
+      battle.critFocusTargetId !== null &&
+      (battle.critFocusLockSec <= 0 || !battle.enemies.some((enemy) => enemy.id === battle.critFocusTargetId && enemy.hp > 0))
+    ) {
+      battle.critFocusTargetId = null;
+      battle.critFocusLockSec = 0;
     }
 
     // Pierce路线独特被动计时器衰减
@@ -1135,6 +1143,8 @@ export class RunEngine {
       critCrownfireReady: this.state.activeRoutePerks?.critCrownfire ?? false,
       critBurstBonusSec: 0,
       critBurstBonusRatio: 0,
+      critFocusTargetId: null,
+      critFocusLockSec: 0,
       // Crit路线独特被动状态
       critComboStacks: 0,
       critComboDecaySec: 0,
@@ -3173,7 +3183,7 @@ export class RunEngine {
           case 'starter':
             return '暴击开始连上了：破绽会越挂越稳';
           case 'bridge':
-            return '暴击越打越快了：下一串会接得更紧';
+            return '暴击改打法了：先盯厚血目标压，破绽会溅到旁边';
           case 'payoff':
             return '暴击打疯了：连打会一串串炸开';
           default:
@@ -3610,6 +3620,7 @@ export class RunEngine {
       'dash-sidestep-bank': 'dashSidestepBank',
       'dash-zero-window': 'dashZeroWindow',
       'dash-afterimage': 'dashAfterimage',
+      'crit-bridge-focus': 'critBridgeFocus',
       'crit-afterglow': 'critAfterglow',
       'crit-embershard': 'critEmbershard',
       'crit-crownfire': 'critCrownfire',
@@ -3628,6 +3639,7 @@ export class RunEngine {
       dashSidestepBank: { routeId: 'dash', text: '穿梭线开始回切了', priority: 2 },
       dashZeroWindow: { routeId: 'dash', text: '穿梭线开始贴身收人了', priority: 3 },
       dashAfterimage: { routeId: 'dash', text: '最后那下到手了，这把能收', priority: 4 },
+      critBridgeFocus: { routeId: 'crit', text: '先盯住厚血目标：破绽链开始往重的身上挂，旁边会跟着掉', priority: 3 },
       critAfterglow: { routeId: 'crit', text: '暴击线开始顺手了', priority: 1 },
       critEmbershard: { routeId: 'crit', text: '暴击线已经连起来了', priority: 2 },
       critCrownfire: { routeId: 'crit', text: '最后那下到手了，这把能收', priority: 4 },
@@ -3670,8 +3682,15 @@ export class RunEngine {
     optionId: string,
   ): { routeId: RouteId; momentText: string; tipText: string } | null {
     switch (optionId) {
+      case 'crit-reroute-window-core':
+        this.activateRoutePerks(['critBridgeFocus']);
+        return {
+          routeId: 'crit',
+          momentText: '先盯住厚血目标：破绽会越挂越紧，下一串更容易接上',
+          tipText: '暴击改打法了：先压厚血目标，把破绽链挂稳。',
+        };
       case 'crit-reroute-window-transform':
-        this.activateRoutePerks(['critEmbershard', 'critCrownfire', 'critLockProtocol']);
+        this.activateRoutePerks(['critBridgeFocus', 'critEmbershard', 'critCrownfire', 'critLockProtocol']);
         return {
           routeId: 'crit',
           momentText: '盯住厚血目标：连着重击会把周围一起炸开',
@@ -5113,6 +5132,7 @@ export class RunEngine {
     const target = this.getNearestEnemy(battle);
     const critStage = this.getRouteBuildStage('crit');
     const dashStage = this.getRouteBuildStage('dash');
+    const critBridgeFocusActive = focusRoute === 'crit' && (this.state.activeRoutePerks?.critBridgeFocus ?? false);
     const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
     const pickupLeadRatio = this.getPickupLeadRatio(battle);
     const pierceFlowRatio = this.getPierceFlowRatio(battle);
@@ -5136,6 +5156,17 @@ export class RunEngine {
           (((target.y - battle.playerY) / Math.max(1, targetDistance)) * battle.playerMoveDirY)
         : 0;
     const pierceLaneScore = focusRoute === 'pierce' && target ? this.getPierceLaneScore(battle, target) : 0;
+    if (critBridgeFocusActive && target) {
+      const newFocusTarget = battle.critFocusTargetId !== target.id;
+      battle.critFocusTargetId = target.id;
+      battle.critFocusLockSec = Math.max(
+        battle.critFocusLockSec,
+        target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 1.8 : 1.15,
+      );
+      if (newFocusTarget && battle.critChain >= 1) {
+        this.queueRouteMoment('crit', '先压这一只：破绽链开始往厚血目标上挂了');
+      }
+    }
     battle.playerAimDirX = Math.cos(baseAngle);
     battle.playerAimDirY = Math.sin(baseAngle);
     if (this.debugConfig.freezePlayerAutoFire) {
@@ -5163,6 +5194,12 @@ export class RunEngine {
       projectileSpeed *= battle.critOverdriveSec > 0 ? 1.08 : 1.03;
       bulletLifeSec = battle.critOverdriveSec > 0 ? 1.95 : 1.82;
       muzzleColor = 0xffd47b;
+      if (critBridgeFocusActive && target) {
+        projectileSpeed *= target.elite || target.critMarkSec > 0 ? 1.08 : 1.04;
+        bulletLifeSec += target.elite || target.critMarkSec > 0 ? 0.12 : 0.06;
+        battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.08);
+        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.12);
+      }
       if (target && critStage !== 'unformed' && (target.elite || targetHpRatio <= 0.42)) {
         projectileSpeed *= battle.critOverdriveSec > 0 ? 1.08 : 1.05;
         bulletLifeSec += 0.08;
@@ -5319,6 +5356,7 @@ export class RunEngine {
     const critStage = this.getRouteBuildStage('crit');
     const pierceStage = this.getRouteBuildStage('pierce');
     const dashStage = this.getRouteBuildStage('dash');
+    const focusRoute = this.getLiveCombatFocusRoute(battle);
     const nextBullets = [];
     for (const bullet of battle.bullets) {
       bullet.x += bullet.vx * dt;
@@ -5641,6 +5679,46 @@ export class RunEngine {
           if (hadCritMark && battle.critChain >= 2) {
             const bonusDamage = bullet.damage * 0.10;
             enemy.hp -= bonusDamage;
+          }
+
+          // crit bridge 核心玩法：压厚血目标时，暴击会把破绽溅到旁边
+          const critBridgeFocusActive = focusRoute === 'crit' && (this.state.activeRoutePerks?.critBridgeFocus ?? false);
+          if (critBridgeFocusActive && battle.critFocusTargetId === enemy.id && battle.critFocusLockSec > 0) {
+            const bridgeSpreadRadius = 90;
+            let bridgeSpreadHits = 0;
+            for (const nearby of battle.enemies) {
+              if (nearby.id === enemy.id || nearby.hp <= 0 || nearby.elite) {
+                continue;
+              }
+              const ndx = nearby.x - enemy.x;
+              const ndy = nearby.y - enemy.y;
+              const nDist = Math.hypot(ndx, ndy);
+              if (nDist <= bridgeSpreadRadius + nearby.radius) {
+                const proximityRatio = 1 - nDist / (bridgeSpreadRadius + nearby.radius);
+                nearby.critMarkSec = Math.max(nearby.critMarkSec, 1.2 + proximityRatio * 0.8);
+                const nearbyOldStacks = nearby.critMarkStacks ?? 0;
+                nearby.critMarkStacks = Math.min(2, nearbyOldStacks + 1);
+                nearby.routeHitFlashSec = Math.max(nearby.routeHitFlashSec ?? 0, 0.1);
+                nearby.routeHitKind = 'crit';
+                bridgeSpreadHits += 1;
+              }
+            }
+            if (bridgeSpreadHits > 0) {
+              battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.16 + bridgeSpreadHits * 0.04);
+              this.createCombatPulse(battle, {
+                x: enemy.x,
+                y: enemy.y,
+                radius: enemy.radius + bridgeSpreadRadius * 0.6,
+                lifeSec: 0.2,
+                color: 0xffa060,
+                secondaryColor: 0xffd8a0,
+                fillAlpha: 0.06,
+                strokeAlpha: 0.45,
+                strokeWidth: 1.5,
+                growthPerSec: 260,
+                innerRadiusRatio: 0.5,
+              });
+            }
           }
           if (critLockActive && (enemy.elite || hadCritMark || battle.critFinisherReady)) {
             enemy.hp -= bullet.damage * (battle.critFinisherReady ? 0.22 : 0.14);
@@ -8501,6 +8579,7 @@ export class RunEngine {
     const pickupFlowRatio = this.getPickupFlowRatio(battle);
     const pickupLeadRatio = this.getPickupLeadRatio(battle);
     const ordinarySurgeRatio = this.getOrdinaryBattleSurgeRatio(battle);
+    const critBridgeFocusActive = focusRoute === 'crit' && (this.state.activeRoutePerks?.critBridgeFocus ?? false);
     let bestTarget: BattleState['enemies'][number] | null = null;
     let bestScore = Number.NEGATIVE_INFINITY;
 
@@ -8581,6 +8660,23 @@ export class RunEngine {
         score += enemy.elite ? eliteCrackRatio * 28 : 0;
         if (enemy.elite && eliteEscortCount > 0) {
           score += eliteEscortCount * (recoveryRatio > 0.18 ? 14 : 7);
+        }
+        if (critBridgeFocusActive) {
+          const markStacks = enemy.critMarkStacks ?? 0;
+          score += enemy.critMarkSec > 0 ? 32 + markStacks * 22 : 0;
+          score += hpRatio >= 0.48 ? 28 + hpRatio * 24 : 0;
+          score += hpRatio >= 0.65 ? 16 : 0;
+          score += recoveryRatio > 0.16 ? 18 + recoveryRatio * 22 : 0;
+          score += battle.critFocusTargetId === enemy.id ? 62 + battle.critFocusLockSec * 26 : 0;
+          if (enemy.elite && hpRatio >= 0.5) {
+            score += 36 + hpRatio * 20;
+          }
+          if (battle.critFocusTargetId !== null && battle.critFocusTargetId !== enemy.id && !enemy.elite && enemy.critMarkSec <= 0.04) {
+            score -= 18;
+          }
+          if (battle.critFocusTargetId !== null && battle.critFocusTargetId !== enemy.id && !enemy.elite && hpRatio <= 0.3) {
+            score -= 14;
+          }
         }
       } else if (focusRoute === 'pierce') {
         const laneScore = this.getPierceLaneScore(battle, enemy);

@@ -457,11 +457,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'crit-reroute-window-core',
         label: '补暴击火力',
         gameplayLabel: '火力更重',
-        gainLabel: '暴击更疼，连发更快',
+        gainLabel: '先盯住厚血目标，破绽会越挂越紧',
         costLabel: '清杂会慢一点',
         routeId: 'crit',
         anomalyRole: 'core',
-        description: '补一段暴击火力，连着打时更容易压住血线。',
+        description: '别再均着点了。先盯住厚血目标压，破绽会挂得更稳，下一串也更容易接上。',
         effects: [
           {
             type: 'stats',

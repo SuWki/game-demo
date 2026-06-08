@@ -1425,7 +1425,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     description: '暴击与暴伤核心提升',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge'],
+    tags: ['bridge', 'crit-bridge-focus'],
     selection: {
       baseWeight: 3.94,
       minRound: 2,
@@ -1603,7 +1603,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     description: '暴击命中后概率触发额外破绽标记，为后续连击铺垫',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge'],
+    tags: ['bridge', 'crit-bridge-focus'],
     selection: {
       baseWeight: 2.2,
       minRound: 2,
@@ -1666,7 +1666,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     description: '暴击率与暴伤提升',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge'],
+    tags: ['bridge', 'crit-bridge-focus'],
     selection: {
       baseWeight: 4,
       minRound: 2,
@@ -1695,7 +1695,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     description: '暴击率与暴伤双重提升',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge'],
+    tags: ['bridge', 'crit-bridge-focus'],
     selection: {
       baseWeight: 3.6,
       minRound: 2,
@@ -1724,7 +1724,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     description: '暴击与弹道强化',
     category: 'route',
     routeId: 'crit',
-    tags: ['bridge'],
+    tags: ['bridge', 'crit-bridge-focus'],
     selection: {
       baseWeight: 3.78,
       minRound: 2,
