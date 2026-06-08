@@ -185,7 +185,10 @@ window.__pilotQaSmoke = (config) => {
   const validBattleLevel =
     config?.battleLevel == null ||
     ['bridge', 'payoff'].includes(config.battleLevel);
-  if (!validRoute || !validStage || !validRole || !validBattleLevel) {
+  const validResultMode =
+    config?.resultMode == null ||
+    ['victory', 'defeat'].includes(config.resultMode);
+  if (!validRoute || !validStage || !validRole || !validBattleLevel || !validResultMode) {
     console.warn('[QA] Invalid smoke scenario config', config);
     return false;
   }

@@ -4595,6 +4595,7 @@ button:hover {
 
 .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body {
   gap: 5px;
+  min-height: 66px;
 }
 
 .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body strong {
@@ -4610,6 +4611,7 @@ button:hover {
 
 .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown {
   gap: 6px;
+  min-height: 46px;
 }
 
 .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown span {
@@ -4626,6 +4628,7 @@ button:hover {
 }
 
 .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-event-meta {
+  min-height: 22px;
   gap: 5px;
 }
 
@@ -4783,6 +4786,20 @@ button:hover {
 
   .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body strong {
     font-size: 16px;
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body {
+    min-height: 60px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body {
+    min-height: 60px;
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown {
+    min-height: 42px;
   }
 }
 

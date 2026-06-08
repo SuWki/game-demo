@@ -365,7 +365,7 @@ export class RunEngine {
         this.setupQaSmokeBattleStage(config.routeId, config.battleLevel);
         return;
       case 'result':
-        this.setupQaSmokeResultStage(config.routeId);
+        this.setupQaSmokeResultStage(config.routeId, config.resultMode);
         return;
       default:
         return;
@@ -2611,10 +2611,34 @@ export class RunEngine {
     }
   }
 
-  private setupQaSmokeResultStage(routeId: QaSmokeScenarioConfig['routeId']): void {
+  private setupQaSmokeResultStage(
+    routeId: QaSmokeScenarioConfig['routeId'],
+    resultMode: QaSmokeScenarioConfig['resultMode'] = 'victory',
+  ): void {
     this.seedQaSmokeRoute(routeId);
     this.applyQaSmokeResultRouteClosure(routeId);
-    this.seedQaSmokeResultSnapshot(routeId);
+    this.seedQaSmokeResultSnapshot(routeId, resultMode);
+    this.state.eventHistory = this.buildQaSmokeResultEventHistory(routeId);
+    if (resultMode === 'defeat') {
+      this.state.phase = 'late';
+      this.state.round = 4;
+      this.state.traversedNodes = [
+        { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
+        { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
+        { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '暴击实战' : '穿透实战' },
+        { id: 'qa-break-node', type: 'battle', title: routeId === 'crit' ? '连段断火' : '拆线失手' },
+      ];
+      this.state.currentNode = {
+        id: 'qa-result-node-defeat',
+        type: 'battle',
+        title: routeId === 'crit' ? '连段断火' : '拆线失手',
+        description: 'QA 失败结果页演示。',
+        phase: 'late',
+      };
+      this.finishRun('defeat', routeId === 'crit' ? 'hpDepleted' : 'timeOut');
+      return;
+    }
+
     this.state.phase = 'ended';
     this.state.round = 5;
     this.state.traversedNodes = [
@@ -2630,12 +2654,14 @@ export class RunEngine {
       description: 'QA 结果页演示。',
       phase: 'finalBattle',
     };
-    this.state.eventHistory = this.buildQaSmokeResultEventHistory(routeId);
     this.finishRun('victory', 'victory');
   }
 
-  private seedQaSmokeResultSnapshot(routeId: QaSmokeScenarioConfig['routeId']): void {
-    const routeProfiles: Record<QaSmokeScenarioConfig['routeId'], {
+  private seedQaSmokeResultSnapshot(
+    routeId: QaSmokeScenarioConfig['routeId'],
+    resultMode: QaSmokeScenarioConfig['resultMode'] = 'victory',
+  ): void {
+    const routeProfiles: Record<QaSmokeScenarioConfig['routeId'], Record<'victory' | 'defeat', {
       durationSec: number;
       battleWins: number;
       level: number;
@@ -2643,27 +2669,49 @@ export class RunEngine {
       maxHp: number;
       hp: number;
       upgradeIds: string[];
-    }> = {
+    }>> = {
       crit: {
-        durationSec: 112,
-        battleWins: 29,
-        level: 8,
-        experience: 41,
-        maxHp: 126,
-        hp: 92,
-        upgradeIds: ['crit-primer', 'crit-aim', 'crit-afterglow', 'crit-burst', 'crit-crownfire', 'crit-finish'],
+        victory: {
+          durationSec: 112,
+          battleWins: 29,
+          level: 8,
+          experience: 41,
+          maxHp: 126,
+          hp: 92,
+          upgradeIds: ['crit-primer', 'crit-aim', 'crit-afterglow', 'crit-burst', 'crit-crownfire', 'crit-finish'],
+        },
+        defeat: {
+          durationSec: 88,
+          battleWins: 18,
+          level: 6,
+          experience: 17,
+          maxHp: 114,
+          hp: 0,
+          upgradeIds: ['crit-primer', 'crit-aim', 'crit-afterglow', 'crit-burst', 'crit-linekeep'],
+        },
       },
       pierce: {
-        durationSec: 96,
-        battleWins: 31,
-        level: 7,
-        experience: 24,
-        maxHp: 118,
-        hp: 84,
-        upgradeIds: ['pierce-core', 'pierce-rail', 'pierce-seamline', 'pierce-fan', 'pierce-riftbloom', 'pierce-bloom'],
+        victory: {
+          durationSec: 96,
+          battleWins: 31,
+          level: 7,
+          experience: 24,
+          maxHp: 118,
+          hp: 84,
+          upgradeIds: ['pierce-core', 'pierce-rail', 'pierce-seamline', 'pierce-fan', 'pierce-riftbloom', 'pierce-bloom'],
+        },
+        defeat: {
+          durationSec: 84,
+          battleWins: 16,
+          level: 6,
+          experience: 11,
+          maxHp: 112,
+          hp: 18,
+          upgradeIds: ['pierce-core', 'pierce-rail', 'pierce-seamline', 'pierce-riftbloom', 'pierce-relay-spine'],
+        },
       },
     };
-    const profile = routeProfiles[routeId];
+    const profile = routeProfiles[routeId][resultMode];
     this.runStartedAtMs = performance.now() - profile.durationSec * 1000;
     this.state.battleWins = profile.battleWins;
     this.state.level = profile.level;

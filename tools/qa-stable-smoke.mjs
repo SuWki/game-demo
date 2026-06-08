@@ -80,6 +80,11 @@ function toRouteList(options = {}) {
   return [...defaultRoutes];
 }
 
+function getResultMode(options = {}) {
+  const mode = options.resultMode ?? process.env.PILOT_QA_RESULT_MODE ?? 'victory';
+  return mode === 'defeat' ? 'defeat' : 'victory';
+}
+
 async function waitForVisible(locator, timeoutMs = 4000) {
   await locator.first().waitFor({ state: 'visible', timeout: timeoutMs });
 }
@@ -142,6 +147,7 @@ export async function runStableSmoke(options = {}) {
   const appUrl = options.appUrl ?? process.env.PILOT_QA_URL ?? 'http://127.0.0.1:4173/game-demo/';
   const outDir = path.resolve(options.outDir ?? process.env.PILOT_QA_OUT_DIR ?? 'output/qa/stable-smoke');
   const routeIds = toRouteList(options);
+  const resultMode = getResultMode(options);
   const executablePath = executableCandidates.find((candidate) => fs.existsSync(candidate));
 
   ensureDir(outDir);
@@ -149,6 +155,7 @@ export async function runStableSmoke(options = {}) {
   const summary = {
     appUrl,
     routeIds,
+    resultMode,
     failed404Urls: [],
     consoleErrors: [],
     consoleWarns: [],
@@ -243,7 +250,7 @@ export async function runStableSmoke(options = {}) {
       await captureBattleStage(page, routeId, 'bridge', routeScreenshots, routeTextChecks, routeCoverage, summary, outDir);
       await captureBattleStage(page, routeId, 'payoff', routeScreenshots, routeTextChecks, routeCoverage, summary, outDir);
 
-      await triggerScenario(page, { routeId, stage: 'result' });
+      await triggerScenario(page, { routeId, stage: 'result', resultMode });
       await waitForVisible(page.locator('[data-action="details"]'), 6000);
       await page.click('[data-action="details"]');
       await waitForVisible(page.locator('.panel-result-details'));
