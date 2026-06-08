@@ -156,7 +156,7 @@ export class RunEngine {
     dash: false,
   };
 
-  private readonly runStartedAtMs = performance.now();
+  private runStartedAtMs = performance.now();
 
   private readonly state: RunState;
 
@@ -2614,6 +2614,7 @@ export class RunEngine {
   private setupQaSmokeResultStage(routeId: QaSmokeScenarioConfig['routeId']): void {
     this.seedQaSmokeRoute(routeId);
     this.applyQaSmokeResultRouteClosure(routeId);
+    this.seedQaSmokeResultSnapshot(routeId);
     this.state.phase = 'ended';
     this.state.round = 5;
     this.state.traversedNodes = [
@@ -2631,6 +2632,49 @@ export class RunEngine {
     };
     this.state.eventHistory = this.buildQaSmokeResultEventHistory(routeId);
     this.finishRun('victory', 'victory');
+  }
+
+  private seedQaSmokeResultSnapshot(routeId: QaSmokeScenarioConfig['routeId']): void {
+    const routeProfiles: Record<QaSmokeScenarioConfig['routeId'], {
+      durationSec: number;
+      battleWins: number;
+      level: number;
+      experience: number;
+      maxHp: number;
+      hp: number;
+      upgradeIds: string[];
+    }> = {
+      crit: {
+        durationSec: 112,
+        battleWins: 29,
+        level: 8,
+        experience: 41,
+        maxHp: 126,
+        hp: 92,
+        upgradeIds: ['crit-primer', 'crit-aim', 'crit-afterglow', 'crit-burst', 'crit-crownfire', 'crit-finish'],
+      },
+      pierce: {
+        durationSec: 96,
+        battleWins: 31,
+        level: 7,
+        experience: 24,
+        maxHp: 118,
+        hp: 84,
+        upgradeIds: ['pierce-core', 'pierce-rail', 'pierce-seamline', 'pierce-fan', 'pierce-riftbloom', 'pierce-bloom'],
+      },
+    };
+    const profile = routeProfiles[routeId];
+    this.runStartedAtMs = performance.now() - profile.durationSec * 1000;
+    this.state.battleWins = profile.battleWins;
+    this.state.level = profile.level;
+    this.state.experience = profile.experience;
+    this.state.experienceToNext = getExperienceToNextLevel(profile.level);
+    this.state.stats.maxHp = profile.maxHp;
+    this.state.stats.hp = profile.hp;
+    this.state.selectedUpgrades = [...profile.upgradeIds];
+    this.state.routeCounts[routeId] = Math.max(this.state.routeCounts[routeId], profile.upgradeIds.length);
+    this.state.committedRoute = routeId;
+    this.state.maturedRoute = routeId;
   }
 
   private getQaSmokeAnomalySample(

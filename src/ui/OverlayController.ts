@@ -808,8 +808,13 @@ export class OverlayController {
     this.screenLayer.classList.add('hidden');
     this.panelLayer.className = `panel-layer ${config.panelLayerClassName ?? ''}`.trim();
     this.panelLayer.classList.remove('hidden');
-    const itemCountClass =
-      config.items.length === 1 ? 'is-single-choice' : config.items.length === 2 ? 'is-two-choice' : '';
+    const itemCountClass = [
+      config.items.length === 1 ? 'is-single-choice' : '',
+      config.items.length === 2 ? 'is-two-choice' : '',
+      config.items.length >= 5 ? 'is-dense-choice' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel commercial-choice-panel ${config.panelClassName}">
         ${config.alertText ? `<div class="panel-alert">${config.alertText}</div>` : ''}

@@ -4549,7 +4549,14 @@ button:hover {
   padding-top: 0;
 }
 
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 12px;
+}
+
 .panel-event-choice-anomaly .choice-strip-event {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   min-height: 152px;
   padding: 16px 18px;
   border-color: rgba(188, 119, 255, 0.34);
@@ -4564,6 +4571,82 @@ button:hover {
 
 .panel-event-choice-anomaly .choice-strip-body small {
   -webkit-line-clamp: 3;
+}
+
+.panel-event-choice-anomaly .choice-strip-event .choice-strip-foot {
+  margin-top: auto;
+}
+
+.panel-event-choice-anomaly .choice-strip-event .choice-route-boost {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-event {
+  min-height: 138px;
+  padding: 14px 16px 15px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-head {
+  gap: 6px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body {
+  gap: 5px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body strong {
+  font-size: 17px;
+  line-height: 1.08;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body small {
+  font-size: 11px;
+  line-height: 1.45;
+  -webkit-line-clamp: 2;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown {
+  gap: 6px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown span {
+  padding: 6px 7px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown small {
+  font-size: 8px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-anomaly-breakdown strong {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-event-meta {
+  gap: 5px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-effect-tag {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-foot {
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-foot-trail {
+  gap: 6px;
+}
+
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-prompt,
+.panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-side-label {
+  font-size: 10px;
 }
 
 .choice-main-copy {
@@ -4670,9 +4753,36 @@ button:hover {
     grid-template-columns: repeat(3, minmax(180px, 1fr));
   }
 
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+
   .choice-context-anomaly,
   .choice-context-upgrade {
     display: none;
+  }
+}
+
+@media (max-height: 860px) {
+  .panel-event-choice-anomaly.commercial-choice-panel {
+    padding: 18px 22px 22px;
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray {
+    gap: 12px;
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-event {
+    min-height: 130px;
+    padding: 13px 14px;
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice .choice-strip-body strong {
+    font-size: 16px;
   }
 }
 
@@ -4702,6 +4812,10 @@ button:hover {
   }
 
   .panel-event-choice-anomaly .choice-grid-tray {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-event-choice-anomaly .choice-grid-tray.is-dense-choice {
     grid-template-columns: 1fr;
   }
 }
