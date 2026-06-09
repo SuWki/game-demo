@@ -5215,7 +5215,7 @@ export class RunEngine {
       battle.critFocusTargetId = target.id;
       battle.critFocusLockSec = Math.max(
         battle.critFocusLockSec,
-        target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 1.8 : 1.15,
+        target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 2.0 : 1.35,
       );
       if (newFocusTarget && battle.critChain >= 1) {
         this.queueRouteMoment('crit', '先压这一只：破绽链开始往厚血目标上挂了');
@@ -5665,9 +5665,9 @@ export class RunEngine {
           }
 
           if (critBridgeFocusActive && battle.critFocusTargetId === enemy.id && battle.critFocusLockSec > 0) {
-            const bridgeHold = enemy.elite || hadCritMark ? 2.35 : 2.05;
+            const bridgeHold = enemy.elite || hadCritMark ? 2.65 : 2.25;
             battle.critComboDecaySec = Math.max(battle.critComboDecaySec, bridgeHold);
-            battle.critBurstChainSec = Math.max(battle.critBurstChainSec, enemy.elite || hadCritMark ? 0.88 : 0.64);
+            battle.critBurstChainSec = Math.max(battle.critBurstChainSec, enemy.elite || hadCritMark ? 1.08 : 0.82);
             battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.12);
             battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
           }
@@ -5717,7 +5717,7 @@ export class RunEngine {
 
             // crit-crownfire: 破绽爆发后短时间提高下一次暴击收益
             if (battle.critCrownfireReady) {
-              battle.critBurstBonusSec = 2.5; // 2.5秒窗口
+              battle.critBurstBonusSec = 2.8; // 更稳一点，真实战斗里更容易看见收口窗口
               battle.critBurstBonusRatio = 0.35; // 35%额外伤害
             }
 

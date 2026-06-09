@@ -204,6 +204,13 @@ TODO
 - Connected crit passive timing back through `RouteManager` so the focus lock is no longer decremented twice.
 - Added a small crit bridge hold extension on focused hits so the single-target pressure window survives long enough to feel like a real bridge.
 - Next: build + smoke, then capture crit bridge/payoff and pierce regression screenshots.
+2026-06-09
+- Current P0 follow-up: lengthened crit focus / chain / burst windows in `RunEngine.ts` and extended `boss-lockdown` signature durations in `battleTemplates.ts`.
+- Validation so far: `npm run build` passes; stable smoke still passes for crit / pierce / boss; a natural crit-directed run now reaches committed crit route state; a directed boss battle sample still shows the signature phase clearly.
+- TODO: keep watching whether crit payoff is now leaning on real battle conditions more than QA shaping, and avoid widening the change into a new balance pass.
+2026-06-09
+- Current validation set is now split cleanly: `output/qa/stable-smoke-current` holds the QA regression shots, `output/qa/natural-crit-directed-1` holds the real crit-route run, and `output/qa/real-battle-current` holds the curated real boss / crit evidence shots.
+- The current read is that the sample is better, but crit payoff still relies on route choice more than a completely generic natural fight, so keep the change small and do not broaden into a balance pass.
 2026-04-04
 - Re-read docs, current selector/data/metrics, and used the latest user brief on top of `PROJECT_STATUS.md` + latest `DEV_ISSUE_LOG.md`.
 - This round stayed on `codex` and focused on content-pool ratio boundaries, hybrid/redirect reinforcement, and validation.
