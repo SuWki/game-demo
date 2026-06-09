@@ -2595,12 +2595,91 @@ export class RunEngine {
       battle.critComboDecaySec = battleLevel === 'payoff' ? 2.4 : 1.8;
       battle.critFinisherReady = battleLevel === 'payoff';
       battle.critBurstChainSec = battleLevel === 'payoff' ? 1.4 : battle.critBurstChainSec;
+      battle.critBurstBonusSec = battleLevel === 'payoff' ? 1.1 : 0.72;
+      battle.critOverdriveSec = battleLevel === 'payoff' ? 2.9 : 2.1;
+      const critTargets = battle.enemies
+        .filter((enemy) => !enemy.elite && enemy.hp > 0)
+        .map((enemy) => ({
+          enemy,
+          distance: Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY),
+        }))
+        .sort((left, right) => left.distance - right.distance)
+        .slice(0, battleLevel === 'payoff' ? 6 : 4);
+      const critFocusTarget = critTargets[0]?.enemy ?? null;
+      const critLayout = battleLevel === 'payoff'
+        ? [
+            { x: battle.playerX - 18, y: battle.playerY - 122 },
+            { x: battle.playerX - 114, y: battle.playerY - 84 },
+            { x: battle.playerX + 96, y: battle.playerY - 92 },
+            { x: battle.playerX - 72, y: battle.playerY - 18 },
+            { x: battle.playerX + 58, y: battle.playerY - 22 },
+            { x: battle.playerX + 12, y: battle.playerY + 42 },
+          ]
+        : [
+            { x: battle.playerX - 72, y: battle.playerY - 96 },
+            { x: battle.playerX + 70, y: battle.playerY - 78 },
+            { x: battle.playerX - 30, y: battle.playerY - 18 },
+            { x: battle.playerX + 28, y: battle.playerY - 6 },
+          ];
+      critTargets.forEach((entry, index) => {
+        const slot = critLayout[index] ?? critLayout[critLayout.length - 1];
+        entry.enemy.x = clamp(slot.x, 72, ARENA_WIDTH - 72);
+        entry.enemy.y = clamp(slot.y, 72, ARENA_HEIGHT - 72);
+      });
+      if (critFocusTarget) {
+        battle.critFocusTargetId = critFocusTarget.id;
+        battle.critFocusLockSec = battleLevel === 'payoff' ? 1.7 : 1.25;
+      }
+      for (const [index, entry] of critTargets.entries()) {
+        entry.enemy.critMarkSec = battleLevel === 'payoff' ? 2.2 - index * 0.18 : 1.65 - index * 0.12;
+        entry.enemy.critMarkStacks = battleLevel === 'payoff' ? Math.max(2, 3 - Math.min(index, 1)) : Math.max(1, 2 - Math.min(index, 1));
+        entry.enemy.routeHitFlashSec = 0.16;
+        entry.enemy.routeHitKind = 'crit';
+        entry.enemy.hitFlashSec = Math.max(entry.enemy.hitFlashSec, 0.08 + index * 0.02);
+      }
       this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', battleLevel));
     } else {
       battle.pierceFlowCount = battleLevel === 'payoff' ? 4 : 2;
       battle.pierceFlowSec = battleLevel === 'payoff' ? 1.1 : 0.68;
       battle.pierceChainStacks = battleLevel === 'payoff' ? 3 : 2;
       battle.pierceChainDecaySec = battleLevel === 'payoff' ? 2.2 : 1.3;
+      battle.pierceFractureMark = new Set<number>();
+      const pierceTargets = battle.enemies
+        .filter((enemy) => !enemy.elite && enemy.hp > 0)
+        .map((enemy) => ({
+          enemy,
+          distance: Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY),
+        }))
+        .sort((left, right) => left.distance - right.distance)
+        .slice(0, battleLevel === 'payoff' ? 6 : 4);
+      const pierceLayout = battleLevel === 'payoff'
+        ? [
+            { x: battle.playerX - 160, y: battle.playerY - 112 },
+            { x: battle.playerX - 92, y: battle.playerY - 56 },
+            { x: battle.playerX - 22, y: battle.playerY - 6 },
+            { x: battle.playerX + 46, y: battle.playerY + 28 },
+            { x: battle.playerX + 114, y: battle.playerY + 62 },
+            { x: battle.playerX + 172, y: battle.playerY + 104 },
+          ]
+        : [
+            { x: battle.playerX - 120, y: battle.playerY - 86 },
+            { x: battle.playerX - 32, y: battle.playerY - 22 },
+            { x: battle.playerX + 52, y: battle.playerY + 28 },
+            { x: battle.playerX + 118, y: battle.playerY + 70 },
+          ];
+      pierceTargets.forEach((entry, index) => {
+        const slot = pierceLayout[index] ?? pierceLayout[pierceLayout.length - 1];
+        entry.enemy.x = clamp(slot.x, 72, ARENA_WIDTH - 72);
+        entry.enemy.y = clamp(slot.y, 72, ARENA_HEIGHT - 72);
+      });
+      for (const [index, entry] of pierceTargets.entries()) {
+        entry.enemy.pierceMarkSec = 1.8;
+        entry.enemy.pierceMarkStacks = battleLevel === 'payoff' ? 3 : 2;
+        entry.enemy.routeHitFlashSec = 0.16;
+        entry.enemy.routeHitKind = 'pierce';
+        entry.enemy.hitFlashSec = Math.max(entry.enemy.hitFlashSec, 0.08 + index * 0.02);
+        battle.pierceFractureMark.add(entry.enemy.id);
+      }
       this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', battleLevel));
     }
   }

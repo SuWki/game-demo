@@ -1811,7 +1811,12 @@ TODO
 - 验证结果：
   - `npm run build` 通过
   - 实页审查覆盖：首页、暂停页、节点选择、普通升级、普通异常、结果页主屏、结果页详情
-  - `E:\codex\auto-shooter-demo\output\qa\ui-copy-audit-20260608\final\summary.json`
-  - `failed404Urls: []`
-  - `consoleErrors: []`
-  - `consoleWarns: []`
+- `E:\codex\auto-shooter-demo\output\qa\ui-copy-audit-20260608\final\summary.json`
+- `failed404Urls: []`
+- `consoleErrors: []`
+- `consoleWarns: []`
+
+2026-06-09
+- 本轮把 crit payoff、pierce payoff 和 Boss signature 的敌人侧证据收紧了，stable smoke 现在能稳定截到 boss 名场面截图。
+- QA-only 预置只改了 smoke 入口里的摆位和标记，没有碰正式战斗流程。
+- 后续如果还有回归，优先只修 smoke 抓帧，不回到全局提示词或平衡轮。

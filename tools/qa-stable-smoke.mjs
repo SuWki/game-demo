@@ -143,6 +143,31 @@ async function captureBattleStage(page, routeId, battleLevel, routeScreenshots, 
   });
 }
 
+async function captureBossSignatureStage(page, summary, outDir) {
+  await page.evaluate(() => window.__pilotQaForceBoss?.('boss-bastion'));
+  await page.waitForTimeout(900);
+  await page.evaluate(() => {
+    window.__pilotDebug?.setConfig?.({ invulnerablePlayer: true });
+    window.__pilotDebug?.setPressureState?.({
+      eliteHpRatio: 0.72,
+      remainingSec: 24,
+      pressurePhaseElapsedSec: 0,
+    });
+  });
+  await page.waitForTimeout(1200);
+  await waitForVisible(page.locator('.game-hud-fixed__mode'));
+  const screenshot = await capture(page, outDir, 'boss-signature.png');
+  summary.coverage.bossSignature = true;
+  summary.screenshots.bossSignature = screenshot;
+  pushCapture(summary, {
+    routeId: 'boss-bastion',
+    stage: 'boss',
+    stageLevel: 'signature',
+    pageSegment: 'boss-signature',
+    screenshot,
+  });
+}
+
 export async function runStableSmoke(options = {}) {
   const appUrl = options.appUrl ?? process.env.PILOT_QA_URL ?? 'http://127.0.0.1:4173/game-demo/';
   const outDir = path.resolve(options.outDir ?? process.env.PILOT_QA_OUT_DIR ?? 'output/qa/stable-smoke');
@@ -162,11 +187,13 @@ export async function runStableSmoke(options = {}) {
     coverage: {
       home: false,
       upgrade: false,
+      bossSignature: false,
       routes: Object.fromEntries(routeIds.map((routeId) => [routeId, createRouteCoverage()])),
     },
     screenshots: {
       home: null,
       upgrade: null,
+      bossSignature: null,
       routes: Object.fromEntries(routeIds.map((routeId) => [routeId, {}])),
     },
     textChecks: {
@@ -249,6 +276,10 @@ export async function runStableSmoke(options = {}) {
 
       await captureBattleStage(page, routeId, 'bridge', routeScreenshots, routeTextChecks, routeCoverage, summary, outDir);
       await captureBattleStage(page, routeId, 'payoff', routeScreenshots, routeTextChecks, routeCoverage, summary, outDir);
+
+      if (!summary.coverage.bossSignature) {
+        await captureBossSignatureStage(page, summary, outDir);
+      }
 
       await triggerScenario(page, { routeId, stage: 'result', resultMode });
       await waitForVisible(page.locator('[data-action="details"]'), 6000);
