@@ -84,6 +84,26 @@ import type {
 } from '../game/types';
 import { ALL_EVENT_CATALOG, ANOMALY_EVENT_CATALOG } from '../data/events';
 import { UPGRADE_ARCHETYPES, buildUpgradeChoice } from '../data/upgrades';
+import { RouteManager } from './route/RouteManager';
+import * as DamageCalculator from './combat/DamageCalculator';
+import * as KillStreakSystem from './progression/KillStreakSystem';
+import * as ExperienceSystem from './progression/ExperienceSystem';
+import * as UpgradeEngine from './progression/UpgradeEngine';
+import * as RouteProgression from './route/RouteProgression';
+import { createBattleState } from './state/BattleStateFactory';
+import { createRunState } from './state/RunStateFactory';
+import * as PressureCurve from './spawn/PressureCurve';
+import * as EnemySpawner from './spawn/EnemySpawner';
+import * as SpawnPatternEngine from './spawn/SpawnPatternEngine';
+import { CritRoutePassive } from './route/CritRoutePassive';
+import { PierceRoutePassive } from './route/PierceRoutePassive';
+import { DashRoutePassive } from './route/DashRoutePassive';
+import * as BulletSystem from './combat/BulletSystem';
+import * as CombatResolver from './combat/CombatResolver';
+import * as DashSystem from './combat/DashSystem';
+import * as EnemyAI from './ai/EnemyAI';
+import * as EliteBehavior from './ai/EliteBehavior';
+import * as BossBehavior from './ai/BossBehavior';
 
 interface EngineAnnouncement {
   kind: 'tip' | 'audio';
@@ -148,6 +168,12 @@ function getEndingLabel(endingKind: RunEndingKind): string {
 export class RunEngine {
   private readonly services: Services;
 
+  // Subsystem instances
+  private readonly routeManager = new RouteManager();
+  private readonly critRoutePassive = new CritRoutePassive();
+  private readonly pierceRoutePassive = new PierceRoutePassive();
+  private readonly dashRoutePassive = new DashRoutePassive();
+
   private readonly announcements: EngineAnnouncement[] = [];
 
   private readonly routeMomentShown: Record<RouteId, boolean> = {
@@ -194,44 +220,7 @@ export class RunEngine {
   public constructor(services: Services) {
     this.services = services;
     const openingNode = createOpeningBattleNode();
-    this.state = {
-      status: 'battle',
-      phase: 'opening',
-      round: 0,
-      totalRounds: 5,
-      level: 1,
-      experience: 0,
-      experienceToNext: getExperienceToNextLevel(1),
-      queuedLevelUps: 0,
-      queuedRewardUpgrades: 0,
-      currentUpgradeIsReward: false,
-      upgradeSource: null,
-      routeCounts: {
-        crit: 0,
-        pierce: 0,
-        dash: 0,
-      },
-      committedRoute: null,
-      maturedRoute: null,
-      stats: createBaseStats(),
-      selectedUpgrades: [],
-      eventHistory: [],
-      traversedNodes: [],
-      battleWins: 0,
-      nodeOptions: [],
-      currentNode: openingNode,
-      lastUpgradeChanges: null,
-      upgradeFlashSec: 0,
-      levelUpPanelDelaySec: 0,
-      upgradeChoices: [],
-      currentEvent: null,
-      battle: null,
-      result: null,
-      routeMomentText: null,
-      routeMomentRouteId: null,
-      routeMomentSec: 0,
-      activeRoutePerks: {},
-    };
+    this.state = createRunState(openingNode);
     this.enterBattle(openingNode);
   }
 
