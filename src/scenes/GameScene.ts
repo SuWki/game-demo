@@ -1025,6 +1025,9 @@ export class GameScene extends Phaser.Scene {
       if (battle.bossSafeWindowGraceSec > 0) {
         return `寻找安全区：${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
       }
+      if (battle.pressureSignatureLabel || battle.pressurePatternLabel || battle.pressurePhaseLabel) {
+        return `Boss 开招：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
+      }
       return '';
     }
 

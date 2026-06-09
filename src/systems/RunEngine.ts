@@ -2232,7 +2232,11 @@ export class RunEngine {
     if (battle.encounterType === 'boss') {
       this.services.metrics.recordBossPhaseEntered(battle.templateId, nextPhase.id, nextPhase.label);
     }
-    this.enqueueTip(`${battle.encounterType === 'boss' ? 'Boss 转段' : '精英转段'}：${nextPhase.label}`);
+    this.enqueueTip(
+      `${battle.encounterType === 'boss' ? 'Boss 开招' : '精英转段'}：${
+        nextPhase.signatureLabel ?? nextPhase.patternLabel ?? nextPhase.label
+      }`,
+    );
     this.enqueueAudio(battle.encounterType === 'boss' ? 'boss' : 'pressure');
   }
 
