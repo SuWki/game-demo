@@ -112,10 +112,22 @@
 
 系统：
 
-- `src/systems/RunEngine.ts`：单局主循环、战斗、节点、升级、异常、路线、结果
+- `src/systems/RunEngine.ts`：单局主循环、战斗、节点、升级、异常、路线、结果（**架构重构中**，正在拆分为多个子系统）
 - `src/systems/PilotAudio.ts`：程序化音乐、SFX、ducking、cue 上下文、音频快照
 - `src/systems/MetricsTracker.ts`：埋点与导出
 - `src/systems/MetaProgression.ts`：局外轻量统计
+
+### 子系统目录（架构重构中）
+
+- `src/systems/spawn/` - 敌人生成子系统（PressureCurve + EnemySpawner + SpawnPatternEngine）
+- `src/systems/combat/` - 战斗子系统（DamageCalculator + BulletSystem + CombatResolver + DashSystem）
+- `src/systems/route/` - 路线子系统（RouteManager + IRoutePassive + CritRoutePassive + PierceRoutePassive + DashRoutePassive + RouteProgression）
+- `src/systems/progression/` - 成长子系统（KillStreakSystem + ExperienceSystem + UpgradeEngine）
+- `src/systems/ai/` - AI 子系统（EnemyAI + EliteBehavior + BossBehavior）
+- `src/systems/state/` - 状态工厂（BattleStateFactory + RunStateFactory）
+
+**详细说明**: 见 `doc/40_AI协作/2026-06-08_架构重构子系统文件说明.md`
+**进度跟踪**: 见 `doc/30_持续优化/2026-06-08_架构重构进度跟踪.md`
 
 UI：
 
@@ -148,7 +160,7 @@ UI：
 
 ## 当前不要轻易做的事
 
-- 不要重写 `RunEngine`。
+- 不要重写 `RunEngine`（正在进行架构重构拆分，等待完成后再做调整）。
 - 不要重开主流程。
 - 不要把项目改成复杂大地图。
 - 不要新增无验证价值的大系统。
@@ -157,6 +169,7 @@ UI：
 - 不要一次性全量图片资源替换。
 - 不要把手感问题转成说明型 UI 问题。
 - 不要只改代码不更新文档。
+- 不要修改已提取的子系统文件接口，除非同步更新所有依赖方。
 
 ## 推荐阅读顺序
 
