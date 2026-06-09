@@ -5204,6 +5204,7 @@ export class RunEngine {
     const eliteCrackRatio = target?.elite ? this.getEliteCrackWindowRatio(battle) : 0;
     const targetIsPickupLead = target ? this.isPickupLeadEnemy(battle, target) : false;
     const moveMagnitude = Math.hypot(battle.playerMoveDirX, battle.playerMoveDirY);
+    const critRouteStage = this.getRouteBuildStage('crit');
     const targetAlignment =
       target && moveMagnitude > 0.05
         ? (((target.x - battle.playerX) / Math.max(1, targetDistance)) * battle.playerMoveDirX) +
@@ -5212,10 +5213,11 @@ export class RunEngine {
     const pierceLaneScore = focusRoute === 'pierce' && target ? this.getPierceLaneScore(battle, target) : 0;
     if (critBridgeFocusActive && target) {
       const newFocusTarget = battle.critFocusTargetId !== target.id;
+      const focusHoldBonus = critRouteStage === 'matured' ? 0.24 : critRouteStage === 'committed' ? 0.14 : 0;
       battle.critFocusTargetId = target.id;
       battle.critFocusLockSec = Math.max(
         battle.critFocusLockSec,
-        target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 2.0 : 1.35,
+        (target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 2.05 : 1.42) + focusHoldBonus,
       );
       if (newFocusTarget && battle.critChain >= 1) {
         this.queueRouteMoment('crit', '先压这一只：破绽链开始往厚血目标上挂了');
@@ -5433,18 +5435,25 @@ export class RunEngine {
         // Crit路线独特被动：破绽累积 + 终结打击 + 爆发连锁
         const critStage = this.getRouteBuildStage('crit');
         if (critStage === 'committed' || critStage === 'matured') {
-          if (!critical) {
-            // 非暴击命中：累积破绽层数（最多5层）
-            battle.critComboStacks = Math.min(5, battle.critComboStacks + 1);
-            battle.critComboDecaySec = 2.0; // 2秒内无命中则重置
-            if (battle.critComboStacks >= 5) {
-              battle.critFinisherReady = true;
-            }
-          } else {
-            // 暴击命中
-            if (battle.critFinisherReady) {
-              // 终结打击：5层时暴击伤害+150%
-              damage *= 2.5; // 原伤害 * 2.5 = +150%
+        if (!critical) {
+          // 非暴击命中：累积破绽层数（最多5层）
+          battle.critComboStacks = Math.min(5, battle.critComboStacks + 1);
+          battle.critComboDecaySec = 2.0; // 2秒内无命中则重置
+          if (battle.critComboStacks >= 5) {
+            battle.critFinisherReady = true;
+          }
+          if (battle.critComboStacks >= 3) {
+            const holdBoost = critStage === 'matured' ? 0.22 : 0.1;
+            battle.critFocusLockSec = Math.max(
+              battle.critFocusLockSec,
+              0.86 + battle.critComboStacks * 0.12 + holdBoost,
+            );
+          }
+        } else {
+          // 暴击命中
+          if (battle.critFinisherReady) {
+            // 终结打击：5层时暴击伤害+150%
+            damage *= 2.5; // 原伤害 * 2.5 = +150%
               battle.critFinisherReady = false;
               battle.critComboStacks = 0;
               battle.critComboDecaySec = 0;
@@ -5455,6 +5464,10 @@ export class RunEngine {
               damage *= 1.3;
               battle.critBurstChainCount += 1;
             }
+            battle.critFocusLockSec = Math.max(
+              battle.critFocusLockSec,
+              battle.critBurstBonusSec > 0 || battle.critBurstChainSec > 0 ? 1.14 : 0.92,
+            );
             // 暴击也重置衰减计时器
             battle.critComboDecaySec = 2.0;
           }

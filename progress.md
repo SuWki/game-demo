@@ -1827,3 +1827,6 @@ TODO
 - 本轮把 crit payoff、pierce payoff 和 Boss signature 的敌人侧证据收紧了，stable smoke 现在能稳定截到 boss 名场面截图。
 - QA-only 预置只改了 smoke 入口里的摆位和标记，没有碰正式战斗流程。
 - 后续如果还有回归，优先只修 smoke 抓帧，不回到全局提示词或平衡轮。
+2026-06-09
+- 本轮继续把真实流程往前推了一小步：`RunEngine.ts` 里把 crit 的焦点保持和连击承接再托了一点，`boss-lockdown` 只做了更早一点的签名触发和更稳一点的停留。
+- 验证分两条线跑：一条是手动 QA smoke 截 `crit / pierce / result`，一条是 real-battle-current 和 boss-directed-v2 的现成实战图；当前结论是 real crit / real boss 证据都还成立，但自然全流程 boss 仍偏定向样本。

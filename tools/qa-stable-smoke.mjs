@@ -132,7 +132,7 @@ async function captureBattleStage(page, routeId, battleLevel, routeScreenshots, 
   const filename = `${routeId}-battle-${battleLevel}.png`;
   routeCoverage[battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge'] = true;
   routeScreenshots[screenshotKey] = await capture(page, outDir, filename);
-  routeTextChecks[textKey] = normalize(await page.locator('.game-hud-fixed__route-moment').innerText());
+  routeTextChecks[textKey] = normalize(await page.locator('.game-hud-fixed__route-moment').textContent());
   pushCapture(summary, {
     routeId,
     stage: 'battle',

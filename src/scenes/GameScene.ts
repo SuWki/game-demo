@@ -3074,6 +3074,16 @@ export class GameScene extends Phaser.Scene {
         this.graphics.strokeRoundedRect(barX, barY, barWidth, 6, 3);
         this.graphics.fillStyle(0xffd774, 0.96);
         this.graphics.fillTriangle(screen.x, barY - 10, screen.x - 7, barY - 1, screen.x + 7, barY - 1);
+        if (battle.pressureSignatureLabel && battle.pressureSignatureSec > 0) {
+          const bossSignatureRatio = Math.min(1, battle.pressureSignatureSec / 3.8);
+          const bossSignatureColor = this.mixColor(accentColor, 0xffefbf, 0.4);
+          const bossSignatureReach = enemy.radius + 14 + bossSignatureRatio * 6;
+          this.graphics.lineStyle(2.8, bossSignatureColor, 0.16 + bossSignatureRatio * 0.22);
+          this.graphics.strokeCircle(screen.x, screen.y, bossSignatureReach);
+          this.graphics.lineStyle(1.6, bossSignatureColor, 0.12 + bossSignatureRatio * 0.12);
+          this.graphics.lineBetween(screen.x - bossSignatureReach, screen.y, screen.x - bossSignatureReach + 10, screen.y);
+          this.graphics.lineBetween(screen.x + bossSignatureReach - 10, screen.y, screen.x + bossSignatureReach, screen.y);
+        }
       } else {
         this.graphics.fillStyle(0x1b1612, 0.84);
         this.graphics.fillRect(screen.x - 16, screen.y - enemy.radius - 10, 32, 4);
@@ -3096,10 +3106,12 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (liveFocusRoute === 'crit' && activeRoutePerks?.critBridgeFocus && battle.critFocusTargetId === enemy.id && battle.critFocusLockSec > 0) {
-        const focusAlpha = Phaser.Math.Clamp(battle.critFocusLockSec / 1.8, 0.12, 0.55);
+        const critPayoffRatio = battle.critBurstBonusSec > 0 ? Math.min(1, battle.critBurstBonusSec / 2.8) : 0;
+        const critChainRatio = battle.critBurstChainSec > 0 ? Math.min(1, battle.critBurstChainSec / 2.0) : 0;
+        const focusAlpha = Phaser.Math.Clamp((battle.critFocusLockSec / 1.8) + critPayoffRatio * 0.08 + critChainRatio * 0.04, 0.12, 0.62);
         const focusPulse = 0.5 + Math.sin(battle.elapsedSec * 5.2) * 0.5;
         const focusColor = this.mixColor(0xff9050, accentColor, 0.3 + focusPulse * 0.15);
-        const focusReach = enemy.radius + 8 + focusPulse * 3;
+        const focusReach = enemy.radius + 8 + focusPulse * 3 + critPayoffRatio * 2;
         this.graphics.lineStyle(2.5, focusColor, focusAlpha);
         this.graphics.strokeCircle(screen.x, screen.y, focusReach);
         this.graphics.lineStyle(1.5, focusColor, focusAlpha * 0.6);
@@ -3115,9 +3127,9 @@ export class GameScene extends Phaser.Scene {
             screen.y + Math.sin(a) * outerR,
           );
         }
-        if (enemy.elite || (enemy.critMarkSec > 0 && (enemy.critMarkStacks ?? 0) >= 2)) {
+        if (enemy.elite || (enemy.critMarkSec > 0 && (enemy.critMarkStacks ?? 0) >= 2) || critPayoffRatio > 0 || critChainRatio > 0) {
           this.graphics.lineStyle(2, focusColor, focusAlpha * 0.8);
-          this.graphics.strokeCircle(screen.x, screen.y, focusReach + 6);
+          this.graphics.strokeCircle(screen.x, screen.y, focusReach + 6 + critPayoffRatio * 4 + critChainRatio * 2);
         }
       }
 
