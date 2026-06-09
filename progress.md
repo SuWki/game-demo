@@ -198,6 +198,12 @@ TODO
 TODO
 - Do not commit `output/playwright/rare-replay/*`, `output/web-game/*`, `progress.md`, or other local QA artifacts.
 - If there is a next round, compare natural-run rare hit rates and branch-switch frequency against real player-like choices instead of only route-biased QA runs.
+
+2026-06-09
+- Current round is staying on the crit bridge line only.
+- Connected crit passive timing back through `RouteManager` so the focus lock is no longer decremented twice.
+- Added a small crit bridge hold extension on focused hits so the single-target pressure window survives long enough to feel like a real bridge.
+- Next: build + smoke, then capture crit bridge/payoff and pierce regression screenshots.
 2026-04-04
 - Re-read docs, current selector/data/metrics, and used the latest user brief on top of `PROJECT_STATUS.md` + latest `DEV_ISSUE_LOG.md`.
 - This round stayed on `codex` and focused on content-pool ratio boundaries, hybrid/redirect reinforcement, and validation.

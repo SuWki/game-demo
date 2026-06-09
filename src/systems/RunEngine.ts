@@ -677,9 +677,6 @@ export class RunEngine {
     battle.critOverdriveSec = Math.max(0, battle.critOverdriveSec - simulationDt);
     battle.dashDriveSec = Math.max(0, battle.dashDriveSec - simulationDt);
     battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - simulationDt);
-    // crit-crownfire: 破绽爆发后短时收益窗口递减
-    battle.critBurstBonusSec = Math.max(0, battle.critBurstBonusSec - simulationDt);
-    battle.critFocusLockSec = Math.max(0, battle.critFocusLockSec - simulationDt);
     battle.eliteCrackWindowSec = Math.max(0, battle.eliteCrackWindowSec - simulationDt);
     battle.eliteBreachFlashSec = Math.max(0, battle.eliteBreachFlashSec - simulationDt);
     battle.eliteBreachCalloutCooldownSec = Math.max(0, battle.eliteBreachCalloutCooldownSec - simulationDt);
@@ -716,22 +713,7 @@ export class RunEngine {
     );
 
     // Crit路线独特被动计时器衰减
-    battle.critComboDecaySec = Math.max(0, battle.critComboDecaySec - dt);
-    if (battle.critComboDecaySec === 0) {
-      battle.critComboStacks = 0;
-      battle.critFinisherReady = false;
-    }
-    battle.critBurstChainSec = Math.max(0, battle.critBurstChainSec - dt);
-    if (battle.critBurstChainSec === 0) {
-      battle.critBurstChainCount = 0;
-    }
-    if (
-      battle.critFocusTargetId !== null &&
-      (battle.critFocusLockSec <= 0 || !battle.enemies.some((enemy) => enemy.id === battle.critFocusTargetId && enemy.hp > 0))
-    ) {
-      battle.critFocusTargetId = null;
-      battle.critFocusLockSec = 0;
-    }
+    this.routeManager.getCritPassive().updatePassiveTimers(battle, simulationDt);
 
     // Pierce路线独特被动计时器衰减
     battle.pierceChainDecaySec = Math.max(0, battle.pierceChainDecaySec - dt);
@@ -5566,6 +5548,7 @@ export class RunEngine {
         );
         if (critical) {
           const critLockActive = this.state.activeRoutePerks?.critLockProtocol ?? false;
+          const critBridgeFocusActive = focusRoute === 'crit' && (this.state.activeRoutePerks?.critBridgeFocus ?? false);
           battle.critOverdriveSec = Math.min(4.2, battle.critOverdriveSec + this.getCritOverdriveDurationGain());
           battle.critChain += 1;
           battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
@@ -5596,6 +5579,14 @@ export class RunEngine {
           } else {
             // 新破绽：初始化1层
             enemy.critMarkStacks = 1;
+          }
+
+          if (critBridgeFocusActive && battle.critFocusTargetId === enemy.id && battle.critFocusLockSec > 0) {
+            const bridgeHold = enemy.elite || hadCritMark ? 2.35 : 2.05;
+            battle.critComboDecaySec = Math.max(battle.critComboDecaySec, bridgeHold);
+            battle.critBurstChainSec = Math.max(battle.critBurstChainSec, enemy.elite || hadCritMark ? 0.88 : 0.64);
+            battle.playerTurnBurstSec = Math.max(battle.playerTurnBurstSec, 0.12);
+            battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
           }
 
           // 3层破绽触发爆发
@@ -5671,7 +5662,6 @@ export class RunEngine {
           }
 
           // crit bridge 核心玩法：压厚血目标时，暴击会把破绽溅到旁边
-          const critBridgeFocusActive = focusRoute === 'crit' && (this.state.activeRoutePerks?.critBridgeFocus ?? false);
           if (critBridgeFocusActive && battle.critFocusTargetId === enemy.id && battle.critFocusLockSec > 0) {
             const bridgeSpreadRadius = 90;
             let bridgeSpreadHits = 0;
