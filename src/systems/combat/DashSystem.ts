@@ -61,15 +61,12 @@ export function tryTriggerDash(
   battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
   deps.enqueueAudio('dash');
 
-  // 开启回切反打窗口
   battle.dashCounterWindowSec = 1.2;
 
-  // 幽灵打击就绪
   if (dashStage === 'committed' || dashStage === 'matured') {
     battle.dashGhostStrikeReady = true;
   }
 
-  // 动量累积
   if (dashStage === 'committed' || dashStage === 'matured') {
     battle.dashMomentumStacks = Math.min(5, battle.dashMomentumStacks + 1);
     battle.dashMomentumDecaySec = 2.0;
@@ -157,16 +154,17 @@ export function tryTriggerDash(
     }
   }
 
+  const dashMomentStage = dashStage === 'matured' ? 'payoff' : dashStage === 'committed' ? 'bridge' : 'starter';
   if (dashPulseHits > 0) {
     deps.enqueueAudio('dashPulse');
-    deps.enqueueTip(`穿梭触发：脉冲命中 ${dashPulseHits} 个敌人`);
+    deps.enqueueTip(`贴身一圈打到 ${dashPulseHits} 个敌人`);
   } else {
-    deps.enqueueTip('穿梭触发：获得短暂无伤窗口');
+    deps.enqueueTip('贴身一圈：拿到短暂无伤');
   }
 
   if (dashCharge >= 2 && !deps.routeMomentShown.dash) {
     deps.routeMomentShown.dash = true;
-    deps.enqueueTip('穿梭开始回切了');
+    deps.queueRouteMoment('dash', deps.getRouteStageMomentText('dash', dashMomentStage));
   }
 
   battle.dashCharge = 0;

@@ -1866,7 +1866,7 @@ export class OverlayController {
         return hasFinisherSupport ? '已经能回打了，但最后那口气还没顶住' : '已经能回打了，但收人的脚还差一点';
       }
       if (result.buildStage === 'hinted') {
-        return '已经开始往贴身打法靠了，但还没真贴住';
+        return '已经开始贴近了，但还没真贴住';
       }
       return '这局还差最后一手';
     }
@@ -1905,7 +1905,7 @@ export class OverlayController {
         finisher: '补最后一下',
       },
       dash: {
-        direction: '先贴上去',
+        direction: '先贴近',
         core: '回打更稳',
         transform: '直接贴身',
         finisher: '补最后一下',
@@ -1945,7 +1945,7 @@ export class OverlayController {
       },
       dash: {
         unformed: '还没打顺',
-        hinted: '开始贴身',
+        hinted: '开始贴近',
         committed: '贴身能回打',
         matured: '贴身就能收人',
       },

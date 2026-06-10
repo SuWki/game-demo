@@ -111,7 +111,7 @@ export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage
     },
     dash: {
       unformed: '没打顺',
-      hinted: '开始贴上去',
+      hinted: '开始贴近',
       committed: '贴身能回打',
       matured: '贴身就能收人',
     },
@@ -148,9 +148,9 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return `${routeName}开始顺手了，先贴上去再拉开`;
+          return `${routeName}开始顺手了，先贴近再找回手`;
         case 'committed':
-          return `${routeName}已经连起来了，换位后还能补一圈`;
+          return `${routeName}已经连起来了，贴住后还能回打`;
         case 'matured':
           return `${routeName}已经压住了，贴身一圈就能收人`;
         default:
@@ -188,11 +188,11 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'dash':
       switch (stage) {
         case 'starter':
-          return '穿梭开始贴上去了：先近身，再拉开';
+          return '穿梭开始贴近了：先靠近，再回打';
         case 'bridge':
-          return '穿梭接顺了：贴身后马上能回打';
+          return '穿梭接起来了：贴住后还能补一轮';
         case 'payoff':
-          return '穿梭压住了：贴身一圈就能收人';
+          return '穿梭压住了：一圈就能收人';
         default:
           return '穿梭开始起势了';
       }

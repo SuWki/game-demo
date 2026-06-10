@@ -177,7 +177,7 @@ window.__pilotDebug = {
 };
 
 window.__pilotQaSmoke = (config) => {
-  const validRoute = config?.routeId === 'crit' || config?.routeId === 'pierce';
+  const validRoute = config?.routeId === 'crit' || config?.routeId === 'pierce' || config?.routeId === 'dash';
   const validStage = ['upgrade', 'anomaly', 'battle', 'result'].includes(config?.stage ?? '');
   const validRole =
     config?.anomalyRole == null ||

@@ -888,7 +888,7 @@ export interface Services {
   configLoader: import('../systems/ConfigLoader').ConfigLoader;
 }
 
-export type QaSmokeRouteId = 'crit' | 'pierce';
+export type QaSmokeRouteId = 'crit' | 'pierce' | 'dash';
 
 export type QaSmokeStageId = 'upgrade' | 'anomaly' | 'battle' | 'result';
 export type QaSmokeBattleLevelId = 'bridge' | 'payoff';

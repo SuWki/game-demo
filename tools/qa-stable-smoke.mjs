@@ -123,8 +123,16 @@ function pushCapture(summary, captureMeta) {
 async function captureBattleStage(page, routeId, battleLevel, routeScreenshots, routeTextChecks, routeCoverage, summary, outDir) {
   await triggerScenario(page, { routeId, stage: 'battle', battleLevel });
   await page.evaluate(() => window.__pilotDebug?.setConfig?.({ invulnerablePlayer: true }));
-  await waitForVisible(page.locator('.game-hud-fixed__route-moment'));
-  await page.waitForTimeout(900);
+  const routeMoment = page.locator('.game-hud-fixed__route-moment');
+  await waitForVisible(routeMoment);
+  if (routeId === 'dash') {
+    await page.waitForFunction(() => {
+      const text = document.querySelector('.game-hud-fixed__route-moment')?.textContent ?? '';
+      return text.includes('贴身') || text.includes('贴近') || text.includes('贴住') || text.includes('回打') || text.includes('收人');
+    }, null, { timeout: 6000 });
+  } else {
+    await page.waitForTimeout(900);
+  }
 
   const screenshotKey = battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge';
   const textKey = battleLevel === 'payoff' ? 'routeMomentPayoff' : 'routeMomentBridge';
@@ -132,7 +140,7 @@ async function captureBattleStage(page, routeId, battleLevel, routeScreenshots, 
   const filename = `${routeId}-battle-${battleLevel}.png`;
   routeCoverage[battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge'] = true;
   routeScreenshots[screenshotKey] = await capture(page, outDir, filename);
-  routeTextChecks[textKey] = normalize(await page.locator('.game-hud-fixed__route-moment').textContent());
+  routeTextChecks[textKey] = normalize(await routeMoment.textContent());
   pushCapture(summary, {
     routeId,
     stage: 'battle',

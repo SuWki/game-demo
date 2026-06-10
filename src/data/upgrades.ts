@@ -2707,7 +2707,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-brush',
     name: '擦身蓄能',
-    description: '脉冲擦到敌人时更容易积蓄能量。',
+    description: '擦身时更容易蓄能。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter', 'dash-brush'],
@@ -2735,7 +2735,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-feint',
     name: '侧滑取样',
-    description: '快速贴近或脱离敌人时，触发短暂脉冲收益。',
+    description: '贴近或拉开时，触发短暂脉冲收益。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2763,7 +2763,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-lanebreak',
     name: '换边破窗',
-    description: '快速贴近或脱离敌人时，触发短暂脉冲收益。',
+    description: '换边时更容易补一层。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2791,7 +2791,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-slipstream',
     name: '换位余程',
-    description: '穿梭冷却与无伤时间强化',
+    description: '穿梭更快，回身更稳。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -2856,7 +2856,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-cutin',
     name: '偏帧切入',
-    description: '脉冲充能速度+15%，修复损伤',
+    description: '穿梭更快，换位后更容易接上。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2898,7 +2898,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-recall',
     name: '借位追回',
-    description: '换个接法继续打，顺手回一口',
+    description: '贴得更稳，回身更顺。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -2963,7 +2963,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-loop',
     name: '净帧循环',
-    description: '缩短穿梭冷却并延长无伤时间，更频繁触发相位脉冲',
+    description: '贴身后更容易再接一轮。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -2993,7 +2993,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidestep-bank',
     name: '侧返蓄窗',
-    description: '脉冲刚触发后的短时间内，下一次命中更容易叠层。',
+    description: '刚打完那一下，下一次更容易接上。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'dash-sidestep-bank'],
@@ -3022,7 +3022,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-return-hold',
     name: '回线留窗',
-    description: '穿梭冷却与无伤时间强化',
+    description: '贴身后回得更快。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3055,7 +3055,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-afterimage',
     name: '残影脉冲',
-    description: '脉冲触发后留下短暂残影伤害，不提供长期无敌。',
+    description: '贴身触发后，身后会留一段余波。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3087,7 +3087,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-retrace-beat',
     name: '回线追拍',
-    description: '穿梭脉冲与无伤时间强化',
+    description: '贴身后更容易再接一轮。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3119,7 +3119,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-counterline',
     name: '脉冲反击',
-    description: '穿梭脉冲与冷却强化',
+    description: '回身那一下更重。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3150,7 +3150,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-return-snap',
     name: '回摆取窗',
-    description: '穿梭冷却与无伤时间强化',
+    description: '贴身后回得更快，也更远。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3183,7 +3183,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rebound-window',
     name: '借窗回返',
-    description: '换个接法继续打，顺手回一口',
+    description: '回身后更容易再接上。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3217,7 +3217,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rethread',
     name: '回线续拍',
-    description: '穿梭频率与脉冲伤害的短时机爆发组合',
+    description: '回身接下一轮更稳。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3246,7 +3246,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reentry',
     name: '回环汲能',
-    description: '穿梭脉冲、冷却与无伤时间的强力组合',
+    description: '贴身后回得更顺，也更容易补伤。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3276,7 +3276,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-anchor',
     name: '穿梭定标',
-    description: '穿梭脉冲、生存与机动的终极封板',
+    description: '贴身、回身、收人都更稳。',
     category: 'route',
     routeId: 'dash',
     tags: ['finisher'],
@@ -3306,7 +3306,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-zero-window',
     name: '瞬返空档',
-    description: '三层脉冲触发后，短时间内命中被标记敌人会追加小伤害。',
+    description: '三层脉冲后，短时间内再碰到就更痛。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3386,27 +3386,27 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'pierce-prism': '裂纹会蔓得更开，更容易一路打到后排',
 
   // 穿梭流 - 脉冲机制
-  'dash-brush': '自动脉冲命中叠层，满层后反击',
-  'dash-feint': '自动脉冲积累反击层数',
-  'dash-lanebreak': '脉冲叠层触发短时间反击',
-  'dash-phasebank': '自动脉冲触发更频繁',
-  'dash-cutback': '满层脉冲后的反击更强',
-  'dash-slipstream': '脉冲间隔缩短，附带无伤时间',
-  'dash-sidechannel': '脉冲频率和反击伤害提升',
-  'dash-reroute-cutin': '脉冲充能更快，修复损伤',
-  'dash-reroute-recall': '脉冲反击强化，修复损伤',
-  'dash-loop': '脉冲更频繁，反击时机更短',
-  'dash-sidestep-bank': '脉冲触发后更容易叠层',
-  'dash-return-hold': '脉冲后安全时间延长',
-  'dash-afterimage': '反击触发残影伤害附近敌人',
-  'dash-retrace-beat': '脉冲反击稳定性更高',
-  'dash-counterline': '满层脉冲反击更明显',
-  'dash-return-snap': '更快进入下一次脉冲',
-  'dash-rebound-window': '脉冲频率和反击伤害提升',
-  'dash-rethread': '脉冲节奏缩短，反击更强',
-  'dash-reentry': '脉冲反击和无伤时间强化',
-  'dash-anchor': '脉冲反击把最后那一下补上',
-  'dash-zero-window': '满层脉冲后打击标记敌人追加伤害',
+  'dash-brush': '擦身命中更容易接上下一层',
+  'dash-feint': '贴近后更容易补层',
+  'dash-lanebreak': '补层后更容易回打',
+  'dash-phasebank': '贴身脉冲更频繁',
+  'dash-cutback': '满层后的回打更重',
+  'dash-slipstream': '穿梭更快，回身更稳',
+  'dash-sidechannel': '贴身更顺，回打也更重',
+  'dash-reroute-cutin': '贴身更快，回得也更顺',
+  'dash-reroute-recall': '回身更容易补伤',
+  'dash-loop': '贴身后更快能再接一轮',
+  'dash-sidestep-bank': '刚打完那一下，更容易再接上',
+  'dash-return-hold': '贴身后的安全时间更长',
+  'dash-afterimage': '回身后会多留一段余波',
+  'dash-retrace-beat': '回身接下一轮更稳',
+  'dash-counterline': '满层后的回打更明显',
+  'dash-return-snap': '更快回到下一次贴身',
+  'dash-rebound-window': '贴身后更容易接回去',
+  'dash-rethread': '贴身节奏更短，回打更强',
+  'dash-reentry': '回身后更容易补上伤害',
+  'dash-anchor': '贴身、回身、收人都更稳',
+  'dash-zero-window': '满层后打到标记敌人会更痛',
 };
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {

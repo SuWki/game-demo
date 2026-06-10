@@ -2466,7 +2466,9 @@ export class RunEngine {
     const routeUpgradeIds =
       routeId === 'crit'
         ? ['crit-primer', 'crit-aim', 'crit-embershard']
-        : ['pierce-core', 'pierce-rail', 'pierce-riftbloom'];
+        : routeId === 'pierce'
+          ? ['pierce-core', 'pierce-rail', 'pierce-riftbloom']
+          : ['dash-brush', 'dash-slipstream', 'dash-rethread'];
     this.state.upgradeChoices = routeUpgradeIds
       .map((id) => UPGRADE_ARCHETYPES.find((upgrade) => upgrade.id === id))
       .filter((upgrade): upgrade is UpgradeArchetype => Boolean(upgrade))
@@ -2544,11 +2546,30 @@ export class RunEngine {
             ? battleLevel === 'payoff'
               ? '暴击强攻'
               : '暴击实战'
-            : battleLevel === 'payoff'
-              ? '穿透强攻'
-              : '穿透实战',
+            : routeId === 'pierce'
+              ? battleLevel === 'payoff'
+                ? '穿透强攻'
+                : '穿透实战'
+              : battleLevel === 'payoff'
+                ? '穿梭强攻'
+                : '穿梭实战',
       },
     ];
+    if (routeId === 'dash') {
+      battle.dashCharge = battleLevel === 'payoff' ? 4 : 2;
+      battle.dashCooldownSec = 0;
+      battle.dashDriveSec = battleLevel === 'payoff' ? 1.08 : 0.78;
+      battle.dashCounterWindowSec = battleLevel === 'payoff' ? 1.1 : 0.8;
+      battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
+      battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.16);
+      this.routeMomentShown.dash = true;
+      this.state.routeMomentRouteId = 'dash';
+      this.state.routeMomentText = this.getRouteStageMomentText(
+        'dash',
+        battleLevel === 'payoff' ? 'payoff' : 'bridge',
+      );
+      this.state.routeMomentSec = 2.6;
+    }
     if (routeId === 'crit') {
       battle.critChain = battleLevel === 'payoff' ? 4 : 2;
       battle.critComboStacks = battleLevel === 'payoff' ? 5 : 3;
@@ -2598,7 +2619,7 @@ export class RunEngine {
         entry.enemy.hitFlashSec = Math.max(entry.enemy.hitFlashSec, 0.08 + index * 0.02);
       }
       this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', battleLevel));
-    } else {
+    } else if (routeId === 'pierce') {
       battle.pierceFlowCount = battleLevel === 'payoff' ? 4 : 2;
       battle.pierceFlowSec = battleLevel === 'payoff' ? 1.1 : 0.68;
       battle.pierceChainStacks = battleLevel === 'payoff' ? 3 : 2;
@@ -2641,6 +2662,49 @@ export class RunEngine {
         battle.pierceFractureMark.add(entry.enemy.id);
       }
       this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', battleLevel));
+    } else {
+      battle.dashDriveSec = battleLevel === 'payoff' ? 1.08 : 0.78;
+      battle.dashCounterWindowSec = battleLevel === 'payoff' ? 1.1 : 0.8;
+      battle.dashCharge = battleLevel === 'payoff' ? 4 : 2;
+      battle.dashCooldownSec = 0;
+      battle.dashMomentumStacks = battleLevel === 'payoff' ? 3 : 2;
+      battle.dashMomentumDecaySec = 2.2;
+      const dashTargets = battle.enemies
+        .filter((enemy) => !enemy.elite && enemy.hp > 0)
+        .map((enemy) => ({
+          enemy,
+          distance: Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY),
+        }))
+        .sort((left, right) => left.distance - right.distance)
+        .slice(0, battleLevel === 'payoff' ? 6 : 4);
+      const dashLayout = battleLevel === 'payoff'
+        ? [
+            { x: battle.playerX - 56, y: battle.playerY - 106 },
+            { x: battle.playerX + 58, y: battle.playerY - 96 },
+            { x: battle.playerX - 90, y: battle.playerY - 18 },
+            { x: battle.playerX + 84, y: battle.playerY + 12 },
+            { x: battle.playerX - 42, y: battle.playerY + 66 },
+            { x: battle.playerX + 30, y: battle.playerY + 98 },
+          ]
+        : [
+            { x: battle.playerX - 54, y: battle.playerY - 84 },
+            { x: battle.playerX + 64, y: battle.playerY - 70 },
+            { x: battle.playerX - 84, y: battle.playerY - 6 },
+            { x: battle.playerX + 82, y: battle.playerY + 20 },
+          ];
+      dashTargets.forEach((entry, index) => {
+        const slot = dashLayout[index] ?? dashLayout[dashLayout.length - 1];
+        entry.enemy.x = clamp(slot.x, 72, ARENA_WIDTH - 72);
+        entry.enemy.y = clamp(slot.y, 72, ARENA_HEIGHT - 72);
+      });
+      for (const [index, entry] of dashTargets.entries()) {
+        entry.enemy.dashMarkSec = 1.6;
+        entry.enemy.dashPulseStacks = battleLevel === 'payoff' ? 2 : 1;
+        entry.enemy.routeHitFlashSec = 0.16;
+        entry.enemy.routeHitKind = 'dash';
+        entry.enemy.hitFlashSec = Math.max(entry.enemy.hitFlashSec, 0.08 + index * 0.02);
+      }
+      this.queueRouteMoment('dash', this.getRouteStageMomentText('dash', battleLevel));
     }
   }
 
@@ -2658,13 +2722,21 @@ export class RunEngine {
       this.state.traversedNodes = [
         { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
         { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
-        { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '暴击实战' : '穿透实战' },
-        { id: 'qa-break-node', type: 'battle', title: routeId === 'crit' ? '连段断火' : '拆线失手' },
+        {
+          id: `qa-battle-${routeId}`,
+          type: 'battle',
+          title: routeId === 'crit' ? '暴击实战' : routeId === 'pierce' ? '穿透实战' : '穿梭实战',
+        },
+        {
+          id: 'qa-break-node',
+          type: 'battle',
+          title: routeId === 'crit' ? '连段断火' : routeId === 'pierce' ? '拆线失手' : '贴身失手',
+        },
       ];
       this.state.currentNode = {
         id: 'qa-result-node-defeat',
         type: 'battle',
-        title: routeId === 'crit' ? '连段断火' : '拆线失手',
+        title: routeId === 'crit' ? '连段断火' : routeId === 'pierce' ? '拆线失手' : '贴身失手',
         description: 'QA 失败结果页演示。',
         phase: 'late',
       };
@@ -2677,13 +2749,17 @@ export class RunEngine {
     this.state.traversedNodes = [
       { id: 'qa-upgrade', type: 'upgrade', title: 'QA 升级' },
       { id: 'qa-anomaly', type: 'anomaly', title: 'QA 异常转折' },
-      { id: `qa-battle-${routeId}`, type: 'battle', title: routeId === 'crit' ? '暴击实战' : '穿透实战' },
+      {
+        id: `qa-battle-${routeId}`,
+        type: 'battle',
+        title: routeId === 'crit' ? '暴击实战' : routeId === 'pierce' ? '穿透实战' : '穿梭实战',
+      },
       { id: 'qa-boss', type: 'boss', title: 'QA 收尾' },
     ];
     this.state.currentNode = {
       id: 'qa-result-node',
       type: 'boss',
-      title: routeId === 'crit' ? '暴击实战结束' : '穿透实战结束',
+      title: routeId === 'crit' ? '暴击实战结束' : routeId === 'pierce' ? '穿透实战结束' : '穿梭实战结束',
       description: 'QA 结果页演示。',
       phase: 'finalBattle',
     };
@@ -2743,6 +2819,26 @@ export class RunEngine {
           upgradeIds: ['pierce-core', 'pierce-rail', 'pierce-seamline', 'pierce-riftbloom', 'pierce-relay-spine'],
         },
       },
+      dash: {
+        victory: {
+          durationSec: 104,
+          battleWins: 27,
+          level: 7,
+          experience: 33,
+          maxHp: 120,
+          hp: 88,
+          upgradeIds: ['dash-brush', 'dash-slipstream', 'dash-sidestep-bank', 'dash-retrace-beat', 'dash-anchor', 'dash-zero-window'],
+        },
+        defeat: {
+          durationSec: 82,
+          battleWins: 15,
+          level: 6,
+          experience: 13,
+          maxHp: 112,
+          hp: 0,
+          upgradeIds: ['dash-brush', 'dash-slipstream', 'dash-sidestep-bank', 'dash-rethread', 'dash-return-hold'],
+        },
+      },
     };
     const profile = routeProfiles[routeId][resultMode];
     this.runStartedAtMs = performance.now() - profile.durationSec * 1000;
@@ -2800,6 +2896,20 @@ export class RunEngine {
           optionId: 'pierce-reroute-window-breakthrough',
         },
       },
+      dash: {
+        direction: {
+          eventId: 'dash-charge-protocol',
+          optionId: 'dash-charge-direction',
+        },
+        core: {
+          eventId: 'dash-charge-protocol',
+          optionId: 'dash-charge-core',
+        },
+        transform: {
+          eventId: 'dash-charge-protocol',
+          optionId: 'dash-charge-transform',
+        },
+      },
     };
 
     return {
@@ -2853,7 +2963,9 @@ export class RunEngine {
     const sourceIds =
       routeId === 'crit'
         ? ['crit-primer', 'crit-aim', 'crit-embershard']
-        : ['pierce-core', 'pierce-rail', 'pierce-riftbloom'];
+        : routeId === 'pierce'
+          ? ['pierce-core', 'pierce-rail', 'pierce-riftbloom']
+          : ['dash-brush', 'dash-slipstream', 'dash-rethread'];
     this.state.selectedUpgrades = [...sourceIds];
     for (const sourceId of sourceIds) {
       const archetype = UPGRADE_ARCHETYPES.find((upgrade) => upgrade.id === sourceId);
@@ -3005,7 +3117,7 @@ export class RunEngine {
         finisher: '补最后一下',
       },
       dash: {
-        direction: '先贴上去',
+        direction: '先贴近',
         core: '回打更稳',
         transform: '直接贴身',
         finisher: '补最后一下',
@@ -3177,7 +3289,7 @@ export class RunEngine {
     if (routeId === 'dash') {
       switch (role) {
         case 'direction':
-          return '先贴上去';
+          return '先贴近';
         case 'core':
           return '回打更稳';
         case 'transform':
@@ -3217,13 +3329,13 @@ export class RunEngine {
   private getDashAnomalyTurnVerb(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '先贴上去';
+        return '先贴近';
       case 'core':
         return '回打更稳';
       case 'transform':
         return '直接贴身';
       case 'finisher':
-        return '把最后一下补上';
+        return '补最后一下';
       default:
         return '往前推一手';
     }
@@ -3592,9 +3704,9 @@ export class RunEngine {
       pierceRiftbloom: { routeId: 'pierce', text: '穿透线已经穿到后排了', priority: 3 },
       piercePrism: { routeId: 'pierce', text: '穿透线已经穿到后排了', priority: 4 },
       pierceBreakthrough: { routeId: 'pierce', text: '找一条直线：这把已经能穿到后排了', priority: 5 },
-      dashBrush: { routeId: 'dash', text: '穿梭线开始顺手了', priority: 1 },
-      dashSidestepBank: { routeId: 'dash', text: '穿梭线开始回切了', priority: 2 },
-      dashZeroWindow: { routeId: 'dash', text: '穿梭线开始贴身收人了', priority: 3 },
+      dashBrush: { routeId: 'dash', text: '贴身后开始顺手了', priority: 1 },
+      dashSidestepBank: { routeId: 'dash', text: '贴身后更容易回打了', priority: 2 },
+      dashZeroWindow: { routeId: 'dash', text: '贴身一圈能收人了', priority: 3 },
       dashAfterimage: { routeId: 'dash', text: '最后那下到手了，这把能收', priority: 4 },
       critBridgeFocus: { routeId: 'crit', text: '先盯住厚血目标：破绽链开始往重的身上挂，旁边会跟着掉', priority: 3 },
       critAfterglow: { routeId: 'crit', text: '暴击线开始顺手了', priority: 1 },
@@ -3782,163 +3894,26 @@ export class RunEngine {
     battle.playerX = nextPlayerX;
     battle.playerY = nextPlayerY;
 
-    battle.dashCooldownSec -= dt;
-    if ((this.state.stats.dashPulseDamage <= 0 && this.state.routeCounts.dash <= 0) || battle.dashCooldownSec > 0) {
-      return;
-    }
-
-    const dashStage = this.getRouteBuildStage('dash');
-    const dashCharge = battle.dashCharge;
-    const pulseRadius = this.getDashPulseRadius(dashCharge, dashStage);
-    const pulseDamage = this.getDashPulseDamage(dashCharge, dashStage);
-    let dashPulseHits = 0;
-
-    battle.dashCooldownSec = this.getDashCooldownAfterPulse(dashStage);
-    battle.invulnerableSec = this.state.stats.dashInvulnerability + (dashStage === 'matured' ? 0.12 : 0);
-    battle.dashDriveSec = Math.max(
-      battle.dashDriveSec,
-      this.getDashDriveDuration(dashCharge),
-    );
-    this.createCombatPulse(battle, {
-      x: battle.playerX,
-      y: battle.playerY,
-      radius: Math.max(34, pulseRadius * 0.52),
-      lifeSec: 0.32,
-      color: 0x8dffe3,
-      secondaryColor: 0xf4fffd,
-      fillAlpha: 0.12,
-      strokeAlpha: 0.94,
-      strokeWidth: 3,
-      growthPerSec: 240,
-      innerRadiusRatio: 0.58,
-      spokeCount: 6 + Math.min(3, dashCharge),
-      spokeLength: 22 + dashCharge * 3,
-      angle: Math.atan2(battle.playerAimDirY, battle.playerAimDirX),
-      spinRate: 9.2,
+    DashSystem.updateDashCooldown(battle, dt);
+    DashSystem.tryTriggerDash(battle, {
+      getRouteBuildStage: (routeId) => this.getRouteBuildStage(routeId as RouteId),
+      getDashPulseRadius: (dashCharge, buildStage) => this.getDashPulseRadius(dashCharge, buildStage),
+      getDashPulseDamage: (dashCharge, buildStage) => this.getDashPulseDamage(dashCharge, buildStage),
+      getDashCooldownAfterPulse: (buildStage) => this.getDashCooldownAfterPulse(buildStage),
+      getDashDriveDuration: (dashCharge) => this.getDashDriveDuration(dashCharge),
+      createCombatPulse: (pulseBattle, config) => this.createCombatPulse(pulseBattle, config),
+      kickBattleShake: (shakeBattle, durationSec, strength, frequency) =>
+        this.kickBattleShake(shakeBattle, durationSec, strength, frequency),
+      enqueueAudio: (cue) => this.enqueueAudio(cue as AudioCue),
+      enqueueTip: (text) => this.enqueueTip(text),
+      queueRouteMoment: (momentRouteId, text) => this.queueRouteMoment(momentRouteId as RouteId, text),
+      getRouteStageMomentText: (momentRouteId, stage) =>
+        this.getRouteStageMomentText(momentRouteId as RouteId, stage),
+      registerEnemyImpact: (impactBattle, enemy, sourceX, sourceY, options) =>
+        this.registerEnemyImpact(impactBattle, enemy, sourceX, sourceY, options),
+      state: this.state,
+      routeMomentShown: this.routeMomentShown,
     });
-    this.kickBattleShake(battle, 0.18, 0.42 + dashCharge * 0.06, 20);
-    battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
-    this.enqueueAudio('dash');
-
-    // 流派构筑第三轮：开启回切反打窗口
-    battle.dashCounterWindowSec = 1.2;
-
-    // Dash路线独特被动：幽灵打击 - Dash后下次攻击穿透并造成额外伤害
-    if (dashStage === 'committed' || dashStage === 'matured') {
-      battle.dashGhostStrikeReady = true;
-    }
-
-    // Dash路线独特被动：动量 - 连续Dash叠加攻速和移速加成
-    if (dashStage === 'committed' || dashStage === 'matured') {
-      battle.dashMomentumStacks = Math.min(5, battle.dashMomentumStacks + 1);
-      battle.dashMomentumDecaySec = 2.0; // 2秒内不Dash则衰减
-    }
-
-    for (const enemy of battle.enemies) {
-      const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
-      if (distance <= pulseRadius) {
-        enemy.hp -= pulseDamage;
-        dashPulseHits += 1;
-        // 记录Dash击杀类型
-        enemy.lastHitWasCrit = false;
-        enemy.lastHitWasPierce = false;
-        // 流派构筑第三轮：脉冲层数积累与回切标记
-        const oldStacks = enemy.dashPulseStacks ?? 0;
-        enemy.dashMarkSec = 1.5;
-        enemy.routeHitFlashSec = 0.16;
-        enemy.routeHitKind = 'dash';
-
-        // dash-brush: 更容易叠第一层标记（第一层直接给2层）
-        const stackGain = (oldStacks === 0 && battle.dashBrushActive) ? 2 : 1;
-        enemy.dashPulseStacks = Math.min(3, oldStacks + stackGain);
-
-        // dash-sidestep-bank: 回切窗口期间层数收益提高（如果处于窗口期，额外+1层）
-        if (battle.dashSidestepBankActive && battle.dashCounterWindowSec > 0) {
-          enemy.dashPulseStacks = Math.min(3, enemy.dashPulseStacks + 1);
-        }
-
-        // 3层脉冲触发回切伤害
-        if (enemy.dashPulseStacks >= 3) {
-          // dash-zero-window: 窗口内命中被 dash 标记敌人获得额外小伤害
-          let returnDamage = 6;
-          if (battle.dashZeroWindowReady && enemy.dashMarkSec > 0) {
-            returnDamage += 4; // 额外伤害
-          }
-          enemy.hp -= returnDamage;
-          enemy.dashPulseStacks = 0;
-          // 标记敌人可被窗口额外伤害
-          enemy.dashMarkedForBonus = true;
-          // 视觉反馈
-          this.createCombatPulse(battle, {
-            x: enemy.x,
-            y: enemy.y,
-            radius: enemy.radius + 20,
-            lifeSec: 0.20,
-            color: 0x7aff7a,
-            secondaryColor: 0xc8ffc8,
-            fillAlpha: 0.10,
-            strokeAlpha: 0.82,
-            strokeWidth: 2.5,
-            growthPerSec: 200,
-            innerRadiusRatio: 0.5,
-          });
-          this.enqueueAudio('dashHit');
-        }
-
-        // dash-afterimage: 回切触发后留下短暂残影脉冲
-        if (battle.dashAfterimageReady && enemy.dashPulseStacks === 0) {
-          // 残影脉冲造成小额伤害
-          enemy.hp -= 3;
-          enemy.routeHitFlashSec = 0.12;
-          this.createCombatPulse(battle, {
-            x: enemy.x,
-            y: enemy.y,
-            radius: enemy.radius + 15,
-            lifeSec: 0.15,
-            color: 0x5aff5a,
-            secondaryColor: 0xa0ffa0,
-            fillAlpha: 0.06,
-            strokeAlpha: 0.6,
-            strokeWidth: 1.5,
-            growthPerSec: 150,
-            innerRadiusRatio: 0.6,
-          });
-        }
-
-        this.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
-          flashSec: 0.18,
-          kick: 12,
-          pulseRadius: enemy.radius + 10,
-          pulseColor: 0x86ffd1,
-          secondaryColor: 0xffffff,
-        });
-        if (this.state.routeCounts.dash > 0) {
-          const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
-          const knockback = (dashStage === 'matured' ? 40 : dashStage === 'committed' ? 30 : 18) + dashCharge * 4;
-          enemy.x += Math.cos(angle) * knockback;
-          enemy.y += Math.sin(angle) * knockback;
-        }
-      }
-    }
-    if (dashPulseHits > 0) {
-      this.enqueueAudio('dashPulse');
-      this.enqueueTip(`穿梭触发：脉冲命中 ${dashPulseHits} 个敌人`);
-    } else {
-      this.enqueueTip('穿梭触发：获得短暂无伤窗口');
-    }
-
-    const dashHeal = this.getDashPulseHeal(dashCharge, dashStage);
-    if (dashHeal > 0) {
-      this.state.stats.hp = clamp(this.state.stats.hp + dashHeal, 0, this.state.stats.maxHp);
-      battle.playerRecoverySec = Math.max(battle.playerRecoverySec, 0.26);
-    }
-
-    if (dashCharge >= 2 && !this.routeMomentShown.dash) {
-      this.routeMomentShown.dash = true;
-      this.enqueueTip('穿梭开始回切了');
-    }
-
-    battle.dashCharge = 0;
   }
 
   private spawnEnemies(battle: BattleState, dt: number): void {

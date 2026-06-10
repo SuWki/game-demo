@@ -1840,3 +1840,7 @@ TODO
 - 这轮把路由推进逻辑的分拆收口了一次：`src/systems/route/RouteProgression.ts` 作为路由阶段推进与阶段文案的单一源头，`RunEngine.ts` 只保留接线；`RouteManager` 也只保留被动计时更新，不再对外暴露 passives getters。
 - 删除了空壳的 `src/systems/progression/RouteProgression.ts`，避免同名文件继续让拆分边界看起来像重复实现。
 - 验证结果：`npm run build` 通过，stable smoke 仍稳定覆盖首页、升级页、crit / pierce 异常与战斗段落、Boss signature、结果页详情，`failed404Urls: []`，`consoleErrors: []`，`consoleWarns: []`。
+2026-06-10
+- 继续收 `dash` 主线补齐：`RouteProgression.ts`、`DashSystem.ts`、`upgrades.ts`、`events.ts`、`OverlayController.ts` 的阶段口径已经统一到 `贴近 / 回打 / 收人`，旧的 `贴上去 / 回切 / 脉冲命中` 说法已从源头模块里清掉。
+- `RunEngine.ts` 这轮只留了必要接线和 QA smoke 入口同步，`dash` 相关的 battle / anomaly / result 样板也已经能稳定跑通。
+- 当前判断还是 `dash` 进行中，没有切到下一项 P0；下一步重点继续看真实战斗里的 starter / bridge / payoff 是否已经立住。

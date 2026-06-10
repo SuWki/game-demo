@@ -246,7 +246,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'route-handoff-dash',
       label: '先接穿梭',
-      gameplayLabel: '先贴上去',
+      gameplayLabel: '先贴近',
       gainLabel: '先把贴身节奏拉起来',
       costLabel: '还不能马上贴身收人',
       anomalyRole: 'direction',

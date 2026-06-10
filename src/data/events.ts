@@ -650,7 +650,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-reroute-window-hold',
         label: '先稳当前机动',
-        gameplayLabel: '先贴上去',
+        gameplayLabel: '先稳住',
         gainLabel: '先把机动底子垫稳',
         costLabel: '不直接切成别的路线',
         anomalyRole: 'direction',
@@ -1214,11 +1214,11 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'dash-charge-protocol',
-    name: '穿梭抉择',
+    name: '贴身抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'dash',
-    description: '普通射击会变弱，但贴身闪过后的那一下会更狠。',
+    description: '普通射击会弱一点，但贴身闪过去那一下会更狠。',
     selection: {
       baseWeight: 0.95,
       minRound: 2,
@@ -1233,13 +1233,13 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'dash-charge-direction',
-        label: '钉住穿梭方向',
-        gameplayLabel: '先贴上去',
-        gainLabel: '穿梭更容易先贴上去',
+        label: '先贴近',
+        gameplayLabel: '先贴近',
+        gainLabel: '更容易先贴住',
         costLabel: '基础火力会弱一点',
         routeId: 'dash',
         anomalyRole: 'direction',
-        description: '先把穿梭贴身那一下抬起来，后面更容易接反打。',
+        description: '先把贴身那一下抬起来，后面更容易接回打。',
         effects: [
           {
             type: 'stats',
@@ -1260,13 +1260,13 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'dash-charge-core',
-        label: '补进穿梭核心',
-        gameplayLabel: '火力更重',
-        gainLabel: '脉冲伤害和无伤窗提高',
+        label: '补进火力',
+        gameplayLabel: '回打更稳',
+        gainLabel: '贴身后更容易回打',
         costLabel: '耐久会少一点',
         routeId: 'dash',
         anomalyRole: 'core',
-        description: '把穿梭的核心拍补实，擦身会更稳。',
+        description: '把贴身后的回手拍实，擦身会更稳。',
         effects: [
           {
             type: 'stats',
@@ -1288,13 +1288,13 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'dash-charge-transform',
-        label: '压上换位爆发',
+        label: '直接贴身',
         gameplayLabel: '直接压上',
-        gainLabel: '换位后爆发更狠',
+        gainLabel: '贴身后爆发更狠',
         costLabel: '容错明显下降',
         routeId: 'dash',
         anomalyRole: 'transform',
-        description: '把穿梭从游走，直接改成贴身收人。',
+        description: '把这把直接往贴身收人的路上推。',
         effects: [
           {
             type: 'stats',
@@ -1317,13 +1317,13 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'dash-charge-finisher',
-        label: '接入收割回路',
+        label: '补最后一下',
         gameplayLabel: '补最后一下',
-        gainLabel: '脉冲后更容易补掉残血',
+        gainLabel: '贴身后更容易补掉残血',
         costLabel: '普通射击更弱',
         routeId: 'dash',
         anomalyRole: 'finisher',
-        description: '不是多一层数值，是把收尾节奏拉起来。',
+        description: '把最后一下补顺。',
         effects: [
           {
             type: 'stats',

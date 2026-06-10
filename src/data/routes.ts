@@ -18,7 +18,7 @@ export const ROUTES: RouteDefinition[] = [
   {
     id: 'dash',
     name: '穿梭',
-    shortHint: '穿梭开始贴身了。',
+    shortHint: '穿梭开始贴近了。',
     matureHint: '穿梭已经能贴身收人了。',
     color: '#9cff97',
   },
