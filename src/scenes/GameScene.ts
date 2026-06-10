@@ -2765,6 +2765,17 @@ export class GameScene extends Phaser.Scene {
           const dist = enemy.radius + 10 + (1 - dashMarkRatio) * 4;
           this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 2);
         }
+        if ((enemy.dashPulseStacks ?? 0) >= 2) {
+          const dashStackRatio = Math.min(1, (enemy.dashPulseStacks ?? 0) / 3);
+          this.graphics.lineStyle(1.4, dashColor, 0.16 + dashStackRatio * 0.18);
+          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 2 + dashStackRatio * 5);
+        }
+        if (enemy.dashMarkedForBonus) {
+          const dashFoldReach = enemy.radius + 14;
+          this.graphics.lineStyle(1.7, 0xeafff8, 0.18 + dashMarkRatio * 0.18);
+          this.graphics.lineBetween(screen.x - dashFoldReach, screen.y - 2, screen.x - 6, screen.y - 2);
+          this.graphics.lineBetween(screen.x + 6, screen.y + 2, screen.x + dashFoldReach, screen.y + 2);
+        }
       }
 
       // 流派构筑第三轮：敌人命中瞬间特效（替代玩家周围常驻线条）

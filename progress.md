@@ -211,6 +211,12 @@ TODO
 2026-06-09
 - Current validation set is now split cleanly: `output/qa/stable-smoke-current` holds the QA regression shots, `output/qa/natural-crit-directed-1` holds the real crit-route run, and `output/qa/real-battle-current` holds the curated real boss / crit evidence shots.
 - The current read is that the sample is better, but crit payoff still relies on route choice more than a completely generic natural fight, so keep the change small and do not broaden into a balance pass.
+
+2026-06-10
+- Rechecked the current dash branch after the split pass and did not find a compile-level breakage.
+- Smoothed a few dash short-hint / stage strings so the wording stays consistent across route data, battle narration, and result copy.
+- Updated `doc/30_持续优化/当前阶段开发总表.md` so `P0-2：dash 主线补齐` now matches the active branch direction again.
+- `npm run build` still passes after the wording/doc收口.
 2026-04-04
 - Re-read docs, current selector/data/metrics, and used the latest user brief on top of `PROJECT_STATUS.md` + latest `DEV_ISSUE_LOG.md`.
 - This round stayed on `codex` and focused on content-pool ratio boundaries, hybrid/redirect reinforcement, and validation.

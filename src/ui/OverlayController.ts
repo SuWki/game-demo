@@ -1786,10 +1786,10 @@ export class OverlayController {
             ? `这一手先把${routeName}的贴身节奏拉起来了`
             : `这一手先把${routeName}打顺了`;
       case 'core':
-        return routeId === 'pierce'
-          ? `这一手让${routeName}穿前排更稳，后排也开始掉血`
-          : routeId === 'dash'
-            ? `这一手让${routeName}贴身后更容易补回打`
+          return routeId === 'pierce'
+            ? `这一手让${routeName}穿前排更稳，后排也开始掉血`
+            : routeId === 'dash'
+            ? `这一手让${routeName}贴住后还能回打`
             : `这一手让${routeName}连打更疼了`;
       case 'transform':
         return routeId === 'crit'
@@ -1855,6 +1855,22 @@ export class OverlayController {
       return '这局还差最后一手';
     }
 
+    if (result.routeId === 'dash') {
+      if (isLateTurn) {
+        return '异常来得偏晚，局面没来得及贴起来';
+      }
+      if (result.buildStage === 'matured') {
+        return hasFinisherSupport ? '已经能贴身收人了，但最后那波还是断了' : '已经能贴身收人了，但最后那波没扛住';
+      }
+      if (result.buildStage === 'committed') {
+        return hasFinisherSupport ? '已经能回打了，但最后那口气还没顶住' : '已经能回打了，但收人的脚还差一点';
+      }
+      if (result.buildStage === 'hinted') {
+        return '已经开始往贴身打法靠了，但还没真贴住';
+      }
+      return '这局还差最后一手';
+    }
+
     if (isLateTurn) {
       return '异常来得偏晚，局面没来得及推起来';
     }
@@ -1890,8 +1906,8 @@ export class OverlayController {
       },
       dash: {
         direction: '先贴上去',
-        core: '火力更重',
-        transform: '直接压上',
+        core: '回打更稳',
+        transform: '直接贴身',
         finisher: '补最后一下',
       },
     };
@@ -1929,7 +1945,7 @@ export class OverlayController {
       },
       dash: {
         unformed: '还没打顺',
-        hinted: '开始贴上去',
+        hinted: '开始贴身',
         committed: '贴身能回打',
         matured: '贴身就能收人',
       },

@@ -3011,7 +3011,7 @@ export class RunEngine {
         return activeRouteId === 'pierce'
           ? `这一手让${routeName}穿前排更稳，后排也开始掉血`
           : activeRouteId === 'dash'
-            ? `这一手让${routeName}贴身后更容易补回打`
+            ? `这一手让${routeName}贴住后还能回打`
             : `这一手让${routeName}连打更疼了`;
       case 'transform':
         return activeRouteId === 'crit'
@@ -3046,8 +3046,8 @@ export class RunEngine {
       },
       dash: {
         direction: '先贴上去',
-        core: '火力更重',
-        transform: '直接压上',
+        core: '回打更稳',
+        transform: '直接贴身',
         finisher: '补最后一下',
       },
     };
@@ -3129,11 +3129,11 @@ export class RunEngine {
       case 'dash':
         switch (buildStage) {
           case 'hinted':
-            return `${routeName}开始顺手了，先贴上去再拉开`;
+            return `${routeName}开始贴身了，先把节奏捡回来`;
           case 'committed':
-            return `${routeName}已经连起来了，换位后还能补一圈`;
+            return `${routeName}已经连起来了，换位后还能回打`;
           case 'matured':
-            return `${routeName}已经压住了，贴身一圈就能收人`;
+            return `${routeName}已经压住了，贴住就能收人`;
           default:
             return `${routeName}还没站稳`;
         }
@@ -3158,7 +3158,7 @@ export class RunEngine {
       },
       dash: {
         unformed: '没打顺',
-        hinted: '开始贴上去',
+        hinted: '开始贴身',
         committed: '贴身能回打',
         matured: '贴身就能收人',
       },
@@ -3201,6 +3201,28 @@ export class RunEngine {
       }
       if (buildStage === 'hinted') {
         return '已经往穿透上靠了，但前排还没打开。';
+      }
+      return '这把还缺一手硬的。';
+    }
+
+    if (routeId === 'dash') {
+      if (isLateTurn) {
+        return '异常来得偏晚，局面没来得及贴起来。';
+      }
+      if (buildStage === 'matured') {
+        if (replayProfile.anomalyFinisherHits === 0) {
+          return '已经能贴身收人了，但最后那波没扛住。';
+        }
+        return '已经能贴身收人了，但最后那波还是断了。';
+      }
+      if (buildStage === 'committed') {
+        if (replayProfile.anomalyFinisherHits === 0) {
+          return '已经能回打了，但收人的脚还差一点。';
+        }
+        return '已经能回打了，但最后那口气还没顶住。';
+      }
+      if (buildStage === 'hinted') {
+        return '已经开始往贴身打法靠了，但还没真贴住。';
       }
       return '这把还缺一手硬的。';
     }
@@ -3257,11 +3279,11 @@ export class RunEngine {
       case 'dash':
         switch (stage) {
           case 'starter':
-            return '穿梭开始贴上去了：先近身，再拉开';
+            return '穿梭开始贴身了：先近身，再回打';
           case 'bridge':
-            return '穿梭接顺了：贴身后马上能回打';
+            return '穿梭接顺了：贴住后还能回打';
           case 'payoff':
-            return '穿梭压住了：贴身一圈就能收人';
+            return '穿梭已经收顺了：贴身一圈就能收人';
           default:
             return '穿梭开始起势了';
         }
@@ -3285,6 +3307,25 @@ export class RunEngine {
     }
   }
 
+  private getAnomalyRoleCalloutForRoute(routeId: RouteId | undefined, role?: AnomalyRoleId): string {
+    if (routeId === 'dash') {
+      switch (role) {
+        case 'direction':
+          return '先贴上去';
+        case 'core':
+          return '回打更稳';
+        case 'transform':
+          return '直接贴身';
+        case 'finisher':
+          return '补最后一下';
+        default:
+          return '';
+      }
+    }
+
+    return this.getAnomalyRoleCallout(role);
+  }
+
   private getAnomalyRoleTurnVerb(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
@@ -3302,9 +3343,24 @@ export class RunEngine {
 
   private getAnomalyTurnMomentText(routeId: RouteId, option: EventOption): string {
     const routeName = ROUTE_NAME_MAP[routeId];
-    const verb = this.getAnomalyRoleTurnVerb(option.anomalyRole);
+    const verb = routeId === 'dash' ? this.getDashAnomalyTurnVerb(option.anomalyRole) : this.getAnomalyRoleTurnVerb(option.anomalyRole);
     const gameplayLabel = option.gameplayLabel?.trim();
     return gameplayLabel ? `${routeName}转折：${verb} · ${gameplayLabel}` : `${routeName}转折：${verb}`;
+  }
+
+  private getDashAnomalyTurnVerb(role?: AnomalyRoleId): string {
+    switch (role) {
+      case 'direction':
+        return '先贴上去';
+      case 'core':
+        return '回打更稳';
+      case 'transform':
+        return '直接贴身';
+      case 'finisher':
+        return '把最后一下补上';
+      default:
+        return '往前推一手';
+    }
   }
 
   private getEventSelectionTip(
@@ -3317,7 +3373,7 @@ export class RunEngine {
     }
 
     const routeName = routeId ? ROUTE_NAME_MAP[routeId] : '这把路子';
-    const role = this.getAnomalyRoleCallout(option.anomalyRole);
+    const role = this.getAnomalyRoleCalloutForRoute(routeId, option.anomalyRole);
     const roleSuffix = role ? `·${role}` : '';
 
     switch (eventDef.anomalyClass) {
@@ -3376,7 +3432,7 @@ export class RunEngine {
         case 'pierce':
           return '穿透已经打到后排了';
         case 'dash':
-          return '穿梭已经贴身打顺了';
+          return '穿梭已经贴身收人了';
         default:
           return '这套已经打顺了';
       }
