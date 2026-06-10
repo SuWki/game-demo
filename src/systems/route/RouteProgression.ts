@@ -1,4 +1,4 @@
-import type { RouteBuildStage, RouteId, RunState } from '../../game/types';
+import type { AudioCue, PhaseId, RouteBuildStage, RouteId, RunState } from '../../game/types';
 
 const ROUTE_COMMIT_THRESHOLD = 3;
 const ROUTE_MATURE_THRESHOLD = 5;
@@ -13,11 +13,11 @@ export interface RouteAdvanceDeps {
   setFirstRouteHintRecorded: (value: boolean) => void;
   markRouteHint: (routeId: RouteId) => void;
   markFirstRouteHint: (routeId: RouteId) => void;
-  markRouteCommitted: (routeId: RouteId, meta: { phase: string; pickId: string }) => void;
+  markRouteCommitted: (routeId: RouteId, meta: { phase: PhaseId; pickId: string }) => void;
   markRouteMatured: (routeId: RouteId) => void;
   queueRouteMoment: (routeId: RouteId, text: string) => void;
   enqueueTip: (text: string) => void;
-  enqueueAudio: (cue: string) => void;
+  enqueueAudio: (cue: AudioCue) => void;
   getRouteStageMomentText: (routeId: RouteId, stage: 'starter' | 'bridge' | 'payoff') => string;
   getRouteStageNarrative: (routeId: RouteId, stage: RouteBuildStage) => string;
   getRouteShortHint: (routeId: RouteId) => string;

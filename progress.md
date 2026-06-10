@@ -1836,3 +1836,7 @@ TODO
 2026-06-09
 - 本轮继续把真实流程往前推了一小步：`RunEngine.ts` 里把 crit 的焦点保持和连击承接再托了一点，`boss-lockdown` 只做了更早一点的签名触发和更稳一点的停留。
 - 验证分两条线跑：一条是手动 QA smoke 截 `crit / pierce / result`，一条是 real-battle-current 和 boss-directed-v2 的现成实战图；当前结论是 real crit / real boss 证据都还成立，但自然全流程 boss 仍偏定向样本。
+2026-06-10
+- 这轮把路由推进逻辑的分拆收口了一次：`src/systems/route/RouteProgression.ts` 作为路由阶段推进与阶段文案的单一源头，`RunEngine.ts` 只保留接线；`RouteManager` 也只保留被动计时更新，不再对外暴露 passives getters。
+- 删除了空壳的 `src/systems/progression/RouteProgression.ts`，避免同名文件继续让拆分边界看起来像重复实现。
+- 验证结果：`npm run build` 通过，stable smoke 仍稳定覆盖首页、升级页、crit / pierce 异常与战斗段落、Boss signature、结果页详情，`failed404Urls: []`，`consoleErrors: []`，`consoleWarns: []`。

@@ -95,9 +95,6 @@ import { createRunState } from './state/RunStateFactory';
 import * as PressureCurve from './spawn/PressureCurve';
 import * as EnemySpawner from './spawn/EnemySpawner';
 import * as SpawnPatternEngine from './spawn/SpawnPatternEngine';
-import { CritRoutePassive } from './route/CritRoutePassive';
-import { PierceRoutePassive } from './route/PierceRoutePassive';
-import { DashRoutePassive } from './route/DashRoutePassive';
 import * as BulletSystem from './combat/BulletSystem';
 import * as CombatResolver from './combat/CombatResolver';
 import * as DashSystem from './combat/DashSystem';
@@ -133,8 +130,6 @@ interface ReplayProfile {
 
 const CENTER_X = ARENA_WIDTH / 2;
 const CENTER_Y = ARENA_HEIGHT / 2;
-const ROUTE_COMMIT_THRESHOLD = 3;
-const ROUTE_MATURE_THRESHOLD = 5;
 const BOSS_SAFE_WINDOW_REACTION_SEC = 0.82;
 const BOSS_SAFE_WINDOW_POCKET_REACTION_SEC = 0.64;
 const BASE_PLAYER_MOVE_SPEED = createBaseStats().moveSpeed;
@@ -142,16 +137,7 @@ const BOSS_SAFE_WINDOW_EDGE_MARGIN_X = 12;
 const BOSS_SAFE_WINDOW_EDGE_MARGIN_Y = 10;
 
 function getBuildStageLabel(buildStage: RouteBuildStage): string {
-  switch (buildStage) {
-    case 'hinted':
-      return '已出倾向';
-    case 'committed':
-      return '开始站稳';
-    case 'matured':
-      return '已经打顺';
-    default:
-      return '未站稳';
-  }
+  return RouteProgression.getBuildStageLabel(buildStage);
 }
 
 function getEndingLabel(endingKind: RunEndingKind): string {
@@ -170,9 +156,6 @@ export class RunEngine {
 
   // Subsystem instances
   private readonly routeManager = new RouteManager();
-  private readonly critRoutePassive = new CritRoutePassive();
-  private readonly pierceRoutePassive = new PierceRoutePassive();
-  private readonly dashRoutePassive = new DashRoutePassive();
 
   private readonly announcements: EngineAnnouncement[] = [];
 
@@ -712,21 +695,7 @@ export class RunEngine {
       battle.monitorKillPickupContinueCooldownSec - dt,
     );
 
-    // Crit路线独特被动计时器衰减
-    this.routeManager.getCritPassive().updatePassiveTimers(battle, simulationDt);
-
-    // Pierce路线独特被动计时器衰减
-    battle.pierceChainDecaySec = Math.max(0, battle.pierceChainDecaySec - dt);
-    if (battle.pierceChainDecaySec === 0) {
-      battle.pierceChainStacks = 0;
-    }
-
-    // Dash路线独特被动计时器衰减
-    battle.dashMomentumDecaySec = Math.max(0, battle.dashMomentumDecaySec - dt);
-    if (battle.dashMomentumDecaySec === 0) {
-      battle.dashMomentumStacks = 0;
-    }
-    battle.dashCounterWindowSec = Math.max(0, battle.dashCounterWindowSec - dt);
+    this.routeManager.updatePassiveTimers(battle, simulationDt);
 
     if (battle.pickupFlowSec <= 0) {
       battle.pickupFlowCount = 0;
@@ -947,16 +916,7 @@ export class RunEngine {
   }
 
   public getRouteBuildStage(routeId: RouteId): RouteBuildStage {
-    if (this.state.maturedRoute === routeId) {
-      return 'matured';
-    }
-    if (this.state.committedRoute === routeId) {
-      return 'committed';
-    }
-    if (this.state.routeCounts[routeId] > 0) {
-      return 'hinted';
-    }
-    return 'unformed';
+    return RouteProgression.getRouteBuildStage(this.state, routeId);
   }
 
   private rollUpgradeChoices(source: UpgradeSource) {
@@ -3102,69 +3062,11 @@ export class RunEngine {
   }
 
   private getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildStage): string {
-    const routeName = ROUTE_NAME_MAP[routeId];
-    switch (routeId) {
-      case 'crit':
-        switch (buildStage) {
-          case 'hinted':
-            return `${routeName}开始顺手了，先把破绽挂稳`;
-          case 'committed':
-            return `${routeName}已经连起来了，连着打会更疼`;
-          case 'matured':
-            return `${routeName}已经压住了，连打时会一串串炸开`;
-          default:
-            return `${routeName}还没站稳`;
-        }
-      case 'pierce':
-        switch (buildStage) {
-          case 'hinted':
-            return `${routeName}开始顺手了，子弹能先穿开前排`;
-          case 'committed':
-            return `${routeName}已经连起来了，前排一散后排就露出来`;
-          case 'matured':
-            return `${routeName}已经压住了，子弹会直接带到后排`;
-          default:
-            return `${routeName}还没站稳`;
-        }
-      case 'dash':
-        switch (buildStage) {
-          case 'hinted':
-            return `${routeName}开始贴身了，先把节奏捡回来`;
-          case 'committed':
-            return `${routeName}已经连起来了，换位后还能回打`;
-          case 'matured':
-            return `${routeName}已经压住了，贴住就能收人`;
-          default:
-            return `${routeName}还没站稳`;
-        }
-      default:
-        return `${routeName}已经打顺了`;
-    }
+    return RouteProgression.getRouteStageNarrative(routeId, buildStage);
   }
 
   private getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
-    const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
-      crit: {
-        unformed: '没打顺',
-        hinted: '开始连上',
-        committed: '火力压住了',
-        matured: '一串串炸开',
-      },
-      pierce: {
-        unformed: '没打顺',
-        hinted: '前排开始松动',
-        committed: '火力压到后排',
-        matured: '一路穿过去了',
-      },
-      dash: {
-        unformed: '没打顺',
-        hinted: '开始贴身',
-        committed: '贴身能回打',
-        matured: '贴身就能收人',
-      },
-    };
-
-    return labelMap[routeId][buildStage];
+    return RouteProgression.getRouteStageLabel(routeId, buildStage);
   }
 
   private getRouteFailureReason(
@@ -3253,43 +3155,7 @@ export class RunEngine {
   }
 
   private getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'bridge' | 'payoff'): string {
-    switch (routeId) {
-      case 'crit':
-        switch (stage) {
-          case 'starter':
-            return '暴击开始连上了：破绽会越挂越稳';
-          case 'bridge':
-            return '暴击改打法了：先盯厚血目标压，破绽会溅到旁边';
-          case 'payoff':
-            return '暴击打疯了：连打会一串串炸开';
-          default:
-            return '暴击开始起势了';
-        }
-      case 'pierce':
-        switch (stage) {
-          case 'starter':
-            return '穿透开始找上线了：前排会先被打散';
-          case 'bridge':
-            return '穿透接起来了：前排一散，后排就会掉血';
-          case 'payoff':
-            return '穿透打穿了：子弹会直接带到后排';
-          default:
-            return '穿透开始起势了';
-        }
-      case 'dash':
-        switch (stage) {
-          case 'starter':
-            return '穿梭开始贴身了：先近身，再回打';
-          case 'bridge':
-            return '穿梭接顺了：贴住后还能回打';
-          case 'payoff':
-            return '穿梭已经收顺了：贴身一圈就能收人';
-          default:
-            return '穿梭开始起势了';
-        }
-      default:
-        return '这套开始打顺了';
-    }
+    return RouteProgression.getRouteStageMomentText(routeId, stage);
   }
 
   private getAnomalyRoleCallout(role?: AnomalyRoleId): string {
@@ -3673,48 +3539,29 @@ export class RunEngine {
   }
 
   private advanceRoute(routeId: RouteId, meta?: RouteAdvanceMeta): void {
-    this.state.routeCounts[routeId] += 1;
-    const count = this.state.routeCounts[routeId];
-    if (count === 1) {
-      this.services.metrics.markRouteHint(routeId);
-      this.queueRouteMoment(routeId, this.getRouteStageMomentText(routeId, 'starter'));
-    }
-
-    if (!this.firstRouteHintRecorded) {
-      this.firstRouteHintRecorded = true;
-      this.services.metrics.markFirstRouteHint(routeId);
-      this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.shortHint ?? '');
-    }
-
-    const otherCounts = Object.entries(this.state.routeCounts)
-      .filter(([candidateRouteId]) => candidateRouteId !== routeId)
-      .map(([, value]) => value);
-
-    if (
-      !this.state.committedRoute &&
-      count >= ROUTE_COMMIT_THRESHOLD &&
-      otherCounts.every((value) => count >= value + 1)
-    ) {
-      this.state.committedRoute = routeId;
-      this.services.metrics.markRouteCommitted(routeId, {
-        phase: this.state.phase,
-        pickId: meta?.pickId ?? `route:${routeId}`,
-      });
-      this.queueRouteMoment(routeId, this.getRouteStageMomentText(routeId, 'bridge'));
-      this.enqueueTip(this.getRouteStageNarrative(routeId, 'committed'));
-    }
-
-    if (
-      !this.state.maturedRoute &&
-      count >= ROUTE_MATURE_THRESHOLD &&
-      otherCounts.every((value) => count >= value + 1)
-    ) {
-      this.state.maturedRoute = routeId;
-      this.services.metrics.markRouteMatured(routeId);
-      this.enqueueAudio('routeMatured');
-      this.queueRouteMoment(routeId, this.getRouteStageMomentText(routeId, 'payoff'));
-      this.enqueueTip(ROUTES.find((route) => route.id === routeId)?.matureHint ?? '');
-    }
+    RouteProgression.advanceRoute(
+      {
+        state: this.state,
+        firstRouteHintRecorded: this.firstRouteHintRecorded,
+        setFirstRouteHintRecorded: (value) => {
+          this.firstRouteHintRecorded = value;
+        },
+        markRouteHint: (hintRouteId) => this.services.metrics.markRouteHint(hintRouteId),
+        markFirstRouteHint: (hintRouteId) => this.services.metrics.markFirstRouteHint(hintRouteId),
+        markRouteCommitted: (committedRouteId, committedMeta) =>
+          this.services.metrics.markRouteCommitted(committedRouteId, committedMeta),
+        markRouteMatured: (maturedRouteId) => this.services.metrics.markRouteMatured(maturedRouteId),
+        queueRouteMoment: (momentRouteId, text) => this.queueRouteMoment(momentRouteId, text),
+        enqueueTip: (text) => this.enqueueTip(text),
+        enqueueAudio: (cue) => this.enqueueAudio(cue),
+        getRouteStageMomentText: (momentRouteId, stage) => this.getRouteStageMomentText(momentRouteId, stage),
+        getRouteStageNarrative: (narrativeRouteId, stage) => this.getRouteStageNarrative(narrativeRouteId, stage),
+        getRouteShortHint: (hintRouteId) => ROUTES.find((route) => route.id === hintRouteId)?.shortHint ?? '',
+        getRouteMatureHint: (matureRouteId) => ROUTES.find((route) => route.id === matureRouteId)?.matureHint ?? '',
+      },
+      routeId,
+      meta,
+    );
   }
 
   private activateRoutePerkFromTags(tags?: string[]): void {

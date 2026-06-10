@@ -1,4 +1,4 @@
-import type { BattleState, RunState } from '../../game/types';
+import type { BattleState } from '../../game/types';
 import { CritRoutePassive } from './CritRoutePassive';
 import { PierceRoutePassive } from './PierceRoutePassive';
 import { DashRoutePassive } from './DashRoutePassive';
@@ -18,28 +18,5 @@ export class RouteManager {
     this.critPassive.updatePassiveTimers(battle, dt);
     this.piercePassive.updatePassiveTimers(battle, dt);
     this.dashPassive.updatePassiveTimers(battle, dt);
-  }
-
-  getCritPassive(): CritRoutePassive {
-    return this.critPassive;
-  }
-
-  getPiercePassive(): PierceRoutePassive {
-    return this.piercePassive;
-  }
-
-  getDashPassive(): DashRoutePassive {
-    return this.dashPassive;
-  }
-
-  isActive(routeId: 'crit' | 'pierce' | 'dash', run: RunState): boolean {
-    switch (routeId) {
-      case 'crit':
-        return this.critPassive.isActive(run);
-      case 'pierce':
-        return this.piercePassive.isActive(run);
-      case 'dash':
-        return this.dashPassive.isActive(run);
-    }
   }
 }
