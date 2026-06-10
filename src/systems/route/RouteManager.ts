@@ -1,4 +1,4 @@
-import type { BattleState } from '../../game/types';
+import type { BattleState, RouteBuildStage } from '../../game/types';
 import { CritRoutePassive } from './CritRoutePassive';
 import { PierceRoutePassive } from './PierceRoutePassive';
 import { DashRoutePassive } from './DashRoutePassive';
@@ -18,5 +18,17 @@ export class RouteManager {
     this.critPassive.updatePassiveTimers(battle, dt);
     this.piercePassive.updatePassiveTimers(battle, dt);
     this.dashPassive.updatePassiveTimers(battle, dt);
+  }
+
+  applyDashPassiveOnDash(battle: BattleState, dashStage: RouteBuildStage): void {
+    this.dashPassive.applyDashPassiveOnDash(battle, dashStage);
+  }
+
+  applyDashPassiveOnHit(
+    battle: BattleState,
+    enemy: BattleState['enemies'][number],
+    dashStage: RouteBuildStage,
+  ): void {
+    this.dashPassive.applyDashPassiveOnHit(battle, enemy, dashStage);
   }
 }

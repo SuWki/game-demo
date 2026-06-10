@@ -1097,7 +1097,7 @@ export class GameScene extends Phaser.Scene {
 
       if (liveFocusRoute === 'dash') {
         if (battle.dashDriveSec > 0) {
-          return '穿梭回切窗口还在：贴身就能反打。';
+          return '穿梭回打窗口还在：贴身就能反打。';
         }
         if (routeStage === 'matured') {
           return '穿梭已经打顺了：贴身一圈就能收人。';
@@ -1106,7 +1106,7 @@ export class GameScene extends Phaser.Scene {
           return '穿梭已经连起来了：先把换位和回打接上。';
         }
         if (routeStage === 'hinted') {
-          return '穿梭开始冒头：先找回切拍子。';
+          return '穿梭开始贴近：先找回打拍子。';
         }
       }
     }
@@ -2370,6 +2370,25 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.renderEliteEscortField(battle, camera);
+    if (battle.dashAfterimages.length > 0) {
+      const dashAfterimages = battle.dashAfterimages.slice(-6);
+      for (const afterimage of dashAfterimages) {
+        const dashAfterimageRatio = Phaser.Math.Clamp(afterimage.lifeSec / 0.8, 0, 1);
+        const afterimageScreen = this.worldToScreen(camera, afterimage.x, afterimage.y);
+        const afterimageReach = 10 + Math.min(20, afterimage.damage * 0.9) + (1 - dashAfterimageRatio) * 14;
+        this.graphics.lineStyle(1.6, 0x7aff7a, 0.12 + dashAfterimageRatio * 0.32);
+        this.graphics.strokeCircle(afterimageScreen.x, afterimageScreen.y, afterimageReach);
+        this.graphics.lineStyle(1.1, 0xeafff8, 0.08 + dashAfterimageRatio * 0.2);
+        this.graphics.lineBetween(
+          afterimageScreen.x - afterimageReach * 0.72,
+          afterimageScreen.y,
+          afterimageScreen.x + afterimageReach * 0.72,
+          afterimageScreen.y,
+        );
+        this.graphics.fillStyle(0xeafff8, 0.06 + dashAfterimageRatio * 0.12);
+        this.graphics.fillCircle(afterimageScreen.x, afterimageScreen.y, 1.8 + dashAfterimageRatio);
+      }
+    }
     const pickupLeadRatio =
       battle.pickupLeadEnemyId === null
         ? 0

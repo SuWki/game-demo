@@ -3901,6 +3901,9 @@ export class RunEngine {
       getDashPulseDamage: (dashCharge, buildStage) => this.getDashPulseDamage(dashCharge, buildStage),
       getDashCooldownAfterPulse: (buildStage) => this.getDashCooldownAfterPulse(buildStage),
       getDashDriveDuration: (dashCharge) => this.getDashDriveDuration(dashCharge),
+      applyDashPassiveOnDash: (dashBattle, dashStage) => this.routeManager.applyDashPassiveOnDash(dashBattle, dashStage),
+      applyDashPassiveOnHit: (dashBattle, dashEnemy, dashStage) =>
+        this.routeManager.applyDashPassiveOnHit(dashBattle, dashEnemy, dashStage),
       createCombatPulse: (pulseBattle, config) => this.createCombatPulse(pulseBattle, config),
       kickBattleShake: (shakeBattle, durationSec, strength, frequency) =>
         this.kickBattleShake(shakeBattle, durationSec, strength, frequency),
@@ -3994,7 +3997,7 @@ export class RunEngine {
         critMarkStacks: 0,
         pierceMarkStacks: 0,
         dashPulseStacks: 0,
-        // 第四轮：裂纹扩散和回切窗口状态初始化
+        // 第四轮：裂纹扩散和回打窗口状态初始化
         pierceEchoDamageTaken: false,
         dashCounterWindowSec: 0,
         dashMarkedForBonus: false,
@@ -4968,7 +4971,7 @@ export class RunEngine {
       critMarkStacks: 0,
       pierceMarkStacks: 0,
       dashPulseStacks: 0,
-      // 第四轮：裂纹扩散和回切窗口状态初始化
+      // 第四轮：裂纹扩散和回打窗口状态初始化
       pierceEchoDamageTaken: false,
       dashCounterWindowSec: 0,
       dashMarkedForBonus: false,
@@ -5379,7 +5382,7 @@ export class RunEngine {
           damage *= enemy.guardDamageMultiplier;
         }
 
-        // dash-zero-window: 回切窗口内命中被 dash 标记敌人获得额外伤害
+        // dash-zero-window: 回打窗口内命中被 dash 标记敌人获得额外伤害
         if (battle.dashZeroWindowReady && battle.dashCounterWindowSec > 0 && enemy.dashMarkSec > 0) {
           damage *= 1.25; // 25% 额外伤害
           enemy.routeHitFlashSec = 0.18;
@@ -5825,7 +5828,7 @@ export class RunEngine {
           }
         }
 
-        // 流派构筑第三轮：回切反打窗口命中收益
+        // 流派构筑第三轮：回打反打窗口命中收益
         if (battle.dashCounterWindowSec > 0 && enemy.dashMarkSec > 0) {
           const counterBonus = 1.12;
           enemy.hp -= bullet.damage * (counterBonus - 1);

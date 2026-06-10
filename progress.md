@@ -1844,3 +1844,8 @@ TODO
 - 继续收 `dash` 主线补齐：`RouteProgression.ts`、`DashSystem.ts`、`upgrades.ts`、`events.ts`、`OverlayController.ts` 的阶段口径已经统一到 `贴近 / 回打 / 收人`，旧的 `贴上去 / 回切 / 脉冲命中` 说法已从源头模块里清掉。
 - `RunEngine.ts` 这轮只留了必要接线和 QA smoke 入口同步，`dash` 相关的 battle / anomaly / result 样板也已经能稳定跑通。
 - 当前判断还是 `dash` 进行中，没有切到下一项 P0；下一步重点继续看真实战斗里的 starter / bridge / payoff 是否已经立住。
+2026-06-10
+- 这轮继续把 `dash` 往真实战斗里推了一刀：`DashRoutePassive` 现在会收束连续窗口和残影寿命，`DashSystem` 会把连段后的残影和命中结果写到真实战场里，`GameScene` 也把这些残影画出来了。
+- 源头模块里把 `dash` 的可见口径继续收成 `贴近 / 回打 / 收人`，连注释里的旧回切说法也顺手清掉了，避免拆分后又冒出两套话术。
+- 现有验证里，`stable smoke` 仍然通过，真实战斗 / 自然 fullrun 也已经能看到 `dash` 的 committed 结果和贴身回打样本，不再只靠 smoke 样板成立。
+- 当前下一步还是继续看 `dash` 的 starter / bridge / payoff 能不能再往前推，重点盯真实战斗里的 finisher 还差多少。

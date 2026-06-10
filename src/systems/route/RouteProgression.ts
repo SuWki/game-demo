@@ -188,7 +188,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'dash':
       switch (stage) {
         case 'starter':
-          return '穿梭开始贴近了：先靠近，再回打';
+          return '穿梭开始贴近了：先贴近，再回打';
         case 'bridge':
           return '穿梭接起来了：贴住后还能补一轮';
         case 'payoff':

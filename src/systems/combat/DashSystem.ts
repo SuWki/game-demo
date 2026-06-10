@@ -7,6 +7,8 @@ export interface DashSystemDeps {
   getDashPulseDamage: (dashCharge: number, buildStage: RouteBuildStage) => number;
   getDashCooldownAfterPulse: (buildStage: RouteBuildStage) => number;
   getDashDriveDuration: (dashCharge: number) => number;
+  applyDashPassiveOnDash: (battle: BattleState, dashStage: RouteBuildStage) => void;
+  applyDashPassiveOnHit: (battle: BattleState, enemy: BattleState['enemies'][number], dashStage: RouteBuildStage) => void;
   createCombatPulse: (battle: BattleState, config: { x: number; y: number; radius: number; lifeSec: number; color: number; secondaryColor?: number; fillAlpha?: number; strokeAlpha?: number; strokeWidth?: number; growthPerSec?: number; innerRadiusRatio?: number; spokeCount?: number; spokeLength?: number; angle?: number; spinRate?: number }) => void;
   kickBattleShake: (battle: BattleState, durationSec: number, strength: number, frequency: number) => void;
   enqueueAudio: (cue: string) => void;
@@ -16,6 +18,13 @@ export interface DashSystemDeps {
   registerEnemyImpact?: (battle: BattleState, enemy: BattleState['enemies'][number], sourceX: number, sourceY: number, options?: { flashSec?: number; kick?: number; pulseRadius?: number; pulseColor?: number; secondaryColor?: number }) => void;
   state: { stats: { dashPulseDamage: number; dashInvulnerability: number }; routeCounts: { dash: number }; activeRoutePerks?: Record<string, boolean> };
   routeMomentShown: Record<string, boolean>;
+}
+
+function pushDashAfterimage(battle: BattleState, afterimage: { x: number; y: number; lifeSec: number; damage: number }): void {
+  battle.dashAfterimages.push(afterimage);
+  if (battle.dashAfterimages.length > 8) {
+    battle.dashAfterimages.shift();
+  }
 }
 
 export function updateDashCooldown(battle: BattleState, dt: number): void {
@@ -34,16 +43,40 @@ export function tryTriggerDash(
   const dashCharge = battle.dashCharge;
   const pulseRadius = deps.getDashPulseRadius(dashCharge, dashStage);
   const pulseDamage = deps.getDashPulseDamage(dashCharge, dashStage);
+  const dashChainCount = battle.dashConsecutiveWindowSec > 0 ? Math.min(3, battle.dashConsecutiveCount + 1) : 1;
+  const chainRadiusBonus =
+    dashChainCount >= 3
+      ? dashStage === 'matured'
+        ? 16
+        : 14
+      : dashChainCount === 2
+        ? dashStage === 'matured'
+          ? 11
+          : 9
+        : 0;
+  const chainDamageBonus =
+    dashChainCount >= 3
+      ? dashStage === 'matured'
+        ? 6
+        : 5
+      : dashChainCount === 2
+        ? dashStage === 'matured'
+          ? 3
+          : 2
+        : 0;
   let dashPulseHits = 0;
+  let dashHitCenterX = 0;
+  let dashHitCenterY = 0;
 
   battle.dashCooldownSec = deps.getDashCooldownAfterPulse(dashStage);
   battle.invulnerableSec = deps.state.stats.dashInvulnerability + (dashStage === 'matured' ? 0.12 : 0);
   battle.dashDriveSec = Math.max(battle.dashDriveSec, deps.getDashDriveDuration(dashCharge));
+  deps.applyDashPassiveOnDash(battle, dashStage);
 
   deps.createCombatPulse(battle, {
     x: battle.playerX,
     y: battle.playerY,
-    radius: Math.max(34, pulseRadius * 0.52),
+    radius: Math.max(34, pulseRadius * 0.52 + chainRadiusBonus * 0.18),
     lifeSec: 0.32,
     color: 0x8dffe3,
     secondaryColor: 0xf4fffd,
@@ -75,8 +108,10 @@ export function tryTriggerDash(
   for (const enemy of battle.enemies) {
     const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
     if (distance <= pulseRadius) {
-      enemy.hp -= pulseDamage;
+      enemy.hp -= pulseDamage + chainDamageBonus;
       dashPulseHits += 1;
+      dashHitCenterX += enemy.x;
+      dashHitCenterY += enemy.y;
       enemy.lastHitWasCrit = false;
       enemy.lastHitWasPierce = false;
 
@@ -135,6 +170,7 @@ export function tryTriggerDash(
         });
       }
 
+      deps.applyDashPassiveOnHit(battle, enemy, dashStage);
       if (deps.registerEnemyImpact) {
         deps.registerEnemyImpact(battle, enemy, battle.playerX, battle.playerY, {
           flashSec: 0.18,
@@ -156,6 +192,22 @@ export function tryTriggerDash(
 
   const dashMomentStage = dashStage === 'matured' ? 'payoff' : dashStage === 'committed' ? 'bridge' : 'starter';
   if (dashPulseHits > 0) {
+    const hitCenterX = dashHitCenterX / dashPulseHits;
+    const hitCenterY = dashHitCenterY / dashPulseHits;
+    pushDashAfterimage(battle, {
+      x: hitCenterX,
+      y: hitCenterY,
+      lifeSec: dashChainCount >= 3 ? 0.8 : dashChainCount === 2 ? 0.64 : 0.48,
+      damage: pulseDamage + chainDamageBonus + dashChainCount,
+    });
+    if (dashChainCount >= 2) {
+      pushDashAfterimage(battle, {
+        x: hitCenterX + 10,
+        y: hitCenterY - 8,
+        lifeSec: dashChainCount >= 3 ? 0.68 : 0.52,
+        damage: pulseDamage + chainDamageBonus + 1,
+      });
+    }
     deps.enqueueAudio('dashPulse');
     deps.enqueueTip(`贴身一圈打到 ${dashPulseHits} 个敌人`);
   } else {

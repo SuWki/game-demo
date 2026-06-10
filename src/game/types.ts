@@ -419,8 +419,8 @@ export interface EnemyState {
   pierceRiftbloomActive?: boolean; // pierce-riftbloom/prism: 裂纹扩散范围增加
   // 裂纹扩散相关状态
   pierceEchoDamageTaken?: boolean; // 已受到 floodgate 追加伤害
-  // Dash 回切窗口状态
-  dashCounterWindowSec?: number; // 回切窗口持续时间
+  // Dash 回打窗口状态
+  dashCounterWindowSec?: number; // 回打窗口持续时间
   dashMarkedForBonus?: boolean; // 是否被标记为可接受窗口额外伤害
   slowSec?: number; // 减速效果持续时间（Dash冲击波）
 }
