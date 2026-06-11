@@ -129,25 +129,25 @@ function getSelectionWeight(
 
   const phaseTagBonusMap: Record<PhaseId, Array<{ tag: string; bonus: number }>> = {
     opening: [
-      { tag: 'opening', bonus: 0.48 },
-      { tag: 'starter', bonus: 0.32 },
+      { tag: 'opening', bonus: 0.64 },
+      { tag: 'starter', bonus: 0.44 },
     ],
     mid: [
-      { tag: 'mid', bonus: 0.55 },
-      { tag: 'bridge', bonus: 0.38 },
+      { tag: 'mid', bonus: 0.72 },
+      { tag: 'bridge', bonus: 0.52 },
     ],
     late: [
-      { tag: 'late', bonus: 0.58 },
-      { tag: 'payoff', bonus: 0.42 },
+      { tag: 'late', bonus: 0.76 },
+      { tag: 'payoff', bonus: 0.56 },
     ],
     finalPrep: [
-      { tag: 'late', bonus: 0.44 },
-      { tag: 'payoff', bonus: 0.34 },
-      { tag: 'finisher', bonus: 0.24 },
+      { tag: 'late', bonus: 0.52 },
+      { tag: 'payoff', bonus: 0.44 },
+      { tag: 'finisher', bonus: 0.3 },
     ],
     finalBattle: [
-      { tag: 'payoff', bonus: 0.32 },
-      { tag: 'finisher', bonus: 0.26 },
+      { tag: 'payoff', bonus: 0.38 },
+      { tag: 'finisher', bonus: 0.3 },
     ],
     ended: [],
   };
@@ -164,9 +164,9 @@ function getSelectionWeight(
     const rarePhaseMultiplier: Record<PhaseId, number> = {
       opening: 0.02,
       mid: 0.38,
-      late: 0.48,
-      finalPrep: 0.92,
-      finalBattle: 1.08,
+      late: 0.54,
+      finalPrep: 0.98,
+      finalBattle: 1.12,
       ended: 0,
     };
 
@@ -190,18 +190,18 @@ function getAnomalyClassMultiplier(anomalyClass: AnomalyClassId | undefined, con
     case 'distortion':
       return {
         opening: 0.84,
-        mid: 1.22,
-        late: 1.34,
-        finalPrep: 1.14,
+        mid: 1.28,
+        late: 1.42,
+        finalPrep: 1.18,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
     case 'hybrid':
       return {
         opening: 0.74,
-        mid: 1.24,
-        late: 1.32,
-        finalPrep: 1.08,
+        mid: 1.3,
+        late: 1.4,
+        finalPrep: 1.12,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
@@ -209,18 +209,18 @@ function getAnomalyClassMultiplier(anomalyClass: AnomalyClassId | undefined, con
       return {
         opening: 0,
         mid: 0.46,
-        late: 1.66,
-        finalPrep: 1.78,
+        late: 1.84,
+        finalPrep: 1.92,
         finalBattle: 0,
         ended: 0,
       }[context.phase];
     case 'routeWindow':
     default:
       return {
-        opening: 0.94,
-        mid: 0.78,
-        late: 0.58,
-        finalPrep: 0.42,
+        opening: 0.84,
+        mid: 0.96,
+        late: 0.66,
+        finalPrep: 0.5,
         finalBattle: 0,
         ended: 0,
       }[context.phase];

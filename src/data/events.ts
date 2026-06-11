@@ -285,10 +285,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '起手校线',
     description: '先把这把的方向拧顺',
     selection: {
-      baseWeight: 3.2,
+      baseWeight: 3.56,
       phaseBonuses: {
-        opening: 1.35,
-        mid: 0.3,
+        opening: 1.52,
+        mid: 0.42,
       },
       noDominantRouteBonus: 1.4,
     },
@@ -456,10 +456,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     description: '中段开始决定是接顺还是换手',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 1.08,
+      baseWeight: 1.24,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.8,
+        mid: 2,
         late: 0.7,
       },
       hintedRouteBonus: 0.6,
@@ -792,11 +792,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     description: '后段会把前面拿的东西重新考一遍',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 1.1,
+      baseWeight: 1.28,
       minRound: 3,
       phaseBonuses: {
-        late: 1.7,
-        finalPrep: 0.9,
+        late: 1.92,
+        finalPrep: 1.06,
       },
       noDominantRouteBonus: 0.2,
     },
@@ -851,10 +851,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentTier: 'rare',
     description: '一次性资源，转火力或防护',
     selection: {
-      baseWeight: 1.28,
+      baseWeight: 1.42,
       minRound: 3,
       phaseBonuses: {
-        late: 2,
+        late: 2.18,
         finalPrep: 0.7,
       },
       noDominantRouteBonus: 0.4,

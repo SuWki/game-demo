@@ -1308,11 +1308,11 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer', 'opening', 'starter'],
     selection: {
-      baseWeight: 2.72,
+      baseWeight: 2.96,
       maxRound: 2,
       phaseBonuses: {
-        opening: 1.62,
-        mid: 0.26,
+        opening: 1.84,
+        mid: 0.34,
       },
       noDominantRouteBonus: 1.5,
     },
@@ -1335,12 +1335,12 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'mid'],
     selection: {
-      baseWeight: 2.38,
+      baseWeight: 2.62,
       minRound: 2,
       maxRound: 4,
       phaseBonuses: {
-        mid: 1.48,
-        late: 0.32,
+        mid: 1.72,
+        late: 0.45,
       },
       noDominantRouteBonus: 1,
     },
@@ -1364,14 +1364,14 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'payoff', 'late', 'rare'],
     selection: {
-      baseWeight: 1.22,
+      baseWeight: 1.4,
       minRound: 3,
       phaseBonuses: {
-        late: 1.55,
-        finalPrep: 2.06,
-        finalBattle: 1.08,
+        late: 1.78,
+        finalPrep: 2.28,
+        finalBattle: 1.22,
       },
-      finalPrepBonus: 2.1,
+      finalPrepBonus: 2.34,
     },
     effects: [
       {

@@ -1861,3 +1861,9 @@ TODO
 - `npm run build` 通过，`npm run qa:stable-smoke` 也继续通过，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`。
 - 真实对局里已经能命中 `针线压场` 这类新节点，但自然 fullrun 目前还不是稳定命中新内容，说明内容层差异已经进了真流程，但出现率还可以再抬。
 - 下一步建议继续推 `P0-3：内容层完整度`，优先把新节点在自然流程里的命中率再提高一点，再继续补 `测试与验证手册.md` 的流程口径。
+
+### 2026-06-11
+- 这轮继续把内容层往自然流程里推了一档：`contentSelectors` 的阶段偏置和 `nodes / events / upgrades` 的阶段权重又收紧了一次。
+- `npm run export:data -> npm run build -> npm run qa:stable-smoke -> natural fullrun` 现在已经写进固定验证顺序，避免只看 `src/` 变更。
+- 稳定 smoke 仍然干净；单局自然 fullrun 已经能自然跑到 `round-1-event`、`round-2-battle-crit-pressure`、`round-3-battle-dash-soft-closeout`，并给出真实失败局结果页。
+- 这一轮说明内容层已经不是只在 QA 样板里成立，但自然 fullrun 还没有到“每局都稳定覆盖多条新内容”的程度，下一步继续盯命中率和阶段分化。

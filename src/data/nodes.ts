@@ -65,7 +65,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.12,
         selection: {
-          baseWeight: 5,
+          baseWeight: 4.72,
           repeatTypeMultiplier: 0.72,
           battleCatchupBonus: 1.4,
         },
@@ -83,13 +83,13 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.12,
         selection: {
-          baseWeight: 3.2,
+          baseWeight: 3.74,
           repeatTypeMultiplier: 0.72,
           routeBonuses: {
-            pierce: 1.08,
+            pierce: 1.25,
             dash: 0.45,
           },
-          battleCatchupBonus: 1.1,
+          battleCatchupBonus: 1.2,
         },
       },
       {
@@ -252,7 +252,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.15,
         selection: {
-          baseWeight: 5.8,
+          baseWeight: 5.42,
           soloMultiplier: 1.15,
           repeatTypeMultiplier: 0.72,
           routeBonuses: {
@@ -276,7 +276,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.18,
         selection: {
-          baseWeight: 3.2,
+          baseWeight: 3.78,
           soloMultiplier: 1.04,
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
@@ -284,7 +284,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
             pierce: 0.8,
             dash: 0.8,
           },
-          battleCatchupBonus: 1.35,
+          battleCatchupBonus: 1.46,
         },
       },
       {
@@ -498,7 +498,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '转折校准',
         description: '坚持或改变',
         selection: {
-          baseWeight: 2.15,
+          baseWeight: 2.42,
           soloMultiplier: 0.88,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 1.05,
@@ -698,7 +698,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.24,
         selection: {
-          baseWeight: 4.95,
+          baseWeight: 4.62,
           soloMultiplier: 1.18,
           repeatTypeMultiplier: 0.8,
           battleCatchupBonus: 1.3,
@@ -717,15 +717,15 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.28,
         selection: {
-          baseWeight: 3,
+          baseWeight: 3.62,
           soloMultiplier: 1,
           repeatTypeMultiplier: 0.78,
           routeBonuses: {
-            dash: 0.75,
-            pierce: 0.75,
-            crit: 0.35,
+            dash: 0.92,
+            pierce: 0.92,
+            crit: 0.48,
           },
-          battleCatchupBonus: 1.05,
+          battleCatchupBonus: 1.14,
         },
       },
       {
@@ -1072,7 +1072,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '黑匣异常',
         description: '发现未知信号',
         selection: {
-          baseWeight: 1.5,
+          baseWeight: 1.78,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.3,
