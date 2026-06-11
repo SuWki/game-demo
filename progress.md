@@ -1849,3 +1849,15 @@ TODO
 - 源头模块里把 `dash` 的可见口径继续收成 `贴近 / 回打 / 收人`，连注释里的旧回切说法也顺手清掉了，避免拆分后又冒出两套话术。
 - 现有验证里，`stable smoke` 仍然通过，真实战斗 / 自然 fullrun 也已经能看到 `dash` 的 committed 结果和贴身回打样本，不再只靠 smoke 样板成立。
 - 当前下一步还是继续看 `dash` 的 starter / bridge / payoff 能不能再往前推，重点盯真实战斗里的 finisher 还差多少。
+2026-06-10
+- 按当前验收口径，`dash` 主线已经可以收口：它已经从 QA 样板闭环走到真实战斗样本和 natural fullrun 样本，不再是“能演示但还没成立”。
+- 这条线当前最值钱的成果是结构没有回退，`DashRoutePassive` / `DashSystem` / `RouteProgression` 继续做源头，`RunEngine` 没有重新塞回 dash 主逻辑。
+- 残留问题已经缩到 `finisher` 偏弱，这一项后续只做顺手回归，不再继续作为最高优先级专项。
+- 当前主线从 `P0-2：dash 主线补齐` 切到 `P0-3：内容层完整度`，下一步重点是补 `nodes / events / upgrades / battleTemplates / contentSelectors` 的自然流程差异和内容厚度。
+
+### 2026-06-11
+- 本轮把内容层真正接到运行时了：`public/data/battleTemplates.json`、`public/data/upgrades.json` 和 `public/data/balance.json` 都已同步导出，不再只停留在 `src/` 源码。
+- `npm run export:data` 被补进固定验证流程，因为 `ConfigLoader` 运行时优先读 `public/data/*.json`，只跑 build 会漏掉这类内容层改动。
+- `npm run build` 通过，`npm run qa:stable-smoke` 也继续通过，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`。
+- 真实对局里已经能命中 `针线压场` 这类新节点，但自然 fullrun 目前还不是稳定命中新内容，说明内容层差异已经进了真流程，但出现率还可以再抬。
+- 下一步建议继续推 `P0-3：内容层完整度`，优先把新节点在自然流程里的命中率再提高一点，再继续补 `测试与验证手册.md` 的流程口径。

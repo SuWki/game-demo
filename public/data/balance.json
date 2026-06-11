@@ -6,9 +6,9 @@
   "PLAYER_BODY_RADIUS": 12,
   "PLAYER_COLLISION_RADIUS": 18,
   "UPGRADE_VALUE_BUCKET_THRESHOLDS": {
-    "mid": 65,
-    "high": 105,
-    "spike": 150
+    "mid": 42,
+    "high": 74,
+    "spike": 110
   },
   "RARITY_LABEL_MAP": {
     "common": "白",

@@ -83,6 +83,7 @@ function getSelectionWeight(
   contentTier: ContentTier | undefined,
   context: ContentContext,
   source: UpgradeSource,
+  tags?: string[],
 ): number {
   const rule = profile ?? {};
   if (rule.minRound && context.round < rule.minRound) {
@@ -124,6 +125,39 @@ function getSelectionWeight(
 
   if (routeId && context.maturedRoute === routeId) {
     weight += rule.maturedRouteBonus ?? 0;
+  }
+
+  const phaseTagBonusMap: Record<PhaseId, Array<{ tag: string; bonus: number }>> = {
+    opening: [
+      { tag: 'opening', bonus: 0.48 },
+      { tag: 'starter', bonus: 0.32 },
+    ],
+    mid: [
+      { tag: 'mid', bonus: 0.55 },
+      { tag: 'bridge', bonus: 0.38 },
+    ],
+    late: [
+      { tag: 'late', bonus: 0.58 },
+      { tag: 'payoff', bonus: 0.42 },
+    ],
+    finalPrep: [
+      { tag: 'late', bonus: 0.44 },
+      { tag: 'payoff', bonus: 0.34 },
+      { tag: 'finisher', bonus: 0.24 },
+    ],
+    finalBattle: [
+      { tag: 'payoff', bonus: 0.32 },
+      { tag: 'finisher', bonus: 0.26 },
+    ],
+    ended: [],
+  };
+
+  if (tags && tags.length > 0) {
+    for (const entry of phaseTagBonusMap[context.phase]) {
+      if (tags.includes(entry.tag)) {
+        weight += entry.bonus;
+      }
+    }
   }
 
   if (contentTier === 'rare') {
@@ -222,7 +256,14 @@ function buildWeightedUpgradePool(
 ): Array<{ item: UpgradeArchetype; weight: number }> {
   return UPGRADE_ARCHETYPES.filter((archetype) => canOfferUpgrade(archetype, context) && predicate(archetype)).map((archetype) => ({
     item: archetype,
-    weight: getSelectionWeight(archetype.selection, archetype.routeId, archetype.contentTier, context, source),
+    weight: getSelectionWeight(
+      archetype.selection,
+      archetype.routeId,
+      archetype.contentTier,
+      context,
+      source,
+      archetype.tags,
+    ),
   }));
 }
 

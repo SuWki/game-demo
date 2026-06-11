@@ -1301,6 +1301,90 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-opening-thread',
+    name: '起手定线',
+    description: '先把节奏拧顺',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'opening', 'starter'],
+    selection: {
+      baseWeight: 2.72,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 1.62,
+        mid: 0.26,
+      },
+      noDominantRouteBonus: 1.5,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          fireRate: 0.08,
+          projectileSpeed: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-midline-turn',
+    name: '中段换手',
+    description: '把中段接成一段',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'mid'],
+    selection: {
+      baseWeight: 2.38,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.48,
+        late: 0.32,
+      },
+      noDominantRouteBonus: 1,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          fireRate: 0.12,
+          projectileSpeed: 12,
+          moveSpeed: 8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'generic-closeout-anchor',
+    name: '收口定盘',
+    description: '让尾段更好收场',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'payoff', 'late', 'rare'],
+    selection: {
+      baseWeight: 1.22,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.55,
+        finalPrep: 2.06,
+        finalBattle: 1.08,
+      },
+      finalPrepBonus: 2.1,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 2,
+          regeneration: 0.08,
+          moveSpeed: 6,
+        },
+      },
+    ],
+  },
+  {
     id: 'generic-last-lock',
     name: '终段封板',
     description: '大幅强化火力输出',

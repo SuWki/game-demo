@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "qa:stable-smoke": "node tools/qa-stable-smoke.mjs",
     "export:data": "npx tsx scripts/export-data.mjs",
     "validate:configs": "npx tsx tools/validate-configs.ts",
     "excel:to-json": "node tools/excel-to-json.mjs",

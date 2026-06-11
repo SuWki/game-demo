@@ -59,6 +59,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '消灭敌人',
         templateCandidates: [
           { templateId: 'elimination', weight: 2.6 },
+          { templateId: 'elimination-needle', weight: 1.15 },
           { templateId: 'elimination-pincer', weight: 1.4 },
           { templateId: 'elimination-sweep', weight: 1 },
         ],
@@ -67,6 +68,28 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           baseWeight: 5,
           repeatTypeMultiplier: 0.72,
           battleCatchupBonus: 1.4,
+        },
+      },
+      {
+        id: 'round-1-battle-needle',
+        type: 'battle',
+        phase: 'opening',
+        title: '针线压场',
+        description: '两翼压线，逼着先收口',
+        templateCandidates: [
+          { templateId: 'elimination-needle', weight: 3 },
+          { templateId: 'elimination-crossline', weight: 0.9 },
+          { templateId: 'elimination-pincer', weight: 0.65 },
+        ],
+        difficultyScale: 1.12,
+        selection: {
+          baseWeight: 3.2,
+          repeatTypeMultiplier: 0.72,
+          routeBonuses: {
+            pierce: 1.08,
+            dash: 0.45,
+          },
+          battleCatchupBonus: 1.1,
         },
       },
       {
@@ -223,6 +246,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '击败被强化的敌人',
         templateCandidates: [
           { templateId: 'elite', weight: 2.4 },
+          { templateId: 'elite-bridge', weight: 1.1 },
           { templateId: 'elite-lockdown', weight: 1.5 },
           { templateId: 'elite-screen', weight: 1.4 },
         ],
@@ -237,6 +261,30 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
             dash: 1.1,
           },
           battleCatchupBonus: 2.0,
+        },
+      },
+      {
+        id: 'round-2-battle-bridge',
+        type: 'battle',
+        phase: 'mid',
+        title: '桥口分层',
+        description: '前后排开始分开站位',
+        templateCandidates: [
+          { templateId: 'elite-bridge', weight: 3 },
+          { templateId: 'elite-lockdown', weight: 0.8 },
+          { templateId: 'elite-screen', weight: 0.7 },
+        ],
+        difficultyScale: 1.18,
+        selection: {
+          baseWeight: 3.2,
+          soloMultiplier: 1.04,
+          repeatTypeMultiplier: 0.76,
+          routeBonuses: {
+            crit: 0.7,
+            pierce: 0.8,
+            dash: 0.8,
+          },
+          battleCatchupBonus: 1.35,
         },
       },
       {
@@ -643,6 +691,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '坚持到时间结束',
         templateCandidates: [
           { templateId: 'survival', weight: 1.8 },
+          { templateId: 'survival-thread', weight: 1.05 },
           { templateId: 'survival-crossfire', weight: 0.45 },
           { templateId: 'survival-rush', weight: 1.2 },
           { templateId: 'survival-gauntlet', weight: 1.1 },
@@ -653,6 +702,30 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
           soloMultiplier: 1.18,
           repeatTypeMultiplier: 0.8,
           battleCatchupBonus: 1.3,
+        },
+      },
+      {
+        id: 'round-3-battle-thread',
+        type: 'battle',
+        phase: 'late',
+        title: '收束缝线',
+        description: '最后一段把场面收进一条线',
+        templateCandidates: [
+          { templateId: 'survival-thread', weight: 3 },
+          { templateId: 'survival-sieve', weight: 0.85 },
+          { templateId: 'survival-crossfire', weight: 0.6 },
+        ],
+        difficultyScale: 1.28,
+        selection: {
+          baseWeight: 3,
+          soloMultiplier: 1,
+          repeatTypeMultiplier: 0.78,
+          routeBonuses: {
+            dash: 0.75,
+            pierce: 0.75,
+            crit: 0.35,
+          },
+          battleCatchupBonus: 1.05,
         },
       },
       {

@@ -281,6 +281,53 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     ],
   },
   {
+    id: 'early-linecheck',
+    name: '起手校线',
+    description: '先把这把的方向拧顺',
+    selection: {
+      baseWeight: 3.2,
+      phaseBonuses: {
+        opening: 1.35,
+        mid: 0.3,
+      },
+      noDominantRouteBonus: 1.4,
+    },
+    options: [
+      {
+        id: 'early-linecheck-offense',
+        label: '先压火力',
+        description: '伤害和射速先抬一点',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              fireRate: 0.14,
+            },
+          },
+        ],
+      },
+      {
+        id: 'early-linecheck-guard',
+        label: '先留余地',
+        description: '先把生存撑稳一点',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 8,
+              regeneration: 0.08,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 12,
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'signal-soften',
     name: '缓冲信号',
     description: '初见成效，继续深入或保留灵活',
@@ -400,6 +447,71 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       maturedRouteBonus: 0.05,
     },
     options: getAnomalyRoutePoolOptions('routeHandoff', ['crit', 'pierce', 'dash']),
+  },
+  {
+    id: 'midline-split',
+    name: '中段岔口',
+    contentKind: 'anomaly',
+    anomalyClass: 'routeWindow',
+    description: '中段开始决定是接顺还是换手',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.08,
+      minRound: 2,
+      phaseBonuses: {
+        mid: 1.8,
+        late: 0.7,
+      },
+      hintedRouteBonus: 0.6,
+      dominantRouteBonus: 2.3,
+      committedRouteBonus: 1.35,
+      offRouteMultiplier: 0.05,
+    },
+    options: [
+      {
+        id: 'midline-split-direction',
+        label: '先接顺',
+        gameplayLabel: '先接顺',
+        gainLabel: '下一段更容易跟上',
+        costLabel: '火力会慢一点',
+        routeId: 'dominant',
+        anomalyRole: 'direction',
+        description: '先把中段接顺，后面更容易一路跟上。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: 0.1,
+              projectileSpeed: 12,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 6,
+          },
+        ],
+      },
+      {
+        id: 'midline-split-transform',
+        label: '直接换手',
+        gameplayLabel: '直接换手',
+        gainLabel: '中段会更像另一种打法',
+        costLabel: '容错会少一点',
+        routeId: 'dominant',
+        anomalyRole: 'transform',
+        description: '这一下不只是补强，是把中段改成另一种处理方式。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 4,
+              moveSpeed: 10,
+              maxHp: -6,
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'crit-reroute-window',
@@ -661,6 +773,66 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
             modifiers: {
               moveSpeed: 10,
               regeneration: 0.08,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'closeout-echo',
+    name: '尾段回响',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    contentTier: 'rare',
+    description: '后段会把前面拿的东西重新考一遍',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.1,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.7,
+        finalPrep: 0.9,
+      },
+      noDominantRouteBonus: 0.2,
+    },
+    options: [
+      {
+        id: 'closeout-echo-press',
+        label: '压到最后',
+        gameplayLabel: '压到最后',
+        gainLabel: '收尾会更狠',
+        costLabel: '容错会少一点',
+        routeId: 'dominant',
+        anomalyRole: 'core',
+        description: '尾段把节奏压窄，收人会更快。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 6,
+              fireRate: 0.16,
+            },
+          },
+        ],
+      },
+      {
+        id: 'closeout-echo-buffer',
+        label: '留一层',
+        gameplayLabel: '留一层',
+        gainLabel: '收尾会更稳',
+        costLabel: '爆发会慢一点',
+        description: '多留一点回旋，后段不容易断。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 8,
+              regeneration: 0.12,
             },
           },
           {
