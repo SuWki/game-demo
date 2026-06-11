@@ -285,10 +285,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '起手校线',
     description: '先把这把的方向拧顺',
     selection: {
-      baseWeight: 3.56,
+      baseWeight: 3.98,
       phaseBonuses: {
-        opening: 1.52,
-        mid: 0.42,
+        opening: 1.86,
+        mid: 0.3,
       },
       noDominantRouteBonus: 1.4,
     },
@@ -333,11 +333,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     description: '初见成效，继续深入或保留灵活',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 2.4,
+      baseWeight: 2.74,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.4,
-        late: 0.7,
+        mid: 1.62,
+        late: 0.88,
       },
       hintedRouteBonus: 1.6,
       dominantRouteBonus: 2.4,
@@ -385,11 +385,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '冷却绕行',
     description: '转为更快攻击或更稳防护',
     selection: {
-      baseWeight: 2.8,
+      baseWeight: 3.04,
       minRound: 2,
       phaseBonuses: {
-        mid: 1.2,
-        late: 0.8,
+        mid: 1.42,
+        late: 1.02,
       },
       noDominantRouteBonus: 1,
     },
@@ -435,11 +435,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     anomalyClass: 'routeWindow',
     description: '短暂机会，微调或切换战法',
     selection: {
-      baseWeight: 0.26,
+      baseWeight: 0.34,
       minRound: 2,
       phaseBonuses: {
-        mid: 0.36,
-        late: 0.12,
+        mid: 0.48,
+        late: 0.18,
       },
       noDominantRouteBonus: 0.1,
       hintedRouteBonus: 0.2,
@@ -792,11 +792,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     description: '后段会把前面拿的东西重新考一遍',
     routeAffinity: 'dominant',
     selection: {
-      baseWeight: 1.28,
+      baseWeight: 1.52,
       minRound: 3,
       phaseBonuses: {
-        late: 1.92,
-        finalPrep: 1.06,
+        late: 2.12,
+        finalPrep: 1.22,
       },
       noDominantRouteBonus: 0.2,
     },
@@ -851,11 +851,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentTier: 'rare',
     description: '一次性资源，转火力或防护',
     selection: {
-      baseWeight: 1.42,
+      baseWeight: 1.58,
       minRound: 3,
       phaseBonuses: {
-        late: 2.18,
-        finalPrep: 0.7,
+        late: 2.34,
+        finalPrep: 0.82,
       },
       noDominantRouteBonus: 0.4,
     },

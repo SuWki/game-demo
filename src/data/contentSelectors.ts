@@ -129,25 +129,25 @@ function getSelectionWeight(
 
   const phaseTagBonusMap: Record<PhaseId, Array<{ tag: string; bonus: number }>> = {
     opening: [
-      { tag: 'opening', bonus: 0.64 },
-      { tag: 'starter', bonus: 0.44 },
+      { tag: 'opening', bonus: 0.94 },
+      { tag: 'starter', bonus: 0.64 },
     ],
     mid: [
-      { tag: 'mid', bonus: 0.72 },
-      { tag: 'bridge', bonus: 0.52 },
+      { tag: 'mid', bonus: 1.04 },
+      { tag: 'bridge', bonus: 0.8 },
     ],
     late: [
-      { tag: 'late', bonus: 0.76 },
-      { tag: 'payoff', bonus: 0.56 },
+      { tag: 'late', bonus: 1.12 },
+      { tag: 'payoff', bonus: 0.84 },
     ],
     finalPrep: [
-      { tag: 'late', bonus: 0.52 },
-      { tag: 'payoff', bonus: 0.44 },
-      { tag: 'finisher', bonus: 0.3 },
+      { tag: 'late', bonus: 0.74 },
+      { tag: 'payoff', bonus: 0.66 },
+      { tag: 'finisher', bonus: 0.5 },
     ],
     finalBattle: [
-      { tag: 'payoff', bonus: 0.38 },
-      { tag: 'finisher', bonus: 0.3 },
+      { tag: 'payoff', bonus: 0.58 },
+      { tag: 'finisher', bonus: 0.46 },
     ],
     ended: [],
   };
@@ -162,11 +162,11 @@ function getSelectionWeight(
 
   if (contentTier === 'rare') {
     const rarePhaseMultiplier: Record<PhaseId, number> = {
-      opening: 0.02,
-      mid: 0.38,
-      late: 0.54,
-      finalPrep: 0.98,
-      finalBattle: 1.12,
+      opening: 0.01,
+      mid: 0.46,
+      late: 0.68,
+      finalPrep: 1.14,
+      finalBattle: 1.24,
       ended: 0,
     };
 
@@ -314,6 +314,29 @@ function mergeWeightedPools<T extends { id: string }>(
   }
 
   return Array.from(merged.values());
+}
+
+function buildGenericPhasePools(
+  genericPool: Array<{ item: UpgradeArchetype; weight: number }>,
+): Record<'opening' | 'mid' | 'late', Array<{ item: UpgradeArchetype; weight: number }>> {
+  return {
+    opening: filterPoolByTags(genericPool, ['opening', 'starter'], ['payoff', 'finisher', 'late']),
+    mid: filterPoolByTags(genericPool, ['mid', 'bridge'], ['starter', 'payoff', 'finisher']),
+    late: filterPoolByTags(genericPool, ['late', 'payoff'], ['starter']),
+  };
+}
+
+function getPhaseGenericPool(
+  genericPhasePools: Record<'opening' | 'mid' | 'late', Array<{ item: UpgradeArchetype; weight: number }>>,
+  phase: PhaseId,
+): Array<{ item: UpgradeArchetype; weight: number }> {
+  if (phase === 'opening') {
+    return genericPhasePools.opening;
+  }
+  if (phase === 'mid') {
+    return genericPhasePools.mid;
+  }
+  return genericPhasePools.late;
 }
 
 function appendUniquePicks<T extends { id: string }>(
@@ -534,16 +557,22 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const dominantHintedEarlyMid = Boolean(context.dominantRoute) && !hasCommittedRoute && earlyMidLevelUp;
   const picks: UpgradeArchetype[] = [];
   const genericPool = buildWeightedUpgradePool(context, 'levelUp', (archetype) => !archetype.routeId);
-  const genericCorePool = filterPoolByTags(genericPool, ['stabilizer', 'bridge'], ['payoff', 'rare']);
-  const genericPrimaryPool = genericCorePool.length > 0 ? genericCorePool : genericPool;
+  const genericPhasePools = buildGenericPhasePools(genericPool);
+  const genericPhasePool = getPhaseGenericPool(genericPhasePools, context.phase);
+  const genericCorePool = filterPoolByTags(
+    genericPhasePool.length > 0 ? genericPhasePool : genericPool,
+    ['stabilizer', 'bridge'],
+    ['payoff', 'rare'],
+  );
+  const genericPrimaryPool = genericCorePool.length > 0 ? genericCorePool : genericPhasePool.length > 0 ? genericPhasePool : genericPool;
   const genericSecondaryPool = mergeWeightedPools(
     scaleWeightedPool(genericPrimaryPool, 1.18, 0.08),
-    scaleWeightedPool(genericPool, 1.05),
+    scaleWeightedPool(genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.08),
   );
   const routeWindowPool = buildLevelUpRouteWindowPool(context);
   const flexPool = mergeWeightedPools(
     scaleWeightedPool(
-      genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool,
+      genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool,
       hasCommittedRoute ? 1.24 : dominantHintedEarlyMid ? 1.18 : openingLevelUp ? 1.24 : earlyMidLevelUp ? 1.28 : 1.28,
       0.1,
     ),
@@ -583,9 +612,11 @@ export function rollUpgradeChoices(
 
   const picks: UpgradeArchetype[] = [];
   const genericPool = buildWeightedUpgradePool(context, source, (archetype) => !archetype.routeId);
-  const genericTransitionPool = filterPoolByTags(genericPool, ['bridge', 'stabilizer']);
-  const genericHybridPool = filterPoolByTags(genericPool, ['hybrid', 'redirect'], ['payoff', 'finisher']);
-  const genericLatePayoffPool = filterPoolByTags(genericPool, ['payoff'], ['starter']);
+  const genericPhasePools = buildGenericPhasePools(genericPool);
+  const genericPhasePool = getPhaseGenericPool(genericPhasePools, context.phase);
+  const genericTransitionPool = filterPoolByTags(genericPhasePool.length > 0 ? genericPhasePool : genericPool, ['bridge', 'stabilizer']);
+  const genericHybridPool = filterPoolByTags(genericPhasePool.length > 0 ? genericPhasePool : genericPool, ['hybrid', 'redirect'], ['payoff', 'finisher']);
+  const genericLatePayoffPool = filterPoolByTags(genericPhasePool.length > 0 ? genericPhasePool : genericPool, ['payoff'], ['starter']);
   const genericLateFlexPool = [...genericLatePayoffPool, ...genericHybridPool, ...genericTransitionPool];
   const allRoutePool = buildWeightedUpgradePool(context, source, (archetype) => Boolean(archetype.routeId));
   const noFocusStarterPool = filterPoolByTags(allRoutePool, ['starter']);
@@ -651,14 +682,14 @@ export function rollUpgradeChoices(
   const nodePrepGenericSupportPool =
     context.phase === 'late' || context.phase === 'finalPrep'
       ? mergeWeightedPools(
-          scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPool, 1.1),
+          scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.1),
           scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, 0.96),
-          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 0.86),
+          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 0.86),
         )
       : mergeWeightedPools(
-          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 1.14, 0.08),
-          scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 1.02),
-          scaleWeightedPool(genericPool, 0.84),
+          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.14, 0.08),
+          scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.02),
+          scaleWeightedPool(genericPhasePool.length > 0 ? genericPhasePool : genericPool, 0.84),
         );
 
   if (source === 'nodePrep') {
@@ -737,7 +768,9 @@ export function rollUpgradeChoices(
         lateOrFinalPrepPhase
           ? genericLateFlexPool.length > 0
             ? genericLateFlexPool
-            : genericPool
+            : genericPhasePool.length > 0
+              ? genericPhasePool
+              : genericPool
           : nodePrepGenericCorePool.length > 0
             ? nodePrepGenericCorePool
             : genericPool,
@@ -756,7 +789,7 @@ export function rollUpgradeChoices(
         1.86,
       ),
       scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 0.38),
-      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPool, 0.18),
+      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 0.18),
     );
     const nodePrepCommittedFlexPool = mergeWeightedPools(
       scaleWeightedPool(
@@ -768,7 +801,7 @@ export function rollUpgradeChoices(
         routeCommittedOrMatured ? 1.52 : 1.42,
       ),
       scaleWeightedPool(finalPrepPhase ? [] : offRouteRedirectPool, routeCommittedOrMatured ? 0.56 : 0.72),
-      scaleWeightedPool(nodePrepLateFlexPool.length > 0 ? nodePrepLateFlexPool : genericPool, routeCommittedOrMatured ? 0.46 : 0.54),
+      scaleWeightedPool(nodePrepLateFlexPool.length > 0 ? nodePrepLateFlexPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, routeCommittedOrMatured ? 0.46 : 0.54),
     );
 
     appendUniquePicks(picks, nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 1);

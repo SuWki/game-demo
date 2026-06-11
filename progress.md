@@ -1867,3 +1867,8 @@ TODO
 - `npm run export:data -> npm run build -> npm run qa:stable-smoke -> natural fullrun` 现在已经写进固定验证顺序，避免只看 `src/` 变更。
 - 稳定 smoke 仍然干净；单局自然 fullrun 已经能自然跑到 `round-1-event`、`round-2-battle-crit-pressure`、`round-3-battle-dash-soft-closeout`，并给出真实失败局结果页。
 - 这一轮说明内容层已经不是只在 QA 样板里成立，但自然 fullrun 还没有到“每局都稳定覆盖多条新内容”的程度，下一步继续盯命中率和阶段分化。
+
+### 2026-06-11 补记
+- 这轮顺手把测试流程收成了固定模板：`npm run export:data -> npm run build -> npm run qa:stable-smoke -> node tools/qa-smart-natural-fullrun.mjs`，并明确要求 preview、smoke、natural fullrun 分开终端跑。
+- 这轮的实际收益还是内容分发侧，不是系统侧重构；`contentSelectors` 继续按阶段把 opening / mid / late 的内容拉开，`nodes / events / upgrades` 也同步往对应阶段靠拢。
+- 目前结论还是一样：stable smoke 已经稳定干净，natural fullrun 也能碰到新内容，但还没到“每局都稳定覆盖多条新内容”的程度，后面继续看自然命中率和阶段分化是否还能再涨一档。

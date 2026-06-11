@@ -65,7 +65,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.12,
         selection: {
-          baseWeight: 4.72,
+          baseWeight: 4.4,
           repeatTypeMultiplier: 0.72,
           battleCatchupBonus: 1.4,
         },
@@ -252,7 +252,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.15,
         selection: {
-          baseWeight: 5.42,
+          baseWeight: 4.96,
           soloMultiplier: 1.15,
           repeatTypeMultiplier: 0.72,
           routeBonuses: {
@@ -276,7 +276,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.18,
         selection: {
-          baseWeight: 3.78,
+          baseWeight: 4.12,
           soloMultiplier: 1.04,
           repeatTypeMultiplier: 0.76,
           routeBonuses: {
@@ -516,7 +516,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '局面改写',
         description: '这一步会把局面拐一下',
         selection: {
-          baseWeight: 2.9,
+          baseWeight: 3.12,
           soloMultiplier: 0.45,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 1,
@@ -529,7 +529,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '偏航裂口',
         description: '航线发生偏移',
         selection: {
-          baseWeight: 3.1,
+          baseWeight: 3.36,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.8,
@@ -542,7 +542,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '侧频噪点',
         description: '受到频率干扰',
         selection: {
-          baseWeight: 2.15,
+          baseWeight: 2.82,
           soloMultiplier: 0.46,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.6,
@@ -615,7 +615,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '路数偏转',
         description: '看看要不要临时改路',
         selection: {
-          baseWeight: 2.8,
+          baseWeight: 3.04,
           soloMultiplier: 0.48,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.5,
@@ -628,7 +628,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '相位裂缝',
         description: '空间异常',
         selection: {
-          baseWeight: 2.15,
+          baseWeight: 2.56,
           soloMultiplier: 0.4,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.35,
@@ -641,7 +641,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '欠账裂纹',
         description: '代价换收益',
         selection: {
-          baseWeight: 2.35,
+          baseWeight: 2.72,
           soloMultiplier: 0.38,
           repeatTypeMultiplier: 0.6,
           noFocusBonus: 0.28,
@@ -654,7 +654,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '分叉噪井',
         description: '多条路径交汇',
         selection: {
-          baseWeight: 2.25,
+          baseWeight: 2.68,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.6,
           noFocusBonus: 0.45,
@@ -667,7 +667,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '偏航试拍',
         description: '收到预兆信号',
         selection: {
-          baseWeight: 2.18,
+          baseWeight: 2.58,
           soloMultiplier: 0.4,
           repeatTypeMultiplier: 0.6,
           noFocusBonus: 0.36,
@@ -698,7 +698,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         ],
         difficultyScale: 1.24,
         selection: {
-          baseWeight: 4.62,
+          baseWeight: 4.38,
           soloMultiplier: 1.18,
           repeatTypeMultiplier: 0.8,
           battleCatchupBonus: 1.3,
@@ -1046,7 +1046,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '风险授权',
         description: '有风险也有收益',
         selection: {
-          baseWeight: 2.9,
+          baseWeight: 3.08,
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.6,
           noFocusBonus: 0.7,
@@ -1059,7 +1059,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '尾段押注',
         description: '全力押注一个方向',
         selection: {
-          baseWeight: 3.02,
+          baseWeight: 3.22,
           soloMultiplier: 0.42,
           repeatTypeMultiplier: 0.62,
           noFocusBonus: 0.5,
@@ -1072,7 +1072,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '黑匣异常',
         description: '发现未知信号',
         selection: {
-          baseWeight: 1.78,
+          baseWeight: 2.24,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.3,
@@ -1085,7 +1085,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: 'Boss 阴影',
         description: '感受到首领威压',
         selection: {
-          baseWeight: 1.6,
+          baseWeight: 1.88,
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.15,
@@ -1098,7 +1098,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '首领残响',
         description: '感受到首领回响',
         selection: {
-          baseWeight: 1.7,
+          baseWeight: 1.98,
           soloMultiplier: 0.28,
           repeatTypeMultiplier: 0.56,
           noFocusBonus: 0.1,
@@ -1111,7 +1111,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '余辉偏折',
         description: '面临多重选择',
         selection: {
-          baseWeight: 1.5,
+          baseWeight: 1.78,
           soloMultiplier: 0.3,
           repeatTypeMultiplier: 0.58,
           noFocusBonus: 0.18,
@@ -1124,7 +1124,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '并线残响',
         description: '战术在此交汇',
         selection: {
-          baseWeight: 1.34,
+          baseWeight: 1.62,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.56,
           noFocusBonus: 0.12,
@@ -1137,7 +1137,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '首领侧录',
         description: '发现首领预兆',
         selection: {
-          baseWeight: 1.58,
+          baseWeight: 1.86,
           soloMultiplier: 0.26,
           repeatTypeMultiplier: 0.56,
           noFocusBonus: 0.14,
@@ -1150,7 +1150,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         title: '终段偏航',
         description: '面临最后抉择',
         selection: {
-          baseWeight: 1.88,
+          baseWeight: 2.14,
           soloMultiplier: 0.28,
           repeatTypeMultiplier: 0.56,
           noFocusBonus: 0.16,
