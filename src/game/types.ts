@@ -21,6 +21,7 @@ export type BattleTemplateId =
   | 'elite-contagion'
   | 'elite-gauntlet'
   | 'elite-bridge'
+  | 'elite-relay'
   | 'boss-hunt'
   | 'boss-lockdown'
   | 'boss-bastion'
@@ -32,7 +33,8 @@ export type BattleTemplateId =
   | 'survival-rush'
   | 'survival-gauntlet'
   | 'survival-sieve'
-  | 'survival-thread';
+  | 'survival-thread'
+  | 'survival-closehold';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
 export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'bossEnding' | 'phaseTransition' | 'result';
 export type RunOutcome = 'victory' | 'defeat';

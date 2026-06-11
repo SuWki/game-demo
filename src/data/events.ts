@@ -129,6 +129,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 2.3,
       minRound: 2,
+      maxRound: 4,
       phaseBonuses: {
         mid: 1.3,
         late: 0.4,
@@ -185,6 +186,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 2.2,
       minRound: 2,
+      maxRound: 4,
       phaseBonuses: {
         mid: 1,
         late: 0.7,
@@ -335,6 +337,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 2.74,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.62,
         late: 0.88,
@@ -387,6 +390,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 3.04,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.42,
         late: 1.02,
@@ -437,6 +441,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 0.34,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 0.48,
         late: 0.18,
@@ -458,6 +463,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 1.24,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 2,
         late: 0.7,
@@ -908,6 +914,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 0.95,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.2,
         late: 0.8,
@@ -954,6 +961,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 0.92,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.15,
         late: 0.85,
@@ -1000,6 +1008,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 0.88,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.1,
         late: 0.9,
@@ -1050,6 +1059,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 1.1,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.2,
         late: 0.8,
@@ -1160,6 +1170,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 0.9,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 0.85,
         late: 1.1,
@@ -1215,6 +1226,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     selection: {
       baseWeight: 1.05,
       minRound: 2,
+      maxRound: 3,
       phaseBonuses: {
         mid: 1.2,
         late: 0.75,

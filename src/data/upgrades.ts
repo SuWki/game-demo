@@ -1328,6 +1328,33 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
     ],
   },
   {
+    id: 'generic-opening-compass',
+    name: '起手校灯',
+    description: '先把准星立住',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'opening', 'starter'],
+    selection: {
+      baseWeight: 3.06,
+      maxRound: 2,
+      phaseBonuses: {
+        opening: 1.88,
+        mid: 0.2,
+      },
+      noDominantRouteBonus: 1.35,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          damage: 1.5,
+          fireRate: 0.06,
+          moveSpeed: 9,
+        },
+      },
+    ],
+  },
+  {
     id: 'generic-midline-turn',
     name: '中段换手',
     description: '把中段接成一段',
@@ -1352,6 +1379,38 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           projectileSpeed: 12,
           moveSpeed: 8,
         },
+      },
+    ],
+  },
+  {
+    id: 'generic-mid-patchbay',
+    name: '中段补线',
+    description: '缺的那拍先补上',
+    category: 'generic',
+    repeatable: true,
+    tags: ['stabilizer', 'bridge', 'mid', 'hybrid'],
+    selection: {
+      baseWeight: 2.84,
+      minRound: 2,
+      maxRound: 4,
+      phaseBonuses: {
+        mid: 1.84,
+        late: 0.58,
+      },
+      noDominantRouteBonus: 0.9,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 6,
+          regeneration: 0.08,
+          projectileSpeed: 10,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 8,
       },
     ],
   },
@@ -1381,6 +1440,40 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           regeneration: 0.08,
           moveSpeed: 6,
         },
+      },
+    ],
+  },
+  {
+    id: 'generic-late-audit',
+    name: '尾段复检',
+    description: '把前面的短板补牢',
+    category: 'generic',
+    contentTier: 'rare',
+    repeatable: true,
+    tags: ['stabilizer', 'payoff', 'late', 'rare'],
+    selection: {
+      baseWeight: 1.46,
+      minRound: 3,
+      phaseBonuses: {
+        late: 1.94,
+        finalPrep: 2.34,
+        finalBattle: 1.18,
+      },
+      finalPrepBonus: 2.42,
+    },
+    effects: [
+      {
+        type: 'stats',
+        modifiers: {
+          maxHp: 6,
+          damage: 1.6,
+          fireRate: 0.1,
+          regeneration: 0.08,
+        },
+      },
+      {
+        type: 'heal',
+        amount: 8,
       },
     ],
   },

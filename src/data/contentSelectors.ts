@@ -30,6 +30,42 @@ interface ContentContext {
   selectedUpgradeIds: string[];
 }
 
+const OPENING_EVENT_IDS = new Set([
+  'field-maintenance',
+  'salvage-bay',
+  'early-linecheck',
+  'coolant-detour',
+  'risky-protocol',
+  'cold-start-warp',
+]);
+
+const MID_EVENT_IDS = new Set([
+  'route-calibration',
+  'targeted-telemetry',
+  'signal-soften',
+  'route-handoff',
+  'midline-split',
+  'crit-reroute-window',
+  'pierce-reroute-window',
+  'dash-reroute-window',
+  'overload-firecontrol',
+  'compressed-cycle',
+  'fixed-turret',
+  'fixed-turret-protocol',
+  'rapid-light-rounds',
+  'heavy-buffer-protocol',
+]);
+
+const LATE_EVENT_IDS = new Set([
+  'closeout-echo',
+  'blackbox-bargain',
+  'redline-light-armor',
+  'heavy-cannon-overload',
+  'pickup-drive-protocol',
+  'dash-charge-protocol',
+  'crit-lock-protocol',
+]);
+
 function pickWeightedUnique<T extends { id: string }>(
   entries: Array<{
     item: T;
@@ -1048,13 +1084,77 @@ function resolveEventDefinition(eventDef: EventDefinition, dominantRoute: RouteI
   };
 }
 
+function getPhaseEventIdSet(phase: PhaseId): Set<string> {
+  switch (phase) {
+    case 'opening':
+      return OPENING_EVENT_IDS;
+    case 'mid':
+      return MID_EVENT_IDS;
+    case 'late':
+    case 'finalPrep':
+      return LATE_EVENT_IDS;
+    default:
+      return new Set<string>();
+  }
+}
+
+function filterCatalogByIds(catalog: EventDefinition[], ids: Set<string>): EventDefinition[] {
+  if (ids.size === 0) {
+    return catalog;
+  }
+  const filtered = catalog.filter((eventDef) => ids.has(eventDef.id));
+  return filtered.length > 0 ? filtered : catalog;
+}
+
+function buildPhaseEventCatalog(
+  catalog: EventDefinition[],
+  context: ContentContext,
+  contentKind: EventContentKind,
+): EventDefinition[] {
+  let phaseCatalog = filterCatalogByIds(catalog, getPhaseEventIdSet(context.phase));
+
+  if (context.phase === 'mid' && !context.dominantRoute) {
+    phaseCatalog = [
+      ...phaseCatalog,
+      ...catalog.filter((eventDef) => OPENING_EVENT_IDS.has(eventDef.id) && !phaseCatalog.some((entry) => entry.id === eventDef.id)),
+    ];
+  }
+
+  if ((context.phase === 'late' || context.phase === 'finalPrep') && !context.committedRoute && !context.maturedRoute) {
+    phaseCatalog = [
+      ...phaseCatalog,
+      ...catalog.filter((eventDef) => MID_EVENT_IDS.has(eventDef.id) && !phaseCatalog.some((entry) => entry.id === eventDef.id)),
+    ];
+  }
+
+  if (context.phase === 'finalPrep') {
+    const closeoutOnly = phaseCatalog.filter(
+      (eventDef) =>
+        eventDef.anomalyClass === 'bossEcho' ||
+        eventDef.routeAffinity === 'dominant' ||
+        eventDef.selection?.minRound === undefined ||
+        (eventDef.selection?.minRound ?? 0) >= 3,
+    );
+    if (closeoutOnly.length > 0) {
+      phaseCatalog = closeoutOnly;
+    }
+  }
+
+  if (contentKind === 'event') {
+    const eventOnly = phaseCatalog.filter((eventDef) => (eventDef.contentKind ?? 'event') === 'event');
+    return eventOnly.length > 0 ? eventOnly : phaseCatalog;
+  }
+
+  return phaseCatalog;
+}
+
 export function rollEventDefinition(
   state: Readonly<RunState>,
   contentKind: EventContentKind = 'event',
 ): EventDefinition {
   const context = buildContentContext(state);
   const dominantRoute = context.dominantRoute;
-  const catalog = getEventCatalogByKind(contentKind);
+  const catalog = buildPhaseEventCatalog(getEventCatalogByKind(contentKind), context, contentKind);
   const weightedEvents = catalog.map((eventDef) => ({
     item: eventDef,
     weight:

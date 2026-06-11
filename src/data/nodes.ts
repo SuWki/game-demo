@@ -16,6 +16,7 @@ interface NodeBlueprint {
   phase: PhaseId;
   title: string;
   description: string;
+  offerRole?: 'direction' | 'stabilize' | 'pivot' | 'closeout' | 'bossPrep';
   templateId?: NodeOption['templateId'];
   templateCandidates?: Array<{
     templateId: NonNullable<NodeOption['templateId']>;
@@ -163,6 +164,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'opening',
         title: '补路火力',
         description: '顺着这条线再压一手',
+        offerRole: 'direction',
         selection: {
           baseWeight: 4,
           repeatTypeMultiplier: 0.8,
@@ -179,6 +181,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'opening',
         title: '补一手',
         description: '把机体稳一稳，顺手补点机动',
+        offerRole: 'stabilize',
         selection: {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.78,
@@ -195,6 +198,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'opening',
         title: '局面改写',
         description: '这一步会把局面拐一下',
+        offerRole: 'direction',
         selection: {
           baseWeight: 1.8,
           soloMultiplier: 0.25,
@@ -208,6 +212,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'opening',
         title: '风险授权',
         description: '有风险也有收益',
+        offerRole: 'direction',
         selection: {
           baseWeight: 2.1,
           soloMultiplier: 0.36,
@@ -221,6 +226,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'opening',
         title: '临时改路',
         description: '让别的路子也更容易接进来',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 1.45,
           soloMultiplier: 0.2,
@@ -271,6 +277,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '前后排开始分开站位',
         templateCandidates: [
           { templateId: 'elite-bridge', weight: 3 },
+          { templateId: 'elite-relay', weight: 1.6 },
           { templateId: 'elite-lockdown', weight: 0.8 },
           { templateId: 'elite-screen', weight: 0.7 },
         ],
@@ -317,6 +324,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '先击破护卫',
         templateCandidates: [
           { templateId: 'elite-screen', weight: 1.8 },
+          { templateId: 'elite-relay', weight: 1.15 },
           { templateId: 'elite', weight: 1.3 },
           { templateId: 'elite-lockdown', weight: 1.1 },
           { templateId: 'elite-vice', weight: 0.55 },
@@ -427,6 +435,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '补路火力',
         description: '顺着这条线再压一手',
+        offerRole: 'stabilize',
         selection: {
           baseWeight: 3.8,
           soloMultiplier: 0.92,
@@ -440,6 +449,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '补一手',
         description: '把机体稳一稳，顺手补点机动',
+        offerRole: 'stabilize',
         selection: {
           baseWeight: 3.4,
           soloMultiplier: 0.9,
@@ -458,6 +468,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '火力校准',
         description: '基础能力提升',
+        offerRole: 'stabilize',
         selection: {
           baseWeight: 1.5,
           soloMultiplier: 0.86,
@@ -471,6 +482,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '补路整备',
         description: '重新挑一边补火力',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.7,
           soloMultiplier: 0.9,
@@ -484,6 +496,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '并轨整备',
         description: '融合多种战术',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.25,
           soloMultiplier: 0.88,
@@ -497,6 +510,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '转折校准',
         description: '坚持或改变',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.42,
           soloMultiplier: 0.88,
@@ -515,6 +529,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '局面改写',
         description: '这一步会把局面拐一下',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 3.12,
           soloMultiplier: 0.45,
@@ -528,6 +543,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '偏航裂口',
         description: '航线发生偏移',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 3.36,
           soloMultiplier: 0.42,
@@ -541,6 +557,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '侧频噪点',
         description: '受到频率干扰',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.82,
           soloMultiplier: 0.46,
@@ -614,6 +631,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '路数偏转',
         description: '看看要不要临时改路',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 3.04,
           soloMultiplier: 0.48,
@@ -627,6 +645,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '相位裂缝',
         description: '空间异常',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.56,
           soloMultiplier: 0.4,
@@ -640,6 +659,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '欠账裂纹',
         description: '代价换收益',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.72,
           soloMultiplier: 0.38,
@@ -653,6 +673,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '分叉噪井',
         description: '多条路径交汇',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.68,
           soloMultiplier: 0.42,
@@ -666,6 +687,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'mid',
         title: '偏航试拍',
         description: '收到预兆信号',
+        offerRole: 'pivot',
         selection: {
           baseWeight: 2.58,
           soloMultiplier: 0.4,
@@ -712,6 +734,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '最后一段把场面收进一条线',
         templateCandidates: [
           { templateId: 'survival-thread', weight: 3 },
+          { templateId: 'survival-closehold', weight: 1.25 },
           { templateId: 'survival-sieve', weight: 0.85 },
           { templateId: 'survival-crossfire', weight: 0.6 },
         ],
@@ -826,6 +849,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '等待高伤时机',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.45 },
+          { templateId: 'survival-closehold', weight: 1.05 },
           { templateId: 'survival', weight: 1.15 },
           { templateId: 'survival-sieve', weight: 0.85 },
         ],
@@ -848,6 +872,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '突破多层防线',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 1.4 },
+          { templateId: 'survival-closehold', weight: 1.05 },
           { templateId: 'survival-gauntlet', weight: 1.25 },
           { templateId: 'survival', weight: 0.85 },
         ],
@@ -870,6 +895,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '靠机动反守为攻',
         templateCandidates: [
           { templateId: 'survival-crossfire', weight: 1.35 },
+          { templateId: 'survival-closehold', weight: 0.95 },
           { templateId: 'survival-rush', weight: 1.2 },
           { templateId: 'survival', weight: 0.9 },
         ],
@@ -956,6 +982,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '补路火力',
         description: '顺着这条线再压一手',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 3.4,
           repeatTypeMultiplier: 0.82,
@@ -968,6 +995,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '后期稳压',
         description: '为决战做准备',
+        offerRole: 'bossPrep',
         selection: {
           baseWeight: 3.2,
           repeatTypeMultiplier: 0.82,
@@ -980,6 +1008,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '定势整备',
         description: '巩固当前风格',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 2.58,
           repeatTypeMultiplier: 0.8,
@@ -997,6 +1026,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '压上筹码',
         description: '获得强力升级',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 2.7,
           repeatTypeMultiplier: 0.82,
@@ -1009,6 +1039,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '稀有读数',
         description: '获得稀有强化',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 2.05,
           repeatTypeMultiplier: 0.8,
@@ -1021,6 +1052,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '终拍定稿',
         description: '战斗方式最终定型',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 2.15,
           repeatTypeMultiplier: 0.8,
@@ -1033,6 +1065,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '旁路归并',
         description: '整合战术体系',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 1.48,
           repeatTypeMultiplier: 0.8,
@@ -1045,6 +1078,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '风险授权',
         description: '有风险也有收益',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 3.08,
           soloMultiplier: 0.3,
@@ -1058,6 +1092,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '尾段押注',
         description: '全力押注一个方向',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 3.22,
           soloMultiplier: 0.42,
@@ -1071,6 +1106,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '黑匣异常',
         description: '发现未知信号',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 2.24,
           soloMultiplier: 0.26,
@@ -1084,6 +1120,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: 'Boss 阴影',
         description: '感受到首领威压',
+        offerRole: 'bossPrep',
         selection: {
           baseWeight: 1.88,
           soloMultiplier: 0.3,
@@ -1097,6 +1134,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '首领残响',
         description: '感受到首领回响',
+        offerRole: 'bossPrep',
         selection: {
           baseWeight: 1.98,
           soloMultiplier: 0.28,
@@ -1110,6 +1148,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '余辉偏折',
         description: '面临多重选择',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 1.78,
           soloMultiplier: 0.3,
@@ -1123,6 +1162,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '并线残响',
         description: '战术在此交汇',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 1.62,
           soloMultiplier: 0.26,
@@ -1136,6 +1176,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '首领侧录',
         description: '发现首领预兆',
+        offerRole: 'bossPrep',
         selection: {
           baseWeight: 1.86,
           soloMultiplier: 0.26,
@@ -1149,6 +1190,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         phase: 'late',
         title: '终段偏航',
         description: '面临最后抉择',
+        offerRole: 'closeout',
         selection: {
           baseWeight: 2.14,
           soloMultiplier: 0.28,
@@ -1328,6 +1370,11 @@ function pickTemplateId(
   return templateCandidates[templateCandidates.length - 1].templateId;
 }
 
+interface WeightedBlueprintEntry {
+  blueprint: NodeBlueprint;
+  weight: number;
+}
+
 function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext, choiceCount: number, round: number): number {
   const { selection } = blueprint;
   let weight = selection.baseWeight;
@@ -1358,23 +1405,24 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
 
   if (round <= 3) {
     if (blueprint.type === 'battle') {
-      weight *= 1.18 + round * 0.05;
+      weight *= 1.06 + round * 0.04;
       if (offerContext.lastNodeType && offerContext.lastNodeType !== 'battle') {
-        weight += 2.2 + Math.max(0, round - offerContext.battleWins) * 0.55;
+        weight += 1.2 + Math.max(0, round - offerContext.battleWins) * 0.4;
       }
     } else if (blueprint.type === 'upgrade') {
-      weight *= 0.55;
+      weight *= round === 1 ? 1.02 : round === 2 ? 1.08 : 1.1;
       if (offerContext.lastNodeType === 'anomaly') {
-        weight *= 0.72;
+        weight *= 0.92;
       }
     } else if (blueprint.type === 'anomaly') {
-      weight *= 0.08 + round * 0.04;
+      const anomalyMultiplier = round === 1 ? (offerContext.focusRoute ? 0.88 : 1.08) : round === 2 ? 1.06 : 1.02;
+      weight *= anomalyMultiplier;
       if (offerContext.lastNodeType === 'upgrade') {
-        weight *= 0.22;
+        weight *= 0.9;
       }
     }
   } else if (blueprint.type === 'anomaly') {
-    weight *= Math.min(0.36, 0.08 + round * 0.04);
+    weight *= 0.92;
   }
 
   return Math.max(0.1, weight);
@@ -1391,46 +1439,117 @@ function buildNode(blueprint: NodeBlueprint, focusRoute: RouteId | null): NodeOp
   };
 }
 
+function pullWeightedBlueprint(
+  pool: WeightedBlueprintEntry[],
+  predicate: (entry: WeightedBlueprintEntry) => boolean,
+): NodeBlueprint | null {
+  const eligiblePool = pool.filter(predicate);
+  if (eligiblePool.length === 0) {
+    return null;
+  }
+
+  const totalWeight = eligiblePool.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * totalWeight;
+  let selectedEntry = eligiblePool[eligiblePool.length - 1];
+
+  for (let index = 0; index < eligiblePool.length; index += 1) {
+    roll -= eligiblePool[index].weight;
+    if (roll <= 0) {
+      selectedEntry = eligiblePool[index];
+      break;
+    }
+  }
+
+  const selectedIndex = pool.indexOf(selectedEntry);
+  const [picked] = pool.splice(selectedIndex, 1);
+  return picked?.blueprint ?? null;
+}
+
+function getPhaseSupportRoles(phase: PhaseId): Array<NodeBlueprint['offerRole']> {
+  switch (phase) {
+    case 'opening':
+      return ['direction', 'stabilize', 'pivot'];
+    case 'mid':
+      return ['pivot', 'stabilize', 'direction'];
+    case 'late':
+      return ['closeout', 'bossPrep', 'pivot'];
+    default:
+      return [];
+  }
+}
+
 function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferContext, choiceCount: number, round: number): NodeBlueprint[] {
-  const pool = offer.blueprints.map((blueprint) => ({
+  const pool: WeightedBlueprintEntry[] = offer.blueprints.map((blueprint) => ({
     blueprint,
     weight: getNodeWeight(blueprint, context, choiceCount, round),
   }));
   const picks: NodeBlueprint[] = [];
+  const supportRoles = getPhaseSupportRoles(offer.phase);
+  const supportTypes = new Set<NodeType>(['upgrade', 'anomaly']);
+  const pickedSupportTypes = new Set<NodeType>();
 
-  while (pool.length > 0 && picks.length < choiceCount) {
-    const anomalyPicked = picks.some((blueprint) => blueprint.type === 'anomaly');
-    const upgradePicked = picks.some((blueprint) => blueprint.type === 'upgrade');
-    let eligiblePool = pool.filter((entry) => {
-      if (anomalyPicked && entry.blueprint.type === 'anomaly') return false;
-      if (upgradePicked && entry.blueprint.type === 'upgrade') return false;
+  const addSupportPick = (preferDistinctType: boolean): boolean => {
+    const picked = pullWeightedBlueprint(pool, (entry) => {
+      if (!supportTypes.has(entry.blueprint.type)) {
+        return false;
+      }
+      if (supportRoles.length > 0 && !supportRoles.includes(entry.blueprint.offerRole)) {
+        return false;
+      }
+      if (preferDistinctType && pickedSupportTypes.has(entry.blueprint.type)) {
+        return false;
+      }
       return true;
     });
-
-    if (eligiblePool.length <= 0) {
-      const battlePool = pool.filter((entry) => entry.blueprint.type === 'battle');
-      if (battlePool.length > 0) {
-        eligiblePool = battlePool;
-      } else {
-        break;
-      }
+    if (!picked) {
+      return false;
     }
+    picks.push(picked);
+    pickedSupportTypes.add(picked.type);
+    return true;
+  };
 
-    const totalWeight = eligiblePool.reduce((sum, entry) => sum + entry.weight, 0);
-    let roll = Math.random() * totalWeight;
-    let selectedEntry = eligiblePool[eligiblePool.length - 1];
-
-    for (let index = 0; index < eligiblePool.length; index += 1) {
-      roll -= eligiblePool[index].weight;
-      if (roll <= 0) {
-        selectedEntry = eligiblePool[index];
-        break;
-      }
+  const addBattlePick = (): boolean => {
+    const picked = pullWeightedBlueprint(pool, (entry) => entry.blueprint.type === 'battle' || entry.blueprint.type === 'boss');
+    if (!picked) {
+      return false;
     }
+    picks.push(picked);
+    return true;
+  };
 
-    const selectedIndex = pool.indexOf(selectedEntry);
-    picks.push(pool[selectedIndex].blueprint);
-    pool.splice(selectedIndex, 1);
+  if (offer.phase === 'opening') {
+    addSupportPick(false);
+    if (picks.length < choiceCount) {
+      addBattlePick();
+    }
+    if (choiceCount >= 3 && picks.length < choiceCount) {
+      addSupportPick(true);
+    }
+  } else if (offer.phase === 'mid' || offer.phase === 'late') {
+    addBattlePick();
+    if (picks.length < choiceCount) {
+      addSupportPick(false);
+    }
+    if (choiceCount >= 3 && picks.length < choiceCount) {
+      addSupportPick(true);
+    }
+  }
+
+  while (pool.length > 0 && picks.length < choiceCount) {
+    const fallback = pullWeightedBlueprint(pool, (entry) => {
+      if (supportTypes.has(entry.blueprint.type) && pickedSupportTypes.has(entry.blueprint.type)) {
+        return false;
+      }
+      return true;
+    });
+    if (!fallback) {
+      break;
+    }
+    picks.push(fallback);
+    if (supportTypes.has(fallback.type)) {
+      pickedSupportTypes.add(fallback.type);
+    }
   }
 
   return picks;

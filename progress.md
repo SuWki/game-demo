@@ -1872,3 +1872,19 @@ TODO
 - 这轮顺手把测试流程收成了固定模板：`npm run export:data -> npm run build -> npm run qa:stable-smoke -> node tools/qa-smart-natural-fullrun.mjs`，并明确要求 preview、smoke、natural fullrun 分开终端跑。
 - 这轮的实际收益还是内容分发侧，不是系统侧重构；`contentSelectors` 继续按阶段把 opening / mid / late 的内容拉开，`nodes / events / upgrades` 也同步往对应阶段靠拢。
 - 目前结论还是一样：stable smoke 已经稳定干净，natural fullrun 也能碰到新内容，但还没到“每局都稳定覆盖多条新内容”的程度，后面继续看自然命中率和阶段分化是否还能再涨一档。
+
+### 2026-06-11 P0-3 内容阶段职责拆分
+- 这轮主改动没有塞回 `E:\codex\auto-shooter-demo\src\systems\RunEngine.ts`，而是放在 `E:\codex\auto-shooter-demo\src\data\contentSelectors.ts`、`E:\codex\auto-shooter-demo\src\data\nodes.ts`、`E:\codex\auto-shooter-demo\src\data\events.ts`、`E:\codex\auto-shooter-demo\src\data\upgrades.ts`、`E:\codex\auto-shooter-demo\src\data\battleTemplates.ts` 这些内容层模块里。
+- `nodes.ts` 给 opening / mid / late 的节点选择补了明确职责：opening 更容易先看到定方向和补基础的 support 节点，mid 更容易出现 battle + 承接 support，late / finalPrep 更偏收束、押注和 Boss 前整备，而不是继续被 battle 权重一路淹掉。
+- `contentSelectors.ts` 现在先按阶段筛事件池，再做路线和权重选择；opening 事件更偏试路和定手感，mid 事件更偏转折和补短板，late / finalPrep 更偏收束和押注。没有 dominant route 时，也只做小幅借用，不再把各阶段内容混成一锅。
+- `events.ts` 给一批 mid 向异常补了 `maxRound`，避免它们一路漏到 late；`upgrades.ts` 增加了 opening / mid / late 三张通用阶段牌，让普通强化面板也能在自然流程里看出“现在在考什么”。
+- `battleTemplates.ts` 新增了 `elite-relay`（`换手压制`）和 `survival-closehold`（`尾线求生`），目标是补中段承接感和 late 求生/收束感，不是再开一轮平衡专项。
+- 运行时数据已经同步到 `E:\codex\auto-shooter-demo\public\data\battleTemplates.json` 和 `E:\codex\auto-shooter-demo\public\data\upgrades.json`；这轮按手册先跑了 `npm run export:data`，避免 `ConfigLoader` 继续读旧 JSON。
+- 验证结果：
+  - `npm run export:data` 通过
+  - `npm run build` 通过
+  - 预览实际跑在 `http://127.0.0.1:4174/game-demo/`
+  - `E:\codex\auto-shooter-demo\output\qa\stable-smoke-content-phase-20260611\summary.json` 通过，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`
+  - `E:\codex\auto-shooter-demo\output\qa\stable-smoke-dash-regression-20260611\summary.json` 继续通过，说明 `dash` 没被这轮内容层改动带坏
+  - 自然样本里已经能看到 opening `round-1-event-ripple / round-1-event-probe`、mid `round-2-battle-crit-hold / round-2-event / round-2-upgrade`、late `round-3-battle-crossfire / round-3-upgrade-rareline / final-prep` 这条链，但 late / finalPrep 还不算高频
+- 当前判断：这轮不只是“抬一点权重”，而是把阶段职责开始写进内容分发和节点构成里了；但自然 fullrun 的可见收益仍然偏温和，P0-3 还能再做一轮，前提是下一轮继续盯 late / finalPrep 的自然命中率，否则会开始进入边际变薄区间。
