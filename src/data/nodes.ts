@@ -700,9 +700,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   3: {
     phase: 'late',
     countWeights: [
-      { count: 1, weight: 8 },
-      { count: 2, weight: 52 },
-      { count: 3, weight: 40 },
+      { count: 1, weight: 3 },
+      { count: 2, weight: 45 },
+      { count: 3, weight: 52 },
     ],
     blueprints: [
       {
@@ -997,9 +997,27 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         description: '为决战做准备',
         offerRole: 'bossPrep',
         selection: {
-          baseWeight: 3.2,
+          baseWeight: 3.46,
           repeatTypeMultiplier: 0.82,
           lowHpBonus: 1.8,
+        },
+      },
+      {
+        id: 'round-3-upgrade-finalcheck',
+        type: 'upgrade',
+        phase: 'late',
+        title: '决战复检',
+        description: '进首领前先把短板补一手',
+        offerRole: 'bossPrep',
+        selection: {
+          baseWeight: 3.1,
+          repeatTypeMultiplier: 0.82,
+          lowHpBonus: 1.72,
+          routeBonuses: {
+            crit: 0.28,
+            pierce: 0.34,
+            dash: 0.34,
+          },
         },
       },
       {
@@ -1403,11 +1421,30 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
     weight += selection.lowHpBonus ?? 0;
   }
 
+  if (blueprint.phase === 'late' && blueprint.offerRole) {
+    if (blueprint.offerRole === 'closeout') {
+      weight *= choiceCount === 1 ? 1.26 : 1.16;
+      if (offerContext.focusRoute) {
+        weight += 0.5;
+      }
+    }
+
+    if (blueprint.offerRole === 'bossPrep') {
+      weight *= choiceCount === 1 ? 1.32 : 1.2;
+      if (offerContext.hpRatio <= 0.7) {
+        weight += 0.4;
+      }
+    }
+  }
+
   if (round <= 3) {
     if (blueprint.type === 'battle') {
       weight *= 1.06 + round * 0.04;
       if (offerContext.lastNodeType && offerContext.lastNodeType !== 'battle') {
         weight += 1.2 + Math.max(0, round - offerContext.battleWins) * 0.4;
+      }
+      if (blueprint.phase === 'late') {
+        weight *= choiceCount === 1 ? 0.74 : 0.92;
       }
     } else if (blueprint.type === 'upgrade') {
       weight *= round === 1 ? 1.02 : round === 2 ? 1.08 : 1.1;
@@ -1526,10 +1563,18 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
     if (choiceCount >= 3 && picks.length < choiceCount) {
       addSupportPick(true);
     }
-  } else if (offer.phase === 'mid' || offer.phase === 'late') {
+  } else if (offer.phase === 'mid') {
     addBattlePick();
     if (picks.length < choiceCount) {
       addSupportPick(false);
+    }
+    if (choiceCount >= 3 && picks.length < choiceCount) {
+      addSupportPick(true);
+    }
+  } else if (offer.phase === 'late') {
+    addSupportPick(false);
+    if (picks.length < choiceCount) {
+      addBattlePick();
     }
     if (choiceCount >= 3 && picks.length < choiceCount) {
       addSupportPick(true);

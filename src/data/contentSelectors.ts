@@ -59,6 +59,7 @@ const MID_EVENT_IDS = new Set([
 const LATE_EVENT_IDS = new Set([
   'closeout-echo',
   'blackbox-bargain',
+  'boss-sightline',
   'redline-light-armor',
   'heavy-cannon-overload',
   'pickup-drive-protocol',
@@ -173,13 +174,14 @@ function getSelectionWeight(
       { tag: 'bridge', bonus: 0.8 },
     ],
     late: [
-      { tag: 'late', bonus: 1.12 },
-      { tag: 'payoff', bonus: 0.84 },
+      { tag: 'late', bonus: 1.26 },
+      { tag: 'payoff', bonus: 1.08 },
+      { tag: 'finisher', bonus: 0.72 },
     ],
     finalPrep: [
-      { tag: 'late', bonus: 0.74 },
-      { tag: 'payoff', bonus: 0.66 },
-      { tag: 'finisher', bonus: 0.5 },
+      { tag: 'late', bonus: 1.18 },
+      { tag: 'payoff', bonus: 1.38 },
+      { tag: 'finisher', bonus: 1.58 },
     ],
     finalBattle: [
       { tag: 'payoff', bonus: 0.58 },
@@ -200,8 +202,8 @@ function getSelectionWeight(
     const rarePhaseMultiplier: Record<PhaseId, number> = {
       opening: 0.01,
       mid: 0.46,
-      late: 0.68,
-      finalPrep: 1.14,
+      late: 0.82,
+      finalPrep: 1.32,
       finalBattle: 1.24,
       ended: 0,
     };
@@ -690,25 +692,48 @@ export function rollUpgradeChoices(
   );
   const finalPrepGenericPatchPool = filterPoolByTags(
     genericPool,
-    ['stabilizer', 'bridge', 'payoff'],
-    ['hybrid', 'redirect'],
+    ['stabilizer', 'late', 'payoff'],
+    ['hybrid', 'redirect', 'starter'],
+  );
+  const finalPrepGenericAuditPool = mergeWeightedPools(
+    scaleWeightedPool(
+      finalPrepGenericPatchPool.length > 0
+        ? finalPrepGenericPatchPool
+        : genericLateFlexPool.length > 0
+          ? genericLateFlexPool
+          : genericPool,
+      1.24,
+    ),
+    scaleWeightedPool(genericLatePayoffPool.length > 0 ? genericLatePayoffPool : genericPool, 1.18),
   );
   const finalPrepGenericCloseoutPool = mergeWeightedPools(
     scaleWeightedPool(
-      finalPrepGenericPatchPool.length > 0 ? finalPrepGenericPatchPool : genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPool,
-      1.18,
+      finalPrepGenericAuditPool.length > 0
+        ? finalPrepGenericAuditPool
+        : finalPrepGenericPatchPool.length > 0
+          ? finalPrepGenericPatchPool
+          : genericLateFlexPool.length > 0
+            ? genericLateFlexPool
+            : genericPool,
+      1.22,
     ),
-    scaleWeightedPool(genericLatePayoffPool.length > 0 ? genericLatePayoffPool : genericPool, 1.12),
+    scaleWeightedPool(genericLatePayoffPool.length > 0 ? genericLatePayoffPool : genericPool, 1.18),
   );
+  const dominantFinalPrepSealPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher'], ['redirect']);
+  const dominantFinalPrepBridgePool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff'], ['starter', 'redirect']);
   const finalPrepRouteSealPool =
-    dominantPayoffPool.length > 0
-      ? dominantPayoffPool
-      : dominantCommittedPool.length > 0
-        ? dominantCommittedPool
-        : dominantNonRedirectPool;
+    dominantFinalPrepSealPool.length > 0
+      ? dominantFinalPrepSealPool
+      : dominantPayoffPool.length > 0
+        ? dominantPayoffPool
+        : dominantFinalPrepBridgePool.length > 0
+          ? dominantFinalPrepBridgePool
+          : dominantCommittedPool.length > 0
+            ? dominantCommittedPool
+            : dominantNonRedirectPool;
   const finalPrepDominantFlexPool = mergeWeightedPools(
-    scaleWeightedPool(finalPrepRouteSealPool.length > 0 ? finalPrepRouteSealPool : dominantRoutePool, 1.92),
-    scaleWeightedPool(finalPrepGenericCloseoutPool.length > 0 ? finalPrepGenericCloseoutPool : genericPool, 0.92),
+    scaleWeightedPool(finalPrepRouteSealPool.length > 0 ? finalPrepRouteSealPool : dominantRoutePool, 2.14),
+    scaleWeightedPool(finalPrepGenericCloseoutPool.length > 0 ? finalPrepGenericCloseoutPool : genericPool, 0.78),
   );
   const allWeightedPool = [...dominantNonRedirectPool, ...genericPool, ...offRoutePool];
   const routeMatured = context.maturedRoute === dominantRoute;
@@ -718,9 +743,9 @@ export function rollUpgradeChoices(
   const nodePrepGenericSupportPool =
     context.phase === 'late' || context.phase === 'finalPrep'
       ? mergeWeightedPools(
-          scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.1),
-          scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, 0.96),
-          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 0.86),
+          scaleWeightedPool(genericLateFlexPool.length > 0 ? genericLateFlexPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.24),
+          scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, 0.7),
+          scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 0.72),
         )
       : mergeWeightedPools(
           scaleWeightedPool(nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.14, 0.08),

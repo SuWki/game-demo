@@ -1886,5 +1886,13 @@ TODO
   - 预览实际跑在 `http://127.0.0.1:4174/game-demo/`
   - `E:\codex\auto-shooter-demo\output\qa\stable-smoke-content-phase-20260611\summary.json` 通过，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`
   - `E:\codex\auto-shooter-demo\output\qa\stable-smoke-dash-regression-20260611\summary.json` 继续通过，说明 `dash` 没被这轮内容层改动带坏
-  - 自然样本里已经能看到 opening `round-1-event-ripple / round-1-event-probe`、mid `round-2-battle-crit-hold / round-2-event / round-2-upgrade`、late `round-3-battle-crossfire / round-3-upgrade-rareline / final-prep` 这条链，但 late / finalPrep 还不算高频
+- 自然样本里已经能看到 opening `round-1-event-ripple / round-1-event-probe`、mid `round-2-battle-crit-hold / round-2-event / round-2-upgrade`、late `round-3-battle-crossfire / round-3-upgrade-rareline / final-prep` 这条链，但 late / finalPrep 还不算高频
 - 当前判断：这轮不只是“抬一点权重”，而是把阶段职责开始写进内容分发和节点构成里了；但自然 fullrun 的可见收益仍然偏温和，P0-3 还能再做一轮，前提是下一轮继续盯 late / finalPrep 的自然命中率，否则会开始进入边际变薄区间。
+
+### 2026-06-12 P0-3 late / finalPrep 边际验证
+- 这轮按要求先读阶段总表、测试手册、玩家文本规范、架构重构说明和 `progress.md`，再开发；没有把新逻辑塞回 `E:\codex\auto-shooter-demo\src\systems\RunEngine.ts`。
+- 主改动继续留在内容层：`E:\codex\auto-shooter-demo\src\data\contentSelectors.ts` 把 late / finalPrep 的 payoff、finisher、稀有收束牌再收紧；`E:\codex\auto-shooter-demo\src\data\nodes.ts` 让 late 节点更容易先给收束或 Boss 前整备，并补了 `round-3-upgrade-finalcheck`；`E:\codex\auto-shooter-demo\src\data\events.ts` 新增 `boss-sightline`，让 Boss 前异常更像最后一次取舍；`E:\codex\auto-shooter-demo\src\data\upgrades.ts` 把几张 late 通用牌标成更明确的 finalPrep / finisher 候选。
+- 运行时数据已通过 `npm run export:data` 同步到 `E:\codex\auto-shooter-demo\public\data\upgrades.json`；`npm run build` 通过，预览跑在 `http://127.0.0.1:4173/game-demo/`。
+- `E:\codex\auto-shooter-demo\output\qa\stable-smoke-late-finalprep-20260612\summary.json` 通过，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`，`crit / pierce / dash / Boss` 回归保持正常。
+- natural fullrun 产物为 `E:\codex\auto-shooter-demo\output\qa\smart-natural-fullrun-late-finalprep-20260612\summary.json`：6 局 0 通关，2 局到 Boss，4 局超时，平均清节点 1.67。能看到两条 late / finalPrep 链：`round-3-upgrade-commit-hold -> final-prep -> final-boss-bastion` 和 `round-3-upgrade-rareline -> final-prep-shadow -> final-boss-bastion`。
+- 当前判断：这轮确实让 late / finalPrep 的职责更清楚，但自然流程收益只是略微更顺，不算明显再抬一档。P0-3 建议在这轮后准备收口，下一步更适合转到 P1 自然流程可玩性回归，或只做极小的内容补洞。

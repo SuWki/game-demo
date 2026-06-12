@@ -802,9 +802,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       minRound: 3,
       phaseBonuses: {
         late: 2.12,
-        finalPrep: 1.22,
+        finalPrep: 1.66,
       },
       noDominantRouteBonus: 0.2,
+      dominantRouteBonus: 1.24,
+      committedRouteBonus: 0.92,
+      maturedRouteBonus: 0.48,
     },
     options: [
       {
@@ -861,9 +864,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       minRound: 3,
       phaseBonuses: {
         late: 2.34,
-        finalPrep: 0.82,
+        finalPrep: 1.18,
       },
       noDominantRouteBonus: 0.4,
+      dominantRouteBonus: 0.68,
+      committedRouteBonus: 0.46,
     },
     options: [
       {
@@ -895,6 +900,73 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
               projectileSpeed: 24,
               moveSpeed: 14,
               regeneration: 0.14,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 10,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'boss-sightline',
+    name: '首领瞄线',
+    contentKind: 'anomaly',
+    anomalyClass: 'bossEcho',
+    contentTier: 'rare',
+    description: '进首领前，先决定这把是继续压火力，还是先留一层余地',
+    routeAffinity: 'dominant',
+    selection: {
+      baseWeight: 1.44,
+      minRound: 3,
+      phaseBonuses: {
+        late: 2.18,
+        finalPrep: 1.38,
+      },
+      noDominantRouteBonus: 0.15,
+      dominantRouteBonus: 1.86,
+      committedRouteBonus: 1.22,
+      maturedRouteBonus: 0.62,
+    },
+    options: [
+      {
+        id: 'boss-sightline-press',
+        label: '先把火力压满',
+        gameplayLabel: '压上去',
+        gainLabel: '进首领前先把伤害再压一截',
+        costLabel: '容错会再少一点',
+        routeId: 'dominant',
+        anomalyRole: 'core',
+        description: '先把这一套火力再压一截，进首领时更容易直接抢主动。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 5,
+              fireRate: 0.12,
+              maxHp: -6,
+            },
+          },
+        ],
+      },
+      {
+        id: 'boss-sightline-brace',
+        label: '先留一层余地',
+        gameplayLabel: '稳着进',
+        gainLabel: '进首领前先把血量和恢复补住',
+        costLabel: '爆发会慢一点',
+        routeId: 'dominant',
+        anomalyRole: 'finisher',
+        description: '先把机体补稳，进首领时不容易第一波就断。',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              maxHp: 8,
+              regeneration: 0.12,
+              fireRate: -0.08,
             },
           },
           {
