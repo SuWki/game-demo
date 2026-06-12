@@ -1,4 +1,4 @@
-﻿Original prompt: 请先读取 `docs/` 目录下的全部项目文档和最近开发记录，再开始处理；如果文档之间存在阶段口径差异，请以最新阶段文档和最近开发记录为准，并在输出中说明你的取舍依据。
+Original prompt: 请先读取 `docs/` 目录下的全部项目文档和最近开发记录，再开始处理；如果文档之间存在阶段口径差异，请以最新阶段文档和最近开发记录为准，并在输出中说明你的取舍依据。
 
 2026-04-01
 - 已重新读取 `doc/docs` 全部文档，并以 `PROJECT_STATUS.md` 与最新 `DEV_ISSUE_LOG.md` 作为本轮口径优先级。
@@ -1896,3 +1896,11 @@ TODO
 - `E:\codex\auto-shooter-demo\output\qa\stable-smoke-late-finalprep-20260612\summary.json` 通过，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`，`crit / pierce / dash / Boss` 回归保持正常。
 - natural fullrun 产物为 `E:\codex\auto-shooter-demo\output\qa\smart-natural-fullrun-late-finalprep-20260612\summary.json`：6 局 0 通关，2 局到 Boss，4 局超时，平均清节点 1.67。能看到两条 late / finalPrep 链：`round-3-upgrade-commit-hold -> final-prep -> final-boss-bastion` 和 `round-3-upgrade-rareline -> final-prep-shadow -> final-boss-bastion`。
 - 当前判断：这轮确实让 late / finalPrep 的职责更清楚，但自然流程收益只是略微更顺，不算明显再抬一档。P0-3 建议在这轮后准备收口，下一步更适合转到 P1 自然流程可玩性回归，或只做极小的内容补洞。
+
+### 2026-06-12 P1-1 自然流程回归
+- 本轮把主线切回 `P1-1：自然流程整体可玩性回归`，不再继续用 `P0-3` 的名义追 late / finalPrep 收益。
+- 代码改动主要落在 `E:\codex\auto-shooter-demo\src\systems\route\RouteProgression.ts` 和 `E:\codex\auto-shooter-demo\src\data\nodes.ts`：前者把 route commit / mature 的门槛再往前挪了一格，后者把 opening / mid 的节点压力和权重分配再压顺一点，让自然流程更容易走到 round-3。
+- 验证流程这轮已经固定成 `npm run export:data -> npm run build -> npm run preview -- --host 127.0.0.1 --port 4173 -> npm run qa:stable-smoke -> node tools/qa-smart-natural-fullrun.mjs`，以后默认就按这个顺序跑。
+- stable smoke 继续干净，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`。
+- natural fullrun 这轮比上一轮更稳：6 局里 5 局打到 Boss，3 局超时，平均清节点 2.0；`routeId=none` 和 `buildStage=unknown` 还没清完，但已经比之前那轮 1.67 / 4 局超时更好。
+- 当前判断：P1-1 还有小幅继续推进的价值，但已经接近“再往前一小步就该准备收口”的边缘。

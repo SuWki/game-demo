@@ -47,9 +47,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   1: {
     phase: 'opening',
     countWeights: [
-      { count: 1, weight: 8 },
-      { count: 2, weight: 50 },
-      { count: 3, weight: 42 },
+      { count: 1, weight: 12 },
+      { count: 2, weight: 56 },
+      { count: 3, weight: 32 },
     ],
     blueprints: [
       {
@@ -239,9 +239,9 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
   2: {
     phase: 'mid',
     countWeights: [
-      { count: 1, weight: 5 },
-      { count: 2, weight: 55 },
-      { count: 3, weight: 40 },
+      { count: 1, weight: 8 },
+      { count: 2, weight: 60 },
+      { count: 3, weight: 32 },
     ],
     blueprints: [
       {
@@ -1439,20 +1439,20 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
 
   if (round <= 3) {
     if (blueprint.type === 'battle') {
-      weight *= 1.06 + round * 0.04;
+      weight *= 1.01 + round * 0.03;
       if (offerContext.lastNodeType && offerContext.lastNodeType !== 'battle') {
-        weight += 1.2 + Math.max(0, round - offerContext.battleWins) * 0.4;
+        weight += 0.9 + Math.max(0, round - offerContext.battleWins) * 0.25;
       }
       if (blueprint.phase === 'late') {
         weight *= choiceCount === 1 ? 0.74 : 0.92;
       }
     } else if (blueprint.type === 'upgrade') {
-      weight *= round === 1 ? 1.02 : round === 2 ? 1.08 : 1.1;
+      weight *= round === 1 ? 1.08 : round === 2 ? 1.12 : 1.1;
       if (offerContext.lastNodeType === 'anomaly') {
         weight *= 0.92;
       }
     } else if (blueprint.type === 'anomaly') {
-      const anomalyMultiplier = round === 1 ? (offerContext.focusRoute ? 0.88 : 1.08) : round === 2 ? 1.06 : 1.02;
+      const anomalyMultiplier = round === 1 ? (offerContext.focusRoute ? 0.92 : 1.12) : round === 2 ? 1.08 : 1.02;
       weight *= anomalyMultiplier;
       if (offerContext.lastNodeType === 'upgrade') {
         weight *= 0.9;
