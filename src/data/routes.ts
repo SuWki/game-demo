@@ -4,22 +4,22 @@ export const ROUTES: RouteDefinition[] = [
   {
     id: 'crit',
     name: '暴击',
-    shortHint: '暴击开始顺手了。',
-    matureHint: '暴击已经连起来了，连打会越来越狠。',
+    shortHint: '暴击顺起来了。',
+    matureHint: '暴击已经连上了。',
     color: '#ff8f70',
   },
   {
     id: 'pierce',
     name: '穿透',
-    shortHint: '穿透开始穿开前排了。',
-    matureHint: '穿透已经能带到后排了。',
+    shortHint: '穿透开始穿开了。',
+    matureHint: '穿透已经带到后排了。',
     color: '#68d4ff',
   },
   {
     id: 'dash',
     name: '穿梭',
-    shortHint: '穿梭开始贴近了。',
-    matureHint: '穿梭已经能贴身收人了。',
+    shortHint: '穿梭开始贴上了。',
+    matureHint: '穿梭已经能收人了。',
     color: '#9cff97',
   },
 ];

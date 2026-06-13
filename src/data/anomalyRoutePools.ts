@@ -178,9 +178,9 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
       label: '先接暴击',
       gameplayLabel: '先打顺',
       gainLabel: '先把暴击打顺',
-      costLabel: '还没到一路猛压的时候',
+      costLabel: '还不到猛压的时候',
       anomalyRole: 'direction',
-      description: '先把暴击这一下补上，后面更容易一路压着打。',
+      description: '先把暴击接顺。',
       routeId: 'crit',
       effects: [
         {
@@ -213,9 +213,9 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
       label: '先接穿透',
       gameplayLabel: '先打开路',
       gainLabel: '先把前排穿开',
-      costLabel: '还不能立刻带到后排',
+      costLabel: '还不到带后排的时候',
       anomalyRole: 'direction',
-      description: '先把穿透这一下补上，后面更容易一路带到后排。',
+      description: '先把穿透接顺。',
       routeId: 'pierce',
       effects: [
         {
@@ -283,7 +283,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     crit: {
       id: 'crit-reroute-window-crit-unused',
       label: '稳住暴击火力',
-      description: '先稳住现在这股暴击火力。',
+      description: '先把暴击打顺。',
       routeId: 'crit',
       effects: [
         {
@@ -302,7 +302,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     pierce: {
       id: 'crit-reroute-window-pierce',
       label: '穿透接管',
-      description: '修好 8 点损伤，顺手把穿透这一线接过来。',
+      description: '修好 8 点损伤，顺手把穿透接过来。',
       routeId: 'pierce',
       effects: [
         {
@@ -330,7 +330,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'crit-reroute-window-dash',
       label: '穿梭接管',
-      description: '修好 8 点损伤，顺手把穿梭节奏接过来。',
+      description: '修好 8 点损伤，顺手把穿梭接过来。',
       routeId: 'dash',
       effects: [
         {
@@ -360,7 +360,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     crit: {
       id: 'pierce-reroute-window-crit',
       label: '暴击接管',
-      description: '修好 8 点损伤，顺手把暴击这一路接过来。',
+      description: '修好 8 点损伤，顺手把暴击接过来。',
       routeId: 'crit',
       effects: [
         {
@@ -477,7 +477,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     pierce: {
       id: 'dash-reroute-window-pierce',
       label: '穿透接管',
-      description: '修好 8 点损伤，顺手把穿透这一线接过来。',
+      description: '修好 8 点损伤，顺手把穿透接过来。',
       routeId: 'pierce',
       effects: [
         {
@@ -509,7 +509,7 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
     dash: {
       id: 'dash-reroute-window-dash-unused',
       label: '稳住穿梭节奏',
-      description: '先稳住现在这股穿梭节奏。',
+      description: '先把穿梭接顺。',
       routeId: 'dash',
       effects: [
         {

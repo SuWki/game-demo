@@ -681,7 +681,7 @@ export class OverlayController {
 
         <div class="result-details-content">
           <div class="result-details-section">
-            <h3 class="detail-section-title">${result.outcome === 'victory' ? '最后收在哪' : '最后断在哪'}</h3>
+            <h3 class="detail-section-title">收尾</h3>
             <div class="detail-summary-stack">
               <div class="detail-summary-card detail-summary-card-focus">
                 <strong>${result.summary}</strong>
@@ -695,7 +695,7 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">转折点</h3>
+            <h3 class="detail-section-title">转折</h3>
             <div class="detail-anomaly-strip">
               <span><small>先打顺</small><strong>${anomalyRoleCounts.direction}</strong></span>
               <span><small>火力更重</small><strong>${anomalyRoleCounts.core}</strong></span>
@@ -708,14 +708,14 @@ export class OverlayController {
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">一路拿过什么</h3>
+            <h3 class="detail-section-title">拿了什么</h3>
             <div class="detail-timeline-scroll">
               ${upgradeTimeline}
             </div>
           </div>
 
           <div class="result-details-section">
-            <h3 class="detail-section-title">📈 这局最后长什么样</h3>
+            <h3 class="detail-section-title">最后样子</h3>
             <div class="detail-stats-grid">
               <div class="detail-stat-card">
                 <span>存活时间</span>
@@ -1771,26 +1771,26 @@ export class OverlayController {
   ): string {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}提前摸到补最后一下，但还没完全接住`;
+      return `${routeName}先摸到收尾手感，但还没完全接住`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}在这里拐顺了，整条线顺了不少`;
+      return `${routeName}在这里拐顺了`;
     }
 
     switch (record.anomalyRole ?? 'direction') {
       case 'direction':
         return routeId === 'pierce'
-          ? `这一手先把${routeName}的前排打穿了`
+          ? `这一手先把${routeName}的前排打穿`
           : routeId === 'dash'
-            ? `这一手先把${routeName}的贴身节奏拉起来了`
-            : `这一手先把${routeName}打顺了`;
+            ? `这一手先把${routeName}的贴身节奏拉起来`
+            : `这一手先把${routeName}打顺`;
       case 'core':
           return routeId === 'pierce'
-            ? `这一手让${routeName}穿前排更稳，后排也开始掉血`
+            ? `这一手让${routeName}更稳地穿前排`
             : routeId === 'dash'
             ? `这一手让${routeName}贴住后还能回打`
-            : `这一手让${routeName}连打更疼了`;
+            : `这一手让${routeName}连打更疼`;
       case 'transform':
         return routeId === 'crit'
           ? `这一手把${routeName}直接打成连爆`

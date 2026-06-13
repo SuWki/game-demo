@@ -57,7 +57,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '歼灭行动',
-        description: '消灭敌人',
+        description: '清掉敌人',
         templateCandidates: [
           { templateId: 'elimination', weight: 2.6 },
           { templateId: 'elimination-needle', weight: 1.15 },
@@ -76,7 +76,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '针线压场',
-        description: '两翼压线，逼着先收口',
+        description: '两翼压线',
         templateCandidates: [
           { templateId: 'elimination-needle', weight: 3 },
           { templateId: 'elimination-crossline', weight: 0.9 },
@@ -98,7 +98,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '侧压试飞',
-        description: '敌人侧面包抄',
+        description: '敌人从侧面压上来',
         templateCandidates: [
           { templateId: 'elimination-pincer', weight: 1.8 },
           { templateId: 'elimination', weight: 1.3 },
@@ -120,7 +120,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '厚线突围',
-        description: '敌人密集正面进攻',
+        description: '前面压得很紧',
         templateCandidates: [
           { templateId: 'elimination-sweep', weight: 2 },
           { templateId: 'elimination', weight: 1 },
@@ -141,7 +141,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '火线试压',
-        description: '远程敌人火力封锁',
+        description: '远程火力压线',
         templateCandidates: [
           { templateId: 'elimination-crossline', weight: 2.1 },
           { templateId: 'elimination-pincer', weight: 1.1 },
@@ -180,7 +180,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '补一手',
-        description: '把机体稳一稳，顺手补点机动',
+        description: '稳一稳，补点机动',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.2,
@@ -196,8 +196,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event',
         type: 'anomaly',
         phase: 'opening',
-        title: '局面改写',
-        description: '这一步会把局面拐一下',
+        title: '改一下局面',
+        description: '这一步会拐一下',
         offerRole: 'direction',
         selection: {
           baseWeight: 1.8,
@@ -211,7 +211,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '风险授权',
-        description: '有风险也有收益',
+        description: '有险也有赚',
         offerRole: 'direction',
         selection: {
           baseWeight: 2.1,
@@ -225,7 +225,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '临时改路',
-        description: '让别的路子也更容易接进来',
+        description: '让别的路子也能接上',
         offerRole: 'pivot',
         selection: {
           baseWeight: 1.45,
@@ -448,7 +448,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '补一手',
-        description: '把机体稳一稳，顺手补点机动',
+        description: '稳一稳，补点机动',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.4,
@@ -467,7 +467,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '火力校准',
-        description: '基础能力提升',
+        description: '补点底子',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 1.5,
@@ -481,7 +481,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '补路整备',
-        description: '重新挑一边补火力',
+        description: '换一边补火力',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.7,
@@ -495,7 +495,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '并轨整备',
-        description: '融合多种战术',
+        description: '把几路拢一拢',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.25,
@@ -509,7 +509,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '转折校准',
-        description: '坚持或改变',
+        description: '要么稳住，要么换手',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.42,
@@ -541,8 +541,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-shift',
         type: 'anomaly',
         phase: 'mid',
-        title: '偏航裂口',
-        description: '航线发生偏移',
+        title: '偏一下',
+        description: '这段会偏一点',
         offerRole: 'pivot',
         selection: {
           baseWeight: 3.36,
@@ -556,7 +556,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '侧频噪点',
-        description: '受到频率干扰',
+        description: '中段有点乱',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.82,
@@ -915,7 +915,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '重击追杀',
-        description: '积蓄火力一击制胜',
+        description: '攒着火力补最后一下',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.6 },
           { templateId: 'survival', weight: 1.1 },
@@ -994,7 +994,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '后期稳压',
-        description: '为决战做准备',
+        description: '先把身位压稳',
         offerRole: 'bossPrep',
         selection: {
           baseWeight: 3.46,
@@ -1007,7 +1007,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '决战复检',
-        description: '进首领前先把短板补一手',
+        description: '进首领前补短板',
         offerRole: 'bossPrep',
         selection: {
           baseWeight: 3.1,
@@ -1025,7 +1025,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '定势整备',
-        description: '巩固当前风格',
+        description: '把当前路子压住',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.58,
@@ -1043,7 +1043,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '压上筹码',
-        description: '获得强力升级',
+        description: '压上去收尾',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.7,
@@ -1056,7 +1056,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '稀有读数',
-        description: '获得稀有强化',
+        description: '拿一手稀有的',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.05,
@@ -1069,7 +1069,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '终拍定稿',
-        description: '战斗方式最终定型',
+        description: '把这局定下来',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.15,
@@ -1238,7 +1238,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'finalPrep',
         title: 'Boss 预整备',
-        description: '修补机体弱点',
+        description: '先补短板',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1260,7 +1260,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '追猎首领',
-        description: '终局压迫战',
+        description: '最后一场压迫战',
         templateId: 'boss-hunt',
         difficultyScale: 1.38,
         selection: {
@@ -1305,7 +1305,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '处决首领',
-        description: '终局爆发战',
+        description: '最后一场爆发战',
         templateId: 'boss-executioner',
         difficultyScale: 1.42,
         selection: {
@@ -1320,7 +1320,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '要塞首领',
-        description: '终局穿透战',
+        description: '最后一场穿透战',
         templateId: 'boss-fortress',
         difficultyScale: 1.43,
         selection: {
@@ -1335,7 +1335,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '猎杀首领',
-        description: '终局机动战',
+        description: '最后一场机动战',
         templateId: 'boss-predator',
         difficultyScale: 1.44,
         selection: {

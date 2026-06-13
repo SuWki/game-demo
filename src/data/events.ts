@@ -524,7 +524,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '暴击抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '这一拍会决定暴击是先稳着打，还是直接压上去。',
+    description: '这一拍会决定暴击怎么走。',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 1.22,
@@ -544,11 +544,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'crit-reroute-window-direction',
         label: '先走暴击',
         gameplayLabel: '先打顺',
-        gainLabel: '更容易连着打出暴击',
-        costLabel: '先少一点容错',
+        gainLabel: '更容易连着出重击',
+        costLabel: '先少一点稳妥',
         routeId: 'crit',
         anomalyRole: 'direction',
-        description: '先把暴击打顺，后面更容易连着出重击。',
+        description: '先把暴击打顺。',
         effects: [
           {
             type: 'stats',
@@ -575,11 +575,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'crit-reroute-window-core',
         label: '补暴击火力',
         gameplayLabel: '火力更重',
-        gainLabel: '先盯住厚血目标，破绽会越挂越紧',
+        gainLabel: '先盯住厚血目标',
         costLabel: '清杂会慢一点',
         routeId: 'crit',
         anomalyRole: 'core',
-        description: '别再均着点了。先盯住厚血目标压，破绽会挂得更稳，下一串也更容易接上。',
+        description: '先盯厚血目标。',
         effects: [
           {
             type: 'stats',
@@ -603,11 +603,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'crit-reroute-window-transform',
         label: '压上暴击',
         gameplayLabel: '直接压上',
-        gainLabel: '盯住厚血目标，连着重击会把旁边一起炸掉',
-        costLabel: '容错和血量都会掉',
+        gainLabel: '连着重击会带到旁边',
+        costLabel: '容错会少一点',
         routeId: 'crit',
         anomalyRole: 'transform',
-        description: '这一下开始别再均着打了。先盯住厚血目标，把重击链压到底，旁边会跟着一起炸。',
+        description: '先盯住厚血目标，重击会带到旁边。',
         effects: [
           {
             type: 'stats',
@@ -636,7 +636,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿透抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '这一拍决定穿透是先稳着打，还是直接穿到后排。',
+    description: '这一拍决定穿透怎么走。',
     routeAffinity: 'pierce',
     selection: {
       baseWeight: 1.45,
@@ -661,7 +661,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         gainLabel: '更容易穿开前排',
         costLabel: '先不冒更大风险',
         anomalyRole: 'direction',
-        description: '先把前排穿开，后面更容易一路带到后排。',
+        description: '先把前排穿开。',
         effects: [
           {
             type: 'stats',
@@ -689,10 +689,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         routeId: 'pierce',
         label: '补穿透火力',
         gameplayLabel: '火力更重',
-        gainLabel: '穿前排更稳，后排掉血更快',
+        gainLabel: '穿前排更稳',
         costLabel: '这手先不顾别的路子',
         anomalyRole: 'core',
-        description: '先把穿透火力补上，打散前排会更稳。',
+        description: '先把穿透补上。',
         effects: [
           {
             type: 'stats',
@@ -716,10 +716,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         routeId: 'pierce',
         label: '压上穿透',
         gameplayLabel: '直接压上',
-        gainLabel: '找一条直线，穿开前排就会把后排一起带走',
-        costLabel: '站位和血量更吃紧',
+        gainLabel: '找到直线就能带后排',
+        costLabel: '站位会更紧',
         anomalyRole: 'transform',
-        description: '拿了这一手就别只看前排了。先找一条直线，穿开前排以后，后排会顺着这条线一起掉。',
+        description: '先找直线。',
         effects: [
           {
             type: 'stats',
@@ -748,7 +748,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿梭转接窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿梭已经跑顺了，可以临时改成贴身强打',
+    description: '穿梭已经跑顺了，可以临时改成贴身强打。',
     routeAffinity: 'dash',
     selection: {
       baseWeight: 1.45,
@@ -772,7 +772,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         gainLabel: '先把机动底子垫稳',
         costLabel: '不直接切成别的路线',
         anomalyRole: 'direction',
-        description: '不转向，先补移速、恢复和耐久。',
+        description: '先补机动。',
         effects: [
           {
             type: 'stats',
@@ -795,7 +795,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '后段会把前面拿的东西重新考一遍',
+    description: '后段会把前面拿的东西再考一遍。',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.52,
@@ -818,7 +818,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '容错会少一点',
         routeId: 'dominant',
         anomalyRole: 'core',
-        description: '尾段把节奏压窄，收人会更快。',
+        description: '尾段把节奏压窄。',
         effects: [
           {
             type: 'stats',
@@ -916,7 +916,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '进首领前，先决定这把是继续压火力，还是先留一层余地',
+    description: '进首领前，先看这把怎么收。',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.44,
@@ -935,11 +935,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'boss-sightline-press',
         label: '先把火力压满',
         gameplayLabel: '压上去',
-        gainLabel: '进首领前先把伤害再压一截',
+        gainLabel: '进首领前把伤害再压一截',
         costLabel: '容错会再少一点',
         routeId: 'dominant',
         anomalyRole: 'core',
-        description: '先把这一套火力再压一截，进首领时更容易直接抢主动。',
+        description: '先把火力再压一截。',
         effects: [
           {
             type: 'stats',
@@ -959,7 +959,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '爆发会慢一点',
         routeId: 'dominant',
         anomalyRole: 'finisher',
-        description: '先把机体补稳，进首领时不容易第一波就断。',
+        description: '先把机体补稳。',
         effects: [
           {
             type: 'stats',
@@ -1474,7 +1474,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'dash',
-    description: '普通射击会弱一点，但贴身闪过去那一下会更狠。',
+    description: '贴身闪过去会更狠。',
     selection: {
       baseWeight: 0.95,
       minRound: 2,
@@ -1495,7 +1495,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '基础火力会弱一点',
         routeId: 'dash',
         anomalyRole: 'direction',
-        description: '先把贴身那一下抬起来，后面更容易接回打。',
+        description: '先把贴身那一下抬起来。',
         effects: [
           {
             type: 'stats',
@@ -1522,7 +1522,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '耐久会少一点',
         routeId: 'dash',
         anomalyRole: 'core',
-        description: '把贴身后的回手拍实，擦身会更稳。',
+        description: '把贴身后的回手拍实。',
         effects: [
           {
             type: 'stats',
@@ -1550,7 +1550,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '容错明显下降',
         routeId: 'dash',
         anomalyRole: 'transform',
-        description: '把这把直接往贴身收人的路上推。',
+        description: '把这把直接推向贴身收人。',
         effects: [
           {
             type: 'stats',
