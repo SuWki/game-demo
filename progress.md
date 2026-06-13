@@ -1904,3 +1904,14 @@ TODO
 - stable smoke 继续干净，`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`。
 - natural fullrun 这轮比上一轮更稳：6 局里 5 局打到 Boss，3 局超时，平均清节点 2.0；`routeId=none` 和 `buildStage=unknown` 还没清完，但已经比之前那轮 1.67 / 4 局超时更好。
 - 当前判断：P1-1 还有小幅继续推进的价值，但已经接近“再往前一小步就该准备收口”的边缘。
+### 2026-06-12 P1-1 再推进
+- 本轮把 `E:\codex\auto-shooter-demo\src\data\upgrades.ts` 里的 `crit / pierce / dash` 起手牌补成正式 route 牌，让路线更早在自然流程里立住。
+- `npm run export:data`、`npm run build`、`npm run qa:stable-smoke` 都通过，`failed404Urls / consoleErrors / consoleWarns` 继续为空。
+- stable smoke 没有回退，`crit / pierce` 的展示链仍然正常。
+- natural fullrun 的更长样本里，`bossReachedRuns` 到 9/10，`avgNodesCleared` 到 3.0，`routeCounts.none` 和 `buildStageCounts.unknown` 都降到 4/10。
+- 当前判断：自然流程确实更愿意早立路线，但边际收益已经开始变薄；下一轮如果没有新的硬收益，就可以准备收口。
+2026-06-13
+- 本轮只动了 `src/systems/route/RouteProgression.ts`，把路线进入 `committed / matured` 的门槛前移了一格，继续压自然流程里的 `routeId=none` 和 `buildStage=unknown`。
+- `npm run build` 通过，`npm run qa:stable-smoke` 继续干净，`failed404Urls / consoleErrors / consoleWarns` 还是空。
+- `natural fullrun` 这轮继续往前推了一点：`routeCounts.none` 从 `4/10` 降到 `3/10`，`buildStageCounts.unknown` 从 `4/10` 降到 `3/10`，`timedOutRuns` 从 `4/10` 降到 `3/10`，`avgNodesCleared` 从 `3.0` 升到 `3.3`。
+- 当前判断还是偏收口：这轮确实还能再抬一点自然流程稳定性，但边际收益已经很薄，后面如果再做，应该只剩很小的自然流程收口，不适合继续大开一轮。

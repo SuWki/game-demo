@@ -1,7 +1,7 @@
 import type { AudioCue, PhaseId, RouteBuildStage, RouteId, RunState } from '../../game/types';
 
-const ROUTE_COMMIT_THRESHOLD = 2;
-const ROUTE_MATURE_THRESHOLD = 4;
+const ROUTE_COMMIT_THRESHOLD = 1;
+const ROUTE_MATURE_THRESHOLD = 3;
 
 export interface RouteAdvanceMeta {
   pickId: string;

@@ -1537,6 +1537,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           critOverdriveCritBonus: 0.03,
         },
       },
+      {
+        type: 'route',
+        routeId: 'crit',
+      },
     ],
   },
   {
@@ -1564,6 +1568,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           flawDurationBonus: 0.15,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'crit',
       },
     ],
   },
@@ -2168,6 +2176,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           pierceEchoDamageBonus: 0.05,
         },
       },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
     ],
   },
   {
@@ -2196,6 +2208,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           crackSpreadRadius: 0.08,
         },
       },
+      {
+        type: 'route',
+        routeId: 'pierce',
+      },
     ],
   },
   {
@@ -2223,6 +2239,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           pierceCooldownRefundBonus: 0.005,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'pierce',
       },
     ],
   },
@@ -2907,6 +2927,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashChargeSpeed: 0.08,
         },
       },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
     ],
   },
   {
@@ -2935,6 +2959,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
           dashGrazeRadiusBonus: 6,
         },
       },
+      {
+        type: 'route',
+        routeId: 'dash',
+      },
     ],
   },
   {
@@ -2962,6 +2990,10 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         modifiers: {
           dashCounterDamageBonus: 0.12,
         },
+      },
+      {
+        type: 'route',
+        routeId: 'dash',
       },
     ],
   },

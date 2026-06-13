@@ -1137,6 +1137,10 @@
         "modifiers": {
           "critOverdriveCritBonus": 0.03
         }
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
       }
     ]
   },
@@ -1167,6 +1171,10 @@
         "modifiers": {
           "flawDurationBonus": 0.15
         }
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
       }
     ]
   },
@@ -1829,6 +1837,10 @@
         "modifiers": {
           "pierceEchoDamageBonus": 0.05
         }
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
       }
     ]
   },
@@ -1859,6 +1871,10 @@
         "modifiers": {
           "crackSpreadRadius": 0.08
         }
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
       }
     ]
   },
@@ -1889,6 +1905,10 @@
         "modifiers": {
           "pierceCooldownRefundBonus": 0.005
         }
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
       }
     ]
   },
@@ -2639,6 +2659,10 @@
         "modifiers": {
           "dashChargeSpeed": 0.08
         }
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
       }
     ]
   },
@@ -2669,6 +2693,10 @@
         "modifiers": {
           "dashGrazeRadiusBonus": 6
         }
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
       }
     ]
   },
@@ -2699,6 +2727,10 @@
         "modifiers": {
           "dashCounterDamageBonus": 0.12
         }
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
       }
     ]
   },
