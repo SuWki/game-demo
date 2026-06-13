@@ -3083,7 +3083,7 @@ export class RunEngine {
         return activeRouteId === 'pierce'
           ? `这一手让${routeName}穿前排更稳，后排也开始掉血`
           : activeRouteId === 'dash'
-            ? `这一手让${routeName}贴住后还能回打`
+            ? `这一手让${routeName}贴住后还能回手`
             : `这一手让${routeName}连打更疼了`;
       case 'transform':
         return activeRouteId === 'crit'
@@ -3708,7 +3708,7 @@ export class RunEngine {
       dashSidestepBank: { routeId: 'dash', text: '贴身后更容易回打了', priority: 2 },
       dashZeroWindow: { routeId: 'dash', text: '贴身一圈能收人了', priority: 3 },
       dashAfterimage: { routeId: 'dash', text: '最后那下到手了，这把能收', priority: 4 },
-      critBridgeFocus: { routeId: 'crit', text: '先盯住厚血目标：破绽链开始往重的身上挂，旁边会跟着掉', priority: 3 },
+      critBridgeFocus: { routeId: 'crit', text: '破绽链开始挂上去了', priority: 3 },
       critAfterglow: { routeId: 'crit', text: '暴击线开始顺手了', priority: 1 },
       critEmbershard: { routeId: 'crit', text: '暴击线已经连起来了', priority: 2 },
       critCrownfire: { routeId: 'crit', text: '最后那下到手了，这把能收', priority: 4 },
@@ -3755,22 +3755,22 @@ export class RunEngine {
         this.activateRoutePerks(['critBridgeFocus']);
         return {
           routeId: 'crit',
-          momentText: '先盯住厚血目标：破绽会越挂越紧，下一串更容易接上',
-          tipText: '暴击改打法了：先压厚血目标，把破绽链挂稳。',
+          momentText: '破绽链开始挂上去了',
+          tipText: '暴击开始压单点了。',
         };
       case 'crit-reroute-window-transform':
         this.activateRoutePerks(['critBridgeFocus', 'critEmbershard', 'critCrownfire', 'critLockProtocol']);
         return {
           routeId: 'crit',
-          momentText: '盯住厚血目标：连着重击会把周围一起炸开',
-          tipText: '暴击改打法了：先盯住厚血目标，把重击链压到底。',
+          momentText: '连着重击会把周围一起炸开',
+          tipText: '暴击开始压单点了。',
         };
       case 'pierce-reroute-window-breakthrough':
         this.activateRoutePerks(['pierceRiftbloom', 'pierceFloodgate', 'pierceBreakthrough']);
         return {
           routeId: 'pierce',
           momentText: '找一条直线：穿开前排就会把后排一起带走',
-          tipText: '穿透改打法了：先找直线，前排一裂开就顺着带后排。',
+          tipText: '穿透开始打直线了。',
         };
       default:
         return null;
@@ -5101,7 +5101,7 @@ export class RunEngine {
         (target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 2.05 : 1.42) + focusHoldBonus,
       );
       if (newFocusTarget && battle.critChain >= 1) {
-        this.queueRouteMoment('crit', '先压这一只：破绽链开始往厚血目标上挂了');
+        this.queueRouteMoment('crit', '破绽链开始挂上去了');
       }
     }
     battle.playerAimDirX = Math.cos(baseAngle);

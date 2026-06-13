@@ -954,7 +954,7 @@ export class OverlayController {
           <span><small>拿了会变成</small><b>${this.getEventClassLabel(eventDef)}</b></span>
           <span><small>现在打到</small><b>${progress.progressLabel}</b></span>
         </div>
-        <div class="anomaly-warning-strip">拿了就别回头，这把会换走法。</div>
+        <div class="anomaly-warning-strip">这把会换走法。</div>
         ${roleSummary ? `<div class="choice-strip-event-meta">${roleSummary}</div>` : ''}
       </aside>
     `;

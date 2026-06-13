@@ -148,9 +148,9 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return `${routeName}开始顺手了，先贴近再找回手`;
+          return `${routeName}开始顺手了`;
         case 'committed':
-          return `${routeName}已经连起来了，贴住后还能回打`;
+          return `${routeName}已经连起来了`;
         case 'matured':
           return `${routeName}已经压住了，贴身一圈就能收人`;
         default:
@@ -168,7 +168,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
         case 'starter':
           return '暴击开始连上了：破绽会越挂越稳';
         case 'bridge':
-          return '暴击改打法了：先盯厚血目标压，破绽会溅到旁边';
+          return '暴击开始压单点了：破绽会溅到旁边';
         case 'payoff':
           return '暴击打疯了：连打会一串串炸开';
         default:
@@ -190,7 +190,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
         case 'starter':
           return '穿梭开始贴近了：先贴近，再回打';
         case 'bridge':
-          return '穿梭接起来了：贴住后还能补一轮';
+          return '穿梭接起来了：贴住后还能回打';
         case 'payoff':
           return '穿梭压住了：一圈就能收人';
         default:
