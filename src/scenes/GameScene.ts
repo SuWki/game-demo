@@ -1602,29 +1602,30 @@ export class GameScene extends Phaser.Scene {
       const screen = this.worldToScreen(camera, enemy.x, enemy.y);
       const label = battle.encounterType === 'boss' ? 'Boss' : '精英';
       const tone = battle.encounterType === 'boss' ? '#ffd774' : '#ffdd7d';
-      const text = this.getEnemyLabelText();
+      const text = this.getEnemyLabelText(battle.encounterType === 'boss');
       text
         .setText(label)
         .setPosition(screen.x, screen.y - enemy.radius - (battle.encounterType === 'boss' ? 39 : 23))
-        .setStyle({
-          fontFamily: 'Arial, sans-serif',
-          fontSize: battle.encounterType === 'boss' ? '13px' : '11px',
-          fontStyle: '700',
-          color: tone,
-          backgroundColor: 'rgba(12, 18, 22, 0.72)',
-          padding: { left: 5, right: 5, top: 1, bottom: 1 },
-        })
-        .setVisible(true);
+        .setColor(tone);
+      if (battle.encounterType === 'boss') {
+        text.setFontSize(13);
+      } else {
+        text.setFontSize(11);
+      }
+      text.setVisible(true);
     }
   }
 
-  private getEnemyLabelText(): Phaser.GameObjects.Text {
+  private getEnemyLabelText(isBoss: boolean): Phaser.GameObjects.Text {
     let text = this.enemyLabelTexts[this.enemyLabelCursor];
     if (!text) {
       text = this.add.text(0, 0, '', {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '11px',
-        color: '#ffdd7d',
+        fontSize: isBoss ? '13px' : '11px',
+        fontStyle: '700',
+        color: isBoss ? '#ffd774' : '#ffdd7d',
+        backgroundColor: 'rgba(12, 18, 22, 0.72)',
+        padding: { left: 5, right: 5, top: 1, bottom: 1 },
       });
       text.setOrigin(0.5, 0.5);
       text.setDepth(90);
