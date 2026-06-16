@@ -209,9 +209,9 @@ export function tryTriggerDash(
       });
     }
     deps.enqueueAudio('dashPulse');
-    deps.enqueueTip(`贴身一圈打到 ${dashPulseHits} 个敌人`);
+    deps.enqueueTip(`接近敌人命中 ${dashPulseHits} 个目标`);
   } else {
-    deps.enqueueTip('贴身一圈：拿到短暂无伤');
+    deps.enqueueTip('接近敌人：获得短暂无敌');
   }
 
   if (dashCharge >= 2 && !deps.routeMomentShown.dash) {

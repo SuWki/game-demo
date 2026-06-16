@@ -98,7 +98,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
         title: '侧压试飞',
-        description: '敌人从侧面压上来',
+        description: '敌人从侧翼进攻',
         templateCandidates: [
           { templateId: 'elimination-pincer', weight: 1.8 },
           { templateId: 'elimination', weight: 1.3 },
@@ -179,8 +179,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-upgrade-fireline',
         type: 'upgrade',
         phase: 'opening',
-        title: '补一手',
-        description: '稳一稳，补点机动',
+        title: '选择强化',
+        description: '调整站位，补充机动性',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.2,
@@ -225,7 +225,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '临时改路',
-        description: '让别的路子也能接上',
+        description: '使其他流派也能衔接当前战斗节奏',
         offerRole: 'pivot',
         selection: {
           baseWeight: 1.45,
@@ -447,8 +447,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-bridge',
         type: 'upgrade',
         phase: 'mid',
-        title: '补一手',
-        description: '稳一稳，补点机动',
+        title: '选择强化',
+        description: '调整站位，补充机动性',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.4,
@@ -915,7 +915,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '重击追杀',
-        description: '攒着火力补最后一下',
+        description: '累积火力完成最终补强',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.6 },
           { templateId: 'survival', weight: 1.1 },
@@ -1025,7 +1025,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '定势整备',
-        description: '把当前路子压住',
+        description: '强化当前流派',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.58,
@@ -1042,8 +1042,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-payoff',
         type: 'upgrade',
         phase: 'late',
-        title: '压上筹码',
-        description: '压上去收尾',
+        title: '全面强化',
+        description: '集中进攻收尾',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.7,
@@ -1069,7 +1069,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '终拍定稿',
-        description: '把这局定下来',
+        description: '确立本局流派方向',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.15,

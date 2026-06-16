@@ -124,7 +124,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'route-calibration',
     name: '读数校准',
-    description: '要么把这套继续拧紧，要么先缓一口气',
+    description: '继续强化当前配置，或调整战斗节奏',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.3,
@@ -143,7 +143,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'route-calibration-focus',
         label: '顺着这条线再压一手',
-        description: '把这套核心再拧紧一点',
+        description: '强化核心战斗属性',
         routeId: 'dominant',
         effects: [
           {
@@ -162,7 +162,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'route-calibration-stabilize',
         label: '补一个稳态',
-        description: '缓一口气，顺手把射速提起来',
+        description: '调整节奏，顺手把射速提起来',
         effects: [
           {
             type: 'stats',
@@ -200,7 +200,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'targeted-telemetry-press',
         label: '追当前窗口',
-        description: '这条线会更稳，火力也更扎实',
+        description: '该流派属性提升，火力更加稳定',
         routeId: 'dominant',
         effects: [
           {
@@ -285,7 +285,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'early-linecheck',
     name: '起手校线',
-    description: '先把这把的方向拧顺',
+    description: '确立本局流派的战斗方向',
     selection: {
       baseWeight: 3.98,
       phaseBonuses: {
@@ -386,7 +386,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'coolant-detour',
     name: '冷却绕行',
-    description: '转为更快攻击或更稳防护',
+    description: '转换为更快的攻击节奏或更强的防护能力',
     selection: {
       baseWeight: 3.04,
       minRound: 2,
@@ -543,12 +543,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-direction',
         label: '先走暴击',
-        gameplayLabel: '先打顺',
+        gameplayLabel: '建立节奏',
         gainLabel: '更容易连着出重击',
         costLabel: '先少一点稳妥',
         routeId: 'crit',
         anomalyRole: 'direction',
-        description: '先把暴击打顺。',
+        description: '建立暴击流派的战斗节奏。',
         effects: [
           {
             type: 'stats',
@@ -601,8 +601,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'crit-reroute-window-transform',
-        label: '压上暴击',
-        gameplayLabel: '直接压上',
+        label: '强化暴击',
+        gameplayLabel: '全面强化',
         gainLabel: '连着重击会带到旁边',
         costLabel: '容错会少一点',
         routeId: 'crit',
@@ -689,8 +689,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         routeId: 'pierce',
         label: '补穿透火力',
         gameplayLabel: '火力更重',
-        gainLabel: '穿前排更稳',
-        costLabel: '这手先不顾别的路子',
+        gainLabel: '前排穿透能力增强',
+        costLabel: '本回合专注当前流派',
         anomalyRole: 'core',
         description: '先把穿透补上。',
         effects: [
@@ -714,8 +714,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'pierce-reroute-window-breakthrough',
         routeId: 'pierce',
-        label: '压上穿透',
-        gameplayLabel: '直接压上',
+        label: '强化穿透',
+        gameplayLabel: '全面强化',
         gainLabel: '找到直线就能带后排',
         costLabel: '站位会更紧',
         anomalyRole: 'transform',
@@ -748,7 +748,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿梭转接窗',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿梭已经跑顺了，可以临时改成贴身强打。',
+    description: '穿梭已成型，可切换为近战强攻模式。',
     routeAffinity: 'dash',
     selection: {
       baseWeight: 1.45,
@@ -814,7 +814,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'closeout-echo-press',
         label: '压到最后',
         gameplayLabel: '压到最后',
-        gainLabel: '收尾会更狠',
+        gainLabel: '最终输出伤害提升',
         costLabel: '容错会少一点',
         routeId: 'dominant',
         anomalyRole: 'core',
@@ -833,7 +833,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'closeout-echo-buffer',
         label: '留一层',
         gameplayLabel: '留一层',
-        gainLabel: '收尾会更稳',
+        gainLabel: '最终输出更加稳定',
         costLabel: '爆发会慢一点',
         description: '多留一点回旋，后段不容易断。',
         effects: [
@@ -916,7 +916,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '进首领前，先看这把怎么收。',
+    description: '进入首领战前，确认最终战斗配置。',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.44,
@@ -934,7 +934,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'boss-sightline-press',
         label: '先把火力压满',
-        gameplayLabel: '压上去',
+        gameplayLabel: '确认选择',
         gainLabel: '进首领前把伤害再压一截',
         costLabel: '容错会再少一点',
         routeId: 'dominant',
@@ -1201,7 +1201,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         gameplayLabel: '玻璃大炮',
         gainLabel: '伤害与移速提高',
         costLabel: '生命上限降低',
-        description: '更快更痛，但更脆弱',
+        description: '攻击速度和伤害提升，但生命值降低',
         effects: [
           {
             type: 'stats',
@@ -1274,7 +1274,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         gameplayLabel: '稳态续航',
         gainLabel: '生命上限和再生提高',
         costLabel: '伤害和弹速降低',
-        description: '击杀变慢，但更稳',
+        description: '攻击速度降低，但生存能力增强',
         effects: [
           {
             type: 'stats',
@@ -1425,7 +1425,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-tempo',
         label: '接入回收驱动',
         gameplayLabel: '拾取驱动',
-        gainLabel: '移速提高，这一套更顺一点',
+        gainLabel: '移速提高，流派战斗效率提升',
         costLabel: '基础伤害降低',
         routeId: 'dominant',
         description: '伤害变低，但更鼓励追击和回收',
@@ -1447,7 +1447,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-magnet',
         label: '接入磁轨回收',
         gameplayLabel: '回收拉扯',
-        gainLabel: '弹速和移速提高，这一套更顺一点',
+        gainLabel: '弹速和移速提高，流派战斗效率提升',
         costLabel: '射速降低',
         routeId: 'dominant',
         description: '输出降低，回收和走位提升',
@@ -1470,11 +1470,11 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'dash-charge-protocol',
-    name: '贴身抉择',
+    name: '近战抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'dash',
-    description: '贴身闪过去会更狠。',
+    description: '接近敌人将造成更高伤害。',
     selection: {
       baseWeight: 0.95,
       minRound: 2,
@@ -1495,7 +1495,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '基础火力会弱一点',
         routeId: 'dash',
         anomalyRole: 'direction',
-        description: '先把贴身那一下抬起来。',
+        description: '强化接近敌人后的反击能力。',
         effects: [
           {
             type: 'stats',
@@ -1517,12 +1517,12 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'dash-charge-core',
         label: '补进火力',
-        gameplayLabel: '回打更稳',
-        gainLabel: '贴身后更容易回打',
+        gameplayLabel: '反击增强',
+        gainLabel: '接近敌人后更容易反击',
         costLabel: '耐久会少一点',
         routeId: 'dash',
         anomalyRole: 'core',
-        description: '把贴身后的回手拍实。',
+        description: '强化接近敌人后的反击效果。',
         effects: [
           {
             type: 'stats',
@@ -1544,13 +1544,13 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'dash-charge-transform',
-        label: '直接贴身',
-        gameplayLabel: '直接压上',
-        gainLabel: '贴身后爆发更狠',
+        label: '全面接近',
+        gameplayLabel: '全面强化',
+        gainLabel: '接近敌人后爆发更强',
         costLabel: '容错明显下降',
         routeId: 'dash',
         anomalyRole: 'transform',
-        description: '把这把直接推向贴身收人。',
+        description: '将战斗推向全面近战输出。',
         effects: [
           {
             type: 'stats',
@@ -1573,9 +1573,9 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'dash-charge-finisher',
-        label: '补最后一下',
-        gameplayLabel: '补最后一下',
-        gainLabel: '贴身后更容易补掉残血',
+        label: '最终补强',
+        gameplayLabel: '最终补强',
+        gainLabel: '接近敌人后更容易消灭残血',
         costLabel: '普通射击更弱',
         routeId: 'dash',
         anomalyRole: 'finisher',
@@ -1613,7 +1613,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'crit',
-    description: '暴击已经打顺了，这一下决定是继续补伤害，还是直接压上去。',
+    description: '暴击已成型，本回合决定继续强化伤害或全面进攻。',
     selection: {
       baseWeight: 0.9,
       minRound: 2,
@@ -1628,13 +1628,13 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'crit-lock-transform',
-        label: '压上重击',
-        gameplayLabel: '直接压上',
+        label: '强化重击',
+        gameplayLabel: '全面强化',
         gainLabel: '短时间里会打得特别狠',
         costLabel: '容错明显下降',
         routeId: 'crit',
         anomalyRole: 'transform',
-        description: '压掉容错，换更狠的爆发窗口。',
+        description: '降低容错率，换取更高的爆发伤害。',
         effects: [
           {
             type: 'stats',
@@ -1659,12 +1659,12 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-lock-finisher',
         label: '接入终结回路',
-        gameplayLabel: '补最后一下',
+        gameplayLabel: '最终补强',
         gainLabel: '破绽炸开后更容易补掉残血',
         costLabel: '后面能补的会少',
         routeId: 'crit',
         anomalyRole: 'finisher',
-        description: '这一手不是补属性，是把收尾拉起来。',
+        description: '本回合不补充属性，直接强化最终输出能力。',
         effects: [
           {
             type: 'stats',

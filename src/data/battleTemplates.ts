@@ -345,7 +345,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pressurePhases: [
         {
           id: 'seal-in',
-          label: '压上来',
+          label: '进攻',
           triggerHpRatio: 0.6,
           triggerRemainingSec: 15,
           spawnIntervalMultiplier: 0.9,
@@ -774,7 +774,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         },
         {
           id: 'fireline',
-          label: '火线压上',
+          label: '火线进攻',
           behaviorOverride: 'kiting',
           signatureLabel: '压边迁火',
           signatureDurationSec: 3.2,
@@ -1334,7 +1334,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-bridge': {
     id: 'elite-bridge',
     name: '桥口压线',
-    description: '前后排开始分层，压法更稳',
+    description: '前后排敌人开始分层，战斗节奏更加稳定',
     contentTier: 'rare',
     durationSec: 34,
     spawnIntervalSec: 1.04,
@@ -1460,7 +1460,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
       pressurePhases: [
         {
           id: 'relay-push',
-          label: '接力压上',
+          label: '接力进攻',
           signatureLabel: '前后换手',
           signatureDurationSec: 3.2,
           signaturePulseIntervalSec: 1.35,
@@ -1669,7 +1669,7 @@ export function getBattleEncounterLabel(
       return '生存战';
     case 'kills':
     default:
-      return '普通战';
+      return '战斗';
   }
 }
 

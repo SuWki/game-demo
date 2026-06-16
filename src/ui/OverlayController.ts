@@ -24,7 +24,6 @@ interface ResultActions {
 interface PauseActions {
   onResume: () => void;
   onRestart: () => void;
-  onBackToMenu: () => void;
   onVolume: () => void;
 }
 
@@ -50,7 +49,7 @@ const NODE_TYPE_ACCENT_MAP: Record<NodeOption['type'], string> = {
 const TOAST_BADGES: Record<ToastTone, string> = {
   neutral: '信息',
   accent: '提示',
-  route: '路子',
+  route: '流派',
   danger: '危险',
   success: '搞定',
 };
@@ -98,7 +97,7 @@ export class OverlayController {
     window.addEventListener('resize', () => this.hideTooltip());
   }
 
-  public showMenu(summary: OverlayMetaSummary, onStart: () => void, onExport: () => void, onVolume: () => void): void {
+  public showMenu(summary: OverlayMetaSummary, onStart: () => void, onVolume: () => void): void {
     this.hideHud();
     this.hidePanel();
     this.clearToasts();
@@ -130,11 +129,10 @@ export class OverlayController {
               <button class="combat-action combat-action-primary" data-action="start">
                 <span class="action-icon">▶</span>
                 <div class="action-content">
-                  <strong>开始作战</strong>
-                  <small>直接开一把</small>
+                  <strong style="font-size: 1.4rem;">开始作战</strong>
                 </div>
               </button>
-              <p class="start-screen-callout">先开战，战报和设置往后放。</p>
+              <p class="start-screen-callout">WASD移动，自动射击</p>
             </div>
 
             <div class="start-screen-meta">
@@ -148,21 +146,18 @@ export class OverlayController {
                   <strong class="stat-value">${summary.wins}</strong>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">上次</span>
+                  <span class="stat-label">上次游玩时长</span>
                   <strong class="stat-value">${summary.lastDurationSec > 0 ? this.formatDuration(summary.lastDurationSec) : '--:--'}</strong>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">上把路子</span>
+                  <span class="stat-label">上把流派</span>
                   <strong class="stat-value">${summary.lastRouteName || '无'}</strong>
                 </div>
               </div>
 
               <div class="start-screen-secondary">
-                <button class="combat-action-small" data-action="export">
-                  <span>旧战报</span>
-                </button>
                 <button class="combat-action-small" data-action="volume">
-                  <span>调音量</span>
+                  <span>音量调整</span>
                 </button>
               </div>
             </div>
@@ -171,7 +166,6 @@ export class OverlayController {
       </section>
     `;
     this.bindClick('[data-action="start"]', onStart);
-    this.bindClick('[data-action="export"]', onExport);
     this.bindClick('[data-action="volume"]', onVolume);
   }
 
@@ -186,56 +180,22 @@ export class OverlayController {
       <section class="floating-panel dock-panel commercial-choice-panel commercial-pause-panel">
         <div class="tray-header">
           <div class="tray-title-group">
-            <span class="panel-eyebrow">先停一下</span>
-            <h2 class="panel-title">缓一口气</h2>
+            <h2 class="panel-title">暂停</h2>
           </div>
         </div>
         <div class="pause-panel-layout">
-          <aside class="pause-panel-summary" aria-label="当前局面">
-            <div class="pause-panel-status">
-              <span>${snapshot.phaseLabel}</span>
-              <strong>${snapshot.statusText}</strong>
-              <small>${snapshot.statusSubtext ?? snapshot.progressDetail}</small>
-            </div>
-            <div class="screen-summary-grid pause-panel-grid">
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">这把路子</span>
-                <strong>${snapshot.routeStatusText}</strong>
-              </article>
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">打到哪了</span>
-                <strong>${snapshot.progressLabel}</strong>
-              </article>
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">眼下先做</span>
-                <strong>${snapshot.objectiveLabel}</strong>
-              </article>
-              <article class="screen-summary-card">
-                <span class="screen-summary-label">还差多少</span>
-                <strong>${snapshot.objectiveProgressText}</strong>
-              </article>
-            </div>
-          </aside>
           <div class="pause-panel-actions">
-            <div class="pause-panel-action-lead">
-              <strong>先看左边，再决定停多久。</strong>
-              <small>继续是主操作，其他都往后退。</small>
-            </div>
             <button class="text-action text-action-primary" data-action="resume">
-              <span>接着打</span>
-              <small>回到刚才那一下</small>
+              <span>回到游戏</span>
             </button>
             <button class="text-action" data-action="restart">
-              <span>重开这一局</span>
-              <small>从头再来</small>
+              <span>重新开始</span>
             </button>
             <button class="text-action" data-action="menu">
               <span>回到首页</span>
-              <small>先回机库</small>
             </button>
             <button class="text-action" data-action="volume">
-              <span>调音量</span>
-              <small>把声音调一下</small>
+              <span>音量调整</span>
             </button>
           </div>
         </div>
@@ -243,7 +203,6 @@ export class OverlayController {
     `;
     this.bindClick('[data-action="resume"]', actions.onResume);
     this.bindClick('[data-action="restart"]', actions.onRestart);
-    this.bindClick('[data-action="menu"]', actions.onBackToMenu);
     this.bindClick('[data-action="volume"]', actions.onVolume);
   }
 
@@ -302,6 +261,15 @@ export class OverlayController {
     this.hideTooltip();
     this.hudLayer.classList.remove('hidden');
     const routeMomentColor = snapshot.routeMomentRouteId ? ROUTE_COLOR_MAP[snapshot.routeMomentRouteId] : undefined;
+    const routeStackHtml =
+      snapshot.routeStatusText || snapshot.routeMomentText
+        ? `
+          <div class="game-hud-fixed__route-stack"${routeMomentColor ? ` style="--route-pill: ${routeMomentColor}"` : ''}>
+            ${snapshot.routeStatusText ? `<span class="game-hud-fixed__route">${snapshot.routeStatusText}</span>` : ''}
+            ${snapshot.routeMomentText ? `<span class="game-hud-fixed__route-moment">${snapshot.routeMomentText}</span>` : ''}
+          </div>
+        `
+        : '';
     this.hudLayer.innerHTML = `
       <div class="game-hud-fixed">
         <section class="game-hud-fixed__left">
@@ -316,18 +284,14 @@ export class OverlayController {
           </div>
           <div class="hud-meter-card is-exp">
             <div class="hud-meter-card__head">
-              <span>EXP</span>
+              <span>EXP ${snapshot.levelText}</span>
               <strong>${snapshot.experienceText}</strong>
             </div>
             <div class="hud-meter-card__bar is-exp">
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
-            <span class="hud-meter-card__level">${snapshot.levelText}</span>
           </div>
-          <div class="game-hud-fixed__route-stack"${routeMomentColor ? ` style="--route-pill: ${routeMomentColor}"` : ''}>
-            <span class="game-hud-fixed__route">${snapshot.routeStatusText}</span>
-            ${snapshot.routeMomentText ? `<span class="game-hud-fixed__route-moment">${snapshot.routeMomentText}</span>` : ''}
-          </div>
+          ${routeStackHtml}
         </section>
         <section class="game-hud-fixed__center">
           <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
@@ -359,9 +323,9 @@ export class OverlayController {
     this.showPanel({
       panelClassName: 'panel-node-choice panel-route-choice',
       panelLayerClassName: 'panel-layer-center',
-      modeLabel: '下一站',
-      eyebrow: '接下来',
-      title: '下一站走哪条',
+      modeLabel: '路线选择',
+      eyebrow: '路线选择',
+      title: '路线选择',
       contextHtml: this.renderRouteChoiceContext(phaseLabel, options.length, progress),
       items: options.map((node) => this.renderNodeChoiceCard(node)),
       progress,
@@ -383,9 +347,9 @@ export class OverlayController {
     this.showPanel({
       panelClassName: 'panel-upgrade-choice',
       panelLayerClassName: 'panel-layer-center',
-      modeLabel: isFinalPrep ? '最后整备' : '挑强化',
-      eyebrow: isFinalPrep ? '最后补一手' : '挑一张',
-      title: isFinalPrep ? '最后整备' : '挑一张强化',
+      modeLabel: isFinalPrep ? '最后整备' : '选择强化',
+      eyebrow: isFinalPrep ? '最后整备' : '选择强化',
+      title: isFinalPrep ? '最后整备' : '选择强化',
       contextHtml: this.renderUpgradeChoiceContext(progress),
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade, progress)),
       progress,
@@ -404,9 +368,9 @@ export class OverlayController {
     this.showPanel({
       panelClassName: `panel-event-choice${isAnomaly ? ' panel-event-choice-anomaly' : ''}`,
       panelLayerClassName: isAnomaly ? 'panel-layer-center' : undefined,
-      modeLabel: isAnomaly ? '异常机会' : '事件',
-      eyebrow: isAnomaly ? '局面要变了' : '事件',
-      title: isAnomaly ? '异常机会' : eventDef.name,
+      modeLabel: isAnomaly ? '异常节点' : '事件',
+      eyebrow: isAnomaly ? '异常节点' : '事件',
+      title: isAnomaly ? '异常节点' : eventDef.name,
       contextHtml: isAnomaly ? this.renderAnomalyChoiceContext(eventDef, progress) : undefined,
       items: eventDef.options.map((option) => this.renderEventChoiceCard(eventDef, option)),
       progress,
@@ -460,8 +424,8 @@ export class OverlayController {
             <div class="result-status-icon ${isVictory ? 'status-victory' : 'status-defeat'}">
               ${isVictory ? '✓' : '✗'}
             </div>
-            <h1 class="result-title">${isVictory ? '这局收住了' : '这局断在这了'}</h1>
-            <p class="result-subtitle">${isVictory ? '一路打到了最后' : '这次停在了这里'}</p>
+            <h1 class="result-title">${isVictory ? '通关成功' : '通关失败'}</h1>
+            <p class="result-subtitle">${isVictory ? '已完成全部关卡' : '本局未能完成'}</p>
             ${!isVictory ? `<p class="result-reason">${result.endingReason}</p>` : ''}
           </div>
 
@@ -480,9 +444,6 @@ export class OverlayController {
               </div>
             </button>
             <div class="result-secondary-actions">
-              <button class="combat-action-small" data-action="details">
-                <span>看这局怎么断的</span>
-              </button>
               <button class="combat-action-small" data-action="menu">
                 <span>回到机库</span>
               </button>
@@ -499,7 +460,7 @@ export class OverlayController {
               <strong class="core-stat-value" data-target="${result.battleWins}" data-format="number">0</strong>
             </div>
             <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="160">
-              <span class="core-stat-label">路子</span>
+              <span class="core-stat-label">流派</span>
               <strong class="core-stat-value">${routeLabel}</strong>
               <small class="core-stat-sub">${buildStageLabel}</small>
             </div>
@@ -510,7 +471,7 @@ export class OverlayController {
               ? `
           <div class="result-upgrade-timeline">
             <div class="timeline-header">
-              <span>这局一路拿了什么</span>
+              <span>所有强化</span>
               <small>${result.selectedUpgrades.length} 张牌</small>
             </div>
             <div class="timeline-scroll">
@@ -519,7 +480,7 @@ export class OverlayController {
                   (upgrade) => `
                 <div class="timeline-item" style="border-color: ${RARITY_COLOR_MAP[upgrade.rarity]};">
                   <div class="timeline-item-icon" style="background: ${RARITY_COLOR_MAP[upgrade.rarity]};">
-                    ${(upgrade.rarityLabel ?? upgrade.rarity ?? '强化').charAt(0)}
+                    ${upgrade.routeId ? '流派' : '强化品质'}
                   </div>
                   <div class="timeline-item-content">
                     <strong>${upgrade.name}</strong>
@@ -541,12 +502,8 @@ export class OverlayController {
               <strong data-target="${result.levelReached}" data-format="level">Lv.1</strong>
             </div>
             <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="320">
-              <span>节点</span>
+              <span>关卡</span>
               <strong data-target="${result.nodesCleared}" data-format="number">0</strong>
-            </div>
-            <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="400">
-              <span>停在哪</span>
-              <strong>${result.endingLabel}</strong>
             </div>
           </div>
         </div>
@@ -554,7 +511,6 @@ export class OverlayController {
     `;
     this.bindClick('[data-action="restart"]', actions.onRestart);
     this.bindClick('[data-action="menu"]', actions.onBackToMenu);
-    this.bindClick('[data-action="details"]', () => this.showResultDetails(result));
 
     // Animate stats appearing and counting up
     this.animateResultStats();
@@ -648,7 +604,7 @@ export class OverlayController {
             </div>
           </div>
         `).join('')
-      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">这局没拿到强化</p>';
+      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">本局未获得强化</p>';
 
     const anomalyTimeline = anomalyHistory.length > 0
       ? anomalyHistory.map((record, index) => `
@@ -668,7 +624,7 @@ export class OverlayController {
             </div>
           </div>
         `).join('')
-      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">这局没有特别明显的转折</p>';
+      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">本局无明显转折</p>';
 
     this.panelLayer.innerHTML = `
       <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
@@ -697,10 +653,10 @@ export class OverlayController {
           <div class="result-details-section">
             <h3 class="detail-section-title">转折</h3>
             <div class="detail-anomaly-strip">
-              <span><small>先打顺</small><strong>${anomalyRoleCounts.direction}</strong></span>
+              <span><small>建立节奏</small><strong>${anomalyRoleCounts.direction}</strong></span>
               <span><small>火力更重</small><strong>${anomalyRoleCounts.core}</strong></span>
-              <span><small>直接压上</small><strong>${anomalyRoleCounts.transform}</strong></span>
-              <span><small>补最后一下</small><strong>${anomalyRoleCounts.finisher}</strong></span>
+              <span><small>全面强化</small><strong>${anomalyRoleCounts.transform}</strong></span>
+              <span><small>最终补强</small><strong>${anomalyRoleCounts.finisher}</strong></span>
             </div>
             <div class="detail-timeline-scroll">
               ${anomalyTimeline}
@@ -730,11 +686,11 @@ export class OverlayController {
                 <strong>Lv.${result.levelReached}</strong>
               </div>
               <div class="detail-stat-card">
-                <span>路子</span>
+                <span>流派</span>
                 <strong>${routeLabel}</strong>
               </div>
               <div class="detail-stat-card">
-                <span>节点</span>
+                <span>关卡</span>
                 <strong>${result.nodesCleared}</strong>
               </div>
               <div class="detail-stat-card">
@@ -834,16 +790,13 @@ export class OverlayController {
     const stageLabel = this.getCompactProgressLabel(progress.progressLabel);
 
     return `
-      <aside class="choice-context choice-context-route" aria-label="下一站怎么选">
+      <aside class="choice-context choice-context-route" aria-label="路线选择">
         <div class="route-context-copy">
-          <span>先看这段</span>
+          <span>当前关卡</span>
           <strong>${stageLabel}</strong>
-          <small>${phaseLabel || '下一站走哪条'}</small>
         </div>
         <div class="route-context-copy route-context-rule">
-          <span>这一轮怎么选</span>
-          <strong>${optionCount} 条路里挑 1 条</strong>
-          <small>先看节点名，再看进去会碰上什么。</small>
+          <strong>路线 ${optionCount} 选 1</strong>
         </div>
       </aside>
     `;
@@ -929,13 +882,12 @@ export class OverlayController {
       .map((stat) => `<span class="upgrade-stat-item tone-${stat.tone}"><small>${stat.label}</small><strong>${stat.value}</strong></span>`)
       .join('');
     return `
-      <aside class="choice-context choice-context-upgrade" aria-label="机体现在这样">
+      <aside class="choice-context choice-context-upgrade" aria-label="当前等级">
         <div class="upgrade-context-head">
-          <span>机体现在这样</span>
+          <span>当前等级</span>
           <strong>${progress.levelText}</strong>
         </div>
         <div class="upgrade-context-route">
-          <small>这把现在</small>
           <strong>${progress.routeStatusText}</strong>
         </div>
         <div class="upgrade-stat-grid">${statItems}</div>
@@ -946,15 +898,10 @@ export class OverlayController {
   private renderAnomalyChoiceContext(eventDef: EventDefinition, progress: PanelProgress): string {
     const roleSummary = this.getAnomalyRoleSummary(eventDef);
     return `
-      <aside class="choice-context choice-context-anomaly" aria-label="异常风险摘要">
-        <span class="anomaly-warning-label">局面要变了</span>
+      <aside class="choice-context choice-context-anomaly" aria-label="异常节点">
+        <span class="anomaly-warning-label">异常节点</span>
         <strong>${eventDef.name}</strong>
         <p>${eventDef.description}</p>
-        <div class="anomaly-risk-grid">
-          <span><small>拿了会变成</small><b>${this.getEventClassLabel(eventDef)}</b></span>
-          <span><small>现在打到</small><b>${progress.progressLabel}</b></span>
-        </div>
-        <div class="anomaly-warning-strip">这把会换走法。</div>
         ${roleSummary ? `<div class="choice-strip-event-meta">${roleSummary}</div>` : ''}
       </aside>
     `;
@@ -968,15 +915,11 @@ export class OverlayController {
       <button class="choice-strip choice-strip-node" style="--choice-accent: ${accent}" data-choice="${node.id}">
         <div class="choice-node-top">
           <span class="choice-mode-badge choice-node-mode">${NODE_TYPE_LABEL_MAP[node.type]}</span>
-          <span class="choice-node-step">这一站</span>
         </div>
         <div class="choice-strip-body choice-strip-body-node">
           <span class="choice-node-kicker">${detail}</span>
           <strong>${node.title}</strong>
           <small>${this.getNodeCardDescription(node)}</small>
-        </div>
-        <div class="choice-strip-foot choice-strip-foot-node">
-          <span class="choice-node-enter">走这条</span>
         </div>
       </button>
     `;
@@ -988,8 +931,8 @@ export class OverlayController {
     const effectText = upgrade.routeId
       ? this.getRouteUpgradeReadableText(upgrade)
       : this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
-    const cardTypeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}强化` : '强化';
-    const cardBadgeLabel = upgrade.routeId ? `${ROUTE_NAME_MAP[upgrade.routeId]}路子` : upgrade.rarityLabel;
+    const cardTypeLabel = upgrade.routeId ? ROUTE_NAME_MAP[upgrade.routeId] : '强化';
+    const cardBadgeLabel = upgrade.routeId ? ROUTE_NAME_MAP[upgrade.routeId] : upgrade.rarityLabel;
     const nameHtml = this.decorateTooltipTerms(upgrade.name);
     const effectTextHtml = this.decorateTooltipTerms(effectText);
 
@@ -1021,10 +964,9 @@ export class OverlayController {
   }
 
   private getRouteUpgradeReadableText(upgrade: UpgradeDefinition): string {
-    // 路线牌在 buildUpgradeChoice 中已经通过 ROUTE_DESCRIPTION_OVERRIDES 设置了描述
-    // 直接使用该描述，避免所有无 stats 的路线牌 fallback 到重复的默认描述
-    if (upgrade.description) {
-      return upgrade.description;
+    const description = upgrade.description?.trim();
+    if (description && !/(流派|这一路会更顺)/.test(description)) {
+      return description;
     }
 
     const modifiers = upgrade.effects
@@ -1037,35 +979,35 @@ export class OverlayController {
     switch (upgrade.routeId) {
       case 'crit':
         if ((modifiers?.critChance ?? 0) > 0 && (modifiers?.critMultiplier ?? 0) > 0) {
-          return '更容易打出暴击，暴击伤害也更高。';
+          return '提升暴击率与暴击伤害。';
         }
         if ((modifiers?.critChance ?? 0) > 0) {
-          return '更容易打出暴击。';
+          return '提升暴击率。';
         }
         if ((modifiers?.critMultiplier ?? 0) > 0) {
-          return '暴击伤害更高。';
+          return '提升暴击伤害。';
         }
         return '暴击命中造成更高伤害。';
       case 'pierce':
         {
           const pierceValue = modifiers?.pierce ?? 0;
           if (pierceValue > 0) {
-            return `子弹多穿过 ${Math.round(pierceValue)} 个敌人。`;
+            return `子弹可多穿透 ${Math.round(pierceValue)} 个敌人。`;
           }
         }
         if ((modifiers?.projectileSpeed ?? 0) > 0) {
-          return '子弹飞得更快。';
+          return '提升子弹飞行速度。';
         }
-        return '子弹可穿过敌人命中后排。';
+        return '子弹可穿透敌人命中后排。';
       case 'dash':
         if ((modifiers?.dashInterval ?? 0) < 0) {
-          return '自动脉冲间隔更短。';
+          return '缩短穿梭脉冲间隔。';
         }
         if ((modifiers?.dashPulseDamage ?? 0) > 0) {
-          return '自动脉冲伤害更高。';
+          return '提升穿梭脉冲伤害。';
         }
         if ((modifiers?.dashInvulnerability ?? 0) > 0) {
-          return '自动脉冲后无敌时间更长。';
+          return '延长穿梭后无敌时间。';
         }
         return '靠近敌人时自动释放近身脉冲。';
       default:
@@ -1081,7 +1023,6 @@ export class OverlayController {
     const routeAccent = this.getEventChoiceAccent(eventDef, option);
     const routeRef = this.getEventRouteReference(eventDef, option);
     const routeLabel = this.getEventRouteLabel(routeRef, eventDef);
-    const prompt = isAnomaly ? '接' : '选';
     const anomalyClass = eventDef.contentKind === 'anomaly' ? ' is-anomaly-event' : '';
     const effectText = this.getEventOptionDescription(eventDef, option);
     const actionLabel = this.getEventChoiceActionLabel(eventDef, option);
@@ -1092,8 +1033,7 @@ export class OverlayController {
     return `
       <button class="choice-strip choice-strip-event${anomalyClass}" style="--choice-accent: ${routeAccent}" data-choice="${option.id}">
         <div class="choice-strip-head">
-          <span class="choice-type">${isAnomaly ? '异常机会' : '事件'}</span>
-          ${isAnomaly ? `<span class="choice-mode-badge choice-event-class">${this.getEventClassLabel(eventDef)}</span>` : ''}
+          <span class="choice-type">${isAnomaly ? '异常节点' : '事件'}</span>
           ${anomalyRoleLabel ? `<span class="choice-mode-badge choice-event-role role-${option.anomalyRole}" style="--route-pill: ${routeAccent}">${anomalyRoleLabel}</span>` : ''}
           <span class="choice-mode-badge choice-event-route ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${routeLabel}</span>
         </div>
@@ -1116,13 +1056,7 @@ export class OverlayController {
                 .join('')}</div>`
             : ''
         }
-        <div class="choice-strip-foot">
-          <span class="choice-route-boost ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${actionLabel}</span>
-          <div class="choice-foot-trail">
-            <span class="choice-side-label">${prompt}</span>
-            <span class="choice-prompt">就这个</span>
-          </div>
-        </div>
+        ${actionLabel ? `<div class="choice-strip-foot"><span class="choice-route-boost ${routeRef ? 'active' : ''}" style="--route-pill: ${routeAccent}">${actionLabel}</span></div>` : ''}
       </button>
     `;
   }
@@ -1166,9 +1100,9 @@ export class OverlayController {
       multishot: '多重',
       maxHp: '生命上限',
       moveSpeed: '移速',
-      dashInterval: '穿梭冷却',
+      dashInterval: '穿梭间隔',
       dashPulseDamage: '穿梭脉冲',
-      dashInvulnerability: '无敌窗',
+      dashInvulnerability: '无敌时间',
       regeneration: '再生',
     };
     return labelMap[statKey] ?? statKey;
@@ -1209,7 +1143,7 @@ export class OverlayController {
       return node.description;
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '拿完直接进 Boss' : '先补一项强化再继续';
+      return node.isFinalPrep ? '拿完直接进 Boss' : '选择一个强化';
     }
     if (node.type === 'anomaly') {
       return '接一次突然变招';
@@ -1225,10 +1159,10 @@ export class OverlayController {
       return getBattleEncounterLabel(node.templateId ?? 'elimination');
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '最后整备' : '补一手强化';
+      return node.isFinalPrep ? '最后整备' : '选择强化';
     }
     if (node.type === 'anomaly') {
-      return '异常机会';
+      return '异常节点';
     }
     return '首领战';
   }
@@ -1236,13 +1170,13 @@ export class OverlayController {
   private getAnomalyRoleLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '先打顺';
+        return '建立节奏';
       case 'core':
         return '火力更重';
       case 'transform':
-        return '直接压上';
+        return '全面强化';
       case 'finisher':
-        return '补最后一下';
+        return '最终补强';
       default:
         return '';
     }
@@ -1251,13 +1185,13 @@ export class OverlayController {
   private getAnomalyRoleActionLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '先打顺';
+        return '建立节奏';
       case 'core':
-        return '把火力提上来';
+        return '提升火力';
       case 'transform':
-        return '直接压上';
+        return '全面强化';
       case 'finisher':
-        return '补最后一下';
+        return '最终补强';
       default:
         return '';
     }
@@ -1281,17 +1215,17 @@ export class OverlayController {
   private getEventRouteLabel(routeId: RouteReference | undefined, eventDef: EventDefinition): string {
     if (!routeId || routeId === 'dominant') {
       if (eventDef.contentKind !== 'anomaly') {
-        return '当前这步';
+        return '当前步骤';
       }
       switch (eventDef.anomalyClass) {
         case 'hybrid':
-          return '两边都沾上';
+          return '双流派融合';
         case 'bossEcho':
-          return '先摸最后那下';
-        case 'distortion':
-          return '场面会变';
+          return '首领余波';
+      case 'distortion':
+        return '局面变化';
         default:
-          return '这把路子';
+          return '当前流派';
       }
     }
     return ROUTE_NAME_MAP[routeId];
@@ -1433,7 +1367,7 @@ export class OverlayController {
     }
 
     return entries
-      .map(([routeId, count]) => `${routeId === 'dominant' ? '这把路子' : `${ROUTE_NAME_MAP[routeId]}`} +${count}`)
+      .map(([routeId, count]) => `${routeId === 'dominant' ? '当前流派' : `${ROUTE_NAME_MAP[routeId]}`} +${count}`)
       .join(' / ');
   }
 
@@ -1465,8 +1399,8 @@ export class OverlayController {
       pierce: '穿透',
       multishot: '扩面',
       moveSpeed: '移速',
-      dashInterval: '穿梭',
-      dashPulseDamage: '脉冲',
+      dashInterval: '穿梭间隔',
+      dashPulseDamage: '脉冲伤害',
       dashInvulnerability: '无伤',
       regeneration: '回复',
     };
@@ -1484,8 +1418,8 @@ export class OverlayController {
 
   private decorateTooltipTerms(text: string): string {
     const tooltipTerms: Array<[string, string]> = [
-      ['穿梭冷却', this.getFocusTooltip('穿梭')],
-      ['无敌时间', this.getFocusTooltip('无伤')],
+      ['穿梭', this.getFocusTooltip('穿梭')],
+      ['无敌时间', this.getFocusTooltip('无敌')],
       ['脉冲伤害', this.getFocusTooltip('脉冲')],
       ['暴击率', this.getFocusTooltip('暴击')],
       ['暴击伤害', this.getFocusTooltip('爆伤')],
@@ -1517,11 +1451,11 @@ export class OverlayController {
   private getRouteTooltip(routeId?: RouteReference): string {
     switch (routeId) {
       case 'crit':
-        return '暴击：更容易连续打出重击。';
-      case 'pierce':
-        return '穿透：子弹穿过去后还能继续带到后排。';
-      case 'dash':
-        return '穿梭：贴身一闪，顺手扫一圈。';
+      return '暴击：命中时更容易打出高伤。';
+    case 'pierce':
+      return '穿透：子弹穿过敌人后继续飞行。';
+    case 'dash':
+      return '穿梭：接近敌人时自动释放近身脉冲。';
       default:
         return '';
     }
@@ -1530,13 +1464,15 @@ export class OverlayController {
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
       暴击: '命中时更容易打出高伤。',
-      爆伤: '暴击时打得更狠。',
-      穿透: '子弹穿过去后还能继续飞。',
-      穿梭: '自动闪一下，顺手打一圈。',
+      暴击伤害: '暴击时伤害更高。',
+      爆伤: '暴击时伤害更高。',
+      穿透: '子弹穿过敌人后继续飞行。',
+      穿梭: '自动闪避并反击。',
       脉冲: '穿梭触发的范围伤害。',
+      无敌: '穿梭后的短暂无敌。',
       无伤: '穿梭后的短暂无敌。',
       扩面: '同时发射更多子弹。',
-      射速: '开火更快。',
+      射速: '单位时间内开火次数。',
     };
     return tooltipMap[label] ?? '';
   }
@@ -1563,13 +1499,13 @@ export class OverlayController {
   private getEventClassLabel(eventDef: EventDefinition): string {
     switch (eventDef.anomalyClass) {
       case 'routeWindow':
-        return '走法会变';
+        return '走法变化';
       case 'hybrid':
-        return '两边都能接上';
+        return '双流派融合';
       case 'bossEcho':
-        return '先摸最后那下';
+        return '首领余波';
       case 'distortion':
-        return '场面会变';
+        return '局面变化';
       default:
         return '异常';
     }
@@ -1577,32 +1513,9 @@ export class OverlayController {
 
   private getEventChoiceActionLabel(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
     if (eventDef.contentKind !== 'anomaly') {
-      return '选这个';
+      return '选择';
     }
-
-    const anomalyRoleLabel = this.getAnomalyRoleActionLabel(option.anomalyRole);
-    const routeRef = this.getEventRouteReference(eventDef, option);
-    const routeSummary = this.getRouteEffectSummary(option.effects);
-    if (eventDef.anomalyClass === 'routeWindow') {
-      if (anomalyRoleLabel) {
-        return anomalyRoleLabel;
-      }
-      if (routeRef && eventDef.routeAffinity && routeRef !== eventDef.routeAffinity) {
-        return '改走这边';
-      }
-      return routeSummary ? '顺着打下去' : '先稳一下';
-    }
-
-    if (eventDef.anomalyClass === 'hybrid') {
-      return '两边一起拿';
-    }
-
-    if (eventDef.anomalyClass === 'bossEcho') {
-        return '先摸那一下';
-    }
-
-    const hasPressure = option.effects?.some((effect) => effect.type === 'heal' && effect.amount < 0);
-    return hasPressure ? '顶着拿' : '就接这个';
+    return '';
   }
 
   private getEventChoiceTags(eventDef: EventDefinition, option: EventDefinition['options'][number]): string[] {
@@ -1621,7 +1534,7 @@ export class OverlayController {
     if (routeSummary) {
       tags.push(routeSummary);
     } else if (eventDef.contentKind === 'anomaly' && eventDef.anomalyClass === 'hybrid') {
-      tags.push('这把路子');
+      tags.push('双流派融合');
     }
 
     const healEffect = option.effects?.find((effect): effect is Extract<ContentEffect, { type: 'heal' }> => effect.type === 'heal');
@@ -1663,12 +1576,9 @@ export class OverlayController {
 
   private getResultRouteRecap(result: RunResult): string {
     if (!result.routeId) {
-      return '这把一直没能把路数接顺。';
+      return '本局未形成明确流派。';
     }
-
-    const turnRecord = this.getResultAnomalyTurnRecord(result);
-    const chronology = this.getResultAnomalyChronology(result, turnRecord);
-    return chronology || '这局没有特别明显的转折点。';
+    return `流派：${ROUTE_NAME_MAP[result.routeId]}`;
   }
 
   private getResultAnomalyChronology(
@@ -1771,34 +1681,34 @@ export class OverlayController {
   ): string {
     const routeName = ROUTE_NAME_MAP[routeId];
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}先摸到收尾手感，但还没完全接住`;
+      return `${routeName}在首领战中取得进展`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}在这里拐顺了`;
+      return `${routeName}在此阶段实现融合`;
     }
 
     switch (record.anomalyRole ?? 'direction') {
       case 'direction':
         return routeId === 'pierce'
-          ? `这一手先把${routeName}的前排打穿`
+          ? `此阶段为${routeName}打开前排路线`
           : routeId === 'dash'
-            ? `这一手先把${routeName}的贴身节奏拉起来`
-            : `这一手先把${routeName}打顺`;
+            ? `此阶段为${routeName}建立接近节奏`
+            : `此阶段为${routeName}建立基础节奏`;
       case 'core':
           return routeId === 'pierce'
-            ? `这一手让${routeName}更稳地穿前排`
+            ? `此阶段强化${routeName}的前排穿透能力`
             : routeId === 'dash'
-            ? `这一手让${routeName}贴住后还能回打`
-            : `这一手让${routeName}连打更疼`;
+            ? `此阶段强化${routeName}接近敌人后的反击能力`
+            : `此阶段强化${routeName}的连击伤害`;
       case 'transform':
         return routeId === 'crit'
-          ? `这一手把${routeName}直接打成连爆`
+          ? `此阶段将${routeName}升级为连续爆发`
           : routeId === 'pierce'
-            ? `这一手让${routeName}直接打到后排`
-            : `这一手让${routeName}直接变成贴身收人`;
+            ? `此阶段使${routeName}能够打击后排`
+            : `此阶段使${routeName}实现全面强化`;
       case 'finisher':
-        return `这一手把${routeName}最后那下补上了`;
+        return `此阶段为${routeName}完成最终补强`;
       default:
         break;
     }
@@ -1806,21 +1716,21 @@ export class OverlayController {
     if (outcome !== 'victory') {
       if (routeId === 'pierce') {
         if (buildStage === 'matured') {
-          return `${routeName}已经打到后排了，但最后那波没收住`;
+          return `${routeName}已穿透至后排，但最终波次未能清理`;
         }
         if (buildStage === 'committed') {
-          return `${routeName}已经打散前排了，但还没把后排带走`;
+          return `${routeName}已击破前排，但未能将伤害延伸至后排`;
         }
         if (buildStage === 'hinted') {
-          return `${routeName}已经往这条路上靠了，但前排还没打开`;
+          return `${routeName}已确立方向，但前排尚未击破`;
         }
       }
       if (buildStage === 'matured' || buildStage === 'committed') {
-        return `${routeName}已经拿到关键火力了，但最后那波没打出来`;
+        return `${routeName}已取得关键强化，但最终波次未能完成输出`;
       }
     }
 
-    return `${routeName}又往前走了一步`;
+    return `${routeName}在此阶段取得进展`;
   }
 
   private getResultFailureReason(
@@ -1840,50 +1750,50 @@ export class OverlayController {
       (result.selectedUpgrades ?? []).some((upgrade) => upgrade.tags?.includes('finisher') || upgrade.tags?.includes('payoff'));
 
     if (result.routeId === 'pierce') {
-      if (isLateTurn) {
-        return '异常来得偏晚，前面那一下没把局面推开';
-      }
-      if (result.buildStage === 'matured') {
-        return hasFinisherSupport ? '已经能穿到后排了，但还清不干净' : '已经能穿到后排了，但最后那下不够';
-      }
-      if (result.buildStage === 'committed') {
-        return hasFinisherSupport ? '前排已经打散了，但火力还差一点' : '前排已经打散了，但还没穿到后排';
-      }
-      if (result.buildStage === 'hinted') {
-        return '有方向了，但还没拆开前排';
-      }
-      return '这局还差最后一手';
+    if (isLateTurn) {
+      return '异常效果出现较晚，局面未能完全展开';
+    }
+    if (result.buildStage === 'matured') {
+      return hasFinisherSupport ? '已具备穿后排能力，但清理不够彻底' : '已具备穿后排能力，但最终伤害不足';
+    }
+    if (result.buildStage === 'committed') {
+      return hasFinisherSupport ? '前排已击破，但火力仍有不足' : '前排已击破，但尚未穿透至后排';
+    }
+    if (result.buildStage === 'hinted') {
+      return '已确立方向，但前排尚未击破';
+    }
+    return '本局仍需最终强化';
     }
 
     if (result.routeId === 'dash') {
-      if (isLateTurn) {
-        return '异常来得偏晚，局面没来得及贴起来';
-      }
-      if (result.buildStage === 'matured') {
-        return hasFinisherSupport ? '已经能贴身收人了，但最后那波还是断了' : '已经能贴身收人了，但最后那波没扛住';
-      }
-      if (result.buildStage === 'committed') {
-        return hasFinisherSupport ? '已经能回打了，但最后那口气还没顶住' : '已经能回打了，但收人的脚还差一点';
-      }
-      if (result.buildStage === 'hinted') {
-        return '已经开始贴近了，但还没真贴住';
-      }
-      return '这局还差最后一手';
+    if (isLateTurn) {
+      return '异常效果出现较晚，局面未能完全展开';
+    }
+    if (result.buildStage === 'matured') {
+      return hasFinisherSupport ? '已具备近战输出能力，但最终波次中断' : '已具备近战输出能力，但最终波次未能承受';
+    }
+    if (result.buildStage === 'committed') {
+      return hasFinisherSupport ? '已具备反击能力，但最终波次未能支撑' : '已具备反击能力，但输出仍有不足';
+    }
+    if (result.buildStage === 'hinted') {
+      return '已开始接近敌人，但尚未完全就位';
+    }
+    return '本局仍需最终强化';
     }
 
     if (isLateTurn) {
-      return '异常来得偏晚，局面没来得及推起来';
+      return '异常效果出现较晚，局面未能完全展开';
     }
     if (result.buildStage === 'matured') {
-      return '已经打顺了，但最后那波没扛住';
+      return '已成型，但最终波次未能承受';
     }
     if (result.buildStage === 'committed') {
-      return '已经连起来了，但伤害还差一点';
+      return '已建立连击，但伤害仍有不足';
     }
     if (result.buildStage === 'hinted') {
-      return '已经往这条路上靠了，但火力还没跟上';
+      return '已确立方向，但火力尚未跟上';
     }
-    return '这局还差最后一手';
+    return '本局仍需最终强化';
   }
 
   private getRouteLayerLabel(routeId: NonNullable<RunResult['routeId']>, role?: AnomalyRoleId): string {
@@ -1893,22 +1803,22 @@ export class OverlayController {
 
     const layerMap: Record<NonNullable<RunResult['routeId']>, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '先打顺',
+        direction: '建立节奏',
         core: '火力更重',
-        transform: '直接压上',
-        finisher: '补最后一下',
+        transform: '全面强化',
+        finisher: '最终补强',
       },
       pierce: {
-        direction: '先打开路',
+        direction: '打开路线',
         core: '火力更重',
-        transform: '直接压上',
-        finisher: '补最后一下',
+        transform: '全面强化',
+        finisher: '最终补强',
       },
       dash: {
-        direction: '先贴近',
-        core: '回打更稳',
-        transform: '直接贴身',
-        finisher: '补最后一下',
+        direction: '接近敌人',
+        core: '火力强化',
+        transform: '全面强化',
+        finisher: '最终补强',
       },
     };
 
@@ -1921,10 +1831,10 @@ export class OverlayController {
 
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
     const genericStageMap: Record<RunResult['buildStage'], string> = {
-      unformed: '还没打顺',
-      hinted: '刚摸到感觉',
-      committed: '开始压住了',
-      matured: '已经打出来了',
+      unformed: '尚未成型',
+      hinted: 'Starter · 初具方向',
+      committed: 'Bridge · 开始压制',
+      matured: 'Payoff · 已经成型',
     };
     if (!routeId) {
       return genericStageMap[buildStage];
@@ -1932,22 +1842,22 @@ export class OverlayController {
 
     const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
       crit: {
-        unformed: '还没打顺',
-        hinted: '开始连上',
-        committed: '火力压住了',
-        matured: '一串串炸开',
+        unformed: '尚未成型',
+        hinted: 'Starter · 锁单点',
+        committed: 'Bridge · 连续压制',
+        matured: 'Payoff · 爆点扩散',
       },
       pierce: {
-        unformed: '还没打顺',
-        hinted: '前排开始松动',
-        committed: '火力压到后排',
-        matured: '一路穿过去了',
+        unformed: '尚未成型',
+        hinted: 'Starter · 找成线',
+        committed: 'Bridge · 传裂到后排',
+        matured: 'Payoff · 一线清场',
       },
       dash: {
-        unformed: '还没打顺',
-        hinted: '开始贴近',
-        committed: '贴身能回打',
-        matured: '贴身就能收人',
+        unformed: '尚未成型',
+        hinted: 'Starter · 贴身脉冲',
+        committed: 'Bridge · 擦身回切',
+        matured: 'Payoff · 残影追返',
       },
     };
 
@@ -1966,7 +1876,7 @@ export class OverlayController {
 
   private getCompactProgressLabel(progressLabel: string): string {
     const match = progressLabel.match(/(\d+\s*\/\s*\d+)/);
-    return match ? match[1].replace(/\s+/g, ' ') : progressLabel.replace(/^推进\s*/, '');
+    return match ? match[1].replace(/\s+/g, ' ') : progressLabel;
   }
 
   private getHudWaveLabel(progressLabel: string): string {
@@ -1974,7 +1884,7 @@ export class OverlayController {
     if (!match) {
       return progressLabel;
     }
-    return `第${match[1]}波`;
+    return `第${match[1]}关`;
   }
 
   private formatDuration(durationSec: number): string {

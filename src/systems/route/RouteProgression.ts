@@ -1,8 +1,5 @@
 import type { AudioCue, PhaseId, RouteBuildStage, RouteId, RunState } from '../../game/types';
 
-const ROUTE_COMMIT_THRESHOLD = 1;
-const ROUTE_MATURE_THRESHOLD = 3;
-
 export interface RouteAdvanceMeta {
   pickId: string;
 }
@@ -27,6 +24,7 @@ export interface RouteAdvanceDeps {
 export function advanceRoute(deps: RouteAdvanceDeps, routeId: RouteId, meta?: RouteAdvanceMeta): void {
   deps.state.routeCounts[routeId] += 1;
   const count = deps.state.routeCounts[routeId];
+
   if (count === 1) {
     deps.markRouteHint(routeId);
     deps.queueRouteMoment(routeId, deps.getRouteStageMomentText(routeId, 'starter'));
@@ -38,15 +36,7 @@ export function advanceRoute(deps: RouteAdvanceDeps, routeId: RouteId, meta?: Ro
     deps.enqueueTip(deps.getRouteShortHint(routeId));
   }
 
-  const otherCounts = Object.entries(deps.state.routeCounts)
-    .filter(([candidateRouteId]) => candidateRouteId !== routeId)
-    .map(([, value]) => value);
-
-  if (
-    !deps.state.committedRoute &&
-    count >= ROUTE_COMMIT_THRESHOLD &&
-    otherCounts.every((value) => count >= value + 1)
-  ) {
+  if (count === 2 && deps.state.committedRoute !== routeId) {
     deps.state.committedRoute = routeId;
     deps.markRouteCommitted(routeId, {
       phase: deps.state.phase,
@@ -56,11 +46,7 @@ export function advanceRoute(deps: RouteAdvanceDeps, routeId: RouteId, meta?: Ro
     deps.enqueueTip(deps.getRouteStageNarrative(routeId, 'committed'));
   }
 
-  if (
-    !deps.state.maturedRoute &&
-    count >= ROUTE_MATURE_THRESHOLD &&
-    otherCounts.every((value) => count >= value + 1)
-  ) {
+  if (count >= 3 && deps.state.maturedRoute !== routeId) {
     deps.state.maturedRoute = routeId;
     deps.markRouteMatured(routeId);
     deps.enqueueAudio('routeMatured');
@@ -70,13 +56,14 @@ export function advanceRoute(deps: RouteAdvanceDeps, routeId: RouteId, meta?: Ro
 }
 
 export function getRouteBuildStage(state: RunState, routeId: RouteId): RouteBuildStage {
-  if (state.maturedRoute === routeId) {
+  const count = state.routeCounts[routeId];
+  if (count >= 3 || state.maturedRoute === routeId) {
     return 'matured';
   }
-  if (state.committedRoute === routeId) {
+  if (count >= 2 || state.committedRoute === routeId) {
     return 'committed';
   }
-  if (state.routeCounts[routeId] > 0) {
+  if (count >= 1) {
     return 'hinted';
   }
   return 'unformed';
@@ -85,35 +72,35 @@ export function getRouteBuildStage(state: RunState, routeId: RouteId): RouteBuil
 export function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
     case 'hinted':
-      return '已出倾向';
+      return '???';
     case 'committed':
-      return '开始站稳';
+      return '???';
     case 'matured':
-      return '已经打顺';
+      return '???';
     default:
-      return '未站稳';
+      return '???';
   }
 }
 
 export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
   const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
     crit: {
-      unformed: '没打顺',
-      hinted: '开始连上',
-      committed: '火力压住了',
-      matured: '一串串炸开',
+      unformed: '?????',
+      hinted: '?????',
+      committed: '????',
+      matured: '????',
     },
     pierce: {
-      unformed: '没打顺',
-      hinted: '前排开始松动',
-      committed: '火力压到后排',
-      matured: '一路穿过去了',
+      unformed: '???',
+      hinted: '?????',
+      committed: '????',
+      matured: '????',
     },
     dash: {
-      unformed: '没打顺',
-      hinted: '开始贴近',
-      committed: '贴身能回打',
-      matured: '贴身就能收人',
+      unformed: '???',
+      hinted: '????',
+      committed: '????',
+      matured: '????',
     },
   };
 
@@ -126,38 +113,38 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'crit':
       switch (buildStage) {
         case 'hinted':
-          return `${routeName}开始顺手了，先把破绽挂稳`;
+          return routeName + '????????????????????';
         case 'committed':
-          return `${routeName}已经连起来了，连着打会更疼`;
+          return routeName + '?????????????';
         case 'matured':
-          return `${routeName}已经压住了，连打时会一串串炸开`;
+          return routeName + '??????????????';
         default:
-          return `${routeName}还没站稳`;
+          return routeName + '????';
       }
     case 'pierce':
       switch (buildStage) {
         case 'hinted':
-          return `${routeName}开始顺手了，子弹能先穿开前排`;
+          return routeName + '????????????????';
         case 'committed':
-          return `${routeName}已经连起来了，前排一散后排就露出来`;
+          return routeName + '?????????????';
         case 'matured':
-          return `${routeName}已经压住了，子弹会直接带到后排`;
+          return routeName + '?????????????????';
         default:
-          return `${routeName}还没站稳`;
+          return routeName + '????';
       }
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return `${routeName}开始顺手了`;
+          return routeName + '????????????????';
         case 'committed':
-          return `${routeName}已经连起来了`;
+          return routeName + '???????????????';
         case 'matured':
-          return `${routeName}已经压住了，贴身一圈就能收人`;
+          return routeName + '?????????????';
         default:
-          return `${routeName}还没站稳`;
+          return routeName + '????';
       }
     default:
-      return `${routeName}已经打顺了`;
+      return routeName + '??????';
   }
 }
 
@@ -166,46 +153,46 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'crit':
       switch (stage) {
         case 'starter':
-          return '暴击开始连上了：破绽会越挂越稳';
+          return '????????????';
         case 'bridge':
-          return '暴击开始压单点了：破绽会溅到旁边';
+          return '???????????????';
         case 'payoff':
-          return '暴击打疯了：连打会一串串炸开';
+          return '??????????????';
         default:
-          return '暴击开始起势了';
+          return '???????';
       }
     case 'pierce':
       switch (stage) {
         case 'starter':
-          return '穿透开始找上线了：前排会先被打散';
+          return '????????????????';
         case 'bridge':
-          return '穿透接起来了：前排一散，后排就会掉血';
+          return '?????????????????';
         case 'payoff':
-          return '穿透打穿了：子弹会直接带到后排';
+          return '????????????';
         default:
-          return '穿透开始起势了';
+          return '???????';
       }
     case 'dash':
       switch (stage) {
         case 'starter':
-          return '穿梭开始贴近了：先贴近，再回打';
+          return '?????????????';
         case 'bridge':
-          return '穿梭接起来了：贴住后还能回打';
+          return '??????????????';
         case 'payoff':
-          return '穿梭压住了：一圈就能收人';
+          return '??????????????';
         default:
-          return '穿梭开始起势了';
+          return '???????';
       }
     default:
-      return '这套开始打顺了';
+      return '????????';
   }
 }
 
 function getRouteName(routeId: RouteId): string {
   const names: Record<RouteId, string> = {
-    crit: '暴击',
-    pierce: '穿透',
-    dash: '穿梭',
+    crit: '??',
+    pierce: '??',
+    dash: '??',
   };
   return names[routeId];
 }

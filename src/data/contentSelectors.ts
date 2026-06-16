@@ -67,6 +67,26 @@ const LATE_EVENT_IDS = new Set([
   'crit-lock-protocol',
 ]);
 
+type RouteShowcaseStage = 'starter' | 'bridge' | 'payoff';
+
+const ROUTE_SHOWCASE_STAGE_IDS: Record<RouteId, Record<RouteShowcaseStage, string[]>> = {
+  crit: {
+    starter: ['crit-aim'],
+    bridge: ['crit-afterglow'],
+    payoff: ['crit-embershard'],
+  },
+  pierce: {
+    starter: ['pierce-core'],
+    bridge: ['pierce-seamkeep'],
+    payoff: ['pierce-riftbloom'],
+  },
+  dash: {
+    starter: ['dash-brush'],
+    bridge: ['dash-sidestep-bank'],
+    payoff: ['dash-afterimage'],
+  },
+};
+
 function pickWeightedUnique<T extends { id: string }>(
   entries: Array<{
     item: T;
@@ -305,6 +325,33 @@ function buildWeightedUpgradePool(
   }));
 }
 
+function getRouteShowcaseStage(context: ContentContext, source: UpgradeSource): RouteShowcaseStage {
+  if (source === 'nodePrep' && context.phase === 'finalPrep') {
+    return context.dominantRoute ? 'payoff' : 'starter';
+  }
+
+  if (context.phase === 'finalPrep' || context.round >= 4) {
+    return context.dominantRoute ? 'payoff' : 'starter';
+  }
+
+  if (context.dominantRoute && (context.committedRoute || context.round >= 2)) {
+    return 'bridge';
+  }
+
+  return 'starter';
+}
+
+function buildRouteShowcasePool(
+  context: ContentContext,
+  source: UpgradeSource,
+  stage: RouteShowcaseStage,
+  routeId?: RouteId,
+): Array<{ item: UpgradeArchetype; weight: number }> {
+  const routeIds = routeId ? [routeId] : ROUTES.map((route) => route.id);
+  const showcaseIds = new Set(routeIds.flatMap((id) => ROUTE_SHOWCASE_STAGE_IDS[id][stage]));
+  return buildWeightedUpgradePool(context, source, (archetype) => Boolean(archetype.routeId) && showcaseIds.has(archetype.id));
+}
+
 function hasAnyTag(tags: string[] | undefined, expected: string[]): boolean {
   return expected.some((tag) => tags?.includes(tag));
 }
@@ -533,18 +580,8 @@ function pickUpgradeRarity(
 
 function selectStarterSet(context: ContentContext, source: UpgradeSource): UpgradeDefinition[] {
   return ROUTES.map((route) => {
-    const starter = pickWeightedUnique(
-      UPGRADE_ARCHETYPES.filter(
-        (archetype) =>
-          archetype.routeId === route.id &&
-          archetype.tags?.includes('starter') &&
-          canOfferUpgrade(archetype, context),
-      ).map((archetype) => ({
-        item: archetype,
-        weight: getSelectionWeight(archetype.selection, archetype.routeId, archetype.contentTier, context, source),
-      })),
-      1,
-    )[0];
+    const starterPool = buildRouteShowcasePool(context, source, 'starter', route.id);
+    const starter = pickWeightedUnique(starterPool, 1)[0];
 
     return starter ? buildUpgradeChoice(starter, pickUpgradeRarity(context, source, starter)) : undefined;
   }).filter(Boolean) as UpgradeDefinition[];
@@ -553,39 +590,13 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
 function buildLevelUpRouteWindowPool(
   context: ContentContext,
 ): Array<{ item: UpgradeArchetype; weight: number }> {
-  const openingLevelUp = context.phase === 'opening';
-  const earlyMidLevelUp = openingLevelUp || context.phase === 'mid';
-  const hasCommittedRoute = Boolean(context.committedRoute || context.maturedRoute);
+  const stage = getRouteShowcaseStage(context, 'levelUp');
   if (!context.dominantRoute) {
-    return scaleWeightedPool(
-      buildWeightedUpgradePool(
-        context,
-        'levelUp',
-        (archetype) => Boolean(archetype.routeId) && Boolean(archetype.tags?.includes('starter')),
-      ),
-      openingLevelUp ? 1.16 : earlyMidLevelUp ? 0.92 : 0.62,
-    );
+    return scaleWeightedPool(buildRouteShowcasePool(context, 'levelUp', 'starter'), 1.12);
   }
 
-  const dominantRoutePool = buildWeightedUpgradePool(
-    context,
-    'levelUp',
-    (archetype) => archetype.routeId === context.dominantRoute,
-  );
-  const dominantLevelUpPool = filterPoolByTags(
-    dominantRoutePool,
-    hasCommittedRoute ? ['starter', 'bridge', 'payoff'] : ['starter', 'bridge'],
-    ['finisher', 'redirect'],
-  );
-  const fallbackPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge', 'payoff'], ['finisher', 'redirect']);
-  const resolvedPool =
-    dominantLevelUpPool.length > 0
-      ? dominantLevelUpPool
-      : fallbackPool.length > 0
-        ? fallbackPool
-        : dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
-
-  return scaleWeightedPool(resolvedPool, hasCommittedRoute ? 1.02 : earlyMidLevelUp ? 1.2 : 0.9);
+  const dominantPool = buildRouteShowcasePool(context, 'levelUp', stage, context.dominantRoute);
+  return scaleWeightedPool(dominantPool, stage === 'payoff' ? 1.12 : stage === 'bridge' ? 1.08 : 1.16);
 }
 
 function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
@@ -656,21 +667,29 @@ export function rollUpgradeChoices(
   const genericHybridPool = filterPoolByTags(genericPhasePool.length > 0 ? genericPhasePool : genericPool, ['hybrid', 'redirect'], ['payoff', 'finisher']);
   const genericLatePayoffPool = filterPoolByTags(genericPhasePool.length > 0 ? genericPhasePool : genericPool, ['payoff'], ['starter']);
   const genericLateFlexPool = [...genericLatePayoffPool, ...genericHybridPool, ...genericTransitionPool];
-  const allRoutePool = buildWeightedUpgradePool(context, source, (archetype) => Boolean(archetype.routeId));
-  const noFocusStarterPool = filterPoolByTags(allRoutePool, ['starter']);
-  const noFocusBridgePool = filterPoolByTags(allRoutePool, ['starter', 'bridge'], ['payoff', 'finisher', 'redirect']);
-  const noFocusLateRoutePool = filterPoolByTags(allRoutePool, ['starter', 'bridge'], ['payoff', 'finisher']);
   const dominantRoute = context.dominantRoute;
+  const routeShowcaseStage = getRouteShowcaseStage(context, source);
+  const noFocusStarterPool = buildRouteShowcasePool(context, source, 'starter');
+  const noFocusBridgePool: Array<{ item: UpgradeArchetype; weight: number }> = [];
+  const noFocusLateRoutePool: Array<{ item: UpgradeArchetype; weight: number }> = [];
   const dominantRoutePool =
     dominantRoute === null
       ? []
-      : buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === dominantRoute);
-  const dominantNonRedirectPool = dominantRoutePool.filter((entry) => !entry.item.tags?.includes('redirect'));
-  const dominantHintPool = filterPoolByTags(dominantRoutePool, ['starter', 'bridge'], ['payoff', 'finisher', 'redirect']);
-  const dominantBridgePool = filterPoolByTags(dominantRoutePool, ['bridge'], ['payoff', 'finisher', 'redirect']);
-  const dominantStarterPool = filterPoolByTags(dominantRoutePool, ['starter']);
-  const dominantCommittedPool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff', 'finisher'], ['redirect']);
-  const dominantPayoffPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher']);
+      : buildRouteShowcasePool(context, source, routeShowcaseStage, dominantRoute);
+  const dominantNonRedirectPool = dominantRoutePool;
+  const dominantHintPool = dominantRoute === null ? [] : buildRouteShowcasePool(context, source, 'starter', dominantRoute);
+  const dominantBridgePool = dominantRoute === null ? [] : buildRouteShowcasePool(context, source, 'bridge', dominantRoute);
+  const dominantStarterPool = dominantRoute === null ? [] : buildRouteShowcasePool(context, source, 'starter', dominantRoute);
+  const dominantCommittedPool =
+    dominantRoute === null
+      ? []
+      : buildRouteShowcasePool(
+          context,
+          source,
+          routeShowcaseStage === 'payoff' ? 'payoff' : routeShowcaseStage === 'bridge' ? 'bridge' : 'starter',
+          dominantRoute,
+        );
+  const dominantPayoffPool = dominantRoute === null ? [] : buildRouteShowcasePool(context, source, 'payoff', dominantRoute);
   const offRoutePool = buildWeightedUpgradePool(
     context,
     source,
@@ -719,8 +738,8 @@ export function rollUpgradeChoices(
     ),
     scaleWeightedPool(genericLatePayoffPool.length > 0 ? genericLatePayoffPool : genericPool, 1.18),
   );
-  const dominantFinalPrepSealPool = filterPoolByTags(dominantRoutePool, ['payoff', 'finisher'], ['redirect']);
-  const dominantFinalPrepBridgePool = filterPoolByTags(dominantRoutePool, ['bridge', 'payoff'], ['starter', 'redirect']);
+  const dominantFinalPrepSealPool = dominantPayoffPool;
+  const dominantFinalPrepBridgePool = dominantBridgePool;
   const finalPrepRouteSealPool =
     dominantFinalPrepSealPool.length > 0
       ? dominantFinalPrepSealPool

@@ -44,16 +44,9 @@ export class MainMenuScene extends Phaser.Scene {
         () => {
           services.audio.unlock();
           services.audio.play('click');
-          const content = window.__exportPilotMetrics();
-          navigator.clipboard.writeText(content).catch(() => undefined);
-          services.overlay.pushToast('战报已复制到剪贴板。', 'success');
-        },
-        () => {
-          services.audio.unlock();
-          services.audio.play('click');
           services.overlay.showVolumePanel(
-            '调音量',
-            '把这一局的声音调顺一点。',
+            '音量调整',
+            '当前音量大小',
             services.audio.getVolume(),
             (volume) => {
               services.audio.setVolume(volume);

@@ -3875,10 +3875,9 @@ button:hover {
 }
 
 .pause-panel-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.8fr);
-  gap: 18px;
-  align-items: stretch;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .pause-panel-summary {
@@ -3920,8 +3919,15 @@ button:hover {
 
 .pause-panel-actions {
   display: grid;
+  width: min(320px, 100%);
+  margin: 0 auto;
   align-content: start;
   gap: 12px;
+}
+
+.pause-panel-actions .text-action {
+  width: 100%;
+  justify-content: center;
 }
 
 .pause-panel-action-lead {

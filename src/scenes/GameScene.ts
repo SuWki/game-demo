@@ -754,19 +754,11 @@ export class GameScene extends Phaser.Scene {
               this.services.overlay.hidePanel();
               this.scene.start('GameScene');
             },
-            onBackToMenu: () => {
-              this.services.audio.play('click');
-              this.gamePaused = false;
-              this.lastHudKey = '';
-              this.lastPauseKey = '';
-              this.services.overlay.hidePanel();
-              this.scene.start('MainMenuScene');
-            },
             onVolume: () => {
               this.services.audio.play('click');
               this.services.overlay.showVolumePanel(
-                '调音量',
-                '把这一局的声音调顺一点。',
+                '音量调整',
+                '当前音量大小',
                 this.services.audio.getVolume(),
                 (volume) => {
                   this.services.audio.setVolume(volume);
@@ -990,15 +982,15 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'upgradeChoice') {
-      return state.currentNode?.isFinalPrep ? '最后整备' : '挑强化';
+      return state.currentNode?.isFinalPrep ? '最后整备' : '选择强化';
     }
 
     if (state.status === 'eventChoice') {
-      return state.currentEvent?.contentKind === 'anomaly' ? '异常机会' : '选事件';
+      return state.currentEvent?.contentKind === 'anomaly' ? '异常节点' : '选事件';
     }
 
     if (state.status === 'nodeChoice') {
-      return '下一站走哪条';
+      return '路线选择';
     }
 
     if (state.status === 'result') {
@@ -1037,76 +1029,76 @@ export class GameScene extends Phaser.Scene {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
         if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
-          return '重击窗口开了：盯住厚血目标，一口气把这一只压到底。';
+          return '暴击窗口开启：集中攻击高血量目标。';
         }
         if (battle.critBurstBonusSec > 0) {
-          return '暴击已经压住了：现在就是连着重击。';
+          return '暴击已触发：连续进行重击。';
         }
         if (battle.critFinisherReady) {
-          return `暴击已经压住了：${battle.critComboStacks}/5 层破绽已经挂满。`;
+          return `暴击已就绪：${battle.critComboStacks}/5 层破绽已挂满。`;
         }
         if (activeRoutePerks?.critBridgeFocus && battle.critFocusLockSec > 0) {
-          return '先压厚血目标：破绽链往这只身上挂，旁边会跟着炸。';
+          return '先集中攻击高血量目标：破绽链将持续累积。';
         }
         if (battle.critChain >= 1) {
-          return `暴击开始顺手了：${battle.critComboStacks}/5 层破绽已经挂上。`;
+          return `暴击开始生效：${battle.critComboStacks}/5 层破绽已累积。`;
         }
         if (routeStage === 'matured') {
           return battle.critComboStacks > 0
-            ? `暴击已经连起来了：破绽 ${battle.critComboStacks}/5，下一次会直接炸开。`
-            : '暴击已经连起来了：抓住时机就能打出一串重击。';
+            ? `暴击已连击：破绽 ${battle.critComboStacks}/5，下一次将触发爆发。`
+            : '暴击已就绪：抓住时机可触发连续重击。';
         }
         if (routeStage === 'committed') {
           return activeRoutePerks?.critBridgeFocus
-            ? '先盯厚血目标：破绽会越挂越紧，下一串更容易接上。'
-            : '暴击已经连起来了：先把破绽叠高。';
+            ? '先攻击高血量目标：破绽链将持续累积。'
+            : '暴击已连击：优先累积破绽层数。';
         }
         if (routeStage === 'hinted') {
           return activeRoutePerks?.critBridgeFocus
-            ? '先找厚血目标：破绽链开始往重的身上挂。'
-            : '暴击开始顺手了：先盯住能连打的目标。';
+            ? '寻找高血量目标：破绽链开始累积。'
+            : '暴击开始生效：优先攻击可连击目标。';
         }
       }
 
       if (liveFocusRoute === 'pierce') {
         if (activeRoutePerks?.pierceBreakthrough && battle.pierceFlowSec > 0 && battle.pierceFlowCount >= 2) {
-          return '这一条线已经通了：前排一裂开，后排会跟着掉。';
+          return '穿透已贯通：前排击破后后排将持续受到伤害。';
         }
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
-            return `穿透已经打到后排了：第 ${battle.pierceFlowCount} 段还在往后带。`;
+            return `穿透已到达后排：第 ${battle.pierceFlowCount} 段仍在延伸。`;
           }
           if (battle.pierceFlowCount >= 2) {
-            return `穿透已经连起来了：第 ${battle.pierceFlowCount} 段已经接上。`;
+            return `穿透已连击：第 ${battle.pierceFlowCount} 段已命中。`;
           }
-          return '穿透已经打开口子：后排正在掉血。';
+          return '穿透已打开缺口：后排正在受到伤害。';
         }
         if (battle.enemies.some((enemy) => (enemy.pierceMarkStacks ?? 0) >= 1)) {
-          return '穿透开始顺手了：裂纹已经挂上，等下一串接进来。';
+          return '穿透开始生效：裂纹已挂上，等待下一波连击。';
         }
         if (routeStage === 'matured') {
-          return '穿透已经打到后排了：子弹会一路带过去。';
+          return '穿透已到达后排：子弹将持续穿透。';
         }
         if (routeStage === 'committed') {
-          return '穿透已经连起来了：前排会慢慢给后排让路。';
+          return '穿透已连击：前排将逐渐被击破。';
         }
         if (routeStage === 'hinted') {
-          return '穿透开始顺手了：先把前排穿开。';
+          return '穿透开始生效：优先击破前排。';
         }
       }
 
       if (liveFocusRoute === 'dash') {
         if (battle.dashDriveSec > 0) {
-          return '穿梭回打窗口还在：贴身就能反打。';
+          return '穿梭反击窗口开启：接近敌人即可反击。';
         }
         if (routeStage === 'matured') {
-          return '穿梭已经打顺了：贴身一圈就能收人。';
+          return '穿梭已成型：接近敌人即可输出。';
         }
         if (routeStage === 'committed') {
-          return '穿梭已经连起来了：先把换位和回打接上。';
+          return '穿梭已连击：优先完成接近与反击。';
         }
         if (routeStage === 'hinted') {
-          return '穿梭开始贴近：先找回打拍子。';
+          return '穿梭开始生效：优先接近敌人。';
         }
       }
     }
@@ -1159,9 +1151,9 @@ export class GameScene extends Phaser.Scene {
       return '战斗里立刻补一项强化。';
     }
     if (state.currentNode?.isFinalPrep) {
-      return '最后补一手，选完就进 Boss。';
+      return '最后整备，选完就进 Boss。';
     }
-    return '补上现在最缺的那一下。';
+    return '补充当前需要的属性。';
   }
 
   private getRunProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
@@ -1242,8 +1234,8 @@ export class GameScene extends Phaser.Scene {
       }
 
       return {
-        objectiveLabel: '先清这一波',
-        objectiveText: '清掉这一波敌人',
+        objectiveLabel: '清理当前波次',
+        objectiveText: '消灭当前波次敌人',
         objectiveDetail: `打掉 ${battle.targetKills} 个敌人后就能往前走。奖励倒计时内打完还能多拿 1 张强化。`,
         objectiveProgressText: `已打掉 ${battle.kills} / ${battle.targetKills}`,
         objectiveTone: 'battle',
@@ -1287,7 +1279,7 @@ export class GameScene extends Phaser.Scene {
       return {
         objectiveLabel: '眼下先做',
         objectiveText: state.currentNode?.isFinalPrep ? '把最后整备补完' : '把这张强化挑好',
-        objectiveDetail: state.upgradeSource === 'levelUp' ? '选完马上回场。' : '选完接着打。',
+        objectiveDetail: state.upgradeSource === 'levelUp' ? '选择后立即返回战场。' : '选择后继续推进。',
         objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
         objectiveTone: 'flow',
       };
@@ -1306,7 +1298,7 @@ export class GameScene extends Phaser.Scene {
     return {
       objectiveLabel: '眼下先做',
       objectiveText: '准备进入下一局',
-      objectiveDetail: '换个路子，再试一次。',
+      objectiveDetail: '换个流派，再试一次。',
       objectiveProgressText: bossDistanceText,
       objectiveTone: 'flow',
     };
@@ -1333,7 +1325,7 @@ export class GameScene extends Phaser.Scene {
     if (displayedCrackRatio > 0.1) {
       return {
         objectiveLabel: '精英目标',
-        objectiveText: '裂口已开，压上本体',
+        objectiveText: '裂口已开，集中攻击本体',
         objectiveDetail: '趁护卫散开，集中打精英。',
         objectiveProgressText: `窗口 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
         objectiveTone: 'elite',
@@ -1362,59 +1354,63 @@ export class GameScene extends Phaser.Scene {
   private getRouteStatusText(): string {
     const state = this.engine.getState();
     const routeId = state.maturedRoute ?? state.committedRoute ?? this.engine.getDominantRoute();
-    if (routeId) {
-      const stage = this.engine.getRouteBuildStage(routeId);
-      return this.getRouteStageStatusText(routeId, stage);
+    if (!routeId) {
+      return '';
     }
 
-    return '先挑强化';
+    const stage = this.engine.getRouteBuildStage(routeId);
+    const stageText = this.getRouteStageStatusText(routeId, stage);
+    return stageText ? `${ROUTE_NAME_MAP[routeId]} · ${stageText}` : ROUTE_NAME_MAP[routeId];
   }
 
   private getRouteStageStatusText(routeId: RouteId, stage: RouteBuildStage): string {
     switch (routeId) {
       case 'crit':
         if (stage === 'matured') {
-          return '暴击已经连起来了：现在就等着一串重击。';
+          return '爆点扩散';
         }
         if (stage === 'committed') {
-          return '暴击已经连起来了：破绽正在接上。';
+          return '连续压制';
         }
         if (stage === 'hinted') {
-          return '暴击开始顺手了：先盯住能连打的目标。';
+          return '开始锁单点';
         }
-        return '暴击还没站稳。';
+        return '尚未锁定';
       case 'pierce':
         if (stage === 'matured') {
-          return '穿透已经打到后排了：一条线会一路带过去。';
+          return '一线清场';
         }
         if (stage === 'committed') {
-          return '穿透已经连起来了：前排会往后排让路。';
+          return '传裂到后排';
         }
         if (stage === 'hinted') {
-          return '穿透开始顺手了：先把前排穿开。';
+          return '开始找成线站位';
         }
-        return '穿透还没站稳。';
+        return '尚未成线';
       case 'dash':
         if (stage === 'matured') {
-          return '穿梭已经打顺了：贴身就能收人。';
+          return '残影追返';
         }
         if (stage === 'committed') {
-          return '穿梭已经连起来了：贴身后更容易回打。';
+          return '擦身回切';
         }
         if (stage === 'hinted') {
-          return '穿梭开始顺手了：先把换位接上。';
+          return '贴身脉冲';
         }
-        return '穿梭还没站稳。';
+        return '尚未贴身';
       default:
-        return '先挑强化';
+        return '';
     }
   }
 
   private getToastTone(text: string): ToastTone {
+    if (text.includes('绿色安全区') || text.includes('安全区')) {
+      return 'route';
+    }
     if (text.includes('精英') || text.includes('高压') || text.includes('压力') || text.includes('Boss')) {
       return 'danger';
     }
-    if (text.includes('打顺') || text.includes('连起来') || text.includes('暴击') || text.includes('穿透') || text.includes('穿梭')) {
+    if (text.includes('成型') || text.includes('连击') || text.includes('暴击') || text.includes('穿透') || text.includes('穿梭')) {
       return 'route';
     }
     if (text.includes('完成') || text.includes('接入') || text.includes('收住')) {

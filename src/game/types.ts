@@ -706,7 +706,7 @@ export interface RunState {
     elapsedSec: number;
     durationSec: number;
   } | null;
-  // 关卡结束过渡（普通战斗→关卡选择）
+  // 关卡结束过渡（战斗→关卡选择）
   phaseTransition?: {
     label: string;
     elapsedSec: number;
