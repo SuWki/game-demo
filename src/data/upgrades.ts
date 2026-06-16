@@ -1513,8 +1513,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-aim',
-    name: '????',
-    description: '????????????????????????????',
+    name: '破绽起手',
+    description: '攻击命中时概率留下破绽标记，累积后触发暴击爆发。',
     category: 'route',
     routeId: 'crit',
     tags: ['starter', 'crit-bridge-focus'],
@@ -1577,8 +1577,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-afterglow',
-    name: '????',
-    description: '?????????????????????',
+    name: '破绽余晖',
+    description: '破绽标记持续时间延长，下一次攻击更容易触发暴击。',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'crit-afterglow'],
@@ -1734,14 +1734,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'heal',
         amount: 6,
       },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
     ],
   },
   {
@@ -1775,14 +1767,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
       {
         type: 'heal',
         amount: 6,
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
-      },
-      {
-        type: 'route',
-        routeId: 'crit',
       },
     ],
   },
@@ -1818,8 +1802,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-embershard',
-    name: '????',
-    description: '????????????????????????',
+    name: '余烬碎片',
+    description: '破绽爆发时伤害会溅射到附近敌人。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2158,8 +2142,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'pierce-core',
-    name: '????',
-    description: '??????????????????????????',
+    name: '穿透核心',
+    description: '子弹穿透敌人后继续飞行，命中后排目标。',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2283,8 +2267,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'pierce-seamkeep',
-    name: '????',
-    description: '???????????????????',
+    name: '裂纹续接',
+    description: '裂纹持续时间延长，后排敌人持续受到伤害。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'pierce-seamkeep'],
@@ -2412,14 +2396,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'heal',
         amount: 6,
       },
-      {
-        type: 'route',
-        routeId: 'pierce',
-      },
-      {
-        type: 'route',
-        routeId: 'pierce',
-      },
     ],
   },
   {
@@ -2484,8 +2460,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'pierce-riftbloom',
-    name: '????',
-    description: '?????????????????????????',
+    name: '裂隙绽放',
+    description: '裂纹扩散范围扩大，影响更多敌人。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2917,8 +2893,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-brush',
-    name: '????',
-    description: '??????????????????????',
+    name: '擦身脉冲',
+    description: '接近敌人命中后更容易累积脉冲层数。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter', 'dash-brush'],
@@ -3108,14 +3084,6 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
         type: 'heal',
         amount: 6,
       },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
-      {
-        type: 'route',
-        routeId: 'dash',
-      },
     ],
   },
   {
@@ -3215,8 +3183,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-sidestep-bank',
-    name: '????',
-    description: '??????????????????????',
+    name: '侧返蓄窗',
+    description: '反击伤害提升14%。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'dash-sidestep-bank'],
@@ -3281,8 +3249,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-afterimage',
-    name: '????',
-    description: '??????????????????????',
+    name: '残影脉冲',
+    description: '反击伤害提升20%，接近范围+12。',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3570,16 +3538,16 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
 
 const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   // 暴击流 - 破绽机制
-  'crit-aim': '????????????????????????????',
+  'crit-aim': '攻击命中时概率留下破绽标记，累积后触发暴击爆发。',
   'crit-primer': '攻击命中时概率留下破绽标记。',
-  'crit-afterglow': '?????????????????????',
+  'crit-afterglow': '破绽标记持续时间延长，下一次攻击更容易触发暴击。',
   'crit-heat-latch': '击破破绽后更容易连续触发新的破绽。',
   'crit-flare-path': '连续命中时更容易叠加破绽层数。',
   'crit-sidechannel': '破绽触发概率提升，爆发伤害增加。',
   'crit-reroute-spark': '超频状态下暴击伤害提升，同时修复少量损伤。',
   'crit-reroute-feed': '破绽机制效率提升，同时修复少量损伤。',
   'crit-branch-ignite': '破绽叠加速度提升，连续攻击更容易触发爆发。',
-  'crit-embershard': '????????????????????????',
+  'crit-embershard': '破绽爆发时伤害会溅射到附近敌人。',
   'crit-burst': '连续命中时破绽层数累积更快。',
   'crit-sparkline': '更容易锁定一个目标进行连续重击。',
   'crit-linekeep': '破绽链的维持时间延长，不易中断。',
@@ -3593,17 +3561,17 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'crit-finish': '破绽爆发完成最终输出，对低血量目标伤害提升。',
 
   // 穿透流 - 裂纹机制
-  'pierce-core': '??????????????????????????',
+  'pierce-core': '子弹穿透敌人后继续飞行，命中后排目标。',
   'pierce-rail': '弹道更加笔直，穿透路径更精准，可穿透整排敌人。',
   'pierce-seamline': '连续命中时更容易击破前排敌人。',
   'pierce-vector': '弹道更加笔直，穿透路径更精准。',
-  'pierce-seamkeep': '???????????????????',
+  'pierce-seamkeep': '裂纹持续时间延长，后排敌人持续受到伤害。',
   'pierce-shearline': '穿透前排后更容易继续命中后排敌人。',
   'pierce-sidechannel': '子弹附带弧线伤害，辅助击破前排。',
   'pierce-reroute-seam': '裂纹回响伤害提升，同时修复少量损伤。',
   'pierce-reroute-ledger': '穿透后排命中伤害提升，同时修复少量损伤。',
   'pierce-sidestitch': '穿透后排时获得额外伤害加成。',
-  'pierce-riftbloom': '?????????????????????????',
+  'pierce-riftbloom': '裂纹扩散范围扩大，影响更多敌人。',
   'pierce-fan': '子弹可同时穿透多名敌人。',
   'pierce-relay-spine': '后排敌人被穿透时连锁伤害增强。',
   'pierce-ledger-fanout': '裂纹扩散覆盖范围扩大，影响更多敌人。',
@@ -3617,7 +3585,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'pierce-prism': '裂纹扩散路径增多，穿透效果覆盖更广。',
 
   // 穿梭流 - 脉冲机制
-  'dash-brush': '??????????????????????',
+  'dash-brush': '接近敌人命中后更容易累积脉冲层数。',
   'dash-feint': '接近敌人后脉冲层数累积速度提升。',
   'dash-lanebreak': '接近敌人后更容易衔接反击攻击。',
   'dash-phasebank': '接近敌人时触发的脉冲频率提升。',
@@ -3627,9 +3595,9 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'dash-reroute-cutin': '穿梭速度提升，反击更加顺畅。',
   'dash-reroute-recall': '反击后更容易补充额外伤害。',
   'dash-loop': '接近敌人后脉冲冷却时间缩短。',
-  'dash-sidestep-bank': '??????????????????????',
+  'dash-sidestep-bank': '反击伤害提升14%。',
   'dash-return-hold': '接近敌人后的无敌时间延长。',
-  'dash-afterimage': '??????????????????????',
+  'dash-afterimage': '反击伤害提升20%，接近范围+12。',
   'dash-retrace-beat': '反击后衔接下一轮攻击更加稳定。',
   'dash-counterline': '脉冲层数满后反击效果更加明显，伤害提升。',
   'dash-return-snap': '更快回到下一次接近敌人的位置。',

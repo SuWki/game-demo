@@ -184,6 +184,11 @@ function getSelectionWeight(
     weight += rule.maturedRouteBonus ?? 0;
   }
 
+  // 展示窗口（1-4轮）：大幅压制 off-route redirect 牌，防止打乱主展示路线
+  if (tags && tags.includes('redirect') && context.committedRoute && context.round <= 4) {
+    weight *= 0.15;
+  }
+
   const phaseTagBonusMap: Record<PhaseId, Array<{ tag: string; bonus: number }>> = {
     opening: [
       { tag: 'opening', bonus: 0.94 },

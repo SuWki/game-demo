@@ -72,35 +72,35 @@ export function getRouteBuildStage(state: RunState, routeId: RouteId): RouteBuil
 export function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
     case 'hinted':
-      return '???';
+      return '初具方向';
     case 'committed':
-      return '???';
+      return '开始成型';
     case 'matured':
-      return '???';
+      return '已经成型';
     default:
-      return '???';
+      return '尚未成型';
   }
 }
 
 export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
   const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
     crit: {
-      unformed: '?????',
-      hinted: '?????',
-      committed: '????',
-      matured: '????',
+      unformed: '尚未成型',
+      hinted: '初具方向',
+      committed: '开始成型',
+      matured: '已经成型',
     },
     pierce: {
-      unformed: '???',
-      hinted: '?????',
-      committed: '????',
-      matured: '????',
+      unformed: '尚未成型',
+      hinted: '初具方向',
+      committed: '开始成型',
+      matured: '已经成型',
     },
     dash: {
-      unformed: '???',
-      hinted: '????',
-      committed: '????',
-      matured: '????',
+      unformed: '尚未成型',
+      hinted: '初具方向',
+      committed: '开始成型',
+      matured: '已经成型',
     },
   };
 
@@ -113,38 +113,38 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'crit':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '????????????????????';
+          return routeName + '开始连起来了：抓住时机就能打出一串重击。';
         case 'committed':
-          return routeName + '?????????????';
+          return routeName + '已经连起来了：先把破绽叠高。';
         case 'matured':
-          return routeName + '??????????????';
+          return routeName + '已经成型了：一串串重击炸开。';
         default:
-          return routeName + '????';
+          return routeName + '尚未成型。';
       }
     case 'pierce':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '????????????????';
+          return routeName + '开始连起来了：前排会慢慢给后排让路。';
         case 'committed':
-          return routeName + '?????????????';
+          return routeName + '已经连起来了：子弹会一路带过去。';
         case 'matured':
-          return routeName + '?????????????????';
+          return routeName + '已经成型了：子弹一路穿到后排。';
         default:
-          return routeName + '????';
+          return routeName + '尚未成型。';
       }
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '????????????????';
+          return routeName + '开始连起来了：先把换位和回打接上。';
         case 'committed':
-          return routeName + '???????????????';
+          return routeName + '已经连起来了：贴身后更容易回打。';
         case 'matured':
-          return routeName + '?????????????';
+          return routeName + '已经成型了：贴身一圈就能收人。';
         default:
-          return routeName + '????';
+          return routeName + '尚未成型。';
       }
     default:
-      return routeName + '??????';
+      return routeName + '尚未成型。';
   }
 }
 
@@ -153,46 +153,46 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'crit':
       switch (stage) {
         case 'starter':
-          return '????????????';
+          return '暴击开始连起来了';
         case 'bridge':
-          return '???????????????';
+          return '暴击已经连起来了';
         case 'payoff':
-          return '??????????????';
+          return '暴击已经成型了';
         default:
-          return '???????';
+          return '暴击阶段变化';
       }
     case 'pierce':
       switch (stage) {
         case 'starter':
-          return '????????????????';
+          return '穿透开始连起来了';
         case 'bridge':
-          return '?????????????????';
+          return '穿透已经连起来了';
         case 'payoff':
-          return '????????????';
+          return '穿透已经成型了';
         default:
-          return '???????';
+          return '穿透阶段变化';
       }
     case 'dash':
       switch (stage) {
         case 'starter':
-          return '?????????????';
+          return '穿梭开始连起来了';
         case 'bridge':
-          return '??????????????';
+          return '穿梭已经连起来了';
         case 'payoff':
-          return '??????????????';
+          return '穿梭已经成型了';
         default:
-          return '???????';
+          return '穿梭阶段变化';
       }
     default:
-      return '????????';
+      return '流派阶段变化';
   }
 }
 
 function getRouteName(routeId: RouteId): string {
   const names: Record<RouteId, string> = {
-    crit: '??',
-    pierce: '??',
-    dash: '??',
+    crit: '暴击',
+    pierce: '穿透',
+    dash: '穿梭',
   };
   return names[routeId];
 }
