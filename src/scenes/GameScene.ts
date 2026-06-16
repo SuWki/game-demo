@@ -1315,7 +1315,7 @@ export class GameScene extends Phaser.Scene {
     if (!battle.eliteAlive) {
       return {
         objectiveLabel: '精英目标',
-        objectiveText: '保持站位直到精英进场',
+        objectiveText: '坚持到精英进场',
         objectiveDetail: '先保住站位和血量，别急着抢节奏。',
         objectiveProgressText: '精英即将进场',
         objectiveTone: 'elite',
@@ -1327,7 +1327,7 @@ export class GameScene extends Phaser.Scene {
         objectiveLabel: '精英目标',
         objectiveText: '裂口已开，集中攻击本体',
         objectiveDetail: '趁护卫散开，集中打精英。',
-        objectiveProgressText: `裂口 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
+        objectiveProgressText: `暴露 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
         objectiveTone: 'elite',
       };
     }

@@ -509,7 +509,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '转折校准',
-        description: '要么保持当前，要么切换流派',
+        description: '坚持原路，或转向新路',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.42,
