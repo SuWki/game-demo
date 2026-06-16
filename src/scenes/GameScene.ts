@@ -1260,7 +1260,7 @@ export class GameScene extends Phaser.Scene {
         return {
           objectiveLabel: '眼下先做',
           objectiveText: '先进最后整备',
-          objectiveDetail: '补最后一手，然后直接进 Boss。',
+          objectiveDetail: '完成选择后进入首领战。',
           objectiveProgressText: '补完就进 Boss',
           objectiveTone: 'flow',
         };
@@ -1268,7 +1268,7 @@ export class GameScene extends Phaser.Scene {
 
       return {
         objectiveLabel: '眼下先做',
-        objectiveText: '挑下一站',
+        objectiveText: '选择下一站',
         objectiveDetail: `现在打到第 ${currentStep} / ${state.totalRounds} 站。`,
         objectiveProgressText: bossDistanceText,
         objectiveTone: 'flow',
@@ -1278,7 +1278,7 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'upgradeChoice') {
       return {
         objectiveLabel: '眼下先做',
-        objectiveText: state.currentNode?.isFinalPrep ? '把最后整备补完' : '把这张强化挑好',
+        objectiveText: state.currentNode?.isFinalPrep ? '完成最后整备' : '完成强化选择',
         objectiveDetail: state.upgradeSource === 'levelUp' ? '选择后立即返回战场。' : '选择后继续推进。',
         objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
         objectiveTone: 'flow',
@@ -1392,12 +1392,12 @@ export class GameScene extends Phaser.Scene {
           return '残影追返';
         }
         if (stage === 'committed') {
-          return '擦身回切';
+          return '擦身反击';
         }
         if (stage === 'hinted') {
-          return '贴身脉冲';
+          return '接近脉冲';
         }
-        return '尚未贴身';
+        return '尚未接近';
       default:
         return '';
     }

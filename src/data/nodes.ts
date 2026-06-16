@@ -1275,7 +1275,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '锁域首领',
-        description: '终局压迫战',
+        description: '最终压迫战',
         templateId: 'boss-lockdown',
         difficultyScale: 1.39,
         selection: {
@@ -1290,7 +1290,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '屏卫首领',
-        description: '终局压迫战',
+        description: '最终压迫战',
         templateId: 'boss-bastion',
         difficultyScale: 1.4,
         selection: {

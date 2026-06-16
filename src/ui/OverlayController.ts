@@ -1855,8 +1855,8 @@ export class OverlayController {
       },
       dash: {
         unformed: '尚未成型',
-        hinted: 'Starter · 贴身脉冲',
-        committed: 'Bridge · 擦身回切',
+        hinted: 'Starter · 接近脉冲',
+        committed: 'Bridge · 擦身反击',
         matured: 'Payoff · 残影追返',
       },
     };

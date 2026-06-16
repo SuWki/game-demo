@@ -135,11 +135,11 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '开始连起来了：先把换位和回打接上。';
+          return routeName + '开始连起来了：接近敌人后可以反击。';
         case 'committed':
-          return routeName + '已经连起来了：贴身后更容易回打。';
+          return routeName + '已经连起来了：接近敌人后反击更稳定。';
         case 'matured':
-          return routeName + '已经成型了：贴身一圈就能收人。';
+          return routeName + '已经成型了：接近敌人即可输出。';
         default:
           return routeName + '尚未成型。';
       }

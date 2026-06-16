@@ -19,7 +19,7 @@ export const ROUTES: RouteDefinition[] = [
     id: 'dash',
     name: '穿梭',
     shortHint: '穿梭已经连起来了。',
-    matureHint: '穿梭已经能贴身收人了。',
+    matureHint: '穿梭已经能接近敌人输出了。',
     color: '#9cff97',
   },
 ];
