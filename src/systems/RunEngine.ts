@@ -2387,13 +2387,13 @@ export class RunEngine {
     if (outcome === 'victory') {
       switch (routeId) {
         case 'crit':
-          return '暴击已经成型';
+          return '暴击已就绪';
         case 'pierce':
-          return '穿透已经成型';
+          return '穿透已就绪';
         case 'dash':
-          return '穿梭已经成型';
+          return '穿梭已就绪';
         default:
-          return `${ROUTE_NAME_MAP[routeId]}已经成型`;
+          return `${ROUTE_NAME_MAP[routeId]}已就绪`;
       }
     }
 
@@ -3402,15 +3402,16 @@ export class RunEngine {
     if (outcome === 'victory') {
       switch (routeId) {
         case 'crit':
-          return '暴击已经成型';
+          return '暴击已就绪';
         case 'pierce':
-          return '穿透已经成型';
+          return '穿透已就绪';
         case 'dash':
-          return '穿梭已经成型';
+          return '穿梭已就绪';
         default:
-          return `${ROUTE_NAME_MAP[routeId]}已经成型`;
+          return `${ROUTE_NAME_MAP[routeId]}已就绪`;
       }
     }
+
 
     return this.getRouteFailureReason(routeId, buildStage, outcome, replayProfile, eventHistory);
   }
@@ -3701,13 +3702,13 @@ export class RunEngine {
       piercePrism: { routeId: 'pierce', text: '一线清场已经能稳定展开', priority: 4 },
       pierceBreakthrough: { routeId: 'pierce', text: '一线清场：后排也会被带走', priority: 5 },
       dashBrush: { routeId: 'dash', text: '接近脉冲开始生效', priority: 1 },
-      dashSidestepBank: { routeId: 'dash', text: '擦身反击开始连上', priority: 2 },
-      dashZeroWindow: { routeId: 'dash', text: '反击窗口稳住了', priority: 3 },
-      dashAfterimage: { routeId: 'dash', text: '残影追返已就位', priority: 4 },
+      dashSidestepBank: { routeId: 'dash', text: '擦身脉冲已连击', priority: 2 },
+      dashZeroWindow: { routeId: 'dash', text: '反击已稳定', priority: 3 },
+      dashAfterimage: { routeId: 'dash', text: '残影脉冲已就绪', priority: 4 },
       critBridgeFocus: { routeId: 'crit', text: '开始锁单点', priority: 1 },
       critAfterglow: { routeId: 'crit', text: '连续压制更稳了', priority: 2 },
       critEmbershard: { routeId: 'crit', text: '爆点开始扩散', priority: 3 },
-      critCrownfire: { routeId: 'crit', text: '爆点窗口已就位', priority: 4 },
+      critCrownfire: { routeId: 'crit', text: '暴击爆发已就绪', priority: 4 },
       critLockProtocol: { routeId: 'crit', text: '单点锁死：持续爆发就绪', priority: 5 },
     };
 
@@ -5695,7 +5696,7 @@ export class RunEngine {
               spinRate: 6.8,
             });
             if (battle.critChain >= 2) {
-              this.queueRouteMoment('crit', '重击窗口开了：盯住这一只压到底');
+              this.queueRouteMoment('crit', '重击已触发：集中攻击该目标');
             }
           }
           if (critStage === 'committed' || critStage === 'matured') {
@@ -7548,7 +7549,7 @@ export class RunEngine {
 
     switch (nextPhase) {
       case 'mid':
-        this.enqueueTip('进到中段了：先把这条流派稳住。');
+        this.enqueueTip('进入中段：保持当前流派节奏。');
         this.enqueueAudio('confirm');
         return;
       case 'late':
@@ -9986,7 +9987,7 @@ export class RunEngine {
           focusRoute === 'pierce'
             ? '裂口出现，穿过火线'
             : focusRoute === 'crit'
-              ? '精英裂口打开，贴近反打'
+              ? '精英裂口打开，接近反击'
               : focusRoute === 'dash'
                 ? '安全窗打开，追回一拍'
                 : '精英裂口打开，追击本体';

@@ -199,7 +199,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'targeted-telemetry-press',
-        label: '追当前窗口',
+        label: '强化当前',
         description: '该流派属性提升，火力更加稳定',
         routeId: 'dominant',
         effects: [
@@ -400,7 +400,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'coolant-detour-tempo',
-        label: '换节奏窗口',
+        label: '切换节奏',
         description: '射速和弹速提升',
         effects: [
           {
@@ -767,9 +767,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       ...getAnomalyRoutePoolOptions('dashRerouteWindow', ['crit', 'pierce']),
       {
         id: 'dash-reroute-window-hold',
-        label: '先稳当前机动',
-        gameplayLabel: '先稳住',
-        gainLabel: '先把机动底子垫稳',
+        label: '保持当前机动',
+        gameplayLabel: '保持当前',
+        gainLabel: '强化机动基础',
         costLabel: '不直接切成别的路线',
         anomalyRole: 'direction',
         description: '先补机动。',
@@ -1253,7 +1253,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'heavy-buffer-armor',
         label: '接入重装外甲',
-        gameplayLabel: '稳住压力',
+        gameplayLabel: '承受压力',
         gainLabel: '生命上限明显提高',
         costLabel: '移速和射速降低',
         description: '牺牲灵活换生存',

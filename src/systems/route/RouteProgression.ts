@@ -72,35 +72,35 @@ export function getRouteBuildStage(state: RunState, routeId: RouteId): RouteBuil
 export function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
     case 'hinted':
-      return '初具方向';
+      return '已开始';
     case 'committed':
-      return '开始成型';
+      return '进行中';
     case 'matured':
-      return '已经成型';
+      return '已完成';
     default:
-      return '尚未成型';
+      return '未开始';
   }
 }
 
 export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
   const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
     crit: {
-      unformed: '尚未成型',
-      hinted: '初具方向',
-      committed: '开始成型',
-      matured: '已经成型',
+      unformed: '未开始',
+      hinted: '已开始',
+      committed: '进行中',
+      matured: '已完成',
     },
     pierce: {
-      unformed: '尚未成型',
-      hinted: '初具方向',
-      committed: '开始成型',
-      matured: '已经成型',
+      unformed: '未开始',
+      hinted: '已开始',
+      committed: '进行中',
+      matured: '已完成',
     },
     dash: {
-      unformed: '尚未成型',
-      hinted: '初具方向',
-      committed: '开始成型',
-      matured: '已经成型',
+      unformed: '未开始',
+      hinted: '已开始',
+      committed: '进行中',
+      matured: '已完成',
     },
   };
 
@@ -113,38 +113,38 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'crit':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '开始连起来了：抓住时机就能打出一串重击。';
+          return routeName + '起手：抓住时机打出一串重击。';
         case 'committed':
-          return routeName + '已经连起来了：先把破绽叠高。';
+          return routeName + '进行中：持续叠加暴击破绽。';
         case 'matured':
-          return routeName + '已经成型了：一串串重击炸开。';
+          return routeName + '已完成：连续暴击造成爆发伤害。';
         default:
-          return routeName + '尚未成型。';
+          return routeName + '未开始。';
       }
     case 'pierce':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '开始连起来了：前排会慢慢给后排让路。';
+          return routeName + '起手：前排伤害逐渐传导到后排。';
         case 'committed':
-          return routeName + '已经连起来了：子弹会一路带过去。';
+          return routeName + '进行中：子弹穿透整排敌人。';
         case 'matured':
-          return routeName + '已经成型了：子弹一路穿到后排。';
+          return routeName + '已完成：子弹穿透整排敌人造成大量伤害。';
         default:
-          return routeName + '尚未成型。';
+          return routeName + '未开始。';
       }
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '开始连起来了：接近敌人后可以反击。';
+          return routeName + '起手：接近敌人后可触发反击。';
         case 'committed':
-          return routeName + '已经连起来了：接近敌人后反击更稳定。';
+          return routeName + '进行中：接近敌人后持续触发反击。';
         case 'matured':
-          return routeName + '已经成型了：接近敌人即可输出。';
+          return routeName + '已完成：接近敌人后持续输出。';
         default:
-          return routeName + '尚未成型。';
+          return routeName + '未开始。';
       }
     default:
-      return routeName + '尚未成型。';
+      return routeName + '未开始。';
   }
 }
 
@@ -153,33 +153,33 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'crit':
       switch (stage) {
         case 'starter':
-          return '暴击开始连起来了';
+          return '暴击起手';
         case 'bridge':
-          return '暴击已经连起来了';
+          return '暴击进行中';
         case 'payoff':
-          return '暴击已经成型了';
+          return '暴击已完成';
         default:
           return '暴击阶段变化';
       }
     case 'pierce':
       switch (stage) {
         case 'starter':
-          return '穿透开始连起来了';
+          return '穿透起手';
         case 'bridge':
-          return '穿透已经连起来了';
+          return '穿透进行中';
         case 'payoff':
-          return '穿透已经成型了';
+          return '穿透已完成';
         default:
           return '穿透阶段变化';
       }
     case 'dash':
       switch (stage) {
         case 'starter':
-          return '穿梭开始连起来了';
+          return '穿梭起手';
         case 'bridge':
-          return '穿梭已经连起来了';
+          return '穿梭进行中';
         case 'payoff':
-          return '穿梭已经成型了';
+          return '穿梭已完成';
         default:
           return '穿梭阶段变化';
       }

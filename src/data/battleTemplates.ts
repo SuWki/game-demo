@@ -873,7 +873,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
         },
         {
           id: 'execution-window',
-          label: '处决窗口',
+          label: '处决时机',
           signatureLabel: '虚弱暴露',
           signatureDurationSec: 2.5,
           triggerHpRatio: 0.35,

@@ -1831,10 +1831,10 @@ export class OverlayController {
 
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
     const genericStageMap: Record<RunResult['buildStage'], string> = {
-      unformed: '尚未成型',
-      hinted: 'Starter · 初具方向',
-      committed: 'Bridge · 开始压制',
-      matured: 'Payoff · 已经成型',
+      unformed: '未开始',
+      hinted: '已开始',
+      committed: '进行中',
+      matured: '已完成',
     };
     if (!routeId) {
       return genericStageMap[buildStage];
@@ -1842,22 +1842,22 @@ export class OverlayController {
 
     const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
       crit: {
-        unformed: '尚未成型',
-        hinted: 'Starter · 锁单点',
-        committed: 'Bridge · 连续压制',
-        matured: 'Payoff · 爆点扩散',
+        unformed: '未开始',
+        hinted: '暴击起手',
+        committed: '连续暴击',
+        matured: '爆发扩散',
       },
       pierce: {
-        unformed: '尚未成型',
-        hinted: 'Starter · 找成线',
-        committed: 'Bridge · 传裂到后排',
-        matured: 'Payoff · 一线清场',
+        unformed: '未开始',
+        hinted: '穿透起手',
+        committed: '裂纹传导',
+        matured: '一线清场',
       },
       dash: {
-        unformed: '尚未成型',
-        hinted: 'Starter · 接近脉冲',
-        committed: 'Bridge · 擦身反击',
-        matured: 'Payoff · 残影追返',
+        unformed: '未开始',
+        hinted: '穿梭起手',
+        committed: '擦身脉冲',
+        matured: '残影脉冲',
       },
     };
 

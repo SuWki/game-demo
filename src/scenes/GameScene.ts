@@ -1029,7 +1029,7 @@ export class GameScene extends Phaser.Scene {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
         if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
-          return '暴击窗口开启：集中攻击高血量目标。';
+          return '暴击已触发：集中攻击高血量目标。';
         }
         if (battle.critBurstBonusSec > 0) {
           return '暴击已触发：连续进行重击。';
@@ -1089,7 +1089,7 @@ export class GameScene extends Phaser.Scene {
 
       if (liveFocusRoute === 'dash') {
         if (battle.dashDriveSec > 0) {
-          return '穿梭反击窗口开启：接近敌人即可反击。';
+          return '穿梭反击已就绪：接近敌人即可反击。';
         }
         if (routeStage === 'matured') {
           return '穿梭已成型：接近敌人即可输出。';
@@ -1315,7 +1315,7 @@ export class GameScene extends Phaser.Scene {
     if (!battle.eliteAlive) {
       return {
         objectiveLabel: '精英目标',
-        objectiveText: '稳住直到精英进场',
+        objectiveText: '保持站位直到精英进场',
         objectiveDetail: '先保住站位和血量，别急着抢节奏。',
         objectiveProgressText: '精英即将进场',
         objectiveTone: 'elite',
@@ -1327,7 +1327,7 @@ export class GameScene extends Phaser.Scene {
         objectiveLabel: '精英目标',
         objectiveText: '裂口已开，集中攻击本体',
         objectiveDetail: '趁护卫散开，集中打精英。',
-        objectiveProgressText: `窗口 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
+        objectiveProgressText: `裂口 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
         objectiveTone: 'elite',
       };
     }
@@ -1389,15 +1389,15 @@ export class GameScene extends Phaser.Scene {
         return '尚未成线';
       case 'dash':
         if (stage === 'matured') {
-          return '残影追返';
+          return '残影脉冲';
         }
         if (stage === 'committed') {
-          return '擦身反击';
+          return '擦身脉冲';
         }
         if (stage === 'hinted') {
           return '接近脉冲';
         }
-        return '尚未接近';
+        return '尚未开始';
       default:
         return '';
     }
