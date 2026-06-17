@@ -1112,12 +1112,13 @@
   },
   {
     "id": "crit-aim",
-    "name": "聚焦瞄准",
-    "description": "命中时概率触发高伤，适合抓短时机爆发",
+    "name": "破绽起手",
+    "description": "攻击命中时概率留下破绽标记，累积后触发暴击爆发。",
     "category": "route",
     "routeId": "crit",
     "tags": [
-      "starter"
+      "starter",
+      "crit-bridge-focus"
     ],
     "selection": {
       "baseWeight": 6,
@@ -1180,8 +1181,8 @@
   },
   {
     "id": "crit-afterglow",
-    "name": "余热描边",
-    "description": "破绽留得更久，下一轮更容易接上窗口。",
+    "name": "破绽余晖",
+    "description": "破绽标记持续时间延长，下一次攻击更容易触发暴击。",
     "category": "route",
     "routeId": "crit",
     "tags": [
@@ -1207,6 +1208,10 @@
         "modifiers": {
           "flawDurationBonus": 0.25
         }
+      },
+      {
+        "type": "route",
+        "routeId": "crit"
       }
     ]
   },
@@ -1347,14 +1352,6 @@
       {
         "type": "heal",
         "amount": 6
-      },
-      {
-        "type": "route",
-        "routeId": "crit"
-      },
-      {
-        "type": "route",
-        "routeId": "crit"
       }
     ]
   },
@@ -1392,14 +1389,6 @@
       {
         "type": "heal",
         "amount": 6
-      },
-      {
-        "type": "route",
-        "routeId": "crit"
-      },
-      {
-        "type": "route",
-        "routeId": "crit"
       }
     ]
   },
@@ -1438,8 +1427,8 @@
   },
   {
     "id": "crit-embershard",
-    "name": "余烬飞溅",
-    "description": "重击炸开时，会顺手带到附近敌人。",
+    "name": "余烬碎片",
+    "description": "破绽爆发时伤害会溅射到附近敌人。",
     "category": "route",
     "contentTier": "rare",
     "routeId": "crit",
@@ -1465,8 +1454,10 @@
     },
     "effects": [
       {
-        "type": "route",
-        "routeId": "crit"
+        "type": "stats",
+        "modifiers": {
+          "critSplashRadius": 0.16
+        }
       },
       {
         "type": "route",
@@ -1812,8 +1803,8 @@
   },
   {
     "id": "pierce-core",
-    "name": "穿甲校正",
-    "description": "先把前排穿开，子弹更容易带到后排。",
+    "name": "穿透核心",
+    "description": "子弹穿透敌人后继续飞行，命中后排目标。",
     "category": "route",
     "routeId": "pierce",
     "tags": [
@@ -1915,7 +1906,7 @@
   {
     "id": "pierce-vector",
     "name": "折线导程",
-    "description": "穿透和弹道开始对齐，清线会更顺。",
+    "description": "穿透弹道更精准，清理敌人更加高效。",
     "category": "route",
     "routeId": "pierce",
     "tags": [
@@ -1945,8 +1936,8 @@
   },
   {
     "id": "pierce-seamkeep",
-    "name": "拆缝续程",
-    "description": "裂纹留得更久，后排更容易被一路带出来。",
+    "name": "裂纹续接",
+    "description": "裂纹持续时间延长，后排敌人持续受到伤害。",
     "category": "route",
     "routeId": "pierce",
     "tags": [
@@ -1973,6 +1964,10 @@
           "pierceEchoDamageBonus": 0.06,
           "crackSpreadRadius": 0.06
         }
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
       }
     ]
   },
@@ -2081,14 +2076,6 @@
       {
         "type": "heal",
         "amount": 6
-      },
-      {
-        "type": "route",
-        "routeId": "pierce"
-      },
-      {
-        "type": "route",
-        "routeId": "pierce"
       }
     ]
   },
@@ -2160,8 +2147,8 @@
   },
   {
     "id": "pierce-riftbloom",
-    "name": "裂面回响",
-    "description": "裂纹散得更开，后排更容易被带出来。",
+    "name": "裂隙绽放",
+    "description": "裂纹扩散范围扩大，影响更多敌人。",
     "category": "route",
     "contentTier": "rare",
     "routeId": "pierce",
@@ -2192,6 +2179,10 @@
           "crackSpreadRadius": 0.25,
           "pierceEchoDamageBonus": 0.1
         }
+      },
+      {
+        "type": "route",
+        "routeId": "pierce"
       }
     ]
   },
@@ -2298,7 +2289,7 @@
   {
     "id": "pierce-relay-spine",
     "name": "并轨穿脊",
-    "description": "穿透的中段接上后，后排会更容易被顺着带掉。",
+    "description": "穿透命中后，后排敌人更容易受到连锁伤害。",
     "category": "route",
     "routeId": "pierce",
     "tags": [
@@ -2329,7 +2320,7 @@
   {
     "id": "pierce-ledger-fanout",
     "name": "拆账铺面",
-    "description": "把穿透的中后段补齐，整条线会更顺。",
+    "description": "强化穿透的中后段效果，整条穿透路线伤害提升。",
     "category": "route",
     "routeId": "pierce",
     "tags": [
@@ -2364,7 +2355,7 @@
   {
     "id": "pierce-floodgate",
     "name": "裂层清账",
-    "description": "一旦接上线，后排会跟着松开。",
+    "description": "穿透命中后，后排敌人会连锁受到伤害。",
     "category": "route",
     "contentTier": "rare",
     "routeId": "pierce",
@@ -2633,8 +2624,8 @@
   },
   {
     "id": "dash-brush",
-    "name": "擦身蓄能",
-    "description": "擦身时更容易蓄能。",
+    "name": "擦身脉冲",
+    "description": "接近敌人命中后更容易累积脉冲层数。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2736,8 +2727,8 @@
   },
   {
     "id": "dash-slipstream",
-    "name": "换位余程",
-    "description": "穿梭更快，回身更稳。",
+    "name": "穿梭余程",
+    "description": "穿梭充能速度提升12%，反击伤害提升12%，接近范围+10。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2769,7 +2760,7 @@
   {
     "id": "dash-sidechannel",
     "name": "错位取样",
-    "description": "换个接法继续打，顺手回一口",
+    "description": "反击伤害提升18%，接近范围+8，恢复6点生命。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2807,7 +2798,7 @@
   {
     "id": "dash-reroute-cutin",
     "name": "偏帧切入",
-    "description": "穿梭更快，换位后更容易接上。",
+    "description": "穿梭充能速度提升，接近敌人后反击伤害提升。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2838,21 +2829,13 @@
       {
         "type": "heal",
         "amount": 6
-      },
-      {
-        "type": "route",
-        "routeId": "dash"
-      },
-      {
-        "type": "route",
-        "routeId": "dash"
       }
     ]
   },
   {
     "id": "dash-reroute-recall",
     "name": "借位追回",
-    "description": "贴得更稳，回身更顺。",
+    "description": "接近范围+10，恢复6点生命。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2889,7 +2872,7 @@
   {
     "id": "pierce-prism",
     "name": "棱镜破轨",
-    "description": "裂纹扩得更大，更容易一条线贯过去。",
+    "description": "裂纹扩散范围提升30%。",
     "category": "route",
     "contentTier": "rare",
     "routeId": "pierce",
@@ -2925,7 +2908,7 @@
   {
     "id": "dash-loop",
     "name": "净帧循环",
-    "description": "贴身后更容易再接一轮。",
+    "description": "穿梭充能速度提升10%，接近范围+6。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2957,7 +2940,7 @@
   {
     "id": "dash-sidestep-bank",
     "name": "侧返蓄窗",
-    "description": "刚打完那一下，下一次更容易接上。",
+    "description": "反击伤害提升14%。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2983,13 +2966,17 @@
         "modifiers": {
           "dashCounterDamageBonus": 0.14
         }
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
       }
     ]
   },
   {
     "id": "dash-return-hold",
     "name": "回线留窗",
-    "description": "贴身后回得更快。",
+    "description": "穿梭充能速度提升8%，反击伤害提升10%。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3024,7 +3011,7 @@
   {
     "id": "dash-afterimage",
     "name": "残影脉冲",
-    "description": "贴身触发后，身后会留一段余波。",
+    "description": "反击伤害提升20%，接近范围+12。",
     "category": "route",
     "contentTier": "rare",
     "routeId": "dash",
@@ -3055,13 +3042,17 @@
           "dashCounterDamageBonus": 0.2,
           "dashGrazeRadiusBonus": 12
         }
+      },
+      {
+        "type": "route",
+        "routeId": "dash"
       }
     ]
   },
   {
     "id": "dash-retrace-beat",
     "name": "回线追拍",
-    "description": "贴身后更容易再接一轮。",
+    "description": "穿梭充能速度提升10%，反击伤害提升12%。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3096,7 +3087,7 @@
   {
     "id": "dash-counterline",
     "name": "脉冲反击",
-    "description": "回身那一下更重。",
+    "description": "反击伤害提升15%。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3130,7 +3121,7 @@
   {
     "id": "dash-return-snap",
     "name": "回摆取窗",
-    "description": "贴身后回得更快，也更远。",
+    "description": "穿梭充能速度提升8%，接近范围+8。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3166,7 +3157,7 @@
   {
     "id": "dash-rebound-window",
     "name": "借窗回返",
-    "description": "回身后更容易再接上。",
+    "description": "接近敌人后反击触发概率提升。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3203,7 +3194,7 @@
   {
     "id": "dash-rethread",
     "name": "回线续拍",
-    "description": "回身接下一轮更稳。",
+    "description": "反击伤害提升18%。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3235,7 +3226,7 @@
   {
     "id": "dash-reentry",
     "name": "回环汲能",
-    "description": "贴身后回得更顺，也更容易补伤。",
+    "description": "穿梭充能速度提升10%，反击伤害提升15%。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3268,7 +3259,7 @@
   {
     "id": "dash-anchor",
     "name": "穿梭定标",
-    "description": "贴身、回身、收人都更稳。",
+    "description": "穿梭接近、反击、消灭的整体稳定性提升。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -3300,7 +3291,7 @@
   {
     "id": "dash-zero-window",
     "name": "瞬返空档",
-    "description": "三层脉冲后，短时间内再碰到就更痛。",
+    "description": "穿梭充能速度提升12%，反击伤害提升12%，接近范围+10。",
     "category": "route",
     "contentTier": "rare",
     "routeId": "dash",

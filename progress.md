@@ -1293,7 +1293,7 @@ eplaySeen: true, consoleErrors: [].
 - In src/systems/RunEngine.ts: kills now burst XP into multi-shard drops, pickups accelerate harder, nearby XP gets chain-vacuum nudges, and pickups feed a tiny cadence carry.
 - In src/scenes/GameScene.ts: XP orbs now render motion trails and short magnet links so pickup flow is readable on screen.
 - In src/systems/PilotAudio.ts: kill / pickup cues were lifted to better match the stronger reward chain.
-- Synced /doc truth docs for current handoff, risks, targets, priorities, and added doc/30_�����Ż�/��������/2026-04-14_����ѭ����ս���ر�����ĥ.md.
+- Synced /doc truth docs for current handoff, risks, targets, priorities, and added doc/30_持续优化/开发复盘/2026-04-14_核心循环与战斗回报链打磨.md.
 - Next step: rerun build + browser smoke and inspect whether the pickup chase loop really reads better in combat.
 
 
@@ -1353,10 +1353,10 @@ TODO
   - `output/playwright/battle-feel-pass/round16/elite-check/summary.json` still shows `eliteRouteChosen=true`, `eliteBattleSeen=true`
   - `window.__pilotAudioDebug()` snapshot during battle showed `currentMusicMode='battle'` and real cue counts including `shoot`
 - Docs synced:
-  - `doc/00_�������/��ǰ���ӿ�.md`
-  - `doc/10_����ĵ�/ս�����������.md`
-  - `doc/30_�����Ż�/��ǰ���������ȼ�.md`
-  - `doc/30_�����Ż�/��������/2026-04-15_ս��ֱ���ָв�ǿ.md`
+  - `doc/00_接手入口/当前交接卡.md`
+  - `doc/10_设计文档/战斗与首领设计.md`
+  - `doc/30_持续优化/当前待办与优先级.md`
+  - `doc/30_持续优化/开发复盘/2026-04-15_战斗直观手感补强.md`
 TODO
 - Before commit, keep `progress.md`, `output/`, `tools/`, and unrelated doc migration files out of staging.
 - Next pass should continue on hit-confirm / hurt-confirm / battle-family feel, not map visualization or new systems.
@@ -1915,3 +1915,25 @@ TODO
 - `npm run build` 通过，`npm run qa:stable-smoke` 继续干净，`failed404Urls / consoleErrors / consoleWarns` 还是空。
 - `natural fullrun` 这轮继续往前推了一点：`routeCounts.none` 从 `4/10` 降到 `3/10`，`buildStageCounts.unknown` 从 `4/10` 降到 `3/10`，`timedOutRuns` 从 `4/10` 降到 `3/10`，`avgNodesCleared` 从 `3.0` 升到 `3.3`。
 - 当前判断还是偏收口：这轮确实还能再抬一点自然流程稳定性，但边际收益已经很薄，后面如果再做，应该只剩很小的自然流程收口，不适合继续大开一轮。
+# 2026-06-17 P2-0 验证链修复与收口
+- 本轮主线为 `P2-0：showcase 验证链修复与阶段文档同步`，不做 P0/P1 微调，不把逻辑塞回 RunEngine.ts。
+- 验证工具适配：`tools/qa-stable-smoke.mjs` 已确认适配当前结果页结构，仅依赖 `[data-action="restart"]` 和 `[data-action="menu"]`，不需要旧 `details` 按钮。结果页详图链路已基于 showcase 结果页结构闭环。
+- `npm run export:data`、`npm run build` 均通过。
+- `npm run preview -- --host 127.0.0.1 --port 4173` 启动预览并验证：
+  - `npm run qa:stable-smoke` 全部通过。
+  - `failed404Urls: []`
+  - `consoleErrors: []`
+  - `consoleWarns: []`
+  - 所有覆盖项：home、upgrade、bossSignature、crit（anomaly / battleBridge / battlePayoff / resultDetail）、pierce（anomaly / battleBridge / battlePayoff / resultDetail）均为 true。
+- natural fullrun（5 轮，PILOT_QA_RUNS=5）产出新 `summary.json` 于 `output/qa/smart-natural-fullrun-p2-0/summary.json`：
+  - `consoleErrorRuns: 0`
+  - `failed404Urls: []`
+  - `bossReachedRuns: 5/5`
+  - `timedOutRuns: 2/5`（Boss 战自然超时）
+  - `wins: 2/5`
+  - 路线分布：dash 1, pierce 1, crit 1, none 2（超时局无法读取）
+  - `buildStage=matured: 3/5`
+- 当前阶段文档已同步：
+  - `doc/30_持续优化/当前阶段开发总表.md` 已更新到 P2-0 口径
+  - `doc/30_持续优化/测试与验证手册.md` 已确认固定流程
+  - 本 progress.md 乱码已修复，保留历史记录

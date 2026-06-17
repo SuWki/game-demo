@@ -290,18 +290,18 @@ export async function runStableSmoke(options = {}) {
       }
 
       await triggerScenario(page, { routeId, stage: 'result', resultMode });
-      await waitForVisible(page.locator('[data-action="details"]'), 6000);
-      await page.click('[data-action="details"]');
-      await waitForVisible(page.locator('.panel-result-details'));
+      await waitForVisible(page.locator('[data-action="restart"]'), 6000);
+      await waitForVisible(page.locator('[data-action="menu"]'), 6000);
+      await page.waitForTimeout(300);
       routeCoverage.resultDetail = true;
       routeScreenshots.result = await capture(page, outDir, `${routeId}-result-detail.png`);
-      routeTextChecks.resultDetail = normalize(await page.locator('.panel-result-details').innerText());
+      routeTextChecks.resultDetail = normalize(await page.locator('.screen-minimal.result-screen').innerText());
       pushCapture(summary, {
         routeId,
         stage: 'result',
-        stageLevel: 'payoff',
+        stageLevel: 'summary',
         anomalyRole: ['direction', 'core', 'transform'],
-        pageSegment: 'result-detail',
+        pageSegment: 'result-screen',
         screenshot: routeScreenshots.result,
       });
     }
