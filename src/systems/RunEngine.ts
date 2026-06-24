@@ -1094,6 +1094,9 @@ export class RunEngine {
       dashMomentumStacks: 0,
       dashMomentumDecaySec: 0,
     };
+    if (encounterType === 'boss') {
+      this.state.battle.pressureTransitionSec = 0.88;
+    }
     this.state.battle.enemyHp = this.getRegularEnemyHp(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.state.battle.enemySpeed = this.getRegularEnemySpeed(template, battleIndex, node.phase, this.state.battle.difficultyScale);
     this.enqueueTip(
@@ -2193,7 +2196,7 @@ export class RunEngine {
       this.services.metrics.recordBossPhaseEntered(battle.templateId, nextPhase.id, nextPhase.label);
     }
     this.enqueueTip(
-      `${battle.encounterType === 'boss' ? 'Boss 开招' : '精英转段'}：${
+      `${battle.encounterType === 'boss' ? 'Boss 开招' : '精英进场'}：${
         nextPhase.signatureLabel ?? nextPhase.patternLabel ?? nextPhase.label
       }`,
     );
@@ -2238,9 +2241,9 @@ export class RunEngine {
       this.state.status = 'bossEnding';
       this.state.bossEnding = {
         outcome: 'victory',
-        label: '首领已破 / 最终检定通过',
+        label: 'Boss 已破 / 通关成功',
         elapsedSec: 0,
-        durationSec: 0.95,
+        durationSec: 0.82,
       };
       this.enqueueAudio('victory');
       return;
@@ -2257,7 +2260,7 @@ export class RunEngine {
     this.state.phaseTransition = {
       label: `${battle.label || this.getBattleTemplate(battle.templateId).name}完成`,
       elapsedSec: 0,
-      durationSec: 0.72,
+      durationSec: 0.46,
     };
     this.enqueueAudio('victory');
 
@@ -3061,7 +3064,7 @@ export class RunEngine {
     const routeName = ROUTE_NAME_MAP[activeRouteId];
 
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}提前进入最终补强阶段，但尚未完全成型`;
+      return `${routeName}提前进入最终补强，但还没完全成型`;
     }
 
     if (record.anomalyClass === 'hybrid') {
@@ -3071,26 +3074,26 @@ export class RunEngine {
     switch (record.anomalyRole) {
       case 'direction':
         return activeRouteId === 'pierce'
-          ? `此阶段为${routeName}打开前排路线`
+          ? `${routeName}先把前排打开`
           : activeRouteId === 'dash'
-            ? `此阶段为${routeName}建立接近节奏`
-            : `此阶段为${routeName}建立基础节奏`;
+            ? `${routeName}先把贴近身位站稳`
+            : `${routeName}先把基础打稳`;
       case 'core':
         return activeRouteId === 'pierce'
-          ? `此阶段强化${routeName}的前排穿透能力，后排开始受到伤害`
+          ? `${routeName}的前排穿透更明显，后面也会吃到伤害`
           : activeRouteId === 'dash'
-            ? `此阶段强化${routeName}接近敌人后的反击能力`
-            : `此阶段强化${routeName}的连击伤害`;
+            ? `${routeName}接近敌人后的反击更顺`
+            : `${routeName}的连击伤害更重`;
       case 'transform':
         return activeRouteId === 'crit'
-          ? `此阶段将${routeName}升级为连续爆发`
+          ? `${routeName}已经能连着爆发`
           : activeRouteId === 'pierce'
-            ? `此阶段使${routeName}能够打击后排`
-            : `此阶段使${routeName}实现全面强化`;
+            ? `${routeName}已经能打到后排`
+            : `${routeName}已经更完整`;
       case 'finisher':
-        return `此阶段为${routeName}完成最终补强`;
+        return `${routeName}完成最后补强`;
       default:
-        return `${routeName}在此阶段取得进展`;
+        return `${routeName}这次更进一步`;
     }
   }
 
@@ -3101,7 +3104,7 @@ export class RunEngine {
 
     const layerMap: Record<RouteId, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '建立节奏',
+        direction: '带起节奏',
         core: '火力更重',
         transform: '全面强化',
         finisher: '最终补强',
@@ -3163,7 +3166,7 @@ export class RunEngine {
       case 'hpDepleted':
         return `${finalNodeTitle}这关把机体磨没了`;
       case 'timeOut':
-        return `${finalNodeTitle}阶段未能承受压力`;
+        return `${finalNodeTitle}没能承住压力`;
       default:
         return `${finalNodeTitle}这一局打完了`;
     }
@@ -3269,7 +3272,7 @@ export class RunEngine {
   private getAnomalyRoleCallout(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '建立节奏';
+        return '带起节奏';
       case 'core':
         return '火力更重';
       case 'transform':
@@ -3303,7 +3306,7 @@ export class RunEngine {
   private getAnomalyRoleTurnVerb(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '建立节奏';
+        return '带起节奏';
       case 'core':
         return '提升火力';
       case 'transform':
@@ -3478,7 +3481,7 @@ export class RunEngine {
   private getAnomalyRoleRecap(profile: ReplayProfile): string {
     const parts: string[] = [];
     if (profile.anomalyDirectionHits > 0) {
-      parts.push(`建立节奏 ${profile.anomalyDirectionHits}`);
+      parts.push(`带起节奏 ${profile.anomalyDirectionHits}`);
     }
     if (profile.anomalyCoreHits > 0) {
       parts.push(`火力更重 ${profile.anomalyCoreHits}`);
@@ -3696,20 +3699,20 @@ export class RunEngine {
     const cueMap: Partial<
       Record<RoutePerkKey, { routeId: RouteId; text: string; priority: number }>
     > = {
-      pierceSeamkeep: { routeId: 'pierce', text: '开始找成线站位', priority: 1 },
-      pierceFloodgate: { routeId: 'pierce', text: '前排裂开后，裂纹开始往后传', priority: 2 },
-      pierceRiftbloom: { routeId: 'pierce', text: '一线清场开始成形', priority: 3 },
-      piercePrism: { routeId: 'pierce', text: '一线清场已经能稳定展开', priority: 4 },
-      pierceBreakthrough: { routeId: 'pierce', text: '一线清场：后排也会被带走', priority: 5 },
-      dashBrush: { routeId: 'dash', text: '接近脉冲开始生效', priority: 1 },
-      dashSidestepBank: { routeId: 'dash', text: '擦身脉冲已连击', priority: 2 },
-      dashZeroWindow: { routeId: 'dash', text: '反击已稳定', priority: 3 },
-      dashAfterimage: { routeId: 'dash', text: '残影脉冲已就绪', priority: 4 },
-      critBridgeFocus: { routeId: 'crit', text: '开始锁单点', priority: 1 },
-      critAfterglow: { routeId: 'crit', text: '连续压制更稳了', priority: 2 },
-      critEmbershard: { routeId: 'crit', text: '爆点开始扩散', priority: 3 },
-      critCrownfire: { routeId: 'crit', text: '暴击爆发已就绪', priority: 4 },
-      critLockProtocol: { routeId: 'crit', text: '单点锁死：持续爆发就绪', priority: 5 },
+      pierceSeamkeep: { routeId: 'pierce', text: '先把直线站住', priority: 1 },
+      pierceFloodgate: { routeId: 'pierce', text: '前排一开，后面开始掉', priority: 2 },
+      pierceRiftbloom: { routeId: 'pierce', text: '穿透开始铺开', priority: 3 },
+      piercePrism: { routeId: 'pierce', text: '穿透已经站稳', priority: 4 },
+      pierceBreakthrough: { routeId: 'pierce', text: '后排也会一起掉', priority: 5 },
+      dashBrush: { routeId: 'dash', text: '贴身起手开始生效', priority: 1 },
+      dashSidestepBank: { routeId: 'dash', text: '贴身反打更顺', priority: 2 },
+      dashZeroWindow: { routeId: 'dash', text: '反击已经稳住', priority: 3 },
+      dashAfterimage: { routeId: 'dash', text: '残影追击开始发力', priority: 4 },
+      critBridgeFocus: { routeId: 'crit', text: '先盯住一个目标', priority: 1 },
+      critAfterglow: { routeId: 'crit', text: '连续压制更稳', priority: 2 },
+      critEmbershard: { routeId: 'crit', text: '爆点开始扩开', priority: 3 },
+      critCrownfire: { routeId: 'crit', text: '暴击爆发开始发力', priority: 4 },
+      critLockProtocol: { routeId: 'crit', text: '锁住一个目标，持续发力', priority: 5 },
     };
 
     let bestCue: { routeId: RouteId; text: string; priority: number } | null = null;
@@ -3752,22 +3755,22 @@ export class RunEngine {
         this.activateRoutePerks(['critBridgeFocus']);
         return {
           routeId: 'crit',
-          momentText: '开始锁单点了',
-          tipText: '暴击开始走单点循环。',
+          momentText: '已经盯住一处了',
+          tipText: '暴击开始带节奏了。',
         };
       case 'crit-reroute-window-transform':
         this.activateRoutePerks(['critBridgeFocus', 'critEmbershard', 'critCrownfire', 'critLockProtocol']);
         return {
           routeId: 'crit',
           momentText: '破绽开始向周围炸开',
-          tipText: '暴击已经能稳定收口了。',
+          tipText: '暴击已经能稳住局面了。',
         };
       case 'pierce-reroute-window-breakthrough':
         this.activateRoutePerks(['pierceRiftbloom', 'pierceFloodgate', 'pierceBreakthrough']);
         return {
           routeId: 'pierce',
           momentText: '一条线已经能把后排带进去',
-          tipText: '穿透开始打直线了。',
+          tipText: '穿透开始走直线了。',
         };
       default:
         return null;
@@ -5098,7 +5101,7 @@ export class RunEngine {
         (target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 2.05 : 1.42) + focusHoldBonus,
       );
       if (newFocusTarget && battle.critChain >= 1) {
-        this.queueRouteMoment('crit', '破绽链开始挂上去了');
+        this.queueRouteMoment('crit', '破绽链开始接上了');
       }
     }
     battle.playerAimDirX = Math.cos(baseAngle);
@@ -5608,7 +5611,7 @@ export class RunEngine {
 
             // crit-crownfire: 破绽爆发后短时间提高下一次暴击收益
             if (battle.critCrownfireReady) {
-              battle.critBurstBonusSec = 2.8; // 更稳一点，真实战斗里更容易看见收口窗口
+              battle.critBurstBonusSec = 2.8; // 更稳一点，真实战斗里更容易看见输出窗口
               battle.critBurstBonusRatio = 0.35; // 35%额外伤害
             }
 
@@ -5696,7 +5699,7 @@ export class RunEngine {
               spinRate: 6.8,
             });
             if (battle.critChain >= 2) {
-              this.queueRouteMoment('crit', '重击已触发：集中攻击该目标');
+              this.queueRouteMoment('crit', '重击已触发：集中火力');
             }
           }
           if (critStage === 'committed' || critStage === 'matured') {
@@ -5739,13 +5742,13 @@ export class RunEngine {
           if (battle.critChain >= 1 && this.getRouteBuildStage('crit') !== 'unformed' && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'starter'));
-            this.enqueueTip('暴击开始顺手了');
+            this.enqueueTip('暴击开始顺了');
           }
           if (battle.critFinisherReady) {
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'payoff'));
           } else if (battle.critChain >= 2) {
             this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
-            this.enqueueTip('暴击已经连起来了');
+            this.enqueueTip('暴击已经接上了');
           }
         } else if (battle.critChain > 0) {
           battle.critChain = Math.max(0, battle.critChain - 1);
@@ -5812,7 +5815,7 @@ export class RunEngine {
             if (!this.routeMomentShown.pierce && this.getRouteBuildStage('pierce') !== 'unformed') {
               this.routeMomentShown.pierce = true;
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'starter'));
-              this.enqueueTip('穿透开始穿前排了');
+              this.enqueueTip('穿透开始打前排了');
             }
             if (pierceChain >= 3) {
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'payoff'));
@@ -5820,7 +5823,7 @@ export class RunEngine {
               this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
             }
             if (carriedBackline && pierceChain >= 2) {
-              this.queueRouteMoment('pierce', '这一条线通了：前排一裂开，后排也会跟着掉');
+              this.queueRouteMoment('pierce', '前排一裂开，后排也会跟着掉');
             }
           }
         }
@@ -7497,8 +7500,8 @@ export class RunEngine {
       this.enqueueAudio('levelUpReady');
       this.enqueueTip(`等级提升 Lv.${this.state.level}`);
       if (this.state.status === 'battle') {
-        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.28);
-        this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.22);
+        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.18);
+        this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.12);
       } else {
         this.openQueuedLevelUpPanel();
       }
@@ -7549,19 +7552,19 @@ export class RunEngine {
 
     switch (nextPhase) {
       case 'mid':
-        this.enqueueTip('进入中段');
+        this.enqueueTip('进入中盘');
         this.enqueueAudio('confirm');
         return;
       case 'late':
-        this.enqueueTip('进入后段');
+        this.enqueueTip('进入收尾');
         this.enqueueAudio('confirm');
         return;
       case 'finalPrep':
-        this.enqueueTip('最后整备');
+        this.enqueueTip('最终强化');
         this.enqueueAudio('upgrade');
         return;
       case 'finalBattle':
-        this.enqueueTip('最终检定');
+        this.enqueueTip('Boss 开场');
         this.enqueueAudio('boss');
         return;
       default:
@@ -7876,7 +7879,7 @@ export class RunEngine {
     if (!this.routeMomentShown.pierce) {
       this.routeMomentShown.pierce = true;
       this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
-      this.enqueueTip('穿透线已经打通了');
+      this.enqueueTip('穿透已经打通了');
     }
   }
 
@@ -9989,7 +9992,7 @@ export class RunEngine {
             : focusRoute === 'crit'
               ? '精英裂口打开，接近反击'
               : focusRoute === 'dash'
-                ? '安全窗打开，追回一拍'
+                ? '护区已开，跟上输出'
                 : '精英裂口打开，追击本体';
         this.enqueueTip(breachTip);
         battle.eliteBreachCalloutCooldownSec = 1.4;

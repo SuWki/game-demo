@@ -163,7 +163,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '补路火力',
-        description: '顺着这条线再压一手',
+        description: '顺着这条线再压一把',
         offerRole: 'direction',
         selection: {
           baseWeight: 4,
@@ -434,7 +434,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '补路火力',
-        description: '顺着这条线再压一手',
+        description: '顺着这条线再压一把',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.8,
@@ -466,7 +466,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-lock',
         type: 'upgrade',
         phase: 'mid',
-        title: '火力校准',
+        title: '火力补强',
         description: '补点底子',
         offerRole: 'stabilize',
         selection: {
@@ -480,7 +480,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-reroute',
         type: 'upgrade',
         phase: 'mid',
-        title: '补路整备',
+        title: '补路调整',
         description: '换一边补火力',
         offerRole: 'pivot',
         selection: {
@@ -494,7 +494,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-mesh',
         type: 'upgrade',
         phase: 'mid',
-        title: '并轨整备',
+        title: '并线调整',
         description: '把几路拢一拢',
         offerRole: 'pivot',
         selection: {
@@ -508,7 +508,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-turn',
         type: 'upgrade',
         phase: 'mid',
-        title: '转折校准',
+        title: '转折调整',
         description: '坚持原路，或转向新路',
         offerRole: 'pivot',
         selection: {
@@ -542,7 +542,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '偏一下',
-        description: '这段会偏一点',
+        description: '这次会偏一点',
         offerRole: 'pivot',
         selection: {
           baseWeight: 3.36,
@@ -556,7 +556,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '侧频噪点',
-        description: '中段有点乱',
+        description: '中盘有点乱',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.82,
@@ -731,7 +731,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '收束缝线',
-        description: '最后一段把场面收进一条线',
+        description: '收尾把场面收进一条线',
         templateCandidates: [
           { templateId: 'survival-thread', weight: 3 },
           { templateId: 'survival-closehold', weight: 1.25 },
@@ -777,7 +777,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-rush',
         type: 'battle',
         phase: 'late',
-        title: '尾段突压',
+        title: '收尾突压',
         description: '高速敌人逼近',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 2 },
@@ -981,7 +981,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '补路火力',
-        description: '顺着这条线再压一手',
+        description: '顺着这条线再压一把',
         offerRole: 'closeout',
         selection: {
           baseWeight: 3.4,
@@ -1006,7 +1006,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-finalcheck',
         type: 'upgrade',
         phase: 'late',
-        title: '决战复检',
+        title: '决战补漏',
         description: '进首领前补短板',
         offerRole: 'bossPrep',
         selection: {
@@ -1024,7 +1024,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-commit-hold',
         type: 'upgrade',
         phase: 'late',
-        title: '定势整备',
+        title: '定型调整',
         description: '强化当前流派',
         offerRole: 'closeout',
         selection: {
@@ -1056,7 +1056,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '稀有读数',
-        description: '拿一手稀有的',
+        description: '拿一个稀有的',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.05,
@@ -1068,8 +1068,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-closeout',
         type: 'upgrade',
         phase: 'late',
-        title: '终拍定稿',
-        description: '确立本局流派方向',
+        title: '收尾定型',
+        description: '确立本局打法方向',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.15,
@@ -1081,8 +1081,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-sidefold',
         type: 'upgrade',
         phase: 'late',
-        title: '旁路归并',
-        description: '整合战术体系',
+        title: '旁路收拢',
+        description: '把打法拢一拢',
         offerRole: 'closeout',
         selection: {
           baseWeight: 1.48,
@@ -1108,7 +1108,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-event-last-bet',
         type: 'anomaly',
         phase: 'late',
-        title: '尾段押注',
+        title: '收尾押注',
         description: '全力押注一个方向',
         offerRole: 'closeout',
         selection: {
@@ -1206,7 +1206,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-closeout',
         type: 'anomaly',
         phase: 'late',
-        title: '终段偏航',
+        title: '收尾偏航',
         description: '面临最后抉择',
         offerRole: 'closeout',
         selection: {
@@ -1226,8 +1226,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'final-prep',
         type: 'upgrade',
         phase: 'finalPrep',
-        title: '最后整备',
-        description: '最后整备',
+        title: '最终强化',
+        description: '最终强化',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1237,7 +1237,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'final-prep-shadow',
         type: 'upgrade',
         phase: 'finalPrep',
-        title: 'Boss 预整备',
+        title: '决战备战',
         description: '先补短板',
         isFinalPrep: true,
         selection: {
@@ -1603,13 +1603,13 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
 export function getPhaseLabel(phase: PhaseId): string {
   switch (phase) {
     case 'opening':
-      return '前段';
+      return '起手';
     case 'mid':
-      return '中段';
+      return '中盘';
     case 'late':
-      return '后段';
+      return '收尾';
     case 'finalPrep':
-      return '最后整备';
+      return '最终强化';
     case 'finalBattle':
       return '最终战';
     case 'ended':

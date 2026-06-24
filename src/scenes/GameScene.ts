@@ -83,18 +83,18 @@ function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSum
 const TERRAIN_BLOT_SIZE = 384;
 /*
 const PHASE_TRACK = [
-  { phase: 'opening', label: '前段' },
-  { phase: 'mid', label: '中段' },
-  { phase: 'late', label: '后段' },
-  { phase: 'finalPrep', label: '整备' },
+  { phase: 'opening', label: '起手' },
+  { phase: 'mid', label: '中盘' },
+  { phase: 'late', label: '收尾' },
+  { phase: 'finalPrep', label: '强化' },
   { phase: 'finalBattle', label: 'Boss' },
 ] as const;
 */
 const PHASE_TRACK = [
-  { phase: 'opening', label: '前段' },
-  { phase: 'mid', label: '中段' },
-  { phase: 'late', label: '后段' },
-  { phase: 'finalPrep', label: '整备' },
+  { phase: 'opening', label: '起手' },
+  { phase: 'mid', label: '中盘' },
+  { phase: 'late', label: '收尾' },
+  { phase: 'finalPrep', label: '强化' },
   { phase: 'finalBattle', label: 'Boss' },
 ] as const;
 
@@ -821,7 +821,7 @@ export class GameScene extends Phaser.Scene {
           state.upgradeSource === 'levelUp'
             ? `等级提升 Lv.${state.level}`
             : state.currentNode?.isFinalPrep
-              ? '最后整备'
+              ? '最终强化'
               : `${getPhaseLabel(state.phase)}强化`;
         this.services.overlay.showUpgradePanel(
           panelTitle,
@@ -864,13 +864,13 @@ export class GameScene extends Phaser.Scene {
   private processAnnouncements(): void {
     for (const item of this.engine.drainAnnouncements()) {
       if (item.kind === 'tip' && item.text) {
-        const tone = this.getToastTone(item.text);
+      const tone = this.getToastTone(item.text);
       const forceBattleToast =
         item.text.includes('Boss 已进场') ||
         item.text.includes('首领已进场') ||
         item.text.includes('精英裂口打开') ||
         item.text.includes('裂口出现') ||
-        item.text.includes('安全窗打开') ||
+        item.text.includes('护区已开') ||
         item.text.includes('压力上升');
         if (this.shouldDisplayToast(tone) || forceBattleToast) {
           this.services.overlay.pushToast(item.text, tone);
@@ -972,6 +972,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getBattleStatusText(battle: BattleState): string {
+    if (battle.encounterType === 'boss' && (battle.elapsedSec < 0.95 || battle.pressureTransitionSec > 0 || battle.pressureSignatureSec > 0)) {
+      return `Boss 进场 · ${this.getBattleIdentityLabel(battle)}`;
+    }
     return `${getBattleEncounterLabel(battle.templateId, battle.encounterType)} · ${this.getBattleIdentityLabel(battle)}`;
   }
 
@@ -981,7 +984,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'upgradeChoice') {
-      return state.currentNode?.isFinalPrep ? '最后整备' : '选择强化';
+      return state.currentNode?.isFinalPrep ? '最终强化' : '选择强化';
     }
 
     if (state.status === 'eventChoice') {
@@ -1010,91 +1013,94 @@ export class GameScene extends Phaser.Scene {
 
   private getBattleStatusSubtext(battle: BattleState): string {
     if (battle.encounterType === 'boss') {
+      if (battle.elapsedSec < 0.95) {
+        return '最终战入口';
+      }
       if (battle.pressureSafeWindowSec > 0) {
-        return 'Boss · 安全窗';
+        return 'Boss · 留口';
       }
       if (battle.bossSafeWindowGraceSec > 0) {
-        return `Boss · 压场 ${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
+        return `Boss · 压住 ${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
       }
       if (battle.pressureSignatureLabel || battle.pressurePatternLabel || battle.pressurePhaseLabel) {
-        return `Boss · 最终检定：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
+        return `Boss · 出招：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
       }
       return '';
     }
 
     const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
     if (liveFocusRoute) {
-      const activeRoutePerks = this.engine.getState().activeRoutePerks;
-      const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
-      if (liveFocusRoute === 'crit') {
-        if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
-          return '◆ 暴击已触发：集中压单点。';
+        const activeRoutePerks = this.engine.getState().activeRoutePerks;
+        const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
+        if (liveFocusRoute === 'crit') {
+          if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
+            return '◆ 暴击已触发：集中火力。';
+          }
+          if (battle.critBurstBonusSec > 0) {
+            return '◆ 暴击已触发：连续重击。';
+          }
+          if (battle.critFinisherReady) {
+            return `◆ 暴击已就绪：${battle.critComboStacks}/5 层破绽已挂满。`;
+          }
+          if (activeRoutePerks?.critBridgeFocus && battle.critFocusLockSec > 0) {
+            return '◆ 先压一个目标：破绽会继续累积。';
+          }
+          if (battle.critChain >= 1) {
+            return `◆ 暴击开始生效：${battle.critComboStacks}/5 层破绽已累积。`;
+          }
+          if (routeStage === 'matured') {
+            return battle.critComboStacks > 0
+              ? `◆ 暴击已连击：破绽 ${battle.critComboStacks}/5，下一次会炸开。`
+              : '◆ 暴击已就绪：连着打更容易炸开。';
+          }
+          if (routeStage === 'committed') {
+            return activeRoutePerks?.critBridgeFocus
+              ? '◆ 先压一个目标：破绽会继续累积。'
+              : '◆ 暴击已连击：先把破绽堆起来。';
+          }
+          if (routeStage === 'hinted') {
+            return activeRoutePerks?.critBridgeFocus
+              ? '◆ 先盯住一个目标：破绽开始累积。'
+              : '◆ 暴击开始生效：先盯住厚血目标。';
+          }
         }
-        if (battle.critBurstBonusSec > 0) {
-          return '◆ 暴击已触发：连续重击。';
-        }
-        if (battle.critFinisherReady) {
-          return `◆ 暴击已就绪：${battle.critComboStacks}/5 层破绽已挂满。`;
-        }
-        if (activeRoutePerks?.critBridgeFocus && battle.critFocusLockSec > 0) {
-          return '◆ 先压单点：破绽链会持续累积。';
-        }
-        if (battle.critChain >= 1) {
-          return `◆ 暴击开始生效：${battle.critComboStacks}/5 层破绽已累积。`;
-        }
-        if (routeStage === 'matured') {
-          return battle.critComboStacks > 0
-            ? `◆ 暴击已连击：破绽 ${battle.critComboStacks}/5，下一次会炸开。`
-            : '◆ 暴击已就绪：抓住时机可触发连续重击。';
-        }
-        if (routeStage === 'committed') {
-          return activeRoutePerks?.critBridgeFocus
-            ? '◆ 先压单点：破绽链会持续累积。'
-            : '◆ 暴击已连击：优先累积破绽层数。';
-        }
-        if (routeStage === 'hinted') {
-          return activeRoutePerks?.critBridgeFocus
-            ? '◆ 先找单点：破绽链开始累积。'
-            : '◆ 暴击开始生效：优先攻击可连击目标。';
-        }
-      }
 
       if (liveFocusRoute === 'pierce') {
         if (activeRoutePerks?.pierceBreakthrough && battle.pierceFlowSec > 0 && battle.pierceFlowCount >= 2) {
-          return '║ 穿透已贯通：前排击破后后排会继续掉血。';
+          return '║ 穿透已贯通：前排一破，后面也会掉血。';
         }
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
-            return `║ 穿透已到达后排：第 ${battle.pierceFlowCount} 段仍在延伸。`;
+            return `║ 穿透已到达后排：第 ${battle.pierceFlowCount} 次命中还在延伸。`;
           }
           if (battle.pierceFlowCount >= 2) {
-            return `║ 穿透已连击：第 ${battle.pierceFlowCount} 段已命中。`;
+            return `║ 穿透已连击：第 ${battle.pierceFlowCount} 次命中已接上。`;
           }
-          return '║ 穿透已打开缺口：后排正在掉血。';
+          return '║ 穿透已展开：后排正在掉血。';
         }
         if (battle.enemies.some((enemy) => (enemy.pierceMarkStacks ?? 0) >= 1)) {
-          return '║ 穿透开始生效：裂纹已经挂上。';
+          return '║ 穿透开始生效：裂痕已经挂上。';
         }
         if (routeStage === 'matured') {
-          return '║ 穿透已到达后排：子弹会继续打穿。';
+          return '║ 穿透已到达后排：子弹会继续往后走。';
         }
         if (routeStage === 'committed') {
-          return '║ 穿透已连击：前排会逐渐裂开。';
+          return '║ 穿透已连起：前排会逐渐裂开。';
         }
         if (routeStage === 'hinted') {
-          return '║ 穿透开始生效：先找整列。';
+          return '║ 穿透开始生效：先找直线。';
         }
       }
 
       if (liveFocusRoute === 'dash') {
         if (battle.dashDriveSec > 0) {
-          return '◌ 穿梭反击已就绪：贴近后会回打。';
+          return '◌ 穿梭反击已就绪：贴近后会反击。';
         }
         if (routeStage === 'matured') {
-          return '◌ 穿梭已成型：贴近后就能收人。';
+          return '◌ 穿梭已成型：贴近后就能清掉。';
         }
         if (routeStage === 'committed') {
-          return '◌ 穿梭已连击：接近后会顺手回打。';
+          return '◌ 穿梭已连起：接近后会顺手反击。';
         }
         if (routeStage === 'hinted') {
           return '◌ 穿梭开始生效：先贴近。';
@@ -1150,7 +1156,7 @@ export class GameScene extends Phaser.Scene {
       return '战斗里立刻补一项强化。';
     }
     if (state.currentNode?.isFinalPrep) {
-      return '最后整备，选完就进 Boss。';
+      return '最终强化，选完就进 Boss。';
     }
     return '补充当前需要的属性。';
   }
@@ -1258,9 +1264,9 @@ export class GameScene extends Phaser.Scene {
       if (state.phase === 'finalPrep' || hasFinalPrepNode) {
         return {
           objectiveLabel: '眼下先做',
-          objectiveText: '先进最后整备',
+          objectiveText: '先进最终强化',
           objectiveDetail: '完成选择后进入首领战。',
-          objectiveProgressText: '补完就进 Boss',
+          objectiveProgressText: '强化完就进 Boss',
           objectiveTone: 'flow',
         };
       }
@@ -1277,7 +1283,7 @@ export class GameScene extends Phaser.Scene {
     if (state.status === 'upgradeChoice') {
       return {
         objectiveLabel: '眼下先做',
-        objectiveText: state.currentNode?.isFinalPrep ? '完成最后整备' : '完成强化选择',
+        objectiveText: state.currentNode?.isFinalPrep ? '完成最终强化' : '完成强化选择',
         objectiveDetail: state.upgradeSource === 'levelUp' ? '选择后立即返回战场。' : '选择后继续推进。',
         objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
         objectiveTone: 'flow',
@@ -1367,37 +1373,37 @@ export class GameScene extends Phaser.Scene {
     switch (routeId) {
       case 'crit':
         if (stage === 'matured') {
-          return '爆点压住';
+          return '越打越重';
         }
         if (stage === 'committed') {
-          return '连续重击';
+          return '连着出重击';
         }
         if (stage === 'hinted') {
-          return '开始锁点';
+          return '开始起势';
         }
-        return '尚未锁定';
+        return '还没起势';
       case 'pierce':
         if (stage === 'matured') {
-          return '一线清场';
+          return '一路打穿';
         }
         if (stage === 'committed') {
-          return '裂纹传导';
+          return '前后连上';
         }
         if (stage === 'hinted') {
           return '开始成线';
         }
-        return '尚未成线';
+        return '还没起势';
       case 'dash':
         if (stage === 'matured') {
-          return '残影脉冲';
+          return '越打越顺';
         }
         if (stage === 'committed') {
-          return '回打接上';
+          return '反击接上';
         }
         if (stage === 'hinted') {
           return '贴近起手';
         }
-        return '尚未开始';
+        return '还没起势';
       default:
         return '';
     }
@@ -1416,7 +1422,7 @@ export class GameScene extends Phaser.Scene {
     if (text.includes('完成') || text.includes('接入') || text.includes('收住')) {
       return 'success';
     }
-    if (text.includes('进入') || text.includes('前段') || text.includes('中段') || text.includes('后段') || text.includes('整备')) {
+    if (text.includes('进入') || text.includes('开局') || text.includes('中盘') || text.includes('收尾') || text.includes('强化')) {
       return 'accent';
     }
     return 'neutral';
@@ -1439,114 +1445,72 @@ export class GameScene extends Phaser.Scene {
     const { outcome, label, elapsedSec, durationSec } = bossEnding;
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
-    const fadeRatio = Math.min(1, elapsedSec / 0.3); // 0.3秒淡入
-    const pulseRatio = Math.min(1, elapsedSec / durationSec); // 整体进度
+    const fadeRatio = Math.min(1, elapsedSec / 0.18);
+    const pulseRatio = Math.min(1, elapsedSec / durationSec);
+    const resultColor = outcome === 'victory' ? 0xffd774 : 0xff6b6b;
+    const battle = this.engine.getState().battle;
 
-    this.terrainGraphics.clear();
-    this.graphics.clear();
-    this.beginEnemyLabelFrame();
-    this.endEnemyLabelFrame();
+    this.renderBattle();
 
-    // 深色背景
-    const bgAlpha = 0.6 + fadeRatio * 0.3;
-    this.graphics.fillStyle(0x0a0806, bgAlpha);
+    this.graphics.fillStyle(0x070504, 0.24 + fadeRatio * 0.18);
     this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+    this.graphics.fillStyle(resultColor, 0.12 + fadeRatio * 0.06);
+    this.graphics.fillRect(0, 0, this.scale.width, 12);
+    this.graphics.fillRect(0, this.scale.height - 12, this.scale.width, 12);
 
-    // 结果颜色
-    const resultColor = outcome === 'victory' ? 0xffd774 : 0xff6b6b; // 金色或红色
-    const glowAlpha = 0.3 + Math.sin(elapsedSec * 8) * 0.15; // 呼吸光效
-
-    // 中心光晕
-    this.graphics.fillStyle(resultColor, glowAlpha * fadeRatio);
-    this.graphics.fillCircle(centerX, centerY, 120 + pulseRatio * 40);
-
-    // 内环
-    this.graphics.lineStyle(3, resultColor, 0.8 * fadeRatio);
-    this.graphics.strokeCircle(centerX, centerY, 80);
-
-    // 外环旋转效果
-    const rotation = elapsedSec * 0.5;
-    this.graphics.lineStyle(2, resultColor, 0.5 * fadeRatio);
+    const ringRadius = 92 + pulseRatio * 18;
+    this.graphics.lineStyle(3, resultColor, 0.7 * fadeRatio);
+    this.graphics.strokeCircle(centerX, centerY, ringRadius);
+    this.graphics.lineStyle(1.5, resultColor, 0.42 * fadeRatio);
     for (let i = 0; i < 4; i++) {
-      const angle = rotation + (i * Math.PI) / 2;
-      const x1 = centerX + Math.cos(angle) * 100;
-      const y1 = centerY + Math.sin(angle) * 100;
-      const x2 = centerX + Math.cos(angle) * 140;
-      const y2 = centerY + Math.sin(angle) * 140;
+      const angle = elapsedSec * 0.6 + (i * Math.PI) / 2;
+      const x1 = centerX + Math.cos(angle) * (ringRadius + 8);
+      const y1 = centerY + Math.sin(angle) * (ringRadius + 8);
+      const x2 = centerX + Math.cos(angle) * (ringRadius + 28);
+      const y2 = centerY + Math.sin(angle) * (ringRadius + 28);
       this.graphics.lineBetween(x1, y1, x2, y2);
     }
 
-    // 使用 UI 文本样式显示标题
-    const labelLines = label.split(' / ');
-    const mainText = labelLines[0];
-    const subText = labelLines[1] || '';
-
-    // 主标题背景
-    const textBgWidth = 320;
-    const textBgHeight = 100;
-    this.graphics.fillStyle(0x1a1510, 0.85 * fadeRatio);
-    this.graphics.fillRoundedRect(centerX - textBgWidth / 2, centerY - textBgHeight / 2 - 20, textBgWidth, textBgHeight, 8);
-
-    // 标题边框
-    this.graphics.lineStyle(2, resultColor, 0.6 * fadeRatio);
-    this.graphics.strokeRoundedRect(centerX - textBgWidth / 2, centerY - textBgHeight / 2 - 20, textBgWidth, textBgHeight, 8);
-
-    // 注意：实际文本渲染由 DOM overlay 处理
-    // 这里只渲染图形效果，文本通过 syncOverlay 更新
+    this.graphics.fillStyle(resultColor, 0.08 + fadeRatio * 0.12);
+    this.graphics.fillCircle(centerX, centerY, 54 + pulseRatio * 18);
+    if (battle?.encounterType === 'boss') {
+      const bossScreen = this.worldToScreen(this.getBattleCameraRect(battle), battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0)?.x ?? battle.playerX, battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0)?.y ?? battle.playerY);
+      this.graphics.lineStyle(4, resultColor, 0.24 + fadeRatio * 0.18);
+      this.graphics.strokeCircle(bossScreen.x, bossScreen.y, 74 + pulseRatio * 18);
+      this.graphics.lineStyle(2, resultColor, 0.2 + fadeRatio * 0.12);
+      this.graphics.lineBetween(bossScreen.x - 88, bossScreen.y, bossScreen.x - 48, bossScreen.y);
+      this.graphics.lineBetween(bossScreen.x + 48, bossScreen.y, bossScreen.x + 88, bossScreen.y);
+      this.graphics.lineBetween(bossScreen.x, bossScreen.y - 88, bossScreen.x, bossScreen.y - 48);
+      this.graphics.lineBetween(bossScreen.x, bossScreen.y + 48, bossScreen.x, bossScreen.y + 88);
+    }
   }
 
   private renderPhaseTransition(phaseTransition: NonNullable<RunState['phaseTransition']>): void {
     const { elapsedSec, durationSec } = phaseTransition;
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
-    const fadeInRatio = Math.min(1, elapsedSec / 0.25); // 0.25秒淡入
-    const progressRatio = Math.min(1, elapsedSec / durationSec); // 整体进度
-    const fadeOutRatio = Math.max(0, (elapsedSec - (durationSec - 0.3)) / 0.3); // 最后0.3秒淡出
-
-    this.terrainGraphics.clear();
-    this.graphics.clear();
-    this.beginEnemyLabelFrame();
-    this.endEnemyLabelFrame();
-
-    // 半透明遮罩（随时间加深再淡出）
-    const bgAlpha = (0.3 + fadeInRatio * 0.3) * (1 - fadeOutRatio);
-    this.graphics.fillStyle(0x0a0806, bgAlpha);
-    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
-
-    // 胜利色（金色）
+    const fadeInRatio = Math.min(1, elapsedSec / 0.14);
+    const progressRatio = Math.min(1, elapsedSec / durationSec);
+    const fadeOutRatio = Math.max(0, (elapsedSec - Math.max(0, durationSec - 0.2)) / 0.2);
     const resultColor = 0xffd774;
-    const glowAlpha = (0.25 + Math.sin(elapsedSec * 6) * 0.1) * (1 - fadeOutRatio);
 
-    // 中心微光晕
-    this.graphics.fillStyle(resultColor, glowAlpha * fadeInRatio);
-    this.graphics.fillCircle(centerX, centerY, 60 + progressRatio * 20);
+    this.renderBattle();
 
-    // 细环
-    this.graphics.lineStyle(1.5, resultColor, 0.5 * fadeInRatio * (1 - fadeOutRatio));
-    this.graphics.strokeCircle(centerX, centerY, 50);
+    this.graphics.fillStyle(0x070504, 0.14 + fadeInRatio * 0.12);
+    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+    this.graphics.lineStyle(1.6, resultColor, 0.4 * fadeInRatio * (1 - fadeOutRatio));
+    this.graphics.strokeCircle(centerX, centerY, 56 + progressRatio * 12);
+    this.graphics.fillStyle(resultColor, 0.08 + fadeInRatio * 0.08);
+    this.graphics.fillCircle(centerX, centerY, 28 + progressRatio * 10);
 
-    // 旋转粒子效果（简化版）
-    const rotation = elapsedSec * 0.8;
-    this.graphics.fillStyle(resultColor, 0.6 * fadeInRatio * (1 - fadeOutRatio));
-    for (let i = 0; i < 3; i++) {
-      const angle = rotation + (i * Math.PI * 2) / 3;
-      const dist = 70;
-      const x = centerX + Math.cos(angle) * dist;
-      const y = centerY + Math.sin(angle) * dist;
-      this.graphics.fillCircle(x, y, 3);
-    }
-
-    // 底部进度条（指示过渡剩余时间）
-    const barWidth = 200;
+    const barWidth = 160;
     const barHeight = 3;
     const barX = centerX - barWidth / 2;
-    const barY = centerY + 80;
-    // 背景条
-    this.graphics.fillStyle(0x333333, 0.5 * fadeInRatio);
-    this.graphics.fillRect(barX, barY, barWidth, barHeight);
-    // 进度条
-    this.graphics.fillStyle(resultColor, 0.8 * fadeInRatio);
+    const barY = centerY + 72;
+    this.graphics.fillStyle(resultColor, 0.34 * fadeInRatio);
     this.graphics.fillRect(barX, barY, barWidth * (1 - progressRatio), barHeight);
+    this.graphics.fillStyle(0xffffff, 0.08 * (1 - fadeOutRatio));
+    this.graphics.fillRect(barX, barY + 5, barWidth, 1.5);
   }
 
   private renderBattle(): void {
@@ -1573,6 +1537,9 @@ export class GameScene extends Phaser.Scene {
     this.renderEliteBossLabels(battle, camera);
     this.renderRouteAura(battle, camera);
     this.renderUpgradeFlash();
+    if (battle.encounterType === 'boss' && (battle.elapsedSec < 0.95 || battle.pressureTransitionSec > 0 || battle.pressureSignatureSec > 0)) {
+      this.renderBossIntroFrame(battle, camera, accentColor);
+    }
     this.endRuntimePreviewImageFrame();
     this.endEnemyLabelFrame();
   }
@@ -1655,17 +1622,56 @@ export class GameScene extends Phaser.Scene {
     }
     const camera = this.getBattleCameraRect(battle);
     const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
-    const flashRatio = Phaser.Math.Clamp(state.upgradeFlashSec / 0.4, 0, 1);
+    const flashRatio = Phaser.Math.Clamp(state.upgradeFlashSec / 0.18, 0, 1);
     const pulse = 0.5 + Math.sin(battle.elapsedSec * 10) * 0.5;
     const glowColor = this.mixColor(0x7af7d4, 0xffffff, 0.2);
 
-    // 升级反馈只围绕玩家出现，避免频繁全屏白光刺眼。
-    this.graphics.fillStyle(glowColor, 0.045 + flashRatio * 0.08);
-    this.graphics.fillCircle(playerScreen.x, playerScreen.y, 46 + flashRatio * 36 + pulse * 5);
-    this.graphics.lineStyle(2, glowColor, 0.18 + flashRatio * 0.22);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 38 + flashRatio * 28 + pulse * 4);
-    this.graphics.lineStyle(1.2, 0xffffff, 0.08 + flashRatio * 0.12);
-    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 58 + flashRatio * 38);
+    this.graphics.fillStyle(glowColor, 0.03 + flashRatio * 0.05);
+    this.graphics.fillCircle(playerScreen.x, playerScreen.y, 32 + flashRatio * 18 + pulse * 3);
+    this.graphics.lineStyle(2, glowColor, 0.22 + flashRatio * 0.16);
+    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 28 + flashRatio * 16 + pulse * 2);
+    this.graphics.lineStyle(1.1, 0xffffff, 0.08 + flashRatio * 0.08);
+    this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 42 + flashRatio * 22);
+  }
+
+  private renderBossIntroFrame(
+    battle: BattleState,
+    camera: { left: number; top: number; width: number; height: number },
+    accentColor: number,
+  ): void {
+    const introRatio = Phaser.Math.Clamp(
+      Math.max(
+        battle.elapsedSec < 0.95 ? 1 - battle.elapsedSec / 0.95 : 0,
+        battle.pressureTransitionSec > 0 ? battle.pressureTransitionSec / 0.88 : 0,
+        battle.pressureSignatureSec > 0 ? battle.pressureSignatureSec / 3.2 : 0,
+      ),
+      0,
+      1,
+    );
+    if (introRatio <= 0) {
+      return;
+    }
+
+    const boss = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
+    const focusX = boss ? this.worldToScreen(camera, boss.x, boss.y).x : this.scale.width * 0.5;
+    const focusY = boss ? this.worldToScreen(camera, boss.x, boss.y).y : this.scale.height * 0.38;
+    const edgeAlpha = 0.08 + introRatio * 0.08;
+
+    this.graphics.fillStyle(0x070504, edgeAlpha);
+    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+    this.graphics.fillStyle(accentColor, 0.08 + introRatio * 0.08);
+    this.graphics.fillRect(0, 12, this.scale.width, 4);
+    this.graphics.fillRect(0, this.scale.height - 16, this.scale.width, 4);
+    this.graphics.lineStyle(2.8, accentColor, 0.24 + introRatio * 0.14);
+    this.graphics.lineBetween(44, 64, 44, this.scale.height - 64);
+    this.graphics.lineBetween(this.scale.width - 44, 64, this.scale.width - 44, this.scale.height - 64);
+    this.graphics.lineStyle(4, accentColor, 0.3 + introRatio * 0.18);
+    this.graphics.strokeCircle(focusX, focusY, 82 + introRatio * 16);
+    this.graphics.lineStyle(1.6, accentColor, 0.18 + introRatio * 0.12);
+    this.graphics.lineBetween(focusX - 112, focusY, focusX - 56, focusY);
+    this.graphics.lineBetween(focusX + 56, focusY, focusX + 112, focusY);
+    this.graphics.lineBetween(focusX, focusY - 112, focusX, focusY - 56);
+    this.graphics.lineBetween(focusX, focusY + 56, focusX, focusY + 112);
   }
 
   private beginRuntimePreviewImageFrame(): void {

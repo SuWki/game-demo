@@ -1218,7 +1218,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-thread': {
     id: 'survival-thread',
     name: '收束缝线',
-    description: '后段压到一条线里，场面更紧',
+    description: '收尾压到一条线里，场面更紧',
     contentTier: 'rare',
     durationSec: 25,
     spawnIntervalSec: 0.38,
@@ -1246,7 +1246,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-closehold': {
     id: 'survival-closehold',
     name: '尾线求生',
-    description: '把场面拢住，再撑住最后一段',
+    description: '把场面拢住，撑过最后一波',
     contentTier: 'rare',
     durationSec: 26,
     spawnIntervalSec: 0.4,
@@ -1334,7 +1334,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'elite-bridge': {
     id: 'elite-bridge',
     name: '桥口压线',
-    description: '前后排敌人开始分层，战斗节奏更加稳定',
+    description: '前后排敌人开始分层，战斗更加稳定',
     contentTier: 'rare',
     durationSec: 34,
     spawnIntervalSec: 1.04,
@@ -1712,11 +1712,11 @@ export function getBattleEnemyReadout(
   }
 
   if (pressureSafeWindowAxis) {
-    parts.push(`安全窗 ${pressureSafeWindowAxis === 'vertical' ? '纵向' : '横向'}`);
+    parts.push(`缓冲区 ${pressureSafeWindowAxis === 'vertical' ? '纵向' : '横向'}`);
   }
 
   if (pressureSafeWindowAxis === 'pocket') {
-    parts[parts.length - 1] = `安全袋${pressureSafeWindowShiftType ? ` ${POCKET_SHIFT_READOUT_MAP[pressureSafeWindowShiftType]}` : ''}`;
+    parts[parts.length - 1] = `缓冲口${pressureSafeWindowShiftType ? ` ${POCKET_SHIFT_READOUT_MAP[pressureSafeWindowShiftType]}` : ''}`;
   }
 
   if (activeBehavior) {
@@ -1724,7 +1724,7 @@ export function getBattleEnemyReadout(
   }
 
   parts.push(`敌群 ${frontline.length > 0 ? frontline.join(' / ') : '普通怪'}`);
-  parts.push(`节奏 ${getSpawnPatternReadout(template)}`);
+  parts.push(`波次 ${getSpawnPatternReadout(template)}`)
 
   if (escort.length > 0) {
     parts.push(`护卫 ${escort.join(' / ')}`);

@@ -188,7 +188,7 @@ export class OverlayController {
         <div class="pause-panel-layout">
           <div class="pause-panel-actions">
             <button class="text-action text-action-primary" data-action="resume">
-              <span>继续作战</span>
+              <span>回到游戏</span>
             </button>
             <button class="text-action" data-action="restart">
               <span>重新开始</span>
@@ -263,15 +263,13 @@ export class OverlayController {
     this.hideTooltip();
     this.hudLayer.classList.remove('hidden');
     const routeMomentColor = snapshot.routeMomentRouteId ? ROUTE_COLOR_MAP[snapshot.routeMomentRouteId] : undefined;
-    const routeStackHtml =
-      snapshot.routeStatusText || snapshot.routeMomentText
-        ? `
-          <div class="game-hud-fixed__route-stack"${routeMomentColor ? ` style="--route-pill: ${routeMomentColor}"` : ''}>
-            ${snapshot.routeStatusText ? `<span class="game-hud-fixed__route">${snapshot.routeStatusText}</span>` : ''}
-            ${snapshot.routeMomentText ? `<span class="game-hud-fixed__route-moment">${snapshot.routeMomentText}</span>` : ''}
-          </div>
-        `
-        : '';
+    const routeStackHtml = snapshot.routeMomentText
+      ? `
+        <div class="game-hud-fixed__route-stack"${routeMomentColor ? ` style="--route-pill: ${routeMomentColor}"` : ''}>
+          <span class="game-hud-fixed__route-moment">${snapshot.routeMomentText}</span>
+        </div>
+      `
+      : '';
     this.hudLayer.innerHTML = `
       <div class="game-hud-fixed">
         <section class="game-hud-fixed__left">
@@ -294,11 +292,6 @@ export class OverlayController {
             </div>
           </div>
           ${routeStackHtml}
-        </section>
-        <section class="game-hud-fixed__center">
-          <span class="game-hud-fixed__wave">${this.getHudWaveLabel(snapshot.progressLabel)}</span>
-          <span class="game-hud-fixed__mode">${snapshot.statusText}</span>
-          ${snapshot.statusSubtext ? `<span class="game-hud-fixed__reward">${snapshot.statusSubtext}</span>` : ''}
         </section>
         <section class="game-hud-fixed__right">
           <button class="hud-pause-button" data-action="pause">暂停</button>
@@ -345,13 +338,13 @@ export class OverlayController {
     choices: UpgradeDefinition[],
     onChoose: (upgradeId: string) => void,
   ): void {
-    const isFinalPrep = title.includes('最后整备');
+    const isFinalPrep = title.includes('最终强化');
     this.showPanel({
       panelClassName: 'panel-upgrade-choice',
       panelLayerClassName: 'panel-layer-center',
-      modeLabel: isFinalPrep ? '最后整备' : '选择强化',
-      eyebrow: isFinalPrep ? '最后整备' : '选择强化',
-      title: isFinalPrep ? '最后整备' : '选择强化',
+      modeLabel: isFinalPrep ? '最终强化' : '选择强化',
+      eyebrow: isFinalPrep ? '最终强化' : '选择强化',
+      title: isFinalPrep ? '最终强化' : '选择强化',
       contextHtml: this.renderUpgradeChoiceContext(progress),
       items: choices.map((upgrade) => this.renderUpgradeChoiceCard(upgrade, progress)),
       progress,
@@ -655,7 +648,7 @@ export class OverlayController {
           <div class="result-details-section">
             <h3 class="detail-section-title">转折</h3>
             <div class="detail-anomaly-strip">
-              <span><small>建立节奏</small><strong>${anomalyRoleCounts.direction}</strong></span>
+              <span><small>带起节奏</small><strong>${anomalyRoleCounts.direction}</strong></span>
               <span><small>火力更重</small><strong>${anomalyRoleCounts.core}</strong></span>
               <span><small>全面强化</small><strong>${anomalyRoleCounts.transform}</strong></span>
               <span><small>最终补强</small><strong>${anomalyRoleCounts.finisher}</strong></span>
@@ -1161,7 +1154,7 @@ export class OverlayController {
       return getBattleEncounterLabel(node.templateId ?? 'elimination');
     }
     if (node.type === 'upgrade') {
-      return node.isFinalPrep ? '最后整备' : '选择强化';
+      return node.isFinalPrep ? '最终强化' : '选择强化';
     }
     if (node.type === 'anomaly') {
       return '异常节点';
@@ -1172,13 +1165,13 @@ export class OverlayController {
   private getAnomalyRoleLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '建立节奏';
+        return '起手';
       case 'core':
-        return '火力更重';
+        return '加力';
       case 'transform':
-        return '全面强化';
+        return '转向';
       case 'finisher':
-        return '最终补强';
+        return '收尾';
       default:
         return '';
     }
@@ -1187,13 +1180,13 @@ export class OverlayController {
   private getAnomalyRoleActionLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '建立节奏';
+        return '起手';
       case 'core':
-        return '提升火力';
+        return '加力';
       case 'transform':
-        return '全面强化';
+        return '转向';
       case 'finisher':
-        return '最终补强';
+        return '收尾';
       default:
         return '';
     }
@@ -1221,7 +1214,7 @@ export class OverlayController {
       }
       switch (eventDef.anomalyClass) {
         case 'hybrid':
-          return '双流派融合';
+          return '两路合流';
         case 'bossEcho':
           return '首领余波';
         case 'distortion':
@@ -1692,34 +1685,34 @@ export class OverlayController {
   ): string {
     const routeName = this.getRouteBadgeText(routeId);
     if (record.anomalyClass === 'bossEcho') {
-      return `${routeName}在首领战中取得进展`;
+      return `${routeName}在首领战里更进一步`;
     }
 
     if (record.anomalyClass === 'hybrid') {
-      return `${routeName}在此阶段实现融合`;
+      return `${routeName}已经合上了`;
     }
 
     switch (record.anomalyRole ?? 'direction') {
       case 'direction':
         return routeId === 'pierce'
-          ? `此阶段为${routeName}打开前排路线`
+          ? `${routeName}先把前排打开`
           : routeId === 'dash'
-            ? `此阶段为${routeName}建立接近节奏`
-            : `此阶段为${routeName}建立基础节奏`;
+            ? `${routeName}先把贴身站住`
+            : `${routeName}先把起手打稳`
       case 'core':
           return routeId === 'pierce'
-            ? `此阶段强化${routeName}的前排穿透能力`
+            ? `${routeName}的前排穿透更明显`
             : routeId === 'dash'
-            ? `此阶段强化${routeName}接近敌人后的反击能力`
-            : `此阶段强化${routeName}的连击伤害`;
+            ? `${routeName}贴身反打更顺`
+            : `${routeName}的连击更重`;
       case 'transform':
         return routeId === 'crit'
-          ? `此阶段将${routeName}升级为连续爆发`
+          ? `${routeName}已经能连着爆发`
           : routeId === 'pierce'
-            ? `此阶段使${routeName}能够打击后排`
-            : `此阶段使${routeName}实现全面强化`;
+            ? `${routeName}已经能打到后排`
+            : `${routeName}已经站住了`;
       case 'finisher':
-        return `此阶段为${routeName}完成最终补强`;
+        return `${routeName}收尾到位`;
       default:
         break;
     }
@@ -1727,21 +1720,21 @@ export class OverlayController {
     if (outcome !== 'victory') {
       if (routeId === 'pierce') {
         if (buildStage === 'matured') {
-          return `${routeName}已穿透至后排，但最终波次未能清理`;
+          return `${routeName}已经打到后排，但最后没收尾`
         }
         if (buildStage === 'committed') {
-          return `${routeName}已击破前排，但未能将伤害延伸至后排`;
+          return `${routeName}已经打穿前排，但后面没跟上`;
         }
         if (buildStage === 'hinted') {
-          return `${routeName}已确立方向，但前排尚未击破`;
+          return `${routeName}方向已经成型，前排还没打开`
         }
       }
       if (buildStage === 'matured' || buildStage === 'committed') {
-        return `${routeName}已取得关键强化，但最终波次未能完成输出`;
+        return `${routeName}已经站稳，但最后一波没打完`;
       }
     }
 
-    return `${routeName}在此阶段取得进展`;
+    return `${routeName}这次更顺了`;
   }
 
   private getResultFailureReason(
@@ -1762,49 +1755,49 @@ export class OverlayController {
 
     if (result.routeId === 'pierce') {
     if (isLateTurn) {
-      return '异常效果出现较晚，局面未能完全展开';
+      return '起势晚，场面没打开'
     }
     if (result.buildStage === 'matured') {
-      return hasFinisherSupport ? '已具备穿后排能力，但清理不够彻底' : '已具备穿后排能力，但最终伤害不足';
+      return hasFinisherSupport ? '已经能打到后排，但收尾不够干净' : '已经能打到后排，但最后差一点';
     }
     if (result.buildStage === 'committed') {
-      return hasFinisherSupport ? '前排已击破，但火力仍有不足' : '前排已击破，但尚未穿透至后排';
+      return hasFinisherSupport ? '前排已经打开，但火力还是差一点' : '前排已经打开，但后面还没跟上';
     }
     if (result.buildStage === 'hinted') {
-      return '已确立方向，但前排尚未击破';
+      return '方向已经成型，前排还没开'
     }
-    return '本局仍需最终强化';
+    return '这把还差一点';
     }
 
     if (result.routeId === 'dash') {
     if (isLateTurn) {
-      return '异常效果出现较晚，局面未能完全展开';
+      return '起势晚，场面没打开'
     }
     if (result.buildStage === 'matured') {
-      return hasFinisherSupport ? '已具备近战输出能力，但最终波次中断' : '已具备近战输出能力，但最终波次未能承受';
+      return hasFinisherSupport ? '已经能贴身输出，但最后一波断了' : '已经能贴身输出，但最后一波没接上';
     }
     if (result.buildStage === 'committed') {
-      return hasFinisherSupport ? '已具备反击能力，但最终波次未能支撑' : '已具备反击能力，但输出仍有不足';
+      return hasFinisherSupport ? '反击已经成型，但最后没撑住' : '反击已经成型，但输出还差一点'
     }
     if (result.buildStage === 'hinted') {
-      return '已开始接近敌人，但尚未完全就位';
+      return '已经开始贴近，但还没完全站住';
     }
-    return '本局仍需最终强化';
+    return '这把还差一点';
     }
 
     if (isLateTurn) {
-      return '异常效果出现较晚，局面未能完全展开';
+      return '起势晚，场面没打开'
     }
     if (result.buildStage === 'matured') {
-      return '已成型，但最终波次未能承受';
+      return '已经成型，但最后一波没顶住';
     }
     if (result.buildStage === 'committed') {
-      return '已建立连击，但伤害仍有不足';
+      return '已经接上了，但伤害还差一点';
     }
     if (result.buildStage === 'hinted') {
-      return '已确立方向，但火力尚未跟上';
+      return '方向已经成型，但火力还没跟上'
     }
-    return '本局仍需最终强化';
+    return '这把还差一点';
   }
 
   private getRouteLayerLabel(routeId: NonNullable<RunResult['routeId']>, role?: AnomalyRoleId): string {
@@ -1814,22 +1807,22 @@ export class OverlayController {
 
     const layerMap: Record<NonNullable<RunResult['routeId']>, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '建立节奏',
-        core: '火力更重',
-        transform: '全面强化',
-        finisher: '最终补强',
+        direction: '起手',
+        core: '加力',
+        transform: '转强',
+        finisher: '收尾',
       },
       pierce: {
-        direction: '打开路线',
-        core: '火力更重',
-        transform: '全面强化',
-        finisher: '最终补强',
+        direction: '起手',
+        core: '加力',
+        transform: '转强',
+        finisher: '收尾',
       },
       dash: {
-        direction: '接近敌人',
-        core: '火力强化',
-        transform: '全面强化',
-        finisher: '最终补强',
+        direction: '起手',
+        core: '加力',
+        transform: '转强',
+        finisher: '收尾',
       },
     };
 
@@ -1837,15 +1830,15 @@ export class OverlayController {
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
-    return routeId ? this.getRouteBadgeText(routeId) : '未成线';
+    return routeId ? this.getRouteBadgeText(routeId) : '未站稳';
   }
 
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
     const genericStageMap: Record<RunResult['buildStage'], string> = {
-      unformed: '未开始',
-      hinted: '已开始',
-      committed: '进行中',
-      matured: '已完成',
+      unformed: '未起势',
+      hinted: '起势',
+      committed: '站稳',
+      matured: '发力',
     };
     if (!routeId) {
       return genericStageMap[buildStage];
@@ -1853,22 +1846,22 @@ export class OverlayController {
 
     const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
       crit: {
-        unformed: '未开始',
-        hinted: '暴击起手',
-        committed: '连续暴击',
-        matured: '爆发扩散',
+        unformed: '未起势',
+        hinted: '暴击起势',
+        committed: '暴击站稳',
+        matured: '暴击发力',
       },
       pierce: {
-        unformed: '未开始',
-        hinted: '穿透起手',
-        committed: '裂纹传导',
-        matured: '一线清场',
+        unformed: '未起势',
+        hinted: '穿透起势',
+        committed: '穿透连起',
+        matured: '穿透贯通',
       },
       dash: {
-        unformed: '未开始',
-        hinted: '穿梭起手',
-        committed: '擦身脉冲',
-        matured: '残影脉冲',
+        unformed: '未起势',
+        hinted: '穿梭起势',
+        committed: '穿梭贴近',
+        matured: '穿梭发力',
       },
     };
 

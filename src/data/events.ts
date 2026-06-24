@@ -5,7 +5,7 @@ import type { ContentEffect, EventContentKind, EventDefinition, RouteReference }
 const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'field-maintenance',
-    name: '临时整备',
+    name: '临时补给',
     description: '选防护还是火力',
     selection: {
       baseWeight: 4.4,
@@ -123,8 +123,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'route-calibration',
-    name: '读数校准',
-    description: '继续强化当前配置，或调整战斗节奏',
+    name: '读数调整',
+    description: '继续加深，或换个节奏',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.3,
@@ -142,8 +142,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'route-calibration-focus',
-        label: '顺着这条线再压一手',
-        description: '强化核心战斗属性',
+        label: '顺着这条线再压',
+        description: '把这条线继续压下去',
         routeId: 'dominant',
         effects: [
           {
@@ -161,8 +161,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'route-calibration-stabilize',
-        label: '补一个稳态',
-        description: '调整节奏，顺手把射速提起来',
+        label: '稳一手',
+        description: '先把节奏稳住',
         effects: [
           {
             type: 'stats',
@@ -181,7 +181,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'targeted-telemetry',
     name: '定向遥测',
-    description: '发现合适的路数，补火力或防护',
+    description: '看局势，补火力或防护',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.2,
@@ -199,8 +199,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'targeted-telemetry-press',
-        label: '强化当前',
-        description: '该流派属性提升，火力更加稳定',
+        label: '继续加力',
+        description: '把当前路子再往前推一点',
         routeId: 'dominant',
         effects: [
           {
@@ -218,8 +218,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'targeted-telemetry-buffer',
-        label: '换一段缓冲',
-        description: '恢复耐久，提高上限',
+        label: '稳一手',
+        description: '先把机体站稳',
         effects: [
           {
             type: 'stats',
@@ -237,7 +237,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'salvage-bay',
-    name: '回收舱段',
+    name: '回收舱体',
     description: '拆成火力或防护',
     selection: {
       baseWeight: 3.4,
@@ -285,7 +285,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'early-linecheck',
     name: '起手校线',
-    description: '确立本局流派的战斗方向',
+    description: '先把这把的打法定住',
     selection: {
       baseWeight: 3.98,
       phaseBonuses: {
@@ -298,7 +298,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'early-linecheck-offense',
         label: '先压火力',
-        description: '伤害和射速先抬一点',
+        description: '火力先加一点',
         effects: [
           {
             type: 'stats',
@@ -312,7 +312,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'early-linecheck-guard',
         label: '先留余地',
-        description: '先把生存撑稳一点',
+        description: '先把生存稳住',
         effects: [
           {
             type: 'stats',
@@ -332,7 +332,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'signal-soften',
     name: '缓冲信号',
-    description: '初见成效，继续深入或保留灵活',
+    description: '已经有起色，继续压或留活口',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.74,
@@ -350,8 +350,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'signal-soften-lean',
-        label: '顺着读法微调',
-        description: '强化当前方向，保留转向余地',
+        label: '顺着这条路走',
+        description: '当前方向继续加深',
         routeId: 'dominant',
         effects: [
           {
@@ -365,8 +365,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'signal-soften-open',
-        label: '保留转向余地',
-        description: '提升恢复和机动',
+        label: '留一点活口',
+        description: '恢复和机动一起补',
         effects: [
           {
             type: 'stats',
@@ -386,7 +386,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'coolant-detour',
     name: '冷却绕行',
-    description: '转换为更快的攻击节奏或更强的防护能力',
+    description: '换成更快的节奏，或者更稳的身板',
     selection: {
       baseWeight: 3.04,
       minRound: 2,
@@ -400,8 +400,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'coolant-detour-tempo',
-        label: '切换节奏',
-        description: '射速和弹速提升',
+        label: '切快一点',
+        description: '出手更快，弹道更顺',
         effects: [
           {
             type: 'stats',
@@ -414,8 +414,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'coolant-detour-guard',
-        label: '换稳定容错',
-        description: '恢复耐久，提升上限和恢复',
+        label: '换稳一点',
+        description: '先把耐久拉满',
         effects: [
           {
             type: 'stats',
@@ -455,10 +455,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'midline-split',
-    name: '中段岔口',
+    name: '中盘岔口',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '中段开始决定是接顺还是换手',
+    description: '中盘该换法了',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.24,
@@ -478,11 +478,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'midline-split-direction',
         label: '先接顺',
         gameplayLabel: '先接顺',
-        gainLabel: '下一段更容易跟上',
+        gainLabel: '中盘更稳',
         costLabel: '火力会慢一点',
         routeId: 'dominant',
         anomalyRole: 'direction',
-        description: '先把中段接顺，后面更容易一路跟上。',
+        description: '先把这一段接住。',
         effects: [
           {
             type: 'stats',
@@ -501,11 +501,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'midline-split-transform',
         label: '直接换手',
         gameplayLabel: '直接换手',
-        gainLabel: '中段会更像另一种打法',
+        gainLabel: '中盘换成另一种打法',
         costLabel: '容错会少一点',
         routeId: 'dominant',
         anomalyRole: 'transform',
-        description: '这一下不只是补强，是把中段改成另一种处理方式。',
+        description: '这一段直接换打法。',
         effects: [
           {
             type: 'stats',
@@ -524,7 +524,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '暴击抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '这一拍会决定暴击怎么走。',
+    description: '暴击这条线要继续压，还是换成更猛的打法。',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 1.22,
@@ -542,13 +542,13 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'crit-reroute-window-direction',
-        label: '先走暴击',
-        gameplayLabel: '建立节奏',
+        label: '先把暴击稳住',
+        gameplayLabel: '起手',
         gainLabel: '更容易连着出重击',
-        costLabel: '先少一点稳妥',
+        costLabel: '稳一点的东西会少些',
         routeId: 'crit',
         anomalyRole: 'direction',
-        description: '建立暴击流派的战斗节奏。',
+        description: '先把暴击节奏带起来。',
         effects: [
           {
             type: 'stats',
@@ -574,12 +574,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-core',
         label: '补暴击火力',
-        gameplayLabel: '火力更重',
-        gainLabel: '先盯住厚血目标',
+        gameplayLabel: '加力',
+        gainLabel: '厚血目标更容易炸开',
         costLabel: '清杂会慢一点',
         routeId: 'crit',
         anomalyRole: 'core',
-        description: '先盯厚血目标。',
+        description: '先往重击上再加一把。',
         effects: [
           {
             type: 'stats',
@@ -602,12 +602,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'crit-reroute-window-transform',
         label: '强化暴击',
-        gameplayLabel: '全面强化',
-        gainLabel: '连着重击会带到旁边',
+        gameplayLabel: '转强',
+        gainLabel: '重击会带到旁边',
         costLabel: '容错会少一点',
         routeId: 'crit',
         anomalyRole: 'transform',
-        description: '先盯住厚血目标，重击会带到旁边。',
+        description: '重击一开，旁边也会跟着掉。',
         effects: [
           {
             type: 'stats',
@@ -636,7 +636,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿透抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '这一拍决定穿透怎么走。',
+    description: '穿透这条线要往前推。',
     routeAffinity: 'pierce',
     selection: {
       baseWeight: 1.45,
@@ -656,12 +656,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'pierce-reroute-window-direction',
         routeId: 'pierce',
-        label: '先走穿透',
-        gameplayLabel: '先打开路',
-        gainLabel: '更容易穿开前排',
-        costLabel: '先不冒更大风险',
+        label: '先把前排打开',
+        gameplayLabel: '起手',
+        gainLabel: '前排更容易穿开',
+        costLabel: '先少一点稳妥',
         anomalyRole: 'direction',
-        description: '先把前排穿开。',
+        description: '先把前排打开。',
         effects: [
           {
             type: 'stats',
@@ -688,11 +688,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'pierce-reroute-window-hold',
         routeId: 'pierce',
         label: '补穿透火力',
-        gameplayLabel: '火力更重',
-        gainLabel: '前排穿透能力增强',
+        gameplayLabel: '加力',
+        gainLabel: '前排更容易被打穿',
         costLabel: '本回合专注当前流派',
         anomalyRole: 'core',
-        description: '先把穿透补上。',
+        description: '再往前推一把。',
         effects: [
           {
             type: 'stats',
@@ -715,11 +715,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         id: 'pierce-reroute-window-breakthrough',
         routeId: 'pierce',
         label: '强化穿透',
-        gameplayLabel: '全面强化',
-        gainLabel: '找到直线就能带后排',
+        gameplayLabel: '转强',
+        gainLabel: '找到直线就能带到后面',
         costLabel: '站位会更紧',
         anomalyRole: 'transform',
-        description: '先找直线。',
+        description: '直线一成，后面也会跟着掉。',
         effects: [
           {
             type: 'stats',
@@ -745,10 +745,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'dash-reroute-window',
-    name: '穿梭转接窗',
+    name: '穿梭转接',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿梭已成型，可切换为近战强攻模式。',
+    description: '穿梭已经成型，接下来往贴身打。',
     routeAffinity: 'dash',
     selection: {
       baseWeight: 1.45,
@@ -767,12 +767,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       ...getAnomalyRoutePoolOptions('dashRerouteWindow', ['crit', 'pierce']),
       {
         id: 'dash-reroute-window-hold',
-        label: '保持当前机动',
-        gameplayLabel: '保持当前',
-        gainLabel: '强化机动基础',
-        costLabel: '不直接切成别的路线',
+        label: '继续贴身',
+        gameplayLabel: '起手',
+        gainLabel: '机动基础更稳',
+        costLabel: '不会直接换路',
         anomalyRole: 'direction',
-        description: '先补机动。',
+        description: '先把身位站稳。',
         effects: [
           {
             type: 'stats',
@@ -795,7 +795,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '后段会把前面拿的东西再考一遍。',
+    description: '尾段把前面的积累再强化一轮。',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.52,
@@ -818,7 +818,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         costLabel: '容错会少一点',
         routeId: 'dominant',
         anomalyRole: 'core',
-        description: '尾段把节奏压窄。',
+        description: '最后一段继续压。',
         effects: [
           {
             type: 'stats',
@@ -835,7 +835,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         gameplayLabel: '留一层',
         gainLabel: '最终输出更加稳定',
         costLabel: '爆发会慢一点',
-        description: '多留一点回旋，后段不容易断。',
+        description: '多留一点余地，最后一段不容易断。',
         effects: [
           {
             type: 'stats',
@@ -912,11 +912,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'boss-sightline',
-    name: '首领瞄线',
+    name: '首领准备',
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '进入首领战前，确认最终战斗配置。',
+    description: '进 Boss 前，先把血量和火力摆好。',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.44,
@@ -934,12 +934,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'boss-sightline-press',
         label: '先把火力压满',
-        gameplayLabel: '确认选择',
-        gainLabel: '进首领前把伤害再压一截',
-        costLabel: '容错会再少一点',
+        gameplayLabel: '加力',
+        gainLabel: '进 Boss 前把伤害再提一把',
+        costLabel: '容错会少一点',
         routeId: 'dominant',
         anomalyRole: 'core',
-        description: '先把火力再压一截。',
+        description: '先把火力提上去。',
         effects: [
           {
             type: 'stats',
@@ -954,12 +954,12 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       {
         id: 'boss-sightline-brace',
         label: '先留一层余地',
-        gameplayLabel: '稳着进',
-        gainLabel: '进首领前先把血量和恢复补住',
+        gameplayLabel: '收尾',
+        gainLabel: '进 Boss 前先把血量和恢复补住',
         costLabel: '爆发会慢一点',
         routeId: 'dominant',
         anomalyRole: 'finisher',
-        description: '先把机体补稳。',
+        description: '先把机体站稳。',
         effects: [
           {
             type: 'stats',
@@ -1410,7 +1410,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     name: '回收驱动协议',
     contentKind: 'anomaly',
     anomalyClass: 'hybrid',
-    description: '基础火力降低，但经验和成长更快',
+    description: '火力弱一点，但成长更快',
     selection: {
       baseWeight: 0.92,
       minRound: 2,
@@ -1425,10 +1425,10 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-tempo',
         label: '接入回收驱动',
         gameplayLabel: '拾取驱动',
-        gainLabel: '移速提高，流派战斗效率提升',
+        gainLabel: '移速提高，战斗更顺',
         costLabel: '基础伤害降低',
         routeId: 'dominant',
-        description: '伤害变低，但更鼓励追击和回收',
+        description: '伤害低一点，追击会更顺。',
         effects: [
           {
             type: 'stats',
@@ -1447,10 +1447,10 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-magnet',
         label: '接入磁轨回收',
         gameplayLabel: '回收拉扯',
-        gainLabel: '弹速和移速提高，流派战斗效率提升',
+        gainLabel: '弹速和移速提高，战斗更顺',
         costLabel: '射速降低',
         routeId: 'dominant',
-        description: '输出降低，回收和走位提升',
+        description: '输出低一点，回收和走位更顺。',
         effects: [
           {
             type: 'stats',
