@@ -2,7 +2,7 @@
 import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/balance';
 import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
-import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
+import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, ROUTE_VISUAL_MAP } from '../data/routes';
 import type {
   BattleDebugConfig,
   BattleDebugRuntimeConfig,
@@ -1029,76 +1029,76 @@ export class GameScene extends Phaser.Scene {
       const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
       if (liveFocusRoute === 'crit') {
         if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
-          return '暴击已触发：集中攻击高血量目标。';
+          return '◆ 暴击已触发：集中压单点。';
         }
         if (battle.critBurstBonusSec > 0) {
-          return '暴击已触发：连续进行重击。';
+          return '◆ 暴击已触发：连续重击。';
         }
         if (battle.critFinisherReady) {
-          return `暴击已就绪：${battle.critComboStacks}/5 层破绽已挂满。`;
+          return `◆ 暴击已就绪：${battle.critComboStacks}/5 层破绽已挂满。`;
         }
         if (activeRoutePerks?.critBridgeFocus && battle.critFocusLockSec > 0) {
-          return '先集中攻击高血量目标：破绽链将持续累积。';
+          return '◆ 先压单点：破绽链会持续累积。';
         }
         if (battle.critChain >= 1) {
-          return `暴击开始生效：${battle.critComboStacks}/5 层破绽已累积。`;
+          return `◆ 暴击开始生效：${battle.critComboStacks}/5 层破绽已累积。`;
         }
         if (routeStage === 'matured') {
           return battle.critComboStacks > 0
-            ? `暴击已连击：破绽 ${battle.critComboStacks}/5，下一次将触发爆发。`
-            : '暴击已就绪：抓住时机可触发连续重击。';
+            ? `◆ 暴击已连击：破绽 ${battle.critComboStacks}/5，下一次会炸开。`
+            : '◆ 暴击已就绪：抓住时机可触发连续重击。';
         }
         if (routeStage === 'committed') {
           return activeRoutePerks?.critBridgeFocus
-            ? '先攻击高血量目标：破绽链将持续累积。'
-            : '暴击已连击：优先累积破绽层数。';
+            ? '◆ 先压单点：破绽链会持续累积。'
+            : '◆ 暴击已连击：优先累积破绽层数。';
         }
         if (routeStage === 'hinted') {
           return activeRoutePerks?.critBridgeFocus
-            ? '寻找高血量目标：破绽链开始累积。'
-            : '暴击开始生效：优先攻击可连击目标。';
+            ? '◆ 先找单点：破绽链开始累积。'
+            : '◆ 暴击开始生效：优先攻击可连击目标。';
         }
       }
 
       if (liveFocusRoute === 'pierce') {
         if (activeRoutePerks?.pierceBreakthrough && battle.pierceFlowSec > 0 && battle.pierceFlowCount >= 2) {
-          return '穿透已贯通：前排击破后后排将持续受到伤害。';
+          return '║ 穿透已贯通：前排击破后后排会继续掉血。';
         }
         if (battle.pierceFlowSec > 0) {
           if (battle.pierceFlowCount >= 3) {
-            return `穿透已到达后排：第 ${battle.pierceFlowCount} 段仍在延伸。`;
+            return `║ 穿透已到达后排：第 ${battle.pierceFlowCount} 段仍在延伸。`;
           }
           if (battle.pierceFlowCount >= 2) {
-            return `穿透已连击：第 ${battle.pierceFlowCount} 段已命中。`;
+            return `║ 穿透已连击：第 ${battle.pierceFlowCount} 段已命中。`;
           }
-          return '穿透已打开缺口：后排正在受到伤害。';
+          return '║ 穿透已打开缺口：后排正在掉血。';
         }
         if (battle.enemies.some((enemy) => (enemy.pierceMarkStacks ?? 0) >= 1)) {
-          return '穿透开始生效：裂纹已挂上，等待下一波连击。';
+          return '║ 穿透开始生效：裂纹已经挂上。';
         }
         if (routeStage === 'matured') {
-          return '穿透已到达后排：子弹将持续穿透。';
+          return '║ 穿透已到达后排：子弹会继续打穿。';
         }
         if (routeStage === 'committed') {
-          return '穿透已连击：前排将逐渐被击破。';
+          return '║ 穿透已连击：前排会逐渐裂开。';
         }
         if (routeStage === 'hinted') {
-          return '穿透开始生效：优先击破前排。';
+          return '║ 穿透开始生效：先找整列。';
         }
       }
 
       if (liveFocusRoute === 'dash') {
         if (battle.dashDriveSec > 0) {
-          return '穿梭反击已就绪：接近敌人即可反击。';
+          return '◌ 穿梭反击已就绪：贴近后会回打。';
         }
         if (routeStage === 'matured') {
-          return '穿梭已成型：接近敌人即可输出。';
+          return '◌ 穿梭已成型：贴近后就能收人。';
         }
         if (routeStage === 'committed') {
-          return '穿梭已连击：优先完成接近与反击。';
+          return '◌ 穿梭已连击：接近后会顺手回打。';
         }
         if (routeStage === 'hinted') {
-          return '穿梭开始生效：优先接近敌人。';
+          return '◌ 穿梭开始生效：先贴近。';
         }
       }
     }
@@ -1360,20 +1360,21 @@ export class GameScene extends Phaser.Scene {
 
     const stage = this.engine.getRouteBuildStage(routeId);
     const stageText = this.getRouteStageStatusText(routeId, stage);
-    return stageText ? `${ROUTE_NAME_MAP[routeId]} · ${stageText}` : ROUTE_NAME_MAP[routeId];
+    const icon = ROUTE_VISUAL_MAP[routeId].icon;
+    return stageText ? `${icon} ${ROUTE_NAME_MAP[routeId]} · ${stageText}` : `${icon} ${ROUTE_NAME_MAP[routeId]}`;
   }
 
   private getRouteStageStatusText(routeId: RouteId, stage: RouteBuildStage): string {
     switch (routeId) {
       case 'crit':
         if (stage === 'matured') {
-          return '爆点扩散';
+          return '爆点压住';
         }
         if (stage === 'committed') {
-          return '连续压制';
+          return '连续重击';
         }
         if (stage === 'hinted') {
-          return '开始锁单点';
+          return '开始锁点';
         }
         return '尚未锁定';
       case 'pierce':
@@ -1381,10 +1382,10 @@ export class GameScene extends Phaser.Scene {
           return '一线清场';
         }
         if (stage === 'committed') {
-          return '传裂到后排';
+          return '裂纹传导';
         }
         if (stage === 'hinted') {
-          return '开始找成线站位';
+          return '开始成线';
         }
         return '尚未成线';
       case 'dash':
@@ -1392,10 +1393,10 @@ export class GameScene extends Phaser.Scene {
           return '残影脉冲';
         }
         if (stage === 'committed') {
-          return '擦身脉冲';
+          return '回打接上';
         }
         if (stage === 'hinted') {
-          return '接近脉冲';
+          return '贴近起手';
         }
         return '尚未开始';
       default:

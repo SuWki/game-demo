@@ -1,6 +1,6 @@
 import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
 import { RARITY_COLOR_MAP } from '../data/balance';
-import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP } from '../data/routes';
+import { ROUTE_COLOR_MAP, ROUTE_NAME_MAP, ROUTE_VISUAL_MAP } from '../data/routes';
 import { describeContentEffects } from '../data/upgrades';
 import type {
   AnomalyRoleId,
@@ -9,6 +9,7 @@ import type {
   NodeOption,
   OverlayHudSnapshot,
   OverlayMetaSummary,
+  RouteId,
   RouteReference,
   RunResult,
   RunState,
@@ -181,18 +182,19 @@ export class OverlayController {
         <div class="tray-header">
           <div class="tray-title-group">
             <h2 class="panel-title">暂停</h2>
+            <span class="panel-eyebrow">当前关卡 ${snapshot.progressLabel}</span>
           </div>
         </div>
         <div class="pause-panel-layout">
           <div class="pause-panel-actions">
             <button class="text-action text-action-primary" data-action="resume">
-              <span>回到游戏</span>
+              <span>继续作战</span>
             </button>
             <button class="text-action" data-action="restart">
               <span>重新开始</span>
             </button>
             <button class="text-action" data-action="menu">
-              <span>回到首页</span>
+              <span>回到机库</span>
             </button>
             <button class="text-action" data-action="volume">
               <span>音量调整</span>
@@ -480,11 +482,11 @@ export class OverlayController {
                   (upgrade) => `
                 <div class="timeline-item" style="border-color: ${RARITY_COLOR_MAP[upgrade.rarity]};">
                   <div class="timeline-item-icon" style="background: ${RARITY_COLOR_MAP[upgrade.rarity]};">
-                    ${upgrade.routeId ? '流派' : '强化品质'}
+                    ${upgrade.routeId ? this.getRouteBadgeText(upgrade.routeId) : '强化品质'}
                   </div>
                   <div class="timeline-item-content">
                     <strong>${upgrade.name}</strong>
-                    ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${ROUTE_NAME_MAP[upgrade.routeId]}</small>` : ''}
+                    ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${this.getRouteBadgeText(upgrade.routeId)}</small>` : ''}
                   </div>
                 </div>
               `
@@ -600,7 +602,7 @@ export class OverlayController {
             </div>
             <div class="detail-timeline-content">
               <strong>${upgrade.name}</strong>
-              ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${ROUTE_NAME_MAP[upgrade.routeId]}</small>` : '<small>通用</small>'}
+              ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${this.getRouteBadgeText(upgrade.routeId)}</small>` : '<small>通用</small>'}
             </div>
           </div>
         `).join('')
@@ -618,7 +620,7 @@ export class OverlayController {
               <div class="detail-timeline-tags">
                 ${record === turnRecord ? '<span class="choice-effect-tag is-route-turn">转折点</span>' : ''}
                 ${record.anomalyRole ? `<span class="choice-effect-tag is-anomaly-role">${this.getAnomalyRoleLabel(record.anomalyRole)}</span>` : ''}
-                ${record.routeId ? `<span class="choice-effect-tag">${ROUTE_NAME_MAP[record.routeId]}</span>` : ''}
+                ${record.routeId ? `<span class="choice-effect-tag">${this.getRouteBadgeText(record.routeId)}</span>` : ''}
                 ${record.anomalyClass ? `<span class="choice-effect-tag">${this.getEventClassLabel({ anomalyClass: record.anomalyClass } as EventDefinition)}</span>` : ''}
               </div>
             </div>
@@ -932,13 +934,13 @@ export class OverlayController {
       ? this.getRouteUpgradeReadableText(upgrade)
       : this.getChoiceEffectSummary(upgrade.effects, { maxSegments: 3 }) || upgrade.description;
     const cardTypeLabel = upgrade.routeId ? ROUTE_NAME_MAP[upgrade.routeId] : '强化';
-    const cardBadgeLabel = upgrade.routeId ? ROUTE_NAME_MAP[upgrade.routeId] : upgrade.rarityLabel;
+    const cardBadgeLabel = upgrade.routeId ? this.getRouteBadgeText(upgrade.routeId) : upgrade.rarityLabel;
     const nameHtml = this.decorateTooltipTerms(upgrade.name);
     const effectTextHtml = this.decorateTooltipTerms(effectText);
 
     // 获取路线图标
     const routeIcon = upgrade.routeId
-      ? (upgrade.routeId === 'crit' ? '🔴' : upgrade.routeId === 'pierce' ? '🔵' : '🟢')
+      ? ROUTE_VISUAL_MAP[upgrade.routeId].icon
       : '⚪';
 
     const rewardBadgeHtml = progress.upgradeRewardLabel
@@ -1222,13 +1224,13 @@ export class OverlayController {
           return '双流派融合';
         case 'bossEcho':
           return '首领余波';
-      case 'distortion':
-        return '局面变化';
+        case 'distortion':
+          return '局面变化';
         default:
           return '当前流派';
       }
     }
-    return ROUTE_NAME_MAP[routeId];
+    return this.getRouteBadgeText(routeId);
   }
 
   private getEventOptionDescription(eventDef: EventDefinition, option: EventDefinition['options'][number]): string {
@@ -1367,7 +1369,7 @@ export class OverlayController {
     }
 
     return entries
-      .map(([routeId, count]) => `${routeId === 'dominant' ? '当前流派' : `${ROUTE_NAME_MAP[routeId]}`} +${count}`)
+      .map(([routeId, count]) => `${routeId === 'dominant' ? '当前流派' : this.getRouteBadgeText(routeId)} +${count}`)
       .join(' / ');
   }
 
@@ -1578,7 +1580,7 @@ export class OverlayController {
     if (!result.routeId) {
       return '本局未形成明确流派。';
     }
-    return `流派：${ROUTE_NAME_MAP[result.routeId]}`;
+    return `流派：${this.getRouteBadgeText(result.routeId)}`;
   }
 
   private getResultAnomalyChronology(
@@ -1620,6 +1622,15 @@ export class OverlayController {
         return `第 ${nodeIndex} 节点${turnPointLabel}${this.describeResultAnomalyPush(routeId, record, result.buildStage, result.outcome)}`;
       })
       .join('；');
+  }
+
+  private getRouteBadgeText(routeId?: RouteId | null): string {
+    if (!routeId) {
+      return '未成线';
+    }
+
+    const icon = ROUTE_VISUAL_MAP[routeId].icon;
+    return `${icon} ${ROUTE_NAME_MAP[routeId]}`;
   }
 
   private getResultAnomalyTurnRecord(
@@ -1679,7 +1690,7 @@ export class OverlayController {
     buildStage: RunResult['buildStage'],
     outcome: RunResult['outcome'],
   ): string {
-    const routeName = ROUTE_NAME_MAP[routeId];
+    const routeName = this.getRouteBadgeText(routeId);
     if (record.anomalyClass === 'bossEcho') {
       return `${routeName}在首领战中取得进展`;
     }
@@ -1826,7 +1837,7 @@ export class OverlayController {
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
-    return routeId ? ROUTE_NAME_MAP[routeId] : '未成线';
+    return routeId ? this.getRouteBadgeText(routeId) : '未成线';
   }
 
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {

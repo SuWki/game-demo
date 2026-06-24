@@ -1937,3 +1937,14 @@ TODO
   - `doc/30_持续优化/当前阶段开发总表.md` 已更新到 P2-0 口径
   - `doc/30_持续优化/测试与验证手册.md` 已确认固定流程
   - 本 progress.md 乱码已修复，保留历史记录
+
+# 2026-06-18 P2-0 收尾清理，切入 P2-1
+- 本轮没有回头改玩法，也没有动 UI 主结构；只清理 `P2-0` 收口后残留的不一致口径。
+- `tools/qa-stable-smoke.mjs` 里的结果页覆盖字段已从旧语义的 `resultDetail` 收口到当前真实语义 `resultScreen`，避免后续展示材料把结果主屏和详情层混着叫。
+- `doc/30_持续优化/当前阶段开发总表.md` 已移除残留的旧阻塞叙事，明确 `P2-0` 已完成，当前主线切到 `P2-1：展示整理与面试材料`。
+- 后续展示整理默认以 `output/qa/stable-smoke-current/summary.json` 和 `output/qa/smart-natural-fullrun-p2-0/summary.json` 为当前 HEAD 引用基线，不再回退引用更早目录。
+# 2026-06-24 路线视觉身份加固
+- 本轮把 `crit / pierce / dash` 的路线视觉口径统一成 `◆ / ║ / ◌`，并把结果页、升级卡、异常卡、战斗路由提示收口到同一套徽章语义。
+- 暂停页只保留主按钮文字和 `当前关卡 X/5`，删除了按钮下的说明噪音。
+- `npm run build`、`npm run qa:stable-smoke` 均通过，`failed404Urls / consoleErrors / consoleWarns` 继续为空。
+- stable smoke 产物已更新，`output/qa/stable-smoke/summary.json` 中的 route / battle / result 覆盖继续保持完整。

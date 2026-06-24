@@ -1545,9 +1545,19 @@ button:hover {
 
 /* 路线图标样式 */
 .choice-route-icon {
-  display: inline-block;
-  font-size: 14px;
-  margin-right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4em;
+  height: 1.4em;
+  margin-right: 6px;
+  border: 1px solid rgba(221, 236, 248, 0.18);
+  border-radius: 999px;
+  background: rgba(233, 243, 250, 0.08);
+  color: rgba(244, 249, 255, 0.92);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
   vertical-align: middle;
 }
 
@@ -3919,7 +3929,7 @@ button:hover {
 
 .pause-panel-actions {
   display: grid;
-  width: min(320px, 100%);
+  width: min(360px, 100%);
   margin: 0 auto;
   align-content: start;
   gap: 12px;
@@ -3927,6 +3937,7 @@ button:hover {
 
 .pause-panel-actions .text-action {
   width: 100%;
+  min-height: 52px;
   justify-content: center;
 }
 
