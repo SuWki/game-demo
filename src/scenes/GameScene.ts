@@ -977,8 +977,7 @@ export class GameScene extends Phaser.Scene {
 
   private getHudModeText(state: ReturnType<RunEngine['getState']>): string {
     if (state.status === 'battle' && state.battle) {
-      // 使用引擎的标签生成逻辑，包含倒计时
-      return this.engine.getBattleLabel();
+      return this.getBattleStatusText(state.battle);
     }
 
     if (state.status === 'upgradeChoice') {
@@ -1012,13 +1011,13 @@ export class GameScene extends Phaser.Scene {
   private getBattleStatusSubtext(battle: BattleState): string {
     if (battle.encounterType === 'boss') {
       if (battle.pressureSafeWindowSec > 0) {
-        return '安全区出现：进入安全区';
+        return 'Boss · 安全窗';
       }
       if (battle.bossSafeWindowGraceSec > 0) {
-        return `寻找安全区：${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
+        return `Boss · 压场 ${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
       }
       if (battle.pressureSignatureLabel || battle.pressurePatternLabel || battle.pressurePhaseLabel) {
-        return `Boss 开招：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
+        return `Boss · 最终检定：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
       }
       return '';
     }

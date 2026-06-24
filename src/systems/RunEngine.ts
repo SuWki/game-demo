@@ -2238,9 +2238,9 @@ export class RunEngine {
       this.state.status = 'bossEnding';
       this.state.bossEnding = {
         outcome: 'victory',
-        label: '首领击破 / 任务完成',
+        label: '首领已破 / 最终检定通过',
         elapsedSec: 0,
-        durationSec: 1.5, // 停留 1.5 秒
+        durationSec: 0.95,
       };
       this.enqueueAudio('victory');
       return;
@@ -2257,7 +2257,7 @@ export class RunEngine {
     this.state.phaseTransition = {
       label: `${battle.label || this.getBattleTemplate(battle.templateId).name}完成`,
       elapsedSec: 0,
-      durationSec: 1.2, // 停留 1.2 秒
+      durationSec: 0.72,
     };
     this.enqueueAudio('victory');
 
@@ -7497,8 +7497,8 @@ export class RunEngine {
       this.enqueueAudio('levelUpReady');
       this.enqueueTip(`等级提升 Lv.${this.state.level}`);
       if (this.state.status === 'battle') {
-        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.4);
-        this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.55);
+        this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.28);
+        this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.22);
       } else {
         this.openQueuedLevelUpPanel();
       }
@@ -7549,19 +7549,19 @@ export class RunEngine {
 
     switch (nextPhase) {
       case 'mid':
-        this.enqueueTip('进入中段：保持当前流派节奏。');
+        this.enqueueTip('进入中段');
         this.enqueueAudio('confirm');
         return;
       case 'late':
-        this.enqueueTip('进入后段：准备打完最后几波。');
+        this.enqueueTip('进入后段');
         this.enqueueAudio('confirm');
         return;
       case 'finalPrep':
-        this.enqueueTip('已进入最后整备：完成选择后进入首领战。');
+        this.enqueueTip('最后整备');
         this.enqueueAudio('upgrade');
         return;
       case 'finalBattle':
-        this.enqueueTip('最终 Boss 入口已锁定。');
+        this.enqueueTip('最终检定');
         this.enqueueAudio('boss');
         return;
       default:
