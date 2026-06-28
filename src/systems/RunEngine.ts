@@ -3731,9 +3731,7 @@ export class RunEngine {
       }
     }
 
-    if (bestCue) {
-      this.queueRouteMoment(bestCue.routeId, bestCue.text);
-    }
+    void bestCue;
   }
 
   private activateRoutePerks(
@@ -5101,7 +5099,7 @@ export class RunEngine {
         (target.elite || (target.critMarkSec > 0 && (target.critMarkStacks ?? 0) >= 1) ? 2.05 : 1.42) + focusHoldBonus,
       );
       if (newFocusTarget && battle.critChain >= 1) {
-        this.queueRouteMoment('crit', '破绽链开始接上了');
+        battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.12);
       }
     }
     battle.playerAimDirX = Math.cos(baseAngle);
@@ -5699,7 +5697,7 @@ export class RunEngine {
               spinRate: 6.8,
             });
             if (battle.critChain >= 2) {
-              this.queueRouteMoment('crit', '重击已触发：集中火力');
+              battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.18);
             }
           }
           if (critStage === 'committed' || critStage === 'matured') {
@@ -5741,14 +5739,11 @@ export class RunEngine {
           }
           if (battle.critChain >= 1 && this.getRouteBuildStage('crit') !== 'unformed' && !this.routeMomentShown.crit) {
             this.routeMomentShown.crit = true;
-            this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'starter'));
-            this.enqueueTip('暴击开始顺了');
           }
           if (battle.critFinisherReady) {
-            this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'payoff'));
+            battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
           } else if (battle.critChain >= 2) {
-            this.queueRouteMoment('crit', this.getRouteStageMomentText('crit', 'bridge'));
-            this.enqueueTip('暴击已经接上了');
+            battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.16);
           }
         } else if (battle.critChain > 0) {
           battle.critChain = Math.max(0, battle.critChain - 1);
@@ -5814,16 +5809,14 @@ export class RunEngine {
             });
             if (!this.routeMomentShown.pierce && this.getRouteBuildStage('pierce') !== 'unformed') {
               this.routeMomentShown.pierce = true;
-              this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'starter'));
-              this.enqueueTip('穿透开始打前排了');
             }
             if (pierceChain >= 3) {
-              this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'payoff'));
+              battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.2);
             } else if (pierceChain >= 2) {
-              this.queueRouteMoment('pierce', this.getRouteStageMomentText('pierce', 'bridge'));
+              battle.tempoPulseSec = Math.max(battle.tempoPulseSec, 0.16);
             }
             if (carriedBackline && pierceChain >= 2) {
-              this.queueRouteMoment('pierce', '前排一裂开，后排也会跟着掉');
+              battle.playerShotFlashSec = Math.max(battle.playerShotFlashSec, 0.12);
             }
           }
         }

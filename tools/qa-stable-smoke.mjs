@@ -13,6 +13,7 @@ const anomalyCaptureRoleByRoute = {
   crit: 'transform',
   pierce: 'transform',
 };
+
 const anomalyTripletByRoute = {
   crit: {
     direction: {
@@ -104,7 +105,7 @@ function createRouteCoverage() {
     anomaly: false,
     battleBridge: false,
     battlePayoff: false,
-    resultDetail: false,
+    resultScreen: false,
   };
 }
 
@@ -123,29 +124,21 @@ function pushCapture(summary, captureMeta) {
 async function captureBattleStage(page, routeId, battleLevel, routeScreenshots, routeTextChecks, routeCoverage, summary, outDir) {
   await triggerScenario(page, { routeId, stage: 'battle', battleLevel });
   await page.evaluate(() => window.__pilotDebug?.setConfig?.({ invulnerablePlayer: true }));
-  const routeMoment = page.locator('.game-hud-fixed__route-moment');
-  await waitForVisible(routeMoment);
-  if (routeId === 'dash') {
-    await page.waitForFunction(() => {
-      const text = document.querySelector('.game-hud-fixed__route-moment')?.textContent ?? '';
-      return text.includes('贴身') || text.includes('贴近') || text.includes('贴住') || text.includes('回打') || text.includes('收人');
-    }, null, { timeout: 6000 });
-  } else {
-    await page.waitForTimeout(900);
-  }
+  await waitForVisible(page.locator('.game-hud-fixed'));
+  await page.waitForTimeout(battleLevel === 'payoff' ? 1100 : 800);
 
   const screenshotKey = battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge';
-  const textKey = battleLevel === 'payoff' ? 'routeMomentPayoff' : 'routeMomentBridge';
-  const pageSegment = battleLevel === 'payoff' ? 'battle-route-moment-payoff' : 'battle-route-moment-bridge';
+  const textKey = battleLevel === 'payoff' ? 'battlePayoffState' : 'battleBridgeState';
+  const pageSegment = battleLevel === 'payoff' ? 'battle-payoff' : 'battle-bridge';
   const filename = `${routeId}-battle-${battleLevel}.png`;
   routeCoverage[battleLevel === 'payoff' ? 'battlePayoff' : 'battleBridge'] = true;
   routeScreenshots[screenshotKey] = await capture(page, outDir, filename);
-  routeTextChecks[textKey] = normalize(await routeMoment.textContent());
+  routeTextChecks[textKey] = normalize(await page.locator('.game-hud-fixed').textContent());
   pushCapture(summary, {
     routeId,
     stage: 'battle',
     stageLevel: battleLevel,
-    routeMomentText: routeTextChecks[textKey],
+    routeMomentText: null,
     pageSegment,
     screenshot: routeScreenshots[screenshotKey],
   });
@@ -163,7 +156,7 @@ async function captureBossSignatureStage(page, summary, outDir) {
     });
   });
   await page.waitForTimeout(1200);
-  await waitForVisible(page.locator('.game-hud-fixed__mode'));
+  await waitForVisible(page.locator('.game-hud-fixed'));
   const screenshot = await capture(page, outDir, 'boss-signature.png');
   summary.coverage.bossSignature = true;
   summary.screenshots.bossSignature = screenshot;
@@ -293,9 +286,9 @@ export async function runStableSmoke(options = {}) {
       await waitForVisible(page.locator('[data-action="restart"]'), 6000);
       await waitForVisible(page.locator('[data-action="menu"]'), 6000);
       await page.waitForTimeout(300);
-      routeCoverage.resultDetail = true;
+      routeCoverage.resultScreen = true;
       routeScreenshots.result = await capture(page, outDir, `${routeId}-result-detail.png`);
-      routeTextChecks.resultDetail = normalize(await page.locator('.screen-minimal.result-screen').innerText());
+      routeTextChecks.resultScreen = normalize(await page.locator('.screen-minimal.result-screen').innerText());
       pushCapture(summary, {
         routeId,
         stage: 'result',

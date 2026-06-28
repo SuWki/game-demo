@@ -112,7 +112,7 @@ export class OverlayController {
           <div class="start-screen-header">
             <div class="title-glitch-wrapper">
               <h1 class="space-title">PROJECT ORBITAL</h1>
-              <div class="title-subtitle">轨道计划 - 自动出击编队</div>
+              <div class="title-subtitle">轨道计划 - 短局自动射击肉鸽</div>
             </div>
           </div>
 
@@ -262,14 +262,6 @@ export class OverlayController {
     this.hidePanel();
     this.hideTooltip();
     this.hudLayer.classList.remove('hidden');
-    const routeMomentColor = snapshot.routeMomentRouteId ? ROUTE_COLOR_MAP[snapshot.routeMomentRouteId] : undefined;
-    const routeStackHtml = snapshot.routeMomentText
-      ? `
-        <div class="game-hud-fixed__route-stack"${routeMomentColor ? ` style="--route-pill: ${routeMomentColor}"` : ''}>
-          <span class="game-hud-fixed__route-moment">${snapshot.routeMomentText}</span>
-        </div>
-      `
-      : '';
     this.hudLayer.innerHTML = `
       <div class="game-hud-fixed">
         <section class="game-hud-fixed__left">
@@ -291,7 +283,6 @@ export class OverlayController {
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
-          ${routeStackHtml}
         </section>
         <section class="game-hud-fixed__right">
           <button class="hud-pause-button" data-action="pause">暂停</button>
@@ -1141,7 +1132,7 @@ export class OverlayController {
       return node.isFinalPrep ? '拿完直接进 Boss' : '选择一个强化';
     }
     if (node.type === 'anomaly') {
-      return '接一次突然变招';
+      return '进入特殊强化选择';
     }
     if (node.type === 'boss') {
       return '马上进入首领战';

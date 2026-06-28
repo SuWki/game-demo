@@ -173,6 +173,8 @@ export class GameScene extends Phaser.Scene {
 
   private enemyLabelCursor = 0;
 
+  private bossSafeHintText!: Phaser.GameObjects.Text;
+
   private shellCasings: Array<{
     x: number;
     y: number;
@@ -223,6 +225,26 @@ export class GameScene extends Phaser.Scene {
     this.terrainGraphics.setDepth(1);
     this.graphics = this.add.graphics();
     this.graphics.setDepth(10);
+    this.bossSafeHintText = this.add.text(0, 0, '请进入绿色安全区躲避BOSS伤害', {
+      fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
+      fontSize: '17px',
+      fontStyle: '700',
+      color: '#e9fff7',
+      stroke: '#08221c',
+      strokeThickness: 3,
+      shadow: {
+        offsetX: 0,
+        offsetY: 1,
+        color: 'rgba(8, 24, 22, 0.38)',
+        blur: 6,
+        fill: true,
+        stroke: false,
+      },
+    });
+    this.bossSafeHintText
+      .setOrigin(0.5, 0.5)
+      .setDepth(95)
+      .setVisible(false);
     this.cameras.main.setZoom(1);
     this.runtimeVisualPreviewEnabled = window.localStorage.getItem(RUNTIME_VISUAL_PREVIEW_STORAGE_KEY) !== 'off';
     this.moveKeys = this.input.keyboard!.addKeys({
@@ -947,8 +969,8 @@ export class GameScene extends Phaser.Scene {
       experienceText: `${Math.round(state.experience)} / ${Math.round(state.experienceToNext)}`,
       experienceRatio: state.experience / Math.max(1, state.experienceToNext),
       routeStatusText,
-      routeMomentText,
-      routeMomentRouteId: routeMomentText ? state.routeMomentRouteId ?? undefined : undefined,
+      routeMomentText: undefined,
+      routeMomentRouteId: undefined,
       routeProgress: ROUTES.map((route) => ({
         routeId: route.id,
         label: route.name,
@@ -1026,86 +1048,6 @@ export class GameScene extends Phaser.Scene {
         return `Boss · 出招：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
       }
       return '';
-    }
-
-    const liveFocusRoute = this.getLiveCombatFocusRoute(battle);
-    if (liveFocusRoute) {
-        const activeRoutePerks = this.engine.getState().activeRoutePerks;
-        const routeStage = this.engine.getRouteBuildStage(liveFocusRoute);
-        if (liveFocusRoute === 'crit') {
-          if (activeRoutePerks?.critLockProtocol && (battle.critBurstBonusSec > 0 || battle.critChain >= 2)) {
-            return '◆ 暴击已触发：集中火力。';
-          }
-          if (battle.critBurstBonusSec > 0) {
-            return '◆ 暴击已触发：连续重击。';
-          }
-          if (battle.critFinisherReady) {
-            return `◆ 暴击已就绪：${battle.critComboStacks}/5 层破绽已挂满。`;
-          }
-          if (activeRoutePerks?.critBridgeFocus && battle.critFocusLockSec > 0) {
-            return '◆ 先压一个目标：破绽会继续累积。';
-          }
-          if (battle.critChain >= 1) {
-            return `◆ 暴击开始生效：${battle.critComboStacks}/5 层破绽已累积。`;
-          }
-          if (routeStage === 'matured') {
-            return battle.critComboStacks > 0
-              ? `◆ 暴击已连击：破绽 ${battle.critComboStacks}/5，下一次会炸开。`
-              : '◆ 暴击已就绪：连着打更容易炸开。';
-          }
-          if (routeStage === 'committed') {
-            return activeRoutePerks?.critBridgeFocus
-              ? '◆ 先压一个目标：破绽会继续累积。'
-              : '◆ 暴击已连击：先把破绽堆起来。';
-          }
-          if (routeStage === 'hinted') {
-            return activeRoutePerks?.critBridgeFocus
-              ? '◆ 先盯住一个目标：破绽开始累积。'
-              : '◆ 暴击开始生效：先盯住厚血目标。';
-          }
-        }
-
-      if (liveFocusRoute === 'pierce') {
-        if (activeRoutePerks?.pierceBreakthrough && battle.pierceFlowSec > 0 && battle.pierceFlowCount >= 2) {
-          return '║ 穿透已贯通：前排一破，后面也会掉血。';
-        }
-        if (battle.pierceFlowSec > 0) {
-          if (battle.pierceFlowCount >= 3) {
-            return `║ 穿透已到达后排：第 ${battle.pierceFlowCount} 次命中还在延伸。`;
-          }
-          if (battle.pierceFlowCount >= 2) {
-            return `║ 穿透已连击：第 ${battle.pierceFlowCount} 次命中已接上。`;
-          }
-          return '║ 穿透已展开：后排正在掉血。';
-        }
-        if (battle.enemies.some((enemy) => (enemy.pierceMarkStacks ?? 0) >= 1)) {
-          return '║ 穿透开始生效：裂痕已经挂上。';
-        }
-        if (routeStage === 'matured') {
-          return '║ 穿透已到达后排：子弹会继续往后走。';
-        }
-        if (routeStage === 'committed') {
-          return '║ 穿透已连起：前排会逐渐裂开。';
-        }
-        if (routeStage === 'hinted') {
-          return '║ 穿透开始生效：先找直线。';
-        }
-      }
-
-      if (liveFocusRoute === 'dash') {
-        if (battle.dashDriveSec > 0) {
-          return '◌ 穿梭反击已就绪：贴近后会反击。';
-        }
-        if (routeStage === 'matured') {
-          return '◌ 穿梭已成型：贴近后就能清掉。';
-        }
-        if (routeStage === 'committed') {
-          return '◌ 穿梭已连起：接近后会顺手反击。';
-        }
-        if (routeStage === 'hinted') {
-          return '◌ 穿梭开始生效：先贴近。';
-        }
-      }
     }
 
     if (this.getBattleTemplate(battle.templateId).winCondition.type === 'survive') {
@@ -1523,6 +1465,7 @@ export class GameScene extends Phaser.Scene {
     this.beginRuntimePreviewImageFrame();
     this.beginEnemyLabelFrame();
     if (!battle) {
+      this.bossSafeHintText.setVisible(false);
       this.graphics.fillGradientStyle(0x13100d, 0x13100d, 0x070706, 0x050505, 1);
       this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
       this.endRuntimePreviewImageFrame();
@@ -1537,6 +1480,8 @@ export class GameScene extends Phaser.Scene {
     this.renderEliteBossLabels(battle, camera);
     this.renderRouteAura(battle, camera);
     this.renderUpgradeFlash();
+    this.renderBossSafeWindowHint(battle);
+    this.renderRouteMomentOverlay(battle);
     if (battle.encounterType === 'boss' && (battle.elapsedSec < 0.95 || battle.pressureTransitionSec > 0 || battle.pressureSignatureSec > 0)) {
       this.renderBossIntroFrame(battle, camera, accentColor);
     }
@@ -1552,6 +1497,26 @@ export class GameScene extends Phaser.Scene {
     for (let index = this.enemyLabelCursor; index < this.enemyLabelTexts.length; index += 1) {
       this.enemyLabelTexts[index].setVisible(false);
     }
+  }
+
+  private renderBossSafeWindowHint(battle: BattleState): void {
+    if (battle.encounterType !== 'boss' || battle.pressureSafeWindowSec <= 0) {
+      this.bossSafeHintText.setVisible(false);
+      return;
+    }
+
+    const pulse = 0.5 + Math.sin(battle.elapsedSec * 5.4) * 0.5;
+    const alpha = Math.min(1, 0.78 + pulse * 0.18);
+    this.bossSafeHintText
+      .setPosition(this.scale.width * 0.56, 142)
+      .setAlpha(alpha)
+      .setVisible(true);
+  }
+
+  private renderRouteMomentOverlay(battle: BattleState): void {
+    const state = this.engine.getState();
+    void battle;
+    void state;
   }
 
   private renderEliteBossLabels(
@@ -2714,27 +2679,20 @@ export class GameScene extends Phaser.Scene {
       if (enemy.critMarkSec > 0) {
         const critMarkRatio = Math.min(1, enemy.critMarkSec / 2.5);
         const critColor = 0xff8c42; // 橙色
-        this.graphics.lineStyle(2.5, critColor, 0.25 + critMarkRatio * 0.55);
-        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 8 + (1 - critMarkRatio) * 4);
+        const critReach = enemy.radius + 10 + (1 - critMarkRatio) * 4;
+        this.renderDiamondOutline(screen.x, screen.y, critReach, critColor, 0.25 + critMarkRatio * 0.55, 2.5);
         if ((enemy.critMarkStacks ?? 0) >= 2) {
-          const stackReach = enemy.radius + 13 + Math.max(0, (enemy.critMarkStacks ?? 0) - 2) * 3;
-          this.graphics.lineStyle(1.8, critColor, 0.18 + critMarkRatio * 0.24);
-          this.graphics.strokeCircle(screen.x, screen.y, stackReach);
+          const stackReach = enemy.radius + 16 + Math.max(0, (enemy.critMarkStacks ?? 0) - 2) * 4;
+          this.renderDiamondOutline(screen.x, screen.y, stackReach, this.mixColor(critColor, 0xffd997, 0.3), 0.16 + critMarkRatio * 0.24, 1.8);
         }
         if (activeRoutePerks?.critLockProtocol) {
-          const bracketRadius = enemy.radius + 15 + (1 - critMarkRatio) * 4;
-          const bracketGap = 4;
-          const bracketWidth = 6;
-          this.graphics.lineStyle(2, 0xffd58a, 0.3 + critMarkRatio * 0.5);
-          this.graphics.lineBetween(screen.x - bracketRadius, screen.y - bracketGap, screen.x - bracketRadius + bracketWidth, screen.y - bracketGap);
-          this.graphics.lineBetween(screen.x - bracketRadius, screen.y - bracketGap, screen.x - bracketRadius, screen.y + bracketGap);
-          this.graphics.lineBetween(screen.x + bracketRadius, screen.y - bracketGap, screen.x + bracketRadius - bracketWidth, screen.y - bracketGap);
-          this.graphics.lineBetween(screen.x + bracketRadius, screen.y - bracketGap, screen.x + bracketRadius, screen.y + bracketGap);
+          const bracketRadius = enemy.radius + 19 + (1 - critMarkRatio) * 4;
+          this.renderTargetBrackets(screen.x, screen.y, bracketRadius, 8, 0xffd58a, 0.28 + critMarkRatio * 0.5);
         }
         // 短促爆闪效果
         if (enemy.hitFlashSec > 0.08) {
-          this.graphics.fillStyle(critColor, 0.12 + critMarkRatio * 0.18);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 5);
+          this.graphics.fillStyle(critColor, 0.06 + critMarkRatio * 0.12);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius + 4);
         }
       }
       // pierceMark: 蓝色贯穿裂纹
@@ -2742,18 +2700,12 @@ export class GameScene extends Phaser.Scene {
         const pierceMarkRatio = Math.min(1, enemy.pierceMarkSec / 1.8);
         const pierceColor = 0x5cb8ff; // 冷蓝色
         const crackAlpha = 0.2 + pierceMarkRatio * 0.5;
-        this.graphics.lineStyle(1.5, pierceColor, crackAlpha);
-        // 绘制贯穿裂纹
-        const crackLen = enemy.radius * 0.8;
-        for (let i = 0; i < 3; i++) {
-          const angle = (i * Math.PI * 2) / 3 + pierceMarkRatio * 0.5;
-          this.graphics.lineBetween(
-            screen.x + Math.cos(angle) * enemy.radius * 0.4,
-            screen.y + Math.sin(angle) * enemy.radius * 0.4,
-            screen.x + Math.cos(angle) * (enemy.radius * 0.4 + crackLen),
-            screen.y + Math.sin(angle) * (enemy.radius * 0.4 + crackLen),
-          );
-        }
+        const crackLen = enemy.radius * 1.3;
+        this.graphics.lineStyle(1.8, pierceColor, crackAlpha);
+        this.graphics.lineBetween(screen.x - crackLen, screen.y - 5, screen.x + crackLen, screen.y + 5);
+        this.graphics.lineBetween(screen.x - crackLen * 0.8, screen.y + 5, screen.x + crackLen * 0.8, screen.y - 5);
+        this.graphics.lineStyle(1.2, this.mixColor(pierceColor, 0xe2fbff, 0.24), 0.14 + pierceMarkRatio * 0.18);
+        this.graphics.lineBetween(screen.x - crackLen * 0.42, screen.y, screen.x + crackLen * 0.42, screen.y);
         if (activeRoutePerks?.pierceBreakthrough) {
           this.graphics.lineStyle(1.8, 0xa7e9ff, 0.18 + pierceMarkRatio * 0.28);
           this.graphics.lineBetween(screen.x - enemy.radius * 1.6, screen.y, screen.x + enemy.radius * 1.6, screen.y);
@@ -2778,25 +2730,32 @@ export class GameScene extends Phaser.Scene {
         const dashMarkRatio = Math.min(1, enemy.dashMarkSec / 1.5);
         const dashColor = 0x7aff7a; // 脉冲绿
         const pulseAlpha = 0.15 + dashMarkRatio * 0.4;
+        const pulseRadius = enemy.radius + 8 + (1 - dashMarkRatio) * 6;
         this.graphics.lineStyle(2, dashColor, pulseAlpha);
-        this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 6 + (1 - dashMarkRatio) * 6);
-        // 残影点
+        this.graphics.beginPath();
+        this.graphics.arc(screen.x, screen.y, pulseRadius, -1.1 + dashMarkRatio * 0.4, 0.7 + dashMarkRatio * 0.4, false);
+        this.graphics.strokePath();
+        this.graphics.beginPath();
+        this.graphics.arc(screen.x, screen.y, pulseRadius, Math.PI - 0.6 + dashMarkRatio * 0.4, Math.PI + 1.1 + dashMarkRatio * 0.4, false);
+        this.graphics.strokePath();
         this.graphics.fillStyle(dashColor, pulseAlpha * 0.6);
         for (let i = 0; i < 4; i++) {
-          const angle = (i * Math.PI) / 2 + dashMarkRatio;
-          const dist = enemy.radius + 10 + (1 - dashMarkRatio) * 4;
+          const angle = (i * Math.PI) / 2 + dashMarkRatio * 1.2;
+          const dist = enemy.radius + 12 + (1 - dashMarkRatio) * 4;
           this.graphics.fillCircle(screen.x + Math.cos(angle) * dist, screen.y + Math.sin(angle) * dist, 2);
         }
         if ((enemy.dashPulseStacks ?? 0) >= 2) {
           const dashStackRatio = Math.min(1, (enemy.dashPulseStacks ?? 0) / 3);
           this.graphics.lineStyle(1.4, dashColor, 0.16 + dashStackRatio * 0.18);
-          this.graphics.strokeCircle(screen.x, screen.y, enemy.radius + 2 + dashStackRatio * 5);
+          this.graphics.beginPath();
+          this.graphics.arc(screen.x, screen.y, enemy.radius + 4 + dashStackRatio * 5, -0.3, 1.6, false);
+          this.graphics.strokePath();
         }
         if (enemy.dashMarkedForBonus) {
           const dashFoldReach = enemy.radius + 14;
           this.graphics.lineStyle(1.7, 0xeafff8, 0.18 + dashMarkRatio * 0.18);
-          this.graphics.lineBetween(screen.x - dashFoldReach, screen.y - 2, screen.x - 6, screen.y - 2);
-          this.graphics.lineBetween(screen.x + 6, screen.y + 2, screen.x + dashFoldReach, screen.y + 2);
+          this.graphics.lineBetween(screen.x - dashFoldReach, screen.y - 3, screen.x - 5, screen.y + 3);
+          this.graphics.lineBetween(screen.x + 5, screen.y - 3, screen.x + dashFoldReach, screen.y + 3);
         }
       }
 
@@ -2814,37 +2773,39 @@ export class GameScene extends Phaser.Scene {
         if (enemy.routeHitKind === 'crit') {
           const critFlashColor = 0xff4444;
           const critBrightColor = 0xffaa55;
-          this.graphics.fillStyle(critFlashColor, 0.42 * flashRatio);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 1.35);
-          this.graphics.fillStyle(critBrightColor, 0.72 * flashRatio);
-          for (let shard = 0; shard < 7; shard += 1) {
-            const angle = faceAngle + shard * 0.9 + flashRatio * 0.24;
-            const inner = enemy.radius * 0.55;
-            const outer = enemy.radius + 18 + (1 - flashRatio) * 10;
-            const width = 4 + shard % 2;
+          const coreRadius = enemy.radius * (0.52 + (1 - flashRatio) * 0.28);
+          this.renderDiamondOutline(screen.x, screen.y, enemy.radius + 20 + (1 - flashRatio) * 12, critBrightColor, 0.38 * flashRatio, 2.6);
+          this.graphics.fillStyle(critFlashColor, 0.18 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, coreRadius);
+          this.graphics.fillStyle(critBrightColor, 0.7 * flashRatio);
+          for (let shard = 0; shard < 6; shard += 1) {
+            const angle = faceAngle + shard * (Math.PI / 3);
+            const inner = enemy.radius * 0.38;
+            const outer = enemy.radius + 20 + (1 - flashRatio) * 14;
+            const shardWidth = 6 + (shard % 2) * 2;
             this.graphics.fillTriangle(
               screen.x + Math.cos(angle) * inner,
               screen.y + Math.sin(angle) * inner,
-              screen.x + Math.cos(angle + 0.18) * (outer - width),
-              screen.y + Math.sin(angle + 0.18) * (outer - width),
-              screen.x + Math.cos(angle - 0.18) * outer,
-              screen.y + Math.sin(angle - 0.18) * outer,
+              screen.x + Math.cos(angle + 0.14) * (outer - shardWidth),
+              screen.y + Math.sin(angle + 0.14) * (outer - shardWidth),
+              screen.x + Math.cos(angle - 0.14) * outer,
+              screen.y + Math.sin(angle - 0.14) * outer,
             );
           }
         } else if (enemy.routeHitKind === 'pierce') {
           const pierceFlashColor = 0x00d4ff;
           const pierceBrightColor = 0x88f0ff;
-          const slashLen = enemy.radius * 1.55 + 12;
-          const split = 5 + (1 - flashRatio) * 8;
-          this.graphics.lineStyle(4, pierceFlashColor, 0.75 * flashRatio);
+          const slashLen = enemy.radius * 2 + 18;
+          const split = 6 + (1 - flashRatio) * 10;
+          this.graphics.lineStyle(4.4, pierceFlashColor, 0.76 * flashRatio);
           this.graphics.lineBetween(screen.x - slashLen, screen.y - split, screen.x + slashLen, screen.y + split);
-          this.graphics.lineBetween(screen.x - slashLen * 0.55, screen.y + split * 1.5, screen.x + slashLen * 0.55, screen.y - split * 1.5);
-          this.graphics.lineStyle(1.8, pierceBrightColor, 0.9 * flashRatio);
-          this.graphics.lineBetween(screen.x - slashLen * 0.74, screen.y, screen.x + slashLen * 0.74, screen.y);
+          this.graphics.lineBetween(screen.x - slashLen, screen.y + split, screen.x + slashLen, screen.y - split);
+          this.graphics.lineStyle(2, pierceBrightColor, 0.92 * flashRatio);
+          this.graphics.lineBetween(screen.x - slashLen * 0.9, screen.y, screen.x + slashLen * 0.9, screen.y);
           if (this.engine.getState().activeRoutePerks?.pierceBreakthrough) {
             this.graphics.lineStyle(2.4, 0xcdf7ff, 0.45 * flashRatio);
-            this.graphics.lineBetween(screen.x - slashLen * 0.2, screen.y - split * 2.1, screen.x + slashLen * 1.1, screen.y - split * 0.4);
-            this.graphics.lineBetween(screen.x - slashLen * 0.2, screen.y + split * 2.1, screen.x + slashLen * 1.1, screen.y + split * 0.4);
+            this.graphics.lineBetween(screen.x - slashLen * 0.18, screen.y - split * 2.2, screen.x + slashLen * 1.05, screen.y - split * 0.4);
+            this.graphics.lineBetween(screen.x - slashLen * 0.18, screen.y + split * 2.2, screen.x + slashLen * 1.05, screen.y + split * 0.4);
           }
           this.graphics.fillStyle(0xffffff, 0.7 * flashRatio);
           this.graphics.fillCircle(screen.x, screen.y, 3);
@@ -2852,17 +2813,19 @@ export class GameScene extends Phaser.Scene {
           const dashFlashColor = 0x72ffc8;
           const dashBrightColor = 0xeafff8;
           const waveRadius = enemy.radius + 10 + (1 - flashRatio) * 20;
-          this.graphics.fillStyle(dashFlashColor, 0.12 * flashRatio);
-          this.graphics.fillCircle(screen.x, screen.y, waveRadius);
-          this.graphics.fillStyle(dashBrightColor, 0.38 * flashRatio);
-          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.62);
-          this.graphics.lineStyle(3, dashFlashColor, 0.34 * flashRatio);
+          this.graphics.fillStyle(dashFlashColor, 0.08 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.84);
+          this.graphics.fillStyle(dashBrightColor, 0.32 * flashRatio);
+          this.graphics.fillCircle(screen.x, screen.y, enemy.radius * 0.54);
+          this.graphics.lineStyle(3, dashFlashColor, 0.36 * flashRatio);
           for (let arc = 0; arc < 3; arc += 1) {
-            const start = faceAngle + arc * 2.1 - 0.48;
+            const start = faceAngle + arc * 1.96 - 0.66;
             this.graphics.beginPath();
-            this.graphics.arc(screen.x, screen.y, waveRadius - arc * 5, start, start + 0.82, false);
+            this.graphics.arc(screen.x, screen.y, waveRadius - arc * 6, start, start + 1.04, false);
             this.graphics.strokePath();
           }
+          this.graphics.lineStyle(1.6, dashBrightColor, 0.28 * flashRatio);
+          this.graphics.lineBetween(screen.x - waveRadius * 0.55, screen.y + 2, screen.x + waveRadius * 0.55, screen.y - 2);
         }
       } else if (enemy.hitFlashSec > 0) {
         const normalHitRatio = Phaser.Math.Clamp(enemy.hitFlashSec / 0.14, 0, 1);
@@ -3351,6 +3314,24 @@ export class GameScene extends Phaser.Scene {
         );
       }
     }
+    if (liveFocusRoute === 'crit' && (critAuraRatio > 0.12 || critBurstRatio > 0.08 || critChainRatio > 0.08)) {
+      const critPulse = 0.5 + Math.sin(battle.elapsedSec * 7.6) * 0.5;
+      const critAuraColor = this.mixColor(0xff9554, 0xffe4a3, 0.28 + critBurstRatio * 0.18);
+      const auraReach = 24 + critAuraRatio * 10 + critBurstRatio * 14;
+      this.renderDiamondOutline(bodyX, bodyY, auraReach, critAuraColor, 0.12 + critAuraRatio * 0.18 + critBurstRatio * 0.12, 1.8);
+      this.renderTargetBrackets(bodyX, bodyY, 18 + critPulse * 4 + critBurstRatio * 10, 5, critAuraColor, 0.08 + critChainRatio * 0.16);
+    }
+    if (liveFocusRoute === 'dash' && (dashDriveRatio > 0.12 || velocityRatio > 0.18)) {
+      const dashAuraColor = this.mixColor(0x8effdc, 0xffffff, 0.18 + dashDriveRatio * 0.14);
+      const dashArcRadius = 18 + dashDriveRatio * 12 + velocityRatio * 4;
+      this.graphics.lineStyle(1.6, dashAuraColor, 0.08 + dashDriveRatio * 0.18);
+      this.graphics.beginPath();
+      this.graphics.arc(bodyX, bodyY, dashArcRadius, -0.7, 0.7, false);
+      this.graphics.strokePath();
+      this.graphics.beginPath();
+      this.graphics.arc(bodyX, bodyY, dashArcRadius, Math.PI - 0.3, Math.PI + 0.9, false);
+      this.graphics.strokePath();
+    }
     if (turnBurstRatio > 0.08) {
       // Trigger particle effect on turn burst start
       if (this.lastTurnBurstSec === 0 && battle.playerTurnBurstSec > 0) {
@@ -3496,15 +3477,41 @@ export class GameScene extends Phaser.Scene {
       const streakRatio = Math.min(1, (battle.killStreakCount - 2) / 8); // 0 at 2 kills, 1 at 10+ kills
       const streakPulse = Math.sin(this.time.now * 0.008) * 0.5 + 0.5;
       const streakColor = this.mixColor(0xffd700, 0xffffff, 0.3); // Golden glow
-      // 固定宽度，只做渐显渐隐，避免缩放导致的不适感
       const edgeAlpha = 0.02 + streakRatio * 0.08 + streakPulse * streakRatio * 0.04;
-      const edgeDepth = 20; // 固定宽度
+      const edgeDepth = 22;
+      const edgeBands = [
+        { inset: 0, thickness: 7, alpha: edgeAlpha * 0.9 },
+        { inset: 7, thickness: 7, alpha: edgeAlpha * 0.5 },
+        { inset: 14, thickness: 8, alpha: edgeAlpha * 0.22 },
+      ];
 
-      this.graphics.fillStyle(streakColor, edgeAlpha);
-      this.graphics.fillRect(0, 0, camera.width, edgeDepth);
-      this.graphics.fillRect(0, camera.height - edgeDepth, camera.width, edgeDepth);
-      this.graphics.fillRect(0, edgeDepth, edgeDepth, camera.height - edgeDepth * 2);
-      this.graphics.fillRect(camera.width - edgeDepth, edgeDepth, edgeDepth, camera.height - edgeDepth * 2);
+      for (const band of edgeBands) {
+        const width = Math.max(0, camera.width - band.inset * 2);
+        const height = Math.max(0, camera.height - band.inset * 2);
+        if (width <= 0 || height <= 0) {
+          continue;
+        }
+        this.graphics.fillStyle(streakColor, band.alpha);
+        this.graphics.fillRect(band.inset, band.inset, width, band.thickness);
+        this.graphics.fillRect(
+          band.inset,
+          camera.height - band.inset - band.thickness,
+          width,
+          band.thickness,
+        );
+        this.graphics.fillRect(
+          band.inset,
+          band.inset + band.thickness,
+          band.thickness,
+          Math.max(0, height - band.thickness * 2),
+        );
+        this.graphics.fillRect(
+          camera.width - band.inset - band.thickness,
+          band.inset + band.thickness,
+          band.thickness,
+          Math.max(0, height - band.thickness * 2),
+        );
+      }
 
       // Corner accents for high streaks
       if (battle.killStreakCount >= 5) {
@@ -3969,6 +3976,43 @@ export class GameScene extends Phaser.Scene {
     this.graphics.lineBetween(baseX - orthoX * (halfWidth * 0.42), baseY - orthoY * (halfWidth * 0.42), rightX, rightY);
   }
 
+  private renderDiamondOutline(
+    centerX: number,
+    centerY: number,
+    radius: number,
+    color: number,
+    alpha: number,
+    width: number,
+  ): void {
+    this.graphics.lineStyle(width, color, alpha);
+    this.graphics.beginPath();
+    this.graphics.moveTo(centerX, centerY - radius);
+    this.graphics.lineTo(centerX + radius, centerY);
+    this.graphics.lineTo(centerX, centerY + radius);
+    this.graphics.lineTo(centerX - radius, centerY);
+    this.graphics.closePath();
+    this.graphics.strokePath();
+  }
+
+  private renderTargetBrackets(
+    centerX: number,
+    centerY: number,
+    radius: number,
+    size: number,
+    color: number,
+    alpha: number,
+  ): void {
+    this.graphics.lineStyle(2, color, alpha);
+    this.graphics.lineBetween(centerX - radius, centerY - size, centerX - radius + size, centerY - size);
+    this.graphics.lineBetween(centerX - radius, centerY - size, centerX - radius, centerY + size);
+    this.graphics.lineBetween(centerX + radius, centerY - size, centerX + radius - size, centerY - size);
+    this.graphics.lineBetween(centerX + radius, centerY - size, centerX + radius, centerY + size);
+    this.graphics.lineBetween(centerX - radius, centerY + size, centerX - radius + size, centerY + size);
+    this.graphics.lineBetween(centerX - radius, centerY + size, centerX - radius, centerY - size);
+    this.graphics.lineBetween(centerX + radius, centerY + size, centerX + radius - size, centerY + size);
+    this.graphics.lineBetween(centerX + radius, centerY + size, centerX + radius, centerY - size);
+  }
+
   private renderEliteEscortField(
     battle: BattleState,
     camera: { left: number; right: number; top: number; bottom: number; width: number; height: number },
@@ -4305,6 +4349,13 @@ export class GameScene extends Phaser.Scene {
                 this.graphics.fillCircle(markerX + chaseOrthoX * railOffset, markerY + chaseOrthoY * railOffset, 2.2);
                 this.graphics.fillCircle(markerX - chaseOrthoX * railOffset, markerY - chaseOrthoY * railOffset, 2.2);
               }
+              this.graphics.lineStyle(3, this.mixColor(focusColor, 0xffffff, 0.18), focusAlpha * 0.28);
+              this.graphics.lineBetween(
+                eliteScreen.x - chaseDirX * (elite.radius + 8),
+                eliteScreen.y - chaseDirY * (elite.radius + 8),
+                eliteScreen.x + chaseDirX * (piercePayoffReach + 22),
+                eliteScreen.y + chaseDirY * (piercePayoffReach + 22),
+              );
             }
             for (const entry of escorts.slice(0, 2)) {
               const escortScreen = this.worldToScreen(camera, entry.enemy.x, entry.enemy.y);
@@ -4360,6 +4411,16 @@ export class GameScene extends Phaser.Scene {
             }
             this.graphics.lineStyle(1.4, focusColor, focusAlpha * 0.72);
             this.graphics.strokeCircle(eliteScreen.x, eliteScreen.y, elite.radius + 12 + eliteCrackRatio * 8);
+            if (battle.dashDriveSec > 0 || battle.dashMomentumStacks >= 2) {
+              const dashPayoffRadius = elite.radius + 24 + eliteCrackRatio * 10 + battle.dashMomentumStacks * 3;
+              this.graphics.lineStyle(2, this.mixColor(focusColor, 0xffffff, 0.16), focusAlpha * 0.42);
+              this.graphics.beginPath();
+              this.graphics.arc(eliteScreen.x, eliteScreen.y, dashPayoffRadius, -0.4, 1.05, false);
+              this.graphics.strokePath();
+              this.graphics.beginPath();
+              this.graphics.arc(eliteScreen.x, eliteScreen.y, dashPayoffRadius, Math.PI - 1.05, Math.PI + 0.4, false);
+              this.graphics.strokePath();
+            }
           }
         }
       }
