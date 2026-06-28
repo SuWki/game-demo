@@ -75,7 +75,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-battle-needle',
         type: 'battle',
         phase: 'opening',
-        title: '针线压场',
+        title: '两翼夹击',
         description: '两翼压线',
         templateCandidates: [
           { templateId: 'elimination-needle', weight: 3 },
@@ -97,7 +97,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-battle-flank',
         type: 'battle',
         phase: 'opening',
-        title: '侧压试飞',
+        title: '侧翼接敌',
         description: '敌人从侧翼进攻',
         templateCandidates: [
           { templateId: 'elimination-pincer', weight: 1.8 },
@@ -140,7 +140,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-battle-crossline',
         type: 'battle',
         phase: 'opening',
-        title: '火线试压',
+        title: '远程压线',
         description: '远程火力压线',
         templateCandidates: [
           { templateId: 'elimination-crossline', weight: 2.1 },
@@ -273,7 +273,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-bridge',
         type: 'battle',
         phase: 'mid',
-        title: '桥口分层',
+        title: '前后夹击',
         description: '前后排开始分开站位',
         templateCandidates: [
           { templateId: 'elite-bridge', weight: 3 },
@@ -345,7 +345,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-dash-cutback',
         type: 'battle',
         phase: 'mid',
-        title: '脉冲压线',
+        title: '回旋压线',
         description: '靠机动反击',
         templateCandidates: [
           { templateId: 'elite-lockdown', weight: 1.8 },
@@ -367,7 +367,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-vice',
         type: 'battle',
         phase: 'mid',
-        title: '拖场绞锁',
+        title: '拉锯战',
         description: '持久战',
         templateCandidates: [
           { templateId: 'elite-vice', weight: 2.2 },
@@ -389,7 +389,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-bulwark',
         type: 'battle',
         phase: 'mid',
-        title: '壁垒拆解',
+        title: '破甲突入',
         description: '突破重甲防御',
         templateCandidates: [
           { templateId: 'elite-bulwark', weight: 2.1 },
@@ -411,7 +411,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-pierce-hold',
         type: 'battle',
         phase: 'mid',
-        title: '拆屏挂账',
+        title: '穿透清场',
         description: '撕开防线，逐个击破',
         templateCandidates: [
           { templateId: 'elite-bulwark', weight: 1.7 },
@@ -730,7 +730,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-thread',
         type: 'battle',
         phase: 'late',
-        title: '收束缝线',
+        title: '收紧防线',
         description: '收尾把场面收进一条线',
         templateCandidates: [
           { templateId: 'survival-thread', weight: 3 },
@@ -822,7 +822,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-sieve',
         type: 'battle',
         phase: 'late',
-        title: '筛火求生',
+        title: '交替接敌',
         description: '远近敌人轮流进攻',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 2 },
@@ -891,7 +891,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-dash-soft-closeout',
         type: 'battle',
         phase: 'late',
-        title: '回摆追回',
+        title: '闪避反打',
         description: '靠机动反守为攻',
         templateCandidates: [
           { templateId: 'survival-crossfire', weight: 1.35 },
@@ -936,7 +936,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-pierce-closeout',
         type: 'battle',
         phase: 'late',
-        title: '裂面清账',
+        title: '直取要害',
         description: '穿透防线直击要害',
         templateCandidates: [
           { templateId: 'survival-sieve', weight: 1.55 },

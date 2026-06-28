@@ -1948,3 +1948,13 @@ TODO
 - 暂停页只保留主按钮文字和 `当前关卡 X/5`，删除了按钮下的说明噪音。
 - `npm run build`、`npm run qa:stable-smoke` 均通过，`failed404Urls / consoleErrors / consoleWarns` 继续为空。
 - stable smoke 产物已更新，`output/qa/stable-smoke/summary.json` 中的 route / battle / result 覆盖继续保持完整。
+
+# 2026-06-29 路线表现层强化
+- 主要改动落在 `E:\codex\auto-shooter-demo\src\scenes\GameScene.ts`，没有去翻玩法规则和数值。
+- 暴击改成了更明确的菱形锁定 / 收紧 / 爆裂语言：敌人标记从圆环改成菱形与准星括号，命中爆发也改成了收束后炸开的碎片感。
+- 穿透改成了更明确的成线 / 贯通语言：敌人裂痕、命中闪光、精英压制线都更像整条轨道被打穿。
+- 穿梭改成了更明确的贴身 / 回切语言：敌人标记和命中反馈改成弧线、回切和脉冲，不再只是绿色圈。
+- 新增了战斗内的中屏 route moment 爆发牌面，让 `起势 / 接上 / 发力` 不只是 HUD 小字，而是有一次明确的表现层提示。
+- 玩家本体也补了轻量路线气质：暴击有短促锁定框，穿梭有贴身弧线，避免只有敌人身上在变。
+- 验证结果：`npm run build` 通过；`npm run qa:stable-smoke` 通过；`failed404Urls: []`、`consoleErrors: []`、`consoleWarns: []`。
+- 当前判断：这轮已经把三路线的“第一眼识别”和“质变瞬间”都往前推了一档，但 `dash` 还没进 stable smoke 主覆盖，后面更适合补一轮针对穿梭 payoff 的专项截图和自然流程观察。

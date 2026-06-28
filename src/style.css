@@ -3376,6 +3376,26 @@ button:hover {
   gap: 14px;
 }
 
+.result-screen .result-screen-actions {
+  width: min(100%, 260px);
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 10px;
+  margin: 0 auto;
+}
+
+.result-screen .result-screen-actions .combat-action,
+.result-screen .result-screen-actions .result-secondary-actions,
+.result-screen .result-screen-actions .combat-action-small {
+  width: 100%;
+}
+
+.result-screen .result-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
 .screen-summary-grid {
   width: 100%;
   gap: 12px;
@@ -3880,14 +3900,16 @@ button:hover {
 }
 
 .commercial-pause-panel {
-  width: min(980px, calc(100vw - 56px));
+  width: min(520px, calc(100vw - 56px));
   max-height: min(70vh, 560px);
+  padding: 24px 24px 22px;
 }
 
 .pause-panel-layout {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding-top: 6px;
 }
 
 .pause-panel-summary {
@@ -3929,16 +3951,58 @@ button:hover {
 
 .pause-panel-actions {
   display: grid;
-  width: min(360px, 100%);
+  width: min(330px, 100%);
   margin: 0 auto;
   align-content: start;
-  gap: 12px;
+  gap: 8px;
 }
 
 .pause-panel-actions .text-action {
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+}
+
+.commercial-pause-panel .tray-header {
+  padding-bottom: 10px;
+  align-items: center;
+}
+
+.commercial-pause-panel .panel-title {
+  font-size: clamp(30px, 3.4vw, 38px);
+  line-height: 1;
+  text-align: center;
+}
+
+.commercial-pause-panel .panel-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.pause-panel-actions .text-action span {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.commercial-pause-panel .pause-panel-actions .text-action {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+}
+
+.commercial-pause-panel .pause-panel-actions .text-action span {
+  display: block;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
 }
 
 .pause-panel-action-lead {

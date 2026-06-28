@@ -1,3 +1,4 @@
+import { ROUTE_VISUAL_MAP } from '../../data/routes';
 import type { AudioCue, PhaseId, RouteBuildStage, RouteId, RunState } from '../../game/types';
 
 export interface RouteAdvanceMeta {
@@ -72,35 +73,35 @@ export function getRouteBuildStage(state: RunState, routeId: RouteId): RouteBuil
 export function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
     case 'hinted':
-      return '已开始';
+      return '起势';
     case 'committed':
-      return '进行中';
+      return '站稳';
     case 'matured':
-      return '已完成';
+      return '发力';
     default:
-      return '未开始';
+      return '未起势';
   }
 }
 
 export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
   const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
     crit: {
-      unformed: '未开始',
-      hinted: '已开始',
-      committed: '进行中',
-      matured: '已完成',
+      unformed: '未起势',
+      hinted: '起势',
+      committed: '站稳',
+      matured: '发力',
     },
     pierce: {
-      unformed: '未开始',
-      hinted: '已开始',
-      committed: '进行中',
-      matured: '已完成',
+      unformed: '未起势',
+      hinted: '起势',
+      committed: '连上',
+      matured: '贯通',
     },
     dash: {
-      unformed: '未开始',
-      hinted: '已开始',
-      committed: '进行中',
-      matured: '已完成',
+      unformed: '未起势',
+      hinted: '起势',
+      committed: '贴身',
+      matured: '发力',
     },
   };
 
@@ -113,38 +114,38 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'crit':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '起手：抓住时机打出一串重击。';
+          return '◆ ' + routeName + '起势：先盯一个。';
         case 'committed':
-          return routeName + '进行中：持续叠加暴击破绽。';
+          return '◆ ' + routeName + '站稳：连打更重。';
         case 'matured':
-          return routeName + '已完成：连续暴击造成爆发伤害。';
+          return '◆ ' + routeName + '发力：一波更容易炸开。';
         default:
-          return routeName + '未开始。';
+          return routeName + '还没起势。';
       }
     case 'pierce':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '起手：前排伤害逐渐传导到后排。';
+          return '║ ' + routeName + '起势：先找直线。';
         case 'committed':
-          return routeName + '进行中：子弹穿透整排敌人。';
+          return '║ ' + routeName + '站稳：前排会慢慢开。';
         case 'matured':
-          return routeName + '已完成：子弹穿透整排敌人造成大量伤害。';
+          return '║ ' + routeName + '发力：后面也会一起掉。';
         default:
-          return routeName + '未开始。';
+          return routeName + '还没起势。';
       }
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return routeName + '起手：接近敌人后可触发反击。';
+          return '◌ ' + routeName + '起势：先贴身。';
         case 'committed':
-          return routeName + '进行中：接近敌人后持续触发反击。';
+          return '◌ ' + routeName + '站稳：贴身后还能接着打。';
         case 'matured':
-          return routeName + '已完成：接近敌人后持续输出。';
+          return '◌ ' + routeName + '发力：贴身后更容易清场。';
         default:
-          return routeName + '未开始。';
+          return routeName + '还没起势。';
       }
     default:
-      return routeName + '未开始。';
+      return routeName + '还没起势。';
   }
 }
 
@@ -153,38 +154,38 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'crit':
       switch (stage) {
         case 'starter':
-          return '暴击起手';
+          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击起势`;
         case 'bridge':
-          return '暴击进行中';
+          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击接上`;
         case 'payoff':
-          return '暴击已完成';
+          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击发力`;
         default:
-          return '暴击阶段变化';
+          return '暴击变化';
       }
     case 'pierce':
       switch (stage) {
         case 'starter':
-          return '穿透起手';
+          return `${ROUTE_VISUAL_MAP.pierce.icon} 穿透起势`;
         case 'bridge':
-          return '穿透进行中';
+          return `${ROUTE_VISUAL_MAP.pierce.icon} 穿透接上`;
         case 'payoff':
-          return '穿透已完成';
+          return `${ROUTE_VISUAL_MAP.pierce.icon} 穿透打穿`;
         default:
-          return '穿透阶段变化';
+          return '穿透变化';
       }
     case 'dash':
       switch (stage) {
         case 'starter':
-          return '穿梭起手';
+          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭起势`;
         case 'bridge':
-          return '穿梭进行中';
+          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭贴身`;
         case 'payoff':
-          return '穿梭已完成';
+          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭发力`;
         default:
-          return '穿梭阶段变化';
+          return '穿梭变化';
       }
     default:
-      return '流派阶段变化';
+      return '路线变化';
   }
 }
 
