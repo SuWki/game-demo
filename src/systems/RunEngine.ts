@@ -199,6 +199,7 @@ export class RunEngine {
   private firstRouteHintRecorded = false;
 
   private advanceAfterPendingUpgrades = false;
+  private readonly chainedLevelUpResumeDelaySec = 0.28;
 
   public constructor(services: Services) {
     this.services = services;
@@ -504,7 +505,11 @@ export class RunEngine {
       }
       this.state.currentUpgradeIsReward = false;
       if (this.state.queuedLevelUps > 0) {
-        this.openQueuedLevelUpPanel();
+        this.state.status = 'battle';
+        this.state.levelUpPanelDelaySec = Math.max(
+          this.state.levelUpPanelDelaySec,
+          this.chainedLevelUpResumeDelaySec,
+        );
         return;
       }
 
@@ -7494,7 +7499,10 @@ export class RunEngine {
       this.enqueueTip(`等级提升 Lv.${this.state.level}`);
       if (this.state.status === 'battle') {
         this.state.upgradeFlashSec = Math.max(this.state.upgradeFlashSec, 0.18);
-        this.state.levelUpPanelDelaySec = Math.max(this.state.levelUpPanelDelaySec, 0.12);
+        this.state.levelUpPanelDelaySec = Math.max(
+          this.state.levelUpPanelDelaySec,
+          this.state.queuedLevelUps > 1 ? this.chainedLevelUpResumeDelaySec : 0.12,
+        );
       } else {
         this.openQueuedLevelUpPanel();
       }
