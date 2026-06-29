@@ -2425,7 +2425,7 @@
   },
   {
     "id": "dash-cutback",
-    "name": "脉冲残影",
+    "name": "脉冲残响",
     "description": "穿梭后更容易收割。",
     "category": "route",
     "contentTier": "rare",
@@ -2760,7 +2760,7 @@
   {
     "id": "dash-sidechannel",
     "name": "错位反击",
-    "description": "反击伤害大幅提升，接近范围扩大，还能回血。",
+    "description": "反击伤害更高，接近范围更大，还能回一口血。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2835,7 +2835,7 @@
   {
     "id": "dash-reroute-recall",
     "name": "闪身追回",
-    "description": "接近范围扩大，还能回血。",
+    "description": "接近范围扩大，还能回一口血。",
     "category": "route",
     "routeId": "dash",
     "tags": [
@@ -2908,7 +2908,7 @@
   {
     "id": "dash-loop",
     "name": "贴身充能",
-    "description": "贴近后充能更快，范围也更广。",
+    "description": "贴近后充能更快，范围也更宽。",
     "category": "route",
     "routeId": "dash",
     "tags": [

@@ -2712,7 +2712,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-cutback',
-    name: '脉冲残影',
+    name: '脉冲残响',
     description: '穿梭后更容易收割。',
     category: 'route',
     contentTier: 'rare',
@@ -3020,7 +3020,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidechannel',
     name: '错位反击',
-    description: '反击伤害大幅提升，接近范围扩大，还能回血。',
+    description: '反击伤害更高，接近范围更大，还能回一口血。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3089,7 +3089,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-recall',
     name: '闪身追回',
-    description: '接近范围扩大，还能回血。',
+    description: '接近范围扩大，还能回一口血。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3154,7 +3154,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-loop',
     name: '贴身充能',
-    description: '贴近后充能更快，范围也更广。',
+    description: '贴近后充能更快，范围也更宽。',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3595,9 +3595,9 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'dash-reroute-cutin': '穿梭更快，接近时更容易压制。',
   'dash-reroute-recall': '贴近范围更大，更容易回到有利位置。',
   'dash-loop': '贴近后充能更快。',
-  'dash-sidestep-bank': '反打伤害提升14%。',
+  'dash-sidestep-bank': '反击伤害提升。',
   'dash-return-hold': '贴近后更稳。',
-  'dash-afterimage': '反打伤害提升20%，贴近范围+12。',
+  'dash-afterimage': '反击更重，贴近范围更大。',
   'dash-retrace-beat': '反打后衔接下一轮更顺。',
   'dash-counterline': '贴近后反打效果更明显，伤害提升。',
   'dash-return-snap': '更快冲回下一次贴近。',
