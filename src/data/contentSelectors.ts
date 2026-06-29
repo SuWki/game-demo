@@ -592,6 +592,24 @@ function selectStarterSet(context: ContentContext, source: UpgradeSource): Upgra
   }).filter(Boolean) as UpgradeDefinition[];
 }
 
+function isFirstUpgradeOffer(context: ContentContext): boolean {
+  return context.selectedUpgradeIds.length === 0;
+}
+
+function pickEqualRouteStarter(
+  context: ContentContext,
+  source: UpgradeSource,
+): UpgradeArchetype | null {
+  const availableRoutes = ROUTES.filter((route) => buildRouteShowcasePool(context, source, 'starter', route.id).length > 0);
+  if (availableRoutes.length === 0) {
+    return null;
+  }
+
+  const pickedRoute = availableRoutes[Math.floor(Math.random() * availableRoutes.length)];
+  const starterPool = buildRouteShowcasePool(context, source, 'starter', pickedRoute.id);
+  return pickWeightedUnique(starterPool, 1)[0] ?? null;
+}
+
 function buildLevelUpRouteWindowPool(
   context: ContentContext,
 ): Array<{ item: UpgradeArchetype; weight: number }> {
@@ -609,6 +627,7 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const earlyMidLevelUp = openingLevelUp || context.phase === 'mid';
   const hasCommittedRoute = Boolean(context.committedRoute || context.maturedRoute);
   const dominantHintedEarlyMid = Boolean(context.dominantRoute) && !hasCommittedRoute && earlyMidLevelUp;
+  const firstUpgradeOffer = isFirstUpgradeOffer(context);
   const picks: UpgradeArchetype[] = [];
   const genericPool = buildWeightedUpgradePool(context, 'levelUp', (archetype) => !archetype.routeId);
   const genericPhasePools = buildGenericPhasePools(genericPool);
@@ -623,7 +642,12 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
     scaleWeightedPool(genericPrimaryPool, 1.18, 0.08),
     scaleWeightedPool(genericPhasePool.length > 0 ? genericPhasePool : genericPool, 1.08),
   );
-  const routeWindowPool = buildLevelUpRouteWindowPool(context);
+  const equalStarter = !context.dominantRoute && openingLevelUp && firstUpgradeOffer
+    ? pickEqualRouteStarter(context, 'levelUp')
+    : null;
+  const routeWindowPool = equalStarter
+    ? [{ item: equalStarter, weight: 1 }]
+    : buildLevelUpRouteWindowPool(context);
   const flexPool = mergeWeightedPools(
     scaleWeightedPool(
       genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool,
@@ -674,7 +698,13 @@ export function rollUpgradeChoices(
   const genericLateFlexPool = [...genericLatePayoffPool, ...genericHybridPool, ...genericTransitionPool];
   const dominantRoute = context.dominantRoute;
   const routeShowcaseStage = getRouteShowcaseStage(context, source);
-  const noFocusStarterPool = buildRouteShowcasePool(context, source, 'starter');
+  const firstUpgradeOffer = isFirstUpgradeOffer(context);
+  const equalStarter = !context.dominantRoute && context.phase === 'opening' && firstUpgradeOffer
+    ? pickEqualRouteStarter(context, source)
+    : null;
+  const noFocusStarterPool = equalStarter
+    ? [{ item: equalStarter, weight: 1 }]
+    : buildRouteShowcasePool(context, source, 'starter');
   const noFocusBridgePool: Array<{ item: UpgradeArchetype; weight: number }> = [];
   const noFocusLateRoutePool: Array<{ item: UpgradeArchetype; weight: number }> = [];
   const dominantRoutePool =

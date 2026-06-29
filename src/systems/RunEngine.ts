@@ -428,6 +428,7 @@ export class RunEngine {
     }
 
     if (node.type === 'anomaly') {
+      this.state.anomalyNodeSeen = true;
       this.state.status = 'eventChoice';
       this.state.currentEvent = this.rollAnomaly();
       this.state.upgradeSource = null;
@@ -614,6 +615,26 @@ export class RunEngine {
         } else {
           this.finishRun('defeat', outcome === 'defeat' ? 'hpDepleted' : 'timeOut');
         }
+      }
+      return;
+    }
+
+    if (this.state.status === 'battleRewardTransition' && this.state.battleRewardTransition) {
+      const dt = deltaMs / 1000;
+      this.state.battleRewardTransition.elapsedSec += dt;
+      if (this.state.battleRewardTransition.elapsedSec >= this.state.battleRewardTransition.durationSec) {
+        this.state.battleRewardTransition = null;
+        if (this.state.queuedLevelUps > 0) {
+          this.openQueuedLevelUpPanel();
+          return;
+        }
+        this.advanceAfterPendingUpgrades = false;
+        this.state.status = 'phaseTransition';
+        this.state.phaseTransition = {
+          label: '准备下一关',
+          elapsedSec: 0,
+          durationSec: 0.24,
+        };
       }
       return;
     }
@@ -2254,22 +2275,13 @@ export class RunEngine {
       return;
     }
 
-    if (this.state.queuedLevelUps > 0) {
-      this.openQueuedLevelUpPanel();
-      return;
-    }
-    this.advanceAfterPendingUpgrades = false;
-
-    // 战斗结束：添加过渡状态，避免瞬间进入关卡选择
-    this.state.status = 'phaseTransition';
-    this.state.phaseTransition = {
+    this.state.status = 'battleRewardTransition';
+    this.state.battleRewardTransition = {
       label: `${battle.label || this.getBattleTemplate(battle.templateId).name}完成`,
       elapsedSec: 0,
-      durationSec: 0.46,
+      durationSec: 0.62,
     };
     this.enqueueAudio('victory');
-
-    // 注意：不再直接调用 advanceRound()，过渡结束后由 tick() 处理
   }
 
   private advanceRound(): void {
@@ -2285,8 +2297,10 @@ export class RunEngine {
       lastNodeType: lastTraversedNode?.type ?? this.state.currentNode?.type ?? null,
       battleWins: this.state.battleWins,
       hpRatio: this.state.stats.hp / Math.max(1, this.state.stats.maxHp),
+      anomalyNodeSeen: this.state.anomalyNodeSeen,
     });
 
+    this.state.anomalyNodeSeen = this.state.anomalyNodeSeen || nextNodes.some((node) => node.type === 'anomaly');
     this.state.phase = nextNodes[0]?.phase ?? this.state.phase;
     this.state.status = 'nodeChoice';
     this.state.nodeOptions = nextNodes;
@@ -2446,8 +2460,10 @@ export class RunEngine {
     this.state.queuedRewardUpgrades = 0;
     this.state.currentUpgradeIsReward = false;
     this.state.levelUpPanelDelaySec = 0;
+    this.state.battleRewardTransition = null;
     this.state.lastUpgradeChanges = null;
     this.state.stats = createBaseStats();
+    this.state.anomalyNodeSeen = false;
     this.firstUpgradeRecorded = false;
     this.firstRouteHintRecorded = false;
     this.advanceAfterPendingUpgrades = false;

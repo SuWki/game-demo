@@ -332,6 +332,8 @@ export class GameScene extends Phaser.Scene {
     // Boss 战结束过渡画面 / 关卡结束过渡
     if (state.status === 'bossEnding' && state.bossEnding) {
       this.renderBossEnding(state.bossEnding);
+    } else if (state.status === 'battleRewardTransition' && state.battleRewardTransition) {
+      this.renderBattleRewardTransition(state.battleRewardTransition);
     } else if (state.status === 'phaseTransition' && state.phaseTransition) {
       this.renderPhaseTransition(state.phaseTransition);
     } else {
@@ -1452,6 +1454,42 @@ export class GameScene extends Phaser.Scene {
     this.graphics.fillStyle(resultColor, 0.34 * fadeInRatio);
     this.graphics.fillRect(barX, barY, barWidth * (1 - progressRatio), barHeight);
     this.graphics.fillStyle(0xffffff, 0.08 * (1 - fadeOutRatio));
+    this.graphics.fillRect(barX, barY + 5, barWidth, 1.5);
+  }
+
+  private renderBattleRewardTransition(battleRewardTransition: NonNullable<RunState['battleRewardTransition']>): void {
+    const { elapsedSec, durationSec } = battleRewardTransition;
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+    const fadeRatio = Math.min(1, elapsedSec / 0.12);
+    const pulseRatio = Math.min(1, elapsedSec / durationSec);
+    const fadeOutRatio = Math.max(0, (elapsedSec - Math.max(0, durationSec - 0.18)) / 0.18);
+    const resultColor = 0xffd774;
+
+    this.renderBattle();
+
+    this.graphics.fillStyle(0x050404, 0.18 + fadeRatio * 0.12);
+    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
+    this.graphics.fillStyle(resultColor, 0.14 * fadeRatio * (1 - fadeOutRatio));
+    this.graphics.fillRect(0, centerY - 42, this.scale.width, 84);
+    this.graphics.lineStyle(2.4, resultColor, 0.5 * fadeRatio * (1 - fadeOutRatio));
+    this.graphics.strokeRect(24, centerY - 38, this.scale.width - 48, 76);
+
+    const ringRadius = 46 + pulseRatio * 16;
+    this.graphics.lineStyle(2.2, resultColor, 0.56 * fadeRatio * (1 - fadeOutRatio));
+    this.graphics.strokeCircle(centerX, centerY, ringRadius);
+    this.graphics.lineStyle(1.2, resultColor, 0.3 * fadeRatio * (1 - fadeOutRatio));
+    this.graphics.strokeCircle(centerX, centerY, ringRadius + 18);
+    this.graphics.fillStyle(resultColor, 0.12 * fadeRatio * (1 - fadeOutRatio));
+    this.graphics.fillCircle(centerX, centerY, 20 + pulseRatio * 10);
+
+    const barWidth = 220;
+    const barHeight = 3;
+    const barX = centerX - barWidth / 2;
+    const barY = centerY + 56;
+    this.graphics.fillStyle(resultColor, 0.36 * fadeRatio);
+    this.graphics.fillRect(barX, barY, barWidth * (1 - pulseRatio), barHeight);
+    this.graphics.fillStyle(0xffffff, 0.1 * (1 - fadeOutRatio));
     this.graphics.fillRect(barX, barY + 5, barWidth, 1.5);
   }
 

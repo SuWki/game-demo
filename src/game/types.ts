@@ -36,7 +36,15 @@ export type BattleTemplateId =
   | 'survival-thread'
   | 'survival-closehold';
 export type PhaseId = 'opening' | 'mid' | 'late' | 'finalPrep' | 'finalBattle' | 'ended';
-export type RunStatus = 'battle' | 'nodeChoice' | 'upgradeChoice' | 'eventChoice' | 'bossEnding' | 'phaseTransition' | 'result';
+export type RunStatus =
+  | 'battle'
+  | 'nodeChoice'
+  | 'upgradeChoice'
+  | 'eventChoice'
+  | 'bossEnding'
+  | 'battleRewardTransition'
+  | 'phaseTransition'
+  | 'result';
 export type RunOutcome = 'victory' | 'defeat';
 export type RouteBuildStage = 'unformed' | 'hinted' | 'committed' | 'matured';
 export type RunEndingKind = 'victory' | 'hpDepleted' | 'timeOut';
@@ -706,6 +714,11 @@ export interface RunState {
     elapsedSec: number;
     durationSec: number;
   } | null;
+  battleRewardTransition?: {
+    label: string;
+    elapsedSec: number;
+    durationSec: number;
+  } | null;
   // 关卡结束过渡（战斗→关卡选择）
   phaseTransition?: {
     label: string;
@@ -735,6 +748,7 @@ export interface RunState {
     critCrownfire?: boolean;
     critLockProtocol?: boolean;
   };
+  anomalyNodeSeen: boolean;
 }
 
 export interface BattleDebugConfig {

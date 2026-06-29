@@ -32,6 +32,7 @@ interface NodeOfferContext {
   lastNodeType: NodeType | null;
   battleWins: number;
   hpRatio: number;
+  anomalyNodeSeen: boolean;
 }
 
 interface RoundNodeOffer {
@@ -162,7 +163,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-upgrade',
         type: 'upgrade',
         phase: 'opening',
-        title: '补路火力',
+        title: '强化节点',
         description: '顺着这条线再压一把',
         offerRole: 'direction',
         selection: {
@@ -179,7 +180,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-upgrade-fireline',
         type: 'upgrade',
         phase: 'opening',
-        title: '选择强化',
+        title: '强化节点',
         description: '调整站位，补充机动性',
         offerRole: 'stabilize',
         selection: {
@@ -196,7 +197,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event',
         type: 'anomaly',
         phase: 'opening',
-        title: '改一下局面',
+        title: '异常节点',
         description: '这一步会拐一下',
         offerRole: 'direction',
         selection: {
@@ -210,7 +211,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event-probe',
         type: 'anomaly',
         phase: 'opening',
-        title: '风险授权',
+        title: '异常节点',
         description: '有险也有赚',
         offerRole: 'direction',
         selection: {
@@ -224,7 +225,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-event-ripple',
         type: 'anomaly',
         phase: 'opening',
-        title: '临时改路',
+        title: '异常节点',
         description: '使其他流派也能衔接当前战斗节奏',
         offerRole: 'pivot',
         selection: {
@@ -433,7 +434,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade',
         type: 'upgrade',
         phase: 'mid',
-        title: '补路火力',
+        title: '强化节点',
         description: '顺着这条线再压一把',
         offerRole: 'stabilize',
         selection: {
@@ -447,7 +448,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-bridge',
         type: 'upgrade',
         phase: 'mid',
-        title: '选择强化',
+        title: '强化节点',
         description: '调整站位，补充机动性',
         offerRole: 'stabilize',
         selection: {
@@ -466,7 +467,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-lock',
         type: 'upgrade',
         phase: 'mid',
-        title: '火力补强',
+        title: '强化节点',
         description: '补点底子',
         offerRole: 'stabilize',
         selection: {
@@ -480,7 +481,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-reroute',
         type: 'upgrade',
         phase: 'mid',
-        title: '补路调整',
+        title: '强化节点',
         description: '换一边补火力',
         offerRole: 'pivot',
         selection: {
@@ -494,7 +495,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-mesh',
         type: 'upgrade',
         phase: 'mid',
-        title: '并线调整',
+        title: '强化节点',
         description: '把几路拢一拢',
         offerRole: 'pivot',
         selection: {
@@ -508,7 +509,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-upgrade-turn',
         type: 'upgrade',
         phase: 'mid',
-        title: '转折调整',
+        title: '强化节点',
         description: '坚持原路，或转向新路',
         offerRole: 'pivot',
         selection: {
@@ -527,7 +528,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event',
         type: 'anomaly',
         phase: 'mid',
-        title: '局面改写',
+        title: '异常节点',
         description: '这一步会把局面拐一下',
         offerRole: 'pivot',
         selection: {
@@ -541,7 +542,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-shift',
         type: 'anomaly',
         phase: 'mid',
-        title: '偏一下',
+        title: '异常节点',
         description: '这次会偏一点',
         offerRole: 'pivot',
         selection: {
@@ -555,7 +556,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-handoff',
         type: 'anomaly',
         phase: 'mid',
-        title: '侧频噪点',
+        title: '异常节点',
         description: '中盘有点乱',
         offerRole: 'pivot',
         selection: {
@@ -629,7 +630,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-event-reroute',
         type: 'anomaly',
         phase: 'mid',
-        title: '路数偏转',
+        title: '异常节点',
         description: '看看要不要临时改路',
         offerRole: 'pivot',
         selection: {
@@ -643,7 +644,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-anomaly-fracture',
         type: 'anomaly',
         phase: 'mid',
-        title: '相位裂缝',
+        title: '异常节点',
         description: '空间异常',
         offerRole: 'pivot',
         selection: {
@@ -657,7 +658,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-anomaly-ledger',
         type: 'anomaly',
         phase: 'mid',
-        title: '欠账裂纹',
+        title: '异常节点',
         description: '代价换收益',
         offerRole: 'pivot',
         selection: {
@@ -671,7 +672,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-anomaly-prism',
         type: 'anomaly',
         phase: 'mid',
-        title: '分叉噪井',
+        title: '异常节点',
         description: '多条路径交汇',
         offerRole: 'pivot',
         selection: {
@@ -685,7 +686,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-anomaly-prelude',
         type: 'anomaly',
         phase: 'mid',
-        title: '偏航试拍',
+        title: '异常节点',
         description: '收到预兆信号',
         offerRole: 'pivot',
         selection: {
@@ -980,7 +981,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade',
         type: 'upgrade',
         phase: 'late',
-        title: '补路火力',
+        title: '强化节点',
         description: '顺着这条线再压一把',
         offerRole: 'closeout',
         selection: {
@@ -993,7 +994,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-anchor',
         type: 'upgrade',
         phase: 'late',
-        title: '后期稳压',
+        title: '强化节点',
         description: '先把身位压稳',
         offerRole: 'bossPrep',
         selection: {
@@ -1006,7 +1007,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-finalcheck',
         type: 'upgrade',
         phase: 'late',
-        title: '决战补漏',
+        title: '强化节点',
         description: '进首领前补短板',
         offerRole: 'bossPrep',
         selection: {
@@ -1024,7 +1025,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-commit-hold',
         type: 'upgrade',
         phase: 'late',
-        title: '定型调整',
+        title: '强化节点',
         description: '强化当前流派',
         offerRole: 'closeout',
         selection: {
@@ -1042,7 +1043,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-payoff',
         type: 'upgrade',
         phase: 'late',
-        title: '全面强化',
+        title: '强化节点',
         description: '集中进攻收尾',
         offerRole: 'closeout',
         selection: {
@@ -1055,7 +1056,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-rareline',
         type: 'upgrade',
         phase: 'late',
-        title: '稀有读数',
+        title: '强化节点',
         description: '拿一个稀有的',
         offerRole: 'closeout',
         selection: {
@@ -1068,7 +1069,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-closeout',
         type: 'upgrade',
         phase: 'late',
-        title: '收尾定型',
+        title: '强化节点',
         description: '确立本局打法方向',
         offerRole: 'closeout',
         selection: {
@@ -1081,7 +1082,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-upgrade-sidefold',
         type: 'upgrade',
         phase: 'late',
-        title: '旁路收拢',
+        title: '强化节点',
         description: '把打法拢一拢',
         offerRole: 'closeout',
         selection: {
@@ -1094,7 +1095,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-event',
         type: 'anomaly',
         phase: 'late',
-        title: '风险授权',
+        title: '异常节点',
         description: '有风险也有收益',
         offerRole: 'closeout',
         selection: {
@@ -1108,7 +1109,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-event-last-bet',
         type: 'anomaly',
         phase: 'late',
-        title: '收尾押注',
+        title: '异常节点',
         description: '全力押注一个方向',
         offerRole: 'closeout',
         selection: {
@@ -1122,7 +1123,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-event-blackbox',
         type: 'anomaly',
         phase: 'late',
-        title: '黑匣异常',
+        title: '异常节点',
         description: '发现未知信号',
         offerRole: 'closeout',
         selection: {
@@ -1136,7 +1137,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-shadow',
         type: 'anomaly',
         phase: 'late',
-        title: 'Boss 阴影',
+        title: '异常节点',
         description: '感受到首领威压',
         offerRole: 'bossPrep',
         selection: {
@@ -1150,7 +1151,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-residue',
         type: 'anomaly',
         phase: 'late',
-        title: '首领残响',
+        title: '异常节点',
         description: '感受到首领回响',
         offerRole: 'bossPrep',
         selection: {
@@ -1164,7 +1165,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-pivot',
         type: 'anomaly',
         phase: 'late',
-        title: '余辉偏折',
+        title: '异常节点',
         description: '面临多重选择',
         offerRole: 'closeout',
         selection: {
@@ -1178,7 +1179,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-switchboard',
         type: 'anomaly',
         phase: 'late',
-        title: '并线残响',
+        title: '异常节点',
         description: '战术在此交汇',
         offerRole: 'closeout',
         selection: {
@@ -1192,7 +1193,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-sidecar',
         type: 'anomaly',
         phase: 'late',
-        title: '首领侧录',
+        title: '异常节点',
         description: '发现首领预兆',
         offerRole: 'bossPrep',
         selection: {
@@ -1206,7 +1207,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-anomaly-closeout',
         type: 'anomaly',
         phase: 'late',
-        title: '收尾偏航',
+        title: '异常节点',
         description: '面临最后抉择',
         offerRole: 'closeout',
         selection: {
@@ -1226,7 +1227,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'final-prep',
         type: 'upgrade',
         phase: 'finalPrep',
-        title: '最终强化',
+        title: '强化节点',
         description: '最终强化',
         isFinalPrep: true,
         selection: {
@@ -1237,7 +1238,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'final-prep-shadow',
         type: 'upgrade',
         phase: 'finalPrep',
-        title: '决战备战',
+        title: '强化节点',
         description: '先补短板',
         isFinalPrep: true,
         selection: {
@@ -1452,6 +1453,9 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
         weight *= 0.92;
       }
     } else if (blueprint.type === 'anomaly') {
+      if (offerContext.anomalyNodeSeen) {
+        return 0;
+      }
       const anomalyMultiplier = round === 1 ? (offerContext.focusRoute ? 0.92 : 1.12) : round === 2 ? 1.08 : 1.02;
       weight *= anomalyMultiplier;
       if (offerContext.lastNodeType === 'upgrade') {
@@ -1459,6 +1463,9 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
       }
     }
   } else if (blueprint.type === 'anomaly') {
+    if (offerContext.anomalyNodeSeen) {
+      return 0;
+    }
     weight *= 0.92;
   }
 
@@ -1524,9 +1531,21 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
   const supportRoles = getPhaseSupportRoles(offer.phase);
   const supportTypes = new Set<NodeType>(['upgrade', 'anomaly']);
   const pickedSupportTypes = new Set<NodeType>();
+  const isBlueprintAllowed = (entry: WeightedBlueprintEntry): boolean => {
+    if (entry.weight <= 0) {
+      return false;
+    }
+    if (entry.blueprint.type === 'anomaly' && context.anomalyNodeSeen) {
+      return false;
+    }
+    return true;
+  };
 
   const addSupportPick = (preferDistinctType: boolean): boolean => {
     const picked = pullWeightedBlueprint(pool, (entry) => {
+      if (!isBlueprintAllowed(entry)) {
+        return false;
+      }
       if (!supportTypes.has(entry.blueprint.type)) {
         return false;
       }
@@ -1547,7 +1566,10 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
   };
 
   const addBattlePick = (): boolean => {
-    const picked = pullWeightedBlueprint(pool, (entry) => entry.blueprint.type === 'battle' || entry.blueprint.type === 'boss');
+    const picked = pullWeightedBlueprint(
+      pool,
+      (entry) => isBlueprintAllowed(entry) && (entry.blueprint.type === 'battle' || entry.blueprint.type === 'boss'),
+    );
     if (!picked) {
       return false;
     }
@@ -1583,6 +1605,9 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
 
   while (pool.length > 0 && picks.length < choiceCount) {
     const fallback = pullWeightedBlueprint(pool, (entry) => {
+      if (!isBlueprintAllowed(entry)) {
+        return false;
+      }
       if (supportTypes.has(entry.blueprint.type) && pickedSupportTypes.has(entry.blueprint.type)) {
         return false;
       }

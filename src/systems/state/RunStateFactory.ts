@@ -39,5 +39,6 @@ export function createRunState(openingNode: NodeOption): RunState {
     routeMomentRouteId: null,
     routeMomentSec: 0,
     activeRoutePerks: {},
+    anomalyNodeSeen: false,
   };
 }
