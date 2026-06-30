@@ -556,10 +556,13 @@ function stabilizeUpgradeChoicePicks(
   picks: UpgradeArchetype[],
   genericPool: Array<{ item: UpgradeArchetype; weight: number }>,
   context: ContentContext,
+  source?: UpgradeSource,
 ): void {
-  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+  // 强化节点(nodePrep)强制3个流派卡，不需要限制流派卡数量
+  if (source !== 'nodePrep') {
+    limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
+  }
   limitDuplicateGenericPrimaryStats(picks, genericPool, context);
-  limitRouteCardsInUpgradeChoices(picks, genericPool, context, 1);
 }
 
 function pickUpgradeRarity(
@@ -674,7 +677,7 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
     appendUniquePicks(picks, genericPool, 3 - picks.length);
   }
 
-  stabilizeUpgradeChoicePicks(picks, genericPool, context);
+  stabilizeUpgradeChoicePicks(picks, genericPool, context, 'levelUp');
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, 'levelUp', archetype)));
 }
@@ -808,169 +811,31 @@ export function rollUpgradeChoices(
         );
 
   if (source === 'nodePrep') {
-    const lateOrFinalPrepPhase = context.phase === 'late' || context.phase === 'finalPrep';
-    const finalPrepPhase = context.phase === 'finalPrep';
+    // 强化节点：强制3个流派（穿梭/暴击/穿透）各选1张卡
+    const stage = getRouteShowcaseStage(context, source);
+    const stageFallbacks: RouteShowcaseStage[] = stage === 'payoff'
+      ? ['payoff', 'bridge', 'starter']
+      : stage === 'bridge'
+        ? ['bridge', 'starter', 'payoff']
+        : ['starter', 'bridge', 'payoff'];
 
-    if (context.phase === 'finalPrep') {
-      if (!context.dominantRoute) {
-        appendUniquePicks(
-          picks,
-          finalPrepGenericPatchPool.length > 0 ? finalPrepGenericPatchPool : genericPool,
-          1,
-        );
-        appendUniquePicks(
-          picks,
-          finalPrepGenericCloseoutPool.length > 0 ? finalPrepGenericCloseoutPool : genericPool,
-          1,
-        );
-        appendUniquePicks(
-          picks,
-          genericLatePayoffPool.length > 0 ? genericLatePayoffPool : finalPrepGenericCloseoutPool.length > 0 ? finalPrepGenericCloseoutPool : genericPool,
-          1,
-        );
-      } else {
-        appendUniquePicks(
-          picks,
-          finalPrepRouteSealPool.length > 0 ? finalPrepRouteSealPool : dominantRoutePool,
-          1,
-        );
-        appendUniquePicks(
-          picks,
-          finalPrepGenericPatchPool.length > 0 ? finalPrepGenericPatchPool : genericPool,
-          1,
-        );
-        appendUniquePicks(
-          picks,
-          finalPrepDominantFlexPool.length > 0 ? finalPrepDominantFlexPool : finalPrepGenericCloseoutPool.length > 0 ? finalPrepGenericCloseoutPool : genericPool,
-          1,
-        );
+    for (const route of ROUTES) {
+      let routePool: Array<{ item: UpgradeArchetype; weight: number }> = [];
+      for (const fallbackStage of stageFallbacks) {
+        routePool = buildRouteShowcasePool(context, source, fallbackStage, route.id);
+        if (routePool.length > 0) break;
       }
-
-      if (picks.length < 3) {
-        appendUniquePicks(
-          picks,
-          finalPrepGenericCloseoutPool.length > 0 ? finalPrepGenericCloseoutPool : genericPool,
-          3 - picks.length,
-        );
+      if (routePool.length > 0) {
+        appendUniquePicks(picks, routePool, 1);
       }
-
-      if (picks.length < 3) {
-        appendUniquePicks(
-          picks,
-          finalPrepRouteSealPool.length > 0 ? finalPrepRouteSealPool : allWeightedPool,
-          3 - picks.length,
-        );
-      }
-
-      // 所有升级路径都必须执行路线牌最多1张和同属性不重复的兜底
-      stabilizeUpgradeChoicePicks(picks, genericPool, context);
-
-      return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
     }
 
-    const earlyMidNoFocus = context.phase === 'opening' || context.phase === 'mid';
-    const nodePrepNoFocusFlexPool = mergeWeightedPools(
-      scaleWeightedPool(
-        lateOrFinalPrepPhase && noFocusLateRoutePool.length > 0
-          ? noFocusLateRoutePool
-          : noFocusBridgePool.length > 0
-            ? noFocusBridgePool
-            : noFocusStarterPool,
-        earlyMidNoFocus ? 1.72 : 1.08,
-      ),
-      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : nodePrepGenericCorePool, earlyMidNoFocus ? 0.24 : 0.82),
-      scaleWeightedPool(
-        lateOrFinalPrepPhase
-          ? genericLateFlexPool.length > 0
-            ? genericLateFlexPool
-            : genericPhasePool.length > 0
-              ? genericPhasePool
-              : genericPool
-          : nodePrepGenericCorePool.length > 0
-            ? nodePrepGenericCorePool
-            : genericPool,
-        earlyMidNoFocus ? 0.08 : 0.48,
-      ),
-    );
-    const nodePrepHintFlexPool = mergeWeightedPools(
-      scaleWeightedPool(
-        dominantHintPool.length > 0
-          ? dominantHintPool
-          : dominantBridgePool.length > 0
-            ? dominantBridgePool
-          : dominantStarterPool.length > 0
-              ? dominantStarterPool
-              : dominantRoutePool,
-        1.86,
-      ),
-      scaleWeightedPool(allowRedirectWindow ? offRouteRedirectPool : [], 0.38),
-      scaleWeightedPool(genericHybridPool.length > 0 ? genericHybridPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, 0.18),
-    );
-    const nodePrepCommittedFlexPool = mergeWeightedPools(
-      scaleWeightedPool(
-        dominantPayoffPool.length > 0
-          ? dominantPayoffPool
-          : dominantCommittedPool.length > 0
-            ? dominantCommittedPool
-            : dominantRoutePool,
-        routeCommittedOrMatured ? 1.52 : 1.42,
-      ),
-      scaleWeightedPool(finalPrepPhase ? [] : offRouteRedirectPool, routeCommittedOrMatured ? 0.56 : 0.72),
-      scaleWeightedPool(nodePrepLateFlexPool.length > 0 ? nodePrepLateFlexPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool, routeCommittedOrMatured ? 0.46 : 0.54),
-    );
-
-    appendUniquePicks(picks, nodePrepGenericCorePool.length > 0 ? nodePrepGenericCorePool : genericPool, 1);
-    appendUniquePicks(picks, nodePrepGenericSupportPool.length > 0 ? nodePrepGenericSupportPool : genericPool, 1);
-
-    if (!context.dominantRoute) {
-      appendUniquePicks(
-        picks,
-        nodePrepNoFocusFlexPool.length > 0
-          ? nodePrepNoFocusFlexPool
-          : noFocusStarterPool.length > 0
-            ? noFocusStarterPool
-            : genericPool,
-        1,
-      );
-    } else if (context.committedRoute || routeMatured || context.round >= 3) {
-      appendUniquePicks(
-        picks,
-        nodePrepCommittedFlexPool.length > 0
-          ? nodePrepCommittedFlexPool
-          : dominantCommittedPool.length > 0
-            ? dominantCommittedPool
-            : nodePrepLateFlexPool.length > 0
-              ? nodePrepLateFlexPool
-              : genericPool,
-        1,
-      );
-    } else {
-      appendUniquePicks(
-        picks,
-        nodePrepHintFlexPool.length > 0
-          ? nodePrepHintFlexPool
-          : dominantHintPool.length > 0
-            ? dominantHintPool
-            : midRedirectWindowPool.length > 0
-              ? midRedirectWindowPool
-              : genericPool,
-        1,
-      );
-    }
-
-    if (picks.length < 3) {
-      appendUniquePicks(
-        picks,
-        nodePrepGenericSupportPool.length > 0 ? nodePrepGenericSupportPool : genericPool,
-        3 - picks.length,
-      );
-    }
-
+    // 如果某个流派池为空导致不足3张，用通用卡补齐
     if (picks.length < 3) {
       appendUniquePicks(picks, genericPool, 3 - picks.length);
     }
 
-    stabilizeUpgradeChoicePicks(picks, genericPool, context);
+    stabilizeUpgradeChoicePicks(picks, genericPool, context, source);
 
     return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
   }
@@ -1112,7 +977,7 @@ export function rollUpgradeChoices(
     picks.push(...fallback);
   }
 
-  stabilizeUpgradeChoicePicks(picks, genericPool, context);
+  stabilizeUpgradeChoicePicks(picks, genericPool, context, source);
 
   return picks.map((archetype) => buildUpgradeChoice(archetype, pickUpgradeRarity(context, source, archetype)));
 }

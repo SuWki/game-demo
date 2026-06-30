@@ -30,7 +30,7 @@ interface PauseActions {
 
 type PanelProgress = Pick<
   OverlayHudSnapshot,
-  'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary' | 'upgradeRewardLabel'
+  'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary' | 'upgradeRewardLabel' | 'routeProgress'
 >;
 
 const NODE_TYPE_LABEL_MAP: Record<NodeOption['type'], string> = {
@@ -262,6 +262,9 @@ export class OverlayController {
     this.hidePanel();
     this.hideTooltip();
     this.hudLayer.classList.remove('hidden');
+    const stageLabel = this.getCompactProgressLabel(snapshot.progressLabel);
+    const objectiveLabel = snapshot.objectiveProgressText?.trim() || '';
+    const showObjectiveLine = snapshot.objectiveTone === 'battle' || snapshot.objectiveTone === 'elite' || snapshot.objectiveTone === 'survive' || snapshot.objectiveTone === 'boss';
     this.hudLayer.innerHTML = `
       <div class="game-hud-fixed">
         <section class="game-hud-fixed__left">
@@ -283,6 +286,10 @@ export class OverlayController {
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
+        </section>
+        <section class="game-hud-fixed__center" aria-label="当前关卡与通关条件">
+          <div class="game-hud-fixed__wave">当前关卡 ${stageLabel}</div>
+          ${showObjectiveLine ? `<div class="game-hud-fixed__objective">通关条件：${objectiveLabel}</div>` : ''}
         </section>
         <section class="game-hud-fixed__right">
           <button class="hud-pause-button" data-action="pause">暂停</button>
@@ -931,6 +938,19 @@ export class OverlayController {
       ? `<span class="choice-reward-badge">${progress.upgradeRewardLabel}</span>`
       : '';
 
+    // 流派卡进度指示器
+    const routeProgressBadgeHtml = upgrade.routeId
+      ? (() => {
+          const routeData = progress.routeProgress?.find((r) => r.routeId === upgrade.routeId);
+          if (!routeData?.progressText) return '';
+          const tooltipAttr = routeData.nextUnlockTooltip
+            ? ` data-tooltip="${routeData.nextUnlockTooltip.replace(/"/g, '&quot;')}"`
+            : '';
+          const tooltipClass = routeData.nextUnlockTooltip ? ' choice-tooltip-term' : '';
+          return `<span class="choice-route-progress-badge${tooltipClass}"${tooltipAttr}>${routeData.progressText}</span>`;
+        })()
+      : '';
+
     return `
       <button
         class="choice-strip choice-strip-upgrade ${upgrade.routeId ? 'is-route-upgrade' : 'is-generic-upgrade'}"
@@ -939,7 +959,7 @@ export class OverlayController {
       >
         <div class="choice-strip-head">
           <span class="choice-type"><span class="choice-route-icon">${routeIcon}</span> ${cardTypeLabel}</span>
-          <span class="choice-head-badges">${rewardBadgeHtml}<span class="choice-rarity">${cardBadgeLabel}</span></span>
+          <span class="choice-head-badges">${routeProgressBadgeHtml}${rewardBadgeHtml}<span class="choice-rarity">${cardBadgeLabel}</span></span>
         </div>
         <div class="choice-strip-body choice-strip-body-upgrade">
           <strong>${nameHtml}</strong>
@@ -986,6 +1006,15 @@ export class OverlayController {
         }
         return '子弹可穿透敌人命中后排。';
       case 'dash':
+        if ((modifiers?.dashCounterDamageBonus ?? 0) > 0 && (modifiers?.dashGrazeRadiusBonus ?? 0) > 0) {
+          return '贴身反打更重，近身触发范围更大。';
+        }
+        if ((modifiers?.dashCounterDamageBonus ?? 0) > 0) {
+          return '贴身反打更重。';
+        }
+        if ((modifiers?.dashGrazeRadiusBonus ?? 0) > 0) {
+          return '更容易擦到敌人并触发穿梭。';
+        }
         if ((modifiers?.dashInterval ?? 0) < 0) {
           return '缩短穿梭脉冲间隔。';
         }
@@ -1412,10 +1441,13 @@ export class OverlayController {
       ['暴击', this.getFocusTooltip('暴击')],
       ['爆伤', this.getFocusTooltip('爆伤')],
       ['穿透', this.getFocusTooltip('穿透')],
-      ['穿梭', this.getFocusTooltip('穿梭')],
       ['脉冲', this.getFocusTooltip('脉冲')],
       ['无伤', this.getFocusTooltip('无伤')],
       ['射速', this.getFocusTooltip('射速')],
+      ['反击', this.getFocusTooltip('反击')],
+      ['破绽', this.getFocusTooltip('破绽')],
+      ['裂纹', this.getFocusTooltip('裂纹')],
+      ['回响', this.getFocusTooltip('回响')],
     ];
     const pieces: string[] = [];
     let cursor = 0;
@@ -1453,8 +1485,12 @@ export class OverlayController {
       暴击伤害: '暴击时伤害更高。',
       爆伤: '暴击时伤害更高。',
       穿透: '子弹穿过敌人后继续飞行。',
-      穿梭: '自动闪避并反击。',
-      脉冲: '穿梭触发的范围伤害。',
+      穿梭: '接近敌人时自动闪避并释放脉冲。',
+      脉冲: '穿梭触发时对周围敌人造成的范围伤害。',
+      反击: '穿梭后短窗口内追打被标记敌人，造成额外伤害。',
+      破绽: '暴击流命中时留下的标记，叠满后触发爆发。',
+      裂纹: '穿透流命中后在敌人身上留下的持续伤害。',
+      回响: '穿透命中后裂纹扩散造成的追加伤害。',
       无敌: '穿梭后的短暂无敌。',
       无伤: '穿梭后的短暂无敌。',
       扩面: '同时发射更多子弹。',

@@ -3508,11 +3508,17 @@ button:hover {
   clip-path: none;
   backdrop-filter: none;
   text-align: center;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  pointer-events: none;
 }
 
 .game-hud-fixed__wave {
   color: var(--commercial-text-main);
-  font-size: clamp(22px, 2.4vw, 34px);
+  font-size: clamp(18px, 1.8vw, 26px);
+  font-weight: 900;
+  line-height: 1.05;
   text-shadow:
     0 2px 12px rgba(0, 0, 0, 0.58),
     0 0 18px rgba(111, 231, 255, 0.18);
@@ -3526,15 +3532,16 @@ button:hover {
 }
 
 .game-hud-fixed__objective {
-  margin-top: 2px;
-  padding: 3px 10px;
+  margin-top: 0;
+  padding: 4px 12px;
   border: 1px solid rgba(111, 231, 255, 0.2);
   border-radius: 999px;
   background: rgba(3, 12, 20, 0.48);
   color: rgba(239, 252, 255, 0.92);
-  font-size: clamp(12px, 1.05vw, 15px);
+  font-size: clamp(11px, 0.95vw, 14px);
   font-weight: 800;
   letter-spacing: 0.04em;
+  line-height: 1.2;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
 }
 
@@ -3546,6 +3553,31 @@ button:hover {
   text-shadow:
     0 2px 10px rgba(0, 0, 0, 0.62),
     0 0 14px rgba(255, 174, 74, 0.24);
+}
+
+/* 升级卡流派进度徽章 */
+.choice-route-progress-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(126, 232, 255, 0.08);
+  border: 1px solid rgba(126, 232, 255, 0.28);
+  color: rgba(180, 235, 255, 0.92);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+  white-space: nowrap;
+  cursor: help;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.choice-route-progress-badge:hover {
+  background: rgba(126, 232, 255, 0.16);
+  border-color: rgba(126, 232, 255, 0.48);
 }
 
 .panel-layer::before {

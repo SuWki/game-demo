@@ -1218,7 +1218,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   'survival-thread': {
     id: 'survival-thread',
     name: '收束缝线',
-    description: '收尾压到一条线里，场面更紧',
+    description: '敌人沿纵线涌入，坚持到时间结束',
     contentTier: 'rare',
     durationSec: 25,
     spawnIntervalSec: 0.38,

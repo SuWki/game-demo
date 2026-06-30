@@ -164,7 +164,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '强化节点',
-        description: '顺着这条线再压一把',
+        description: '获取一个流派强化',
         offerRole: 'direction',
         selection: {
           baseWeight: 4,
@@ -181,7 +181,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'opening',
         title: '强化节点',
-        description: '调整站位，补充机动性',
+        description: '获取一个流派强化',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.2,
@@ -435,7 +435,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '强化节点',
-        description: '顺着这条线再压一把',
+        description: '获取一个流派强化',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.8,
@@ -449,7 +449,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '强化节点',
-        description: '调整站位，补充机动性',
+        description: '获取一个流派强化',
         offerRole: 'stabilize',
         selection: {
           baseWeight: 3.4,
@@ -468,10 +468,10 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '强化节点',
-        description: '补点底子',
+        description: '获取一个流派强化',
         offerRole: 'stabilize',
         selection: {
-          baseWeight: 1.5,
+          baseWeight: 2.2,
           soloMultiplier: 0.86,
           repeatTypeMultiplier: 0.78,
           lowHpBonus: 0.9,
@@ -482,7 +482,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '强化节点',
-        description: '换一边补火力',
+        description: '获取一个流派强化',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.7,
@@ -496,7 +496,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '强化节点',
-        description: '把几路拢一拢',
+        description: '获取一个流派强化',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.25,
@@ -510,7 +510,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'mid',
         title: '强化节点',
-        description: '坚持原路，或转向新路',
+        description: '获取一个流派强化',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.42,
@@ -557,7 +557,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '异常节点',
-        description: '中盘有点乱',
+        description: '获取异常强化效果',
         offerRole: 'pivot',
         selection: {
           baseWeight: 2.82,
@@ -732,7 +732,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'late',
         title: '收紧防线',
-        description: '收尾把场面收进一条线',
+        description: '生存战斗：在限定区域内坚守',
         templateCandidates: [
           { templateId: 'survival-thread', weight: 3 },
           { templateId: 'survival-closehold', weight: 1.25 },
@@ -982,7 +982,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '顺着这条线再压一把',
+        description: '获取一个流派强化',
         offerRole: 'closeout',
         selection: {
           baseWeight: 3.4,
@@ -995,7 +995,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '先把身位压稳',
+        description: '获取一个流派强化',
         offerRole: 'bossPrep',
         selection: {
           baseWeight: 3.46,
@@ -1008,7 +1008,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '进首领前补短板',
+        description: '获取一个流派强化',
         offerRole: 'bossPrep',
         selection: {
           baseWeight: 3.1,
@@ -1026,7 +1026,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '强化当前流派',
+        description: '获取一个流派强化',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.58,
@@ -1044,7 +1044,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '集中进攻收尾',
+        description: '获取一个流派强化',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.7,
@@ -1057,7 +1057,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '拿一个稀有的',
+        description: '获取一个流派强化',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.05,
@@ -1070,7 +1070,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '确立本局打法方向',
+        description: '获取一个流派强化',
         offerRole: 'closeout',
         selection: {
           baseWeight: 2.15,
@@ -1083,7 +1083,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'late',
         title: '强化节点',
-        description: '把打法拢一拢',
+        description: '获取一个流派强化',
         offerRole: 'closeout',
         selection: {
           baseWeight: 1.48,
@@ -1228,7 +1228,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'finalPrep',
         title: '强化节点',
-        description: '最终强化',
+        description: '获取一个流派强化',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1239,7 +1239,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'upgrade',
         phase: 'finalPrep',
         title: '强化节点',
-        description: '先补短板',
+        description: '获取一个流派强化',
         isFinalPrep: true,
         selection: {
           baseWeight: 1,
@@ -1456,10 +1456,13 @@ function getNodeWeight(blueprint: NodeBlueprint, offerContext: NodeOfferContext,
       if (offerContext.anomalyNodeSeen) {
         return 0;
       }
-      const anomalyMultiplier = round === 1 ? (offerContext.focusRoute ? 0.92 : 1.12) : round === 2 ? 1.08 : 1.02;
+      if (round <= 2) {
+        return 0;
+      }
+      const anomalyMultiplier = 0.78;
       weight *= anomalyMultiplier;
       if (offerContext.lastNodeType === 'upgrade') {
-        weight *= 0.9;
+        weight *= 0.82;
       }
     }
   } else if (blueprint.type === 'anomaly') {
@@ -1577,6 +1580,11 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
     return true;
   };
 
+  if (choiceCount === 1) {
+    addBattlePick();
+    return picks;
+  }
+
   if (offer.phase === 'opening') {
     addSupportPick(false);
     if (picks.length < choiceCount) {
@@ -1686,6 +1694,16 @@ export function buildNodeOptions(
     choiceCount,
     round,
   );
+
+  // Fallback: 如果没有选出任何节点，强制选择一个默认节点
+  if (picked.length === 0 && offer.blueprints.length > 0) {
+    // 优先选择 upgrade 或 boss 类型节点
+    const fallbackBlueprint = offer.blueprints.find(
+      (bp) => bp.type === 'upgrade' || bp.type === 'boss'
+    ) || offer.blueprints[0];
+    
+    return [buildNode(fallbackBlueprint, focusRoute)];
+  }
 
   return picked.map((blueprint, index) => ({
     ...buildNode(blueprint, focusRoute),

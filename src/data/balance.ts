@@ -410,6 +410,16 @@ function applyStatModifiers(target: PlayerStats, modifiers: StatModifiers): void
   target.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
   // 生命回复系数再下调，避免回复过强抹掉战斗压力
   target.regeneration += (modifiers.regeneration ?? 0) * 0.12;
+  target.critOverdriveCritBonus += modifiers.critOverdriveCritBonus ?? 0;
+  target.critSplashRadius += modifiers.critSplashRadius ?? 0;
+  target.flawDurationBonus += modifiers.flawDurationBonus ?? 0;
+  target.critOverdriveDurationBonus += modifiers.critOverdriveDurationBonus ?? 0;
+  target.pierceEchoDamageBonus += modifiers.pierceEchoDamageBonus ?? 0;
+  target.crackSpreadRadius += modifiers.crackSpreadRadius ?? 0;
+  target.pierceCooldownRefundBonus += modifiers.pierceCooldownRefundBonus ?? 0;
+  target.dashChargeSpeed += modifiers.dashChargeSpeed ?? 0;
+  target.dashCounterDamageBonus += modifiers.dashCounterDamageBonus ?? 0;
+  target.dashGrazeRadiusBonus += modifiers.dashGrazeRadiusBonus ?? 0;
 }
 
 function getExpectedSingleTargetDps(stats: PlayerStats): number {
@@ -493,7 +503,7 @@ export function estimateUpgradeValue(
 }
 
 export function getDashGrazeOuterRadius(stats: PlayerStats, buildStage: RouteBuildStage): number {
-  return 64 + stats.moveSpeed * 0.03 + (buildStage === 'matured' ? 14 : buildStage === 'committed' ? 8 : 0);
+  return 64 + stats.moveSpeed * 0.03 + (stats.dashGrazeRadiusBonus ?? 0) + (buildStage === 'matured' ? 14 : buildStage === 'committed' ? 8 : 0);
 }
 
 export function getDashGrazeInnerRadius(): number {
@@ -595,10 +605,12 @@ export function getPierceEchoCount(multishot: number, buildStage: RouteBuildStag
   return count;
 }
 
-export function getPierceEchoDamageRatio(buildStage: RouteBuildStage): number {
-  return buildStage === 'matured' ? 0.34 : buildStage === 'committed' ? 0.28 : 0.22;
+export function getPierceEchoDamageRatio(buildStage: RouteBuildStage, stats?: PlayerStats): number {
+  const baseRatio = buildStage === 'matured' ? 0.34 : buildStage === 'committed' ? 0.28 : 0.22;
+  return baseRatio + (stats?.pierceEchoDamageBonus ?? 0);
 }
 
-export function getPierceCooldownRefund(buildStage: RouteBuildStage): number {
-  return buildStage === 'matured' ? 0.012 : buildStage === 'committed' ? 0.008 : 0;
+export function getPierceCooldownRefund(buildStage: RouteBuildStage, stats?: PlayerStats): number {
+  const baseRefund = buildStage === 'matured' ? 0.012 : buildStage === 'committed' ? 0.008 : 0;
+  return baseRefund + (stats?.pierceCooldownRefundBonus ?? 0);
 }

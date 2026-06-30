@@ -87,8 +87,8 @@ const game = new Phaser.Game({
   backgroundColor: '#06111a',
   scene: [BootScene, MainMenuScene, GameScene, ResultScene],
   scale: {
-    mode: isMobile ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.NO_CENTER,
   },
   input: {
     touch: {

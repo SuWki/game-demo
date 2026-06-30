@@ -80,10 +80,10 @@ export function calculatePierceEchoCount(multishot: number, buildStage: RouteBui
   return getPierceEchoCount(multishot, buildStage);
 }
 
-export function calculatePierceEchoDamageRatio(buildStage: RouteBuildStage): number {
-  return getPierceEchoDamageRatio(buildStage);
+export function calculatePierceEchoDamageRatio(buildStage: RouteBuildStage, stats?: PlayerStats): number {
+  return getPierceEchoDamageRatio(buildStage, stats);
 }
 
-export function calculatePierceCooldownRefund(buildStage: RouteBuildStage): number {
-  return getPierceCooldownRefund(buildStage);
+export function calculatePierceCooldownRefund(buildStage: RouteBuildStage, stats?: PlayerStats): number {
+  return getPierceCooldownRefund(buildStage, stats);
 }

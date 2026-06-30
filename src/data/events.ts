@@ -54,7 +54,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '高压试飞',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '先受伤，再换转向机会',
+    description: '承受伤害，换取属性强化',
     selection: {
       baseWeight: 1.15,
       maxRound: 2,
@@ -64,14 +64,14 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       noDominantRouteBonus: 0.8,
     },
-    options: getAnomalyRoutePoolOptions('riskyProtocol', ['crit', 'pierce', 'dash']),
+    options: getAnomalyRoutePoolOptions('riskyProtocol', ['crit', 'pierce']),
   },
   {
     id: 'cold-start-warp',
     name: '冷启偏折',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-    description: '能量涌动，转火力或防护',
+    description: '牺牲一项属性，换取另一项强化',
     selection: {
       baseWeight: 1.05,
       maxRound: 2,
@@ -84,8 +84,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'cold-start-warp-redline',
-        label: '先吞一口红线',
-        description: '火力更猛，但先受伤',
+        label: '提火力',
+        description: '伤害+4，射速+14%，HP-8',
         effects: [
           {
             type: 'stats',
@@ -102,8 +102,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'cold-start-warp-brace',
-        label: '先垫一层缓冲',
-        description: '耐久和恢复提升，但弹道变慢',
+        label: '补防护',
+        description: '生命+6，恢复+0.1/s，弹速-12，回复8HP',
         effects: [
           {
             type: 'stats',
@@ -121,63 +121,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
     ],
   },
-  {
-    id: 'route-calibration',
-    name: '读数调整',
-    description: '继续加深，或换个节奏',
-    routeAffinity: 'dominant',
-    selection: {
-      baseWeight: 2.3,
-      minRound: 2,
-      maxRound: 4,
-      phaseBonuses: {
-        mid: 1.3,
-        late: 0.4,
-      },
-      hintedRouteBonus: 1.2,
-      dominantRouteBonus: 3.4,
-      committedRouteBonus: 1.6,
-      maturedRouteBonus: 0.2,
-    },
-    options: [
-      {
-        id: 'route-calibration-focus',
-        label: '顺着这条线再压',
-        description: '把这条线继续压下去',
-        routeId: 'dominant',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 5,
-              fireRate: 0.15,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'dominant',
-          },
-        ],
-      },
-      {
-        id: 'route-calibration-stabilize',
-        label: '稳一手',
-        description: '先把节奏稳住',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              fireRate: 0.2,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 12,
-          },
-        ],
-      },
-    ],
-  },
+
   {
     id: 'targeted-telemetry',
     name: '定向遥测',
@@ -218,8 +162,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'targeted-telemetry-buffer',
-        label: '稳一手',
-        description: '先把机体站稳',
+        label: '补生存',
+        routeId: 'dominant',
+        description: '生命+6，回复18HP',
         effects: [
           {
             type: 'stats',
@@ -285,7 +230,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'early-linecheck',
     name: '起手校线',
-    description: '先把这把的打法定住',
+    description: '选择火力或生存方向',
     selection: {
       baseWeight: 3.98,
       phaseBonuses: {
@@ -297,8 +242,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'early-linecheck-offense',
-        label: '先压火力',
-        description: '火力先加一点',
+        label: '提火力',
+        description: '伤害+4，射速+14%',
         effects: [
           {
             type: 'stats',
@@ -311,8 +256,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'early-linecheck-guard',
-        label: '先留余地',
-        description: '先把生存稳住',
+        label: '补生存',
+        description: '生命+8，恢复+0.08/s，回复12HP',
         effects: [
           {
             type: 'stats',
@@ -332,7 +277,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'signal-soften',
     name: '缓冲信号',
-    description: '已经有起色，继续压或留活口',
+    description: '继续强化当前方向，或补充生存',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 2.74,
@@ -350,8 +295,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'signal-soften-lean',
-        label: '顺着这条路走',
-        description: '当前方向继续加深',
+        label: '强化当前',
+        description: '射速+14%，移速+12',
         routeId: 'dominant',
         effects: [
           {
@@ -365,8 +310,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'signal-soften-open',
-        label: '留一点活口',
-        description: '恢复和机动一起补',
+        label: '补生存',
+        description: '恢复+0.1/s，移速+10，回复10HP',
         effects: [
           {
             type: 'stats',
@@ -386,7 +331,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'coolant-detour',
     name: '冷却绕行',
-    description: '换成更快的节奏，或者更稳的身板',
+    description: '提升射速和弹速，或提升生存',
     selection: {
       baseWeight: 3.04,
       minRound: 2,
@@ -400,8 +345,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'coolant-detour-tempo',
-        label: '切快一点',
-        description: '出手更快，弹道更顺',
+        label: '提射速',
+        description: '射速+18%，弹速+18',
         effects: [
           {
             type: 'stats',
@@ -414,8 +359,8 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'coolant-detour-guard',
-        label: '换稳一点',
-        description: '先把耐久拉满',
+        label: '补耐久',
+        description: '生命+6，恢复+0.08/s，回复10HP',
         effects: [
           {
             type: 'stats',
@@ -451,80 +396,15 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       committedRouteBonus: 0.16,
       maturedRouteBonus: 0.05,
     },
-    options: getAnomalyRoutePoolOptions('routeHandoff', ['crit', 'pierce', 'dash']),
+    options: getAnomalyRoutePoolOptions('routeHandoff', ['crit', 'dash']),
   },
-  {
-    id: 'midline-split',
-    name: '中盘岔口',
-    contentKind: 'anomaly',
-    anomalyClass: 'routeWindow',
-    description: '中盘该换法了',
-    routeAffinity: 'dominant',
-    selection: {
-      baseWeight: 1.24,
-      minRound: 2,
-      maxRound: 3,
-      phaseBonuses: {
-        mid: 2,
-        late: 0.7,
-      },
-      hintedRouteBonus: 0.6,
-      dominantRouteBonus: 2.3,
-      committedRouteBonus: 1.35,
-      offRouteMultiplier: 0.05,
-    },
-    options: [
-      {
-        id: 'midline-split-direction',
-        label: '先接顺',
-        gameplayLabel: '先接顺',
-        gainLabel: '中盘更稳',
-        costLabel: '火力会慢一点',
-        routeId: 'dominant',
-        anomalyRole: 'direction',
-        description: '先把这一段接住。',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              fireRate: 0.1,
-              projectileSpeed: 12,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 6,
-          },
-        ],
-      },
-      {
-        id: 'midline-split-transform',
-        label: '直接换手',
-        gameplayLabel: '直接换手',
-        gainLabel: '中盘换成另一种打法',
-        costLabel: '容错会少一点',
-        routeId: 'dominant',
-        anomalyRole: 'transform',
-        description: '这一段直接换打法。',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 4,
-              moveSpeed: 10,
-              maxHp: -6,
-            },
-          },
-        ],
-      },
-    ],
-  },
+
   {
     id: 'crit-reroute-window',
     name: '暴击抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '暴击这条线要继续压，还是换成更猛的打法。',
+    description: '选择暴击方向或其他方向',
     routeAffinity: 'crit',
     selection: {
       baseWeight: 1.22,
@@ -542,13 +422,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'crit-reroute-window-direction',
-        label: '先把暴击稳住',
-        gameplayLabel: '起手',
-        gainLabel: '更容易连着出重击',
-        costLabel: '稳一点的东西会少些',
+        label: '稳住暴击',
         routeId: 'crit',
-        anomalyRole: 'direction',
-        description: '先把暴击节奏带起来。',
+        description: '暴击+6%，射速+8%，恢复6HP',
         effects: [
           {
             type: 'stats',
@@ -573,13 +449,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'crit-reroute-window-core',
-        label: '补暴击火力',
-        gameplayLabel: '加力',
-        gainLabel: '厚血目标更容易炸开',
-        costLabel: '清杂会慢一点',
+        label: '堆暴击倍率',
         routeId: 'crit',
-        anomalyRole: 'core',
-        description: '先往重击上再加一把。',
+        description: '暴击+8%，暴击倍率+28%，射速+4%',
         effects: [
           {
             type: 'stats',
@@ -599,36 +471,6 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
           },
         ],
       },
-      {
-        id: 'crit-reroute-window-transform',
-        label: '强化暴击',
-        gameplayLabel: '转强',
-        gainLabel: '重击会带到旁边',
-        costLabel: '容错会少一点',
-        routeId: 'crit',
-        anomalyRole: 'transform',
-        description: '重击一开，旁边也会跟着掉。',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 4,
-              fireRate: 0.1,
-              critMultiplier: 0.36,
-              critOverdriveDurationBonus: 0.2,
-              maxHp: -10,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
     ],
   },
   {
@@ -636,7 +478,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿透抉择',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿透这条线要往前推。',
+    description: '选择穿透方向或其他方向',
     routeAffinity: 'pierce',
     selection: {
       baseWeight: 1.45,
@@ -652,16 +494,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       offRouteMultiplier: 0.05,
     },
     options: [
-      ...getAnomalyRoutePoolOptions('pierceRerouteWindow', ['crit', 'dash']),
       {
         id: 'pierce-reroute-window-direction',
+        label: '强化穿透',
         routeId: 'pierce',
-        label: '先把前排打开',
-        gameplayLabel: '起手',
-        gainLabel: '前排更容易穿开',
-        costLabel: '先少一点稳妥',
-        anomalyRole: 'direction',
-        description: '先把前排打开。',
+        description: '弹速+14，射速+6%，恢复8HP',
         effects: [
           {
             type: 'stats',
@@ -685,59 +522,34 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
         ],
       },
       {
-        id: 'pierce-reroute-window-hold',
-        routeId: 'pierce',
-        label: '补穿透火力',
-        gameplayLabel: '加力',
-        gainLabel: '前排更容易被打穿',
-        costLabel: '本回合专注当前流派',
-        anomalyRole: 'core',
-        description: '再往前推一把。',
+        id: 'pierce-reroute-window-crit',
+        label: '转暴击',
+        routeId: 'crit',
+        description: '伤害+3，射速+12%，暴击+3%，恢复8HP',
         effects: [
           {
             type: 'stats',
             modifiers: {
               damage: 3,
-              projectileSpeed: 16,
+              fireRate: 0.12,
+              critChance: 0.03,
             },
           },
           {
             type: 'heal',
-            amount: 10,
+            amount: 8,
           },
           {
             type: 'route',
-            routeId: 'pierce',
-          },
-        ],
-      },
-      {
-        id: 'pierce-reroute-window-breakthrough',
-        routeId: 'pierce',
-        label: '强化穿透',
-        gameplayLabel: '转强',
-        gainLabel: '找到直线就能带到后面',
-        costLabel: '站位会更紧',
-        anomalyRole: 'transform',
-        description: '直线一成，后面也会跟着掉。',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 4,
-              projectileSpeed: 22,
-              pierce: 1,
-              fireRate: -0.06,
-              maxHp: -10,
-            },
+            routeId: 'crit',
           },
           {
             type: 'route',
-            routeId: 'pierce',
+            routeId: 'crit',
           },
           {
             type: 'route',
-            routeId: 'pierce',
+            routeId: 'crit',
           },
         ],
       },
@@ -748,7 +560,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '穿梭转接',
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
-    description: '穿梭已经成型，接下来往贴身打。',
+    description: '选择穿梭方向或其他方向',
     routeAffinity: 'dash',
     selection: {
       baseWeight: 1.45,
@@ -764,15 +576,11 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       offRouteMultiplier: 0.05,
     },
     options: [
-      ...getAnomalyRoutePoolOptions('dashRerouteWindow', ['crit', 'pierce']),
       {
         id: 'dash-reroute-window-hold',
-        label: '继续贴身',
-        gameplayLabel: '起手',
-        gainLabel: '机动基础更稳',
-        costLabel: '不会直接换路',
-        anomalyRole: 'direction',
-        description: '先把身位站稳。',
+        label: '强化穿梭',
+        routeId: 'dash',
+        description: '移速+10，恢复+0.08/s，回复10HP',
         effects: [
           {
             type: 'stats',
@@ -787,6 +595,38 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
           },
         ],
       },
+      {
+        id: 'dash-reroute-window-crit',
+        label: '转暴击',
+        routeId: 'crit',
+        description: '伤害+3，射速+12%，暴击+3%，恢复8HP',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              damage: 3,
+              fireRate: 0.12,
+              critChance: 0.03,
+            },
+          },
+          {
+            type: 'heal',
+            amount: 8,
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+          {
+            type: 'route',
+            routeId: 'crit',
+          },
+        ],
+      },
     ],
   },
   {
@@ -795,7 +635,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '尾段把前面的积累再强化一轮。',
+    description: '最终战斗前的最后一次强化',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.52,
@@ -812,13 +652,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'closeout-echo-press',
-        label: '压到最后',
-        gameplayLabel: '压到最后',
-        gainLabel: '最终输出伤害提升',
-        costLabel: '容错会少一点',
+        label: '强化输出',
         routeId: 'dominant',
-        anomalyRole: 'core',
-        description: '最后一段继续压。',
+        description: '伤害+6，射速+16%',
         effects: [
           {
             type: 'stats',
@@ -831,11 +667,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'closeout-echo-buffer',
-        label: '留一层',
-        gameplayLabel: '留一层',
-        gainLabel: '最终输出更加稳定',
-        costLabel: '爆发会慢一点',
-        description: '多留一点余地，最后一段不容易断。',
+        label: '强化生存',
+        routeId: 'dominant',
+        description: '生命+8，恢复+0.12/s，回复10HP',
         effects: [
           {
             type: 'stats',
@@ -858,7 +692,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
     contentTier: 'rare',
-    description: '一次性资源，转火力或防护',
+    description: '牺牲生命，换两种不同的突击方案',
     selection: {
       baseWeight: 1.58,
       minRound: 3,
@@ -872,39 +706,40 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'blackbox-bargain-redline',
-        label: '压成高输出',
-        description: '伤害和射速提升，但先受伤',
+        id: 'blackbox-bargain-dash',
+        label: '拼命突击',
+        routeId: 'dash',
+        description: '生命-12，伤害+6，移速+16',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              damage: 8,
-              fireRate: 0.24,
+              damage: 6,
+              moveSpeed: 16,
+            },
+          },
+          {
+            type: 'heal',
+            amount: -12,
+          },
+        ],
+      },
+      {
+        id: 'blackbox-bargain-crit',
+        label: '拼命暴击',
+        routeId: 'crit',
+        description: '生命-10，暴击+10%，伤害+5',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              critChance: 0.1,
+              damage: 5,
             },
           },
           {
             type: 'heal',
             amount: -10,
-          },
-        ],
-      },
-      {
-        id: 'blackbox-bargain-slack',
-        label: '拆成喘息余地',
-        description: '恢复、机动和弹道缓冲',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              projectileSpeed: 24,
-              moveSpeed: 14,
-              regeneration: 0.14,
-            },
-          },
-          {
-            type: 'heal',
-            amount: 10,
           },
         ],
       },
@@ -916,7 +751,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'bossEcho',
     contentTier: 'rare',
-    description: '进 Boss 前，先把血量和火力摆好。',
+    description: '首领战前的最后调整',
     routeAffinity: 'dominant',
     selection: {
       baseWeight: 1.44,
@@ -933,13 +768,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'boss-sightline-press',
-        label: '先把火力压满',
-        gameplayLabel: '加力',
-        gainLabel: '进 Boss 前把伤害再提一把',
-        costLabel: '容错会少一点',
+        label: '提火力',
         routeId: 'dominant',
-        anomalyRole: 'core',
-        description: '先把火力提上去。',
+        description: '伤害+5，射速+12%，生命-6',
         effects: [
           {
             type: 'stats',
@@ -953,13 +784,9 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'boss-sightline-brace',
-        label: '先留一层余地',
-        gameplayLabel: '收尾',
-        gainLabel: '进 Boss 前先把血量和恢复补住',
-        costLabel: '爆发会慢一点',
+        label: '补生存',
         routeId: 'dominant',
-        anomalyRole: 'finisher',
-        description: '先把机体站稳。',
+        description: '生命+8，恢复+0.12/s，射速-8%，回复10HP',
         effects: [
           {
             type: 'stats',
@@ -982,7 +809,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '过载火控',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-    description: '牺牲射速，换取伤害。',
+    description: '牺牲射速，换两种不同的火力配置',
     selection: {
       baseWeight: 0.95,
       minRound: 2,
@@ -995,29 +822,33 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'overload-firecontrol-accept',
-        label: '接受过载',
-        description: '射速降低40%，伤害提升80%',
+        id: 'overload-firecontrol-crit',
+        label: '重炮暴击',
+        routeId: 'crit',
+        description: '射速-25%，伤害+6，暴击+6%',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              fireRate: -0.4,
-              damage: 8,
+              fireRate: -0.25,
+              damage: 6,
+              critChance: 0.06,
             },
           },
         ],
       },
       {
-        id: 'overload-firecontrol-decline',
-        label: '拒绝过载',
-        description: '保持配置，少量通用强化',
+        id: 'overload-firecontrol-pierce',
+        label: '重炮穿透',
+        routeId: 'pierce',
+        description: '射速-25%，伤害+5，弹速+20',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              damage: 2,
-              fireRate: 0.08,
+              fireRate: -0.25,
+              damage: 5,
+              projectileSpeed: 20,
             },
           },
         ],
@@ -1029,7 +860,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     name: '压缩循环',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-    description: '牺牲伤害，换取射速。',
+    description: '牺牲伤害，换射速或弹速',
     selection: {
       baseWeight: 0.92,
       minRound: 2,
@@ -1042,77 +873,33 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'compressed-cycle-accept',
-        label: '接受压缩',
-        description: '伤害降低30%，射速提升70%',
+        id: 'compressed-cycle-dash',
+        label: '高频走射',
+        routeId: 'dash',
+        description: '伤害-3，射速+55%，移速+12',
         effects: [
           {
             type: 'stats',
             modifiers: {
               damage: -3,
-              fireRate: 0.7,
+              fireRate: 0.55,
+              moveSpeed: 12,
             },
           },
         ],
       },
       {
-        id: 'compressed-cycle-decline',
-        label: '拒绝压缩',
-        description: '保持配置，少量通用强化',
+        id: 'compressed-cycle-pierce',
+        label: '高速穿透',
+        routeId: 'pierce',
+        description: '伤害-3，弹速+30，暴击+4%',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              damage: 2,
-              fireRate: 0.08,
-            },
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'fixed-turret',
-    name: '固定炮台',
-    contentKind: 'anomaly',
-    anomalyClass: 'distortion',
-    description: '牺牲机动，换取火力',
-    selection: {
-      baseWeight: 0.88,
-      minRound: 2,
-      maxRound: 3,
-      phaseBonuses: {
-        mid: 1.1,
-        late: 0.9,
-      },
-      noDominantRouteBonus: 1.15,
-    },
-    options: [
-      {
-        id: 'fixed-turret-accept',
-        label: '接受改造',
-        description: '移速降低50%，伤害和射速提升',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: -50,
-              damage: 4,
-              fireRate: 0.3,
-            },
-          },
-        ],
-      },
-      {
-        id: 'fixed-turret-decline',
-        label: '拒绝改造',
-        description: '保持配置，少量通用强化',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 2,
-              moveSpeed: 8,
+              damage: -3,
+              projectileSpeed: 30,
+              critChance: 0.04,
             },
           },
         ],
@@ -1124,10 +911,10 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
 const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
   {
     id: 'fixed-turret-protocol',
-    name: '固定炮台协议',
+    name: '炮台协议',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-    description: '牺牲机动，换取火力',
+    description: '牺牲移速或射速，换火力配置',
     selection: {
       baseWeight: 1.1,
       minRound: 2,
@@ -1140,38 +927,33 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'fixed-turret-rapid',
-        label: '接入速射炮台',
-        gameplayLabel: '炮台化',
-        gainLabel: '射速大幅提高，适合找位置定点输出',
-        costLabel: '移速大幅降低',
-        description: '移动变慢，持续火力更强',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              moveSpeed: -45,
-              fireRate: 0.55,
-              projectileSpeed: 12,
-            },
-          },
-        ],
-      },
-      {
-        id: 'fixed-turret-cannon',
-        label: '接入重炮炮台',
-        gameplayLabel: '慢速重炮',
-        gainLabel: '单发伤害大幅提高',
-        costLabel: '移速降低，射速降低',
-        description: '机动和射速降低，单发伤害更高',
+        id: 'fixed-turret-protocol-crit',
+        label: '定点重炮',
+        routeId: 'crit',
+        description: '移速-35，伤害+5，射速+30%',
         effects: [
           {
             type: 'stats',
             modifiers: {
               moveSpeed: -35,
-              fireRate: -0.18,
-              damage: 9,
-              projectileSpeed: -12,
+              damage: 5,
+              fireRate: 0.3,
+            },
+          },
+        ],
+      },
+      {
+        id: 'fixed-turret-protocol-dash',
+        label: '游击改装',
+        routeId: 'dash',
+        description: '射速-25%，移速+20，暴击+5%',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: -0.25,
+              moveSpeed: 20,
+              critChance: 0.05,
             },
           },
         ],
@@ -1183,7 +965,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     name: '红线轻甲协议',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-        description: '用装甲换速度和火力',
+    description: '牺牲装甲，换两种不同的输出方向',
     selection: {
       baseWeight: 1,
       minRound: 1,
@@ -1196,37 +978,33 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'redline-light-armor-burst',
-        label: '拆甲提火力',
-        gameplayLabel: '玻璃大炮',
-        gainLabel: '伤害与移速提高',
-        costLabel: '生命上限降低',
-        description: '攻击速度和伤害提升，但生命值降低',
+        id: 'redline-light-armor-pierce',
+        label: '拆甲提穿透',
+        routeId: 'pierce',
+        description: '生命-18，伤害+5，弹速+20',
         effects: [
           {
             type: 'stats',
             modifiers: {
               maxHp: -18,
-              damage: 6,
-              moveSpeed: 18,
+              damage: 5,
+              projectileSpeed: 20,
             },
           },
         ],
       },
       {
-        id: 'redline-light-armor-tempo',
-        label: '拆甲提节奏',
-        gameplayLabel: '轻甲快攻',
-        gainLabel: '移速和射速提高',
-        costLabel: '生命上限降低',
-        description: '放弃耐久，换走位和射速',
+        id: 'redline-light-armor-crit',
+        label: '拆甲提暴击',
+        routeId: 'crit',
+        description: '生命-16，暴击+8%，伤害+4',
         effects: [
           {
             type: 'stats',
             modifiers: {
               maxHp: -16,
-              moveSpeed: 16,
-              fireRate: 0.28,
+              critChance: 0.08,
+              damage: 4,
             },
           },
         ],
@@ -1238,7 +1016,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     name: '重装缓冲协议',
     contentKind: 'anomaly',
     anomalyClass: 'distortion',
-    description: '用火控和机动换防护',
+    description: '牺牲射速或移速，换生存能力',
     selection: {
       baseWeight: 0.9,
       minRound: 2,
@@ -1251,166 +1029,46 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     },
     options: [
       {
-        id: 'heavy-buffer-armor',
-        label: '接入重装外甲',
-        gameplayLabel: '承受压力',
-        gainLabel: '生命上限明显提高',
-        costLabel: '移速和射速降低',
-        description: '牺牲灵活换生存',
+        id: 'heavy-buffer-dash',
+        label: '轻装突击',
+        routeId: 'dash',
+        description: '移速-20，生命+16，射速+30%',
         effects: [
           {
             type: 'stats',
             modifiers: {
-              maxHp: 24,
-              moveSpeed: -18,
-              fireRate: -0.2,
-            },
-          },
-        ],
-      },
-      {
-        id: 'heavy-buffer-stabilizer',
-        label: '接入缓冲核心',
-        gameplayLabel: '稳态续航',
-        gainLabel: '生命上限和再生提高',
-        costLabel: '伤害和弹速降低',
-        description: '攻击速度降低，但生存能力增强',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
+              moveSpeed: -20,
               maxHp: 16,
-              regeneration: 0.12,
-              damage: -3,
-              projectileSpeed: -16,
+              fireRate: 0.3,
+            },
+          },
+        ],
+      },
+      {
+        id: 'heavy-buffer-pierce',
+        label: '重装穿透',
+        routeId: 'pierce',
+        description: '射速-20%，生命+20，弹速+16',
+        effects: [
+          {
+            type: 'stats',
+            modifiers: {
+              fireRate: -0.2,
+              maxHp: 20,
+              projectileSpeed: 16,
             },
           },
         ],
       },
     ],
   },
-  {
-    id: 'rapid-light-rounds',
-    name: '高频轻弹协议',
-    contentKind: 'anomaly',
-    anomalyClass: 'distortion',
-    description: '单发降低，射速提高',
-    selection: {
-      baseWeight: 1.05,
-      minRound: 2,
-      maxRound: 3,
-      phaseBonuses: {
-        mid: 1.2,
-        late: 0.75,
-      },
-      hintedRouteBonus: 0.4,
-    },
-    options: [
-      {
-        id: 'rapid-light-rounds-trigger',
-        label: '切换轻弹循环',
-        gameplayLabel: '高频触发',
-        gainLabel: '射速大幅提高，更容易连续触发效果',
-        costLabel: '单发伤害降低',
-        description: '开火更密，效果更容易连续触发',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: -4,
-              fireRate: 0.65,
-              critChance: 0.03,
-            },
-          },
-        ],
-      },
-      {
-        id: 'rapid-light-rounds-fan',
-        label: '切换散射轻弹',
-        gameplayLabel: '多弹压制',
-        gainLabel: '多重提高，射速提高',
-        costLabel: '单发伤害降低，弹速降低',
-        description: '火力铺开，适合清小怪',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: -5,
-              fireRate: 0.24,
-              multishot: 1,
-              projectileSpeed: -18,
-            },
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'heavy-cannon-overload',
-    name: '重炮过载协议',
-    contentKind: 'anomaly',
-    anomalyClass: 'distortion',
-    description: '射速降低，单发提高',
-    selection: {
-      baseWeight: 0.98,
-      minRound: 2,
-      phaseBonuses: {
-        mid: 0.95,
-        late: 1.15,
-      },
-      committedRouteBonus: 0.25,
-    },
-    options: [
-      {
-        id: 'heavy-cannon-overload-impact',
-        label: '接入重炮核心',
-        gameplayLabel: '慢速重炮',
-        gainLabel: '单发伤害大幅提高',
-        costLabel: '射速降低，弹速降低',
-        description: '开火变慢，但单发更强',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 10,
-              fireRate: -0.35,
-              projectileSpeed: -20,
-            },
-          },
-        ],
-      },
-      {
-        id: 'heavy-cannon-overload-crit',
-        label: '接入要害重炮',
-        gameplayLabel: '强敌锁定',
-        gainLabel: '伤害与暴击伤害提高',
-        costLabel: '射速降低，移速降低',
-        routeId: 'crit',
-        description: '集中火力，适合打精英',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 5,
-              critMultiplier: 0.32,
-              fireRate: -0.26,
-              moveSpeed: -10,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'crit',
-          },
-        ],
-      },
-    ],
-  },
+
   {
     id: 'pickup-drive-protocol',
     name: '回收驱动协议',
     contentKind: 'anomaly',
     anomalyClass: 'hybrid',
-    description: '火力弱一点，但成长更快',
+    description: '牺牲伤害，换取移速或弹速提升',
     selection: {
       baseWeight: 0.92,
       minRound: 2,
@@ -1425,10 +1083,10 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-tempo',
         label: '接入回收驱动',
         gameplayLabel: '拾取驱动',
-        gainLabel: '移速提高，战斗更顺',
+        gainLabel: '移速+12',
         costLabel: '基础伤害降低',
         routeId: 'dominant',
-        description: '伤害低一点，追击会更顺。',
+        description: '伤害-3，移速+12',
         effects: [
           {
             type: 'stats',
@@ -1447,10 +1105,10 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
         id: 'pickup-drive-magnet',
         label: '接入磁轨回收',
         gameplayLabel: '回收拉扯',
-        gainLabel: '弹速和移速提高，战斗更顺',
+        gainLabel: '弹速+24，移速+10',
         costLabel: '射速降低',
         routeId: 'dominant',
-        description: '输出低一点，回收和走位更顺。',
+        description: '射速-18%，弹速+24，移速+10',
         effects: [
           {
             type: 'stats',
@@ -1489,13 +1147,9 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'dash-charge-direction',
-        label: '先贴近',
-        gameplayLabel: '先贴近',
-        gainLabel: '更容易先贴住',
-        costLabel: '基础火力会弱一点',
+        label: '强化接近',
         routeId: 'dash',
-        anomalyRole: 'direction',
-        description: '强化接近敌人后的反击能力。',
+        description: '移速+12，冲刺间隔-18%',
         effects: [
           {
             type: 'stats',
@@ -1516,13 +1170,9 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'dash-charge-core',
-        label: '补进火力',
-        gameplayLabel: '反击增强',
-        gainLabel: '接近敌人后更容易反击',
-        costLabel: '耐久会少一点',
+        label: '强化反击',
         routeId: 'dash',
-        anomalyRole: 'core',
-        description: '强化接近敌人后的反击效果。',
+        description: '冲刺伤害+8，无敌+10%，移速+6',
         effects: [
           {
             type: 'stats',
@@ -1542,69 +1192,6 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
           },
         ],
       },
-      {
-        id: 'dash-charge-transform',
-        label: '全面接近',
-        gameplayLabel: '全面强化',
-        gainLabel: '接近敌人后爆发更强',
-        costLabel: '容错明显下降',
-        routeId: 'dash',
-        anomalyRole: 'transform',
-        description: '将战斗推向全面近战输出。',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              damage: 4,
-              dashPulseDamage: 10,
-              dashInterval: -0.22,
-              maxHp: -10,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
-      {
-        id: 'dash-charge-finisher',
-        label: '最终补强',
-        gameplayLabel: '最终补强',
-        gainLabel: '接近敌人后更容易消灭残血',
-        costLabel: '普通射击更弱',
-        routeId: 'dash',
-        anomalyRole: 'finisher',
-        description: '把最后一下补顺。',
-        effects: [
-          {
-            type: 'stats',
-            modifiers: {
-              dashPulseDamage: 12,
-              dashChargeSpeed: 0.12,
-              dashCounterDamageBonus: 0.22,
-              dashGrazeRadiusBonus: 8,
-              fireRate: -0.08,
-            },
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-          {
-            type: 'route',
-            routeId: 'dash',
-          },
-        ],
-      },
     ],
   },
   {
@@ -1613,7 +1200,7 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     contentKind: 'anomaly',
     anomalyClass: 'routeWindow',
     routeAffinity: 'crit',
-    description: '暴击已成型，本回合决定继续强化伤害或全面进攻。',
+    description: '暴击已成型，选择继续强化或全面进攻',
     selection: {
       baseWeight: 0.9,
       minRound: 2,
@@ -1628,13 +1215,9 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
     options: [
       {
         id: 'crit-lock-transform',
-        label: '强化重击',
-        gameplayLabel: '全面强化',
-        gainLabel: '短时间里会打得特别狠',
-        costLabel: '容错明显下降',
+        label: '强化爆发',
         routeId: 'crit',
-        anomalyRole: 'transform',
-        description: '降低容错率，换取更高的爆发伤害。',
+        description: '生命-12，伤害+4，射速+12%，暴击倍率+42%',
         effects: [
           {
             type: 'stats',
@@ -1658,13 +1241,9 @@ const RAW_ANOMALY_EVENT_CATALOG: EventDefinition[] = [
       },
       {
         id: 'crit-lock-finisher',
-        label: '接入终结回路',
-        gameplayLabel: '最终补强',
-        gainLabel: '破绽炸开后更容易补掉残血',
-        costLabel: '后面能补的会少',
+        label: '终结回路',
         routeId: 'crit',
-        anomalyRole: 'finisher',
-        description: '本回合不补充属性，直接强化最终输出能力。',
+        description: '溅射+12%，过载暴击+5%，过载持续+35%',
         effects: [
           {
             type: 'stats',

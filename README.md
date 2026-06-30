@@ -1,48 +1,41 @@
-# PROJECT ORBITAL / 轨道计划
-短局肉鸽自动射击原型。玩家负责走位和路线选择，角色自动攻击，五轮一局，最后由 Boss 收口。
+# 短局节点推进自动射击原型
 
-## 30 秒看懂
-这是一个短局肉鸽 demo：自动攻击 + 手动走位 + 三条路线成长。每局跑 5 轮，最后打 Boss，能看到 `暴击`、`穿透`、`穿梭` 三种不同成型方向。
+短局肉鸽自动射击原型 — 手动走位 × 自动攻击 × 三路线成长 × Boss收口。
 
-## 直达链接
-- 在线试玩：<https://suwki.github.io/game-demo/>
-- 演示视频：待补充
-- 仓库地址：<https://github.com/SuWki/game-demo>
+## 设计理念
+五轮短局内，玩家通过节点选择与三选一强化，沿暴击/穿透/穿梭三条路线构建差异化打法，最终由Boss战检验成型质量。核心设计目标：**路线不能一张成型，成型必须有检验**。
 
-## 项目亮点
-- 自动攻击 + 手动走位。
-- 五轮短局闭环。
-- 三条路线分别偏向 `暴击` / `穿透` / `穿梭`。
-- Boss 作为最终收口。
-- 有 `qa:stable-smoke` 和 natural fullrun 回归链路。
+## 在线体验
+- 试玩：<https://suwki.github.io/game-demo/>
+- 仓库：<https://github.com/SuWki/game-demo>
 
-## 我负责什么 / AI 负责什么
-| 我负责 | AI 负责 |
-| --- | --- |
-| 目标设计、规则取舍、问题判断、验收 | 具体实现、拆分、迭代和修复 |
+## 系统特色
+- **核心循环**：自动攻击 + 手动走位 + 节点选择 + 三选一强化，五轮一局
+- **三条路线**：暴击（爆发收口）、穿透（弹道扩散）、穿梭（位移反击），各有独立成型节奏
+- **四层阶段**：开始 → 过渡 → 成型 → 检验，控制路线牌不能一张成型
+- **关卡差异化**：普通战、精英战、生存战、Boss战各有独立职责
+- **异常节点**：distortion / routeWindow / bossEcho / hybrid 四种事件丰富局内变化
 
-## 精选截图
-### 首页
-![首页](public/showcase-assets/home.png)
+## 截图
 
-### 升级页
-![升级页](public/showcase-assets/upgrade.png)
+| 首页 | 升级选择 |
+|:---:|:---:|
+| ![首页](public/showcase-assets/home.png) | ![升级页](public/showcase-assets/upgrade.png) |
 
-### 暴击收口
-![crit payoff](public/showcase-assets/crit-payoff.png)
+| 暴击收口 | 穿透收口 | 穿梭收口 |
+|:---:|:---:|:---:|
+| ![暴击](public/showcase-assets/crit-payoff.png) | ![穿透](public/showcase-assets/pierce-payoff.png) | ![穿梭](public/showcase-assets/dash-payoff.png) |
 
-### 穿透收口
-![pierce payoff](public/showcase-assets/pierce-payoff.png)
+| Boss开场 | 结果页 |
+|:---:|:---:|
+| ![Boss](public/showcase-assets/boss-signature.png) | ![结果](public/showcase-assets/result-detail.png) |
 
-### 穿梭收口
-![dash payoff](public/showcase-assets/dash-payoff.png)
+## 技术栈
+- Phaser 3 + TypeScript + Vite
+- GitHub Pages 自动部署
 
-### Boss 开场
-![Boss signature](public/showcase-assets/boss-signature.png)
-
-### 结果页
-![结果页](public/showcase-assets/result-detail.png)
-
-## 最小运行方式
-- `npm install`
-- `npm run dev`
+## 本地运行
+```
+npm install
+npm run dev
+```

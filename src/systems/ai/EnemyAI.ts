@@ -297,15 +297,12 @@ export function updateEnemyProjectiles(battle: BattleState, dt: number, deps: En
       continue;
     }
 
+    // 安全区内清理所有弹体（不论 Boss 还是普通战斗）
     if (
-      battle.encounterType === 'boss' &&
-      deps.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 18)
+      battle.pressureSafeWindowSec > 0 &&
+      deps.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 14)
     ) {
       battle.insideSafeProjectileClears += 1;
-      continue;
-    }
-
-    if (projectile.respectsSafeWindow && deps.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 10)) {
       continue;
     }
 

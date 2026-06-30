@@ -198,14 +198,6 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
           type: 'route',
           routeId: 'crit',
         },
-        {
-          type: 'route',
-          routeId: 'crit',
-        },
-        {
-          type: 'route',
-          routeId: 'crit',
-        },
       ],
     },
     pierce: {
@@ -233,14 +225,6 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
           type: 'route',
           routeId: 'pierce',
         },
-        {
-          type: 'route',
-          routeId: 'pierce',
-        },
-        {
-          type: 'route',
-          routeId: 'pierce',
-        },
       ],
     },
     dash: {
@@ -259,14 +243,6 @@ const ANOMALY_ROUTE_POOLS: Record<AnomalyRoutePoolId, AnomalyRoutePool> = {
             moveSpeed: 14,
             dashInterval: -0.22,
           },
-        },
-        {
-          type: 'route',
-          routeId: 'dash',
-        },
-        {
-          type: 'route',
-          routeId: 'dash',
         },
         {
           type: 'route',

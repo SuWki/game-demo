@@ -85,22 +85,10 @@ import type {
 import { ALL_EVENT_CATALOG, ANOMALY_EVENT_CATALOG } from '../data/events';
 import { UPGRADE_ARCHETYPES, buildUpgradeChoice } from '../data/upgrades';
 import { RouteManager } from './route/RouteManager';
-import * as DamageCalculator from './combat/DamageCalculator';
-import * as KillStreakSystem from './progression/KillStreakSystem';
-import * as ExperienceSystem from './progression/ExperienceSystem';
-import * as UpgradeEngine from './progression/UpgradeEngine';
 import * as RouteProgression from './route/RouteProgression';
 import { createBattleState } from './state/BattleStateFactory';
 import { createRunState } from './state/RunStateFactory';
-import * as PressureCurve from './spawn/PressureCurve';
-import * as EnemySpawner from './spawn/EnemySpawner';
-import * as SpawnPatternEngine from './spawn/SpawnPatternEngine';
-import * as BulletSystem from './combat/BulletSystem';
-import * as CombatResolver from './combat/CombatResolver';
 import * as DashSystem from './combat/DashSystem';
-import * as EnemyAI from './ai/EnemyAI';
-import * as EliteBehavior from './ai/EliteBehavior';
-import * as BossBehavior from './ai/BossBehavior';
 
 interface EngineAnnouncement {
   kind: 'tip' | 'audio';
@@ -506,11 +494,15 @@ export class RunEngine {
       }
       this.state.currentUpgradeIsReward = false;
       if (this.state.queuedLevelUps > 0) {
-        this.state.status = 'battle';
-        this.state.levelUpPanelDelaySec = Math.max(
-          this.state.levelUpPanelDelaySec,
-          this.chainedLevelUpResumeDelaySec,
-        );
+        if (this.advanceAfterPendingUpgrades) {
+          this.openQueuedLevelUpPanel();
+        } else {
+          this.state.status = 'battle';
+          this.state.levelUpPanelDelaySec = Math.max(
+            this.state.levelUpPanelDelaySec,
+            this.chainedLevelUpResumeDelaySec,
+          );
+        }
         return;
       }
 
@@ -943,6 +935,14 @@ export class RunEngine {
 
   public getRouteBuildStage(routeId: RouteId): RouteBuildStage {
     return RouteProgression.getRouteBuildStage(this.state, routeId);
+  }
+
+  public getRouteBuildProgressInfo(routeId: RouteId) {
+    return RouteProgression.getRouteBuildProgressInfo(this.state, routeId);
+  }
+
+  public getRouteStageUnlockDescription(routeId: RouteId, stage: Exclude<RouteBuildStage, 'unformed'>): string {
+    return RouteProgression.getRouteStageUnlockDescription(routeId, stage);
   }
 
   private rollUpgradeChoices(source: UpgradeSource) {
@@ -1419,8 +1419,8 @@ export class RunEngine {
         battle.bossSafeWindowMoments += 1;
         this.refreshBossSafeWindowGrace(battle);
         this.clearBossSafeWindowBlockers(battle);
-        this.enqueueTip('进入绿色安全区');
       }
+      this.enqueueTip('进入绿色安全区');
 
       if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
         this.services.metrics.recordBossSafeWindowSeen(
@@ -1466,8 +1466,8 @@ export class RunEngine {
       battle.bossSafeWindowMoments += 1;
       this.refreshBossSafeWindowGrace(battle);
       this.clearBossSafeWindowBlockers(battle);
-      this.enqueueTip('进入绿色安全区');
     }
+    this.enqueueTip('进入绿色安全区');
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
       this.services.metrics.recordBossSafeWindowSeen(
@@ -2281,6 +2281,7 @@ export class RunEngine {
       elapsedSec: 0,
       durationSec: 0.62,
     };
+    this.state.battle = null;
     this.enqueueAudio('victory');
   }
 
@@ -3629,6 +3630,16 @@ export class RunEngine {
     this.state.stats.dashPulseDamage += modifiers.dashPulseDamage ?? 0;
     this.state.stats.dashInvulnerability += modifiers.dashInvulnerability ?? 0;
     this.state.stats.regeneration += (modifiers.regeneration ?? 0) * 0.38;
+    this.state.stats.critOverdriveCritBonus += modifiers.critOverdriveCritBonus ?? 0;
+    this.state.stats.critSplashRadius += modifiers.critSplashRadius ?? 0;
+    this.state.stats.flawDurationBonus += modifiers.flawDurationBonus ?? 0;
+    this.state.stats.critOverdriveDurationBonus += modifiers.critOverdriveDurationBonus ?? 0;
+    this.state.stats.pierceEchoDamageBonus += modifiers.pierceEchoDamageBonus ?? 0;
+    this.state.stats.crackSpreadRadius += modifiers.crackSpreadRadius ?? 0;
+    this.state.stats.pierceCooldownRefundBonus += modifiers.pierceCooldownRefundBonus ?? 0;
+    this.state.stats.dashChargeSpeed += modifiers.dashChargeSpeed ?? 0;
+    this.state.stats.dashCounterDamageBonus += modifiers.dashCounterDamageBonus ?? 0;
+    this.state.stats.dashGrazeRadiusBonus += modifiers.dashGrazeRadiusBonus ?? 0;
   }
 
   private applyEffects(effects: ContentEffect[], meta?: RouteAdvanceMeta): void {
@@ -5553,8 +5564,8 @@ export class RunEngine {
           const oldStacks = enemy.critMarkStacks ?? 0;
 
           // crit-afterglow: 破绽持续时间延长（基础2.4秒，激活后3.2秒）
-          const baseMarkDuration = 2.4;
-          const markDuration = battle.critAfterglowActive ? 3.2 : baseMarkDuration;
+          const baseMarkDuration = 2.4 + this.state.stats.flawDurationBonus;
+          const markDuration = battle.critAfterglowActive ? baseMarkDuration + 0.8 : baseMarkDuration;
           enemy.critMarkSec = markDuration;
           enemy.routeHitFlashSec = 0.18;
           enemy.routeHitKind = 'crit';
@@ -5670,7 +5681,7 @@ export class RunEngine {
               const nDist = Math.hypot(ndx, ndy);
               if (nDist <= bridgeSpreadRadius + nearby.radius) {
                 const proximityRatio = 1 - nDist / (bridgeSpreadRadius + nearby.radius);
-                nearby.critMarkSec = Math.max(nearby.critMarkSec, 1.2 + proximityRatio * 0.8);
+                nearby.critMarkSec = Math.max(nearby.critMarkSec, 1.2 + this.state.stats.flawDurationBonus * 0.5 + proximityRatio * 0.8);
                 const nearbyOldStacks = nearby.critMarkStacks ?? 0;
                 nearby.critMarkStacks = Math.min(2, nearbyOldStacks + 1);
                 nearby.routeHitFlashSec = Math.max(nearby.routeHitFlashSec ?? 0, 0.1);
@@ -5777,7 +5788,7 @@ export class RunEngine {
           const wasMarked = enemy.pierceMarkSec > 0;
           const oldStacks = enemy.pierceMarkStacks ?? 0;
 
-          enemy.pierceMarkSec = 1.8;
+          enemy.pierceMarkSec = 1.8 + this.state.stats.crackSpreadRadius * 1.2;
           enemy.routeHitFlashSec = 0.16;
           enemy.routeHitKind = 'pierce';
           enemy.pierceChainHits = Math.max(enemy.pierceChainHits ?? 0, bullet.hitCount + 1);
@@ -5844,7 +5855,7 @@ export class RunEngine {
 
         // 流派构筑第三轮：回打反打窗口命中收益
         if (battle.dashCounterWindowSec > 0 && enemy.dashMarkSec > 0) {
-          const counterBonus = 1.12;
+          const counterBonus = 1.12 + this.state.stats.dashCounterDamageBonus;
           enemy.hp -= bullet.damage * (counterBonus - 1);
           enemy.routeHitFlashSec = 0.14;
           enemy.routeHitKind = 'dash';
@@ -6065,7 +6076,7 @@ export class RunEngine {
         distance > this.getDashGrazeInnerRadius()
       ) {
         enemy.grazeCooldownSec = 0.8;
-        battle.dashCharge = Math.min(6, battle.dashCharge + 1);
+        battle.dashCharge = Math.min(6, battle.dashCharge + 1 + this.state.stats.dashChargeSpeed);
         this.createCombatPulse(battle, {
           x: enemy.x,
           y: enemy.y,
@@ -7051,16 +7062,12 @@ export class RunEngine {
         continue;
       }
 
+      // 安全区内清理所有弹体（不论 Boss 还是普通战斗）
       if (
-        battle.encounterType === 'boss' &&
-        this.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 18)
+        battle.pressureSafeWindowSec > 0 &&
+        this.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 14)
       ) {
-        // 安全区内清理弹体，记录清弹数据
         battle.insideSafeProjectileClears += 1;
-        continue;
-      }
-
-      if (projectile.respectsSafeWindow && this.isPointInsidePressureSafeWindow(battle, projectile.x, projectile.y, projectile.radius + 10)) {
         continue;
       }
 
@@ -7732,11 +7739,11 @@ export class RunEngine {
     const markDuration = battle.pierceSeamkeepActive ? 1.8 : baseMarkDuration;
 
     // pierce-riftbloom/prism: 扩散范围增加（基础140，激活后180）
-    const baseRange = 140;
-    const range = battle.pierceRiftbloomActive ? 180 : baseRange;
+    const baseRange = 140 + this.state.stats.crackSpreadRadius * 120;
+    const range = battle.pierceRiftbloomActive ? baseRange + 40 : baseRange;
 
     // pierce-floodgate: 追加小范围裂纹伤害
-    const floodgateBonus = battle.pierceFloodgateReady ? 4 : 0;
+    const floodgateBonus = battle.pierceFloodgateReady ? 4 + this.state.stats.pierceEchoDamageBonus * 20 : 0;
 
     const crackDamage = enemy.elite ? 5 : 8;
     const bulletDirX = bullet.vx / Math.max(1, Math.hypot(bullet.vx, bullet.vy));
@@ -7770,7 +7777,7 @@ export class RunEngine {
     }
 
     // 视觉反馈（riftbloom 增加脉冲范围）
-    const pulseRadius = battle.pierceRiftbloomActive ? enemy.radius + 48 : enemy.radius + 36;
+    const pulseRadius = battle.pierceRiftbloomActive ? enemy.radius + 48 + this.state.stats.crackSpreadRadius * 24 : enemy.radius + 36 + this.state.stats.crackSpreadRadius * 18;
     this.createCombatPulse(battle, {
       x: enemy.x,
       y: enemy.y,
@@ -10155,11 +10162,11 @@ export class RunEngine {
   }
 
   private getCritOverdriveDurationGain(): number {
-    return getCritOverdriveDurationGain(this.getRouteBuildStage('crit'));
+    return getCritOverdriveDurationGain(this.getRouteBuildStage('crit')) + this.state.stats.critOverdriveDurationBonus;
   }
 
   private getCritSplashRatio(battle: BattleState): number {
-    return getCritSplashRatio(this.getRouteBuildStage('crit'), battle.critOverdriveSec);
+    return getCritSplashRatio(this.getRouteBuildStage('crit'), battle.critOverdriveSec, this.state.stats);
   }
 
   private getPierceEchoCount(): number {
@@ -10167,10 +10174,10 @@ export class RunEngine {
   }
 
   private getPierceEchoDamageRatio(): number {
-    return getPierceEchoDamageRatio(this.getRouteBuildStage('pierce'));
+    return getPierceEchoDamageRatio(this.getRouteBuildStage('pierce'), this.state.stats);
   }
 
   private getPierceCooldownRefund(): number {
-    return getPierceCooldownRefund(this.getRouteBuildStage('pierce'));
+    return getPierceCooldownRefund(this.getRouteBuildStage('pierce'), this.state.stats);
   }
 }

@@ -526,7 +526,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-firepower',
     name: '火力强化',
-    description: '加火力，打得更疼。',
+    description: '伤害+3',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer'],
@@ -547,7 +547,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-cadence',
     name: '装填加速',
-    description: '射速拉满，扣扳机更快。',
+    description: '射速+22%',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer'],
@@ -568,7 +568,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-ballistics',
     name: '弹药加速',
-    description: '子弹更快，伤害更高。',
+    description: '弹速+20，伤害+2',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer'],
@@ -611,7 +611,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-reactor',
     name: '爆伤增幅',
-    description: '暴击伤害更狠。',
+    description: '暴击倍率+22%',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer'],
@@ -632,7 +632,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-frame',
     name: '加固骨架',
-    description: '血上限提高，顺便回点血。',
+    description: '生命+12，回复12HP',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer'],
@@ -657,7 +657,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-thrusters',
     name: '轻快靴',
-    description: '跑得更快。',
+    description: '移速+15',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer'],
@@ -678,7 +678,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-overclock',
     name: '自修复回路',
-    description: '回血更稳，射速也快了。',
+    description: '恢复+0.12/s，射速+9%',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge'],
@@ -729,7 +729,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-pressure-bypass',
     name: '硬扛',
-    description: '更耐打，输出也更高。',
+    description: '生命+8，恢复+0.09/s，移速+8，回复10HP',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge'],
@@ -791,7 +791,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-open-loop',
     name: '热身补给',
-    description: '开局更稳当。',
+    description: '生命+6，恢复+0.07/s，移速+7，回复8HP',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'hybrid'],
@@ -824,7 +824,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-crossfeed',
     name: '全面补给',
-    description: '全属性小幅提升，并恢复生命。',
+    description: '射速+9%，弹速+15，移速+9，回复6HP',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'hybrid'],
@@ -858,7 +858,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-reroute-buffer',
     name: '稳扎稳打',
-    description: '生存和机动都更强。',
+    description: '生命+4.5，恢复+0.06/s，移速+9，弹速+12，回复10HP',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'hybrid'],
@@ -892,7 +892,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-relay-throttle',
     name: '火力全开',
-    description: '火力和弹道同步提升。',
+    description: '伤害+2，射速+10%，弹速+12，移速+6',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'hybrid'],
@@ -921,7 +921,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-terminal-weave',
     name: '全面强化',
-    description: '全属性同步提升。',
+    description: '伤害+3，射速+16%，弹速+24，移速+14，恢复+0.12/s',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -952,7 +952,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-sightline-cache',
     name: '精准打击',
-    description: '打得准，打得狠。',
+    description: '伤害+1.5，弹速+21，移速+8',
     category: 'generic',
     repeatable: true,
     tags: ['bridge', 'stabilizer'],
@@ -982,7 +982,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-terminal-baffle',
     name: '铁壁',
-    description: '更抗揍，输出也更猛。',
+    description: '生命+9，恢复+0.09/s，伤害+2.2，弹速+14，回复10HP',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1016,7 +1016,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-salvo-cache',
     name: '急速射击',
-    description: '火力更密，出手更快。',
+    description: '伤害+2.2，射速+9%，弹速+14',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge'],
@@ -1045,7 +1045,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-drift-anchor',
     name: '稳如磐石',
-    description: '跑得稳，也更耐揍。',
+    description: '生命+4.5，移速+10，射速+6%，恢复+0.06/s，回复6HP',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'hybrid'],
@@ -1110,7 +1110,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-last-mile',
     name: '后劲十足',
-    description: '越到后面越能打。',
+    description: '生命+7.5，伤害+3，射速+8%，恢复+0.11/s，回复6HP',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1144,7 +1144,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-mirror-lattice',
     name: '暴击强化',
-    description: '火力更猛，暴击更准。',
+    description: '伤害+1.5，暴击+4%，弹速+14，移速+8',
     category: 'generic',
     repeatable: true,
     tags: ['bridge', 'hybrid'],
@@ -1175,7 +1175,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-borrowed-tail',
     name: '弹幕压制',
-    description: '火力密，弹幕稳。',
+    description: '伤害+3，射速+11%，多重+1，移速+8',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1205,7 +1205,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-crown-pocket',
     name: '余波庇护',
-    description: '更抗揍，回血也更快。',
+    description: '生命+7.5，恢复+0.12/s，弹速+14，移速+6，回复10HP',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1239,7 +1239,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-tailfold',
     name: '连射强化',
-    description: '火力和射速同步提升。',
+    description: '伤害+2，射速+9%，弹速+14，移速+9',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1269,7 +1269,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-echo-stow',
     name: '续航强化',
-    description: '生存和回复大幅强化。',
+    description: '生命+6，恢复+0.12/s，弹速+15，移速+7.5，回复8HP',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1303,7 +1303,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-opening-thread',
     name: '开局定调',
-    description: '开局更稳。',
+    description: '伤害+2，射速+8%，弹速+10',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'opening', 'starter'],
@@ -1330,7 +1330,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-opening-compass',
     name: '开局抢攻',
-    description: '开局先声夺人。',
+    description: '伤害+1.5，射速+6%，移速+9',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'opening', 'starter'],
@@ -1357,7 +1357,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-midline-turn',
     name: '中盘接力',
-    description: '中期过渡更顺。',
+    description: '射速+12%，弹速+12，移速+8',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'mid'],
@@ -1385,7 +1385,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-mid-patchbay',
     name: '中盘补强',
-    description: '中间短板补齐。',
+    description: '生命+6，恢复+0.08/s，弹速+10',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'mid', 'hybrid'],
@@ -1417,7 +1417,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-closeout-anchor',
     name: '收尾稳住',
-    description: '后面收得住。',
+    description: '伤害+2，恢复+0.08/s，移速+6',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1446,7 +1446,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-late-audit',
     name: '查漏补缺',
-    description: '补齐前期的短板。',
+    description: '生命+6，伤害+1.6，射速+10%，恢复+0.08/s，回复8HP',
     category: 'generic',
     contentTier: 'rare',
     repeatable: true,
@@ -1514,7 +1514,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-aim',
     name: '弱点起手',
-    description: '命中留标记，攒满后暴击爆发。',
+    description: '过载暴击+3%，回复8HP',
     category: 'route',
     routeId: 'crit',
     tags: ['starter', 'crit-bridge-focus'],
@@ -1578,7 +1578,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-afterglow',
     name: '破绽残留',
-    description: '标记持续更久，下次攻击更容易暴击。',
+    description: '破绽持续+25%',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'crit-afterglow'],
@@ -1671,7 +1671,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-sidechannel',
     name: '侧路加温',
-    description: '暴击溅射范围扩大，顺便回点血。',
+    description: '暴击溅射范围+12%，回复6HP',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
@@ -1739,7 +1739,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-reroute-feed',
     name: '借焰续杯',
-    description: '破绽持续更久，顺带回血。',
+    description: '破绽持续+20%，回复6HP',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'redirect'],
@@ -1773,7 +1773,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-branch-ignite',
     name: '连锁引燃',
-    description: '暴击命中后概率再挂破绽，为连击铺路。',
+    description: '暴击溅射+8%',
     category: 'route',
     routeId: 'crit',
     tags: ['bridge', 'crit-bridge-focus'],
@@ -1928,7 +1928,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'crit-crownfire',
     name: '冠火连环',
-    description: '重击炸开后，下一发更容易连上。',
+    description: '暴击溅射+15%，过载暴击+6%',
     category: 'route',
     contentTier: 'rare',
     routeId: 'crit',
@@ -2143,7 +2143,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-core',
     name: '穿透弹头',
-    description: '子弹穿过敌人继续飞。',
+    description: '穿透回响伤害+5%',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2207,7 +2207,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamline',
     name: '破甲弹头',
-    description: '命中越稳，前排越容易被穿开。',
+    description: '穿透冷却返还+0.5%',
     category: 'route',
     routeId: 'pierce',
     tags: ['starter'],
@@ -2239,7 +2239,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-vector',
     name: '折线穿透',
-    description: '穿透弹道更准，清怪更快。',
+    description: '穿透扩散+12%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2268,7 +2268,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seamkeep',
     name: '裂纹蔓延',
-    description: '裂纹留得更久，后面一直掉血。',
+    description: '穿透回响伤害+6%，穿透扩散+6%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'pierce-seamkeep'],
@@ -2302,7 +2302,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-shearline',
     name: '切层穿透',
-    description: '穿过一层后继续往后穿。',
+    description: '穿过一层后继续穿透。',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2367,7 +2367,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-seam',
     name: '回响加伤',
-    description: '回响伤害提升，顺带补点耐久。',
+    description: '穿透回响伤害+8%，回复6HP',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2401,7 +2401,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-reroute-ledger',
     name: '层层剥落',
-    description: '再推一把，后排更早暴露。',
+    description: '穿透回响伤害+6%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2431,7 +2431,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-sidestitch',
     name: '并轨强化',
-    description: '穿透和弹道一起加强。',
+    description: '穿透扩散+10%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'redirect'],
@@ -2461,7 +2461,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-riftbloom',
     name: '裂隙扩散',
-    description: '裂纹扩得更开，更多敌人一起掉血。',
+    description: '穿透扩散+25%，穿透回响伤害+10%',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2529,7 +2529,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-phasebank',
     name: '相位回充',
-    description: '穿梭更顺畅，出手更快。',
+    description: '穿梭充能+12%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -2560,7 +2560,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-fan',
     name: '裂轨分叉',
-    description: '穿透和弹道强化。',
+    description: '穿透回响伤害+4%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2588,7 +2588,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-relay-spine',
     name: '穿脊连锁',
-    description: '穿透命中后更容易击杀下一个目标。',
+    description: '穿透扩散+14%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2617,7 +2617,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ledger-fanout',
     name: '铺面穿透',
-    description: '强化穿透后半程伤害。',
+    description: '穿透回响伤害+5%，穿透扩散+8%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge'],
@@ -2650,7 +2650,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-floodgate',
     name: '裂层冲刷',
-    description: '穿透命中后更容易击杀下一个目标。',
+    description: '穿透扩散+20%，穿透回响伤害+8%',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -2682,7 +2682,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-seam-ledger',
     name: '裂幕收尾',
-    description: '穿透收尾更稳，后续伤害更足。',
+    description: '穿透回响伤害+8%，穿透扩散+20%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2775,7 +2775,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ripple',
     name: '回响扩散',
-    description: '穿透和弹道强化。',
+    description: '穿透扩散+18%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2804,7 +2804,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-ledger-line',
     name: '贯穿连锁',
-    description: '穿过去后后排也继续掉血。',
+    description: '穿透回响伤害+7%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2836,7 +2836,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-bloom',
     name: '扇面裂开',
-    description: '穿透范围强化。',
+    description: '穿透扩散+22%',
     category: 'route',
     routeId: 'pierce',
     tags: ['bridge', 'payoff'],
@@ -2957,8 +2957,8 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-lanebreak',
-    name: '换边抢攻',
-    description: '换边时更容易叠上一层。',
+    name: '换位抢攻',
+    description: '贴近后反击更容易叠层。',
     category: 'route',
     routeId: 'dash',
     tags: ['starter'],
@@ -2990,7 +2990,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-slipstream',
     name: '穿梭加速',
-    description: '充能更快，反击更疼，接近范围更大。',
+    description: '穿梭充能+12%，擦弹范围+5',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3020,7 +3020,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidechannel',
     name: '错位反击',
-    description: '反击伤害更高，接近范围更大，还能回一口血。',
+    description: '反击伤害+18%，擦弹范围+8，回复6HP',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3055,7 +3055,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-cutin',
     name: '闪身切入',
-    description: '穿梭充能更快，接近敌人后反击更疼。',
+    description: '穿梭充能+15%，回复6HP',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3089,7 +3089,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reroute-recall',
     name: '闪身追回',
-    description: '接近范围扩大，还能回一口血。',
+    description: '擦弹范围+10，回复6HP',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3123,7 +3123,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'pierce-prism',
     name: '棱镜碎裂',
-    description: '裂纹扩散范围大幅提升。',
+    description: '穿透扩散+30%',
     category: 'route',
     contentTier: 'rare',
     routeId: 'pierce',
@@ -3154,7 +3154,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-loop',
     name: '贴身充能',
-    description: '贴近后充能更快，范围也更宽。',
+    description: '穿梭充能+10%，擦弹范围+6',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3184,7 +3184,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-sidestep-bank',
     name: '侧移加压',
-    description: '反击伤害提升。',
+    description: '反击伤害+14%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'dash-sidestep-bank'],
@@ -3217,7 +3217,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-return-hold',
     name: '回身蓄力',
-    description: '贴近后更稳。',
+    description: '穿梭充能+8%，反击伤害+10%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge'],
@@ -3250,7 +3250,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-afterimage',
     name: '残影爆裂',
-    description: '反击更重，贴近范围更大。',
+    description: '反击伤害+20%，擦弹范围+12',
     category: 'route',
     contentTier: 'rare',
     routeId: 'dash',
@@ -3286,7 +3286,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-retrace-beat',
     name: '回转续拍',
-    description: '穿梭更快，反击更稳。',
+    description: '穿梭充能+10%，反击伤害+12%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3318,7 +3318,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-counterline',
     name: '近身反击',
-    description: '反击伤害提升。',
+    description: '反击伤害+15%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3349,7 +3349,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-return-snap',
     name: '回摆冲刺',
-    description: '更快冲回下一次贴近。',
+    description: '穿梭充能+8%，擦弹范围+8',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3382,7 +3382,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rebound-window',
     name: '闪身回转',
-    description: '穿梭更快，回身更顺。',
+    description: '穿梭充能+10%，回复6HP',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'redirect'],
@@ -3416,7 +3416,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-rethread',
     name: '续力回转',
-    description: '反击伤害提升。',
+    description: '反击伤害+18%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3445,7 +3445,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-reentry',
     name: '回环充能',
-    description: '穿梭更快，反击更重。',
+    description: '穿梭充能+10%，反击伤害+15%',
     category: 'route',
     routeId: 'dash',
     tags: ['bridge', 'payoff'],
@@ -3475,7 +3475,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'dash-anchor',
     name: '贴身定势',
-    description: '贴近、反击、收尾一气呵成。',
+    description: '穿梭充能+12%，反击伤害+12%，擦弹范围+10',
     category: 'route',
     routeId: 'dash',
     tags: ['finisher'],
@@ -3540,17 +3540,17 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   // 暴击流 - 破绽机制
   'crit-aim': '命中时有概率留下破绽，叠满后触发暴击爆发。',
   'crit-primer': '命中时有概率留下破绽。',
-  'crit-afterglow': '破绽持续更久，下次攻击更易暴击。',
-  'crit-heat-latch': '击破破绽后更容易续上新的破绽。',
-  'crit-flare-path': '连续命中时破绽叠加更快。',
+  'crit-afterglow': '破绽持续+25%，下次攻击更易暴击。',
+  'crit-heat-latch': '击破破绽后续上新破绽概率提升。',
+  'crit-flare-path': '连续命中时破绽叠加效率提升。',
   'crit-sidechannel': '破绽触发率提升，爆发伤害更高。',
   'crit-reroute-spark': '超频时暴击伤害提升，并恢复少量生命。',
-  'crit-reroute-feed': '破绽持续更久，并恢复少量生命。',
-  'crit-branch-ignite': '破绽叠加更快，连续攻击更易触发爆发。',
+  'crit-reroute-feed': '破绽持续+20%，并恢复6HP。',
+  'crit-branch-ignite': '破绽叠加效率提升，连续攻击更易触发爆发。',
   'crit-embershard': '破绽爆发时伤害溅射周围敌人。',
-  'crit-burst': '连续命中时破绽叠加更快。',
+  'crit-burst': '连续命中时破绽叠加效率提升。',
   'crit-sparkline': '更容易锁定目标连续重击。',
-  'crit-linekeep': '破绽链持续更久，不易中断。',
+  'crit-linekeep': '破绽链持续+20%，不易中断。',
   'crit-crownfire': '破绽爆发后下次攻击更易衔接连击。',
   'crit-ember-rail': '多层破绽同时爆发时伤害大幅提升。',
   'crit-redline': '短时间内压制力增强，暴击伤害提升。',
@@ -3565,20 +3565,20 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   'pierce-rail': '弹道更笔直，穿透路径更精准，可穿透整排敌人。',
   'pierce-seamline': '连续命中时更容易击碎前排。',
   'pierce-vector': '弹道更笔直，穿透更精准。',
-  'pierce-seamkeep': '裂纹持续更久，后排敌人持续掉血。',
+  'pierce-seamkeep': '裂纹持续+6%，后排敌人持续掉血。',
   'pierce-shearline': '穿透前排后更容易命中后排。',
   'pierce-sidechannel': '子弹带弧线伤害，辅助清前排。',
-  'pierce-reroute-seam': '回响伤害更高，并恢复少量生命。',
-  'pierce-reroute-ledger': '穿透后排伤害更高，并恢复少量生命。',
+  'pierce-reroute-seam': '穿透回响伤害+8%，并恢复6HP。',
+  'pierce-reroute-ledger': '穿透回响伤害+6%，并恢复6HP。',
   'pierce-sidestitch': '穿透后排时获得额外伤害加成。',
-  'pierce-riftbloom': '裂纹扩散范围更大，命中更多敌人。',
+  'pierce-riftbloom': '穿透扩散+25%，穿透回响伤害+10%。',
   'pierce-fan': '子弹可同时穿透多名敌人。',
   'pierce-relay-spine': '穿透命中后后排敌人连锁受伤。',
   'pierce-ledger-fanout': '裂纹覆盖范围更大，命中更多敌人。',
-  'pierce-floodgate': '裂纹扩散时对后方敌人追加额外伤害。',
+  'pierce-floodgate': '穿透扩散+20%，穿透回响伤害+8%。',
   'pierce-seam-ledger': '裂纹目标的连续命中收益递增。',
   'pierce-echo': '穿透命中后回响效率更高，造成额外伤害。',
-  'pierce-ripple': '裂纹扩散更快，更容易传到后排。',
+  'pierce-ripple': '穿透扩散+18%，更容易传到后排。',
   'pierce-ledger-line': '穿透敌人后，后排持续掉血。',
   'pierce-bloom': '裂纹范围更大，更容易命中多个敌人。',
   'pierce-chain': '穿透距离更远，后排更容易连续受伤。',
@@ -3587,30 +3587,30 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   // 穿梭流 - 脉冲机制
   'dash-brush': '贴身命中后更容易攒起脉冲。',
   'dash-feint': '贴近或拉开都能触发脉冲增益。',
-  'dash-lanebreak': '换边后更容易衔接下一轮。',
-  'dash-phasebank': '贴近后更容易攒起脉冲。',
-  'dash-cutback': '火力更重，回身后更容易收割残血。',
-  'dash-slipstream': '穿梭更快，输出更稳。',
-  'dash-sidechannel': '贴近更顺，反打更重。',
-  'dash-reroute-cutin': '穿梭更快，接近时更容易压制。',
-  'dash-reroute-recall': '贴近范围更大，更容易回到有利位置。',
-  'dash-loop': '贴近后充能更快。',
-  'dash-sidestep-bank': '反击伤害提升。',
-  'dash-return-hold': '贴近后更稳。',
-  'dash-afterimage': '反击更重，贴近范围更大。',
-  'dash-retrace-beat': '反打后衔接下一轮更顺。',
-  'dash-counterline': '贴近后反打效果更明显，伤害提升。',
-  'dash-return-snap': '更快冲回下一次贴近。',
-  'dash-rebound-window': '贴近后反打更容易出手。',
-  'dash-rethread': '贴身命中后更容易接续输出。',
-  'dash-reentry': '反打后更容易衔接火力。',
-  'dash-anchor': '贴近、反打、收尾一气呵成。',
+  'dash-lanebreak': '贴近后更易衔接下一轮。',
+  'dash-phasebank': '贴近后更易攒起脉冲。',
+  'dash-cutback': '反击伤害提升，回身后更易收割残血。',
+  'dash-slipstream': '穿梭充能+12%。',
+  'dash-sidechannel': '穿梭充能+15%，反击伤害+18%。',
+  'dash-reroute-cutin': '穿梭充能+15%，接近时更易压制。',
+  'dash-reroute-recall': '擦弹范围+10，并回复6HP。',
+  'dash-loop': '穿梭充能+10%，擦弹范围+6。',
+  'dash-sidestep-bank': '反击伤害+14%。',
+  'dash-return-hold': '穿梭充能+8%，反击伤害+10%。',
+  'dash-afterimage': '反击伤害+20%，擦弹范围+12。',
+  'dash-retrace-beat': '穿梭充能+10%，反击伤害+12%。',
+  'dash-counterline': '反击伤害+15%，贴近后效果更明显。',
+  'dash-return-snap': '穿梭充能+8%，擦弹范围+8。',
+  'dash-rebound-window': '穿梭充能+10%，回复6HP。',
+  'dash-rethread': '反击伤害+18%。',
+  'dash-reentry': '穿梭充能+10%，反击伤害+15%。',
+  'dash-anchor': '穿梭充能+12%，反击伤害+12%，擦弹范围+10。',
   'dash-zero-window': '贴身命中后更容易压制目标。',
 };
 
 function getUpgradeDescription(archetype: UpgradeArchetype, effects: ContentEffect[]): string {
   if (archetype.category === 'route') {
-    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '选择后，这条路会更顺。';
+    return ROUTE_DESCRIPTION_OVERRIDES[archetype.id] ?? '选择后，强化当前流派路线。';
   }
 
   return archetype.description ?? describeContentEffects(effects, archetype.routeId);

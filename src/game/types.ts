@@ -876,6 +876,10 @@ export interface OverlayHudSnapshot {
     value: number;
     color: string;
     active: boolean;
+    /** 进度文本，如 "3/8" */
+    progressText?: string;
+    /** 下一个阶段的解锁描述，用于 hover tooltip */
+    nextUnlockTooltip?: string;
   }>;
   statSummary: Array<{
     label: string;
