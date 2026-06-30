@@ -472,6 +472,17 @@ export interface PulseState {
   spinRate: number;
 }
 
+export interface DamageNumber {
+  x: number;
+  y: number;
+  value: number;
+  lifeSec: number;
+  maxLifeSec: number;
+  kind: 'normal' | 'crit' | 'pierce' | 'dash';
+  velocityX: number;
+  velocityY: number;
+}
+
 export interface ExperienceOrbState {
   id: number;
   x: number;
@@ -648,6 +659,7 @@ export interface BattleState {
   dashGhostStrikeReady: boolean; // 幽灵打击就绪（Dash后下次攻击穿透+额外伤害）
   dashMomentumStacks: number; // 动量层数（连续Dash叠加攻速和移速）
   dashMomentumDecaySec: number; // 动量衰减计时器
+  damageNumbers: DamageNumber[];
 }
 
 export interface NodeRecord {
@@ -765,6 +777,7 @@ export interface BattleDebugConfig {
   showCollisionRadii: boolean;
   phase: DebugBattlePhaseId;
   templateId: BattleTemplateId;
+  hideBossPressureOverlay: boolean; // 隐藏Boss压力遮罩
 }
 
 export interface BattleDebugRuntimeConfig {

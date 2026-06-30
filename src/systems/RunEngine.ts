@@ -740,6 +740,14 @@ export class RunEngine {
     } else {
       battle.cameraShakeStrength = Math.max(0, battle.cameraShakeStrength - dt * 1.8);
     }
+    // 伤害飘字更新
+    for (const dn of battle.damageNumbers) {
+      dn.lifeSec -= dt;
+      dn.x += dn.velocityX * dt;
+      dn.y += dn.velocityY * dt;
+      dn.velocityY += 40 * dt; // 轻微重力
+    }
+    battle.damageNumbers = battle.damageNumbers.filter((dn) => dn.lifeSec > 0);
     battle.pressurePhaseElapsedSec += simulationDt;
     battle.pressureTransitionSec = Math.max(0, battle.pressureTransitionSec - simulationDt);
 
@@ -1119,6 +1127,7 @@ export class RunEngine {
       dashGhostStrikeReady: false,
       dashMomentumStacks: 0,
       dashMomentumDecaySec: 0,
+      damageNumbers: [],
     };
     if (encounterType === 'boss') {
       this.state.battle.pressureTransitionSec = 0.88;
@@ -5420,6 +5429,22 @@ export class RunEngine {
 
         enemy.hp -= damage;
         bullet.hitCount += 1;
+
+        // 伤害飘字
+        const dmgKind: 'normal' | 'crit' | 'pierce' | 'dash' = critical
+          ? 'crit'
+          : bullet.routeFocus === 'pierce' ? 'pierce'
+          : bullet.routeFocus === 'dash' ? 'dash' : 'normal';
+        battle.damageNumbers.push({
+          x: enemy.x + (Math.random() - 0.5) * 12,
+          y: enemy.y - enemy.radius - 4,
+          value: Math.round(damage),
+          lifeSec: critical ? 0.9 : 0.65,
+          maxLifeSec: critical ? 0.9 : 0.65,
+          kind: dmgKind,
+          velocityX: (Math.random() - 0.5) * 30,
+          velocityY: -55 - Math.random() * 20,
+        });
 
         // 记录击杀类型用于路线特色击杀奖励
         enemy.lastHitWasCrit = critical;

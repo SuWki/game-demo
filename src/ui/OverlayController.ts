@@ -880,9 +880,6 @@ export class OverlayController {
           <span>当前等级</span>
           <strong>${progress.levelText}</strong>
         </div>
-        <div class="upgrade-context-route">
-          <strong>${progress.routeStatusText}</strong>
-        </div>
         <div class="upgrade-stat-grid">${statItems}</div>
       </aside>
     `;

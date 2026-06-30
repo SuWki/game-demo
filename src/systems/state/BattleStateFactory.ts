@@ -172,5 +172,6 @@ export function createBattleState(params: CreateBattleStateParams): BattleState 
     dashGhostStrikeReady: false,
     dashMomentumStacks: 0,
     dashMomentumDecaySec: 0,
+    damageNumbers: [],
   };
 }

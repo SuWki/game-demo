@@ -155,6 +155,10 @@ export class BattleDebugPanel {
               <input data-debug-check="showCollisionRadii" type="checkbox" />
               <span>Show collision radii</span>
             </label>
+            <label class="debug-check">
+              <input data-debug-check="hideBossPressureOverlay" type="checkbox" />
+              <span>Hide boss pressure overlay</span>
+            </label>
           </section>
           <section class="debug-panel-section">
             <h3>Battle reset</h3>
@@ -241,6 +245,7 @@ export class BattleDebugPanel {
       'showEnemyVectors',
       'showProjectileVectors',
       'showCollisionRadii',
+      'hideBossPressureOverlay',
     ];
     checkboxKeys.forEach((key) => {
       const checkbox = this.layer.querySelector<HTMLInputElement>(`[data-debug-check="${key}"]`);
@@ -313,6 +318,7 @@ export class BattleDebugPanel {
       'showEnemyVectors',
       'showProjectileVectors',
       'showCollisionRadii',
+      'hideBossPressureOverlay',
     ];
     checkboxKeys.forEach((key) => {
       const checkbox = this.layer.querySelector<HTMLInputElement>(`[data-debug-check="${key}"]`);

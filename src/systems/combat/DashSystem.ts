@@ -108,7 +108,18 @@ export function tryTriggerDash(
   for (const enemy of battle.enemies) {
     const distance = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY);
     if (distance <= pulseRadius) {
-      enemy.hp -= pulseDamage + chainDamageBonus;
+      const dashDmg = pulseDamage + chainDamageBonus;
+      enemy.hp -= dashDmg;
+      battle.damageNumbers.push({
+        x: enemy.x + (Math.random() - 0.5) * 12,
+        y: enemy.y - enemy.radius - 4,
+        value: Math.round(dashDmg),
+        lifeSec: 0.65,
+        maxLifeSec: 0.65,
+        kind: 'dash',
+        velocityX: (Math.random() - 0.5) * 30,
+        velocityY: -55 - Math.random() * 20,
+      });
       dashPulseHits += 1;
       dashHitCenterX += enemy.x;
       dashHitCenterY += enemy.y;
@@ -133,6 +144,16 @@ export function tryTriggerDash(
           returnDamage += 4;
         }
         enemy.hp -= returnDamage;
+        battle.damageNumbers.push({
+          x: enemy.x + (Math.random() - 0.5) * 10,
+          y: enemy.y - enemy.radius - 8,
+          value: Math.round(returnDamage),
+          lifeSec: 0.75,
+          maxLifeSec: 0.75,
+          kind: 'crit',
+          velocityX: (Math.random() - 0.5) * 25,
+          velocityY: -60 - Math.random() * 15,
+        });
         enemy.dashPulseStacks = 0;
         enemy.dashMarkedForBonus = true;
 
@@ -154,6 +175,16 @@ export function tryTriggerDash(
 
       if ((deps.state.activeRoutePerks?.dashAfterimage ?? false) && enemy.dashPulseStacks === 0) {
         enemy.hp -= 3;
+        battle.damageNumbers.push({
+          x: enemy.x + (Math.random() - 0.5) * 8,
+          y: enemy.y - enemy.radius - 2,
+          value: 3,
+          lifeSec: 0.5,
+          maxLifeSec: 0.5,
+          kind: 'dash',
+          velocityX: (Math.random() - 0.5) * 20,
+          velocityY: -45 - Math.random() * 15,
+        });
         enemy.routeHitFlashSec = 0.12;
         deps.createCombatPulse(battle, {
           x: enemy.x,

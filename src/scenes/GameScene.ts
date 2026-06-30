@@ -160,6 +160,7 @@ export class GameScene extends Phaser.Scene {
     showCollisionRadii: false,
     phase: 'opening',
     templateId: 'elimination',
+    hideBossPressureOverlay: false, // 隐藏Boss压力遮罩
   };
 
 
@@ -172,6 +173,21 @@ export class GameScene extends Phaser.Scene {
   private readonly enemyLabelTexts: Phaser.GameObjects.Text[] = [];
 
   private enemyLabelCursor = 0;
+
+  private readonly damageNumberTexts: Phaser.GameObjects.Text[] = [];
+
+  private dyingEnemies: Array<{
+    id: number;
+    x: number;
+    y: number;
+    radius: number;
+    elite: boolean;
+    archetype: string;
+    lifeSec: number;
+    maxLifeSec: number;
+  }> = [];
+
+  private lastSeenEnemyHp: Map<number, number> = new Map();
 
   private bossSafeHintText!: Phaser.GameObjects.Text;
 
@@ -356,8 +372,11 @@ export class GameScene extends Phaser.Scene {
     if (!this.resultHandled && state.status === 'result' && state.result) {
       this.resultHandled = true;
       this.services.meta.recordRun(state.result);
-      this.scene.start('ResultScene', {
-        result: state.result,
+      this.cameras.main.fadeOut(280, 6, 12, 18);
+      this.time.delayedCall(300, () => {
+        this.scene.start('ResultScene', {
+          result: state.result,
+        });
       });
     }
   }
@@ -788,7 +807,10 @@ export class GameScene extends Phaser.Scene {
               this.lastHudKey = '';
               this.lastPauseKey = '';
               this.services.overlay.hidePanel();
-              this.scene.start('GameScene');
+              this.cameras.main.fadeOut(180, 4, 10, 16);
+              this.time.delayedCall(200, () => {
+                this.scene.start('GameScene');
+              });
             },
             onVolume: () => {
               this.services.audio.play('click');
@@ -1538,6 +1560,8 @@ export class GameScene extends Phaser.Scene {
     this.renderBattleEntities(battle, camera, accentColor);
     this.renderEliteBossLabels(battle, camera);
     this.renderRouteAura(battle, camera);
+    this.renderDamageNumbers(battle, camera);
+    this.renderDyingEnemies(battle, camera);
     this.renderUpgradeFlash();
     this.renderBossSafeWindowHint(battle);
     this.renderRouteMomentOverlay(battle);
@@ -1636,6 +1660,121 @@ export class GameScene extends Phaser.Scene {
     // 玩家周围常驻路线线条已取消；路线反馈改到敌人受击特效上。
     void battle;
     void camera;
+  }
+
+  private renderDamageNumbers(
+    battle: BattleState,
+    camera: { left: number; top: number; right: number; bottom: number; width: number; height: number },
+  ): void {
+    const dnCount = battle.damageNumbers.length;
+    for (let i = 0; i < dnCount; i += 1) {
+      const dn = battle.damageNumbers[i];
+      const screen = this.worldToScreen(camera, dn.x, dn.y);
+      const lifeRatio = Phaser.Math.Clamp(dn.lifeSec / dn.maxLifeSec, 0, 1);
+      const isCrit = dn.kind === 'crit';
+      const isDash = dn.kind === 'dash';
+      const isPierce = dn.kind === 'pierce';
+
+      let text = this.damageNumberTexts[i];
+      if (!text) {
+        text = this.add.text(0, 0, '', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '14px',
+          fontStyle: '900',
+          color: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 3,
+        });
+        text.setOrigin(0.5, 0.5);
+        text.setDepth(100);
+        this.damageNumberTexts.push(text);
+      }
+
+      const fontSize = isCrit ? 18 + (1 - lifeRatio) * 2 : isDash ? 15 : isPierce ? 14 : 13;
+      const color = isCrit ? '#ffd700' : isDash ? '#7aff7a' : isPierce ? '#a8d8ff' : '#ffffff';
+      const alpha = lifeRatio < 0.3 ? lifeRatio / 0.3 : 1;
+      const scale = isCrit && lifeRatio > 0.8 ? 1 + (1 - lifeRatio) * 2 : 1;
+
+      text.setText(String(dn.value));
+      text.setFontSize(fontSize);
+      text.setColor(color);
+      text.setAlpha(alpha);
+      text.setScale(scale);
+      text.setPosition(screen.x, screen.y);
+      text.setVisible(true);
+    }
+    for (let i = dnCount; i < this.damageNumberTexts.length; i += 1) {
+      this.damageNumberTexts[i].setVisible(false);
+    }
+  }
+
+  private renderDyingEnemies(
+    battle: BattleState,
+    camera: { left: number; top: number; right: number; bottom: number; width: number; height: number },
+  ): void {
+    // Track newly dead enemies
+    for (const enemy of battle.enemies) {
+      if (enemy.hp <= 0) {
+        const prevHp = this.lastSeenEnemyHp.get(enemy.id);
+        if (prevHp === undefined || prevHp > 0) {
+          // Just died - add to dying animation list
+          const deathDuration = enemy.elite ? 0.5 : 0.22;
+          this.dyingEnemies.push({
+            id: enemy.id,
+            x: enemy.x,
+            y: enemy.y,
+            radius: enemy.radius,
+            elite: enemy.elite,
+            archetype: enemy.archetype,
+            lifeSec: deathDuration,
+            maxLifeSec: deathDuration,
+          });
+        }
+      }
+      this.lastSeenEnemyHp.set(enemy.id, enemy.hp);
+    }
+
+    // Render dying enemies
+    for (const dying of this.dyingEnemies) {
+      const screen = this.worldToScreen(camera, dying.x, dying.y);
+      const lifeRatio = Phaser.Math.Clamp(dying.lifeSec / dying.maxLifeSec, 0, 1);
+      const alpha = lifeRatio;
+      const scale = dying.elite
+        ? 1 + (1 - lifeRatio) * 0.3 // Elite: expand slightly
+        : 1 - (1 - lifeRatio) * 0.5; // Regular: shrink
+
+      const renderRadius = dying.radius * scale;
+
+      // Flash white
+      const flashColor = dying.elite ? 0xffffff : 0xffe8cc;
+      this.graphics.fillStyle(flashColor, alpha * 0.6);
+      this.graphics.fillCircle(screen.x, screen.y, renderRadius * 1.2);
+
+      // Core body
+      const bodyColor = dying.elite ? 0xff8844 : 0xff6644;
+      this.graphics.fillStyle(bodyColor, alpha * 0.9);
+      this.graphics.fillCircle(screen.x, screen.y, renderRadius);
+
+      // Elite: burst particles
+      if (dying.elite && lifeRatio > 0.3) {
+        const burstCount = 6;
+        for (let i = 0; i < burstCount; i += 1) {
+          const angle = (i / burstCount) * Math.PI * 2 + (1 - lifeRatio) * 2;
+          const dist = renderRadius + (1 - lifeRatio) * 40;
+          const px = screen.x + Math.cos(angle) * dist;
+          const py = screen.y + Math.sin(angle) * dist;
+          this.graphics.fillStyle(0xffd700, alpha * 0.7);
+          this.graphics.fillCircle(px, py, 2 + lifeRatio * 2);
+        }
+      }
+    }
+
+    // Update timers and remove expired
+    const dt = 1 / 60;
+    for (const dying of this.dyingEnemies) {
+      dying.lifeSec -= dt;
+    }
+    this.dyingEnemies = this.dyingEnemies.filter((d) => d.lifeSec > 0);
   }
 
   private renderUpgradeFlash(): void {
@@ -1804,9 +1943,16 @@ export class GameScene extends Phaser.Scene {
 
     const baseLeft = clamp(battle.playerX - visibleWorldWidth * 0.5 + predictionOffsetX, 0, maxLeft);
     const baseTop = clamp(battle.playerY - visibleWorldHeight * 0.5 + predictionOffsetY, 0, maxTop);
-    // 镜头抖动已完全禁用
-    const left = clamp(baseLeft, 0, maxLeft);
-    const top = clamp(baseTop, 0, maxTop);
+    // 镜头抖动
+    let shakeOffsetX = 0;
+    let shakeOffsetY = 0;
+    if (battle.cameraShakeSec > 0 && battle.cameraShakeStrength > 0.01) {
+      const shakePhase = battle.elapsedSec * battle.cameraShakeFrequency * Math.PI * 2;
+      shakeOffsetX = Math.sin(shakePhase) * battle.cameraShakeStrength * 3;
+      shakeOffsetY = Math.cos(shakePhase * 1.37) * battle.cameraShakeStrength * 3;
+    }
+    const left = clamp(baseLeft + shakeOffsetX, 0, maxLeft);
+    const top = clamp(baseTop + shakeOffsetY, 0, maxTop);
 
     return {
       left,
@@ -4672,43 +4818,47 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
-    const renderedSafeWindow = this.renderPressureSafeWindowOverlay(battle, camera, accentColor, flashAlpha);
-    if (renderedSafeWindow && battle.pressureSafeWindowAxis !== 'pocket') {
+    // Hide boss pressure overlay toggle
+    if (this.debugConfig.hideBossPressureOverlay) {
       return;
     }
 
+    const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
+    // Safe window overlay removed - too distracting
+    // this.renderPressureSafeWindowOverlay(battle, camera, accentColor, flashAlpha);
+
     switch (battle.pressurePatternMode) {
       case 'sideClamp':
-        this.graphics.fillStyle(accentColor, flashAlpha);
+        // Reduced opacity for less distraction
+        this.graphics.fillStyle(accentColor, flashAlpha * 0.5);
         this.graphics.fillRect(28, 92, 30, this.scale.height - 184);
         this.graphics.fillRect(this.scale.width - 58, 92, 30, this.scale.height - 184);
-        this.graphics.lineStyle(2, accentColor, flashAlpha * 1.4);
+        this.graphics.lineStyle(2, accentColor, flashAlpha * 0.7);
         this.graphics.lineBetween(58, 120, 58, this.scale.height - 120);
         this.graphics.lineBetween(this.scale.width - 58, 120, this.scale.width - 58, this.scale.height - 120);
         return;
       case 'laneCrush':
-        this.graphics.fillStyle(accentColor, flashAlpha);
+        this.graphics.fillStyle(accentColor, flashAlpha * 0.5);
         this.graphics.fillRect(84, 28, this.scale.width - 168, 28);
         this.graphics.fillRect(84, this.scale.height - 56, this.scale.width - 168, 28);
-        this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
+        this.graphics.lineStyle(2, accentColor, flashAlpha * 0.68);
         this.graphics.lineBetween(112, 56, this.scale.width - 112, 56);
         this.graphics.lineBetween(112, this.scale.height - 56, this.scale.width - 112, this.scale.height - 56);
         return;
       case 'crossfireWave':
-        this.graphics.lineStyle(2, accentColor, flashAlpha * 1.5);
+        this.graphics.lineStyle(2, accentColor, flashAlpha * 0.75);
         this.graphics.lineBetween(82, 112, this.scale.width - 82, this.scale.height - 112);
         this.graphics.lineBetween(82, this.scale.height - 112, this.scale.width - 82, 112);
-        this.graphics.lineStyle(1, accentColor, flashAlpha * 1.1);
+        this.graphics.lineStyle(1, accentColor, flashAlpha * 0.55);
         this.graphics.lineBetween(132, 112, this.scale.width - 132, this.scale.height - 112);
         this.graphics.lineBetween(132, this.scale.height - 112, this.scale.width - 132, 112);
         if (battle.pressureSafeWindowShiftType === 'centerReset') {
-          this.graphics.lineStyle(2, accentColor, flashAlpha * 1.3);
+          this.graphics.lineStyle(2, accentColor, flashAlpha * 0.65);
           this.graphics.strokeCircle(this.scale.width * 0.5, this.scale.height * 0.5, 66);
           this.graphics.strokeCircle(this.scale.width * 0.5, this.scale.height * 0.5, 102);
         }
         if (battle.pressureSafeWindowShiftType === 'edgeBounce') {
-          this.graphics.lineStyle(2, accentColor, flashAlpha * 1.25);
+          this.graphics.lineStyle(2, accentColor, flashAlpha * 0.62);
           this.graphics.lineBetween(72, 138, 120, 138);
           this.graphics.lineBetween(72, this.scale.height - 138, 120, this.scale.height - 138);
           this.graphics.lineBetween(this.scale.width - 72, 138, this.scale.width - 120, 138);

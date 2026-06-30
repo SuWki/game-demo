@@ -100,6 +100,25 @@ export function resolveBulletHit(
   enemy.hp -= damage;
   bullet.hitCount += 1;
 
+  // 伤害飘字
+  const damageKind: 'normal' | 'crit' | 'pierce' | 'dash' = critical
+    ? 'crit'
+    : bullet.routeFocus === 'pierce'
+      ? 'pierce'
+      : bullet.routeFocus === 'dash'
+        ? 'dash'
+        : 'normal';
+  battle.damageNumbers.push({
+    x: enemy.x + (Math.random() - 0.5) * 12,
+    y: enemy.y - enemy.radius - 4,
+    value: Math.round(damage),
+    lifeSec: critical ? 0.9 : 0.65,
+    maxLifeSec: critical ? 0.9 : 0.65,
+    kind: damageKind,
+    velocityX: (Math.random() - 0.5) * 30,
+    velocityY: -55 - Math.random() * 20,
+  });
+
   enemy.lastHitWasCrit = critical;
   enemy.lastHitWasPierce = bullet.hitCount > 1 || bullet.routeFocus === 'pierce';
 
