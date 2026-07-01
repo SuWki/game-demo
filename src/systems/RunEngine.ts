@@ -4322,6 +4322,11 @@ export class RunEngine {
     // Calculate multiplier: +5% per kill, max +50% at 10 kills
     battle.killStreakMultiplier = 1.0 + Math.min(0.5, battle.killStreakCount * 0.05);
 
+    // Play combo sound when streak is active (2+ kills in a row)
+    if (battle.killStreakCount >= 2) {
+      this.enqueueAudio('combo');
+    }
+
     return battle.killFlowCount;
   }
 

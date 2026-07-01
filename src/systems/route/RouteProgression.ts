@@ -111,7 +111,6 @@ export function getRouteBuildProgressInfo(state: RunState, routeId: RouteId): {
 /** 返回指定流派在指定阶段解锁的效果描述，用于 tooltip */
 export function getRouteStageUnlockDescription(routeId: RouteId, stage: Exclude<RouteBuildStage, 'unformed'>): string {
   const threshold = ROUTE_STAGE_THRESHOLDS[stage];
-  const stageLabel = getBuildStageLabel(stage);
   let unlockText = '';
   switch (routeId) {
     case 'crit':
@@ -142,7 +141,7 @@ export function getRouteStageUnlockDescription(routeId: RouteId, stage: Exclude<
       }
       break;
   }
-  return `流派强化选择数量到达 ${threshold} 时解锁「${stageLabel}」：${unlockText}`;
+  return `流派强化到达 ${threshold} 张解锁：${unlockText}`;
 }
 
 export function getBuildStageLabel(buildStage: RouteBuildStage): string {

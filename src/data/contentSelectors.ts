@@ -618,10 +618,23 @@ function buildLevelUpRouteWindowPool(
 ): Array<{ item: UpgradeArchetype; weight: number }> {
   const stage = getRouteShowcaseStage(context, 'levelUp');
   if (!context.dominantRoute) {
-    return scaleWeightedPool(buildRouteShowcasePool(context, 'levelUp', 'starter'), 1.12);
+    const starterPool = buildRouteShowcasePool(context, 'levelUp', 'starter');
+    // If starter showcase cards are exhausted, try ALL route cards
+    if (starterPool.length === 0) {
+      return scaleWeightedPool(
+        buildWeightedUpgradePool(context, 'levelUp', (archetype) => Boolean(archetype.routeId)),
+        1.12,
+      );
+    }
+    return scaleWeightedPool(starterPool, 1.12);
   }
 
   const dominantPool = buildRouteShowcasePool(context, 'levelUp', stage, context.dominantRoute);
+  // If showcase cards for dominant route are exhausted, try ALL cards for this route
+  if (dominantPool.length === 0) {
+    const allRoutePool = buildWeightedUpgradePool(context, 'levelUp', (archetype) => archetype.routeId === context.dominantRoute);
+    return scaleWeightedPool(allRoutePool, stage === 'payoff' ? 1.12 : stage === 'bridge' ? 1.08 : 1.16);
+  }
   return scaleWeightedPool(dominantPool, stage === 'payoff' ? 1.12 : stage === 'bridge' ? 1.08 : 1.16);
 }
 
@@ -651,6 +664,12 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
   const routeWindowPool = equalStarter
     ? [{ item: equalStarter, weight: 1 }]
     : buildLevelUpRouteWindowPool(context);
+
+  // Route card appearance probability: 60% for balanced progression
+  // This ensures: lucky runs reach 8 cards by round 3, normal by round 4, bad by round 5
+  const ROUTE_CARD_APPEARANCE_RATE = 0.60;
+  const shouldOfferRouteCard = equalStarter !== null || Math.random() < ROUTE_CARD_APPEARANCE_RATE;
+
   const flexPool = mergeWeightedPools(
     scaleWeightedPool(
       genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPhasePool.length > 0 ? genericPhasePool : genericPool,
@@ -663,11 +682,12 @@ function rollLevelUpChoices(context: ContentContext): UpgradeDefinition[] {
     ),
   );
 
-  if (context.dominantRoute && routeWindowPool.length > 0) {
+  if (context.dominantRoute && routeWindowPool.length > 0 && shouldOfferRouteCard) {
     appendUniquePicks(picks, routeWindowPool, 1);
     appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
     appendUniquePicks(picks, flexPool.length > 0 ? flexPool : routeWindowPool, 3 - picks.length);
   } else {
+    // No route card this time - all generic
     appendUniquePicks(picks, genericPrimaryPool.length > 0 ? genericPrimaryPool : genericPool, 1);
     appendUniquePicks(picks, genericSecondaryPool.length > 0 ? genericSecondaryPool : genericPool, 1);
     appendUniquePicks(picks, flexPool.length > 0 ? flexPool : genericPool, 1);
@@ -821,9 +841,14 @@ export function rollUpgradeChoices(
 
     for (const route of ROUTES) {
       let routePool: Array<{ item: UpgradeArchetype; weight: number }> = [];
+      // Try each stage in fallback order, accumulating available cards
       for (const fallbackStage of stageFallbacks) {
-        routePool = buildRouteShowcasePool(context, source, fallbackStage, route.id);
-        if (routePool.length > 0) break;
+        const stagePool = buildRouteShowcasePool(context, source, fallbackStage, route.id);
+        routePool = [...routePool, ...stagePool];
+      }
+      // If showcase cards exhausted, try ALL route cards for this route
+      if (routePool.length === 0) {
+        routePool = buildWeightedUpgradePool(context, source, (archetype) => archetype.routeId === route.id);
       }
       if (routePool.length > 0) {
         appendUniquePicks(picks, routePool, 1);

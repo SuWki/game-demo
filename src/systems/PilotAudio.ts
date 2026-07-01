@@ -83,6 +83,7 @@ const PREVIEW_CUE_URLS: Partial<Record<AudioCue, string>> = {
   relayBrute: 'assets/preview-runtime/audio/enemy_relay_brute.wav',
   relayRanged: 'assets/preview-runtime/audio/enemy_relay_ranged.wav',
   eliteSpawn: 'assets/preview-runtime/audio/enemy_elite_spawn.wav',
+  combo: 'assets/preview-runtime/audio/combo_streak.wav',
   victory: 'assets/preview-runtime/audio/ui_victory.wav',
   defeat: 'assets/preview-runtime/audio/ui_defeat.wav',
   result: 'assets/preview-runtime/audio/ui_result.wav',
@@ -133,6 +134,9 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
   dashPulse: 0.52,
   routeMatured: 0.58,
   eliteSpawn: 0.62,
+
+  // 连击特效 - 0.65-0.75
+  combo: 0.68,
 
   // 结算 - 0.7-0.8
   victory: 0.8,
@@ -869,6 +873,7 @@ export class PilotAudio {
         return;
       case 'kill':
       case 'crit':
+      case 'combo':
       case 'relayBrute':
         this.duckMusic(0.22, 0.115);
         return;
@@ -2164,6 +2169,45 @@ export class PilotAudio {
               duration: 0.24,
               delay: 0.12,
               sweepTo: 680,
+            });
+          },
+        };
+      case 'combo':
+        // Kill streak combo sound - escalating pitch with streak count
+        return {
+          cooldownMs: 120,
+          play: (context, destination, now) => {
+            const variant = this.getCueVariant('combo', 30);
+            // Rising tone that gets higher with each combo tick
+            createVoice(context, destination, now, {
+              type: 'triangle',
+              frequency: 380 + variant,
+              peak: 0.06,
+              duration: 0.08,
+              sweepTo: 580 + variant * 1.4,
+            });
+            createVoice(context, destination, now, {
+              type: 'sine',
+              frequency: 720 + variant * 1.8,
+              peak: 0.038,
+              duration: 0.1,
+              delay: 0.016,
+              sweepTo: 1040 + variant * 2.2,
+            });
+            createVoice(context, destination, now, {
+              type: 'square',
+              frequency: 240 + variant * 0.6,
+              peak: 0.022,
+              duration: 0.055,
+              delay: 0.008,
+              sweepTo: 180 + variant * 0.3,
+            });
+            this.createNoiseBurst(context, destination, now, {
+              peak: 0.028,
+              duration: 0.048,
+              frequency: 2480 + variant * 8,
+              q: 1.18,
+              pan: variant * 0.006,
             });
           },
         };

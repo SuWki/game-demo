@@ -175,6 +175,7 @@ export class GameScene extends Phaser.Scene {
   private enemyLabelCursor = 0;
 
   private readonly damageNumberTexts: Phaser.GameObjects.Text[] = [];
+  private lastDamageCount = 0; // Track last frame's damage count to detect new ones
 
   private dyingEnemies: Array<{
     id: number;
@@ -188,6 +189,10 @@ export class GameScene extends Phaser.Scene {
   }> = [];
 
   private lastSeenEnemyHp: Map<number, number> = new Map();
+
+  // Particle emitters for visual effects
+  private particleEmitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+  private readonly emitterPool: Map<string, Phaser.GameObjects.Particles.ParticleEmitter> = new Map();
 
   private bossSafeHintText!: Phaser.GameObjects.Text;
 
@@ -719,6 +724,7 @@ export class GameScene extends Phaser.Scene {
     this.runtimePreviewImages.length = 0;
     this.runtimePreviewImageCursor = 0;
     this.services.debugPanel.unbind();
+    this.cleanupAllParticles();
   }
 
   private isSimulationPaused(): boolean {
@@ -1582,6 +1588,140 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  // ========== Particle System ==========
+
+  private createParticleEmitter(
+    x: number,
+    y: number,
+    config: {
+      color: number;
+      count: number;
+      speed: number;
+      lifespan: number;
+      scale: number;
+      alpha?: number;
+      blendMode?: Phaser.BlendModes;
+    },
+  ): Phaser.GameObjects.Particles.ParticleEmitter {
+    const emitter = this.add.particles(x, y, 'white-pixel', {
+      lifespan: config.lifespan * 1000,
+      speed: { min: config.speed * 0.6, max: config.speed * 1.4 },
+      angle: { min: 0, max: 360 },
+      scale: { start: config.scale * 1.2, end: config.scale * 0.3 },
+      quantity: config.count,
+      tint: config.color,
+      alpha: { start: config.alpha ?? 1, end: 0 },
+      blendMode: config.blendMode ?? Phaser.BlendModes.ADD,
+      emitting: false,
+    });
+    emitter.setDepth(50);
+    this.particleEmitters.push(emitter);
+    return emitter;
+  }
+
+  private emitParticles(
+    x: number,
+    y: number,
+    config: {
+      color: number;
+      count: number;
+      speed: number;
+      lifespan: number;
+      scale: number;
+      alpha?: number;
+      blendMode?: Phaser.BlendModes;
+    },
+  ): void {
+    const emitter = this.createParticleEmitter(x, y, config);
+    emitter.explode(config.count, x, y);
+    // Auto-destroy after emission
+    this.time.delayedCall(config.lifespan * 1000 + 100, () => {
+      emitter.destroy();
+      const idx = this.particleEmitters.indexOf(emitter);
+      if (idx >= 0) this.particleEmitters.splice(idx, 1);
+    });
+  }
+
+  private cleanupAllParticles(): void {
+    for (const emitter of this.particleEmitters) {
+      emitter.destroy();
+    }
+    this.particleEmitters.length = 0;
+    this.emitterPool.clear();
+  }
+
+  // ========== Specialized Particle Effects ==========
+
+  /** Bullet hit spark effect */
+  private emitHitSpark(x: number, y: number, isCrit: boolean): void {
+    const color = isCrit ? 0xffd700 : 0xffffff;
+    const count = isCrit ? 8 : 5;
+    const speed = isCrit ? 120 : 80;
+    const lifespan = isCrit ? 0.3 : 0.2;
+    const scale = isCrit ? 3 : 2;
+    
+    this.emitParticles(x, y, {
+      color,
+      count,
+      speed,
+      lifespan,
+      scale,
+      alpha: 0.9,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+  }
+
+  /** Critical hit burst effect */
+  private emitCritBurst(x: number, y: number): void {
+    // Main golden burst
+    this.emitParticles(x, y, {
+      color: 0xffd700,
+      count: 16,
+      speed: 150,
+      lifespan: 0.4,
+      scale: 4,
+      alpha: 1,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+    
+    // Secondary white sparks
+    this.emitParticles(x, y, {
+      color: 0xffffff,
+      count: 8,
+      speed: 100,
+      lifespan: 0.3,
+      scale: 2,
+      alpha: 0.8,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+  }
+
+  /** Pierce ripple effect */
+  private emitPierceRipple(x: number, y: number): void {
+    this.emitParticles(x, y, {
+      color: 0xa8d8ff,
+      count: 10,
+      speed: 90,
+      lifespan: 0.35,
+      scale: 2.5,
+      alpha: 0.7,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+  }
+
+  /** Dash trail effect */
+  private emitDashTrail(x: number, y: number): void {
+    this.emitParticles(x, y, {
+      color: 0x7aff7a,
+      count: 6,
+      speed: 60,
+      lifespan: 0.25,
+      scale: 2,
+      alpha: 0.8,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+  }
+
   private renderBossSafeWindowHint(battle: BattleState): void {
     if (battle.pressureSafeWindowSec <= 0) {
       this.bossSafeHintText.setVisible(false);
@@ -1677,6 +1817,17 @@ export class GameScene extends Phaser.Scene {
 
       let text = this.damageNumberTexts[i];
       if (!text) {
+        // New damage number - trigger particle effect
+        if (isCrit) {
+          this.emitCritBurst(screen.x, screen.y);
+        } else if (isPierce) {
+          this.emitPierceRipple(screen.x, screen.y);
+        } else if (isDash) {
+          this.emitDashTrail(screen.x, screen.y);
+        } else {
+          this.emitHitSpark(screen.x, screen.y, false);
+        }
+        
         text = this.add.text(0, 0, '', {
           fontFamily: 'Arial, sans-serif',
           fontSize: '14px',
@@ -1706,6 +1857,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = dnCount; i < this.damageNumberTexts.length; i += 1) {
       this.damageNumberTexts[i].setVisible(false);
     }
+    this.lastDamageCount = dnCount;
   }
 
   private renderDyingEnemies(
@@ -1755,17 +1907,18 @@ export class GameScene extends Phaser.Scene {
       this.graphics.fillStyle(bodyColor, alpha * 0.9);
       this.graphics.fillCircle(screen.x, screen.y, renderRadius);
 
-      // Elite: burst particles
-      if (dying.elite && lifeRatio > 0.3) {
-        const burstCount = 6;
-        for (let i = 0; i < burstCount; i += 1) {
-          const angle = (i / burstCount) * Math.PI * 2 + (1 - lifeRatio) * 2;
-          const dist = renderRadius + (1 - lifeRatio) * 40;
-          const px = screen.x + Math.cos(angle) * dist;
-          const py = screen.y + Math.sin(angle) * dist;
-          this.graphics.fillStyle(0xffd700, alpha * 0.7);
-          this.graphics.fillCircle(px, py, 2 + lifeRatio * 2);
-        }
+      // Elite: burst particles (use Phaser particle system)
+      if (dying.elite && lifeRatio > 0.3 && lifeRatio < 0.35) {
+        // Emit once during the animation
+        this.emitParticles(screen.x, screen.y, {
+          color: 0xffd700,
+          count: 12,
+          speed: 80,
+          lifespan: 0.4,
+          scale: 3,
+          alpha: 0.9,
+          blendMode: Phaser.BlendModes.ADD,
+        });
       }
     }
 
@@ -2147,16 +2300,7 @@ export class GameScene extends Phaser.Scene {
     const pattern = template.spawnRule?.pattern ?? 'surround';
     const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
     if (pattern === 'lanes' && laneBias === 'vertical') {
-      for (const worldX of [ARENA_WIDTH * 0.24, ARENA_WIDTH * 0.5, ARENA_WIDTH * 0.76]) {
-        const screenX = worldX - camera.left;
-        if (screenX < -40 || screenX > camera.width + 40) {
-          continue;
-        }
-        g.fillStyle(encounterGlow, 0.032 + pulse * 0.026);
-        g.fillRect(screenX - 18, 0, 36, camera.height);
-        g.lineStyle(1.5, encounterGlow, 0.03 + pulse * 0.04);
-        g.lineBetween(screenX, 0, screenX, camera.height);
-      }
+      // Lane indicators removed - too distracting
       return;
     }
 
@@ -4824,8 +4968,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
-    // Safe window overlay removed - too distracting
-    // this.renderPressureSafeWindowOverlay(battle, camera, accentColor, flashAlpha);
+    // Safe window overlay - shows safe zone (green) and danger zone (red)
+    this.renderPressureSafeWindowOverlay(battle, camera, accentColor, flashAlpha);
 
     switch (battle.pressurePatternMode) {
       case 'sideClamp':
@@ -4945,7 +5089,8 @@ export class GameScene extends Phaser.Scene {
       this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.36);
       this.graphics.strokeRect(safeStartX, safeStartY, safeWidth, safeHeight);
       this.renderSafeWindowBrackets(safeStartX, safeStartY, safeWidth, safeHeight, safeTint, accentColor, safeWindowAlpha, flashAlpha);
-      this.graphics.lineStyle(2, accentColor, flashAlpha * 1.3);
+      // Reduced boundary lines - thinner and more transparent
+      this.graphics.lineStyle(1.2, accentColor, flashAlpha * 0.6);
       this.graphics.lineBetween(safeStartX, safeStartY, safeStartX, safeEndY);
       this.graphics.lineBetween(safeEndX, safeStartY, safeEndX, safeEndY);
       this.graphics.lineBetween(safeStartX, safeStartY, safeEndX, safeStartY);
@@ -4980,7 +5125,8 @@ export class GameScene extends Phaser.Scene {
       this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
       this.graphics.strokeRect(safeStart, topInset - 4, safeWidth, contentHeight + 8);
       this.renderSafeWindowBrackets(safeStart, topInset - 4, safeWidth, contentHeight + 8, safeTint, accentColor, safeWindowAlpha, flashAlpha);
-      this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
+      // Reduced boundary lines - thinner and more transparent
+      this.graphics.lineStyle(1.2, accentColor, flashAlpha * 0.6);
       this.graphics.lineBetween(safeStart, topInset - 8, safeStart, camera.height - bottomInset + 8);
       this.graphics.lineBetween(safeEnd, topInset - 8, safeEnd, camera.height - bottomInset + 8);
       return true;
@@ -5012,7 +5158,8 @@ export class GameScene extends Phaser.Scene {
     this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
     this.graphics.strokeRect(leftInset - 4, safeStart, contentWidth + 8, safeHeight);
     this.renderSafeWindowBrackets(leftInset - 4, safeStart, contentWidth + 8, safeHeight, safeTint, accentColor, safeWindowAlpha, flashAlpha);
-    this.graphics.lineStyle(2, accentColor, flashAlpha * 1.35);
+    // Reduced boundary lines - thinner and more transparent
+    this.graphics.lineStyle(1.2, accentColor, flashAlpha * 0.6);
     this.graphics.lineBetween(leftInset - 8, safeStart, camera.width - rightInset + 8, safeStart);
     this.graphics.lineBetween(leftInset - 8, safeEnd, camera.width - rightInset + 8, safeEnd);
     return true;

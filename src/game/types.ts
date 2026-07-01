@@ -78,6 +78,7 @@ export type AudioCue =
   | 'relayBrute'
   | 'relayRanged'
   | 'pressure'
+  | 'combo' // Kill streak combo sound
   | 'lowHpWarning'
   | 'routeMatured'
   | 'eliteSpawn'
