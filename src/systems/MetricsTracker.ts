@@ -207,7 +207,7 @@ export class MetricsTracker {
     target.__pilotMetrics = this.store;
     target.__exportPilotMetrics = () => {
       const content = JSON.stringify(this.store, null, 2);
-      console.log(content);
+      if (import.meta.env.DEV) console.log(content);
       return content;
     };
   }

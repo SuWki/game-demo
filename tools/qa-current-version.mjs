@@ -3,7 +3,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 
 const url = process.env.PILOT_QA_URL ?? 'http://127.0.0.1:4187';
-const outputDir = 'E:/codex/unity-learning/output/qa/current-version';
+const outputDir = process.env.PILOT_QA_OUTPUT ?? 'output/qa/current-version';
 const executableCandidates = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',

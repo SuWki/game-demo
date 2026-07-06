@@ -53,7 +53,7 @@ export class ConfigLoader {
     }
     
     this.loaded = true;
-    console.log('[ConfigLoader] 核心配置预加载完成');
+    if (import.meta.env.DEV) console.log('[ConfigLoader] 核心配置预加载完成');
   }
 
   /**
@@ -73,7 +73,7 @@ export class ConfigLoader {
       this.configs[name] = data;
       
       if (this.isDev) {
-        console.log(`[ConfigLoader] 已从 JSON 加载 ${name}`);
+        if (import.meta.env.DEV) console.log(`[ConfigLoader] 已从 JSON 加载 ${name}`);
       }
       
       return data as ConfigMap[T];

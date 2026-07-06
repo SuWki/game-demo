@@ -1,4 +1,4 @@
-﻿import {
+import {
   ARENA_HEIGHT,
   ARENA_WIDTH,
   VIEWPORT_HEIGHT,
@@ -89,6 +89,34 @@ import * as RouteProgression from './route/RouteProgression';
 import { createBattleState } from './state/BattleStateFactory';
 import { createRunState } from './state/RunStateFactory';
 import * as DashSystem from './combat/DashSystem';
+import {
+  CENTER_X,
+  CENTER_Y,
+  BOSS_SAFE_WINDOW_REACTION_SEC,
+  BOSS_SAFE_WINDOW_POCKET_REACTION_SEC,
+  BASE_PLAYER_MOVE_SPEED,
+  BOSS_SAFE_WINDOW_EDGE_MARGIN_X,
+  BOSS_SAFE_WINDOW_EDGE_MARGIN_Y,
+  getBattleViewportBounds as getBattleViewportBoundsPure,
+  getBossSafeWindowLingerSec as getBossSafeWindowLingerSecPure,
+  getBossSafeWindowTargetDistance as getBossSafeWindowTargetDistancePure,
+  chooseBossPressureSafeWindowCenter as chooseBossPressureSafeWindowCenterPure,
+  chooseBossPressureSafePocketCenter as chooseBossPressureSafePocketCenterPure,
+  getBossPressurePocketFallbackAngle,
+  getPressurePocketShiftProfile,
+  collectPressureSlotPositions as collectPressureSlotPositionsPure,
+  isPointInsidePressureSafeWindow as isPointInsidePressureSafeWindowPure,
+  getDistanceOutsidePressureSafeWindow as getDistanceOutsidePressureSafeWindowPure,
+  calculateBossSafeWindowGraceSec,
+} from './battle/pressureSafeWindowMath';
+import {
+  calculateStatChanges as calculateStatChangesPure,
+  getResultRouteEvidenceCounts as getResultRouteEvidenceCountsPure,
+  getInferredResultRoute as getInferredResultRoutePure,
+  getResultBuildStage as getResultBuildStagePure,
+  getDefaultBuildStage,
+  getDominantRouteFromCounts,
+} from './battle/resultAnalysis';
 
 interface EngineAnnouncement {
   kind: 'tip' | 'audio';
@@ -115,14 +143,6 @@ interface ReplayProfile {
   anomalyTransformHits: number;
   anomalyFinisherHits: number;
 }
-
-const CENTER_X = ARENA_WIDTH / 2;
-const CENTER_Y = ARENA_HEIGHT / 2;
-const BOSS_SAFE_WINDOW_REACTION_SEC = 0.82;
-const BOSS_SAFE_WINDOW_POCKET_REACTION_SEC = 0.64;
-const BASE_PLAYER_MOVE_SPEED = createBaseStats().moveSpeed;
-const BOSS_SAFE_WINDOW_EDGE_MARGIN_X = 12;
-const BOSS_SAFE_WINDOW_EDGE_MARGIN_Y = 10;
 
 function getBuildStageLabel(buildStage: RouteBuildStage): string {
   return RouteProgression.getBuildStageLabel(buildStage);
@@ -817,29 +837,11 @@ export class RunEngine {
   }
 
   public getDominantRoute(): RouteId | null {
-    const entries = Object.entries(this.state.routeCounts) as Array<[RouteId, number]>;
-    const top = [...entries].sort((left, right) => right[1] - left[1])[0];
-    return top && top[1] > 0 ? top[0] : null;
+    return getDominantRouteFromCounts(this.state.routeCounts);
   }
 
   private calculateStatChanges(before: PlayerStats, after: PlayerStats): StatModifiers {
-    const changes: StatModifiers = {};
-
-    if (after.maxHp !== before.maxHp) changes.maxHp = after.maxHp - before.maxHp;
-    if (after.damage !== before.damage) changes.damage = after.damage - before.damage;
-    if (after.fireRate !== before.fireRate) changes.fireRate = after.fireRate - before.fireRate;
-    if (after.projectileSpeed !== before.projectileSpeed) changes.projectileSpeed = after.projectileSpeed - before.projectileSpeed;
-    if (after.critChance !== before.critChance) changes.critChance = after.critChance - before.critChance;
-    if (after.critMultiplier !== before.critMultiplier) changes.critMultiplier = after.critMultiplier - before.critMultiplier;
-    if (after.pierce !== before.pierce) changes.pierce = after.pierce - before.pierce;
-    if (after.multishot !== before.multishot) changes.multishot = after.multishot - before.multishot;
-    if (after.moveSpeed !== before.moveSpeed) changes.moveSpeed = after.moveSpeed - before.moveSpeed;
-    if (after.dashInterval !== before.dashInterval) changes.dashInterval = after.dashInterval - before.dashInterval;
-    if (after.dashPulseDamage !== before.dashPulseDamage) changes.dashPulseDamage = after.dashPulseDamage - before.dashPulseDamage;
-    if (after.dashInvulnerability !== before.dashInvulnerability) changes.dashInvulnerability = after.dashInvulnerability - before.dashInvulnerability;
-    if (after.regeneration !== before.regeneration) changes.regeneration = after.regeneration - before.regeneration;
-
-    return changes;
+    return calculateStatChangesPure(before, after);
   }
 
   private getResultRoute(): RouteId | null {
@@ -847,49 +849,19 @@ export class RunEngine {
   }
 
   private getInferredResultRoute(): RouteId | null {
-    const counts = this.getResultRouteEvidenceCounts(
-      this.state.selectedUpgrades
-        .map((id) => this.getAllUpgradeArchetypes().find((upgrade) => upgrade.id === id))
-        .filter((upgrade): upgrade is UpgradeDefinition => upgrade !== undefined),
+    return getInferredResultRoutePure(
+      this.state.selectedUpgrades,
+      this.getAllUpgradeArchetypes(),
       this.state.eventHistory,
+      this.state.routeCounts,
     );
-    const dominantRoute = this.getDominantRoute();
-    const rankedRoutes = (Object.entries(counts) as Array<[RouteId, number]>).sort((left, right) => {
-      if (right[1] !== left[1]) {
-        return right[1] - left[1];
-      }
-      return left[0].localeCompare(right[0]);
-    });
-    const [bestRoute, bestCount] = rankedRoutes[0] ?? [null, 0];
-    if (bestRoute && bestCount > 0) {
-      return bestRoute;
-    }
-    return dominantRoute;
   }
 
   private getResultRouteEvidenceCounts(
     selectedUpgrades: UpgradeDefinition[],
     eventHistory: PickedEventRecord[],
   ): Record<RouteId, number> {
-    const counts: Record<RouteId, number> = {
-      crit: 0,
-      pierce: 0,
-      dash: 0,
-    };
-
-    for (const upgrade of selectedUpgrades) {
-      if (upgrade.routeId) {
-        counts[upgrade.routeId] += upgrade.rarity === 'rare' ? 2 : 1;
-      }
-    }
-
-    for (const record of eventHistory) {
-      if (record.routeId) {
-        counts[record.routeId] += record.anomalyClass ? 2 : 1;
-      }
-    }
-
-    return counts;
+    return getResultRouteEvidenceCountsPure(selectedUpgrades, eventHistory);
   }
 
   private getResultBuildStage(
@@ -897,29 +869,14 @@ export class RunEngine {
     selectedUpgrades: UpgradeDefinition[],
     eventHistory: PickedEventRecord[],
   ): RouteBuildStage {
-    if (!routeId) {
-      return this.getBuildStage();
-    }
-
-    if (this.state.maturedRoute === routeId) {
-      return 'matured';
-    }
-    if (this.state.committedRoute === routeId) {
-      return 'committed';
-    }
-
-    const counts = this.getResultRouteEvidenceCounts(selectedUpgrades, eventHistory);
-    const evidence = counts[routeId];
-    if (evidence >= 5) {
-      return 'matured';
-    }
-    if (evidence >= 2) {
-      return 'committed';
-    }
-    if (evidence >= 1) {
-      return 'hinted';
-    }
-    return 'unformed';
+    return getResultBuildStagePure(
+      routeId,
+      selectedUpgrades,
+      eventHistory,
+      this.state.maturedRoute,
+      this.state.committedRoute,
+      this.getBuildStage(),
+    );
   }
 
   private getCurrentBattleIndex(): number {
@@ -1333,19 +1290,7 @@ export class RunEngine {
     width: number;
     height: number;
   } {
-    const width = Math.min(VIEWPORT_WIDTH, ARENA_WIDTH);
-    const height = Math.min(VIEWPORT_HEIGHT, ARENA_HEIGHT);
-    const left = clamp(battle.playerX - width * 0.5, 0, Math.max(0, ARENA_WIDTH - width));
-    const top = clamp(battle.playerY - height * 0.5, 0, Math.max(0, ARENA_HEIGHT - height));
-
-    return {
-      left,
-      right: left + width,
-      top,
-      bottom: top + height,
-      width,
-      height,
-    };
+    return getBattleViewportBoundsPure(battle);
   }
 
   private updateBossFirelineMonitoring(battle: BattleState): void {
@@ -1542,14 +1487,11 @@ export class RunEngine {
   }
 
   private getBossSafeWindowLingerSec(baseLingerSec: number, pulseIntervalSec: number | undefined): number {
-    const minimumReadableSec = Math.max(baseLingerSec, (pulseIntervalSec ?? baseLingerSec) + 0.12);
-    return clamp(minimumReadableSec, 1.12, 2.34);
+    return getBossSafeWindowLingerSecPure(baseLingerSec, pulseIntervalSec);
   }
 
   private getBossSafeWindowTargetDistance(axis: PressureSafeWindowAxis): number {
-    const reactionSec = axis === 'pocket' ? BOSS_SAFE_WINDOW_POCKET_REACTION_SEC : BOSS_SAFE_WINDOW_REACTION_SEC;
-    const targetDistance = BASE_PLAYER_MOVE_SPEED * reactionSec;
-    return axis === 'pocket' ? clamp(targetDistance, 118, 172) : clamp(targetDistance, 132, 204);
+    return getBossSafeWindowTargetDistancePure(axis);
   }
 
   private chooseBossPressureSafeWindowCenter(
@@ -1558,31 +1500,7 @@ export class RunEngine {
     span: number,
     anchoredLane: number,
   ): number {
-    const view = this.getBattleViewportBounds(battle);
-    const dimension = axis === 'vertical' ? view.width : view.height;
-    const viewStart = axis === 'vertical' ? view.left : view.top;
-    const viewEnd = viewStart + dimension;
-    const playerCoord = axis === 'vertical' ? battle.playerX : battle.playerY;
-    const margin = axis === 'vertical' ? BOSS_SAFE_WINDOW_EDGE_MARGIN_X : BOSS_SAFE_WINDOW_EDGE_MARGIN_Y;
-    const minCenter = viewStart + margin + span * 0.5;
-    const maxCenter = viewEnd - margin - span * 0.5;
-    if (battle.bossSafeWindowMoments <= 0) {
-      return clamp(playerCoord, minCenter, maxCenter);
-    }
-    const targetDistance = this.getBossSafeWindowTargetDistance(axis);
-    const positiveTravelMax = Math.max(0, maxCenter - playerCoord);
-    const negativeTravelMax = Math.max(0, playerCoord - minCenter);
-    const preferredSign = anchoredLane >= playerCoord ? 1 : -1;
-    const preferredTravelMax = preferredSign > 0 ? positiveTravelMax : negativeTravelMax;
-    const alternateTravelMax = preferredSign > 0 ? negativeTravelMax : positiveTravelMax;
-    const travelSign =
-      preferredTravelMax >= Math.min(targetDistance, 48) || preferredTravelMax >= alternateTravelMax - 16
-        ? preferredSign
-        : -preferredSign;
-    const resolvedTravelMax = travelSign > 0 ? positiveTravelMax : negativeTravelMax;
-    const resolvedTravelDistance = Math.min(targetDistance, resolvedTravelMax);
-    const center = playerCoord + travelSign * resolvedTravelDistance;
-    return clamp(center, minCenter, maxCenter);
+    return chooseBossPressureSafeWindowCenterPure(battle, axis, span, anchoredLane);
   }
 
   private chooseBossPressureSafePocketCenter(
@@ -1593,72 +1511,14 @@ export class RunEngine {
     anchorX: number,
     anchorY: number,
   ): { x: number; y: number } {
-    const view = this.getBattleViewportBounds(battle);
-    const halfX = spanX * 0.5;
-    const halfY = spanY * 0.5;
-    const minX = view.left + BOSS_SAFE_WINDOW_EDGE_MARGIN_X + halfX;
-    const maxX = view.right - BOSS_SAFE_WINDOW_EDGE_MARGIN_X - halfX;
-    const minY = view.top + BOSS_SAFE_WINDOW_EDGE_MARGIN_Y + halfY;
-    const maxY = view.bottom - BOSS_SAFE_WINDOW_EDGE_MARGIN_Y - halfY;
-    if (battle.bossSafeWindowMoments <= 0) {
-      return {
-        x: clamp(battle.playerX, minX, maxX),
-        y: clamp(battle.playerY, minY, maxY),
-      };
-    }
-    const targetDistance = this.getBossSafeWindowTargetDistance('pocket');
-    const directionX = anchorX - battle.playerX;
-    const directionY = anchorY - battle.playerY;
-    const directionLength = Math.hypot(directionX, directionY);
-    const fallbackAngle = this.getBossPressurePocketFallbackAngle(battle, shiftType);
-    const baseAngle = directionLength > 1 ? Math.atan2(directionY, directionX) : fallbackAngle;
-    const lateralSign = battle.pressurePatternPulseCount % 2 === 0 ? 1 : -1;
-    const angleOffsets = [0, 0.42 * lateralSign, -0.42 * lateralSign, 0.82 * lateralSign, -0.82 * lateralSign];
-    const radialOffsets = [0, -28, 26];
-    let bestCandidate = {
-      x: clamp(anchorX, minX, maxX),
-      y: clamp(anchorY, minY, maxY),
-    };
-    let bestScore = Number.POSITIVE_INFINITY;
-
-    for (const angleOffset of angleOffsets) {
-      const angle = baseAngle + angleOffset;
-      const dirX = Math.cos(angle);
-      const dirY = Math.sin(angle);
-      for (const radialOffset of radialOffsets) {
-        const rawX = battle.playerX + dirX * (targetDistance + radialOffset);
-        const rawY = battle.playerY + dirY * (targetDistance + radialOffset);
-        const candidateX = clamp(rawX, minX, maxX);
-        const candidateY = clamp(rawY, minY, maxY);
-        const centerDistance = Math.hypot(candidateX - battle.playerX, candidateY - battle.playerY);
-        const anchorDrift = Math.hypot(candidateX - anchorX, candidateY - anchorY);
-        const clampLoss = Math.hypot(candidateX - rawX, candidateY - rawY);
-        const score =
-          Math.abs(centerDistance - targetDistance) +
-          anchorDrift * 0.18 +
-          clampLoss * 0.52;
-
-        if (score < bestScore) {
-          bestScore = score;
-          bestCandidate = { x: candidateX, y: candidateY };
-        }
-      }
-    }
-
-    return bestCandidate;
+    return chooseBossPressureSafePocketCenterPure(battle, spanX, spanY, shiftType, anchorX, anchorY);
   }
 
   private getBossPressurePocketFallbackAngle(
     battle: BattleState,
     shiftType: PressurePocketShiftModeId,
   ): number {
-    const baseAngle =
-      shiftType === 'edgeBounce'
-        ? Math.PI * 0.18
-        : shiftType === 'centerReset'
-          ? -Math.PI * 0.5
-          : -Math.PI * 0.28;
-    return baseAngle + Math.max(0, battle.pressurePatternPulseCount - 1) * 0.46;
+    return getBossPressurePocketFallbackAngle(battle, shiftType);
   }
 
   private getPressurePocketShiftType(
@@ -1678,52 +1538,7 @@ export class RunEngine {
     heightScale: number;
     lingerScale: number;
   } {
-    switch (shiftType) {
-      case 'centerReset':
-        return {
-          anchors: [
-            { x: 0.5, y: 0.5 },
-            { x: 0.34, y: 0.36 },
-            { x: 0.5, y: 0.5 },
-            { x: 0.66, y: 0.64 },
-            { x: 0.5, y: 0.5 },
-          ],
-          playerBlend: 0.18,
-          widthScale: 1.08,
-          heightScale: 1.06,
-          lingerScale: 1.08,
-        };
-      case 'edgeBounce':
-        return {
-          anchors: [
-            { x: 0.24, y: 0.3 },
-            { x: 0.76, y: 0.3 },
-            { x: 0.8, y: 0.7 },
-            { x: 0.2, y: 0.7 },
-            { x: 0.2, y: 0.5 },
-            { x: 0.8, y: 0.5 },
-          ],
-          playerBlend: 0.14,
-          widthScale: 0.92,
-          heightScale: 0.94,
-          lingerScale: 0.9,
-        };
-      case 'sweep':
-      default:
-        return {
-          anchors: [
-            { x: 0.34, y: 0.36 },
-            { x: 0.66, y: 0.36 },
-            { x: 0.64, y: 0.66 },
-            { x: 0.36, y: 0.66 },
-            { x: 0.5, y: 0.5 },
-          ],
-          playerBlend: 0.22,
-          widthScale: 1,
-          heightScale: 1,
-          lingerScale: 1,
-        };
-    }
+    return getPressurePocketShiftProfile(shiftType);
   }
 
   private collectPressureSlotPositions(
@@ -1733,26 +1548,7 @@ export class RunEngine {
     safeStart: number,
     safeEnd: number,
   ): number[] {
-    const slotPositions: number[] = [];
-    const safePadding = 30;
-
-    for (let index = 0; index < shotSlots; index += 1) {
-      const ratio = shotSlots === 1 ? 0.5 : index / (shotSlots - 1);
-      const position = margin + ratio * (dimension - margin * 2);
-      if (position > safeStart - safePadding && position < safeEnd + safePadding) {
-        continue;
-      }
-      slotPositions.push(position);
-    }
-
-    if (slotPositions.length === 0) {
-      slotPositions.push(
-        clamp(safeStart - (safePadding + 18), margin, dimension - margin),
-        clamp(safeEnd + safePadding + 18, margin, dimension - margin),
-      );
-    }
-
-    return slotPositions;
+    return collectPressureSlotPositionsPure(dimension, margin, shotSlots, safeStart, safeEnd);
   }
 
   private isPointInsidePressureSafeWindow(
@@ -1761,53 +1557,11 @@ export class RunEngine {
     y: number,
     padding = 0,
   ): boolean {
-    if (!battle.pressureSafeWindowAxis || battle.pressureSafeWindowSec <= 0 || battle.pressureSafeWindowSpan <= 0) {
-      return false;
-    }
-
-    const safeStartX = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5 - padding;
-    const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5 + padding;
-
-    if (battle.pressureSafeWindowAxis === 'vertical') {
-      return x >= safeStartX && x <= safeEndX;
-    }
-
-    if (battle.pressureSafeWindowAxis === 'horizontal') {
-      return y >= safeStartX && y <= safeEndX;
-    }
-
-    if (battle.pressureSafeWindowSecondarySpan <= 0) {
-      return false;
-    }
-
-    const safeStartY = battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5 - padding;
-    const safeEndY = battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
-    return x >= safeStartX && x <= safeEndX && y >= safeStartY && y <= safeEndY;
+    return isPointInsidePressureSafeWindowPure(battle, x, y, padding);
   }
 
   private getDistanceOutsidePressureSafeWindow(battle: BattleState, x: number, y: number, padding = 0): number {
-    if (!battle.pressureSafeWindowAxis || battle.pressureSafeWindowSec <= 0 || battle.pressureSafeWindowSpan <= 0) {
-      return 0;
-    }
-
-    const halfX = battle.pressureSafeWindowSpan * 0.5 + padding;
-    const dx = Math.max(0, Math.abs(x - battle.pressureSafeWindowCenter) - halfX);
-
-    if (battle.pressureSafeWindowAxis === 'vertical') {
-      return dx;
-    }
-
-    if (battle.pressureSafeWindowAxis === 'horizontal') {
-      return Math.max(0, Math.abs(y - battle.pressureSafeWindowCenter) - halfX);
-    }
-
-    if (battle.pressureSafeWindowSecondarySpan <= 0) {
-      return dx;
-    }
-
-    const halfY = battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
-    const dy = Math.max(0, Math.abs(y - battle.pressureSafeWindowSecondaryCenter) - halfY);
-    return Math.hypot(dx, dy);
+    return getDistanceOutsidePressureSafeWindowPure(battle, x, y, padding);
   }
 
   private refreshBossSafeWindowGrace(battle: BattleState): void {
@@ -1815,15 +1569,14 @@ export class RunEngine {
       return;
     }
 
-    const distance = this.getDistanceOutsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12);
-    if (distance <= 0) {
+    const graceSec = calculateBossSafeWindowGraceSec(battle, this.state.stats);
+    if (graceSec <= 0) {
       battle.bossSafeWindowGraceSec = 0;
       battle.outsideSafeDamageTimerSec = 0;
       return;
     }
 
-    const moveSpeed = Math.max(120, getPlayerMoveSpeed(this.state.stats));
-    battle.bossSafeWindowGraceSec = clamp(distance / moveSpeed + 0.28, 0.58, 1.18);
+    battle.bossSafeWindowGraceSec = graceSec;
     battle.outsideSafeDamageTimerSec = 0;
   }
 
@@ -2393,16 +2146,11 @@ export class RunEngine {
   }
 
   private getBuildStage(): RouteBuildStage {
-    if (this.state.maturedRoute) {
-      return 'matured';
-    }
-    if (this.state.committedRoute) {
-      return 'committed';
-    }
-    if (this.getDominantRoute()) {
-      return 'hinted';
-    }
-    return 'unformed';
+    return getDefaultBuildStage(
+      this.state.maturedRoute,
+      this.state.committedRoute,
+      this.getDominantRoute(),
+    );
   }
 
   private getBuildSummary(

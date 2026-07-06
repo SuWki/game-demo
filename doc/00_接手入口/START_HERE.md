@@ -24,6 +24,7 @@
 - 当前状态：可运行、可继续开发、可验证，正在从“能玩”转向“值得反复玩、能作为求职作品讲清楚”
 - 当前工作性质：核心体验验收、路线构筑收口、表现层读局、求职作品证据链整理
 - 当前不是：地图扩写轮、Boss 大重构轮、UI 全主题重做轮、正式资产替换轮、作品集包装优先轮
+- 表现层增强（2026-07-06）：Boss 入场动画（屏幕暗化+名字横幅）、升级面板选择闪光+音效、击杀连击数显示已完成
 
 ## 当前主问题
 
@@ -125,9 +126,10 @@
 - `src/systems/progression/` - 成长子系统（KillStreakSystem + ExperienceSystem + UpgradeEngine）
 - `src/systems/ai/` - AI 子系统（EnemyAI + EliteBehavior + BossBehavior）
 - `src/systems/state/` - 状态工厂（BattleStateFactory + RunStateFactory）
+- `src/systems/battle/` - 战斗纯函数模块（pressureSafeWindowMath + resultAnalysis）
 
-**详细说明**: 见 `doc/40_AI协作/2026-06-08_架构重构子系统文件说明.md`
-**进度跟踪**: 见 `doc/30_持续优化/2026-06-08_架构重构进度跟踪.md`
+**详细说明**: 见 `doc/00_接手入口/技术架构总览.md`
+**进度跟踪**: 见 `doc/00_接手入口/当前交接卡.md`
 
 UI：
 

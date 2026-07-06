@@ -1,8 +1,15 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/balance';
-import { getBattleEncounterLabel } from '../data/battleTemplates';
+import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, ROUTE_VISUAL_MAP } from '../data/routes';
+import {
+  mixColor as mixColorPure,
+  worldToScreen as worldToScreenPure,
+  isVisibleInCamera as isVisibleInCameraPure,
+  getTerrainNoise as getTerrainNoisePure,
+  createPanelStatSummary as createPanelStatSummaryPure,
+} from './renderHelpers';
 import type {
   BattleDebugConfig,
   BattleDebugRuntimeConfig,
@@ -66,20 +73,6 @@ const PREVIEW_FX_HIT_DASH_TEXTURE = 'preview-fx-hit-dash';
 const PREVIEW_FX_EXPLOSION_SMALL_TEXTURE = 'preview-fx-explosion-small';
 const PREVIEW_FX_CHARGE_GLOW_TEXTURE = 'preview-fx-charge-glow';
 
-function createPanelStatSummary(stats: PlayerStats): OverlayHudSnapshot['statSummary'] {
-  return [
-    { label: '伤害', value: stats.damage.toFixed(0), tone: 'offense' },
-    { label: '射速', value: `${Math.round(stats.fireRate * 60)}/分`, tone: 'offense' },
-    { label: '弹速', value: stats.projectileSpeed.toFixed(0), tone: 'offense' },
-    { label: '暴击率', value: `${Math.round(stats.critChance * 100)}%`, tone: 'offense' },
-    { label: '暴伤', value: `${Math.round(stats.critMultiplier * 100)}%`, tone: 'offense' },
-    { label: '穿透', value: stats.pierce.toFixed(0), tone: 'utility' },
-    { label: '多重', value: stats.multishot.toFixed(0), tone: 'utility' },
-    { label: '生命', value: `${Math.ceil(stats.hp)} / ${Math.round(stats.maxHp)}`, tone: 'survival' },
-    { label: '移速', value: stats.moveSpeed.toFixed(0), tone: 'mobility' },
-    { label: '再生', value: `${Math.round(stats.regeneration * 10)}/10秒`, tone: 'survival' },
-  ];
-}
 const TERRAIN_BLOT_SIZE = 384;
 /*
 const PHASE_TRACK = [
@@ -176,6 +169,10 @@ export class GameScene extends Phaser.Scene {
 
   private readonly damageNumberTexts: Phaser.GameObjects.Text[] = [];
   private lastDamageCount = 0; // Track last frame's damage count to detect new ones
+
+  private bossIntroBannerText: Phaser.GameObjects.Text | null = null;
+
+  private killStreakText: Phaser.GameObjects.Text | null = null;
 
   private dyingEnemies: Array<{
     id: number;
@@ -322,8 +319,7 @@ export class GameScene extends Phaser.Scene {
       if (validBossTemplates.includes(forcedBossTemplate)) {
         this.time.delayedCall(400, () => {
           this.restartDebugBattle(forcedBossTemplate as BattleDebugConfig['templateId'], 'finalBattle');
-          // eslint-disable-next-line no-console
-          console.log(`[QA] Auto-triggered forced boss battle: ${forcedBossTemplate}`);
+          if (import.meta.env.DEV) console.log(`[QA] Auto-triggered forced boss battle: ${forcedBossTemplate}`);
         });
       }
     }
@@ -335,8 +331,7 @@ export class GameScene extends Phaser.Scene {
         const config = JSON.parse(storedQaSmokeScenario) as QaSmokeScenarioConfig;
         this.time.delayedCall(320, () => {
           this.runQaSmokeScenario(config);
-          // eslint-disable-next-line no-console
-          console.log(`[QA] Auto-triggered smoke scenario: ${storedQaSmokeScenario}`);
+          if (import.meta.env.DEV) console.log(`[QA] Auto-triggered smoke scenario: ${storedQaSmokeScenario}`);
         });
       } catch {
         // eslint-disable-next-line no-console
@@ -893,7 +888,8 @@ export class GameScene extends Phaser.Scene {
           this.getPanelProgressSnapshot(),
           state.upgradeChoices,
           (upgradeId) => {
-            this.services.audio.play(state.upgradeSource === 'levelUp' ? 'upgrade' : 'confirm');
+            this.services.audio.play('upgrade');
+            this.services.audio.play('confirm');
             this.engine.chooseUpgrade(upgradeId);
             this.processAnnouncements();
             this.syncOverlay();
@@ -1015,7 +1011,7 @@ export class GameScene extends Phaser.Scene {
           nextUnlockTooltip,
         };
       }).filter((route) => route.value > 0 || route.active),
-      statSummary: createPanelStatSummary(state.stats),
+      statSummary: createPanelStatSummaryPure(state.stats),
       statusText,
       statusSubtext:
         state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : progressSnapshot.progressDetail,
@@ -1110,7 +1106,7 @@ export class GameScene extends Phaser.Scene {
       phaseTrack: progress.phaseTrack,
       levelText: `Lv.${state.level}`,
       routeStatusText: this.getRouteStatusText(),
-      statSummary: createPanelStatSummary(state.stats),
+      statSummary: createPanelStatSummaryPure(state.stats),
       upgradeRewardLabel: state.currentUpgradeIsReward ? '通关奖励' : undefined,
       routeProgress: this.createHudSnapshot().routeProgress,
     };
@@ -1568,6 +1564,7 @@ export class GameScene extends Phaser.Scene {
     this.renderRouteAura(battle, camera);
     this.renderDamageNumbers(battle, camera);
     this.renderDyingEnemies(battle, camera);
+    this.renderCritFlashRings();
     this.renderUpgradeFlash();
     this.renderBossSafeWindowHint(battle);
     this.renderRouteMomentOverlay(battle);
@@ -1655,11 +1652,11 @@ export class GameScene extends Phaser.Scene {
   /** Bullet hit spark effect */
   private emitHitSpark(x: number, y: number, isCrit: boolean): void {
     const color = isCrit ? 0xffd700 : 0xffffff;
-    const count = isCrit ? 8 : 5;
-    const speed = isCrit ? 120 : 80;
-    const lifespan = isCrit ? 0.3 : 0.2;
-    const scale = isCrit ? 3 : 2;
-    
+    const count = isCrit ? 10 : 6;
+    const speed = isCrit ? 140 : 90;
+    const lifespan = isCrit ? 0.35 : 0.22;
+    const scale = isCrit ? 3.5 : 2;
+
     this.emitParticles(x, y, {
       color,
       count,
@@ -1669,6 +1666,11 @@ export class GameScene extends Phaser.Scene {
       alpha: 0.9,
       blendMode: Phaser.BlendModes.ADD,
     });
+
+    // Critical hit: add radial flash ring
+    if (isCrit) {
+      this.emitCritFlashRing(x, y);
+    }
   }
 
   /** Critical hit burst effect */
@@ -1676,35 +1678,71 @@ export class GameScene extends Phaser.Scene {
     // Main golden burst
     this.emitParticles(x, y, {
       color: 0xffd700,
-      count: 16,
-      speed: 150,
-      lifespan: 0.4,
-      scale: 4,
+      count: 20,
+      speed: 170,
+      lifespan: 0.45,
+      scale: 4.5,
       alpha: 1,
       blendMode: Phaser.BlendModes.ADD,
     });
-    
+
     // Secondary white sparks
     this.emitParticles(x, y, {
       color: 0xffffff,
-      count: 8,
-      speed: 100,
-      lifespan: 0.3,
-      scale: 2,
-      alpha: 0.8,
+      count: 10,
+      speed: 110,
+      lifespan: 0.32,
+      scale: 2.5,
+      alpha: 0.85,
       blendMode: Phaser.BlendModes.ADD,
     });
+
+    // Orange shockwave ring
+    this.emitCritFlashRing(x, y);
+  }
+
+  /** Crit radial flash ring — draws an expanding golden ring at the impact point */
+  private critFlashRings: { x: number; y: number; lifeSec: number; maxLifeSec: number }[] = [];
+
+  private emitCritFlashRing(x: number, y: number): void {
+    this.critFlashRings.push({ x, y, lifeSec: 0.3, maxLifeSec: 0.3 });
+  }
+
+  private renderCritFlashRings(): void {
+    const dt = 1 / 60;
+    for (const ring of this.critFlashRings) {
+      const ratio = 1 - ring.lifeSec / ring.maxLifeSec; // 0 -> 1
+      const radius = 6 + ratio * 28;
+      const alpha = (1 - ratio) * 0.7;
+      this.graphics.lineStyle(2.5, 0xffd700, alpha);
+      this.graphics.strokeCircle(ring.x, ring.y, radius);
+      // Inner faint fill
+      this.graphics.fillStyle(0xffd700, alpha * 0.12);
+      this.graphics.fillCircle(ring.x, ring.y, radius * 0.7);
+      ring.lifeSec -= dt;
+    }
+    this.critFlashRings = this.critFlashRings.filter((r) => r.lifeSec > 0);
   }
 
   /** Pierce ripple effect */
   private emitPierceRipple(x: number, y: number): void {
     this.emitParticles(x, y, {
       color: 0xa8d8ff,
-      count: 10,
-      speed: 90,
-      lifespan: 0.35,
-      scale: 2.5,
-      alpha: 0.7,
+      count: 14,
+      speed: 100,
+      lifespan: 0.4,
+      scale: 3,
+      alpha: 0.75,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+    // Inner bright core
+    this.emitParticles(x, y, {
+      color: 0xffffff,
+      count: 4,
+      speed: 40,
+      lifespan: 0.2,
+      scale: 2,
+      alpha: 0.6,
       blendMode: Phaser.BlendModes.ADD,
     });
   }
@@ -1713,11 +1751,21 @@ export class GameScene extends Phaser.Scene {
   private emitDashTrail(x: number, y: number): void {
     this.emitParticles(x, y, {
       color: 0x7aff7a,
-      count: 6,
-      speed: 60,
-      lifespan: 0.25,
-      scale: 2,
-      alpha: 0.8,
+      count: 8,
+      speed: 70,
+      lifespan: 0.3,
+      scale: 2.5,
+      alpha: 0.85,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+    // Bright core particles
+    this.emitParticles(x, y, {
+      color: 0xc8ffc8,
+      count: 4,
+      speed: 30,
+      lifespan: 0.2,
+      scale: 1.5,
+      alpha: 0.7,
       blendMode: Phaser.BlendModes.ADD,
     });
   }
@@ -1909,16 +1957,28 @@ export class GameScene extends Phaser.Scene {
 
       // Elite: burst particles (use Phaser particle system)
       if (dying.elite && lifeRatio > 0.3 && lifeRatio < 0.35) {
-        // Emit once during the animation
+        // Emit once during the animation — enhanced explosion
         this.emitParticles(screen.x, screen.y, {
           color: 0xffd700,
-          count: 12,
-          speed: 80,
-          lifespan: 0.4,
-          scale: 3,
-          alpha: 0.9,
+          count: 16,
+          speed: 100,
+          lifespan: 0.45,
+          scale: 3.5,
+          alpha: 0.95,
           blendMode: Phaser.BlendModes.ADD,
         });
+        // Secondary shockwave
+        this.emitParticles(screen.x, screen.y, {
+          color: 0xff6600,
+          count: 8,
+          speed: 60,
+          lifespan: 0.3,
+          scale: 5,
+          alpha: 0.6,
+          blendMode: Phaser.BlendModes.ADD,
+        });
+        // Flash ring for elite death
+        this.critFlashRings.push({ x: screen.x, y: screen.y, lifeSec: 0.35, maxLifeSec: 0.35 });
       }
     }
 
@@ -1971,16 +2031,30 @@ export class GameScene extends Phaser.Scene {
     const boss = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
     const focusX = boss ? this.worldToScreen(camera, boss.x, boss.y).x : this.scale.width * 0.5;
     const focusY = boss ? this.worldToScreen(camera, boss.x, boss.y).y : this.scale.height * 0.38;
-    const edgeAlpha = 0.08 + introRatio * 0.08;
 
-    this.graphics.fillStyle(0x070504, edgeAlpha);
+    // Enhanced screen darkening — deeper vignette for dramatic Boss entrance
+    const darkAlpha = 0.12 + introRatio * 0.22;
+    this.graphics.fillStyle(0x05030a, darkAlpha);
     this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
-    this.graphics.fillStyle(accentColor, 0.08 + introRatio * 0.08);
+
+    // Radial vignette around Boss position
+    const vignetteRadius = 180 + introRatio * 80;
+    this.graphics.fillStyle(0x000000, introRatio * 0.15);
+    this.graphics.fillCircle(focusX, focusY, vignetteRadius * 1.8);
+    this.graphics.fillStyle(0x000000, 0);
+    this.graphics.fillCircle(focusX, focusY, vignetteRadius);
+
+    // Top/bottom accent bars
+    this.graphics.fillStyle(accentColor, 0.1 + introRatio * 0.1);
     this.graphics.fillRect(0, 12, this.scale.width, 4);
     this.graphics.fillRect(0, this.scale.height - 16, this.scale.width, 4);
+
+    // Side rails
     this.graphics.lineStyle(2.8, accentColor, 0.24 + introRatio * 0.14);
     this.graphics.lineBetween(44, 64, 44, this.scale.height - 64);
     this.graphics.lineBetween(this.scale.width - 44, 64, this.scale.width - 44, this.scale.height - 64);
+
+    // Targeting reticle around Boss
     this.graphics.lineStyle(4, accentColor, 0.3 + introRatio * 0.18);
     this.graphics.strokeCircle(focusX, focusY, 82 + introRatio * 16);
     this.graphics.lineStyle(1.6, accentColor, 0.18 + introRatio * 0.12);
@@ -1988,6 +2062,48 @@ export class GameScene extends Phaser.Scene {
     this.graphics.lineBetween(focusX + 56, focusY, focusX + 112, focusY);
     this.graphics.lineBetween(focusX, focusY - 112, focusX, focusY - 56);
     this.graphics.lineBetween(focusX, focusY + 56, focusX, focusY + 112);
+
+    // Boss name banner — appears during the first 0.95s of Boss encounter
+    if (battle.elapsedSec < 1.4 && battle.encounterType === 'boss') {
+      const bannerRatio = Phaser.Math.Clamp(1 - battle.elapsedSec / 1.4, 0, 1);
+      const bannerY = this.scale.height * 0.22;
+      const bannerH = 46;
+      const bannerW = this.scale.width * 0.7;
+      const bannerX = (this.scale.width - bannerW) / 2;
+
+      // Banner background bar
+      this.graphics.fillStyle(0x000000, bannerRatio * 0.7);
+      this.graphics.fillRect(bannerX, bannerY - bannerH / 2, bannerW, bannerH);
+      // Accent line under banner
+      this.graphics.fillStyle(accentColor, bannerRatio * 0.8);
+      this.graphics.fillRect(bannerX, bannerY + bannerH / 2 - 2, bannerW, 2);
+      this.graphics.fillRect(bannerX, bannerY - bannerH / 2, bannerW, 1);
+
+      // Boss name text
+      const templateName = BATTLE_TEMPLATES[battle.templateId]?.name ?? '';
+      const bossLabel = templateName || 'Boss';
+      if (!this.bossIntroBannerText) {
+        this.bossIntroBannerText = this.add.text(0, 0, '', {
+          fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
+          fontSize: '20px',
+          fontStyle: 'bold',
+          color: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 4,
+        });
+        this.bossIntroBannerText.setOrigin(0.5, 0.5);
+        this.bossIntroBannerText.setDepth(200);
+      }
+      this.bossIntroBannerText
+        .setText(bossLabel)
+        .setPosition(this.scale.width / 2, bannerY)
+        .setAlpha(bannerRatio)
+        .setVisible(true);
+    } else {
+      if (this.bossIntroBannerText) {
+        this.bossIntroBannerText.setVisible(false);
+      }
+    }
   }
 
   private beginRuntimePreviewImageFrame(): void {
@@ -2096,13 +2212,15 @@ export class GameScene extends Phaser.Scene {
 
     const baseLeft = clamp(battle.playerX - visibleWorldWidth * 0.5 + predictionOffsetX, 0, maxLeft);
     const baseTop = clamp(battle.playerY - visibleWorldHeight * 0.5 + predictionOffsetY, 0, maxTop);
-    // 镜头抖动
+    // 镜头抖动 — 增强为带随机噪声的冲击式抖动
     let shakeOffsetX = 0;
     let shakeOffsetY = 0;
     if (battle.cameraShakeSec > 0 && battle.cameraShakeStrength > 0.01) {
       const shakePhase = battle.elapsedSec * battle.cameraShakeFrequency * Math.PI * 2;
-      shakeOffsetX = Math.sin(shakePhase) * battle.cameraShakeStrength * 3;
-      shakeOffsetY = Math.cos(shakePhase * 1.37) * battle.cameraShakeStrength * 3;
+      const noiseX = Math.sin(shakePhase * 2.3 + 1.7) * 0.4 + Math.sin(shakePhase * 5.1) * 0.2;
+      const noiseY = Math.cos(shakePhase * 1.9 + 3.1) * 0.4 + Math.cos(shakePhase * 4.7) * 0.2;
+      shakeOffsetX = (Math.sin(shakePhase) + noiseX) * battle.cameraShakeStrength * 3.5;
+      shakeOffsetY = (Math.cos(shakePhase * 1.37) + noiseY) * battle.cameraShakeStrength * 3.5;
     }
     const left = clamp(baseLeft + shakeOffsetX, 0, maxLeft);
     const top = clamp(baseTop + shakeOffsetY, 0, maxTop);
@@ -2124,14 +2242,7 @@ export class GameScene extends Phaser.Scene {
     x: number,
     y: number,
   ): { x: number; y: number } {
-    const worldWidth = typeof camera.right === 'number' ? Math.max(1, camera.right - camera.left) : (camera.width ?? this.scale.width);
-    const worldHeight = typeof camera.bottom === 'number' ? Math.max(1, camera.bottom - camera.top) : (camera.height ?? this.scale.height);
-    const screenWidth = camera.width ?? this.scale.width;
-    const screenHeight = camera.height ?? this.scale.height;
-    return {
-      x: (x - camera.left) * (screenWidth / worldWidth),
-      y: (y - camera.top) * (screenHeight / worldHeight),
-    };
+    return worldToScreenPure(camera, x, y, this.scale.width, this.scale.height);
   }
 
   private isVisibleInCamera(
@@ -2140,12 +2251,11 @@ export class GameScene extends Phaser.Scene {
     y: number,
     padding = 40,
   ): boolean {
-    return x >= camera.left - padding && x <= camera.right + padding && y >= camera.top - padding && y <= camera.bottom + padding;
+    return isVisibleInCameraPure(camera, x, y, padding);
   }
 
   private getTerrainNoise(x: number, y: number, salt = 0): number {
-    const value = Math.sin(x * 12.9898 + y * 78.233 + salt * 43.129) * 43758.5453123;
-    return value - Math.floor(value);
+    return getTerrainNoisePure(x, y, salt);
   }
 
   private renderBattleTerrain(
@@ -2341,16 +2451,16 @@ export class GameScene extends Phaser.Scene {
     const state = this.engine.getState();
     const healthRatio = state.stats.hp / state.stats.maxHp;
 
-    // P0优化：低血量警告（<30%时触发）
+    // P0优化：低血量警告（<30%时触发）— 增强版带心跳脉冲
     if (healthRatio < 0.3) {
-      const pulseSpeed = healthRatio < 0.15 ? 8 : 5; // 血量越低脉动越快
+      const pulseSpeed = healthRatio < 0.15 ? 10 : 6; // 血量越低脉动越快
       const pulseAlpha = 0.5 + Math.sin(battle.elapsedSec * pulseSpeed) * 0.5;
       const warningAlpha = (0.3 - healthRatio) / 0.3; // 血量越低越明显
-      const edgeThickness = 40;
+      const edgeThickness = healthRatio < 0.15 ? 55 : 42;
 
-      // 屏幕边缘红色渐变警告
+      // 屏幕边缘红色渐变警告 — 增强亮度
       const redColor = 0xff0000;
-      const finalAlpha = pulseAlpha * warningAlpha * 0.4;
+      const finalAlpha = pulseAlpha * warningAlpha * (healthRatio < 0.15 ? 0.55 : 0.4);
 
       // 上边缘
       this.graphics.fillGradientStyle(redColor, redColor, 0x000000, 0x000000, finalAlpha, finalAlpha, 0, 0);
@@ -2367,6 +2477,16 @@ export class GameScene extends Phaser.Scene {
       // 右边缘
       this.graphics.fillGradientStyle(0x000000, redColor, 0x000000, redColor, 0, finalAlpha, 0, finalAlpha);
       this.graphics.fillRect(camera.width - edgeThickness, 0, edgeThickness, camera.height);
+
+      // 极低血量（<15%）时增加屏幕中央暗化 vignette
+      if (healthRatio < 0.15) {
+        const vignetteAlpha = pulseAlpha * warningAlpha * 0.08;
+        this.graphics.fillGradientStyle(
+          0x000000, 0x000000, 0x000000, 0x000000,
+          vignetteAlpha, vignetteAlpha, vignetteAlpha * 2, vignetteAlpha * 2,
+        );
+        this.graphics.fillRect(0, 0, camera.width, camera.height);
+      }
     }
   }
 
@@ -3941,6 +4061,49 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Kill Streak combo counter text — display large combo number on screen
+    if (battle.killStreakCount >= 3) {
+      const streakRatio = Math.min(1, (battle.killStreakCount - 3) / 7); // 0 at 3 kills, 1 at 10+
+      const streakPulse = Math.sin(this.time.now * 0.012) * 0.5 + 0.5;
+      const comboScale = 1 + streakRatio * 0.4 + streakPulse * streakRatio * 0.15;
+      const comboAlpha = 0.6 + streakRatio * 0.35 + streakPulse * 0.05;
+
+      if (!this.killStreakText) {
+        this.killStreakText = this.add.text(0, 0, '', {
+          fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
+          fontSize: '32px',
+          fontStyle: 'bold',
+          color: '#ffd700',
+          stroke: '#000000',
+          strokeThickness: 5,
+        });
+        this.killStreakText.setOrigin(0.5, 0.5);
+        this.killStreakText.setDepth(180);
+      }
+
+      // Position: right side of screen, vertically centered
+      const comboX = camera.width * 0.82;
+      const comboY = camera.height * 0.18;
+
+      this.killStreakText
+        .setText(`${battle.killStreakCount} 连击!`)
+        .setPosition(comboX, comboY)
+        .setScale(comboScale)
+        .setAlpha(comboAlpha)
+        .setVisible(true);
+
+      // Draw a subtle backing circle behind the combo text
+      const backRadius = 36 + streakRatio * 12;
+      this.graphics.lineStyle(2 + streakRatio * 1.5, 0xffd700, 0.1 + streakRatio * 0.2 + streakPulse * 0.06);
+      this.graphics.strokeCircle(comboX, comboY, backRadius);
+      this.graphics.fillStyle(0xffd700, 0.02 + streakRatio * 0.04);
+      this.graphics.fillCircle(comboX, comboY, backRadius * 0.8);
+    } else {
+      if (this.killStreakText) {
+        this.killStreakText.setVisible(false);
+      }
+    }
+
     // Route state is now expressed by enemy hit VFX instead of extra player-side gauges.
 
     // The old top-center yellow upgrade bar was ambiguous during battle start,
@@ -5331,19 +5494,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private mixColor(base: number, target: number, amount: number): number {
-    const ratio = clamp(amount, 0, 1);
-    const baseR = (base >> 16) & 0xff;
-    const baseG = (base >> 8) & 0xff;
-    const baseB = base & 0xff;
-    const targetR = (target >> 16) & 0xff;
-    const targetG = (target >> 8) & 0xff;
-    const targetB = target & 0xff;
-
-    const mixedR = Math.round(baseR + (targetR - baseR) * ratio);
-    const mixedG = Math.round(baseG + (targetG - baseG) * ratio);
-    const mixedB = Math.round(baseB + (targetB - baseB) * ratio);
-
-    return (mixedR << 16) | (mixedG << 8) | mixedB;
+    return mixColorPure(base, target, amount);
   }
 }
 

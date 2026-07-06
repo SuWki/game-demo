@@ -198,25 +198,25 @@ window.__pilotQaSmoke = (config) => {
   const gameScene = game.scene.getScene('GameScene');
   if (gameScene instanceof GameScene && gameScene.scene.isActive()) {
     gameScene.runQaSmokeScenario(config);
-    console.log(`[QA] Triggered smoke scenario: ${payload}`);
+    if (import.meta.env.DEV) console.log(`[QA] Triggered smoke scenario: ${payload}`);
     return true;
   }
 
   const menuScene = game.scene.getScene('MainMenuScene');
   if (menuScene) {
     menuScene.scene.start('GameScene');
-    console.log(`[QA] Starting GameScene with smoke scenario: ${payload}`);
+    if (import.meta.env.DEV) console.log(`[QA] Starting GameScene with smoke scenario: ${payload}`);
     return true;
   }
 
   const resultScene = game.scene.getScene('ResultScene');
   if (resultScene) {
     resultScene.scene.start('GameScene');
-    console.log(`[QA] Restarting GameScene with smoke scenario: ${payload}`);
+    if (import.meta.env.DEV) console.log(`[QA] Restarting GameScene with smoke scenario: ${payload}`);
     return true;
   }
 
-  console.log(`[QA] Stored smoke scenario. Start the game to trigger: ${payload}`);
+  if (import.meta.env.DEV) console.log(`[QA] Stored smoke scenario. Start the game to trigger: ${payload}`);
   return true;
 };
 
@@ -231,23 +231,19 @@ window.__pilotQaForceBoss = (templateId) => {
   const menuScene = game.scene.getScene('MainMenuScene');
   if (menuScene) {
     menuScene.scene.start('GameScene');
-    // eslint-disable-next-line no-console
-    console.log(`[QA] Starting GameScene with forced boss: ${templateId}`);
+    if (import.meta.env.DEV) console.log(`[QA] Starting GameScene with forced boss: ${templateId}`);
     return;
   }
   const gameScene = game.scene.getScene('GameScene');
   if (gameScene instanceof GameScene) {
     try {
       gameScene.restartDebugBattle(templateId, 'finalBattle');
-      // eslint-disable-next-line no-console
-      console.log(`[QA] Forced boss battle restarted: ${templateId}`);
+      if (import.meta.env.DEV) console.log(`[QA] Forced boss battle restarted: ${templateId}`);
     } catch {
       // Scene exists but may not be fully created yet; rely on create() auto-trigger
-      // eslint-disable-next-line no-console
-      console.log(`[QA] GameScene not ready yet; will auto-trigger on create: ${templateId}`);
+      if (import.meta.env.DEV) console.log(`[QA] GameScene not ready yet; will auto-trigger on create: ${templateId}`);
     }
   } else {
-    // eslint-disable-next-line no-console
-    console.log(`[QA] Stored forced boss template. Start the game to trigger: ${templateId}`);
+    if (import.meta.env.DEV) console.log(`[QA] Stored forced boss template. Start the game to trigger: ${templateId}`);
   }
 };

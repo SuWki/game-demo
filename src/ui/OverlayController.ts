@@ -96,6 +96,24 @@ export class OverlayController {
     this.root.addEventListener('mouseout', (event) => this.handleTooltipLeave(event));
     this.root.addEventListener('focusout', (event) => this.handleTooltipLeave(event));
     window.addEventListener('resize', () => this.hideTooltip());
+
+    // Inject upgrade choice flash animation styles
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      @keyframes choiceFlashSelect {
+        0% { box-shadow: 0 0 0 0 var(--rarity-accent, #59baf3); filter: brightness(1); transform: scale(1); }
+        30% { box-shadow: 0 0 32px 8px var(--rarity-accent, #59baf3); filter: brightness(1.8); transform: scale(1.04); }
+        100% { box-shadow: 0 0 0 0 var(--rarity-accent, #59baf3); filter: brightness(1); transform: scale(1); }
+      }
+      .choice-strip.choice-flash-select {
+        animation: choiceFlashSelect 0.45s ease-out forwards !important;
+        pointer-events: none;
+      }
+      .choice-strip.choice-flash-select .choice-strip-body {
+        animation: choiceFlashSelect 0.45s ease-out forwards;
+      }
+    `;
+    this.root.append(styleEl);
   }
 
   public showMenu(summary: OverlayMetaSummary, onStart: () => void, onVolume: () => void): void {
@@ -348,8 +366,27 @@ export class OverlayController {
       progress,
     });
     for (const upgrade of choices) {
-      this.bindClick(`[data-choice="${upgrade.id}"]`, () => onChoose(upgrade.id));
+      this.bindClick(`[data-choice="${upgrade.id}"]`, () => {
+        this.flashChoiceCard(upgrade.id, () => onChoose(upgrade.id));
+      });
     }
+  }
+
+  /** Triggers a bright flash animation on the selected card before invoking the callback */
+  private flashChoiceCard(upgradeId: string, onComplete: () => void): void {
+    const cardEl = this.root.querySelector<HTMLElement>(`[data-choice="${upgradeId}"]`);
+    if (!cardEl) {
+      onComplete();
+      return;
+    }
+    cardEl.classList.add('choice-flash-select');
+    // Dim sibling cards
+    const siblings = this.root.querySelectorAll<HTMLElement>('.choice-strip:not(.choice-flash-select)');
+    siblings.forEach((el) => { el.style.opacity = '0.4'; el.style.transition = 'opacity 0.2s'; el.style.pointerEvents = 'none'; });
+    // After the flash animation, invoke the callback
+    window.setTimeout(() => {
+      onComplete();
+    }, 350);
   }
 
   public showEventPanel(
