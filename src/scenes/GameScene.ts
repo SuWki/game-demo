@@ -231,6 +231,17 @@ export class GameScene extends Phaser.Scene {
     this.engine.setDebugConfig(this.getRuntimeDebugConfig());
     this.runtimePreviewImages.length = 0;
     this.runtimePreviewImageCursor = 0;
+    // Create the 'white-pixel' texture used by particle emitters.
+    // Phaser shows a green placeholder rectangle for missing textures,
+    // so this must be created before any particle effects are emitted.
+    if (!this.textures.exists('white-pixel')) {
+      const gfx = this.make.graphics();
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillRect(0, 0, 4, 4);
+      gfx.generateTexture('white-pixel', 4, 4);
+      gfx.destroy();
+    }
+
     this.terrainGraphics = this.add.graphics();
     this.terrainGraphics.setDepth(1);
     this.graphics = this.add.graphics();
@@ -4077,13 +4088,13 @@ export class GameScene extends Phaser.Scene {
           stroke: '#000000',
           strokeThickness: 5,
         });
-        this.killStreakText.setOrigin(0.5, 0.5);
+        this.killStreakText.setOrigin(1, 0); // Right-aligned, top-aligned to keep within screen bounds
         this.killStreakText.setDepth(180);
       }
 
-      // Position: below the pause button (top-right corner)
-      const comboX = camera.width - 56;
-      const comboY = 82;
+      // Position: below the pause button (top-right corner), right-aligned with padding
+      const comboX = camera.width - 16;
+      const comboY = 56;
 
       this.killStreakText
         .setText(`${battle.killStreakCount} 连击!`)
@@ -4092,12 +4103,15 @@ export class GameScene extends Phaser.Scene {
         .setAlpha(comboAlpha)
         .setVisible(true);
 
-      // Draw a subtle backing circle behind the combo text
+      // Draw a subtle backing circle behind the combo text (offset for right-aligned origin)
+      const textWidth = this.killStreakText.width * comboScale;
+      const circleX = comboX - textWidth * 0.5;
+      const circleY = comboY + this.killStreakText.height * comboScale * 0.5;
       const backRadius = 36 + streakRatio * 12;
       this.graphics.lineStyle(2 + streakRatio * 1.5, 0xffd700, 0.1 + streakRatio * 0.2 + streakPulse * 0.06);
-      this.graphics.strokeCircle(comboX, comboY, backRadius);
+      this.graphics.strokeCircle(circleX, circleY, backRadius);
       this.graphics.fillStyle(0xffd700, 0.02 + streakRatio * 0.04);
-      this.graphics.fillCircle(comboX, comboY, backRadius * 0.8);
+      this.graphics.fillCircle(circleX, circleY, backRadius * 0.8);
     } else {
       if (this.killStreakText) {
         this.killStreakText.setVisible(false);

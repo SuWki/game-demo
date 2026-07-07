@@ -143,14 +143,17 @@ function getSelectionWeight(
   tags?: string[],
 ): number {
   const rule = profile ?? {};
-  if (rule.minRound && context.round < rule.minRound) {
-    return 0;
-  }
-  if (rule.maxRound && context.round > rule.maxRound) {
-    return 0;
-  }
-  if (rule.excludeFromFinalPrep && context.phase === 'finalPrep') {
-    return 0;
+  // 强化节点(nodePrep)绕过轮次/阶段限制，确保三流派始终有卡可选
+  if (source !== 'nodePrep') {
+    if (rule.minRound && context.round < rule.minRound) {
+      return 0;
+    }
+    if (rule.maxRound && context.round > rule.maxRound) {
+      return 0;
+    }
+    if (rule.excludeFromFinalPrep && context.phase === 'finalPrep') {
+      return 0;
+    }
   }
 
   let weight = rule.baseWeight ?? 1;
@@ -235,7 +238,8 @@ function getSelectionWeight(
 
     let rareMultiplier = rarePhaseMultiplier[context.phase];
     if (source === 'nodePrep') {
-      rareMultiplier += 0.16;
+      // 强化节点不限制稀有度，确保所有route卡牌可选
+      rareMultiplier = 1;
     }
     if (!context.dominantRoute) {
       rareMultiplier *= 0.7;

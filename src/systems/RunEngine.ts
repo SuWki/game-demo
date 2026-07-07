@@ -461,6 +461,14 @@ export class RunEngine {
       pickId: `upgrade:${upgrade.sourceId}`,
     });
 
+    // Ensure route-category upgrades always increment the route count.
+    // Many route archetypes only have stat effects (no explicit 'route' effect),
+    // so applyEffects won't call advanceRoute for them. We do it here to
+    // guarantee every route pick advances the build progression.
+    if (upgrade.category === 'route' && upgrade.routeId && !upgrade.effects.some((e) => e.type === 'route')) {
+      this.advanceRoute(upgrade.routeId, { pickId: `upgrade:${upgrade.sourceId}` });
+    }
+
     // Capture stats after upgrade and calculate changes
     const statsAfter = this.state.stats;
     const statChanges = this.calculateStatChanges(statsBefore, statsAfter);
