@@ -120,8 +120,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-1-battle-breach',
         type: 'battle',
         phase: 'opening',
-        title: '厚线突围',
-        description: '前面压得很紧',
+title: '厚线突围',
+description: '高血量敌人密集推进'
         templateCandidates: [
           { templateId: 'elimination-sweep', weight: 2 },
           { templateId: 'elimination', weight: 1 },
@@ -570,8 +570,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-2-battle-crit-pressure',
         type: 'battle',
         phase: 'mid',
-        title: '蓄势压制',
-        description: '敌人有护盾间隙',
+title: '蓄势压制',
+description: '精英持盾推进，寻找破绽'
         templateId: 'elite-pressure-hold',
         difficultyScale: 1.22,
         selection: {
@@ -846,8 +846,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-crit-soft-closeout',
         type: 'battle',
         phase: 'late',
-        title: '热区续压',
-        description: '等待高伤时机',
+title: '热区续压',
+description: '高压环境下持续输出'
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.45 },
           { templateId: 'survival-closehold', weight: 1.05 },
@@ -915,8 +915,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         id: 'round-3-battle-crit-closeout',
         type: 'battle',
         phase: 'late',
-        title: '重击追杀',
-        description: '累积火力完成最终补强',
+title: '重击追杀',
+description: '集中火力消灭高威胁目标'
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.6 },
           { templateId: 'survival', weight: 1.1 },
@@ -1261,8 +1261,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '追猎首领',
-        description: '最后一场压迫战',
-        templateId: 'boss-hunt',
+description: '最终压迫战',
+templateId: 'boss-hunt',
         difficultyScale: 1.38,
         selection: {
           baseWeight: 1,
@@ -1306,8 +1306,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '处决首领',
-        description: '最后一场爆发战',
-        templateId: 'boss-executioner',
+description: '最终压迫战',
+templateId: 'boss-executioner',
         difficultyScale: 1.42,
         selection: {
           baseWeight: 1,
@@ -1321,8 +1321,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '要塞首领',
-        description: '最后一场穿透战',
-        templateId: 'boss-fortress',
+description: '最终压迫战',
+templateId: 'boss-fortress',
         difficultyScale: 1.43,
         selection: {
           baseWeight: 1,
@@ -1336,8 +1336,8 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'boss',
         phase: 'finalBattle',
         title: '猎杀首领',
-        description: '最后一场机动战',
-        templateId: 'boss-predator',
+description: '最终压迫战',
+templateId: 'boss-predator',
         difficultyScale: 1.44,
         selection: {
           baseWeight: 1,
