@@ -101,16 +101,30 @@ export class OverlayController {
     const styleEl = document.createElement('style');
     styleEl.textContent = `
       @keyframes choiceFlashSelect {
-        0% { box-shadow: 0 0 0 0 var(--rarity-accent, #59baf3); filter: brightness(1); transform: scale(1); }
-        30% { box-shadow: 0 0 32px 8px var(--rarity-accent, #59baf3); filter: brightness(1.8); transform: scale(1.04); }
-        100% { box-shadow: 0 0 0 0 var(--rarity-accent, #59baf3); filter: brightness(1); transform: scale(1); }
+        0% { filter: brightness(1); transform: scale(1); }
+        25% { filter: brightness(1.9) saturate(1.3); transform: scale(1.05); }
+        100% { filter: brightness(1); transform: scale(1); }
+      }
+      @keyframes choiceFlashOverlay {
+        0% { opacity: 0; }
+        25% { opacity: 0.85; }
+        100% { opacity: 0; }
       }
       .choice-strip.choice-flash-select {
         animation: choiceFlashSelect 0.45s ease-out forwards !important;
         pointer-events: none;
+        outline: 3px solid var(--rarity-accent, #59baf3);
+        outline-offset: -1px;
       }
-      .choice-strip.choice-flash-select .choice-strip-body {
-        animation: choiceFlashSelect 0.45s ease-out forwards;
+      .choice-strip.choice-flash-select::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--rarity-accent, #59baf3), rgba(255,255,255,0.6));
+        mix-blend-mode: screen;
+        animation: choiceFlashOverlay 0.45s ease-out forwards;
+        pointer-events: none;
+        z-index: 10;
       }
     `;
     this.root.append(styleEl);

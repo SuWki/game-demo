@@ -4081,9 +4081,9 @@ export class GameScene extends Phaser.Scene {
         this.killStreakText.setDepth(180);
       }
 
-      // Position: right side of screen, vertically centered
-      const comboX = camera.width * 0.82;
-      const comboY = camera.height * 0.18;
+      // Position: below the pause button (top-right corner)
+      const comboX = camera.width - 56;
+      const comboY = 82;
 
       this.killStreakText
         .setText(`${battle.killStreakCount} 连击!`)
