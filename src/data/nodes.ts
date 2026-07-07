@@ -198,7 +198,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'opening',
         title: '异常节点',
-        description: '这一步会拐一下',
+        description: '触发流派转折事件',
         offerRole: 'direction',
         selection: {
           baseWeight: 1.8,
@@ -529,7 +529,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'anomaly',
         phase: 'mid',
         title: '异常节点',
-        description: '这一步会把局面拐一下',
+        description: '触发局面转折事件',
         offerRole: 'pivot',
         selection: {
           baseWeight: 3.12,

@@ -659,8 +659,8 @@ export class OverlayController {
       <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
         <div class="tray-header">
           <div class="tray-title-group">
-            <span class="panel-eyebrow">这一局</span>
-            <h2 class="panel-title">怎么打到这里的</h2>
+<span class="panel-eyebrow">战斗结算</span>
+<h2 class="panel-title">战斗回顾</h2>
           </div>
         </div>
 
@@ -683,7 +683,7 @@ export class OverlayController {
             <h3 class="detail-section-title">转折</h3>
             <div class="detail-anomaly-strip">
               <span><small>带起节奏</small><strong>${anomalyRoleCounts.direction}</strong></span>
-              <span><small>火力更重</small><strong>${anomalyRoleCounts.core}</strong></span>
+              <span><small>火力强化</small><strong>${anomalyRoleCounts.core}</strong></span>
               <span><small>全面强化</small><strong>${anomalyRoleCounts.transform}</strong></span>
               <span><small>最终补强</small><strong>${anomalyRoleCounts.finisher}</strong></span>
             </div>
@@ -1004,7 +1004,7 @@ export class OverlayController {
 
   private getRouteUpgradeReadableText(upgrade: UpgradeDefinition): string {
     const description = upgrade.description?.trim();
-    if (description && !/(流派|这一路会更顺)/.test(description)) {
+    if (description && !/(流派)/.test(description)) {
       return description;
     }
 
@@ -1040,13 +1040,13 @@ export class OverlayController {
         return '子弹可穿透敌人命中后排。';
       case 'dash':
         if ((modifiers?.dashCounterDamageBonus ?? 0) > 0 && (modifiers?.dashGrazeRadiusBonus ?? 0) > 0) {
-          return '贴身反打更重，近身触发范围更大。';
+          return '贴身反击伤害提升，近身触发范围扩大。';
         }
         if ((modifiers?.dashCounterDamageBonus ?? 0) > 0) {
-          return '贴身反打更重。';
+          return '贴身反击伤害提升。';
         }
         if ((modifiers?.dashGrazeRadiusBonus ?? 0) > 0) {
-          return '更容易擦到敌人并触发穿梭。';
+          return '更容易触发擦弹并激活穿梭。';
         }
         if ((modifiers?.dashInterval ?? 0) < 0) {
           return '缩短穿梭脉冲间隔。';
@@ -1502,7 +1502,7 @@ export class OverlayController {
   private getRouteTooltip(routeId?: RouteReference): string {
     switch (routeId) {
       case 'crit':
-      return '暴击：命中时更容易打出高伤。';
+      return '暴击：命中时概率造成高额伤害。';
     case 'pierce':
       return '穿透：子弹穿过敌人后继续飞行。';
     case 'dash':
@@ -1514,7 +1514,7 @@ export class OverlayController {
 
   private getFocusTooltip(label: string): string {
     const tooltipMap: Record<string, string> = {
-      暴击: '命中时更容易打出高伤。',
+      暴击: '命中时概率造成高额伤害。',
       暴击伤害: '暴击时伤害更高。',
       爆伤: '暴击时伤害更高。',
       穿透: '子弹穿过敌人后继续飞行。',
@@ -1761,10 +1761,10 @@ export class OverlayController {
             : `${routeName}先把起手打稳`
       case 'core':
           return routeId === 'pierce'
-            ? `${routeName}的前排穿透更明显`
-            : routeId === 'dash'
-            ? `${routeName}贴身反打更顺`
-            : `${routeName}的连击更重`;
+? `${routeName}的前排穿透效果增强`
+: routeId === 'dash'
+? `${routeName}贴身反击能力增强`
+: `${routeName}的连击伤害提升`;
       case 'transform':
         return routeId === 'crit'
           ? `${routeName}已经能连着爆发`
@@ -1815,49 +1815,49 @@ export class OverlayController {
 
     if (result.routeId === 'pierce') {
     if (isLateTurn) {
-      return '起势晚，场面没打开'
+      return '起势较晚，局面未能展开'
     }
     if (result.buildStage === 'matured') {
-      return hasFinisherSupport ? '已经能打到后排，但收尾不够干净' : '已经能打到后排，但最后差一点';
+      return hasFinisherSupport ? '已突破至后排，但收尾不足' : '已突破至后排，但最终伤害不足';
     }
     if (result.buildStage === 'committed') {
-      return hasFinisherSupport ? '前排已经打开，但火力还是差一点' : '前排已经打开，但后面还没跟上';
+      return hasFinisherSupport ? '前排已突破，但火力仍不足' : '前排已突破，但后续未跟上';
     }
     if (result.buildStage === 'hinted') {
-      return '方向已经成型，前排还没开'
+      return '方向已明确，前排尚未突破'
     }
-    return '这把还差一点';
+    return '本局仍需强化';
     }
 
     if (result.routeId === 'dash') {
     if (isLateTurn) {
-      return '起势晚，场面没打开'
+      return '起势较晚，局面未能展开'
     }
     if (result.buildStage === 'matured') {
-      return hasFinisherSupport ? '已经能贴身输出，但最后一波断了' : '已经能贴身输出，但最后一波没接上';
+      return hasFinisherSupport ? '已具备贴身输出能力，但最终阶段中断' : '已具备贴身输出能力，但最终阶段未衔接';
     }
     if (result.buildStage === 'committed') {
-      return hasFinisherSupport ? '反击已经成型，但最后没撑住' : '反击已经成型，但输出还差一点'
+      return hasFinisherSupport ? '反击能力已成型，但最终阶段未支撑' : '反击能力已成型，但输出仍不足'
     }
     if (result.buildStage === 'hinted') {
-      return '已经开始贴近，但还没完全站住';
+      return '已开始贴近敌人，但尚未完全就位';
     }
-    return '这把还差一点';
+    return '本局仍需强化';
     }
 
     if (isLateTurn) {
-      return '起势晚，场面没打开'
+      return '起势较晚，局面未能展开'
     }
     if (result.buildStage === 'matured') {
-      return '已经成型，但最后一波没顶住';
+      return '已成型，但最终阶段未能坚持';
     }
     if (result.buildStage === 'committed') {
-      return '已经接上了，但伤害还差一点';
+      return '已成型，但伤害输出不足';
     }
     if (result.buildStage === 'hinted') {
-      return '方向已经成型，但火力还没跟上'
+      return '方向已明确，但火力尚未成型'
     }
-    return '这把还差一点';
+    return '本局仍需强化';
   }
 
   private getRouteLayerLabel(routeId: NonNullable<RunResult['routeId']>, role?: AnomalyRoleId): string {
@@ -1890,15 +1890,15 @@ export class OverlayController {
   }
 
   private getRouteDisplayLabel(routeId: RunResult['routeId']): string {
-    return routeId ? this.getRouteBadgeText(routeId) : '未站稳';
+    return routeId ? this.getRouteBadgeText(routeId) : '未成型';
   }
 
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
     const genericStageMap: Record<RunResult['buildStage'], string> = {
-      unformed: '未起势',
-      hinted: '起势',
-      committed: '站稳',
-      matured: '发力',
+unformed: '未成型',
+hinted: '起势',
+committed: '成型',
+matured: '完全',
     };
     if (!routeId) {
       return genericStageMap[buildStage];
@@ -1906,22 +1906,22 @@ export class OverlayController {
 
     const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
       crit: {
-        unformed: '未起势',
-        hinted: '暴击起势',
-        committed: '暴击站稳',
-        matured: '暴击发力',
+unformed: '未成型',
+hinted: '暴击起势',
+committed: '暴击成型',
+matured: '暴击完全',
       },
       pierce: {
-        unformed: '未起势',
+        unformed: '未成型',
         hinted: '穿透起势',
         committed: '穿透连起',
         matured: '穿透贯通',
       },
       dash: {
-        unformed: '未起势',
-        hinted: '穿梭起势',
-        committed: '穿梭贴近',
-        matured: '穿梭发力',
+unformed: '未成型',
+hinted: '穿梭起势',
+committed: '穿梭贴近',
+matured: '穿梭完全',
       },
     };
 

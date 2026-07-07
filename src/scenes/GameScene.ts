@@ -245,7 +245,7 @@ export class GameScene extends Phaser.Scene {
     this.terrainGraphics.setDepth(1);
     this.graphics = this.add.graphics();
     this.graphics.setDepth(10);
-    this.bossSafeHintText = this.add.text(0, 0, '请进入绿色安全区躲避伤害', {
+    this.bossSafeHintText = this.add.text(0, 0, '进入绿色安全区域', {
       fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
       fontSize: '17px',
       fontStyle: '700',
@@ -1061,7 +1061,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (state.status === 'result') {
-      return '这一局收尾';
+      return '战斗结算';
     }
 
     return this.getRouteStatusText();
@@ -1082,10 +1082,10 @@ export class GameScene extends Phaser.Scene {
         return '最终战入口';
       }
       if (battle.pressureSafeWindowSec > 0) {
-        return 'Boss · 留口';
+        return 'Boss · 安全窗口';
       }
       if (battle.bossSafeWindowGraceSec > 0) {
-        return `Boss · 压住 ${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
+        return `Boss · 倒计时 ${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
       }
       if (battle.pressureSignatureLabel || battle.pressurePatternLabel || battle.pressurePhaseLabel) {
         return `Boss · 出招：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
@@ -1372,7 +1372,7 @@ export class GameScene extends Phaser.Scene {
         if (stage === 'hinted') {
           return '开始起势';
         }
-        return '还没起势';
+        return '尚未成型';
       case 'pierce':
         if (stage === 'matured') {
           return '一路打穿';
@@ -1383,7 +1383,7 @@ export class GameScene extends Phaser.Scene {
         if (stage === 'hinted') {
           return '开始成线';
         }
-        return '还没起势';
+        return '尚未成型';
       case 'dash':
         if (stage === 'matured') {
           return '越打越顺';
@@ -1394,7 +1394,7 @@ export class GameScene extends Phaser.Scene {
         if (stage === 'hinted') {
           return '贴近起手';
         }
-        return '还没起势';
+        return '尚未成型';
       default:
         return '';
     }

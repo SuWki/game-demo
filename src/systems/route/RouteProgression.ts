@@ -84,7 +84,7 @@ export function getRouteBuildProgressInfo(state: RunState, routeId: RouteId): {
   nextThreshold: number | null;
   /** 下一个阶段的 ID，如 'hinted' | 'committed' | 'matured' */
   nextStageId: Exclude<RouteBuildStage, 'unformed'> | null;
-  /** 下一个阶段的中文标签，如 '起势' | '站稳' | '发力' */
+  /** 下一个阶段的中文标签，如 '起势' | '成型' | '成型' */
   nextStageName: string | null;
 } {
   const count = state.routeCounts[routeId];
@@ -149,33 +149,33 @@ export function getBuildStageLabel(buildStage: RouteBuildStage): string {
     case 'hinted':
       return '起势';
     case 'committed':
-      return '站稳';
+      return '成型';
     case 'matured':
-      return '发力';
+      return '成型';
     default:
-      return '未起势';
+      return '未成型';
   }
 }
 
 export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage): string {
   const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
     crit: {
-      unformed: '未起势',
+      unformed: '未成型',
       hinted: '起势',
-      committed: '站稳',
-      matured: '发力',
+      committed: '成型',
+      matured: '成型',
     },
     pierce: {
-      unformed: '未起势',
+      unformed: '未成型',
       hinted: '起势',
       committed: '连上',
       matured: '贯通',
     },
     dash: {
-      unformed: '未起势',
+      unformed: '未成型',
       hinted: '起势',
       committed: '贴身',
-      matured: '发力',
+      matured: '成型',
     },
   };
 
@@ -190,36 +190,36 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
         case 'hinted':
           return '◆ ' + routeName + '起势：先盯一个。';
         case 'committed':
-          return '◆ ' + routeName + '站稳：连打更重。';
+          return '◆ ' + routeName + '成型：连续输出能力强化。';
         case 'matured':
-          return '◆ ' + routeName + '发力：一波更容易炸开。';
+          return '◆ ' + routeName + '成型：爆发伤害大幅提升。';
         default:
-          return routeName + '还没起势。';
+          return routeName + '尚未成型。';
       }
     case 'pierce':
       switch (buildStage) {
         case 'hinted':
           return '║ ' + routeName + '起势：先找直线。';
         case 'committed':
-          return '║ ' + routeName + '站稳：前排会慢慢开。';
+          return '║ ' + routeName + '成型：前排持续被突破。';
         case 'matured':
-          return '║ ' + routeName + '发力：后面也会一起掉。';
+          return '║ ' + routeName + '成型：后排同时受到伤害。';
         default:
-          return routeName + '还没起势。';
+          return routeName + '尚未成型。';
       }
     case 'dash':
       switch (buildStage) {
         case 'hinted':
           return '◌ ' + routeName + '起势：先贴身。';
         case 'committed':
-          return '◌ ' + routeName + '站稳：贴身后还能接着打。';
+          return '◌ ' + routeName + '成型：贴身后可持续输出。';
         case 'matured':
-          return '◌ ' + routeName + '发力：贴身后更容易清场。';
+          return '◌ ' + routeName + '成型：贴身输出能力大幅提升。';
         default:
-          return routeName + '还没起势。';
+          return routeName + '尚未成型。';
       }
     default:
-      return routeName + '还没起势。';
+      return routeName + '尚未成型。';
   }
 }
 
@@ -232,7 +232,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
         case 'bridge':
           return `${ROUTE_VISUAL_MAP.crit.icon} 暴击接上`;
         case 'payoff':
-          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击发力`;
+          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击成型`;
         default:
           return '暴击变化';
       }
@@ -254,7 +254,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
         case 'bridge':
           return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭贴身`;
         case 'payoff':
-          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭发力`;
+          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭成型`;
         default:
           return '穿梭变化';
       }

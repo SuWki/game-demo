@@ -616,7 +616,7 @@ export class RunEngine {
       if (anomalyPerkMoment?.routeId === optionRouteId) {
         this.enqueueTip(anomalyPerkMoment.tipText);
       }
-      this.enqueueTip(`${ROUTE_NAME_MAP[optionRouteId]}被这一下改写了`);
+      this.enqueueTip(`${ROUTE_NAME_MAP[optionRouteId]}已触发变化`);
     }
     this.advanceRound();
   }
@@ -2869,14 +2869,14 @@ export class RunEngine {
         return activeRouteId === 'pierce'
           ? `${routeName}先把前排打开`
           : activeRouteId === 'dash'
-            ? `${routeName}先把贴近身位站稳`
+            ? `${routeName}先贴近身位`
             : `${routeName}先把基础打稳`;
       case 'core':
-        return activeRouteId === 'pierce'
-          ? `${routeName}的前排穿透更明显，后面也会吃到伤害`
-          : activeRouteId === 'dash'
-            ? `${routeName}接近敌人后的反击更顺`
-            : `${routeName}的连击伤害更重`;
+return activeRouteId === 'pierce'
+? `${routeName}的前排穿透效果增强`
+: activeRouteId === 'dash'
+? `${routeName}接近敌人后反击能力增强`
+: `${routeName}的连击伤害提升`;
       case 'transform':
         return activeRouteId === 'crit'
           ? `${routeName}已经能连着爆发`
@@ -2898,13 +2898,13 @@ export class RunEngine {
     const layerMap: Record<RouteId, Record<AnomalyRoleId, string>> = {
       crit: {
         direction: '带起节奏',
-        core: '火力更重',
+        core: '火力强化',
         transform: '全面强化',
         finisher: '最终补强',
       },
       pierce: {
         direction: '打开路线',
-        core: '火力更重',
+        core: '火力强化',
         transform: '全面强化',
         finisher: '最终补强',
       },
@@ -3067,7 +3067,7 @@ export class RunEngine {
       case 'direction':
         return '带起节奏';
       case 'core':
-        return '火力更重';
+        return '火力强化';
       case 'transform':
         return '全面强化';
       case 'finisher':
@@ -3277,7 +3277,7 @@ export class RunEngine {
       parts.push(`带起节奏 ${profile.anomalyDirectionHits}`);
     }
     if (profile.anomalyCoreHits > 0) {
-      parts.push(`火力更重 ${profile.anomalyCoreHits}`);
+      parts.push(`火力强化 ${profile.anomalyCoreHits}`);
     }
     if (profile.anomalyTransformHits > 0) {
       parts.push(`全面强化 ${profile.anomalyTransformHits}`);
@@ -3505,17 +3505,17 @@ export class RunEngine {
       pierceSeamkeep: { routeId: 'pierce', text: '先把直线站住', priority: 1 },
       pierceFloodgate: { routeId: 'pierce', text: '前排一开，后面开始掉', priority: 2 },
       pierceRiftbloom: { routeId: 'pierce', text: '穿透开始铺开', priority: 3 },
-      piercePrism: { routeId: 'pierce', text: '穿透已经站稳', priority: 4 },
-      pierceBreakthrough: { routeId: 'pierce', text: '后排也会一起掉', priority: 5 },
-      dashBrush: { routeId: 'dash', text: '贴身起手开始生效', priority: 1 },
-      dashSidestepBank: { routeId: 'dash', text: '贴身反打更顺', priority: 2 },
-      dashZeroWindow: { routeId: 'dash', text: '反击已经稳住', priority: 3 },
-      dashAfterimage: { routeId: 'dash', text: '残影追击开始发力', priority: 4 },
+      piercePrism: { routeId: 'pierce', text: '穿透已成型', priority: 4 },
+      pierceBreakthrough: { routeId: 'pierce', text: '后排同时受到伤害', priority: 5 },
+      dashBrush: { routeId: 'dash', text: '贴身起手生效', priority: 1 },
+      dashSidestepBank: { routeId: 'dash', text: '贴身反击强化', priority: 2 },
+      dashZeroWindow: { routeId: 'dash', text: '反击能力稳定', priority: 3 },
+      dashAfterimage: { routeId: 'dash', text: '残影追击生效', priority: 4 },
       critBridgeFocus: { routeId: 'crit', text: '先盯住一个目标', priority: 1 },
-      critAfterglow: { routeId: 'crit', text: '连续压制更稳', priority: 2 },
+      critAfterglow: { routeId: 'crit', text: '连续压制稳定', priority: 2 },
       critEmbershard: { routeId: 'crit', text: '爆点开始扩开', priority: 3 },
-      critCrownfire: { routeId: 'crit', text: '暴击爆发开始发力', priority: 4 },
-      critLockProtocol: { routeId: 'crit', text: '锁住一个目标，持续发力', priority: 5 },
+      critCrownfire: { routeId: 'crit', text: '暴击爆发强化', priority: 4 },
+      critLockProtocol: { routeId: 'crit', text: '锁定目标，持续输出', priority: 5 },
     };
 
     let bestCue: { routeId: RouteId; text: string; priority: number } | null = null;
@@ -5433,7 +5433,7 @@ export class RunEngine {
 
             // crit-crownfire: 破绽爆发后短时间提高下一次暴击收益
             if (battle.critCrownfireReady) {
-              battle.critBurstBonusSec = 2.8; // 更稳一点，真实战斗里更容易看见输出窗口
+              battle.critBurstBonusSec = 2.8; // 稳定输出窗口
               battle.critBurstBonusRatio = 0.35; // 35%额外伤害
             }
 

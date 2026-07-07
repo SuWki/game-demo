@@ -656,7 +656,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-thrusters',
-    name: '轻快靴',
+    name: '疾行靴',
     description: '移速+15',
     category: 'generic',
     repeatable: true,
@@ -677,7 +677,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-overclock',
-    name: '自修复回路',
+    name: '修复回路',
     description: '恢复+0.12/s，射速+9%',
     category: 'generic',
     repeatable: true,
@@ -700,7 +700,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-vector-buffer',
     name: '全面提速',
-    description: '射速、移速、弹速一块拉。',
+    description: '射速、移速、弹速全面提升。',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge'],
@@ -728,7 +728,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-pressure-bypass',
-    name: '硬扛',
+    name: '硬体装甲',
     description: '生命+8，恢复+0.09/s，移速+8，回复10HP',
     category: 'generic',
     repeatable: true,
@@ -761,7 +761,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   {
     id: 'generic-sideband-cache',
     name: '快速装填',
-    description: '射速弹速机动一把梭。',
+    description: '射速、弹速、移速全面提升。',
     category: 'generic',
     repeatable: true,
     tags: ['stabilizer', 'bridge', 'hybrid'],
@@ -981,7 +981,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-terminal-baffle',
-    name: '铁壁',
+    name: '铁壁装甲',
     description: '生命+9，恢复+0.09/s，伤害+2.2，弹速+14，回复10HP',
     category: 'generic',
     contentTier: 'rare',
