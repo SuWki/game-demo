@@ -121,7 +121,7 @@ const ROUND_NODE_OFFERS: Record<number, RoundNodeOffer> = {
         type: 'battle',
         phase: 'opening',
 title: '厚线突围',
-description: '高血量敌人密集推进'
+description: '高血量敌人密集推进',
         templateCandidates: [
           { templateId: 'elimination-sweep', weight: 2 },
           { templateId: 'elimination', weight: 1 },
@@ -571,7 +571,7 @@ description: '高血量敌人密集推进'
         type: 'battle',
         phase: 'mid',
 title: '蓄势压制',
-description: '精英持盾推进，寻找破绽'
+description: '精英持盾推进，寻找破绽',
         templateId: 'elite-pressure-hold',
         difficultyScale: 1.22,
         selection: {
@@ -847,7 +847,7 @@ description: '精英持盾推进，寻找破绽'
         type: 'battle',
         phase: 'late',
 title: '热区续压',
-description: '高压环境下持续输出'
+description: '高压环境下持续输出',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.45 },
           { templateId: 'survival-closehold', weight: 1.05 },
@@ -916,7 +916,7 @@ description: '高压环境下持续输出'
         type: 'battle',
         phase: 'late',
 title: '重击追杀',
-description: '集中火力消灭高威胁目标'
+description: '集中火力消灭高威胁目标',
         templateCandidates: [
           { templateId: 'survival-rush', weight: 1.6 },
           { templateId: 'survival', weight: 1.1 },
