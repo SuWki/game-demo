@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/balance';
-import { BATTLE_TEMPLATES, getBattleEncounterLabel } from '../data/battleTemplates';
+import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
 import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, ROUTE_VISUAL_MAP } from '../data/routes';
 import {
@@ -170,8 +170,7 @@ export class GameScene extends Phaser.Scene {
   private readonly damageNumberTexts: Phaser.GameObjects.Text[] = [];
   private lastDamageCount = 0; // Track last frame's damage count to detect new ones
 
-  private bossIntroBannerText: Phaser.GameObjects.Text | null = null;
-
+  
   private killStreakText: Phaser.GameObjects.Text | null = null;
 
   private dyingEnemies: Array<{
@@ -1579,9 +1578,6 @@ export class GameScene extends Phaser.Scene {
     this.renderUpgradeFlash();
     this.renderBossSafeWindowHint(battle);
     this.renderRouteMomentOverlay(battle);
-    if (battle.encounterType === 'boss' && (battle.elapsedSec < 0.95 || battle.pressureTransitionSec > 0 || battle.pressureSignatureSec > 0)) {
-      this.renderBossIntroFrame(battle, camera, accentColor);
-    }
     this.endRuntimePreviewImageFrame();
     this.endEnemyLabelFrame();
   }
@@ -2019,102 +2015,6 @@ export class GameScene extends Phaser.Scene {
     this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 28 + flashRatio * 16 + pulse * 2);
     this.graphics.lineStyle(1.1, 0xffffff, 0.08 + flashRatio * 0.08);
     this.graphics.strokeCircle(playerScreen.x, playerScreen.y, 42 + flashRatio * 22);
-  }
-
-  private renderBossIntroFrame(
-    battle: BattleState,
-    camera: { left: number; top: number; width: number; height: number },
-    accentColor: number,
-  ): void {
-    const introRatio = Phaser.Math.Clamp(
-      Math.max(
-        battle.elapsedSec < 0.95 ? 1 - battle.elapsedSec / 0.95 : 0,
-        battle.pressureTransitionSec > 0 ? battle.pressureTransitionSec / 0.88 : 0,
-        battle.pressureSignatureSec > 0 ? battle.pressureSignatureSec / 3.2 : 0,
-      ),
-      0,
-      1,
-    );
-    if (introRatio <= 0) {
-      return;
-    }
-
-    const boss = battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
-    const focusX = boss ? this.worldToScreen(camera, boss.x, boss.y).x : this.scale.width * 0.5;
-    const focusY = boss ? this.worldToScreen(camera, boss.x, boss.y).y : this.scale.height * 0.38;
-
-    // Enhanced screen darkening — deeper vignette for dramatic Boss entrance
-    const darkAlpha = 0.12 + introRatio * 0.22;
-    this.graphics.fillStyle(0x05030a, darkAlpha);
-    this.graphics.fillRect(0, 0, this.scale.width, this.scale.height);
-
-    // Radial vignette around Boss position
-    const vignetteRadius = 180 + introRatio * 80;
-    this.graphics.fillStyle(0x000000, introRatio * 0.15);
-    this.graphics.fillCircle(focusX, focusY, vignetteRadius * 1.8);
-    this.graphics.fillStyle(0x000000, 0);
-    this.graphics.fillCircle(focusX, focusY, vignetteRadius);
-
-    // Top/bottom accent bars
-    this.graphics.fillStyle(accentColor, 0.1 + introRatio * 0.1);
-    this.graphics.fillRect(0, 12, this.scale.width, 4);
-    this.graphics.fillRect(0, this.scale.height - 16, this.scale.width, 4);
-
-    // Side rails
-    this.graphics.lineStyle(2.8, accentColor, 0.24 + introRatio * 0.14);
-    this.graphics.lineBetween(44, 64, 44, this.scale.height - 64);
-    this.graphics.lineBetween(this.scale.width - 44, 64, this.scale.width - 44, this.scale.height - 64);
-
-    // Targeting reticle around Boss
-    this.graphics.lineStyle(4, accentColor, 0.3 + introRatio * 0.18);
-    this.graphics.strokeCircle(focusX, focusY, 82 + introRatio * 16);
-    this.graphics.lineStyle(1.6, accentColor, 0.18 + introRatio * 0.12);
-    this.graphics.lineBetween(focusX - 112, focusY, focusX - 56, focusY);
-    this.graphics.lineBetween(focusX + 56, focusY, focusX + 112, focusY);
-    this.graphics.lineBetween(focusX, focusY - 112, focusX, focusY - 56);
-    this.graphics.lineBetween(focusX, focusY + 56, focusX, focusY + 112);
-
-    // Boss name banner — appears during the first 0.95s of Boss encounter
-    if (battle.elapsedSec < 1.4 && battle.encounterType === 'boss') {
-      const bannerRatio = Phaser.Math.Clamp(1 - battle.elapsedSec / 1.4, 0, 1);
-      const bannerY = this.scale.height * 0.22;
-      const bannerH = 46;
-      const bannerW = this.scale.width * 0.7;
-      const bannerX = (this.scale.width - bannerW) / 2;
-
-      // Banner background bar
-      this.graphics.fillStyle(0x000000, bannerRatio * 0.7);
-      this.graphics.fillRect(bannerX, bannerY - bannerH / 2, bannerW, bannerH);
-      // Accent line under banner
-      this.graphics.fillStyle(accentColor, bannerRatio * 0.8);
-      this.graphics.fillRect(bannerX, bannerY + bannerH / 2 - 2, bannerW, 2);
-      this.graphics.fillRect(bannerX, bannerY - bannerH / 2, bannerW, 1);
-
-      // Boss name text
-      const templateName = BATTLE_TEMPLATES[battle.templateId]?.name ?? '';
-      const bossLabel = templateName || 'Boss';
-      if (!this.bossIntroBannerText) {
-        this.bossIntroBannerText = this.add.text(0, 0, '', {
-          fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
-          fontSize: '20px',
-          fontStyle: 'bold',
-          color: '#ffffff',
-          stroke: '#000000',
-          strokeThickness: 4,
-        });
-        this.bossIntroBannerText.setOrigin(0.5, 0.5);
-        this.bossIntroBannerText.setDepth(200);
-      }
-      this.bossIntroBannerText
-        .setText(bossLabel)
-        .setPosition(this.scale.width / 2, bannerY)
-        .setAlpha(bannerRatio)
-        .setVisible(true);
-    } else {
-      if (this.bossIntroBannerText) {
-        this.bossIntroBannerText.setVisible(false);
-      }
-    }
   }
 
   private beginRuntimePreviewImageFrame(): void {
