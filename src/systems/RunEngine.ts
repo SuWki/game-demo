@@ -151,11 +151,11 @@ function getBuildStageLabel(buildStage: RouteBuildStage): string {
 function getEndingLabel(endingKind: RunEndingKind): string {
   switch (endingKind) {
     case 'hpDepleted':
-      return '机体撑不住了';
+      return '生命值耗尽';
     case 'timeOut':
-      return '未能承受压力';
+      return '超时';
     default:
-      return '打完了';
+      return '战斗结束';
   }
 }
 
@@ -2957,11 +2957,11 @@ export class RunEngine {
   private getEndingReason(endingKind: RunEndingKind, finalNodeTitle: string): string {
     switch (endingKind) {
       case 'hpDepleted':
-        return `${finalNodeTitle}这关把机体磨没了`;
+        return `在「${finalNodeTitle}」中生命值耗尽`;
       case 'timeOut':
-        return `${finalNodeTitle}没能承住压力`;
+        return `在「${finalNodeTitle}」中超时`;
       default:
-        return `${finalNodeTitle}这一局打完了`;
+        return `在「${finalNodeTitle}」中结束`;
     }
   }
 
@@ -2991,59 +2991,59 @@ export class RunEngine {
 
     if (routeId === 'pierce') {
       if (isLateTurn) {
-        return '异常效果出现较晚，局面未能完全展开。';
+        return '异常效果触发较晚，局面未能完全展开。';
       }
       if (buildStage === 'matured') {
         if (replayProfile.anomalyFinisherHits === 0) {
-          return '已具备穿后排能力，但最终伤害不足。';
+          return '穿透流派已成型，但最终伤害不足。';
         }
-        return '已具备穿后排能力，但清理不够彻底。';
+        return '穿透流派已成型，但清理不够彻底。';
       }
       if (buildStage === 'committed') {
         if (replayProfile.anomalyFinisherHits === 0) {
-          return '前排已击破，但尚未穿透至后排。';
+          return '前排已突破，但尚未穿透至后排。';
         }
-        return '前排已击破，但火力仍有不足。';
+        return '前排已突破，但火力仍有不足。';
       }
       if (buildStage === 'hinted') {
-        return '已确立穿透方向，但前排尚未击破。';
+        return '穿透方向已明确，但前排尚未突破。';
       }
       return '本局仍需关键强化。';
     }
 
     if (routeId === 'dash') {
       if (isLateTurn) {
-        return '异常效果出现较晚，局面未能完全展开。';
+        return '异常效果触发较晚，局面未能完全展开。';
       }
       if (buildStage === 'matured') {
         if (replayProfile.anomalyFinisherHits === 0) {
-          return '已具备接近输出能力，但最终波次未能承受。';
+          return '穿梭流派已成型，但最终阶段未能坚持。';
         }
-        return '已具备接近输出能力，但最终波次中断。';
+        return '穿梭流派已成型，但最终阶段中断。';
       }
       if (buildStage === 'committed') {
         if (replayProfile.anomalyFinisherHits === 0) {
-          return '已具备反击能力，但输出仍有不足。';
+          return '反击能力已成型，但输出仍有不足。';
         }
-        return '已具备反击能力，但最终波次未能支撑。';
+        return '反击能力已成型，但最终阶段未能支撑。';
       }
       if (buildStage === 'hinted') {
-        return '已开始接近敌人，但尚未完全就位。';
+        return '方向已明确，但尚未完全就位。';
       }
       return '本局仍需关键强化。';
     }
 
     if (isLateTurn) {
-      return '异常效果出现较晚，局面未能完全展开。';
+      return '异常效果触发较晚，局面未能完全展开。';
     }
     if (buildStage === 'matured') {
-      return '已成型，但最终波次未能承受。';
+      return '流派已成型，但最终阶段未能坚持。';
     }
     if (buildStage === 'committed') {
-      return '已建立连击，但伤害仍有不足。';
+      return '流派已成型，但伤害输出不足。';
     }
     if (buildStage === 'hinted') {
-      return '已确立方向，但火力尚未跟上。';
+      return '方向已明确，但火力尚未成型。';
     }
     return '本局仍需关键强化。';
   }

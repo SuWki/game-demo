@@ -1780,21 +1780,21 @@ export class OverlayController {
     if (outcome !== 'victory') {
       if (routeId === 'pierce') {
         if (buildStage === 'matured') {
-          return `${routeName}已经打到后排，但最后没收尾`
+          return `${routeName}已突破至后排，但未能完成收尾`
         }
         if (buildStage === 'committed') {
-          return `${routeName}已经打穿前排，但后面没跟上`;
+          return `${routeName}已突破前排，但后续火力不足`;
         }
         if (buildStage === 'hinted') {
-          return `${routeName}方向已经成型，前排还没打开`
+          return `${routeName}方向已成型，但前排尚未突破`
         }
       }
       if (buildStage === 'matured' || buildStage === 'committed') {
-        return `${routeName}已经站稳，但最后一波没打完`;
+        return `${routeName}已成型，但最终阶段未能完成`;
       }
     }
 
-    return `${routeName}这次更顺了`;
+    return `${routeName}本局表现良好`;
   }
 
   private getResultFailureReason(

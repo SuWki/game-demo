@@ -1227,7 +1227,7 @@ export class GameScene extends Phaser.Scene {
       return {
         objectiveLabel: '清理当前波次',
         objectiveText: '消灭当前波次敌人',
-        objectiveDetail: `打掉 ${battle.targetKills} 个敌人后就能往前走。奖励倒计时内打完还能多拿 1 张强化。`,
+        objectiveDetail: `消灭 ${battle.targetKills} 个敌人后即可推进。奖励倒计时内完成可额外获得 1 张强化卡牌。`,
         objectiveProgressText: `${battle.kills} / ${battle.targetKills} 击杀`,
         objectiveTone: 'battle',
       };

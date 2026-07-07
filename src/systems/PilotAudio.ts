@@ -145,61 +145,77 @@ const CUE_VOLUME_MAP: Partial<Record<AudioCue, number>> = {
 };
 
 const MUSIC_PROFILES: Record<Exclude<MusicMode, 'silent'>, MusicProfile> = {
+  // 菜单：A小调空间氛围主题，五声音阶旋律搭配根-五度交替低音
   menu: {
-    stepSec: 0.34,
-    gain: 0.58,
+    stepSec: 0.38,
+    gain: 0.56,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
-    bassPeak: 0.078,
-    leadPeak: 0.036,
-    accentPeak: 0.019,
-    padPeak: 0.025,
-    bass: [45, null, 48, null, 52, null, 48, null],
-    lead: [57, 60, 64, 60, 55, 59, 62, 59],
-    accent: [69, null, null, 72, null, null, 71, null],
+    bassPeak: 0.082,
+    leadPeak: 0.042,
+    accentPeak: 0.022,
+    padPeak: 0.032,
+    // 低音：A1-E2 交替（根-五度），第7-8拍走向 G1→F1 增加张力
+    bass: [33, null, 40, null, 33, null, 40, null, 31, null, 38, null, 29, null, 36, null],
+    // 主旋律：A4-C5-E5-D5-C5-A4-B4-A4（五声音阶下行回归）
+    lead: [69, null, 72, null, 76, 74, 72, null, 69, null, 71, null, 76, 74, 72, null],
+    // 高音点缀：E5, A5 稀疏回响
+    accent: [76, null, null, null, 81, null, null, null, 76, null, null, null, 79, null, null, null],
   },
+  // 战斗：E小调驱动节奏，贝斯走八分音符根音推进
   battle: {
-    stepSec: 0.28,
-    gain: 0.74,
+    stepSec: 0.24,
+    gain: 0.72,
     bassType: 'sawtooth',
     leadType: 'triangle',
     accentType: 'square',
-    bassPeak: 0.076,
-    leadPeak: 0.034,
-    accentPeak: 0.022,
-    padPeak: 0.016,
-    bass: [38, null, 38, null, 41, null, 43, null, 36, null, 38, null, 41, null, 43, null],
-    lead: [53, null, 56, null, 58, null, 60, null, 53, null, 56, null, 60, null, 63, null],
-    accent: [65, null, null, null, 68, null, null, null, 65, null, null, null, 70, null, null, null],
+    bassPeak: 0.08,
+    leadPeak: 0.038,
+    accentPeak: 0.026,
+    padPeak: 0.02,
+    // 低音：E2八分推进，每4拍换 G2→A2→D2 制造和声运动
+    bass: [40, 40, null, 40, 43, 43, null, 43, 45, 45, null, 45, 38, 38, null, 38],
+    // 主旋律：E4-G4-B4-A4 上行，G4-E4 回落，形成问答句
+    lead: [64, null, 67, null, 71, 69, 67, null, 64, null, 67, null, 71, 74, 72, null],
+    // 强调音：B4, E5 穿插在反拍
+    accent: [null, 71, null, null, null, null, 76, null, null, 71, null, null, null, null, 76, null],
   },
+  // BOSS：D小调黑暗主题，半音级进低音营造压迫感
   boss: {
-    stepSec: 0.22,
-    gain: 0.82,
+    stepSec: 0.2,
+    gain: 0.8,
     bassType: 'sawtooth',
     leadType: 'square',
     accentType: 'triangle',
-    bassPeak: 0.082,
-    leadPeak: 0.034,
-    accentPeak: 0.022,
-    padPeak: 0.018,
-    bass: [34, null, 34, 36, 34, null, 31, null, 34, null, 36, 38, 34, null, 29, null],
-    lead: [58, null, 61, 58, null, 62, null, 65, 58, null, 63, 66, null, 65, null, 70],
-    accent: [70, null, null, 73, null, null, 70, null, 68, null, null, 72, null, null, 68, null],
+    bassPeak: 0.086,
+    leadPeak: 0.036,
+    accentPeak: 0.024,
+    padPeak: 0.024,
+    // 低音：D2半音级进 D→D→E→F→D→D→C→D，压迫逼近
+    bass: [38, 38, null, 39, 41, null, 38, null, 38, 38, null, 36, 37, null, 38, null],
+    // 主旋律：D4-F4-A4-G4-F4-E4-D4-C4 戏剧性下行
+    lead: [62, null, 65, null, 69, 67, 65, null, 64, 62, null, 60, 62, null, 65, null],
+    // 强调音：A4→D5→F5 黑暗和弦色调
+    accent: [null, 69, null, null, 74, null, null, 77, null, 69, null, null, 74, null, null, 77],
   },
+  // 结算：C大调解决主题，I-vi-IV-V 经典终止
   result: {
-    stepSec: 0.34,
-    gain: 0.52,
+    stepSec: 0.36,
+    gain: 0.5,
     bassType: 'triangle',
     leadType: 'sine',
     accentType: 'triangle',
-    bassPeak: 0.064,
-    leadPeak: 0.028,
-    accentPeak: 0.015,
-    padPeak: 0.02,
-    bass: [45, null, 48, null, 52, null, 57, null],
-    lead: [60, 64, 67, 72, 69, 64, 67, 64],
-    accent: [72, null, null, 76, null, null, 74, null],
+    bassPeak: 0.068,
+    leadPeak: 0.032,
+    accentPeak: 0.018,
+    padPeak: 0.028,
+    // 低音：C2-G2-A2-F2（I-V-vi-IV）
+    bass: [36, null, 43, null, 45, null, 41, null, 36, null, 43, null, 45, null, 41, null],
+    // 主旋律：C4-E4-G4-C5-B4-G4-E4-C4 解决句
+    lead: [60, null, 64, null, 67, null, 72, null, 71, null, 67, null, 64, null, 60, null],
+    // 高音点缀：G4-C5-E5 上扬
+    accent: [67, null, null, 72, null, null, 76, null, 67, null, null, 72, null, null, 76, null],
   },
 };
 
