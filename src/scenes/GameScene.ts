@@ -5116,28 +5116,55 @@ export class GameScene extends Phaser.Scene {
     const safeTint = SAFE_WINDOW_TINT;
     const dangerTint = SAFE_WINDOW_DANGER;
 
-    if (battle.pressureSafeWindowAxis === 'pocket') {
-      if (battle.pressureSafeWindowSecondarySpan <= 0) {
-        return false;
+    // 当竖条/横条安全区有副轴长度时，按口袋矩形渲染
+    const hasSecondarySpan = battle.pressureSafeWindowSecondarySpan > 0;
+    const isPocketShape = battle.pressureSafeWindowAxis === 'pocket' || hasSecondarySpan;
+
+    if (isPocketShape) {
+      if (battle.pressureSafeWindowSecondarySpan <= 0 && battle.pressureSafeWindowAxis !== 'pocket') {
+        // fall through to strip rendering
+      } else {
+      // 计算安全区在屏幕上的实际 X/Y 范围
+      let boundsCenterX: number;
+      let boundsSpanX: number;
+      let boundsCenterY: number;
+      let boundsSpanY: number;
+
+      if (battle.pressureSafeWindowAxis === 'horizontal') {
+        // horizontal: 主轴=Y, 副轴=X
+        boundsCenterY = battle.pressureSafeWindowCenter;
+        boundsSpanY = battle.pressureSafeWindowSpan;
+        boundsCenterX = battle.pressureSafeWindowSecondaryCenter;
+        boundsSpanX = battle.pressureSafeWindowSecondarySpan;
+      } else {
+        // vertical 或 pocket: 主轴=X, 副轴=Y
+        boundsCenterX = battle.pressureSafeWindowCenter;
+        boundsSpanX = battle.pressureSafeWindowSpan;
+        boundsCenterY = battle.pressureSafeWindowSecondaryCenter;
+        boundsSpanY = battle.pressureSafeWindowSecondarySpan;
       }
 
+      if (boundsSpanY <= 0) {
+        // 副轴无长度，回退到条形渲染
+      } else {
+
       const safeStartX = Phaser.Math.Clamp(
-        battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5 - camera.left,
+        boundsCenterX - boundsSpanX * 0.5 - camera.left,
         leftInset,
         camera.width - rightInset,
       );
       const safeEndX = Phaser.Math.Clamp(
-        battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5 - camera.left,
+        boundsCenterX + boundsSpanX * 0.5 - camera.left,
         leftInset,
         camera.width - rightInset,
       );
       const safeStartY = Phaser.Math.Clamp(
-        battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5 - camera.top,
+        boundsCenterY - boundsSpanY * 0.5 - camera.top,
         topInset,
         camera.height - bottomInset,
       );
       const safeEndY = Phaser.Math.Clamp(
-        battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5 - camera.top,
+        boundsCenterY + boundsSpanY * 0.5 - camera.top,
         topInset,
         camera.height - bottomInset,
       );
@@ -5173,6 +5200,8 @@ export class GameScene extends Phaser.Scene {
       this.graphics.lineBetween(safeStartX, safeStartY, safeEndX, safeStartY);
       this.graphics.lineBetween(safeStartX, safeEndY, safeEndX, safeEndY);
       return true;
+      } // end if boundsSpanY > 0
+      } // end isPocketShape
     }
 
     if (battle.pressureSafeWindowAxis === 'vertical') {

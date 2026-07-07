@@ -304,11 +304,39 @@ export function isPointInsidePressureSafeWindow(
   const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5 + padding;
 
   if (battle.pressureSafeWindowAxis === 'vertical') {
-    return x >= safeStartX && x <= safeEndX;
+    if (!(x >= safeStartX && x <= safeEndX)) {
+      return false;
+    }
+    if (battle.pressureSafeWindowSecondarySpan <= 0) {
+      return true;
+    }
+    const safeStartY =
+      battle.pressureSafeWindowSecondaryCenter -
+      battle.pressureSafeWindowSecondarySpan * 0.5 -
+      padding;
+    const safeEndY =
+      battle.pressureSafeWindowSecondaryCenter +
+      battle.pressureSafeWindowSecondarySpan * 0.5 +
+      padding;
+    return y >= safeStartY && y <= safeEndY;
   }
 
   if (battle.pressureSafeWindowAxis === 'horizontal') {
-    return y >= safeStartX && y <= safeEndX;
+    if (!(y >= safeStartX && y <= safeEndX)) {
+      return false;
+    }
+    if (battle.pressureSafeWindowSecondarySpan <= 0) {
+      return true;
+    }
+    const safeStartX2 =
+      battle.pressureSafeWindowSecondaryCenter -
+      battle.pressureSafeWindowSecondarySpan * 0.5 -
+      padding;
+    const safeEndX2 =
+      battle.pressureSafeWindowSecondaryCenter +
+      battle.pressureSafeWindowSecondarySpan * 0.5 +
+      padding;
+    return x >= safeStartX2 && x <= safeEndX2;
   }
 
   if (battle.pressureSafeWindowSecondarySpan <= 0) {
@@ -336,17 +364,30 @@ export function getDistanceOutsidePressureSafeWindow(
     return 0;
   }
 
-  const halfX = battle.pressureSafeWindowSpan * 0.5 + padding;
-  const dx = Math.max(0, Math.abs(x - battle.pressureSafeWindowCenter) - halfX);
+  const halfPrimary = battle.pressureSafeWindowSpan * 0.5 + padding;
 
   if (battle.pressureSafeWindowAxis === 'vertical') {
-    return dx;
+    const dx = Math.max(0, Math.abs(x - battle.pressureSafeWindowCenter) - halfPrimary);
+    if (battle.pressureSafeWindowSecondarySpan <= 0) {
+      return dx;
+    }
+    const halfY = battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
+    const dy = Math.max(0, Math.abs(y - battle.pressureSafeWindowSecondaryCenter) - halfY);
+    return Math.hypot(dx, dy);
   }
 
   if (battle.pressureSafeWindowAxis === 'horizontal') {
-    return Math.max(0, Math.abs(y - battle.pressureSafeWindowCenter) - halfX);
+    const dy = Math.max(0, Math.abs(y - battle.pressureSafeWindowCenter) - halfPrimary);
+    if (battle.pressureSafeWindowSecondarySpan <= 0) {
+      return dy;
+    }
+    const halfX = battle.pressureSafeWindowSecondarySpan * 0.5 + padding;
+    const dx = Math.max(0, Math.abs(x - battle.pressureSafeWindowSecondaryCenter) - halfX);
+    return Math.hypot(dx, dy);
   }
 
+  // pocket
+  const dx = Math.max(0, Math.abs(x - battle.pressureSafeWindowCenter) - halfPrimary);
   if (battle.pressureSafeWindowSecondarySpan <= 0) {
     return dx;
   }
@@ -369,5 +410,5 @@ export function calculateBossSafeWindowGraceSec(
     return 0;
   }
   const moveSpeed = Math.max(120, getPlayerMoveSpeed(stats));
-  return clamp(distance / moveSpeed + 0.28, 0.58, 1.18);
+  return clamp(distance / moveSpeed + 0.34, 0.72, 1.5);
 }

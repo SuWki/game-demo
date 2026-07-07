@@ -252,7 +252,7 @@ export class OverlayController {
           <strong data-volume-readout>${volumePercent}%</strong>
         </div>
         <div class="volume-panel-slider">
-          <input data-volume-slider type="range" min="0" max="150" step="1" value="${volumePercent}" />
+          <input data-volume-slider type="range" min="1" max="150" step="1" value="${volumePercent}" />
         </div>
         <div class="volume-panel-actions">
           <button class="text-action text-action-primary" data-action="close">

@@ -1402,14 +1402,19 @@ export class RunEngine {
     }
 
     const dimension = axis === 'vertical' ? view.width : view.height;
-    const minimumSpan = axis === 'vertical' ? 134 : 108; // 原164/132收窄18-20%
-    const maximumSpan = dimension * 0.38; // 原0.48收窄20%
+    const secondaryDimension = axis === 'vertical' ? view.height : view.width;
+    const minimumSpan = axis === 'vertical' ? 160 : 130;
+    const maximumSpan = dimension * 0.42;
     const safeWindowSpan = clamp(
-      (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 212 : 156)) * 0.8,
+      (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 220 : 168)) * 0.82,
       minimumSpan,
       maximumSpan,
     );
+    // 安全区副轴长度：限制为视口的62%，给玩家留出足够的移动空间
+    const secondarySpan = clamp(secondaryDimension * 0.62, 180, secondaryDimension * 0.72);
     const safeWindowCenter = this.choosePressureSafeWindowCenter(battle, axis, safeWindowSpan);
+    const safeWindowSecondaryCenter =
+      axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
     const baseSafeWindowSec = phase.patternSafeWindowLingerSec ?? (axis === 'vertical' ? 1.28 : 1.18);
     const safeWindowSec =
       battle.encounterType === 'boss'
@@ -1420,9 +1425,8 @@ export class RunEngine {
     battle.pressureSafeWindowShiftType = undefined;
     battle.pressureSafeWindowCenter = safeWindowCenter;
     battle.pressureSafeWindowSpan = safeWindowSpan;
-    battle.pressureSafeWindowSecondaryCenter =
-      axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
-    battle.pressureSafeWindowSecondarySpan = 0;
+    battle.pressureSafeWindowSecondaryCenter = safeWindowSecondaryCenter;
+    battle.pressureSafeWindowSecondarySpan = secondarySpan;
     battle.pressureSafeWindowSec = safeWindowSec;
     if (battle.encounterType === 'boss') {
       battle.bossSafeWindowMoments += 1;
@@ -1609,6 +1613,8 @@ export class RunEngine {
     if (battle.bossSafeWindowGraceSec > 0) {
       battle.bossSafeWindowGraceSec = Math.max(0, battle.bossSafeWindowGraceSec - dt);
       battle.outsideSafeDamageTimerSec = 0;
+      // 宽限期内持续清理安全区内敌人，确保玩家进入时通道畅通
+      this.clearBossSafeWindowBlockers(battle);
       return;
     }
 
@@ -1664,11 +1670,11 @@ export class RunEngine {
       }
 
       const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
-      const pushDistance = 104 + enemy.radius * 1.6;
+      const pushDistance = 132 + enemy.radius * 1.8;
       enemy.x = clamp(enemy.x + Math.cos(angle) * pushDistance, 24, ARENA_WIDTH - 24);
       enemy.y = clamp(enemy.y + Math.sin(angle) * pushDistance, 24, ARENA_HEIGHT - 24);
-      enemy.recoverySec = Math.max(enemy.recoverySec, 0.28);
-      enemy.rangedCooldownSec = Math.max(enemy.rangedCooldownSec, 0.38);
+      enemy.recoverySec = Math.max(enemy.recoverySec, 0.42);
+      enemy.rangedCooldownSec = Math.max(enemy.rangedCooldownSec, 0.52);
     }
   }
 

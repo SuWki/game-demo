@@ -394,7 +394,7 @@ export class PilotAudio {
   }
 
   public setVolume(volume: number): void {
-    this.masterVolume = Math.max(0, Math.min(1.5, volume));
+    this.masterVolume = Math.max(0.01, Math.min(1.5, volume));
     if (this.masterGain) {
       this.masterGain.gain.value = Math.max(0.0001, this.masterVolume * 1.16);
     }

@@ -62,7 +62,7 @@ const services: Services = {
 
 const savedAudioVolume = Number(window.localStorage.getItem('pilot-audio-volume'));
 const defaultAudioVolume = 0.4;
-services.audio.setVolume(Number.isFinite(savedAudioVolume) && savedAudioVolume > 0 ? savedAudioVolume : defaultAudioVolume);
+services.audio.setVolume(Number.isFinite(savedAudioVolume) && savedAudioVolume >= 0.01 ? savedAudioVolume : defaultAudioVolume);
 
 window.__pilotAudioDebug = () => services.audio.getDebugSnapshot();
 
