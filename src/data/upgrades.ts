@@ -656,7 +656,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-thrusters',
-    name: '疾行靴',
+    name: '疾行战靴',
     description: '移速+15',
     category: 'generic',
     repeatable: true,
