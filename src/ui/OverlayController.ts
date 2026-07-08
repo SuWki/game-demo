@@ -442,7 +442,6 @@ export class OverlayController {
     this.screenLayer.classList.remove('hidden');
     const routeLabel = this.getRouteDisplayLabel(result.routeId);
     const isVictory = result.outcome === 'victory';
-    const buildStageLabel = this.getRouteResultStageLabel(result.routeId, result.buildStage);
     this.screenLayer.innerHTML = `
       <section class="screen-minimal result-screen space-combat-result-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
         <div class="space-scanlines" aria-hidden="true"></div>
@@ -461,22 +460,6 @@ export class OverlayController {
           <div class="result-story">
             <p class="result-story__summary">${result.summary}</p>
             <p class="result-story__route">${this.getResultRouteRecap(result)}</p>
-            <p class="result-story__build">${result.buildSummary}</p>
-          </div>
-
-          <div class="result-screen-actions">
-            <button class="combat-action combat-action-primary" data-action="restart">
-              <span class="action-icon">▶</span>
-              <div class="action-content">
-                <strong>再来一局</strong>
-                <small>立刻重开</small>
-              </div>
-            </button>
-            <div class="result-secondary-actions">
-              <button class="combat-action-small" data-action="menu">
-                <span>回到机库</span>
-              </button>
-            </div>
           </div>
 
           <div class="result-core-stats">
@@ -491,7 +474,6 @@ export class OverlayController {
             <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="160">
               <span class="core-stat-label">流派</span>
               <strong class="core-stat-value">${routeLabel}</strong>
-              <small class="core-stat-sub">${buildStageLabel}</small>
             </div>
           </div>
 
@@ -533,6 +515,21 @@ export class OverlayController {
             <div class="detail-stat" style="opacity: 0;" data-animate="stat" data-delay="320">
               <span>关卡</span>
               <strong data-target="${result.nodesCleared}" data-format="number">0</strong>
+            </div>
+          </div>
+
+          <div class="result-screen-actions">
+            <button class="combat-action combat-action-primary" data-action="restart">
+              <span class="action-icon">▶</span>
+              <div class="action-content">
+                <strong>再来一局</strong>
+                <small>立刻重开</small>
+              </div>
+            </button>
+            <div class="result-secondary-actions">
+              <button class="combat-action-small" data-action="menu">
+                <span>回到机库</span>
+              </button>
             </div>
           </div>
         </div>
