@@ -1302,7 +1302,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-opening-thread',
-    name: '开局定调',
+    name: '开局蓄力',
     description: '伤害+2，射速+8%，弹速+10',
     category: 'generic',
     repeatable: true,
@@ -1329,7 +1329,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'generic-opening-compass',
-    name: '开局抢攻',
+    name: '开局猛攻',
     description: '伤害+1.5，射速+6%，移速+9',
     category: 'generic',
     repeatable: true,
@@ -1513,7 +1513,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'crit-aim',
-    name: '弱点起手',
+    name: '弱点初现',
     description: '过载暴击+3%，回复8HP',
     category: 'route',
     routeId: 'crit',
@@ -2893,7 +2893,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-brush',
-    name: '擦身起势',
+    name: '擦身初现',
     description: '擦过敌人后快速累积脉冲。',
     category: 'route',
     routeId: 'dash',
@@ -2957,7 +2957,7 @@ export const UPGRADE_ARCHETYPES: UpgradeArchetype[] = [
   },
   {
     id: 'dash-lanebreak',
-    name: '换位抢攻',
+    name: '换位猛攻',
     description: '贴近后反击更容易叠层。',
     category: 'route',
     routeId: 'dash',

@@ -1218,7 +1218,7 @@ export class OverlayController {
   private getAnomalyRoleLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '起手';
+        return '起步';
       case 'core':
         return '加力';
       case 'transform':
@@ -1233,7 +1233,7 @@ export class OverlayController {
   private getAnomalyRoleActionLabel(role?: AnomalyRoleId): string {
     switch (role) {
       case 'direction':
-        return '起手';
+        return '起步';
       case 'core':
         return '加力';
       case 'transform':
@@ -1758,7 +1758,7 @@ export class OverlayController {
           ? `${routeName}先把前排打开`
           : routeId === 'dash'
             ? `${routeName}先把贴身站住`
-            : `${routeName}先把起手打稳`
+            : `${routeName}先把开局打稳`
       case 'core':
           return routeId === 'pierce'
 ? `${routeName}的前排穿透效果增强`
@@ -1815,7 +1815,7 @@ export class OverlayController {
 
     if (result.routeId === 'pierce') {
     if (isLateTurn) {
-      return '起势较晚，局面未能展开'
+      return '成型较晚，局面未能展开'
     }
     if (result.buildStage === 'matured') {
       return hasFinisherSupport ? '已突破至后排，但收尾不足' : '已突破至后排，但最终伤害不足';
@@ -1831,7 +1831,7 @@ export class OverlayController {
 
     if (result.routeId === 'dash') {
     if (isLateTurn) {
-      return '起势较晚，局面未能展开'
+      return '成型较晚，局面未能展开'
     }
     if (result.buildStage === 'matured') {
       return hasFinisherSupport ? '已具备贴身输出能力，但最终阶段中断' : '已具备贴身输出能力，但最终阶段未衔接';
@@ -1846,7 +1846,7 @@ export class OverlayController {
     }
 
     if (isLateTurn) {
-      return '起势较晚，局面未能展开'
+      return '成型较晚，局面未能展开'
     }
     if (result.buildStage === 'matured') {
       return '已成型，但最终阶段未能坚持';
@@ -1867,19 +1867,19 @@ export class OverlayController {
 
     const layerMap: Record<NonNullable<RunResult['routeId']>, Record<AnomalyRoleId, string>> = {
       crit: {
-        direction: '起手',
+        direction: '起步',
         core: '加力',
         transform: '转强',
         finisher: '收尾',
       },
       pierce: {
-        direction: '起手',
+        direction: '起步',
         core: '加力',
         transform: '转强',
         finisher: '收尾',
       },
       dash: {
-        direction: '起手',
+        direction: '起步',
         core: '加力',
         transform: '转强',
         finisher: '收尾',
@@ -1896,7 +1896,7 @@ export class OverlayController {
   private getRouteResultStageLabel(routeId: RunResult['routeId'], buildStage: RunResult['buildStage']): string {
     const genericStageMap: Record<RunResult['buildStage'], string> = {
 unformed: '未成型',
-hinted: '起势',
+hinted: '初现',
 committed: '成型',
 matured: '完全',
     };
@@ -1907,19 +1907,19 @@ matured: '完全',
     const stageMap: Record<NonNullable<RunResult['routeId']>, Record<RunResult['buildStage'], string>> = {
       crit: {
 unformed: '未成型',
-hinted: '暴击起势',
+hinted: '暴击初现',
 committed: '暴击成型',
 matured: '暴击完全',
       },
       pierce: {
         unformed: '未成型',
-        hinted: '穿透起势',
+        hinted: '穿透初现',
         committed: '穿透连起',
         matured: '穿透贯通',
       },
       dash: {
 unformed: '未成型',
-hinted: '穿梭起势',
+hinted: '穿梭初现',
 committed: '穿梭贴近',
 matured: '穿梭完全',
       },

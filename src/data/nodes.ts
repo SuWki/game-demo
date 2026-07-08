@@ -570,7 +570,7 @@ description: '高血量敌人密集推进',
         id: 'round-2-battle-crit-pressure',
         type: 'battle',
         phase: 'mid',
-title: '蓄势压制',
+    title: '持续压制',
 description: '精英持盾推进，寻找破绽',
         templateId: 'elite-pressure-hold',
         difficultyScale: 1.22,
@@ -1636,7 +1636,7 @@ function pickWeightedUniqueBlueprints(offer: RoundNodeOffer, context: NodeOfferC
 export function getPhaseLabel(phase: PhaseId): string {
   switch (phase) {
     case 'opening':
-      return '起手';
+      return '开局';
     case 'mid':
       return '中盘';
     case 'late':

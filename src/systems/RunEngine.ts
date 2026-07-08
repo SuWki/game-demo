@@ -1148,6 +1148,10 @@ export class RunEngine {
   }
 
   private clearPressureSafeWindow(battle: BattleState): void {
+    // 安全区消失时给玩家短暂无敌，防止区内外敌人瞬间秒杀
+    if (battle.encounterType === 'boss' && battle.pressureSafeWindowSec > 0) {
+      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.45);
+    }
     battle.pressureSafeWindowAxis = undefined;
     battle.pressureSafeWindowShiftType = undefined;
     battle.pressureSafeWindowCenter = CENTER_X;
@@ -1350,18 +1354,18 @@ export class RunEngine {
     if (axis === 'pocket') {
       const shiftType = this.getPressurePocketShiftType(battle, phase);
       const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
-      // 安全区尺寸收窄 20%（原值 * 0.8）
-      const baseSafeWindowSpan = clamp((phase.patternSafeWindowSize ?? 184) * 0.8, 122, view.width * 0.34);
+      // 安全区尺寸：保证矩形有足够走位空间
+      const baseSafeWindowSpan = clamp((phase.patternSafeWindowSize ?? 200) * 0.88, 150, view.width * 0.36);
       const baseSafeWindowSecondarySpan = clamp(
-        (phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.68) * 0.8,
-        86,
-        view.height * 0.32,
+        (phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.82) * 0.88,
+        130,
+        view.height * 0.36,
       );
-      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 144, view.width * 0.44);
+      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 156, view.width * 0.46);
       const safeWindowSecondarySpan = clamp(
         baseSafeWindowSecondarySpan * shiftProfile.heightScale,
-        104,
-        view.height * 0.42,
+        140,
+        view.height * 0.44,
       );
       const safeWindowCenter = this.choosePressureSafePocketCenter(battle, safeWindowSpan, safeWindowSecondarySpan, shiftType);
       const baseSafeWindowSec = (phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale;
@@ -1403,15 +1407,15 @@ export class RunEngine {
 
     const dimension = axis === 'vertical' ? view.width : view.height;
     const secondaryDimension = axis === 'vertical' ? view.height : view.width;
-    const minimumSpan = axis === 'vertical' ? 160 : 130;
+    const minimumSpan = axis === 'vertical' ? 170 : 150;
     const maximumSpan = dimension * 0.42;
     const safeWindowSpan = clamp(
       (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 220 : 168)) * 0.82,
       minimumSpan,
       maximumSpan,
     );
-    // 安全区副轴长度：限制为视口的62%，给玩家留出足够的移动空间
-    const secondarySpan = clamp(secondaryDimension * 0.62, 180, secondaryDimension * 0.72);
+    // 安全区副轴长度：与主轴接近，形成近似正方形矩形，让玩家有四方位走位空间
+    const secondarySpan = clamp(safeWindowSpan * 0.88, 140, secondaryDimension * 0.38);
     const safeWindowCenter = this.choosePressureSafeWindowCenter(battle, axis, safeWindowSpan);
     const safeWindowSecondaryCenter =
       axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
@@ -1602,8 +1606,8 @@ export class RunEngine {
     const inside = this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12);
 
     if (inside) {
-      // 安全区内：极短保护 + 清理贴脸敌人
-      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.08);
+      // 安全区内：持续保护 + 清理贴脸敌人
+      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.15);
       battle.bossSafeWindowGraceSec = 0;
       battle.outsideSafeDamageTimerSec = 0;
       this.clearBossSafeWindowBlockers(battle);
@@ -3507,7 +3511,7 @@ return activeRouteId === 'pierce'
       pierceRiftbloom: { routeId: 'pierce', text: '穿透开始铺开', priority: 3 },
       piercePrism: { routeId: 'pierce', text: '穿透已成型', priority: 4 },
       pierceBreakthrough: { routeId: 'pierce', text: '后排同时受到伤害', priority: 5 },
-      dashBrush: { routeId: 'dash', text: '贴身起手生效', priority: 1 },
+      dashBrush: { routeId: 'dash', text: '贴身开始生效', priority: 1 },
       dashSidestepBank: { routeId: 'dash', text: '贴身反击强化', priority: 2 },
       dashZeroWindow: { routeId: 'dash', text: '反击能力稳定', priority: 3 },
       dashAfterimage: { routeId: 'dash', text: '残影追击生效', priority: 4 },
@@ -5896,7 +5900,7 @@ return activeRouteId === 'pierce'
             battle.encounterType === 'boss' &&
             this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)
           ) {
-            battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.12);
+            battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.25);
             const bounceAngle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
             enemy.x = clamp(enemy.x + Math.cos(bounceAngle) * 34, -48, ARENA_WIDTH + 48);
             enemy.y = clamp(enemy.y + Math.sin(bounceAngle) * 34, -48, ARENA_HEIGHT + 48);
@@ -6869,6 +6873,15 @@ return activeRouteId === 'pierce'
 
       const distance = Math.hypot(projectile.x - battle.playerX, projectile.y - battle.playerY);
       if (!this.debugConfig.freezeEnemyProjectiles && distance <= projectile.radius + PLAYER_COLLISION_RADIUS) {
+        // 安全区内免疫弹体伤害
+        if (
+          battle.encounterType === 'boss' &&
+          battle.pressureSafeWindowSec > 0 &&
+          this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)
+        ) {
+          battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.15);
+          continue;
+        }
         if (battle.invulnerableSec <= 0 && !this.debugConfig.invulnerablePlayer) {
           this.state.stats.hp = clamp(this.state.stats.hp - projectile.damage, 0, this.state.stats.maxHp);
           battle.invulnerableSec = 0.32;

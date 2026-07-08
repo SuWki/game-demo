@@ -229,7 +229,7 @@ const RAW_EVENT_CATALOG: EventDefinition[] = [
   },
   {
     id: 'early-linecheck',
-    name: '起手校线',
+    name: '开局校线',
     description: '选择火力或生存方向',
     selection: {
       baseWeight: 3.98,

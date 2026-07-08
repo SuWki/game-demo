@@ -140,7 +140,7 @@ export function updateEnemies(battle: BattleState, dt: number, deps: EnemyAIDeps
           battle.encounterType === 'boss' &&
           deps.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)
         ) {
-          battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.12);
+          battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.25);
           const bounceAngle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
           enemy.x = clamp(enemy.x + Math.cos(bounceAngle) * 34, -48, ARENA_WIDTH + 48);
           enemy.y = clamp(enemy.y + Math.sin(bounceAngle) * 34, -48, ARENA_HEIGHT + 48);
@@ -312,6 +312,15 @@ export function updateEnemyProjectiles(battle: BattleState, dt: number, deps: En
 
     const distance = Math.hypot(projectile.x - battle.playerX, projectile.y - battle.playerY);
     if (!deps.debugConfig.freezeEnemyProjectiles && distance <= projectile.radius + PLAYER_COLLISION_RADIUS) {
+      // 安全区内免疫弹体伤害
+      if (
+        battle.encounterType === 'boss' &&
+        battle.pressureSafeWindowSec > 0 &&
+        deps.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12)
+      ) {
+        battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.15);
+        continue;
+      }
       if (battle.invulnerableSec <= 0 && !deps.debugConfig.invulnerablePlayer) {
         deps.state.stats.hp = clamp(deps.state.stats.hp - projectile.damage, 0, deps.state.stats.maxHp);
         battle.invulnerableSec = 0.32;

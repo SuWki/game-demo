@@ -1273,7 +1273,7 @@ export const BATTLE_TEMPLATES: Record<BattleTemplateId, BattleTemplateDefinition
   },
   'elite-pressure-hold': {
     id: 'elite-pressure-hold',
-    name: '蓄势压制',
+    name: '持续压制',
     description: '护盾消失时进攻',
     contentTier: 'rare',
     durationSec: 35,

@@ -84,7 +84,7 @@ export function getRouteBuildProgressInfo(state: RunState, routeId: RouteId): {
   nextThreshold: number | null;
   /** 下一个阶段的 ID，如 'hinted' | 'committed' | 'matured' */
   nextStageId: Exclude<RouteBuildStage, 'unformed'> | null;
-  /** 下一个阶段的中文标签，如 '起势' | '成型' | '成型' */
+  /** 下一个阶段的中文标签，如 '初现' | '成型' | '成型' */
   nextStageName: string | null;
 } {
   const count = state.routeCounts[routeId];
@@ -147,7 +147,7 @@ export function getRouteStageUnlockDescription(routeId: RouteId, stage: Exclude<
 export function getBuildStageLabel(buildStage: RouteBuildStage): string {
   switch (buildStage) {
     case 'hinted':
-      return '起势';
+      return '初现';
     case 'committed':
       return '成型';
     case 'matured':
@@ -161,19 +161,19 @@ export function getRouteStageLabel(routeId: RouteId, buildStage: RouteBuildStage
   const labelMap: Record<RouteId, Record<RouteBuildStage, string>> = {
     crit: {
       unformed: '未成型',
-      hinted: '起势',
+      hinted: '初现',
       committed: '成型',
       matured: '成型',
     },
     pierce: {
       unformed: '未成型',
-      hinted: '起势',
+      hinted: '初现',
       committed: '连上',
       matured: '贯通',
     },
     dash: {
       unformed: '未成型',
-      hinted: '起势',
+      hinted: '初现',
       committed: '贴身',
       matured: '成型',
     },
@@ -188,7 +188,7 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'crit':
       switch (buildStage) {
         case 'hinted':
-          return '◆ ' + routeName + '起势：先盯一个。';
+          return '◆ ' + routeName + '初现：先盯一个。';
         case 'committed':
           return '◆ ' + routeName + '成型：连续输出能力强化。';
         case 'matured':
@@ -199,7 +199,7 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'pierce':
       switch (buildStage) {
         case 'hinted':
-          return '║ ' + routeName + '起势：先找直线。';
+          return '║ ' + routeName + '初现：先找直线。';
         case 'committed':
           return '║ ' + routeName + '成型：前排持续被突破。';
         case 'matured':
@@ -210,7 +210,7 @@ export function getRouteStageNarrative(routeId: RouteId, buildStage: RouteBuildS
     case 'dash':
       switch (buildStage) {
         case 'hinted':
-          return '◌ ' + routeName + '起势：先贴身。';
+          return '◌ ' + routeName + '初现：先贴身。';
         case 'committed':
           return '◌ ' + routeName + '成型：贴身后可持续输出。';
         case 'matured':
@@ -228,7 +228,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'crit':
       switch (stage) {
         case 'starter':
-          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击起势`;
+          return `${ROUTE_VISUAL_MAP.crit.icon} 暴击初现`;
         case 'bridge':
           return `${ROUTE_VISUAL_MAP.crit.icon} 暴击接上`;
         case 'payoff':
@@ -239,7 +239,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'pierce':
       switch (stage) {
         case 'starter':
-          return `${ROUTE_VISUAL_MAP.pierce.icon} 穿透起势`;
+          return `${ROUTE_VISUAL_MAP.pierce.icon} 穿透初现`;
         case 'bridge':
           return `${ROUTE_VISUAL_MAP.pierce.icon} 穿透接上`;
         case 'payoff':
@@ -250,7 +250,7 @@ export function getRouteStageMomentText(routeId: RouteId, stage: 'starter' | 'br
     case 'dash':
       switch (stage) {
         case 'starter':
-          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭起势`;
+          return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭初现`;
         case 'bridge':
           return `${ROUTE_VISUAL_MAP.dash.icon} 穿梭贴身`;
         case 'payoff':
