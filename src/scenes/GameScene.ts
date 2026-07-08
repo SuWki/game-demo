@@ -5259,7 +5259,7 @@ this.graphics.lineStyle(3, dashAuraColor, 0.15 + dashDriveRatio * 0.25);
       isVertical ? camera.width - rightInset : camera.height - bottomInset,
     );
     const safePrim = Math.max(18, safeEndPrim - safeStartPrim);
-    const defaultSecondary = Math.max(140, battle.pressureSafeWindowSpan * 0.88);
+    const defaultSecondary = Math.max(160, battle.pressureSafeWindowSpan * 0.85);
     const secondaryScreen = isVertical
       ? battle.playerY - camera.top
       : battle.playerX - camera.left;

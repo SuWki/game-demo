@@ -459,8 +459,36 @@ export class OverlayController {
 
           <div class="result-story">
             <p class="result-story__summary">${result.summary}</p>
-            <p class="result-story__route">${this.getResultRouteRecap(result)}</p>
           </div>
+
+          ${
+            result.routeTrace && result.routeTrace.length > 0
+              ? `
+          <div class="result-upgrade-timeline result-node-trace">
+            <div class="timeline-header">
+              <span>路线节点</span>
+              <small>${result.routeTrace.length} 个节点</small>
+            </div>
+            <div class="timeline-scroll">
+              ${result.routeTrace
+                .map(
+                  (node) => `
+                <div class="timeline-item" style="border-color: ${NODE_TYPE_ACCENT_MAP[node.type]};">
+                  <div class="timeline-item-icon" style="background: ${NODE_TYPE_ACCENT_MAP[node.type]};">
+                    ${NODE_TYPE_LABEL_MAP[node.type]}
+                  </div>
+                  <div class="timeline-item-content">
+                    <strong>${node.title}</strong>
+                  </div>
+                </div>
+              `,
+                )
+                .join('')}
+            </div>
+          </div>
+          `
+              : ''
+          }
 
           <div class="result-core-stats">
             <div class="core-stat-item" style="opacity: 0;" data-animate="stat" data-delay="0">

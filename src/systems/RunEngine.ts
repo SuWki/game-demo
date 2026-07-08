@@ -1354,18 +1354,18 @@ export class RunEngine {
     if (axis === 'pocket') {
       const shiftType = this.getPressurePocketShiftType(battle, phase);
       const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
-      // 安全区尺寸：保证矩形有足够走位空间
-      const baseSafeWindowSpan = clamp((phase.patternSafeWindowSize ?? 200) * 0.88, 150, view.width * 0.36);
+      // 安全区尺寸：足够大让玩家有走位空间，不被小怪挤压
+      const baseSafeWindowSpan = clamp((phase.patternSafeWindowSize ?? 240) * 0.95, 180, view.width * 0.42);
       const baseSafeWindowSecondarySpan = clamp(
-        (phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.82) * 0.88,
-        130,
-        view.height * 0.36,
+        (phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.85) * 0.95,
+        160,
+        view.height * 0.42,
       );
-      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 156, view.width * 0.46);
+      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 186, view.width * 0.52);
       const safeWindowSecondarySpan = clamp(
         baseSafeWindowSecondarySpan * shiftProfile.heightScale,
-        140,
-        view.height * 0.44,
+        166,
+        view.height * 0.50,
       );
       const safeWindowCenter = this.choosePressureSafePocketCenter(battle, safeWindowSpan, safeWindowSecondarySpan, shiftType);
       const baseSafeWindowSec = (phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale;
@@ -1407,15 +1407,15 @@ export class RunEngine {
 
     const dimension = axis === 'vertical' ? view.width : view.height;
     const secondaryDimension = axis === 'vertical' ? view.height : view.width;
-    const minimumSpan = axis === 'vertical' ? 170 : 150;
-    const maximumSpan = dimension * 0.42;
+    const minimumSpan = axis === 'vertical' ? 200 : 180;
+    const maximumSpan = dimension * 0.48;
     const safeWindowSpan = clamp(
-      (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 220 : 168)) * 0.82,
+      (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 260 : 200)) * 0.92,
       minimumSpan,
       maximumSpan,
     );
     // 安全区副轴长度：与主轴接近，形成近似正方形矩形，让玩家有四方位走位空间
-    const secondarySpan = clamp(safeWindowSpan * 0.88, 140, secondaryDimension * 0.38);
+    const secondarySpan = clamp(safeWindowSpan * 0.85, 160, secondaryDimension * 0.44);
     const safeWindowCenter = this.choosePressureSafeWindowCenter(battle, axis, safeWindowSpan);
     const safeWindowSecondaryCenter =
       axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
@@ -1467,13 +1467,114 @@ export class RunEngine {
     if (battle.encounterType === 'boss') {
       return this.chooseBossPressureSafeWindowCenter(battle, axis, span, anchoredLane);
     }
-    const blendedCenter = anchoredLane * 0.72 + playerCoord * 0.28;
     const margin = axis === 'vertical' ? 72 : 58;
-    return clamp(
-      blendedCenter,
-      viewStart + margin + span * 0.5,
-      viewStart + dimension - margin - span * 0.5,
-    );
+    const minCenter = viewStart + margin + span * 0.5;
+    const maxCenter = viewStart + dimension - margin - span * 0.5;
+
+    // 生成候选中心点：锚点+玩家位置+均匀分布
+    const candidates = [
+      clamp(anchoredLane, minCenter, maxCenter),
+      clamp(anchoredLane * 0.72 + playerCoord * 0.28, minCenter, maxCenter),
+      clamp(viewStart + dimension * 0.25, minCenter, maxCenter),
+      clamp(viewStart + dimension * 0.5, minCenter, maxCenter),
+      clamp(viewStart + dimension * 0.75, minCenter, maxCenter),
+    ];
+
+    // 选敌人最少的候选位置
+    const secondarySpan = battle.pressureSafeWindowSecondarySpan || span * 0.85;
+    let bestCenter = candidates[1];
+    let bestScore = Infinity;
+    for (const cand of candidates) {
+      const score = this.scoreSafeWindowCandidate(battle, axis, cand, span, secondarySpan);
+      if (score < bestScore) {
+        bestScore = score;
+        bestCenter = cand;
+      }
+    }
+    return bestCenter;
+  }
+
+  private scoreSafeWindowCandidate(
+    battle: BattleState,
+    axis: PressureSafeWindowAxis,
+    center: number,
+    span: number,
+    secondarySpan: number,
+  ): number {
+    const isVertical = axis === 'vertical';
+    const primaryStart = center - span * 0.5;
+    const primaryEnd = center + span * 0.5;
+    const secondaryCenter = isVertical
+      ? battle.playerY
+      : battle.playerX;
+    const secondaryStart = secondaryCenter - secondarySpan * 0.5;
+    const secondaryEnd = secondaryCenter + secondarySpan * 0.5;
+
+    let score = 0;
+    for (const enemy of battle.enemies) {
+      const ep = isVertical ? enemy.x : enemy.y;
+      const es = isVertical ? enemy.y : enemy.x;
+      if (ep >= primaryStart - 30 && ep <= primaryEnd + 30 && es >= secondaryStart - 30 && es <= secondaryEnd + 30) {
+        // 敌人在安全区内或边缘，每个+10分（越低越好）
+        score += 10;
+      } else {
+        // 离安全区越远的敌人分数越低
+        const distToEdge = Math.max(0, Math.abs(ep - center) - span * 0.5);
+        score += Math.max(0, 3 - distToEdge * 0.02);
+      }
+    }
+    return score;
+  }
+
+  private findEnemyAwarePocketCenter(
+    battle: BattleState,
+    spanX: number,
+    spanY: number,
+    anchorX: number,
+    anchorY: number,
+    playerBlend: number,
+  ): { x: number; y: number } {
+    const view = this.getBattleViewportBounds(battle);
+    const blendedX = anchorX * (1 - playerBlend) + battle.playerX * playerBlend;
+    const blendedY = anchorY * (1 - playerBlend) + battle.playerY * playerBlend;
+    const minX = view.left + 84 + spanX * 0.5;
+    const maxX = view.right - 84 - spanX * 0.5;
+    const minY = view.top + 74 + spanY * 0.5;
+    const maxY = view.bottom - 74 - spanY * 0.5;
+
+    // 生成候选中心点
+    const candidates: { x: number; y: number }[] = [
+      { x: clamp(blendedX, minX, maxX), y: clamp(blendedY, minY, maxY) },
+      { x: clamp(anchorX, minX, maxX), y: clamp(anchorY, minY, maxY) },
+      { x: clamp(view.left + view.width * 0.3, minX, maxX), y: clamp(view.top + view.height * 0.3, minY, maxY) },
+      { x: clamp(view.left + view.width * 0.7, minX, maxX), y: clamp(view.top + view.height * 0.3, minY, maxY) },
+      { x: clamp(view.left + view.width * 0.3, minX, maxX), y: clamp(view.top + view.height * 0.7, minY, maxY) },
+      { x: clamp(view.left + view.width * 0.7, minX, maxX), y: clamp(view.top + view.height * 0.7, minY, maxY) },
+      { x: clamp(view.left + view.width * 0.5, minX, maxX), y: clamp(view.top + view.height * 0.5, minY, maxY) },
+    ];
+
+    let best = candidates[0];
+    let bestScore = Infinity;
+    for (const cand of candidates) {
+      const x0 = cand.x - spanX * 0.5;
+      const x1 = cand.x + spanX * 0.5;
+      const y0 = cand.y - spanY * 0.5;
+      const y1 = cand.y + spanY * 0.5;
+      let score = 0;
+      for (const enemy of battle.enemies) {
+        if (enemy.x >= x0 - 30 && enemy.x <= x1 + 30 && enemy.y >= y0 - 30 && enemy.y <= y1 + 30) {
+          score += 10;
+        } else {
+          const dist = Math.hypot(enemy.x - cand.x, enemy.y - cand.y);
+          score += Math.max(0, 3 - dist * 0.01);
+        }
+      }
+      if (score < bestScore) {
+        bestScore = score;
+        best = cand;
+      }
+    }
+    return best;
   }
 
   private choosePressureSafePocketCenter(
@@ -1494,12 +1595,7 @@ export class RunEngine {
       return this.chooseBossPressureSafePocketCenter(battle, spanX, spanY, shiftType, anchorX, anchorY);
     }
     const playerBlend = shiftProfile.playerBlend;
-    const blendedX = anchorX * (1 - playerBlend) + battle.playerX * playerBlend;
-    const blendedY = anchorY * (1 - playerBlend) + battle.playerY * playerBlend;
-    return {
-      x: clamp(blendedX, view.left + 84 + spanX * 0.5, view.right - 84 - spanX * 0.5),
-      y: clamp(blendedY, view.top + 74 + spanY * 0.5, view.bottom - 74 - spanY * 0.5),
-    };
+    return this.findEnemyAwarePocketCenter(battle, spanX, spanY, anchorX, anchorY, playerBlend);
   }
 
   private getBossSafeWindowLingerSec(baseLingerSec: number, pulseIntervalSec: number | undefined): number {
