@@ -457,10 +457,6 @@ export class OverlayController {
             ${!isVictory ? `<p class="result-reason">${result.endingReason}</p>` : ''}
           </div>
 
-          <div class="result-story">
-            <p class="result-story__summary">${result.summary}</p>
-          </div>
-
           ${
             result.routeTrace && result.routeTrace.length > 0
               ? `

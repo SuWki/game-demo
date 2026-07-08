@@ -1778,17 +1778,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderBossSafeWindowHint(battle: BattleState): void {
-    if (battle.pressureSafeWindowSec <= 0) {
-      this.bossSafeHintText.setVisible(false);
-      return;
-    }
-
-    const pulse = 0.5 + Math.sin(battle.elapsedSec * 5.4) * 0.5;
-    const alpha = Math.min(1, 0.78 + pulse * 0.18);
-    this.bossSafeHintText
-      .setPosition(this.scale.width * 0.56, 142)
-      .setAlpha(alpha)
-      .setVisible(true);
+    // 安全区提示已移除
+    this.bossSafeHintText.setVisible(false);
+    void battle;
   }
 
   private renderRouteMomentOverlay(battle: BattleState): void {
@@ -5023,269 +5015,29 @@ this.graphics.lineStyle(3, dashAuraColor, 0.15 + dashDriveRatio * 0.25);
   }
 
   private renderEncounterFlowOverlay(
-    battle: BattleState,
-    camera: { left: number; top: number; width: number; height: number },
-    accentColor: number,
+    _battle: BattleState,
+    _camera: { left: number; top: number; width: number; height: number },
+    _accentColor: number,
   ): void {
-    const template = this.getBattleTemplate(battle.templateId);
-    const pattern = template.spawnRule?.pattern ?? 'surround';
-    const laneBias = template.spawnRule?.laneBias ?? 'horizontal';
-    const alpha = 0.026 + Math.min(0.04, battle.tempoPulseSec * 0.1 + (battle.elapsedSec / Math.max(1, template.durationSec)) * 0.028);
-    const flowPulse = 0.5 + Math.sin(battle.elapsedSec * 2.2) * 0.5;
-
-    if (pattern === 'pincers') {
-      const slide = ((battle.elapsedSec * 84) % 64) - 18;
-      this.graphics.fillStyle(accentColor, alpha * (0.34 + flowPulse * 0.22));
-      this.graphics.fillRect(0, 68, 22, camera.height - 136);
-      this.graphics.fillRect(camera.width - 22, 68, 22, camera.height - 136);
-      this.graphics.lineStyle(2, accentColor, alpha * 1.25);
-      for (let lane = 0; lane < 3; lane += 1) {
-        const y = 132 + lane * ((camera.height - 264) / 2);
-        this.graphics.lineBetween(36, y, 78, y - 20);
-        this.graphics.lineBetween(36, y, 78, y + 20);
-        this.graphics.lineBetween(camera.width - 36, y, camera.width - 78, y - 20);
-        this.graphics.lineBetween(camera.width - 36, y, camera.width - 78, y + 20);
-        this.graphics.fillStyle(accentColor, alpha * (0.48 + flowPulse * 0.16));
-        this.graphics.fillRoundedRect(22 + slide, y - 7, 24, 14, 5);
-        this.graphics.fillRoundedRect(camera.width - 46 - slide, y - 7, 24, 14, 5);
-      }
-      return;
-    }
-
-    if (pattern === 'lanes' && laneBias === 'vertical') {
-      return;
-    }
-
-    if (pattern === 'lanes' && laneBias === 'horizontal') {
-      return;
-    }
-
-    const centerX = camera.width * 0.5;
-    const centerY = camera.height * 0.5;
-    const arm = 34 + flowPulse * 14;
-    const edgeInsetX = 34;
-    const edgeInsetY = 42;
-    this.graphics.lineStyle(2, accentColor, alpha * 1.08);
-    this.graphics.lineBetween(edgeInsetX, centerY - 48, edgeInsetX + arm, centerY - 18);
-    this.graphics.lineBetween(edgeInsetX, centerY + 48, edgeInsetX + arm, centerY + 18);
-    this.graphics.lineBetween(camera.width - edgeInsetX, centerY - 48, camera.width - edgeInsetX - arm, centerY - 18);
-    this.graphics.lineBetween(camera.width - edgeInsetX, centerY + 48, camera.width - edgeInsetX - arm, centerY + 18);
-    this.graphics.lineBetween(centerX - 48, edgeInsetY, centerX - 18, edgeInsetY + arm);
-    this.graphics.lineBetween(centerX + 48, edgeInsetY, centerX + 18, edgeInsetY + arm);
-    this.graphics.lineBetween(centerX - 48, camera.height - edgeInsetY, centerX - 18, camera.height - edgeInsetY - arm);
-    this.graphics.lineBetween(centerX + 48, camera.height - edgeInsetY, centerX + 18, camera.height - edgeInsetY - arm);
-    this.graphics.fillStyle(accentColor, alpha * (0.46 + flowPulse * 0.12));
-    this.graphics.fillTriangle(edgeInsetX - 2, centerY, edgeInsetX + 18, centerY - 12, edgeInsetX + 18, centerY + 12);
-    this.graphics.fillTriangle(
-      camera.width - edgeInsetX + 2,
-      centerY,
-      camera.width - edgeInsetX - 18,
-      centerY - 12,
-      camera.width - edgeInsetX - 18,
-      centerY + 12,
-    );
+    // 遭遇流装饰遮罩已移除 — 不再画场内装饰线条和箭头
   }
 
   private renderPressurePatternOverlay(
-    battle: BattleState,
-    camera: { left: number; top: number; width: number; height: number },
-    accentColor: number,
+    _battle: BattleState,
+    _camera: { left: number; top: number; width: number; height: number },
+    _accentColor: number,
   ): void {
-    if (!battle.pressurePatternMode || !battle.pressurePatternLabel) {
-      return;
-    }
-
-    // Hide boss pressure overlay toggle
-    if (this.debugConfig.hideBossPressureOverlay) {
-      return;
-    }
-
-    const flashAlpha = Math.min(0.16, 0.04 + battle.pressurePatternFlashSec * 0.2);
-    // Safe window overlay - shows safe zone (green) and danger zone (red)
-    this.renderPressureSafeWindowOverlay(battle, camera, accentColor, flashAlpha);
-
-    switch (battle.pressurePatternMode) {
-      case 'sideClamp':
-        // Reduced opacity for less distraction
-        this.graphics.fillStyle(accentColor, flashAlpha * 0.5);
-        this.graphics.fillRect(28, 92, 30, this.scale.height - 184);
-        this.graphics.fillRect(this.scale.width - 58, 92, 30, this.scale.height - 184);
-        this.graphics.lineStyle(2, accentColor, flashAlpha * 0.7);
-        this.graphics.lineBetween(58, 120, 58, this.scale.height - 120);
-        this.graphics.lineBetween(this.scale.width - 58, 120, this.scale.width - 58, this.scale.height - 120);
-        return;
-      case 'laneCrush':
-        this.graphics.fillStyle(accentColor, flashAlpha * 0.5);
-        this.graphics.fillRect(84, 28, this.scale.width - 168, 28);
-        this.graphics.fillRect(84, this.scale.height - 56, this.scale.width - 168, 28);
-        this.graphics.lineStyle(2, accentColor, flashAlpha * 0.68);
-        this.graphics.lineBetween(112, 56, this.scale.width - 112, 56);
-        this.graphics.lineBetween(112, this.scale.height - 56, this.scale.width - 112, this.scale.height - 56);
-        return;
-      case 'crossfireWave':
-        // 对角线指示器已移除 — 不再画从左下到右上的 X 交叉线
-        return;
-      default:
-        return;
-    }
+    // 压力模式遮罩已移除 — 不再画场内色块遮盖层
   }
 
   private renderPressureSafeWindowOverlay(
-    battle: BattleState,
-    camera: { left: number; top: number; width: number; height: number },
-    accentColor: number,
-    flashAlpha: number,
+    _battle: BattleState,
+    _camera: { left: number; top: number; width: number; height: number },
+    _accentColor: number,
+    _flashAlpha: number,
   ): boolean {
-    if (
-      !battle.pressureSafeWindowAxis ||
-      battle.pressureSafeWindowSec <= 0 ||
-      battle.pressureSafeWindowSpan <= 0
-    ) {
-      return false;
-    }
-
-    const topInset = 22;
-    const bottomInset = 20;
-    const leftInset = 20;
-    const rightInset = 20;
-    const contentWidth = camera.width - leftInset - rightInset;
-    const contentHeight = camera.height - topInset - bottomInset;
-    const safeWindowAlpha = Math.min(0.18, 0.05 + battle.pressureSafeWindowSec * 0.08 + flashAlpha * 0.7);
-    const dangerAlpha = Math.min(0.16, 0.05 + battle.pressureSafeWindowSec * 0.06 + flashAlpha * 0.95);
-    const safeTint = SAFE_WINDOW_TINT;
-    const dangerTint = SAFE_WINDOW_DANGER;
-
-    // 当竖条/横条安全区有副轴长度时，按口袋矩形渲染
-    const hasSecondarySpan = battle.pressureSafeWindowSecondarySpan > 0;
-    const isPocketShape = battle.pressureSafeWindowAxis === 'pocket' || hasSecondarySpan;
-
-    if (isPocketShape) {
-      if (battle.pressureSafeWindowSecondarySpan <= 0 && battle.pressureSafeWindowAxis !== 'pocket') {
-        // fall through to strip rendering
-      } else {
-      // 计算安全区在屏幕上的实际 X/Y 范围
-      let boundsCenterX: number;
-      let boundsSpanX: number;
-      let boundsCenterY: number;
-      let boundsSpanY: number;
-
-      if (battle.pressureSafeWindowAxis === 'horizontal') {
-        // horizontal: 主轴=Y, 副轴=X
-        boundsCenterY = battle.pressureSafeWindowCenter;
-        boundsSpanY = battle.pressureSafeWindowSpan;
-        boundsCenterX = battle.pressureSafeWindowSecondaryCenter;
-        boundsSpanX = battle.pressureSafeWindowSecondarySpan;
-      } else {
-        // vertical 或 pocket: 主轴=X, 副轴=Y
-        boundsCenterX = battle.pressureSafeWindowCenter;
-        boundsSpanX = battle.pressureSafeWindowSpan;
-        boundsCenterY = battle.pressureSafeWindowSecondaryCenter;
-        boundsSpanY = battle.pressureSafeWindowSecondarySpan;
-      }
-
-      if (boundsSpanY <= 0) {
-        // 副轴无长度，回退到条形渲染
-      } else {
-
-      const safeStartX = Phaser.Math.Clamp(
-        boundsCenterX - boundsSpanX * 0.5 - camera.left,
-        leftInset,
-        camera.width - rightInset,
-      );
-      const safeEndX = Phaser.Math.Clamp(
-        boundsCenterX + boundsSpanX * 0.5 - camera.left,
-        leftInset,
-        camera.width - rightInset,
-      );
-      const safeStartY = Phaser.Math.Clamp(
-        boundsCenterY - boundsSpanY * 0.5 - camera.top,
-        topInset,
-        camera.height - bottomInset,
-      );
-      const safeEndY = Phaser.Math.Clamp(
-        boundsCenterY + boundsSpanY * 0.5 - camera.top,
-        topInset,
-        camera.height - bottomInset,
-      );
-      const safeWidth = Math.max(28, safeEndX - safeStartX);
-      const safeHeight = Math.max(24, safeEndY - safeStartY);
-
-      if (safeStartY > topInset) {
-        this.graphics.fillStyle(dangerTint, dangerAlpha);
-        this.graphics.fillRect(leftInset, topInset, contentWidth, safeStartY - topInset);
-      }
-      if (safeEndY < camera.height - bottomInset) {
-        this.graphics.fillStyle(dangerTint, dangerAlpha);
-        this.graphics.fillRect(leftInset, safeEndY, contentWidth, camera.height - bottomInset - safeEndY);
-      }
-      if (safeStartX > leftInset) {
-        this.graphics.fillStyle(dangerTint, dangerAlpha * 0.92);
-        this.graphics.fillRect(leftInset, safeStartY, safeStartX - leftInset, safeHeight);
-      }
-      if (safeEndX < camera.width - rightInset) {
-        this.graphics.fillStyle(dangerTint, dangerAlpha * 0.92);
-        this.graphics.fillRect(safeEndX, safeStartY, camera.width - rightInset - safeEndX, safeHeight);
-      }
-
-      this.graphics.fillStyle(safeTint, safeWindowAlpha * 0.58);
-      this.graphics.fillRect(safeStartX, safeStartY, safeWidth, safeHeight);
-      this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.36);
-      this.graphics.strokeRect(safeStartX, safeStartY, safeWidth, safeHeight);
-      this.renderSafeWindowBrackets(safeStartX, safeStartY, safeWidth, safeHeight, safeTint, accentColor, safeWindowAlpha, flashAlpha);
-      // Reduced boundary lines - thinner and more transparent
-      this.graphics.lineStyle(1.2, accentColor, flashAlpha * 0.6);
-      this.graphics.lineBetween(safeStartX, safeStartY, safeStartX, safeEndY);
-      this.graphics.lineBetween(safeEndX, safeStartY, safeEndX, safeEndY);
-      this.graphics.lineBetween(safeStartX, safeStartY, safeEndX, safeStartY);
-      this.graphics.lineBetween(safeStartX, safeEndY, safeEndX, safeEndY);
-      return true;
-      } // end if boundsSpanY > 0
-      } // end isPocketShape
-    }
-
-    // 竖条/横条无副轴时，按紧凑矩形渲染（不再画全屏柱子）
-    const isVertical = battle.pressureSafeWindowAxis === 'vertical';
-    const primaryScreen = isVertical
-      ? battle.pressureSafeWindowCenter - camera.left
-      : battle.pressureSafeWindowCenter - camera.top;
-    const safeStartPrim = Phaser.Math.Clamp(
-      primaryScreen - battle.pressureSafeWindowSpan * 0.5,
-      isVertical ? leftInset : topInset,
-      isVertical ? camera.width - rightInset : camera.height - bottomInset,
-    );
-    const safeEndPrim = Phaser.Math.Clamp(
-      primaryScreen + battle.pressureSafeWindowSpan * 0.5,
-      isVertical ? leftInset : camera.width - rightInset,
-      isVertical ? camera.width - rightInset : camera.height - bottomInset,
-    );
-    const safePrim = Math.max(18, safeEndPrim - safeStartPrim);
-    const defaultSecondary = Math.max(160, battle.pressureSafeWindowSpan * 0.85);
-    const secondaryScreen = isVertical
-      ? battle.playerY - camera.top
-      : battle.playerX - camera.left;
-    const safeStartSec = Phaser.Math.Clamp(
-      secondaryScreen - defaultSecondary * 0.5,
-      isVertical ? topInset : leftInset,
-      isVertical ? camera.height - bottomInset : camera.width - rightInset,
-    );
-    const safeEndSec = Phaser.Math.Clamp(
-      secondaryScreen + defaultSecondary * 0.5,
-      isVertical ? topInset : leftInset,
-      isVertical ? camera.height - bottomInset : camera.width - rightInset,
-    );
-    const safeSec = Math.max(18, safeEndSec - safeStartSec);
-
-    const rectX = isVertical ? safeStartPrim : safeStartSec;
-    const rectY = isVertical ? safeStartSec : safeStartPrim;
-    const rectW = isVertical ? safePrim : safeSec;
-    const rectH = isVertical ? safeSec : safePrim;
-
-    this.graphics.fillStyle(safeTint, safeWindowAlpha * 0.55);
-    this.graphics.fillRect(rectX, rectY, rectW, rectH);
-    this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.3);
-    this.graphics.strokeRect(rectX, rectY, rectW, rectH);
-    this.renderSafeWindowBrackets(rectX, rectY, rectW, rectH, safeTint, accentColor, safeWindowAlpha, flashAlpha);
-    return true;
+    // 安全区遮罩已移除
+    return false;
   }
 
   private renderSafeWindowBrackets(

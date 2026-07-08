@@ -1185,7 +1185,6 @@ export class RunEngine {
     battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.24);
     battle.pressurePatternPulseCount = 0;
     this.clearPressureSafeWindow(battle);
-    this.enqueueTip('安全区即将刷新');
 
     if (battle.encounterType === 'boss') {
       this.services.metrics.recordBossPhasePatternSeen(battle.templateId, phase.id, phase.label, phase.patternLabel);
@@ -1259,10 +1258,9 @@ export class RunEngine {
 
   private executePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
     battle.pressurePatternPulseCount += 1;
+    // 安全区机制已移除 — 不再生成安全区，只保留弹幕和护卫生成
     switch (phase.patternMode) {
       case 'laneCrush':
-        this.openPressureSafeWindow(battle, phase, 'vertical');
-        this.spawnPressureWallShots(battle, phase, 'vertical');
         this.spawnPatternEscortWave(
           battle,
           phase.patternEscortBurst ?? 0,
@@ -1271,8 +1269,6 @@ export class RunEngine {
         );
         return;
       case 'sideClamp':
-        this.openPressureSafeWindow(battle, phase, 'horizontal');
-        this.spawnPressureWallShots(battle, phase, 'horizontal');
         this.spawnPatternEscortWave(
           battle,
           phase.patternEscortBurst ?? 0,
@@ -1281,8 +1277,6 @@ export class RunEngine {
         );
         return;
       case 'crossfireWave':
-        this.openPressureSafeWindow(battle, phase, 'pocket');
-        this.spawnPressurePocketShots(battle, phase);
         this.firePressureVolley(battle, phase.patternVolleyCount ?? 0, {
           spreadRad: phase.patternVolleySpreadRad ?? 0.2,
           shotsPerShooter: phase.patternVolleyShotsPerShooter ?? 2,
@@ -1383,10 +1377,7 @@ export class RunEngine {
       battle.pressureSafeWindowSec = safeWindowSec;
       if (battle.encounterType === 'boss') {
         battle.bossSafeWindowMoments += 1;
-        this.refreshBossSafeWindowGrace(battle);
-        this.clearBossSafeWindowBlockers(battle);
       }
-      this.enqueueTip('进入绿色安全区');
 
       if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
         this.services.metrics.recordBossSafeWindowSeen(
@@ -1434,10 +1425,7 @@ export class RunEngine {
     battle.pressureSafeWindowSec = safeWindowSec;
     if (battle.encounterType === 'boss') {
       battle.bossSafeWindowMoments += 1;
-      this.refreshBossSafeWindowGrace(battle);
-      this.clearBossSafeWindowBlockers(battle);
     }
-    this.enqueueTip('进入绿色安全区');
 
     if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
       this.services.metrics.recordBossSafeWindowSeen(
@@ -1692,65 +1680,8 @@ export class RunEngine {
     battle.outsideSafeDamageTimerSec = 0;
   }
 
-  private applyBossSafeWindowPenalty(battle: BattleState, dt: number): void {
-    if (battle.encounterType !== 'boss' || battle.pressureSafeWindowSec <= 0) {
-      battle.bossSafeWindowGraceSec = 0;
-      battle.outsideSafeDamageTimerSec = 0;
-      return;
-    }
-
-    const inside = this.isPointInsidePressureSafeWindow(battle, battle.playerX, battle.playerY, 12);
-
-    if (inside) {
-      // 安全区内：持续保护 + 清理贴脸敌人
-      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.15);
-      battle.bossSafeWindowGraceSec = 0;
-      battle.outsideSafeDamageTimerSec = 0;
-      this.clearBossSafeWindowBlockers(battle);
-      return;
-    }
-
-    if (battle.bossSafeWindowGraceSec > 0) {
-      battle.bossSafeWindowGraceSec = Math.max(0, battle.bossSafeWindowGraceSec - dt);
-      battle.outsideSafeDamageTimerSec = 0;
-      // 宽限期内持续清理安全区内敌人，确保玩家进入时通道畅通
-      this.clearBossSafeWindowBlockers(battle);
-      return;
-    }
-
-    // 安全区外：可感知 tick 伤害
-    // 用冷却控制每 0.35s 左右触发一次
-    const tickInterval = 0.35;
-    battle.outsideSafeDamageTimerSec = (battle.outsideSafeDamageTimerSec || 0) + dt;
-
-    if (battle.outsideSafeDamageTimerSec >= tickInterval) {
-      battle.outsideSafeDamageTimerSec = 0;
-      battle.outsideSafeDamageTickCount = (battle.outsideSafeDamageTickCount || 0) + 1;
-
-      const template = this.getBattleTemplate(battle.templateId);
-      const damagePerTick = Math.max(
-        8,
-        this.getContactDamage(template, this.getCurrentBattleIndex(), this.state.phase, battle.difficultyScale, 0.35),
-      );
-
-      // 扣除伤害
-      this.state.stats.hp = clamp(this.state.stats.hp - damagePerTick, 0, this.state.stats.maxHp);
-
-      // 视觉反馈：玩家伤害闪烁 + 近失提示 + 威胁方向
-      battle.playerDamageFlashSec = Math.max(battle.playerDamageFlashSec, 0.22);
-      battle.playerNearMissSec = Math.max(battle.playerNearMissSec, 0.18);
-
-      // 威胁方向指向安全区中心
-      this.registerPlayerThreatDirection(
-        battle,
-        battle.pressureSafeWindowCenter,
-        battle.pressureSafeWindowSecondaryCenter,
-        0.18,
-      );
-
-      // 音频反馈：pressure 音效
-      this.services.audio.play('pressure');
-    }
+  private applyBossSafeWindowPenalty(_battle: BattleState, _dt: number): void {
+    // 安全区惩罚机制已移除
   }
 
   private clearBossSafeWindowBlockers(battle: BattleState): void {
