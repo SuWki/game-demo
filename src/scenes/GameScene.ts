@@ -2263,19 +2263,6 @@ export class GameScene extends Phaser.Scene {
     const g = this.terrainGraphics;
     const template = this.getBattleTemplate(battle.templateId);
     const pulse = 0.5 + Math.sin(battle.elapsedSec * 1.7 + battle.kills * 0.08) * 0.5;
-    if (battle.encounterType === 'boss') {
-      const bossBackdropTexture =
-        battle.templateId === 'boss-lockdown' ? PREVIEW_BG_BOSS_CORE_TEXTURE : PREVIEW_BG_BOSS_DANGER_TEXTURE;
-      this.renderRuntimePreviewImage(
-        bossBackdropTexture,
-        camera.width * 0.5,
-        camera.height * 0.5,
-        camera.width,
-        0,
-        0.48 + pulse * 0.1,
-        { height: camera.height, depth: 4 },
-      );
-    }
     const encounterGlow =
       template.winCondition.type === 'survive'
         ? this.mixColor(accentColor, 0xff8677, 0.22)
