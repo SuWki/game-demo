@@ -39,8 +39,6 @@ const ELITE_FILL = 0xffb56a;
 const ELITE_STROKE = 0xffddb0;
 const BOSS_FILL = 0xff9462;
 const BOSS_STROKE = 0xffd4b8;
-const SAFE_WINDOW_TINT = 0x82ffca;
-const SAFE_WINDOW_DANGER = 0xff6d62;
 const TERRAIN_TILE_SIZE = 160;
 const RUNTIME_VISUAL_PREVIEW_STORAGE_KEY = 'pilot-runtime-preview-assets';
 
@@ -358,7 +356,9 @@ export class GameScene extends Phaser.Scene {
       left: this.moveKeys.left.isDown || this.arrowKeys.left.isDown || touchDir.left,
       right: this.moveKeys.right.isDown || this.arrowKeys.right.isDown || touchDir.right,
     });
-    const scaledDelta = this.isSimulationPaused() ? 0 : delta * this.debugConfig.timeScale;
+    // 限制单帧最大 delta，防止首帧或切后台后回归时一次性模拟过长时间导致卡顿
+    const clampedDelta = Math.min(delta, 100);
+    const scaledDelta = this.isSimulationPaused() ? 0 : clampedDelta * this.debugConfig.timeScale;
     if (scaledDelta > 0) {
       this.engine.tick(scaledDelta);
     }
@@ -5015,42 +5015,6 @@ this.graphics.lineStyle(3, dashAuraColor, 0.15 + dashDriveRatio * 0.25);
     _accentColor: number,
   ): void {
     // 压力模式遮罩已移除 — 不再画场内色块遮盖层
-  }
-
-  private renderPressureSafeWindowOverlay(
-    _battle: BattleState,
-    _camera: { left: number; top: number; width: number; height: number },
-    _accentColor: number,
-    _flashAlpha: number,
-  ): boolean {
-    // 安全区遮罩已移除
-    return false;
-  }
-
-  private renderSafeWindowBrackets(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    safeTint: number,
-    accentColor: number,
-    safeWindowAlpha: number,
-    flashAlpha: number,
-  ): void {
-    const corner = Math.min(18, Math.max(10, Math.min(width, height) * 0.22));
-    this.graphics.lineStyle(2, safeTint, safeWindowAlpha * 1.18);
-    this.graphics.lineBetween(x, y, x + corner, y);
-    this.graphics.lineBetween(x, y, x, y + corner);
-    this.graphics.lineBetween(x + width - corner, y, x + width, y);
-    this.graphics.lineBetween(x + width, y, x + width, y + corner);
-    this.graphics.lineBetween(x, y + height - corner, x, y + height);
-    this.graphics.lineBetween(x, y + height, x + corner, y + height);
-    this.graphics.lineBetween(x + width - corner, y + height, x + width, y + height);
-    this.graphics.lineBetween(x + width, y + height - corner, x + width, y + height);
-    this.graphics.lineStyle(1.2, accentColor, flashAlpha * 0.9 + safeWindowAlpha * 0.34);
-    this.graphics.lineBetween(x + width * 0.5, y + 8, x + width * 0.5, y + Math.min(height - 8, 22));
-    this.graphics.lineBetween(x + 8, y + height * 0.5, x + Math.min(width - 8, 22), y + height * 0.5);
-    this.graphics.lineBetween(x + width - 8, y + height * 0.5, x + Math.max(8, width - 22), y + height * 0.5);
   }
 
   private getEnemyRecoveryRatio(enemy: BattleState['enemies'][number]): number {
