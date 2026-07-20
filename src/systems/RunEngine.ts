@@ -5442,8 +5442,6 @@ return activeRouteId === 'pierce'
                 const distance = Math.hypot(dx, dy);
                 if (distance <= emberRadius + nearby.radius) {
                   nearby.hp -= emberDamage;
-                  nearby.routeHitFlashSec = 0.14;
-                  nearby.routeHitKind = 'crit';
                 }
               }
               // 爆点视觉反馈
@@ -5507,8 +5505,6 @@ return activeRouteId === 'pierce'
                 nearby.critMarkSec = Math.max(nearby.critMarkSec, 1.2 + this.state.stats.flawDurationBonus * 0.5 + proximityRatio * 0.8);
                 const nearbyOldStacks = nearby.critMarkStacks ?? 0;
                 nearby.critMarkStacks = Math.min(2, nearbyOldStacks + 1);
-                nearby.routeHitFlashSec = Math.max(nearby.routeHitFlashSec ?? 0, 0.1);
-                nearby.routeHitKind = 'crit';
                 bridgeSpreadHits += 1;
               }
             }
