@@ -8365,11 +8365,56 @@ return activeRouteId === 'pierce'
     }
   }
 
+  /**
+   * 预测每个敌人即将受到的飞行中子弹伤害。
+   * 对每颗子弹，通过射线-圆相交测试找到它即将命中的最近敌人，
+   * 累积该敌人的待结算伤害。索敌时跳过 hp - pendingDamage <= 0 的敌人，
+   * 避免对即将被现有子弹击杀的敌人继续射击导致空枪。
+   */
+  private computePendingDamageMap(battle: BattleState): Map<number, number> {
+    const pendingMap = new Map<number, number>();
+    if (battle.bullets.length === 0 || battle.enemies.length === 0) {
+      return pendingMap;
+    }
+    for (const bullet of battle.bullets) {
+      const speed = Math.hypot(bullet.vx, bullet.vy);
+      if (speed < 1) continue;
+      const dirX = bullet.vx / speed;
+      const dirY = bullet.vy / speed;
+      let nearestDist = Infinity;
+      let nearestEnemy: BattleState['enemies'][number] | null = null;
+      for (const enemy of battle.enemies) {
+        if (enemy.hp <= 0) continue;
+        const dx = enemy.x - bullet.x;
+        const dy = enemy.y - bullet.y;
+        const along = dx * dirX + dy * dirY;
+        if (along <= 0) continue; // 子弹正在远离敌人
+        // 子弹路径到敌人中心的横向距离
+        const lateral = Math.abs(dx * dirY - dy * dirX);
+        const hitRadius = enemy.radius + 4; // 与碰撞阈值一致
+        if (lateral > hitRadius) continue;
+        // 检查子弹是否能在生命周期内到达敌人
+        const timeToHit = along / speed;
+        if (timeToHit > bullet.lifeSec) continue;
+        if (along < nearestDist) {
+          nearestDist = along;
+          nearestEnemy = enemy;
+        }
+      }
+      if (nearestEnemy) {
+        const current = pendingMap.get(nearestEnemy.id) ?? 0;
+        pendingMap.set(nearestEnemy.id, current + bullet.damage);
+      }
+    }
+    return pendingMap;
+  }
+
   private getNearestEnemy(battle: BattleState): BattleState['enemies'][number] | null {
     if (battle.enemies.length === 0) {
       return null;
     }
 
+    const pendingDamageMap = this.computePendingDamageMap(battle);
     const focusRoute = this.getLiveCombatFocusRoute(battle);
     const activeElite = battle.eliteAlive ? this.getEliteEnemy(battle) : null;
     const activeEliteRecovery = activeElite ? this.getEnemyRecoveryRatio(activeElite) : 0;
@@ -8393,6 +8438,11 @@ return activeRouteId === 'pierce'
 
     for (const enemy of battle.enemies) {
       if (enemy.hp <= 0) {
+        continue;
+      }
+      // 跳过即将被飞行中子弹击杀的敌人，避免后续子弹射空
+      const pendingDamage = pendingDamageMap.get(enemy.id) ?? 0;
+      if (enemy.hp - pendingDamage <= 0) {
         continue;
       }
       const dx = enemy.x - battle.playerX;
