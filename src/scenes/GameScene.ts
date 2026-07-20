@@ -501,6 +501,7 @@ export class GameScene extends Phaser.Scene {
         killPickupContinueMoments: 0,
         enemies: [],
         enemyProjectiles: [],
+        safeZone: null,
       };
     }
 
@@ -589,6 +590,18 @@ export class GameScene extends Phaser.Scene {
         lifeSec: projectile.lifeSec,
         radius: projectile.radius,
       })),
+      safeZone: battle.safeZone
+        ? {
+            active: true,
+            phase: battle.safeZone.phase,
+            centerX: battle.safeZone.centerX,
+            centerY: battle.safeZone.centerY,
+            halfWidth: battle.safeZone.halfWidth,
+            halfHeight: battle.safeZone.halfHeight,
+            timer: battle.safeZone.timer,
+            cycleCount: battle.safeZone.cycleCount,
+          }
+        : null,
     };
   }
 
@@ -1578,6 +1591,8 @@ export class GameScene extends Phaser.Scene {
     this.renderUpgradeFlash();
     this.renderBossSafeWindowHint(battle);
     this.renderRouteMomentOverlay(battle);
+    this.renderSafeZone(battle, camera);
+    this.renderSafeZoneHints(battle);
     this.endRuntimePreviewImageFrame();
     this.endEnemyLabelFrame();
   }
@@ -1787,6 +1802,151 @@ export class GameScene extends Phaser.Scene {
     const state = this.engine.getState();
     void battle;
     void state;
+  }
+
+  // ========== 安全区渲染 ==========
+
+  private safeZoneText: Phaser.GameObjects.Text | null = null;
+  private safeZoneHintText: Phaser.GameObjects.Text | null = null;
+
+  private renderSafeZone(
+    battle: BattleState,
+    camera: { left: number; top: number; right: number; bottom: number; width: number; height: number },
+  ): void {
+    const sz = battle.safeZone;
+    if (!sz) return;
+
+    const screen = this.worldToScreen(camera, sz.centerX, sz.centerY);
+    const w = sz.halfWidth * 2;
+    const h = sz.halfHeight * 2;
+    const x = screen.x - sz.halfWidth;
+    const y = screen.y - sz.halfHeight;
+
+    if (sz.phase === 'warning') {
+      // 预警阶段：安全区蓝色 + 区外红色闪烁
+      const warningRatio = sz.timer / sz.warningDuration;
+      const pulse = 0.5 + 0.5 * Math.sin(battle.elapsedSec * 12);
+
+      // 安全区蓝色半透明矩形
+      this.graphics.fillStyle(0x2a7fff, 0.08 + warningRatio * 0.06);
+      this.graphics.fillRect(x, y, w, h);
+
+      // 边缘呼吸光效
+      const edgeAlpha = 0.4 + pulse * 0.3;
+      this.graphics.lineStyle(2.5, 0x4a9fff, edgeAlpha);
+      this.graphics.strokeRect(x, y, w, h);
+
+      // 内层细线
+      this.graphics.lineStyle(1, 0x6abfff, edgeAlpha * 0.5);
+      this.graphics.strokeRect(x + 4, y + 4, w - 8, h - 8);
+
+      // 中心十字标记
+      this.graphics.lineStyle(1.5, 0x4a9fff, 0.3 + pulse * 0.2);
+      this.graphics.lineBetween(screen.x - 8, screen.y, screen.x + 8, screen.y);
+      this.graphics.lineBetween(screen.x, screen.y - 8, screen.x, screen.y + 8);
+
+      // 区外红色预警闪烁
+      const redAlpha = 0.06 + pulse * 0.08;
+      this.graphics.fillStyle(0xff2222, redAlpha);
+      // 上方
+      this.graphics.fillRect(0, 0, this.scale.width, Math.max(0, y));
+      // 下方
+      this.graphics.fillRect(0, y + h, this.scale.width, Math.max(0, this.scale.height - y - h));
+      // 左方
+      this.graphics.fillRect(0, y, Math.max(0, x), h);
+      // 右方
+      this.graphics.fillRect(x + w, y, Math.max(0, this.scale.width - x - w), h);
+
+      // 引导线（玩家不在区内时）
+      const playerScreen = this.worldToScreen(camera, battle.playerX, battle.playerY);
+      const dx = screen.x - playerScreen.x;
+      const dy = screen.y - playerScreen.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 60) {
+        this.graphics.lineStyle(1.5, 0x4a9fff, 0.15 + pulse * 0.1);
+        const dashLen = 8;
+        const gapLen = 6;
+        const steps = Math.floor(dist / (dashLen + gapLen));
+        for (let i = 0; i < steps; i++) {
+          const t1 = (i * (dashLen + gapLen)) / dist;
+          const t2 = (i * (dashLen + gapLen) + dashLen) / dist;
+          this.graphics.lineBetween(
+            playerScreen.x + dx * t1,
+            playerScreen.y + dy * t1,
+            playerScreen.x + dx * t2,
+            playerScreen.y + dy * t2,
+          );
+        }
+      }
+    } else if (sz.phase === 'active') {
+      // 存续阶段：稳定蓝色显示
+      const activeRatio = sz.timer / sz.activeDuration;
+      this.graphics.fillStyle(0x2a7fff, 0.06 + activeRatio * 0.04);
+      this.graphics.fillRect(x, y, w, h);
+      this.graphics.lineStyle(2, 0x4a9fff, 0.25 + activeRatio * 0.15);
+      this.graphics.strokeRect(x, y, w, h);
+    } else {
+      // 过渡阶段：淡出
+      const transRatio = sz.timer / sz.transitionDuration;
+      this.graphics.fillStyle(0x2a7fff, 0.04 * transRatio);
+      this.graphics.fillRect(x, y, w, h);
+      this.graphics.lineStyle(1.5, 0x4a9fff, 0.2 * transRatio);
+      this.graphics.strokeRect(x, y, w, h);
+    }
+  }
+
+  private renderSafeZoneHints(battle: BattleState): void {
+    // 战前提示横幅
+    if (battle.safeZoneHintSec > 0) {
+      if (!this.safeZoneHintText) {
+        this.safeZoneHintText = this.add.text(0, 0, '', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '16px',
+          fontStyle: '700',
+          color: '#4a9fff',
+          backgroundColor: 'rgba(8, 16, 28, 0.8)',
+          padding: { left: 16, right: 16, top: 6, bottom: 6 },
+        });
+        this.safeZoneHintText.setOrigin(0.5, 0.5);
+        this.safeZoneHintText.setDepth(200);
+      }
+      const alpha = Math.min(1, battle.safeZoneHintSec / 0.5);
+      this.safeZoneHintText
+        .setText('战斗中会出现安全区（蓝色区域），区外将受到覆盖攻击伤害')
+        .setPosition(this.scale.width * 0.5, this.scale.height * 0.18)
+        .setAlpha(alpha)
+        .setVisible(true);
+    } else if (this.safeZoneHintText) {
+      this.safeZoneHintText.setVisible(false);
+    }
+
+    // 教学文字
+    if (battle.safeZoneTutorialSec > 0 && battle.safeZoneTutorialText) {
+      if (!this.safeZoneText) {
+        this.safeZoneText = this.add.text(0, 0, '', {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '14px',
+          fontStyle: '700',
+          color: '#6abfff',
+          backgroundColor: 'rgba(8, 16, 28, 0.72)',
+          padding: { left: 10, right: 10, top: 4, bottom: 4 },
+        });
+        this.safeZoneText.setOrigin(0.5, 0.5);
+        this.safeZoneText.setDepth(200);
+      }
+      const sz = battle.safeZone;
+      const camera = this.getBattleCameraRect(battle);
+      const tx = sz ? this.worldToScreen(camera, sz.centerX, sz.centerY).x : this.scale.width * 0.5;
+      const ty = sz ? this.worldToScreen(camera, sz.centerX, sz.centerY).y - sz.halfHeight - 20 : this.scale.height * 0.3;
+      const alpha = Math.min(1, battle.safeZoneTutorialSec / 0.5);
+      this.safeZoneText
+        .setText(battle.safeZoneTutorialText)
+        .setPosition(tx, ty)
+        .setAlpha(alpha)
+        .setVisible(true);
+    } else if (this.safeZoneText) {
+      this.safeZoneText.setVisible(false);
+    }
   }
 
   private renderEliteBossLabels(

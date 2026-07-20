@@ -661,6 +661,30 @@ export interface BattleState {
   dashMomentumStacks: number; // 动量层数（连续Dash叠加攻速和移速）
   dashMomentumDecaySec: number; // 动量衰减计时器
   damageNumbers: DamageNumber[];
+  // 安全区检验机制
+  safeZone: SafeZoneState | null;
+  safeZoneHintSec: number;       // 战前提示剩余时间
+  safeZoneTutorialSec: number;   // 教学文字剩余显示时间
+  safeZoneTutorialText: string;  // 教学文字内容
+}
+
+export interface SafeZoneState {
+  centerX: number;
+  centerY: number;
+  halfWidth: number;
+  halfHeight: number;
+  phase: 'warning' | 'active' | 'transition';
+  timer: number;                // 当前阶段剩余时间
+  warningDuration: number;      // 预警总时间（缓存）
+  activeDuration: number;       // 存续总时间（缓存）
+  transitionDuration: number;   // 过渡总时间（缓存）
+  coverAttackDamage: number;    // 覆盖攻击基础伤害
+  coverAttackMultiplier: number; // 覆盖攻击伤害倍率
+  shiftMode: 'sweep' | 'edgeBounce' | 'centerReset';
+  prevCenterX: number;
+  prevCenterY: number;
+  cycleCount: number;           // 当前战斗已循环次数
+  difficultyTier: number;       // 0=教学 1=前期 2=中期 3=后期 4=狂暴
 }
 
 export interface NodeRecord {
@@ -863,6 +887,16 @@ export interface BattleDebugSnapshot {
   killPickupContinueMoments: number;
   enemies: BattleDebugEnemySnapshot[];
   enemyProjectiles: BattleDebugProjectileSnapshot[];
+  safeZone: {
+    active: boolean;
+    phase: string;
+    centerX: number;
+    centerY: number;
+    halfWidth: number;
+    halfHeight: number;
+    timer: number;
+    cycleCount: number;
+  } | null;
 }
 
 export interface OverlayMetaSummary {

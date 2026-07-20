@@ -173,5 +173,9 @@ export function createBattleState(params: CreateBattleStateParams): BattleState 
     dashMomentumStacks: 0,
     dashMomentumDecaySec: 0,
     damageNumbers: [],
+    safeZone: null,
+    safeZoneHintSec: 0,
+    safeZoneTutorialSec: 0,
+    safeZoneTutorialText: '',
   };
 }
