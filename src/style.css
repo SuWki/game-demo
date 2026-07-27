@@ -3488,6 +3488,113 @@ button:hover {
   border-color: rgba(111, 231, 255, 0.26);
 }
 
+/* ============================================================
+   流派核心资源条（A2）— 让蓄力-爆发可被经营
+   ============================================================ */
+.route-resource {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--route-color, #59baf3) 32%, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--route-color, #59baf3) 12%, rgba(10, 17, 24, 0.74)),
+    rgba(10, 17, 24, 0.78)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 4px 10px rgba(0, 0, 0, 0.18);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.route-resource.is-finisher-ready {
+  border-color: color-mix(in srgb, var(--route-color, #59baf3) 78%, rgba(255, 255, 255, 0.32));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--route-color, #59baf3) 60%, rgba(255, 255, 255, 0.18)),
+    0 0 16px color-mix(in srgb, var(--route-color, #59baf3) 40%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.24);
+  animation: routeResourceFinisherPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes routeResourceFinisherPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--route-color, #59baf3) 60%, rgba(255, 255, 255, 0.18)),
+      0 0 14px color-mix(in srgb, var(--route-color, #59baf3) 36%, transparent),
+      0 6px 14px rgba(0, 0, 0, 0.24);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--route-color, #59baf3) 78%, rgba(255, 255, 255, 0.28)),
+      0 0 22px color-mix(in srgb, var(--route-color, #59baf3) 56%, transparent),
+      0 6px 14px rgba(0, 0, 0, 0.24);
+  }
+}
+
+.route-resource__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.route-resource__name {
+  color: color-mix(in srgb, var(--route-color, #59baf3) 90%, white);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.route-resource__label {
+  color: rgba(246, 251, 255, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.route-resource__stacks {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.route-resource-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--route-color, #59baf3) 40%, rgba(255, 255, 255, 0.18));
+  background: rgba(10, 17, 24, 0.7);
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.route-resource-dot.is-filled {
+  background: var(--route-color, #59baf3);
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--route-color, #59baf3) 70%, transparent),
+    inset 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.route-resource__window {
+  position: relative;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(10, 17, 24, 0.6);
+  overflow: hidden;
+}
+
+.route-resource__window-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.08s linear;
+  box-shadow: 0 0 4px currentColor;
+}
+
 .game-hud-fixed__left {
   width: min(300px, 36vw);
 }

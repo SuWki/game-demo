@@ -423,6 +423,8 @@ export interface EnemyState {
   critMarkBurstReady?: boolean;
   pierceMarkStacks?: number;
   pierceChainHits?: number;
+  /** committed 阶段裂纹引爆冷却（秒）。0 表示可引爆。 */
+  pierceFractureDetonateSec?: number;
   dashPulseStacks?: number;
   // 命中瞬间特效
   routeHitFlashSec?: number;
@@ -928,6 +930,22 @@ export interface OverlayHudSnapshot {
     progressText?: string;
     /** 下一个阶段的解锁描述，用于 hover tooltip */
     nextUnlockTooltip?: string;
+  }>;
+  /** 流派核心资源条：让玩家能"看着资源条打爆发"。仅当对应流派 hinted 以上才出现。 */
+  routeResources: Array<{
+    routeId: RouteId;
+    /** 当前累积层数（crit: 0-5, pierce: 0-3, dash: 0-5） */
+    stacks: number;
+    /** 最大层数 */
+    maxStacks: number;
+    /** 是否处于"就绪"高亮态（crit: 终结打击 / dash: 幽灵打击） */
+    finisherReady: boolean;
+    /** 短窗口剩余秒数（crit: 爆发连锁窗口 / pierce: 连锁衰减 / dash: 动量衰减） */
+    windowSec: number;
+    /** 窗口期最大秒数，用于绘制进度环 */
+    windowMaxSec: number;
+    /** 窗口标签，如 "爆发连锁" / "裂纹扩散" / "动量" */
+    windowLabel: string;
   }>;
   statSummary: Array<{
     label: string;

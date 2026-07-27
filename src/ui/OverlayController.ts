@@ -282,6 +282,7 @@ export class OverlayController {
     const stageLabel = this.getCompactProgressLabel(snapshot.progressLabel);
     const objectiveLabel = snapshot.objectiveProgressText?.trim() || '';
     const showObjectiveLine = snapshot.objectiveTone === 'battle' || snapshot.objectiveTone === 'elite' || snapshot.objectiveTone === 'survive' || snapshot.objectiveTone === 'boss';
+    const routeResourceHtml = this.renderRouteResources(snapshot.routeResources ?? []);
     this.hudLayer.innerHTML = `
       <div class="game-hud-fixed">
         <section class="game-hud-fixed__left">
@@ -303,6 +304,7 @@ export class OverlayController {
               <span style="width: ${Math.max(0, Math.min(100, snapshot.experienceRatio * 100)).toFixed(1)}%"></span>
             </div>
           </div>
+          ${routeResourceHtml}
         </section>
         <section class="game-hud-fixed__center" aria-label="当前关卡与通关条件">
           <div class="game-hud-fixed__wave">当前关卡 ${stageLabel}</div>
@@ -316,6 +318,56 @@ export class OverlayController {
     if (onPause) {
       this.bindClick('[data-action="pause"]', onPause);
     }
+  }
+
+  /** 渲染流派核心资源条：让玩家能"看着资源条打爆发"。 */
+  private renderRouteResources(resources: NonNullable<OverlayHudSnapshot['routeResources']>): string {
+    if (!resources || resources.length === 0) {
+      return '';
+    }
+    return resources.map((resource) => {
+      // 防御性：routeId 不在映射表里 → 跳过渲染，避免 undefined 颜色/名称导致 UI 错位
+      const color = ROUTE_COLOR_MAP[resource.routeId];
+      const routeName = ROUTE_NAME_MAP[resource.routeId];
+      if (!color || !routeName) {
+        return '';
+      }
+      // 防御性：数值健壮化，避免 NaN/Infinity/负数破坏布局
+      const rawMax = Number.isFinite(resource.maxStacks) ? Math.max(0, Math.floor(resource.maxStacks)) : 0;
+      const rawStacks = Number.isFinite(resource.stacks) ? Math.max(0, Math.floor(resource.stacks)) : 0;
+      const stacks = Math.min(rawStacks, rawMax);
+      const windowSec = Number.isFinite(resource.windowSec) ? Math.max(0, resource.windowSec) : 0;
+      const windowMaxSec = Number.isFinite(resource.windowMaxSec) ? Math.max(0, resource.windowMaxSec) : 0;
+      const safeLabel = this.escapeHtml(resource.windowLabel ?? '');
+
+      // 堆叠点：maxStacks <= 0 时不渲染该行（避免空容器占位）
+      const stacksHtml = rawMax > 0
+        ? `<div class="route-resource__stacks">${Array.from({ length: rawMax }, (_, i) => {
+            const filled = i < stacks;
+            return `<span class="route-resource-dot ${filled ? 'is-filled' : ''}" style="--route-color: ${color};"></span>`;
+          }).join('')}</div>`
+        : '';
+      // 窗口进度条：仅在有有效窗口时渲染，避免空 track 占位
+      const hasWindow = windowSec > 0 && windowMaxSec > 0;
+      const windowRatio = hasWindow
+        ? Math.max(0, Math.min(100, (windowSec / windowMaxSec) * 100))
+        : 0;
+      const windowHtml = hasWindow
+        ? `<div class="route-resource__window"><div class="route-resource__window-bar" style="width: ${windowRatio.toFixed(1)}%; background: ${color};"></div></div>`
+        : '';
+
+      const finisherClass = resource.finisherReady ? 'is-finisher-ready' : '';
+      return `
+        <div class="route-resource ${finisherClass}" style="--route-color: ${color};" data-route="${resource.routeId}">
+          <div class="route-resource__head">
+            <span class="route-resource__name">${routeName}</span>
+            ${safeLabel ? `<span class="route-resource__label">${safeLabel}</span>` : ''}
+          </div>
+          ${stacksHtml}
+          ${windowHtml}
+        </div>
+      `;
+    }).join('');
   }
 
   public showNodePanel(
@@ -1553,8 +1605,12 @@ export class OverlayController {
     return tooltipMap[label] ?? '';
   }
 
-  private escapeHtml(value: string): string {
-    return value.replace(/[&<>"']/g, (char) => {
+  private escapeHtml(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    const str = typeof value === 'string' ? value : String(value);
+    return str.replace(/[&<>"']/g, (char) => {
       switch (char) {
         case '&':
           return '&amp;';

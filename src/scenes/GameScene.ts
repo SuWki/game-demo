@@ -2,30 +2,29 @@ import Phaser from 'phaser';
 import { ARENA_HEIGHT, ARENA_WIDTH, clamp, getPlayerMoveSpeed } from '../data/balance';
 import { getBattleEncounterLabel } from '../data/battleTemplates';
 import { getPhaseLabel } from '../data/nodes';
-import { ROUTES, ROUTE_COLOR_MAP, ROUTE_NAME_MAP, ROUTE_VISUAL_MAP } from '../data/routes';
+import { ROUTE_COLOR_MAP } from '../data/routes';
 import {
   mixColor as mixColorPure,
   worldToScreen as worldToScreenPure,
   isVisibleInCamera as isVisibleInCameraPure,
   getTerrainNoise as getTerrainNoisePure,
-  createPanelStatSummary as createPanelStatSummaryPure,
 } from './renderHelpers';
 import type {
   BattleDebugConfig,
   BattleDebugRuntimeConfig,
   BattleDebugSnapshot,
   BattleState,
+  BattleTemplateDefinition,
+  BattleTemplateId,
   DebugBattlePhaseId,
-  OverlayHudSnapshot,
   PlayerStats,
   QaSmokeScenarioConfig,
-  RouteBuildStage,
-  RouteId,
   RunState,
   Services,
-  ToastTone,
 } from '../game/types';
 import { RunEngine } from '../systems/RunEngine';
+import { ParticleDirector } from './ParticleDirector';
+import { HudComposer } from './HudComposer';
 import type { BattleDebugTemplateOption } from '../ui/BattleDebugPanel';
 
 const XP_ORB_FILL = 0x67f08b;
@@ -72,22 +71,6 @@ const PREVIEW_FX_EXPLOSION_SMALL_TEXTURE = 'preview-fx-explosion-small';
 const PREVIEW_FX_CHARGE_GLOW_TEXTURE = 'preview-fx-charge-glow';
 
 const TERRAIN_BLOT_SIZE = 384;
-/*
-const PHASE_TRACK = [
-  { phase: 'opening', label: '开局' },
-  { phase: 'mid', label: '中盘' },
-  { phase: 'late', label: '收尾' },
-  { phase: 'finalPrep', label: '强化' },
-  { phase: 'finalBattle', label: 'Boss' },
-] as const;
-*/
-const PHASE_TRACK = [
-  { phase: 'opening', label: '开局' },
-  { phase: 'mid', label: '中盘' },
-  { phase: 'late', label: '收尾' },
-  { phase: 'finalPrep', label: '强化' },
-  { phase: 'finalBattle', label: 'Boss' },
-] as const;
 
 const DEBUG_SYNC_INTERVAL_MS = 120;
 
@@ -185,8 +168,11 @@ export class GameScene extends Phaser.Scene {
   private lastSeenEnemyHp: Map<number, number> = new Map();
 
   // Particle emitters for visual effects
+  // NOTE: 已迁移到 ParticleDirector，这里保留字段仅为兼容旧引用，最终会移除。
   private particleEmitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
   private readonly emitterPool: Map<string, Phaser.GameObjects.Particles.ParticleEmitter> = new Map();
+  private particles!: ParticleDirector;
+  private hud!: HudComposer;
 
   private bossSafeHintText!: Phaser.GameObjects.Text;
 
@@ -200,24 +186,12 @@ export class GameScene extends Phaser.Scene {
   // 配置访问方法（通过 ConfigLoader）
   // ============================================================
 
-  private getBattleTemplate(id: import('../game/types').BattleTemplateId): import('../game/types').BattleTemplateDefinition {
-    const templates = this.services.configLoader.getBattleTemplates();
-    const template = templates.find(t => t.id === id);
-    if (!template) {
-      throw new Error(`[GameScene] 战斗模板未找到: ${id}`);
-    }
-    return template;
+  private getBattleTemplate(id: BattleTemplateId): BattleTemplateDefinition {
+    return this.services.configLoader.getBattleTemplate(id);
   }
 
-  private getAllBattleTemplates(): import('../game/types').BattleTemplateDefinition[] {
+  private getAllBattleTemplates(): BattleTemplateDefinition[] {
     return this.services.configLoader.getBattleTemplates();
-  }
-
-  private getRoute(routeId: import('../game/types').RouteId) {
-    const routes = this.services.configLoader.get('balance') as any;
-    // Routes are still loaded from the routes.ts file for now
-    // as they contain UI-specific data
-    return ROUTES.find(r => r.id === routeId);
   }
 
   public create(): void {
@@ -226,6 +200,7 @@ export class GameScene extends Phaser.Scene {
     this.services.audio.setMusic('battle');
     this.engine = new RunEngine(this.services);
     this.engine.setDebugConfig(this.getRuntimeDebugConfig());
+    this.hud = new HudComposer(this.engine, this.services.configLoader);
     this.runtimePreviewImages.length = 0;
     this.runtimePreviewImageCursor = 0;
     // Create the 'white-pixel' texture used by particle emitters.
@@ -243,6 +218,7 @@ export class GameScene extends Phaser.Scene {
     this.terrainGraphics.setDepth(1);
     this.graphics = this.add.graphics();
     this.graphics.setDepth(10);
+    this.particles = new ParticleDirector(this, this.graphics);
     this.bossSafeHintText = this.add.text(0, 0, '进入绿色安全区域', {
       fontFamily: '"Microsoft YaHei UI", "Microsoft YaHei", sans-serif',
       fontSize: '17px',
@@ -811,7 +787,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const hudSnapshot = this.createHudSnapshot();
+    const hudSnapshot = this.hud.createHudSnapshot();
     const hudKey = JSON.stringify(hudSnapshot);
     if (hudKey !== this.lastHudKey) {
       this.services.overlay.showHud(hudSnapshot, () => this.toggleGamePause());
@@ -882,7 +858,7 @@ export class GameScene extends Phaser.Scene {
         this.services.overlay.showNodePanel(
           getPhaseLabel(state.phase),
           state.nodeOptions,
-          this.getPanelProgressSnapshot(),
+          this.hud.getPanelProgressSnapshot(),
           (nodeId) => {
             this.services.audio.play('confirm');
             this.engine.chooseNode(nodeId);
@@ -907,8 +883,8 @@ export class GameScene extends Phaser.Scene {
               : `${getPhaseLabel(state.phase)}强化`;
         this.services.overlay.showUpgradePanel(
           panelTitle,
-          this.getUpgradePanelDescription(),
-          this.getPanelProgressSnapshot(),
+          this.hud.getUpgradePanelDescription(),
+          this.hud.getPanelProgressSnapshot(),
           state.upgradeChoices,
           (upgradeId) => {
             this.services.audio.play('upgrade');
@@ -927,7 +903,7 @@ export class GameScene extends Phaser.Scene {
       const panelKey = `event:${state.currentEvent.id}:${state.currentEvent.options.map((option) => option.id).join('|')}`;
       if (panelKey !== this.lastPanelKey) {
         this.services.audio.play(state.currentEvent.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
-        this.services.overlay.showEventPanel(state.currentEvent, this.getPanelProgressSnapshot(), (optionId) => {
+        this.services.overlay.showEventPanel(state.currentEvent, this.hud.getPanelProgressSnapshot(), (optionId) => {
           this.services.audio.play(state.currentEvent?.contentKind === 'anomaly' ? 'anomaly' : 'confirm');
           this.engine.chooseEventOption(optionId);
           this.processAnnouncements();
@@ -999,451 +975,9 @@ export class GameScene extends Phaser.Scene {
     this.services.audio.setMusic('battle');
   }
 
-  private createHudSnapshot(): OverlayHudSnapshot {
-    const state = this.engine.getState();
-    const routeStatusText = this.getRouteStatusText();
-    const progressSnapshot = this.getRunProgressSnapshot();
-    const objectiveSnapshot = this.getObjectiveSnapshot();
-    const statusText = this.getHudModeText(state);
-    const routeMomentText = state.routeMomentSec > 0 ? state.routeMomentText ?? undefined : undefined;
-
-    return {
-      phaseLabel: getPhaseLabel(state.phase),
-      nodeLabel: state.currentNode?.title ?? '节点选择',
-      hpText: `${Math.round(state.stats.hp)} / ${Math.round(state.stats.maxHp)}`,
-      hpRatio: state.stats.hp / Math.max(1, state.stats.maxHp),
-      levelText: `Lv.${state.level}`,
-      experienceText: `${Math.round(state.experience)} / ${Math.round(state.experienceToNext)}`,
-      experienceRatio: state.experience / Math.max(1, state.experienceToNext),
-      routeStatusText,
-      routeMomentText: undefined,
-      routeMomentRouteId: undefined,
-      routeProgress: ROUTES.map((route) => {
-        const progressInfo = this.engine.getRouteBuildProgressInfo(route.id);
-        const progressText = `${progressInfo.count}/${progressInfo.nextThreshold ?? progressInfo.count}`;
-        const nextUnlockTooltip = progressInfo.nextStageId
-          ? this.engine.getRouteStageUnlockDescription(route.id, progressInfo.nextStageId)
-          : undefined;
-        return {
-          routeId: route.id,
-          label: route.name,
-          value: progressInfo.count,
-          color: route.color,
-          active: this.engine.getDominantRoute() === route.id,
-          progressText,
-          nextUnlockTooltip,
-        };
-      }).filter((route) => route.value > 0 || route.active),
-      statSummary: createPanelStatSummaryPure(state.stats),
-      statusText,
-      statusSubtext:
-        state.status === 'battle' && state.battle ? this.getBattleStatusSubtext(state.battle) : progressSnapshot.progressDetail,
-      progressLabel: progressSnapshot.progressLabel,
-      progressDetail: progressSnapshot.progressDetail,
-      phaseTrack: progressSnapshot.phaseTrack,
-      objectiveLabel: objectiveSnapshot.objectiveLabel,
-      objectiveText: objectiveSnapshot.objectiveText,
-      objectiveDetail: objectiveSnapshot.objectiveDetail,
-      objectiveProgressText: objectiveSnapshot.objectiveProgressText,
-      objectiveTone: objectiveSnapshot.objectiveTone,
-    };
-  }
-
-  private getBattleStatusText(battle: BattleState): string {
-    if (battle.encounterType === 'boss' && (battle.elapsedSec < 0.95 || battle.pressureTransitionSec > 0 || battle.pressureSignatureSec > 0)) {
-      return `Boss 进场 · ${this.getBattleIdentityLabel(battle)}`;
-    }
-    return `${getBattleEncounterLabel(battle.templateId, battle.encounterType)} · ${this.getBattleIdentityLabel(battle)}`;
-  }
-
-  private getHudModeText(state: ReturnType<RunEngine['getState']>): string {
-    if (state.status === 'battle' && state.battle) {
-      return this.getBattleStatusText(state.battle);
-    }
-
-    if (state.status === 'upgradeChoice') {
-      return state.currentNode?.isFinalPrep ? '最终强化' : '选择强化';
-    }
-
-    if (state.status === 'eventChoice') {
-      return state.currentEvent?.contentKind === 'anomaly' ? '异常节点' : '选事件';
-    }
-
-    if (state.status === 'nodeChoice') {
-      return '路线选择';
-    }
-
-    if (state.status === 'result') {
-      return '战斗结算';
-    }
-
-    return this.getRouteStatusText();
-  }
-
-  private getBattleIdentityLabel(battle: BattleState): string {
-    const nodeTitle = this.engine.getState().currentNode?.title;
-    if (battle.encounterType === 'boss') {
-      return nodeTitle ?? this.getBattleTemplate(battle.templateId).name;
-    }
-
-    return battle.label || nodeTitle || this.getBattleTemplate(battle.templateId).name;
-  }
-
-  private getBattleStatusSubtext(battle: BattleState): string {
-    if (battle.encounterType === 'boss') {
-      if (battle.elapsedSec < 0.95) {
-        return '最终战入口';
-      }
-      if (battle.pressureSafeWindowSec > 0) {
-        return 'Boss · 安全窗口';
-      }
-      if (battle.bossSafeWindowGraceSec > 0) {
-        return `Boss · 倒计时 ${Math.ceil(battle.bossSafeWindowGraceSec)}秒`;
-      }
-      if (battle.pressureSignatureLabel || battle.pressurePatternLabel || battle.pressurePhaseLabel) {
-        return `Boss · 出招：${battle.pressureSignatureLabel ?? battle.pressurePatternLabel ?? battle.pressurePhaseLabel}`;
-      }
-      return '';
-    }
-
-    if (this.getBattleTemplate(battle.templateId).winCondition.type === 'survive') {
-      return `生存倒计时：${Math.max(0, Math.ceil(battle.remainingSec))}秒`;
-    }
-
-    if (battle.remainingSec > 0) {
-      return `奖励倒计时：${Math.ceil(battle.remainingSec)}秒`;
-    }
-
-    return '奖励倒计时结束';
-  }
-
-  private getPanelProgressSnapshot(): Pick<
-    OverlayHudSnapshot,
-    'progressLabel' | 'progressDetail' | 'phaseTrack' | 'levelText' | 'routeStatusText' | 'statSummary' | 'upgradeRewardLabel' | 'routeProgress'
-  > {
-    const state = this.engine.getState();
-    const progress = this.getRunProgressSnapshot();
-    return {
-      progressLabel: progress.progressLabel,
-      progressDetail: progress.progressDetail,
-      phaseTrack: progress.phaseTrack,
-      levelText: `Lv.${state.level}`,
-      routeStatusText: this.getRouteStatusText(),
-      statSummary: createPanelStatSummaryPure(state.stats),
-      upgradeRewardLabel: state.currentUpgradeIsReward ? '通关奖励' : undefined,
-      routeProgress: this.createHudSnapshot().routeProgress,
-    };
-  }
-
-  private getBossDistanceText(currentStep: number, totalRounds: number): string {
-    const remainingStops = Math.max(0, totalRounds - currentStep);
-    if (remainingStops <= 0) {
-      return 'Boss 已在眼前';
-    }
-    if (remainingStops === 1) {
-      return '再过 1 站进 Boss';
-    }
-    return `距 Boss 还剩 ${remainingStops} 站`;
-  }
-
-  private getUpgradePanelDescription(): string {
-    const state = this.engine.getState();
-    if (state.currentUpgradeIsReward) {
-      return '奖励倒计时内完成关卡获得的额外强化。';
-    }
-    if (state.upgradeSource === 'levelUp') {
-      return '战斗里立刻补一项强化。';
-    }
-    if (state.currentNode?.isFinalPrep) {
-      return '最终强化，选完就进 Boss。';
-    }
-    return '补充当前需要的属性。';
-  }
-
-  private getRunProgressSnapshot(): Pick<OverlayHudSnapshot, 'progressLabel' | 'progressDetail' | 'phaseTrack'> {
-    const state = this.engine.getState();
-    const currentStep = Math.min(state.totalRounds, Math.max(1, state.round));
-    const currentPhaseLabel = getPhaseLabel(state.phase);
-    const currentPhaseIndex = PHASE_TRACK.findIndex((entry) => entry.phase === state.phase);
-    const bossDistanceText = this.getBossDistanceText(currentStep, state.totalRounds);
-    const nextPhaseLabel =
-      currentPhaseIndex >= 0 && currentPhaseIndex < PHASE_TRACK.length - 1 ? PHASE_TRACK[currentPhaseIndex + 1].label : null;
-
-    let progressDetail = '';
-    if (state.phase === 'finalPrep') {
-      progressDetail = '下一站是 Boss';
-    } else if (state.phase === 'finalBattle') {
-      progressDetail = 'Boss 战';
-    }
-
-    return {
-      progressLabel: `${currentStep} / ${state.totalRounds}`,
-      progressDetail,
-      phaseTrack: PHASE_TRACK.map((entry, index) => {
-        const step = index + 1;
-        if (step < currentStep) {
-          return {
-            label: entry.label,
-            state: 'done' as const,
-          };
-        }
-        if (step === currentStep) {
-          return {
-            label: entry.label,
-            state: entry.phase === 'finalBattle' ? ('boss-active' as const) : ('active' as const),
-          };
-        }
-        return {
-          label: entry.label,
-          state: entry.phase === 'finalBattle' ? ('boss-upcoming' as const) : ('upcoming' as const),
-        };
-      }),
-    };
-  }
-
-  private getObjectiveSnapshot(): Pick<
-    OverlayHudSnapshot,
-    'objectiveLabel' | 'objectiveText' | 'objectiveDetail' | 'objectiveProgressText' | 'objectiveTone'
-  > {
-    const state = this.engine.getState();
-    const currentStep = Math.min(state.totalRounds, Math.max(1, state.round));
-    const bossDistanceText = this.getBossDistanceText(currentStep, state.totalRounds);
-
-    if (state.status === 'battle' && state.battle) {
-      const battle = state.battle;
-      const targetTitle = this.getBattleIdentityLabel(battle);
-      if (battle.encounterType === 'boss') {
-        return {
-          objectiveLabel: '先盯 Boss',
-          objectiveText: '击败 Boss 本体',
-          objectiveDetail: '先把金色血条打下来，旁边的小怪会跟着散。',
-          objectiveProgressText: battle.eliteAlive ? '击败 Boss' : 'Boss 即将进场',
-          objectiveTone: 'boss',
-        };
-      }
-
-      const winCondition = this.getBattleTemplate(battle.templateId).winCondition.type;
-      if (winCondition === 'elite') {
-        return this.getEliteObjectiveSnapshot(battle);
-      }
-
-      if (winCondition === 'survive') {
-        return {
-          objectiveLabel: '先活下来',
-          objectiveText: '撑到倒计时结束',
-          objectiveDetail: '只要活到计时归零就能过关。',
-          objectiveProgressText: `生存 ${Math.max(0, Math.ceil(battle.remainingSec))} 秒`,
-          objectiveTone: 'survive',
-        };
-      }
-
-      return {
-        objectiveLabel: '清理当前波次',
-        objectiveText: '消灭当前波次敌人',
-        objectiveDetail: `消灭 ${battle.targetKills} 个敌人后即可推进。奖励倒计时内完成可额外获得 1 张强化卡牌。`,
-        objectiveProgressText: `${battle.kills} / ${battle.targetKills} 击杀`,
-        objectiveTone: 'battle',
-      };
-    }
-
-    if (state.status === 'nodeChoice') {
-      const hasBossNode = state.nodeOptions.some((node) => node.type === 'boss');
-      const hasFinalPrepNode = state.nodeOptions.some((node) => node.isFinalPrep);
-
-      if (state.phase === 'finalBattle' || hasBossNode) {
-        return {
-          objectiveLabel: '眼下先做',
-          objectiveText: '选定最终战',
-          objectiveDetail: '选定后马上进 Boss。',
-          objectiveProgressText: 'Boss 战入口',
-          objectiveTone: 'flow',
-        };
-      }
-
-      if (state.phase === 'finalPrep' || hasFinalPrepNode) {
-        return {
-          objectiveLabel: '眼下先做',
-          objectiveText: '先进最终强化',
-          objectiveDetail: '完成选择后进入首领战。',
-          objectiveProgressText: '强化完就进 Boss',
-          objectiveTone: 'flow',
-        };
-      }
-
-      return {
-        objectiveLabel: '眼下先做',
-        objectiveText: '选择下一站',
-        objectiveDetail: `现在打到第 ${currentStep} / ${state.totalRounds} 站。`,
-        objectiveProgressText: bossDistanceText,
-        objectiveTone: 'flow',
-      };
-    }
-
-    if (state.status === 'upgradeChoice') {
-      return {
-        objectiveLabel: '眼下先做',
-        objectiveText: state.currentNode?.isFinalPrep ? '完成最终强化' : '完成强化选择',
-        objectiveDetail: state.upgradeSource === 'levelUp' ? '选择后立即返回战场。' : '选择后继续推进。',
-        objectiveProgressText: state.currentNode?.isFinalPrep ? '选完直接进 Boss' : bossDistanceText,
-        objectiveTone: 'flow',
-      };
-    }
-
-    if (state.status === 'eventChoice') {
-      return {
-        objectiveLabel: '眼下先做',
-        objectiveText: state.currentEvent?.contentKind === 'anomaly' ? '接住这个转折' : '把这步选完',
-        objectiveDetail: '选完就接着往前打。',
-        objectiveProgressText: bossDistanceText,
-        objectiveTone: 'flow',
-      };
-    }
-
-    return {
-      objectiveLabel: '眼下先做',
-      objectiveText: '准备进入下一局',
-      objectiveDetail: '换个流派，再试一次。',
-      objectiveProgressText: bossDistanceText,
-      objectiveTone: 'flow',
-    };
-  }
-
-  private getEliteObjectiveSnapshot(
-    battle: BattleState,
-  ): Pick<OverlayHudSnapshot, 'objectiveLabel' | 'objectiveText' | 'objectiveDetail' | 'objectiveProgressText' | 'objectiveTone'> {
-    const escortCount = battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
-    const crackRatio = battle.eliteCrackWindowSec > 0 ? Math.min(1, battle.eliteCrackWindowSec / 0.82) : 0;
-    const breachFlashRatio = battle.eliteBreachFlashSec > 0 ? Math.min(1, battle.eliteBreachFlashSec / 0.48) : 0;
-    const displayedCrackRatio = Math.max(crackRatio, breachFlashRatio * 0.92);
-
-    if (!battle.eliteAlive) {
-      return {
-        objectiveLabel: '精英目标',
-        objectiveText: '坚持到精英进场',
-        objectiveDetail: '先保住站位和血量，别急着抢节奏。',
-        objectiveProgressText: '精英即将进场',
-        objectiveTone: 'elite',
-      };
-    }
-
-    if (displayedCrackRatio > 0.1) {
-      return {
-        objectiveLabel: '精英目标',
-        objectiveText: '裂口已开，集中攻击本体',
-        objectiveDetail: '趁护卫散开，集中打精英。',
-        objectiveProgressText: `暴露 ${battle.eliteCrackWindowSec.toFixed(1)}s · 破口 ${Math.max(1, battle.eliteCrackEscortCount)}`,
-        objectiveTone: 'elite',
-      };
-    }
-
-    if (escortCount > 0) {
-      return {
-        objectiveLabel: '精英目标',
-        objectiveText: '先拆护卫，等裂口',
-        objectiveDetail: '先清掉护卫，再集中打精英。',
-        objectiveProgressText: `护卫剩余 ${escortCount}`,
-        objectiveTone: 'elite',
-      };
-    }
-
-    return {
-      objectiveLabel: '精英目标',
-      objectiveText: '盯住精英本体',
-      objectiveDetail: '护卫压力降低，集中打精英。',
-      objectiveProgressText: `${this.getBattleTemplate(battle.templateId).name} · 本体收尾`,
-      objectiveTone: 'elite',
-    };
-  }
-
-  private getRouteStatusText(): string {
-    const state = this.engine.getState();
-    const routeId = state.maturedRoute ?? state.committedRoute ?? this.engine.getDominantRoute();
-    if (!routeId) {
-      return '';
-    }
-
-    const stage = this.engine.getRouteBuildStage(routeId);
-    const stageText = this.getRouteStageStatusText(routeId, stage);
-    const icon = ROUTE_VISUAL_MAP[routeId].icon;
-    const progressInfo = this.engine.getRouteBuildProgressInfo(routeId);
-    const progressSuffix = progressInfo.nextThreshold
-      ? ` (${progressInfo.count}/${progressInfo.nextThreshold})`
-      : '';
-    const base = stageText ? `${icon} ${ROUTE_NAME_MAP[routeId]} · ${stageText}` : `${icon} ${ROUTE_NAME_MAP[routeId]}`;
-    return base + progressSuffix;
-  }
-
-  private getRouteStageStatusText(routeId: RouteId, stage: RouteBuildStage): string {
-    switch (routeId) {
-      case 'crit':
-        if (stage === 'matured') {
-          return '越打越重';
-        }
-        if (stage === 'committed') {
-          return '连着出重击';
-        }
-        if (stage === 'hinted') {
-          return '开始成型';
-        }
-        return '尚未成型';
-      case 'pierce':
-        if (stage === 'matured') {
-          return '一路打穿';
-        }
-        if (stage === 'committed') {
-          return '前后连上';
-        }
-        if (stage === 'hinted') {
-          return '开始成线';
-        }
-        return '尚未成型';
-      case 'dash':
-        if (stage === 'matured') {
-          return '越打越顺';
-        }
-        if (stage === 'committed') {
-          return '反击接上';
-        }
-        if (stage === 'hinted') {
-          return '贴身就位';
-        }
-        return '尚未成型';
-      default:
-        return '';
-    }
-  }
-
-  private getToastTone(text: string): ToastTone {
-    if (text.includes('绿色安全区') || text.includes('安全区')) {
-      return 'route';
-    }
-    if (text.includes('精英') || text.includes('高压') || text.includes('压力') || text.includes('Boss')) {
-      return 'danger';
-    }
-    if (text.includes('成型') || text.includes('连击') || text.includes('暴击') || text.includes('穿透') || text.includes('穿梭')) {
-      return 'route';
-    }
-    if (text.includes('完成') || text.includes('接入') || text.includes('收住')) {
-      return 'success';
-    }
-    if (text.includes('进入') || text.includes('开局') || text.includes('中盘') || text.includes('收尾') || text.includes('强化')) {
-      return 'accent';
-    }
-    return 'neutral';
-  }
-
-  private shouldDisplayToast(tone: ToastTone): boolean {
-    const status = this.engine.getState().status;
-    if (status === 'battle') {
-      return tone === 'danger' || tone === 'route';
-    }
-
-    if (status === 'upgradeChoice' || status === 'eventChoice' || status === 'nodeChoice') {
-      return false;
-    }
-
-    return tone === 'danger' || tone === 'success' || tone === 'route';
-  }
+  // NOTE: HUD 快照构建已迁移到 HudComposer（createHudSnapshot / getPanelProgressSnapshot /
+  //       getUpgradePanelDescription / getRouteStatusText / getObjectiveSnapshot 等方法）。
+  //       GameScene 通过 this.hud.* 调用，不再保留实现副本。
 
   private renderBossEnding(bossEnding: NonNullable<RunState['bossEnding']>): void {
     this.battleRewardTransitionText.setVisible(false);
@@ -1608,6 +1142,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ========== Particle System ==========
+  // NOTE: 实现已迁移到 ParticleDirector，下面方法保留为薄委托，
+  //       以便逐步替换调用点；后续可全部改为直接调用 this.particles.*。
 
   private createParticleEmitter(
     x: number,
@@ -1622,20 +1158,7 @@ export class GameScene extends Phaser.Scene {
       blendMode?: Phaser.BlendModes;
     },
   ): Phaser.GameObjects.Particles.ParticleEmitter {
-    const emitter = this.add.particles(x, y, 'white-pixel', {
-      lifespan: config.lifespan * 1000,
-      speed: { min: config.speed * 0.6, max: config.speed * 1.4 },
-      angle: { min: 0, max: 360 },
-      scale: { start: config.scale * 1.2, end: config.scale * 0.3 },
-      quantity: config.count,
-      tint: config.color,
-      alpha: { start: config.alpha ?? 1, end: 0 },
-      blendMode: config.blendMode ?? Phaser.BlendModes.ADD,
-      emitting: false,
-    });
-    emitter.setDepth(50);
-    this.particleEmitters.push(emitter);
-    return emitter;
+    return this.particles.createEmitter(x, y, config);
   }
 
   private emitParticles(
@@ -1651,20 +1174,11 @@ export class GameScene extends Phaser.Scene {
       blendMode?: Phaser.BlendModes;
     },
   ): void {
-    const emitter = this.createParticleEmitter(x, y, config);
-    emitter.explode(config.count, x, y);
-    // Auto-destroy after emission
-    this.time.delayedCall(config.lifespan * 1000 + 100, () => {
-      emitter.destroy();
-      const idx = this.particleEmitters.indexOf(emitter);
-      if (idx >= 0) this.particleEmitters.splice(idx, 1);
-    });
+    this.particles.emitParticles(x, y, config);
   }
 
   private cleanupAllParticles(): void {
-    for (const emitter of this.particleEmitters) {
-      emitter.destroy();
-    }
+    this.particles.cleanupAll();
     this.particleEmitters.length = 0;
     this.emitterPool.clear();
   }
@@ -1673,123 +1187,31 @@ export class GameScene extends Phaser.Scene {
 
   /** Bullet hit spark effect */
   private emitHitSpark(x: number, y: number, isCrit: boolean): void {
-    const color = isCrit ? 0xffd700 : 0xffffff;
-    const count = isCrit ? 10 : 6;
-    const speed = isCrit ? 140 : 90;
-    const lifespan = isCrit ? 0.35 : 0.22;
-    const scale = isCrit ? 3.5 : 2;
-
-    this.emitParticles(x, y, {
-      color,
-      count,
-      speed,
-      lifespan,
-      scale,
-      alpha: 0.9,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-
-    // Critical hit: add radial flash ring
-    if (isCrit) {
-      this.emitCritFlashRing(x, y);
-    }
+    this.particles.emitHitSpark(x, y, isCrit);
   }
 
   /** Critical hit burst effect */
   private emitCritBurst(x: number, y: number): void {
-    // Main golden burst
-    this.emitParticles(x, y, {
-      color: 0xffd700,
-      count: 20,
-      speed: 170,
-      lifespan: 0.45,
-      scale: 4.5,
-      alpha: 1,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-
-    // Secondary white sparks
-    this.emitParticles(x, y, {
-      color: 0xffffff,
-      count: 10,
-      speed: 110,
-      lifespan: 0.32,
-      scale: 2.5,
-      alpha: 0.85,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-
-    // Orange shockwave ring
-    this.emitCritFlashRing(x, y);
+    this.particles.emitCritBurst(x, y);
   }
 
   /** Crit radial flash ring — draws an expanding golden ring at the impact point */
-  private critFlashRings: { x: number; y: number; lifeSec: number; maxLifeSec: number }[] = [];
-
-  private emitCritFlashRing(x: number, y: number): void {
-    this.critFlashRings.push({ x, y, lifeSec: 0.3, maxLifeSec: 0.3 });
+  private emitCritFlashRing(x: number, y: number, maxLifeSec: number = 0.3): void {
+    this.particles.emitCritFlashRing(x, y, maxLifeSec);
   }
 
   private renderCritFlashRings(): void {
-    const dt = 1 / 60;
-    for (const ring of this.critFlashRings) {
-      const ratio = 1 - ring.lifeSec / ring.maxLifeSec; // 0 -> 1
-      const radius = 6 + ratio * 28;
-      const alpha = (1 - ratio) * 0.7;
-      this.graphics.lineStyle(2.5, 0xffd700, alpha);
-      this.graphics.strokeCircle(ring.x, ring.y, radius);
-      // Inner faint fill
-      this.graphics.fillStyle(0xffd700, alpha * 0.12);
-      this.graphics.fillCircle(ring.x, ring.y, radius * 0.7);
-      ring.lifeSec -= dt;
-    }
-    this.critFlashRings = this.critFlashRings.filter((r) => r.lifeSec > 0);
+    this.particles.renderCritFlashRings();
   }
 
   /** Pierce ripple effect */
   private emitPierceRipple(x: number, y: number): void {
-    this.emitParticles(x, y, {
-      color: 0xa8d8ff,
-      count: 14,
-      speed: 100,
-      lifespan: 0.4,
-      scale: 3,
-      alpha: 0.75,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-    // Inner bright core
-    this.emitParticles(x, y, {
-      color: 0xffffff,
-      count: 4,
-      speed: 40,
-      lifespan: 0.2,
-      scale: 2,
-      alpha: 0.6,
-      blendMode: Phaser.BlendModes.ADD,
-    });
+    this.particles.emitPierceRipple(x, y);
   }
 
   /** Dash trail effect */
   private emitDashTrail(x: number, y: number): void {
-    this.emitParticles(x, y, {
-      color: 0x7aff7a,
-      count: 8,
-      speed: 70,
-      lifespan: 0.3,
-      scale: 2.5,
-      alpha: 0.85,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-    // Bright core particles
-    this.emitParticles(x, y, {
-      color: 0xc8ffc8,
-      count: 4,
-      speed: 30,
-      lifespan: 0.2,
-      scale: 1.5,
-      alpha: 0.7,
-      blendMode: Phaser.BlendModes.ADD,
-    });
+    this.particles.emitDashTrail(x, y);
   }
 
   private renderBossSafeWindowHint(battle: BattleState): void {
@@ -2137,7 +1559,7 @@ export class GameScene extends Phaser.Scene {
           blendMode: Phaser.BlendModes.ADD,
         });
         // Flash ring for elite death
-        this.critFlashRings.push({ x: screen.x, y: screen.y, lifeSec: 0.35, maxLifeSec: 0.35 });
+        this.emitCritFlashRing(screen.x, screen.y, 0.35);
       }
     }
 

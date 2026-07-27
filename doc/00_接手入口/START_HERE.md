@@ -25,6 +25,7 @@
 - 当前工作性质：核心体验验收、路线构筑收口、表现层读局、求职作品证据链整理
 - 当前不是：地图扩写轮、Boss 大重构轮、UI 全主题重做轮、正式资产替换轮、作品集包装优先轮
 - 表现层增强（2026-07-06）：Boss 入场动画（屏幕暗化+名字横幅）、升级面板选择闪光+音效、击杀连击数显示已完成
+- 架构重构（2026-07-27）：RunEngine God Class 第三轮拆分完成。新增 `PressureWindowController.ts`（845 行）+ `DashMomentMonitor.ts`（91 行），RunEngine 从 9622 行降至 8711 行。`SafeZoneHost` / `DashMomentHost` / `PressureWindowHost` 三套接口委托落地，`tsc --noEmit` 通过。
 
 ## 当前主问题
 
@@ -126,7 +127,7 @@
 - `src/systems/progression/` - 成长子系统（KillStreakSystem + ExperienceSystem + UpgradeEngine）
 - `src/systems/ai/` - AI 子系统（EnemyAI + EliteBehavior + BossBehavior）
 - `src/systems/state/` - 状态工厂（BattleStateFactory + RunStateFactory）
-- `src/systems/battle/` - 战斗纯函数模块（pressureSafeWindowMath + resultAnalysis）
+- `src/systems/battle/` - 战斗纯函数与控制器模块（pressureSafeWindowMath + resultAnalysis + SafeZoneController + PressureWindowController + DashMomentMonitor）
 
 **详细说明**: 见 `doc/00_接手入口/技术架构总览.md`
 **进度跟踪**: 见 `doc/00_接手入口/当前交接卡.md`

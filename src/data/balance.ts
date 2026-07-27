@@ -614,3 +614,54 @@ export function getPierceCooldownRefund(buildStage: RouteBuildStage, stats?: Pla
   const baseRefund = buildStage === 'matured' ? 0.012 : buildStage === 'committed' ? 0.008 : 0;
   return baseRefund + (stats?.pierceCooldownRefundBonus ?? 0);
 }
+
+// ============================================================
+// 暴击路线被动 — 数值常量（设计调整时只改这里）
+// ============================================================
+
+/** 破绽累积最大层数（5 层后下一次暴击触发终结打击）。 */
+export const CRIT_COMBO_MAX_STACKS = 5;
+/** 破绽/暴击衰减窗口：未命中超过此时长后层数清零。 */
+export const CRIT_COMBO_DECAY_SEC = 2.0;
+/** 终结打击伤害倍率（原伤害 × 此倍率 = +150% 暴击伤害）。 */
+export const CRIT_FINISHER_DAMAGE_MULTIPLIER = 2.5;
+/** 爆发连锁伤害倍率（终结打击后窗口内每次暴击 +30% 伤害）。 */
+export const CRIT_BURST_CHAIN_DAMAGE_MULTIPLIER = 1.3;
+/** 爆发连锁最大触发次数（终结打击后 2 秒内最多 3 次）。 */
+export const CRIT_BURST_CHAIN_MAX_HITS = 3;
+/** 爆发连锁窗口持续时间（秒）。 */
+export const CRIT_BURST_CHAIN_WINDOW_SEC = 2.0;
+/** Crit focus lock 锁定窗口：层数加成系数。 */
+export const CRIT_FOCUS_LOCK_PER_STACK = 0.12;
+/** Crit focus lock 锁定窗口：matured 阶段额外加成。 */
+export const CRIT_FOCUS_LOCK_MATURED_BONUS = 0.22;
+/** Crit focus lock 锁定窗口：committed 阶段额外加成。 */
+export const CRIT_FOCUS_LOCK_COMMITTED_BONUS = 0.1;
+/** Crit focus lock 锁定窗口：暴击命中后基础值（无爆发加成）。 */
+export const CRIT_FOCUS_LOCK_BASE_SEC = 0.92;
+/** Crit focus lock 锁定窗口：暴击命中后激活值（爆发窗口期）。 */
+export const CRIT_FOCUS_LOCK_BURST_SEC = 1.14;
+/** Crit focus lock 锁定窗口：非暴击累积时的初始基础值。 */
+export const CRIT_FOCUS_LOCK_ACCUM_BASE_SEC = 0.86;
+
+// ============================================================
+// 穿透路线被动 — 数值常量
+// ============================================================
+
+/** 连锁反应最大层数（穿透命中累积，达到此值触发额外伤害）。 */
+export const PIERCE_CHAIN_MAX_STACKS = 3;
+/** 连锁反应衰减窗口（秒）。 */
+export const PIERCE_CHAIN_DECAY_SEC = 2.0;
+/** 连锁爆发伤害倍率（满 3 层时 ×1.4）。 */
+export const PIERCE_CHAIN_BURST_DAMAGE_MULTIPLIER = 1.4;
+/** 连锁爆发额外伤害比例（直接扣血比例，0.4 = +40%）。 */
+export const PIERCE_CHAIN_BURST_BONUS_RATIO = 0.4;
+/** committed 阶段裂纹引爆半径（px）。 */
+export const PIERCE_FRACTURE_DETONATE_RADIUS = 80;
+/** committed 阶段裂纹引爆伤害比例（0.2 = 20% 基础伤害的 AOE）。 */
+export const PIERCE_FRACTURE_DETONATE_RATIO = 0.2;
+/** committed 阶段裂纹引爆冷却（秒，防止单敌人被反复引爆）。 */
+export const PIERCE_FRACTURE_DETONATE_COOLDOWN_SEC = 0.6;
+/** matured 阶段击杀标记敌人时的裂纹扩散半径（px）。 */
+export const PIERCE_FRACTURE_SPREAD_RADIUS = 120;
+

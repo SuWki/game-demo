@@ -1,207 +1,91 @@
 /**
  * 配置加载器
- * 支持从 JSON 文件加载游戏配置，开发环境支持热重载
- * 
- * 使用方式:
- *   const configLoader = new ConfigLoader();
- *   await configLoader.preloadCore();
- *   const upgrades = configLoader.getUpgrades();
+ *
+ * 设计原则：`src/data/*.ts` 是唯一事实源（single source of truth）。
+ * `public/data/*.json` 仅为 Excel 工作流提供的导出产物，运行时不再 fetch。
+ *
+ * 这样做的理由：
+ * - 避免运行时同时存在 JSON 与 TS 两份数据、必须手动同步的隐性 bug。
+ * - `balance.ts` 等模块既包含常量也包含函数，JSON 无法完整表达，TS 才是完整源。
+ * - 静态导入让类型在编译期就被严格检查，不再需要 `as unknown as ConfigMap[T]`。
  */
 
 import type {
-  UpgradeArchetype,
   BattleTemplateDefinition,
   EnemyArchetypeDefinition,
+  UpgradeArchetype,
 } from '../game/types';
-
-// 配置名称类型
-export type ConfigName = 'upgrades' | 'battleTemplates' | 'enemyArchetypes' | 'balance';
-
-// 配置数据类型映射
-export interface ConfigMap {
-  upgrades: UpgradeArchetype[];
-  battleTemplates: BattleTemplateDefinition[];
-  enemyArchetypes: EnemyArchetypeDefinition[];
-  balance: Record<string, unknown>;
-}
+import { BATTLE_TEMPLATES } from '../data/battleTemplates';
+import { ENEMY_ARCHETYPES } from '../data/enemyArchetypes';
+import { UPGRADE_ARCHETYPES } from '../data/upgrades';
 
 export class ConfigLoader {
-  private configs: Partial<ConfigMap> = {};
-  private isDev: boolean;
-  private readonly assetBaseUrl: string;
+  private readonly upgrades: UpgradeArchetype[] = UPGRADE_ARCHETYPES;
+  private readonly battleTemplates: BattleTemplateDefinition[] = Object.values(BATTLE_TEMPLATES);
+  private readonly enemyArchetypes: EnemyArchetypeDefinition[] = Object.values(ENEMY_ARCHETYPES);
   private loaded: boolean = false;
 
-  constructor(isDev?: boolean) {
-    this.isDev = isDev ?? (import.meta as any).env?.DEV ?? false;
-    this.assetBaseUrl = this.resolveAssetBaseUrl();
-  }
-
   /**
-   * 预加载所有核心配置
+   * 预加载核心配置。
+   *
+   * 当前所有数据都是静态导入的 TS 模块，所以这里只是把状态标记为已加载，
+   * 保留这个方法是为了与现有调用点（`main.ts` 中的 `await configLoader.preloadCore()`）兼容，
+   * 后续可以直接在调用点删除该方法。
    */
   async preloadCore(): Promise<void> {
-    if (this.loaded) return;
-
-    const configNames: ConfigName[] = ['upgrades', 'battleTemplates', 'enemyArchetypes', 'balance'];
-    
-    for (const name of configNames) {
-      try {
-        await this.load(name);
-      } catch (error) {
-        console.warn(`[ConfigLoader] 预加载 ${name} 失败，将使用内置数据`);
-      }
-    }
-    
     this.loaded = true;
-    if (import.meta.env.DEV) console.log('[ConfigLoader] 核心配置预加载完成');
   }
 
-  /**
-   * 加载指定配置
-   */
-  async load<T extends ConfigName>(name: T): Promise<ConfigMap[T]> {
-    if (this.configs[name]) {
-      return this.configs[name] as ConfigMap[T];
-    }
-
-    try {
-      const response = await fetch(new URL(`data/${name}.json`, this.assetBaseUrl).toString());
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const data = await response.json();
-      this.configs[name] = data;
-      
-      if (this.isDev) {
-        if (import.meta.env.DEV) console.log(`[ConfigLoader] 已从 JSON 加载 ${name}`);
-      }
-      
-      return data as ConfigMap[T];
-    } catch (error) {
-      console.warn(`[ConfigLoader] 加载 ${name}.json 失败: ${error}`);
-      
-      // 回退到内置数据
-      const fallback = await this.getFallback(name);
-      this.configs[name] = fallback;
-      return fallback as ConfigMap[T];
-    }
+  /** 配置是否已就绪（永远为 true，因为数据是静态导入的）。 */
+  isLoaded(): boolean {
+    return true;
   }
 
-  /**
-   * 开发环境热重载
-   */
-  async reload<T extends ConfigName>(name: T): Promise<ConfigMap[T]> {
-    if (!this.isDev) {
-      console.warn('[ConfigLoader] 热重载仅在开发环境可用');
-      return this.get<T>(name);
-    }
-
-    this.configs[name] = undefined;
-    return this.load(name);
-  }
-
-  /**
-   * 获取已加载的配置（同步）
-   */
-  get<T extends ConfigName>(name: T): ConfigMap[T] {
-    if (!this.configs[name]) {
-      throw new Error(`[ConfigLoader] 配置 ${name} 未加载，请先调用 preloadCore()`);
-    }
-    return this.configs[name] as ConfigMap[T];
-  }
-
-  /**
-   * 获取升级配置
-   */
+  /** 获取升级配置。 */
   getUpgrades(): UpgradeArchetype[] {
-    return this.get('upgrades');
+    return this.upgrades;
   }
 
-  /**
-   * 获取战斗模板配置
-   */
+  /** 获取所有战斗模板。 */
   getBattleTemplates(): BattleTemplateDefinition[] {
-    return this.get('battleTemplates');
+    return this.battleTemplates;
   }
 
-  /**
-   * 获取敌人原型配置
-   */
+  /** 获取所有敌人原型定义。 */
   getEnemyArchetypes(): EnemyArchetypeDefinition[] {
-    return this.get('enemyArchetypes');
+    return this.enemyArchetypes;
   }
 
   /**
-   * 获取平衡性配置
+   * 按 ID 查找战斗模板，找不到则 fail-fast。
    */
-  getBalance(): Record<string, unknown> {
-    return this.get('balance');
+  getBattleTemplate(id: BattleTemplateDefinition['id']): BattleTemplateDefinition {
+    const template = this.battleTemplates.find(t => t.id === id);
+    if (!template) {
+      throw new Error(`[ConfigLoader] 战斗模板未找到: ${id}`);
+    }
+    return template;
   }
 
   /**
-   * 检查配置是否已加载
+   * 按 ID 查找敌人原型，找不到则 fail-fast。
    */
-  isLoaded(name: ConfigName): boolean {
-    return this.configs[name] !== undefined;
+  getEnemyArchetype(id: EnemyArchetypeDefinition['id']): EnemyArchetypeDefinition {
+    const archetype = this.enemyArchetypes.find(a => a.id === id);
+    if (!archetype) {
+      throw new Error(`[ConfigLoader] 敌人原型未找到: ${id}`);
+    }
+    return archetype;
   }
 
   /**
-   * 获取内置数据（回退）
+   * 按 ID 查找升级原型，找不到则 fail-fast。
    */
-  private async getFallback<T extends ConfigName>(name: T): Promise<ConfigMap[T]> {
-    switch (name) {
-      case 'upgrades': {
-        const { UPGRADE_ARCHETYPES } = await import('../data/upgrades');
-        return UPGRADE_ARCHETYPES as unknown as ConfigMap[T];
-      }
-      case 'battleTemplates': {
-        const { BATTLE_TEMPLATES } = await import('../data/battleTemplates');
-        return Object.values(BATTLE_TEMPLATES) as unknown as ConfigMap[T];
-      }
-      case 'enemyArchetypes': {
-        const { ENEMY_ARCHETYPES } = await import('../data/enemyArchetypes');
-        return Object.values(ENEMY_ARCHETYPES) as unknown as ConfigMap[T];
-      }
-      case 'balance': {
-        const balanceModule = await import('../data/balance');
-        return {
-          VIEWPORT_WIDTH: balanceModule.VIEWPORT_WIDTH,
-          VIEWPORT_HEIGHT: balanceModule.VIEWPORT_HEIGHT,
-          ARENA_WIDTH: balanceModule.ARENA_WIDTH,
-          ARENA_HEIGHT: balanceModule.ARENA_HEIGHT,
-          PLAYER_BODY_RADIUS: balanceModule.PLAYER_BODY_RADIUS,
-          PLAYER_COLLISION_RADIUS: balanceModule.PLAYER_COLLISION_RADIUS,
-          UPGRADE_VALUE_BUCKET_THRESHOLDS: balanceModule.UPGRADE_VALUE_BUCKET_THRESHOLDS,
-          RARITY_LABEL_MAP: balanceModule.RARITY_LABEL_MAP,
-          RARITY_COLOR_MAP: balanceModule.RARITY_COLOR_MAP,
-        } as unknown as ConfigMap[T];
-      }
-      default:
-        throw new Error(`[ConfigLoader] 未知的配置名称: ${name}`);
+  getUpgrade(id: UpgradeArchetype['id']): UpgradeArchetype {
+    const upgrade = this.upgrades.find(u => u.id === id);
+    if (!upgrade) {
+      throw new Error(`[ConfigLoader] 升级原型未找到: ${id}`);
     }
-  }
-
-  private resolveAssetBaseUrl(): string {
-    const envBase = this.normalizeBasePath((import.meta as any).env?.BASE_URL ?? '/');
-    if (envBase !== '/') {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-      return new URL(envBase, origin).toString();
-    }
-
-    if (typeof document !== 'undefined' && document.baseURI) {
-      return document.baseURI;
-    }
-
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-    return new URL('/', origin).toString();
-  }
-
-  private normalizeBasePath(basePath: string): string {
-    if (!basePath || basePath === '.' || basePath === './') {
-      return '/';
-    }
-
-    const trimmed = basePath.startsWith('/') ? basePath : `/${basePath}`;
-    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+    return upgrade;
   }
 }

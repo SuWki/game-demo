@@ -56,6 +56,7 @@ import type {
   ContentEffect,
   ContentTier,
   DebugBattlePhaseId,
+  EnemyArchetypeDefinition,
   EnemyArchetypeId,
   PressurePocketShiftModeId,
   PressurePatternModeId,
@@ -67,6 +68,7 @@ import type {
   NodeOption,
   NodeType,
   AudioCue,
+  PhaseId,
   PlayerInputState,
   PlayerStats,
   PickedEventRecord,
@@ -109,6 +111,12 @@ import {
   getDistanceOutsidePressureSafeWindow as getDistanceOutsidePressureSafeWindowPure,
   calculateBossSafeWindowGraceSec,
 } from './battle/pressureSafeWindowMath';
+import { SafeZoneController } from './battle/SafeZoneController';
+import type { SafeZoneHost } from './battle/SafeZoneController';
+import { DashMomentMonitor } from './battle/DashMomentMonitor';
+import type { DashMomentHost } from './battle/DashMomentMonitor';
+import { PressureWindowController } from './battle/PressureWindowController';
+import type { PressureWindowHost, PressureVolleyOptions } from './battle/PressureWindowController';
 import {
   calculateStatChanges as calculateStatChangesPure,
   getResultRouteEvidenceCounts as getResultRouteEvidenceCountsPure,
@@ -159,11 +167,14 @@ function getEndingLabel(endingKind: RunEndingKind): string {
   }
 }
 
-export class RunEngine {
+export class RunEngine implements SafeZoneHost, DashMomentHost, PressureWindowHost {
   private readonly services: Services;
 
   // Subsystem instances
   private readonly routeManager = new RouteManager();
+  private readonly safeZoneController: SafeZoneController;
+  private readonly dashMomentMonitor: DashMomentMonitor;
+  private readonly pressureWindowController: PressureWindowController;
 
   private readonly announcements: EngineAnnouncement[] = [];
 
@@ -211,6 +222,9 @@ export class RunEngine {
 
   public constructor(services: Services) {
     this.services = services;
+    this.safeZoneController = new SafeZoneController(this);
+    this.dashMomentMonitor = new DashMomentMonitor(this);
+    this.pressureWindowController = new PressureWindowController(this);
     const openingNode = createOpeningBattleNode();
     this.state = createRunState(openingNode);
     this.enterBattle(openingNode);
@@ -220,13 +234,8 @@ export class RunEngine {
   // 配置访问方法（通过 ConfigLoader）
   // ============================================================
 
-  private getBattleTemplate(id: BattleTemplateId): BattleTemplateDefinition {
-    const templates = this.services.configLoader.getBattleTemplates();
-    const template = templates.find(t => t.id === id);
-    if (!template) {
-      throw new Error(`[RunEngine] 战斗模板未找到: ${id}`);
-    }
-    return template;
+  public getBattleTemplate(id: BattleTemplateId): BattleTemplateDefinition {
+    return this.services.configLoader.getBattleTemplate(id);
   }
 
   private getAllBattleTemplates(): BattleTemplateDefinition[] {
@@ -234,25 +243,15 @@ export class RunEngine {
   }
 
   private getUpgradeArchetypeById(id: string): UpgradeArchetype {
-    const upgrades = this.services.configLoader.getUpgrades();
-    const upgrade = upgrades.find(u => u.id === id);
-    if (!upgrade) {
-      throw new Error(`[RunEngine] 升级原型未找到: ${id}`);
-    }
-    return upgrade;
+    return this.services.configLoader.getUpgrade(id);
   }
 
   private getAllUpgradeArchetypes(): UpgradeArchetype[] {
     return this.services.configLoader.getUpgrades();
   }
 
-  private getEnemyArchetypeDef(id: EnemyArchetypeId): import('../game/types').EnemyArchetypeDefinition {
-    const archetypes = this.services.configLoader.getEnemyArchetypes();
-    const archetype = archetypes.find(a => a.id === id);
-    if (!archetype) {
-      throw new Error(`[RunEngine] 敌人原型未找到: ${id}`);
-    }
-    return archetype;
+  private getEnemyArchetypeDef(id: EnemyArchetypeId): EnemyArchetypeDefinition {
+    return this.services.configLoader.getEnemyArchetype(id);
   }
 
   public getState(): Readonly<RunState> {
@@ -730,16 +729,8 @@ export class RunEngine {
     battle.playerTurnBurstSec = Math.max(0, battle.playerTurnBurstSec - dt);
     battle.playerNearMissSec = Math.max(0, battle.playerNearMissSec - dt);
     battle.playerNearMissCooldownSec = Math.max(0, battle.playerNearMissCooldownSec - dt);
-    battle.monitorDashLateMomentCooldownSec = Math.max(0, battle.monitorDashLateMomentCooldownSec - dt);
-    battle.monitorDashCounterCooldownSec = Math.max(0, battle.monitorDashCounterCooldownSec - dt);
-    battle.monitorEliteCrackFollowThroughCooldownSec = Math.max(
-      0,
-      battle.monitorEliteCrackFollowThroughCooldownSec - dt,
-    );
-    battle.monitorKillPickupContinueCooldownSec = Math.max(
-      0,
-      battle.monitorKillPickupContinueCooldownSec - dt,
-    );
+    // Dash 时刻冷却由 DashMomentMonitor 统一推进
+    this.dashMomentMonitor.tickCooldowns(battle, dt);
 
     this.routeManager.updatePassiveTimers(battle, simulationDt);
 
@@ -888,7 +879,8 @@ export class RunEngine {
     );
   }
 
-  private getCurrentBattleIndex(): number {
+  /** PressureWindowHost：当前战斗在 run 中的序号。 */
+  getCurrentBattleIndex(): number {
     return Math.max(1, this.state.round + 1);
   }
 
@@ -1118,7 +1110,7 @@ export class RunEngine {
     });
   }
 
-  private getActivePressurePhase(battle: BattleState): BattlePressurePhaseDefinition | null {
+  getActivePressurePhase(battle: BattleState): BattlePressurePhaseDefinition | null {
     const phases = this.getBattleTemplate(battle.templateId).eliteRule?.pressurePhases ?? [];
     if (battle.pressurePhaseIndex < 0 || battle.pressurePhaseIndex >= phases.length) {
       return null;
@@ -1134,163 +1126,17 @@ export class RunEngine {
     return getBattleActiveEliteBehavior(battle.templateId, battle.pressurePhaseIndex) ?? template.eliteRule?.behavior ?? 'frontline';
   }
 
-  private activatePressureSignature(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
-    const durationSec = phase.signatureDurationSec ?? 0;
-    if (durationSec <= 0 || !phase.signatureLabel) {
-      battle.pressureSignatureLabel = undefined;
-      battle.pressureSignatureSec = 0;
-      battle.pressureSignaturePulseSec = 0;
-      return;
-    }
-
-    battle.pressureSignatureLabel = phase.signatureLabel;
-    battle.pressureSignatureSec = durationSec;
-    battle.pressureSignaturePulseSec = 0;
-
-    if (battle.encounterType === 'boss') {
-      this.services.metrics.recordBossSignatureSeen(battle.templateId, phase.id, phase.label, phase.signatureLabel, durationSec);
-    }
-  }
-
-  private clearPressureSafeWindow(battle: BattleState): void {
-    // 安全区消失时给玩家短暂无敌，防止区内外敌人瞬间秒杀
-    if (battle.encounterType === 'boss' && battle.pressureSafeWindowSec > 0) {
-      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.45);
-    }
-    battle.pressureSafeWindowAxis = undefined;
-    battle.pressureSafeWindowShiftType = undefined;
-    battle.pressureSafeWindowCenter = CENTER_X;
-    battle.pressureSafeWindowSpan = 0;
-    battle.pressureSafeWindowSecondaryCenter = CENTER_Y;
-    battle.pressureSafeWindowSecondarySpan = 0;
-    battle.pressureSafeWindowSec = 0;
-    battle.bossSafeWindowGraceSec = 0;
-  }
-
-  private clearPressurePattern(battle: BattleState): void {
-    battle.pressurePatternLabel = undefined;
-    battle.pressurePatternMode = undefined;
-    battle.pressurePatternPulseSec = 0;
-    battle.pressurePatternFlashSec = 0;
-    battle.pressurePatternPulseCount = 0;
-    battle.pressurePocketShiftSeen = [];
-    this.clearPressureSafeWindow(battle);
-  }
-
-  private activatePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
-    const pulseIntervalSec = phase.patternPulseIntervalSec ?? 0;
-    if (pulseIntervalSec <= 0 || !phase.patternLabel || !phase.patternMode) {
-      this.clearPressurePattern(battle);
-      return;
-    }
-
-    battle.pressurePatternLabel = phase.patternLabel;
-    battle.pressurePatternMode = phase.patternMode;
-    battle.pressurePatternPulseSec = Math.min(0.65, Math.max(0.2, pulseIntervalSec * 0.45));
-    battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.24);
-    battle.pressurePatternPulseCount = 0;
-    this.clearPressureSafeWindow(battle);
-
-    if (battle.encounterType === 'boss') {
-      this.services.metrics.recordBossPhasePatternSeen(battle.templateId, phase.id, phase.label, phase.patternLabel);
-    }
-  }
+  // NOTE: 压力签名 / 压力模式状态机（activatePressureSignature / clearPressureSafeWindow /
+  //       clearPressurePattern / activatePressurePattern / updatePressureSignature /
+  //       updatePressurePattern / executePressurePattern）已迁移到 PressureWindowController。
+  //       RunEngine 通过 PressureWindowHost 接口向其暴露共享方法。
 
   private updatePressureSignature(battle: BattleState, dt: number): void {
-    if (battle.pressureSignatureSec <= 0) {
-      battle.pressureSignatureLabel = undefined;
-      battle.pressureSignaturePulseSec = 0;
-      return;
-    }
-
-    const phase = this.getActivePressurePhase(battle);
-    if (!phase) {
-      battle.pressureSignatureLabel = undefined;
-      battle.pressureSignatureSec = 0;
-      battle.pressureSignaturePulseSec = 0;
-      return;
-    }
-
-    battle.pressureSignatureSec = Math.max(0, battle.pressureSignatureSec - dt);
-    battle.pressureSignaturePulseSec = Math.max(0, battle.pressureSignaturePulseSec - dt);
-    if (battle.pressureSignatureSec <= 0) {
-      battle.pressureSignatureLabel = undefined;
-      battle.pressureSignaturePulseSec = 0;
-      return;
-    }
-
-    const pulseIntervalSec = phase.signaturePulseIntervalSec ?? 0;
-    const shouldPulse = pulseIntervalSec > 0 && battle.pressureSignaturePulseSec <= 0;
-    if (!shouldPulse) {
-      return;
-    }
-
-    if ((phase.signatureEscortBurst ?? 0) > 0) {
-      this.spawnPhaseEscortBurst(battle, phase.signatureEscortBurst ?? 0);
-    }
-    if ((phase.signatureVolleyCount ?? 0) > 0) {
-      this.firePressureVolley(battle, phase.signatureVolleyCount ?? 0);
-    }
-
-    battle.pressureSignaturePulseSec = pulseIntervalSec;
+    this.pressureWindowController.updatePressureSignature(battle, dt);
   }
 
   private updatePressurePattern(battle: BattleState, dt: number): void {
-    battle.pressurePatternFlashSec = Math.max(0, battle.pressurePatternFlashSec - dt);
-    battle.pressureSafeWindowSec = Math.max(0, battle.pressureSafeWindowSec - dt);
-    if (battle.pressureSafeWindowSec <= 0) {
-      this.clearPressureSafeWindow(battle);
-    }
-    const phase = this.getActivePressurePhase(battle);
-    if (!phase || !phase.patternLabel || !phase.patternMode || (phase.patternPulseIntervalSec ?? 0) <= 0) {
-      this.clearPressurePattern(battle);
-      return;
-    }
-
-    if (battle.pressurePatternLabel !== phase.patternLabel || battle.pressurePatternMode !== phase.patternMode) {
-      this.activatePressurePattern(battle, phase);
-    }
-
-    battle.pressurePatternPulseSec = Math.max(0, battle.pressurePatternPulseSec - dt);
-    if (battle.pressurePatternPulseSec > 0) {
-      return;
-    }
-
-    this.executePressurePattern(battle, phase);
-    battle.pressurePatternPulseSec = phase.patternPulseIntervalSec ?? 0;
-    battle.pressurePatternFlashSec = Math.max(battle.pressurePatternFlashSec, 0.48);
-  }
-
-  private executePressurePattern(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
-    battle.pressurePatternPulseCount += 1;
-    // 安全区机制已移除 — 不再生成安全区，只保留弹幕和护卫生成
-    switch (phase.patternMode) {
-      case 'laneCrush':
-        this.spawnPatternEscortWave(
-          battle,
-          phase.patternEscortBurst ?? 0,
-          phase.patternMode,
-          phase.patternEscortArchetype,
-        );
-        return;
-      case 'sideClamp':
-        this.spawnPatternEscortWave(
-          battle,
-          phase.patternEscortBurst ?? 0,
-          phase.patternMode,
-          phase.patternEscortArchetype,
-        );
-        return;
-      case 'crossfireWave':
-        this.firePressureVolley(battle, phase.patternVolleyCount ?? 0, {
-          spreadRad: phase.patternVolleySpreadRad ?? 0.2,
-          shotsPerShooter: phase.patternVolleyShotsPerShooter ?? 2,
-          respectsSafeWindow: true,
-        });
-        return;
-      default:
-        return;
-    }
+    this.pressureWindowController.updatePressurePattern(battle, dt);
   }
 
   private getBattleViewportBounds(battle: BattleState): {
@@ -1305,358 +1151,19 @@ export class RunEngine {
   }
 
   private updateBossFirelineMonitoring(battle: BattleState): void {
-    if (battle.encounterType !== 'boss' || battle.templateId !== 'boss-bastion') {
-      return;
-    }
-
-    const phase = this.getActivePressurePhase(battle);
-    if (!phase || phase.id !== 'fireline') {
-      return;
-    }
-
-    const view = this.getBattleViewportBounds(battle);
-    const visibleProjectiles = battle.enemyProjectiles.filter(
-      (projectile) =>
-        projectile.x >= view.left - 18 &&
-        projectile.x <= view.right + 18 &&
-        projectile.y >= view.top - 18 &&
-        projectile.y <= view.bottom + 18,
-    ).length;
-    const activeEscorts = battle.enemies.filter((enemy) => !enemy.elite && enemy.hp > 0).length;
-    const safeAreaRatio =
-      battle.pressureSafeWindowAxis === 'pocket' &&
-      battle.pressureSafeWindowSpan > 0 &&
-      battle.pressureSafeWindowSecondarySpan > 0
-        ? (battle.pressureSafeWindowSpan * battle.pressureSafeWindowSecondarySpan) / Math.max(1, view.width * view.height)
-        : battle.pressureSafeWindowAxis && battle.pressureSafeWindowSpan > 0
-          ? battle.pressureSafeWindowSpan / Math.max(1, battle.pressureSafeWindowAxis === 'vertical' ? view.width : view.height)
-          : 0;
-    const dangerCoverage = clamp(1 - safeAreaRatio, 0, 1);
-    const projectileCoverage = clamp(visibleProjectiles / 18, 0, 1);
-    const escortCoverage = clamp(activeEscorts / 5, 0, 1);
-    const phasePulseCoverage = clamp(battle.pressurePatternPulseCount / 4, 0, 1);
-    const coverage =
-      dangerCoverage * 0.5 +
-      projectileCoverage * 0.26 +
-      escortCoverage * 0.12 +
-      phasePulseCoverage * 0.12;
-    battle.bossFirelineCoverage = Math.max(battle.bossFirelineCoverage, Number(coverage.toFixed(3)));
+    this.pressureWindowController.updateBossFirelineMonitoring(battle);
   }
 
-  private openPressureSafeWindow(
-    battle: BattleState,
-    phase: BattlePressurePhaseDefinition,
-    axis: PressureSafeWindowAxis,
-  ): void {
-    const view = this.getBattleViewportBounds(battle);
+  // NOTE: 压力窗口几何与弹幕生成（openPressureSafeWindow / choosePressureSafeWindowCenter /
+  //       scoreSafeWindowCandidate / findEnemyAwarePocketCenter / choosePressureSafePocketCenter /
+  //       getBossSafeWindowLingerSec / getBossSafeWindowTargetDistance / chooseBossPressureSafeWindowCenter /
+  //       chooseBossPressureSafePocketCenter / getBossPressurePocketFallbackAngle / getPressurePocketShiftType /
+  //       getPressurePocketShiftProfile / collectPressureSlotPositions / getDistanceOutsidePressureSafeWindow /
+  //       refreshBossSafeWindowGrace / getPressureProjectileStats / spawnPressureWallShots /
+  //       spawnPressurePocketShots / recordBossPhaseMetrics）已迁移到 PressureWindowController。
+  //       几何纯函数仍在 pressureSafeWindowMath.ts，本类保留 isPointInsidePressureSafeWindow 供 SafeZoneHost 使用。
 
-    if (axis === 'pocket') {
-      const shiftType = this.getPressurePocketShiftType(battle, phase);
-      const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
-      // 安全区尺寸：足够大让玩家有走位空间，不被小怪挤压
-      const baseSafeWindowSpan = clamp((phase.patternSafeWindowSize ?? 240) * 0.95, 180, view.width * 0.42);
-      const baseSafeWindowSecondarySpan = clamp(
-        (phase.patternSafeWindowSecondarySize ?? baseSafeWindowSpan * 0.85) * 0.95,
-        160,
-        view.height * 0.42,
-      );
-      const safeWindowSpan = clamp(baseSafeWindowSpan * shiftProfile.widthScale, 186, view.width * 0.52);
-      const safeWindowSecondarySpan = clamp(
-        baseSafeWindowSecondarySpan * shiftProfile.heightScale,
-        166,
-        view.height * 0.50,
-      );
-      const safeWindowCenter = this.choosePressureSafePocketCenter(battle, safeWindowSpan, safeWindowSecondarySpan, shiftType);
-      const baseSafeWindowSec = (phase.patternSafeWindowLingerSec ?? 1.08) * shiftProfile.lingerScale;
-      const safeWindowSec =
-        battle.encounterType === 'boss'
-          ? this.getBossSafeWindowLingerSec(baseSafeWindowSec, phase.patternPulseIntervalSec)
-          : clamp(baseSafeWindowSec, 0.72, 1.72);
-
-      battle.pressureSafeWindowAxis = axis;
-      battle.pressureSafeWindowShiftType = shiftType;
-      battle.pressureSafeWindowCenter = safeWindowCenter.x;
-      battle.pressureSafeWindowSpan = safeWindowSpan;
-      battle.pressureSafeWindowSecondaryCenter = safeWindowCenter.y;
-      battle.pressureSafeWindowSecondarySpan = safeWindowSecondarySpan;
-      battle.pressureSafeWindowSec = safeWindowSec;
-      if (battle.encounterType === 'boss') {
-        battle.bossSafeWindowMoments += 1;
-      }
-
-      if (battle.encounterType === 'boss' && !battle.pressurePocketShiftSeen.includes(shiftType)) {
-        this.services.metrics.recordBossSafeWindowSeen(
-          battle.templateId,
-          phase.id,
-          phase.label,
-          phase.patternLabel ?? phase.label,
-          axis,
-          safeWindowSpan,
-          safeWindowSec,
-          safeWindowSecondarySpan,
-          shiftType,
-        );
-        battle.pressurePocketShiftSeen.push(shiftType);
-      }
-      return;
-    }
-
-    const dimension = axis === 'vertical' ? view.width : view.height;
-    const secondaryDimension = axis === 'vertical' ? view.height : view.width;
-    const minimumSpan = axis === 'vertical' ? 200 : 180;
-    const maximumSpan = dimension * 0.48;
-    const safeWindowSpan = clamp(
-      (phase.patternSafeWindowSize ?? (axis === 'vertical' ? 260 : 200)) * 0.92,
-      minimumSpan,
-      maximumSpan,
-    );
-    // 安全区副轴长度：与主轴接近，形成近似正方形矩形，让玩家有四方位走位空间
-    const secondarySpan = clamp(safeWindowSpan * 0.85, 160, secondaryDimension * 0.44);
-    const safeWindowCenter = this.choosePressureSafeWindowCenter(battle, axis, safeWindowSpan);
-    const safeWindowSecondaryCenter =
-      axis === 'vertical' ? view.top + view.height * 0.5 : view.left + view.width * 0.5;
-    const baseSafeWindowSec = phase.patternSafeWindowLingerSec ?? (axis === 'vertical' ? 1.28 : 1.18);
-    const safeWindowSec =
-      battle.encounterType === 'boss'
-        ? this.getBossSafeWindowLingerSec(baseSafeWindowSec, phase.patternPulseIntervalSec)
-        : clamp(baseSafeWindowSec, 0.82, 1.9);
-
-    battle.pressureSafeWindowAxis = axis;
-    battle.pressureSafeWindowShiftType = undefined;
-    battle.pressureSafeWindowCenter = safeWindowCenter;
-    battle.pressureSafeWindowSpan = safeWindowSpan;
-    battle.pressureSafeWindowSecondaryCenter = safeWindowSecondaryCenter;
-    battle.pressureSafeWindowSecondarySpan = secondarySpan;
-    battle.pressureSafeWindowSec = safeWindowSec;
-    if (battle.encounterType === 'boss') {
-      battle.bossSafeWindowMoments += 1;
-    }
-
-    if (battle.encounterType === 'boss' && battle.pressurePatternPulseCount === 1) {
-      this.services.metrics.recordBossSafeWindowSeen(
-        battle.templateId,
-        phase.id,
-        phase.label,
-        phase.patternLabel ?? phase.label,
-        axis,
-        safeWindowSpan,
-        safeWindowSec,
-      );
-    }
-  }
-
-  private choosePressureSafeWindowCenter(
-    battle: BattleState,
-    axis: PressureSafeWindowAxis,
-    span: number,
-  ): number {
-    const view = this.getBattleViewportBounds(battle);
-    const dimension = axis === 'vertical' ? view.width : view.height;
-    const viewStart = axis === 'vertical' ? view.left : view.top;
-    const playerCoord = axis === 'vertical' ? battle.playerX : battle.playerY;
-    const laneRatios = axis === 'vertical' ? [0.32, 0.68, 0.5, 0.36, 0.64] : [0.3, 0.7, 0.5, 0.38, 0.62];
-    const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1) % laneRatios.length;
-    const anchoredLane = viewStart + dimension * laneRatios[pulseIndex];
-    if (battle.encounterType === 'boss') {
-      return this.chooseBossPressureSafeWindowCenter(battle, axis, span, anchoredLane);
-    }
-    const margin = axis === 'vertical' ? 72 : 58;
-    const minCenter = viewStart + margin + span * 0.5;
-    const maxCenter = viewStart + dimension - margin - span * 0.5;
-
-    // 生成候选中心点：锚点+玩家位置+均匀分布
-    const candidates = [
-      clamp(anchoredLane, minCenter, maxCenter),
-      clamp(anchoredLane * 0.72 + playerCoord * 0.28, minCenter, maxCenter),
-      clamp(viewStart + dimension * 0.25, minCenter, maxCenter),
-      clamp(viewStart + dimension * 0.5, minCenter, maxCenter),
-      clamp(viewStart + dimension * 0.75, minCenter, maxCenter),
-    ];
-
-    // 选敌人最少的候选位置
-    const secondarySpan = battle.pressureSafeWindowSecondarySpan || span * 0.85;
-    let bestCenter = candidates[1];
-    let bestScore = Infinity;
-    for (const cand of candidates) {
-      const score = this.scoreSafeWindowCandidate(battle, axis, cand, span, secondarySpan);
-      if (score < bestScore) {
-        bestScore = score;
-        bestCenter = cand;
-      }
-    }
-    return bestCenter;
-  }
-
-  private scoreSafeWindowCandidate(
-    battle: BattleState,
-    axis: PressureSafeWindowAxis,
-    center: number,
-    span: number,
-    secondarySpan: number,
-  ): number {
-    const isVertical = axis === 'vertical';
-    const primaryStart = center - span * 0.5;
-    const primaryEnd = center + span * 0.5;
-    const secondaryCenter = isVertical
-      ? battle.playerY
-      : battle.playerX;
-    const secondaryStart = secondaryCenter - secondarySpan * 0.5;
-    const secondaryEnd = secondaryCenter + secondarySpan * 0.5;
-
-    let score = 0;
-    for (const enemy of battle.enemies) {
-      const ep = isVertical ? enemy.x : enemy.y;
-      const es = isVertical ? enemy.y : enemy.x;
-      if (ep >= primaryStart - 30 && ep <= primaryEnd + 30 && es >= secondaryStart - 30 && es <= secondaryEnd + 30) {
-        // 敌人在安全区内或边缘，每个+10分（越低越好）
-        score += 10;
-      } else {
-        // 离安全区越远的敌人分数越低
-        const distToEdge = Math.max(0, Math.abs(ep - center) - span * 0.5);
-        score += Math.max(0, 3 - distToEdge * 0.02);
-      }
-    }
-    return score;
-  }
-
-  private findEnemyAwarePocketCenter(
-    battle: BattleState,
-    spanX: number,
-    spanY: number,
-    anchorX: number,
-    anchorY: number,
-    playerBlend: number,
-  ): { x: number; y: number } {
-    const view = this.getBattleViewportBounds(battle);
-    const blendedX = anchorX * (1 - playerBlend) + battle.playerX * playerBlend;
-    const blendedY = anchorY * (1 - playerBlend) + battle.playerY * playerBlend;
-    const minX = view.left + 84 + spanX * 0.5;
-    const maxX = view.right - 84 - spanX * 0.5;
-    const minY = view.top + 74 + spanY * 0.5;
-    const maxY = view.bottom - 74 - spanY * 0.5;
-
-    // 生成候选中心点
-    const candidates: { x: number; y: number }[] = [
-      { x: clamp(blendedX, minX, maxX), y: clamp(blendedY, minY, maxY) },
-      { x: clamp(anchorX, minX, maxX), y: clamp(anchorY, minY, maxY) },
-      { x: clamp(view.left + view.width * 0.3, minX, maxX), y: clamp(view.top + view.height * 0.3, minY, maxY) },
-      { x: clamp(view.left + view.width * 0.7, minX, maxX), y: clamp(view.top + view.height * 0.3, minY, maxY) },
-      { x: clamp(view.left + view.width * 0.3, minX, maxX), y: clamp(view.top + view.height * 0.7, minY, maxY) },
-      { x: clamp(view.left + view.width * 0.7, minX, maxX), y: clamp(view.top + view.height * 0.7, minY, maxY) },
-      { x: clamp(view.left + view.width * 0.5, minX, maxX), y: clamp(view.top + view.height * 0.5, minY, maxY) },
-    ];
-
-    let best = candidates[0];
-    let bestScore = Infinity;
-    for (const cand of candidates) {
-      const x0 = cand.x - spanX * 0.5;
-      const x1 = cand.x + spanX * 0.5;
-      const y0 = cand.y - spanY * 0.5;
-      const y1 = cand.y + spanY * 0.5;
-      let score = 0;
-      for (const enemy of battle.enemies) {
-        if (enemy.x >= x0 - 30 && enemy.x <= x1 + 30 && enemy.y >= y0 - 30 && enemy.y <= y1 + 30) {
-          score += 10;
-        } else {
-          const dist = Math.hypot(enemy.x - cand.x, enemy.y - cand.y);
-          score += Math.max(0, 3 - dist * 0.01);
-        }
-      }
-      if (score < bestScore) {
-        bestScore = score;
-        best = cand;
-      }
-    }
-    return best;
-  }
-
-  private choosePressureSafePocketCenter(
-    battle: BattleState,
-    spanX: number,
-    spanY: number,
-    shiftType: PressurePocketShiftModeId,
-  ): { x: number; y: number } {
-    const view = this.getBattleViewportBounds(battle);
-    const shiftModes = this.getActivePressurePhase(battle)?.patternPocketShiftModes;
-    const shiftModeCount = Math.max(1, shiftModes?.length ?? 0);
-    const shiftCycleIndex = Math.floor(Math.max(0, battle.pressurePatternPulseCount - 1) / shiftModeCount);
-    const shiftProfile = this.getPressurePocketShiftProfile(shiftType);
-    const anchor = shiftProfile.anchors[shiftCycleIndex % shiftProfile.anchors.length];
-    const anchorX = view.left + view.width * anchor.x;
-    const anchorY = view.top + view.height * anchor.y;
-    if (battle.encounterType === 'boss') {
-      return this.chooseBossPressureSafePocketCenter(battle, spanX, spanY, shiftType, anchorX, anchorY);
-    }
-    const playerBlend = shiftProfile.playerBlend;
-    return this.findEnemyAwarePocketCenter(battle, spanX, spanY, anchorX, anchorY, playerBlend);
-  }
-
-  private getBossSafeWindowLingerSec(baseLingerSec: number, pulseIntervalSec: number | undefined): number {
-    return getBossSafeWindowLingerSecPure(baseLingerSec, pulseIntervalSec);
-  }
-
-  private getBossSafeWindowTargetDistance(axis: PressureSafeWindowAxis): number {
-    return getBossSafeWindowTargetDistancePure(axis);
-  }
-
-  private chooseBossPressureSafeWindowCenter(
-    battle: BattleState,
-    axis: PressureSafeWindowAxis,
-    span: number,
-    anchoredLane: number,
-  ): number {
-    return chooseBossPressureSafeWindowCenterPure(battle, axis, span, anchoredLane);
-  }
-
-  private chooseBossPressureSafePocketCenter(
-    battle: BattleState,
-    spanX: number,
-    spanY: number,
-    shiftType: PressurePocketShiftModeId,
-    anchorX: number,
-    anchorY: number,
-  ): { x: number; y: number } {
-    return chooseBossPressureSafePocketCenterPure(battle, spanX, spanY, shiftType, anchorX, anchorY);
-  }
-
-  private getBossPressurePocketFallbackAngle(
-    battle: BattleState,
-    shiftType: PressurePocketShiftModeId,
-  ): number {
-    return getBossPressurePocketFallbackAngle(battle, shiftType);
-  }
-
-  private getPressurePocketShiftType(
-    battle: BattleState,
-    phase: BattlePressurePhaseDefinition,
-  ): PressurePocketShiftModeId {
-    const shiftModes: PressurePocketShiftModeId[] =
-      phase.patternPocketShiftModes?.length ? phase.patternPocketShiftModes : ['sweep'];
-    const pulseIndex = Math.max(0, battle.pressurePatternPulseCount - 1);
-    return shiftModes[pulseIndex % shiftModes.length] ?? 'sweep';
-  }
-
-  private getPressurePocketShiftProfile(shiftType: PressurePocketShiftModeId): {
-    anchors: Array<{ x: number; y: number }>;
-    playerBlend: number;
-    widthScale: number;
-    heightScale: number;
-    lingerScale: number;
-  } {
-    return getPressurePocketShiftProfile(shiftType);
-  }
-
-  private collectPressureSlotPositions(
-    dimension: number,
-    margin: number,
-    shotSlots: number,
-    safeStart: number,
-    safeEnd: number,
-  ): number[] {
-    return collectPressureSlotPositionsPure(dimension, margin, shotSlots, safeStart, safeEnd);
-  }
-
-  private isPointInsidePressureSafeWindow(
+  isPointInsidePressureSafeWindow(
     battle: BattleState,
     x: number,
     y: number,
@@ -1665,487 +1172,64 @@ export class RunEngine {
     return isPointInsidePressureSafeWindowPure(battle, x, y, padding);
   }
 
-  private getDistanceOutsidePressureSafeWindow(battle: BattleState, x: number, y: number, padding = 0): number {
-    return getDistanceOutsidePressureSafeWindowPure(battle, x, y, padding);
+  private applyBossSafeWindowPenalty(battle: BattleState, dt: number): void {
+    this.pressureWindowController.applyBossSafeWindowPenalty(battle, dt);
   }
 
-  private refreshBossSafeWindowGrace(battle: BattleState): void {
-    if (battle.encounterType !== 'boss') {
-      return;
-    }
-
-    const graceSec = calculateBossSafeWindowGraceSec(battle, this.state.stats);
-    if (graceSec <= 0) {
-      battle.bossSafeWindowGraceSec = 0;
-      battle.outsideSafeDamageTimerSec = 0;
-      return;
-    }
-
-    battle.bossSafeWindowGraceSec = graceSec;
-    battle.outsideSafeDamageTimerSec = 0;
-  }
-
-  private applyBossSafeWindowPenalty(_battle: BattleState, _dt: number): void {
-    // 安全区惩罚机制已移除
-  }
-
-  // ========== 安全区检验机制 V4 ==========
-
-  private static readonly SAFE_ZONE_TIERS = [
-    { warning: 1.5, active: 1.2, transition: 0.4, shift: 40, halfW: 130, halfH: 75, mult: 1.3 },
-    { warning: 1.3, active: 1.0, transition: 0.35, shift: 80, halfW: 120, halfH: 70, mult: 1.8 },
-    { warning: 1.1, active: 0.9, transition: 0.3, shift: 60, halfW: 100, halfH: 60, mult: 1.8 },
-    { warning: 0.9, active: 0.7, transition: 0.25, shift: 45, halfW: 80, halfH: 50, mult: 1.8 },
-    { warning: 0.8, active: 0.6, transition: 0.2, shift: 35, halfW: 65, halfH: 40, mult: 1.8 },
-  ];
+  // NOTE: SafeZone 系统（SAFE_ZONE_TIERS 常量、updateSafeZone、tryActivateSafeZone、
+  //       shouldSafeZoneContinue、getSafeZoneTier、startSafeZoneCycle、chooseSafeZoneShiftMode/Direction、
+  //       adjustSafeZoneForEnemies、pushEnemiesOutOfSafeZone、deflectEnemiesFromSafeZone、
+  //       executeCoverAttack、clearBossSafeWindowBlockers）已迁移到 SafeZoneController。
+  //       RunEngine 通过 SafeZoneHost 接口向其暴露共享方法。
 
   private updateSafeZone(battle: BattleState, dt: number): void {
-    if (battle.safeZoneHintSec > 0) {
-      battle.safeZoneHintSec = Math.max(0, battle.safeZoneHintSec - dt);
-    }
-    if (battle.safeZoneTutorialSec > 0) {
-      battle.safeZoneTutorialSec = Math.max(0, battle.safeZoneTutorialSec - dt);
-    }
-
-    if (!battle.safeZone) {
-      this.tryActivateSafeZone(battle);
-      return;
-    }
-
-    const sz = battle.safeZone;
-    sz.timer -= dt;
-
-    if (sz.timer <= 0) {
-      if (sz.phase === 'warning') {
-        this.executeCoverAttack(battle);
-        sz.phase = 'active';
-        sz.timer = sz.activeDuration;
-      } else if (sz.phase === 'active') {
-        sz.phase = 'transition';
-        sz.timer = sz.transitionDuration;
-      } else {
-        sz.cycleCount++;
-        if (this.shouldSafeZoneContinue(battle)) {
-          this.startSafeZoneCycle(battle);
-        } else {
-          battle.safeZone = null;
-        }
-      }
-    }
-
-    if (battle.safeZone && battle.safeZone.phase === 'active') {
-      this.deflectEnemiesFromSafeZone(battle);
-    }
+    this.safeZoneController.update(battle, dt);
   }
 
-  private tryActivateSafeZone(battle: BattleState): void {
-    if (battle.encounterType !== 'boss' && battle.encounterType !== 'battle') return;
-    if (battle.pressurePhaseIndex < 1) return;
-    const elite = battle.eliteAlive ? this.getEliteEnemy(battle) : null;
-    if (elite) {
-      const hpRatio = elite.hp / Math.max(1, elite.maxHp);
-      const threshold = battle.encounterType === 'boss' ? 0.15 : 0.20;
-      if (hpRatio <= threshold) return;
-    }
-    const phase = this.getActivePressurePhase(battle);
-    if (!phase || !phase.patternMode) return;
-    this.startSafeZoneCycle(battle);
-    if (battle.safeZoneHintSec <= 0) {
-      battle.safeZoneHintSec = 3.0;
-    }
+  /** 由 SafeZoneController 调用：清理 Boss 火线里挡路的小怪。 */
+  clearBossSafeWindowBlockers(battle: BattleState): void {
+    this.safeZoneController.clearBossSafeWindowBlockers(battle);
   }
 
-  private shouldSafeZoneContinue(battle: BattleState): boolean {
-    const elite = battle.eliteAlive ? this.getEliteEnemy(battle) : null;
-    if (!elite) return false;
-    const hpRatio = elite.hp / Math.max(1, elite.maxHp);
-    const threshold = battle.encounterType === 'boss' ? 0.15 : 0.20;
-    if (hpRatio <= threshold) return false;
-    const maxCycles = battle.encounterType === 'boss' ? 12 : 4;
-    if (battle.safeZone && battle.safeZone.cycleCount >= maxCycles) return false;
-    return true;
+  // ============================================================
+  // Host 接口实现 — 供 SafeZoneController / DashMomentMonitor / PressureWindowController 使用
+  // ============================================================
+
+  getPlayerStats(): PlayerStats {
+    return this.state.stats;
   }
 
-  private getSafeZoneTier(battle: BattleState): number {
-    if (!battle.safeZone) return 0;
-    const cycle = battle.safeZone.cycleCount;
-    const isBoss = battle.encounterType === 'boss';
-    const tutorialCycles = isBoss ? 2 : 1;
-    if (cycle < tutorialCycles) return 0;
-    const elite = battle.eliteAlive ? this.getEliteEnemy(battle) : null;
-    if (!elite) return 1;
-    const hpRatio = elite.hp / Math.max(1, elite.maxHp);
-    if (hpRatio > 0.6) return 1;
-    if (hpRatio > 0.4) return 2;
-    if (hpRatio > 0.25) return 3;
-    return 4;
+  /** DashMomentHost / PressureWindowHost：暴露当前 RunState 阶段。 */
+  getRunPhase(): PhaseId {
+    return this.state.phase;
   }
 
-  private startSafeZoneCycle(battle: BattleState): void {
-    const tier = this.getSafeZoneTier(battle);
-    const config = RunEngine.SAFE_ZONE_TIERS[Math.min(tier, 4)];
-    const view = this.getBattleViewportBounds(battle);
-    const prevZone = battle.safeZone;
-    const anchorX = prevZone ? prevZone.centerX : battle.playerX;
-    const anchorY = prevZone ? prevZone.centerY : battle.playerY;
-    const shiftMode = this.chooseSafeZoneShiftMode(battle);
-    const shiftDir = this.chooseSafeZoneShiftDirection(battle, anchorX, anchorY, shiftMode, view);
-    let cx = anchorX + shiftDir.x * config.shift;
-    let cy = anchorY + shiftDir.y * config.shift;
-    cx = clamp(cx, view.left + config.halfW + 20, view.right - config.halfW - 20);
-    cy = clamp(cy, view.top + config.halfH + 20, view.bottom - config.halfH - 20);
-    const adjusted = this.adjustSafeZoneForEnemies(battle, cx, cy, config.halfW, config.halfH, view);
-    cx = adjusted.x;
-    cy = adjusted.y;
-    const coverDamage = Math.max(8, Math.round(this.state.stats.maxHp * 0.12));
-    const isBoss = battle.encounterType === 'boss';
-    const coverMult = isBoss ? config.mult : Math.min(config.mult, 1.4);
-    if (battle.safeZoneTutorialSec <= 0) {
-      const prevCycles = prevZone?.cycleCount ?? 0;
-      if (prevCycles === 0) {
-        battle.safeZoneTutorialText = '移动到蓝色区域躲避覆盖攻击';
-        battle.safeZoneTutorialSec = 2.5;
-      } else if (prevCycles === 1 && isBoss) {
-        battle.safeZoneTutorialText = '安全区会移动，注意跟随';
-        battle.safeZoneTutorialSec = 2.0;
-      }
-    }
-    battle.safeZone = {
-      centerX: cx,
-      centerY: cy,
-      halfWidth: config.halfW,
-      halfHeight: config.halfH,
-      phase: 'warning',
-      timer: config.warning,
-      warningDuration: config.warning,
-      activeDuration: config.active,
-      transitionDuration: config.transition,
-      coverAttackDamage: coverDamage,
-      coverAttackMultiplier: coverMult,
-      shiftMode,
-      prevCenterX: anchorX,
-      prevCenterY: anchorY,
-      cycleCount: prevZone?.cycleCount ?? 0,
-      difficultyTier: tier,
-    };
-    this.pushEnemiesOutOfSafeZone(battle);
+  /** PressureWindowHost：暴露 metrics 服务，用于 Boss 阶段埋点。 */
+  get metrics() {
+    return this.services.metrics;
   }
 
-  private chooseSafeZoneShiftMode(battle: BattleState): 'sweep' | 'edgeBounce' | 'centerReset' {
-    const cycle = battle.safeZone?.cycleCount ?? 0;
-    const modes: Array<'sweep' | 'edgeBounce' | 'centerReset'> = ['sweep', 'edgeBounce', 'centerReset'];
-    return modes[cycle % 3];
+  isInvulnerablePlayerDebug(): boolean {
+    return this.debugConfig.invulnerablePlayer;
   }
 
-  private chooseSafeZoneShiftDirection(
-    _battle: BattleState,
-    anchorX: number,
-    anchorY: number,
-    mode: 'sweep' | 'edgeBounce' | 'centerReset',
-    view: { left: number; right: number; top: number; bottom: number },
-  ): { x: number; y: number } {
-    const cycle = _battle.safeZone?.cycleCount ?? 0;
-    if (mode === 'sweep') {
-      return { x: cycle % 2 === 0 ? 1 : -1, y: 0 };
-    }
-    if (mode === 'edgeBounce') {
-      const sx = cycle % 2 === 0 ? 1 : -1;
-      const sy = cycle % 4 < 2 ? 1 : -1;
-      return { x: sx, y: sy };
-    }
-    const towardCenterX = (view.left + view.right) * 0.5 - anchorX;
-    const towardCenterY = (view.top + view.bottom) * 0.5 - anchorY;
-    const mag = Math.hypot(towardCenterX, towardCenterY) || 1;
-    if (cycle % 2 === 0) {
-      return { x: -towardCenterX / mag, y: -towardCenterY / mag };
-    }
-    return { x: towardCenterX / mag, y: towardCenterY / mag };
+  applyCoverAttackDamage(damage: number): void {
+    this.state.stats.hp = clamp(this.state.stats.hp - damage, 0, this.state.stats.maxHp);
   }
 
-  private adjustSafeZoneForEnemies(
+  applyCoverAttackFeedback(
     battle: BattleState,
-    cx: number,
-    cy: number,
-    halfW: number,
-    halfH: number,
-    view: { left: number; right: number; top: number; bottom: number },
-  ): { x: number; y: number } {
-    const offsets = [
-      { dx: 0, dy: 0 },
-      { dx: 30, dy: 0 }, { dx: -30, dy: 0 },
-      { dx: 0, dy: 30 }, { dx: 0, dy: -30 },
-      { dx: 25, dy: 25 }, { dx: -25, dy: -25 },
-      { dx: 25, dy: -25 }, { dx: -25, dy: 25 },
-    ];
-    let best = { x: cx, y: cy };
-    let bestScore = -Infinity;
-    for (const off of offsets) {
-      const tx = clamp(cx + off.dx, view.left + halfW + 20, view.right - halfW - 20);
-      const ty = clamp(cy + off.dy, view.top + halfH + 20, view.bottom - halfH - 20);
-      let score = 100;
-      for (const enemy of battle.enemies) {
-        if (enemy.hp <= 0 || enemy.elite) continue;
-        const ex = Math.abs(enemy.x - tx);
-        const ey = Math.abs(enemy.y - ty);
-        if (ex < halfW + enemy.radius && ey < halfH + enemy.radius) {
-          score -= 35;
-        } else if (ex < halfW + enemy.radius + 30 && ey < halfH + enemy.radius + 30) {
-          score -= 12;
-        }
-      }
-      if (score > bestScore) {
-        bestScore = score;
-        best = { x: tx, y: ty };
-      }
-    }
-    return best;
-  }
-
-  private pushEnemiesOutOfSafeZone(battle: BattleState): void {
-    const sz = battle.safeZone;
-    if (!sz) return;
-    for (const enemy of battle.enemies) {
-      if (enemy.hp <= 0 || enemy.elite) continue;
-      const dx = enemy.x - sz.centerX;
-      const dy = enemy.y - sz.centerY;
-      if (Math.abs(dx) < sz.halfWidth + enemy.radius && Math.abs(dy) < sz.halfHeight + enemy.radius) {
-        const pushLeft = sz.centerX - sz.halfWidth - enemy.radius - 40;
-        const pushRight = sz.centerX + sz.halfWidth + enemy.radius + 40;
-        const pushTop = sz.centerY - sz.halfHeight - enemy.radius - 40;
-        const pushBottom = sz.centerY + sz.halfHeight + enemy.radius + 40;
-        const distLeft = Math.abs(enemy.x - pushLeft);
-        const distRight = Math.abs(enemy.x - pushRight);
-        const distTop = Math.abs(enemy.y - pushTop);
-        const distBottom = Math.abs(enemy.y - pushBottom);
-        const minDist = Math.min(distLeft, distRight, distTop, distBottom);
-        if (minDist === distLeft) {
-          enemy.x = clamp(pushLeft, 24, ARENA_WIDTH - 24);
-        } else if (minDist === distRight) {
-          enemy.x = clamp(pushRight, 24, ARENA_WIDTH - 24);
-        } else if (minDist === distTop) {
-          enemy.y = clamp(pushTop, 24, ARENA_HEIGHT - 24);
-        } else {
-          enemy.y = clamp(pushBottom, 24, ARENA_HEIGHT - 24);
-        }
-        enemy.recoverySec = Math.max(enemy.recoverySec, 0.5);
-      }
-    }
-  }
-
-  private deflectEnemiesFromSafeZone(battle: BattleState): void {
-    const sz = battle.safeZone;
-    if (!sz) return;
-    for (const enemy of battle.enemies) {
-      if (enemy.hp <= 0 || enemy.elite) continue;
-      const dx = enemy.x - sz.centerX;
-      const dy = enemy.y - sz.centerY;
-      if (Math.abs(dx) < sz.halfWidth + enemy.radius + 10 && Math.abs(dy) < sz.halfHeight + enemy.radius + 10) {
-        if (Math.abs(dx) < sz.halfWidth && Math.abs(dy) < sz.halfHeight) {
-          const pushLeft = sz.centerX - sz.halfWidth - enemy.radius - 5;
-          const pushRight = sz.centerX + sz.halfWidth + enemy.radius + 5;
-          const pushTop = sz.centerY - sz.halfHeight - enemy.radius - 5;
-          const pushBottom = sz.centerY + sz.halfHeight + enemy.radius + 5;
-          const distLeft = Math.abs(enemy.x - pushLeft);
-          const distRight = Math.abs(enemy.x - pushRight);
-          const distTop = Math.abs(enemy.y - pushTop);
-          const distBottom = Math.abs(enemy.y - pushBottom);
-          const minDist = Math.min(distLeft, distRight, distTop, distBottom);
-          if (minDist === distLeft) enemy.x = pushLeft;
-          else if (minDist === distRight) enemy.x = pushRight;
-          else if (minDist === distTop) enemy.y = pushTop;
-          else enemy.y = pushBottom;
-        }
-      }
-    }
-  }
-
-  private executeCoverAttack(battle: BattleState): void {
-    const sz = battle.safeZone;
-    if (!sz) return;
-    const playerInZone =
-      Math.abs(battle.playerX - sz.centerX) < sz.halfWidth &&
-      Math.abs(battle.playerY - sz.centerY) < sz.halfHeight;
-    if (!playerInZone && battle.invulnerableSec <= 0 && !this.debugConfig.invulnerablePlayer) {
-      const damage = sz.coverAttackDamage * sz.coverAttackMultiplier;
-      this.state.stats.hp = clamp(this.state.stats.hp - damage, 0, this.state.stats.maxHp);
-      battle.invulnerableSec = Math.max(battle.invulnerableSec, 0.35);
-      battle.playerDamageFlashSec = 0.2;
-      battle.playerDamageAngle = Math.atan2(battle.playerY - sz.centerY, battle.playerX - sz.centerX);
-      this.createCombatPulse(battle, {
-        x: battle.playerX,
-        y: battle.playerY,
-        radius: 40,
-        lifeSec: 0.3,
-        color: 0xff4444,
-        secondaryColor: 0xff8888,
-        fillAlpha: 0.2,
-        strokeAlpha: 0.8,
-        strokeWidth: 3,
-        growthPerSec: 200,
-        innerRadiusRatio: 0.4,
-      });
-    }
-  }
-
-  private clearBossSafeWindowBlockers(battle: BattleState): void {
-    if (battle.encounterType !== 'boss' || !battle.pressureSafeWindowAxis) {
-      return;
-    }
-
-    for (const enemy of battle.enemies) {
-      if (enemy.elite) {
-        continue;
-      }
-
-      const blocksWindow = this.isPointInsidePressureSafeWindow(battle, enemy.x, enemy.y, enemy.radius + 44);
-      const blocksPlayer = Math.hypot(enemy.x - battle.playerX, enemy.y - battle.playerY) <= enemy.radius + 72;
-      if (!blocksWindow && !blocksPlayer) {
-        continue;
-      }
-
-      const angle = Math.atan2(enemy.y - battle.playerY, enemy.x - battle.playerX);
-      const pushDistance = 132 + enemy.radius * 1.8;
-      enemy.x = clamp(enemy.x + Math.cos(angle) * pushDistance, 24, ARENA_WIDTH - 24);
-      enemy.y = clamp(enemy.y + Math.sin(angle) * pushDistance, 24, ARENA_HEIGHT - 24);
-      enemy.recoverySec = Math.max(enemy.recoverySec, 0.42);
-      enemy.rangedCooldownSec = Math.max(enemy.rangedCooldownSec, 0.52);
-    }
-  }
-
-  private getPressureProjectileStats(
-    battle: BattleState,
-    damageMultiplier: number,
-  ): { projectileSpeed: number; projectileDamage: number } {
-    const currentPhase = this.getActivePressurePhase(battle);
-    return {
-      projectileSpeed: 252 * (currentPhase?.rangedProjectileSpeedMultiplier ?? 1),
-      projectileDamage: Math.max(
-        6,
-        Math.round(
-          this.getContactDamage(
-            this.getBattleTemplate(battle.templateId),
-            this.getCurrentBattleIndex(),
-            this.state.phase,
-            battle.difficultyScale,
-            damageMultiplier,
-          ),
-        ),
-      ),
-    };
-  }
-
-  private spawnPressureWallShots(
-    battle: BattleState,
-    phase: BattlePressurePhaseDefinition,
-    axis: PressureSafeWindowAxis,
+    flashSec: number,
+    invulnSec: number,
+    angle: number,
+    pulseConfig: Parameters<RunEngine['createCombatPulse']>[1],
   ): void {
-    if (battle.pressureSafeWindowSpan <= 0) {
-      return;
-    }
-
-    const view = this.getBattleViewportBounds(battle);
-    const dimension = axis === 'vertical' ? view.width : view.height;
-    const offset = axis === 'vertical' ? view.left : view.top;
-    const margin = axis === 'vertical' ? 72 : 58;
-    const shotSlots = Math.max(4, phase.patternWallShotCount ?? (axis === 'vertical' ? 7 : 6));
-    const safeStart = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5 - offset;
-    const safeEnd = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5 - offset;
-    const slotPositions = this.collectPressureSlotPositions(dimension, margin, shotSlots, safeStart, safeEnd).map(
-      (position) => position + offset,
-    );
-    const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, 0.7);
-
-    for (const position of slotPositions) {
-      if (axis === 'vertical') {
-        this.spawnEnemyProjectile(battle, position, view.top - 22, projectileSpeed, projectileDamage, 6, Math.PI / 2, {
-          respectsSafeWindow: true,
-        });
-        this.spawnEnemyProjectile(
-          battle,
-          position,
-          view.bottom + 22,
-          projectileSpeed,
-          projectileDamage,
-          6,
-          -Math.PI / 2,
-          {
-            respectsSafeWindow: true,
-          },
-        );
-        continue;
-      }
-
-      this.spawnEnemyProjectile(battle, view.left - 22, position, projectileSpeed, projectileDamage, 6, 0, {
-        respectsSafeWindow: true,
-      });
-      this.spawnEnemyProjectile(battle, view.right + 22, position, projectileSpeed, projectileDamage, 6, Math.PI, {
-        respectsSafeWindow: true,
-      });
-    }
+    battle.invulnerableSec = Math.max(battle.invulnerableSec, invulnSec);
+    battle.playerDamageFlashSec = flashSec;
+    battle.playerDamageAngle = angle;
+    this.createCombatPulse(battle, pulseConfig);
   }
 
-  private spawnPressurePocketShots(battle: BattleState, phase: BattlePressurePhaseDefinition): void {
-    if (battle.pressureSafeWindowAxis !== 'pocket' || battle.pressureSafeWindowSpan <= 0) {
-      return;
-    }
-
-    const view = this.getBattleViewportBounds(battle);
-    const shiftType = battle.pressureSafeWindowShiftType ?? 'sweep';
-    const safeStartX = battle.pressureSafeWindowCenter - battle.pressureSafeWindowSpan * 0.5;
-    const safeEndX = battle.pressureSafeWindowCenter + battle.pressureSafeWindowSpan * 0.5;
-    const safeStartY = battle.pressureSafeWindowSecondaryCenter - battle.pressureSafeWindowSecondarySpan * 0.5;
-    const safeEndY = battle.pressureSafeWindowSecondaryCenter + battle.pressureSafeWindowSecondarySpan * 0.5;
-    const horizontalSlotCount = Math.max(4, (phase.patternWallShotCount ?? 5) + (shiftType === 'edgeBounce' ? 1 : 0));
-    const verticalSlotCount = Math.max(
-      4,
-      (phase.patternWallShotCount ?? 5) - 1 + (shiftType === 'centerReset' ? -1 : 0),
-    );
-    const xMargin = shiftType === 'edgeBounce' ? 72 : 84;
-    const yMargin = shiftType === 'centerReset' ? 76 : 68;
-    const xSlots = this.collectPressureSlotPositions(
-      view.width,
-      xMargin,
-      horizontalSlotCount,
-      safeStartX - view.left,
-      safeEndX - view.left,
-    ).map((position) => position + view.left);
-    const ySlots = this.collectPressureSlotPositions(
-      view.height,
-      yMargin,
-      verticalSlotCount,
-      safeStartY - view.top,
-      safeEndY - view.top,
-    ).map((position) => position + view.top);
-    const damageMultiplier = shiftType === 'centerReset' ? 0.64 : shiftType === 'edgeBounce' ? 0.7 : 0.68;
-    const { projectileSpeed, projectileDamage } = this.getPressureProjectileStats(battle, damageMultiplier);
-
-    for (const x of xSlots) {
-      this.spawnEnemyProjectile(battle, x, view.top - 24, projectileSpeed, projectileDamage, 6, Math.PI / 2, {
-        respectsSafeWindow: true,
-      });
-      this.spawnEnemyProjectile(
-        battle,
-        x,
-        view.bottom + 24,
-        projectileSpeed,
-        projectileDamage,
-        6,
-        -Math.PI / 2,
-        {
-          respectsSafeWindow: true,
-        },
-      );
-    }
-
-    for (const y of ySlots) {
-      this.spawnEnemyProjectile(battle, view.left - 24, y, projectileSpeed, projectileDamage, 6, 0, {
-        respectsSafeWindow: true,
-      });
-      this.spawnEnemyProjectile(battle, view.right + 24, y, projectileSpeed, projectileDamage, 6, Math.PI, {
-        respectsSafeWindow: true,
-      });
-    }
-  }
 
   private finishBattleOnPlayerDefeat(battle: BattleState): boolean {
     if (this.state.stats.hp > 0 || this.state.status === 'result' || this.state.battle !== battle) {
@@ -2230,113 +1314,34 @@ export class RunEngine {
     };
   }
 
+  // NOTE: Dash 时刻监控（isLateDashMonitoringPhase / markLateDashWindowMoment /
+  //       markDashCounterMoment / markEliteCrackFollowThroughMoment / markKillPickupContinueMoment）
+  //       已迁移到 DashMomentMonitor。RunEngine 通过 DashMomentHost 接口向其暴露 getRunPhase。
+
   private isLateDashMonitoringPhase(): boolean {
-    return this.state.phase === 'late' || this.state.phase === 'finalPrep' || this.state.phase === 'finalBattle';
+    return this.dashMomentMonitor.isLateDashMonitoringPhase();
   }
 
   private markLateDashWindowMoment(battle: BattleState, strength: number): void {
-    if (!this.isLateDashMonitoringPhase() || strength < 0.28 || battle.monitorDashLateMomentCooldownSec > 0) {
-      return;
-    }
-
-    battle.lateDashWindowMoments += 1;
-    battle.monitorDashLateMomentCooldownSec = 0.34;
+    this.dashMomentMonitor.markLateDashWindowMoment(battle, strength);
   }
 
   private markDashCounterMoment(battle: BattleState, strength: number): void {
-    if (strength < 0.24 || battle.monitorDashCounterCooldownSec > 0) {
-      return;
-    }
-
-    battle.dashCounterMoments += 1;
-    battle.monitorDashCounterCooldownSec = 0.42;
+    this.dashMomentMonitor.markDashCounterMoment(battle, strength);
   }
 
   private markEliteCrackFollowThroughMoment(battle: BattleState, strength: number): void {
-    if (strength < 0.18 || battle.monitorEliteCrackFollowThroughCooldownSec > 0) {
-      return;
-    }
-
-    battle.eliteCrackFollowThroughMoments += 1;
-    battle.monitorEliteCrackFollowThroughCooldownSec = 0.28;
+    this.dashMomentMonitor.markEliteCrackFollowThroughMoment(battle, strength);
   }
 
   private markKillPickupContinueMoment(battle: BattleState, strength: number): void {
-    if (strength < 0.22 || battle.monitorKillPickupContinueCooldownSec > 0) {
-      return;
-    }
-
-    battle.killPickupContinueMoments += 1;
-    battle.monitorKillPickupContinueCooldownSec = 0.46;
+    this.dashMomentMonitor.markKillPickupContinueMoment(battle, strength);
   }
 
+  // NOTE: 压力阶段推进（updatePressurePhase + activatePressureSignature + activatePressurePattern +
+  //       recordBossPhaseMetrics）已迁移到 PressureWindowController。本方法仅作为主循环入口的委托。
   private updatePressurePhase(battle: BattleState): void {
-    const template = this.getBattleTemplate(battle.templateId);
-    const phases = template.eliteRule?.pressurePhases;
-    if (!battle.eliteAlive || !phases || phases.length === 0) {
-      return;
-    }
-
-    const eliteEnemy = battle.enemies.find((enemy) => enemy.elite);
-    if (!eliteEnemy) {
-      return;
-    }
-
-    const currentPhase = this.getActivePressurePhase(battle);
-    if (currentPhase && battle.pressurePhaseElapsedSec < (currentPhase.minResidenceSec ?? 0)) {
-      return;
-    }
-
-    const nextIndex = battle.pressurePhaseIndex + 1;
-    if (nextIndex < 0 || nextIndex >= phases.length) {
-      return;
-    }
-
-    const nextPhase = phases[nextIndex];
-    const hpTriggered =
-      nextPhase.triggerHpRatio !== undefined && eliteEnemy.hp / Math.max(1, eliteEnemy.maxHp) <= nextPhase.triggerHpRatio;
-    const timeTriggered =
-      nextPhase.triggerRemainingSec !== undefined && battle.remainingSec <= nextPhase.triggerRemainingSec;
-    if (!hpTriggered && !timeTriggered) {
-      return;
-    }
-
-    if (battle.encounterType === 'boss' && currentPhase) {
-      this.recordBossPhaseMetrics(battle, currentPhase, battle.pressurePhaseElapsedSec);
-    }
-
-    battle.pressurePhaseIndex = nextIndex;
-    battle.pressurePhaseLabel = nextPhase.label;
-    battle.pressurePhaseElapsedSec = 0;
-    battle.pressureTransitionSec = Math.max(battle.pressureTransitionSec, 1.15);
-
-    if ((nextPhase.entryGuardSec ?? 0) > 0) {
-      eliteEnemy.guardSec = Math.max(eliteEnemy.guardSec, nextPhase.entryGuardSec ?? 0);
-      eliteEnemy.guardDamageMultiplier = Math.min(
-        eliteEnemy.guardDamageMultiplier,
-        nextPhase.entryGuardDamageMultiplier ?? eliteEnemy.guardDamageMultiplier,
-      );
-    }
-
-    if ((template.eliteRule?.escortBatch ?? 0) > 0) {
-      battle.eliteSupportCooldownSec = Math.min(
-        battle.eliteSupportCooldownSec,
-        Math.max(0.75, this.getEliteEscortRespawnSec(template, battle) * 0.55),
-      );
-    }
-
-    this.spawnPhaseEscortBurst(battle, nextPhase.entryEscortBurst ?? 0);
-    this.activatePressureSignature(battle, nextPhase);
-    this.activatePressurePattern(battle, nextPhase);
-    if (battle.encounterType === 'boss') {
-      this.services.metrics.recordBossPhaseEntered(battle.templateId, nextPhase.id, nextPhase.label);
-    }
-    this.enqueueTip(
-      `${battle.encounterType === 'boss' ? 'Boss 开招' : '精英进场'}：${
-        nextPhase.signatureLabel ?? nextPhase.patternLabel ?? nextPhase.label
-      }`,
-    );
-    this.enqueueAudio(battle.encounterType === 'boss' ? 'boss' : 'pressure');
+    this.pressureWindowController.updatePressurePhase(battle);
   }
 
   private completeBattle(): void {
@@ -2347,21 +1352,21 @@ export class RunEngine {
 
     this.state.battleWins += 1;
     this.finalizeBossPressureMetrics(battle);
+    const template = this.getBattleTemplate(battle.templateId);
     this.services.metrics.recordBattleCompleted(
       battle.templateId,
       'win',
-      this.getBattleTemplate(battle.templateId).contentTier,
+      template.contentTier,
       this.getBattleMonitoringSummary(battle),
     );
     const completionExp = getBattleCompletionExperience(
-      this.getBattleTemplate(battle.templateId),
+      template,
       this.getCurrentBattleIndex(),
       this.state.phase,
     );
-    const template = this.getBattleTemplate(battle.templateId);
     const earnedTimedReward =
       battle.encounterType !== 'boss' && template.winCondition.type !== 'survive' && battle.remainingSec > 0;
-    this.enqueueTip(`${battle.label || this.getBattleTemplate(battle.templateId).name}完成`);
+    this.enqueueTip(`${battle.label || template.name}完成`);
     if (earnedTimedReward) {
       this.state.queuedLevelUps += 1;
       this.state.queuedRewardUpgrades += 1;
@@ -2387,7 +1392,7 @@ export class RunEngine {
 
     this.state.status = 'battleRewardTransition';
     this.state.battleRewardTransition = {
-      label: `${battle.label || this.getBattleTemplate(battle.templateId).name}完成`,
+      label: `${battle.label || template.name}完成`,
       elapsedSec: 0,
       durationSec: 0.62,
     };
@@ -4237,7 +3242,8 @@ return activeRouteId === 'pierce'
     return Math.max(0, baseMax + (this.getActivePressurePhase(battle)?.escortMaxBonus ?? 0));
   }
 
-  private getEliteEscortRespawnSec(
+  /** PressureWindowHost：精英护卫刷新间隔（受当前压力阶段 escortRespawnMultiplier 影响）。 */
+  getEliteEscortRespawnSec(
     template: BattleTemplateDefinition,
     battle: BattleState,
   ): number {
@@ -4246,7 +3252,8 @@ return activeRouteId === 'pierce'
     return Math.max(0.75, baseRespawn * multiplier);
   }
 
-  private spawnPhaseEscortBurst(battle: BattleState, requestedCount: number): void {
+  /** PressureWindowHost：阶段进场时刷新护卫爆发。 */
+  spawnPhaseEscortBurst(battle: BattleState, requestedCount: number): void {
     if (requestedCount <= 0 || !battle.eliteAlive) {
       return;
     }
@@ -4266,7 +3273,8 @@ return activeRouteId === 'pierce'
     this.spawnEliteSupportEnemies(battle, allowedCount);
   }
 
-  private spawnPatternEscortWave(
+  /** PressureWindowHost：压力脉冲期间刷新护卫波次。 */
+  spawnPatternEscortWave(
     battle: BattleState,
     requestedCount: number,
     mode: PressurePatternModeId,
@@ -4354,7 +3362,8 @@ return activeRouteId === 'pierce'
     };
   }
 
-  private getContactDamage(
+  /** PressureWindowHost：敌人接触伤害（受压力阶段缩放）。 */
+  getContactDamage(
     template: BattleTemplateDefinition,
     round: number,
     phase: RunState['phase'],
@@ -5453,46 +4462,9 @@ return activeRouteId === 'pierce'
         const critical = Math.random() < this.getEffectiveCritChance(battle);
         let damage = critical ? bullet.damage * this.state.stats.critMultiplier : bullet.damage;
 
-        // Crit路线独特被动：破绽累积 + 终结打击 + 爆发连锁
+        // Crit路线独特被动：破绽累积 + 终结打击 + 爆发连锁（委托给 RouteManager → CritRoutePassive）
         const critStage = this.getRouteBuildStage('crit');
-        if (critStage === 'committed' || critStage === 'matured') {
-        if (!critical) {
-          // 非暴击命中：累积破绽层数（最多5层）
-          battle.critComboStacks = Math.min(5, battle.critComboStacks + 1);
-          battle.critComboDecaySec = 2.0; // 2秒内无命中则重置
-          if (battle.critComboStacks >= 5) {
-            battle.critFinisherReady = true;
-          }
-          if (battle.critComboStacks >= 3) {
-            const holdBoost = critStage === 'matured' ? 0.22 : 0.1;
-            battle.critFocusLockSec = Math.max(
-              battle.critFocusLockSec,
-              0.86 + battle.critComboStacks * 0.12 + holdBoost,
-            );
-          }
-        } else {
-          // 暴击命中
-          if (battle.critFinisherReady) {
-            // 终结打击：5层时暴击伤害+150%
-            damage *= 2.5; // 原伤害 * 2.5 = +150%
-              battle.critFinisherReady = false;
-              battle.critComboStacks = 0;
-              battle.critComboDecaySec = 0;
-              battle.critBurstChainCount = 0; // 重置爆发连锁计数
-              battle.critBurstChainSec = 2.0; // 开启2秒爆发连锁窗口
-            } else if (battle.critBurstChainSec > 0 && battle.critBurstChainCount < 3) {
-              // 爆发连锁：终结打击后2秒内每次暴击额外+30%伤害（最多3次）
-              damage *= 1.3;
-              battle.critBurstChainCount += 1;
-            }
-            battle.critFocusLockSec = Math.max(
-              battle.critFocusLockSec,
-              battle.critBurstBonusSec > 0 || battle.critBurstChainSec > 0 ? 1.14 : 0.92,
-            );
-            // 暴击也重置衰减计时器
-            battle.critComboDecaySec = 2.0;
-          }
-        }
+        damage = this.routeManager.applyCritPassiveOnHit(battle, enemy, critical, damage, critStage);
         if (bullet.routeFocus === 'pierce' || bullet.hitCount > 0) {
           damage *= Math.max(0.38, 1 - bullet.hitCount * 0.24);
         }
@@ -5551,24 +4523,87 @@ return activeRouteId === 'pierce'
         enemy.lastHitWasCrit = critical;
         enemy.lastHitWasPierce = bullet.hitCount > 1 || bullet.routeFocus === 'pierce';
 
-        // Pierce路线独特被动
+        // Pierce路线独特被动：连锁累积 + committed 裂纹引爆 + 满层连锁爆发（委托给 RouteManager → PierceRoutePassive）
         const pierceStage = this.getRouteBuildStage('pierce');
         if (pierceStage === 'committed' || pierceStage === 'matured') {
           if (bullet.hitCount > 1) {
-            // 穿透印记：穿透命中标记敌人
-            battle.pierceFractureMark.add(enemy.id);
+            const pierceResult = this.routeManager.applyPiercePassiveOnHit(
+              battle,
+              enemy,
+              bullet.hitCount,
+              damage,
+              pierceStage,
+            );
+            damage = pierceResult.damage;
 
-            // 连锁累积：穿透命中累积层数
-            battle.pierceChainStacks = Math.min(3, battle.pierceChainStacks + 1);
-            battle.pierceChainDecaySec = 2.0;
+            // committed 阶段裂纹引爆：AOE 伤害 + 视觉脉冲
+            if (pierceResult.detonate) {
+              const detonate = pierceResult.detonate;
+              const aoeBaseDamage = damage * detonate.ratio;
+              let aoeHitCount = 0;
+              battle.enemies.forEach((target) => {
+                if (target.id === enemy.id || target.hp <= 0) return;
+                const distance = Math.hypot(target.x - detonate.x, target.y - detonate.y);
+                if (distance <= detonate.radius) {
+                  // 距离衰减：边缘 50%
+                  const falloff = 1 - (distance / detonate.radius) * 0.5;
+                  target.hp -= aoeBaseDamage * falloff;
+                  target.hitFlashSec = Math.max(target.hitFlashSec, 0.16);
+                  target.pierceMarkStacks = (target.pierceMarkStacks ?? 0) + 1;
+                  battle.pierceFractureMark.add(target.id);
+                  aoeHitCount += 1;
+                }
+              });
 
-            // 连锁爆发：3层时额外伤害
-            if (battle.pierceChainStacks >= 3) {
-              damage *= 1.4;
-              enemy.hp -= damage * 0.4; // 额外40%伤害
-              battle.pierceChainStacks = 0;
-              battle.pierceChainDecaySec = 0;
-              // 创建连锁爆发视觉效果
+              // 引爆视觉：双层脉冲（内层高亮 + 外层扩散环）
+              this.createCombatPulse(battle, {
+                x: detonate.x,
+                y: detonate.y,
+                radius: detonate.radius * 0.45,
+                lifeSec: 0.32,
+                color: 0x68d4ff,
+                secondaryColor: 0xffffff,
+                fillAlpha: 0.55,
+                strokeAlpha: 0.85,
+                strokeWidth: 2.5,
+                growthPerSec: detonate.radius * 1.4,
+                innerRadiusRatio: 0.55,
+              });
+              this.createCombatPulse(battle, {
+                x: detonate.x,
+                y: detonate.y,
+                radius: detonate.radius * 0.7,
+                lifeSec: 0.42,
+                color: 0xa8d8ff,
+                secondaryColor: 0x68d4ff,
+                fillAlpha: 0.18,
+                strokeAlpha: 0.6,
+                strokeWidth: 1.5,
+                growthPerSec: detonate.radius * 1.8,
+                innerRadiusRatio: 0.7,
+                spokeCount: 8,
+                spokeLength: 14,
+                angle: 0,
+                spinRate: 18,
+              });
+
+              // 引爆伤害飘字（落在引爆源上）
+              if (aoeHitCount > 0) {
+                battle.damageNumbers.push({
+                  x: detonate.x + (Math.random() - 0.5) * 10,
+                  y: detonate.y - enemy.radius - 6,
+                  value: Math.round(aoeBaseDamage * aoeHitCount),
+                  lifeSec: 0.7,
+                  maxLifeSec: 0.7,
+                  kind: 'pierce',
+                  velocityX: (Math.random() - 0.5) * 24,
+                  velocityY: -50 - Math.random() * 18,
+                });
+              }
+            }
+
+            // 满层连锁爆发视觉（PierceRoutePassive 内部已扣血并清层）
+            if (pierceResult.chainBurst) {
               this.createCombatPulse(battle, {
                 x: enemy.x,
                 y: enemy.y,
@@ -6149,6 +5184,10 @@ return activeRouteId === 'pierce'
       enemy.spawnFlashSec = Math.max(0, enemy.spawnFlashSec - dt);
       enemy.pressurePulseSec = Math.max(0, enemy.pressurePulseSec - dt);
       enemy.tacticCooldownSec = Math.max(0, enemy.tacticCooldownSec - dt);
+      // Dash 冲击波减速效果衰减
+      if (enemy.slowSec && enemy.slowSec > 0) {
+        enemy.slowSec = Math.max(0, enemy.slowSec - dt);
+      }
       // 流派构筑第二轮：敌人状态标记递减
       enemy.critMarkSec = Math.max(0, enemy.critMarkSec - dt);
       enemy.pierceMarkSec = Math.max(0, enemy.pierceMarkSec - dt);
@@ -6505,8 +5544,8 @@ return activeRouteId === 'pierce'
       ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.12 : 0.06) -
       recoveryRatio * 0.48;
 
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -36, ARENA_WIDTH + 36);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -36, ARENA_HEIGHT + 36);
   }
 
   private updateBruteEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
@@ -6681,8 +5720,8 @@ return activeRouteId === 'pierce'
       recoveryRatio * 0.56 +
       openingRatio * 0.14 +
       ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.12 : 0.06);
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_WIDTH + 44);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -44, ARENA_HEIGHT + 44);
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -44, ARENA_WIDTH + 44);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -44, ARENA_HEIGHT + 44);
   }
 
   private updateSkirmisherEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
@@ -6834,8 +5873,8 @@ return activeRouteId === 'pierce'
       ordinarySurgeRatio * (pickupLeadRatio > 0.08 ? 0.14 : 0.08) -
       recoveryRatio * 0.5;
 
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_WIDTH + 36);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -36, ARENA_HEIGHT + 36);
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -36, ARENA_WIDTH + 36);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -36, ARENA_HEIGHT + 36);
   }
 
   private updateRangedEnemy(enemy: BattleState['enemies'][number], battle: BattleState, dt: number): void {
@@ -7009,8 +6048,8 @@ return activeRouteId === 'pierce'
       openingRatio * (screenedByAnchor ? 0.1 : 0.06) +
       ordinarySurgeRatio * (screenedByAnchor ? 0.08 : 0.04) -
       recoveryRatio * 0.58;
-    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_WIDTH + 42);
-    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * dt, -42, ARENA_HEIGHT + 42);
+    enemy.x = clamp(enemy.x + (moveX / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -42, ARENA_WIDTH + 42);
+    enemy.y = clamp(enemy.y + (moveY / magnitude) * enemy.speed * speedMultiplier * this.getEnemySlowFactor(enemy) * dt, -42, ARENA_HEIGHT + 42);
 
     enemy.rangedCooldownSec = Math.max(0, enemy.rangedCooldownSec - dt);
     if (enemy.rangedCooldownSec > 0 || distance > preferredDistance * 1.45) {
@@ -7068,7 +6107,8 @@ return activeRouteId === 'pierce'
     return Math.max(0.65, (archetype.shotIntervalSec ?? 2.35) * multiplier);
   }
 
-  private spawnEnemyProjectile(
+  /** PressureWindowHost：生成敌人投射物（带可选安全窗口忽略标记）。 */
+  spawnEnemyProjectile(
     battle: BattleState,
     x: number,
     y: number,
@@ -7107,7 +6147,8 @@ return activeRouteId === 'pierce'
     });
   }
 
-  private firePressureVolley(
+  /** PressureWindowHost：从护卫/远程敌人发射齐射。 */
+  firePressureVolley(
     battle: BattleState,
     requestedShooterCount: number,
     options?: {
@@ -7302,7 +6343,8 @@ return activeRouteId === 'pierce'
     const movementSpeed =
       enemy.speed *
       (pressurePhase?.eliteSpeedMultiplier ?? 1) *
-      (1 + transitionMobilityRatio * (battle.encounterType === 'boss' ? 0.12 : 0.06));
+      (1 + transitionMobilityRatio * (battle.encounterType === 'boss' ? 0.12 : 0.06)) *
+      this.getEnemySlowFactor(enemy);
     const dx = battle.playerX - enemy.x;
     const dy = battle.playerY - enemy.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -7727,7 +6769,8 @@ return activeRouteId === 'pierce'
     }
   }
 
-  private enqueueTip(text: string): void {
+  /** PressureWindowHost / 内部共用：入队提示文本。 */
+  enqueueTip(text: string): void {
     if (!text) {
       return;
     }
@@ -7737,7 +6780,8 @@ return activeRouteId === 'pierce'
     });
   }
 
-  private enqueueAudio(cue: EngineAnnouncement['cue']): void {
+  /** PressureWindowHost / 内部共用：入队音频提示。 */
+  enqueueAudio(cue: EngineAnnouncement['cue']): void {
     this.announcements.push({
       kind: 'audio',
       cue,
@@ -9279,7 +8323,7 @@ return activeRouteId === 'pierce'
     return battle.enemies.filter((enemy) => !enemy.elite && enemy.role === 'escort' && enemy.hp > 0).length;
   }
 
-  private getEliteEnemy(battle: BattleState): BattleState['enemies'][number] | null {
+  getEliteEnemy(battle: BattleState): BattleState['enemies'][number] | null {
     return battle.enemies.find((enemy) => enemy.elite && enemy.hp > 0) ?? null;
   }
 
@@ -9793,7 +8837,7 @@ return activeRouteId === 'pierce'
     const moveMagnitude = Math.max(0.01, Math.hypot(moveX, moveY));
     const normalizedMoveX = moveX / moveMagnitude;
     const normalizedMoveY = moveY / moveMagnitude;
-    const moveSpeed = enemy.speed * dt;
+    const moveSpeed = enemy.speed * this.getEnemySlowFactor(enemy) * dt;
     enemy.x += normalizedMoveX * moveSpeed;
     enemy.y += normalizedMoveY * moveSpeed;
   }
@@ -10236,6 +9280,11 @@ return activeRouteId === 'pierce'
     speedMultiplier = 1,
   ): number {
     return getEnemyMoveSpeed(template, round, phase, difficultyScale, speedMultiplier);
+  }
+
+  /** Dash 冲击波减速因子：slowSec > 0 时移动速度减半。 */
+  private getEnemySlowFactor(enemy: BattleState['enemies'][number]): number {
+    return enemy.slowSec && enemy.slowSec > 0 ? 0.5 : 1;
   }
 
   private getEnemySpawnInterval(
