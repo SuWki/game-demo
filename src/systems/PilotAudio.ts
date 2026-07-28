@@ -379,6 +379,27 @@ export class PilotAudio {
     intensity: 0,
   };
 
+  /** 销毁音频图与定时器，避免页面卸载或 HMR 后定时器泄漏。 */
+  public dispose(): void {
+    if (this.schedulerHandle !== null) {
+      window.clearInterval(this.schedulerHandle);
+      this.schedulerHandle = null;
+    }
+    if (this.meterHandle !== null) {
+      window.clearInterval(this.meterHandle);
+      this.meterHandle = null;
+    }
+    if (this.context) {
+      this.context.close().catch(() => undefined);
+      this.context = null;
+      this.masterGain = null;
+      this.musicGain = null;
+      this.sfxGain = null;
+      this.analyser = null;
+      this.analyserData = null;
+    }
+  }
+
   public unlock(): void {
     this.ensureAudioGraph();
     if (!this.context) {

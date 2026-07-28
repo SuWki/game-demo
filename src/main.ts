@@ -47,9 +47,8 @@ const debugPanel = new BattleDebugPanel(uiRoot);
 const metrics = new MetricsTracker(window.localStorage);
 metrics.attachToWindow(window);
 
-// 初始化配置加载器并预加载
+// 配置数据通过静态 import 引入，无需异步加载
 const configLoader = new ConfigLoader();
-await configLoader.preloadCore();
 
 const services: Services = {
   overlay,
@@ -189,7 +188,7 @@ window.__pilotQaSmoke = (config) => {
     config?.resultMode == null ||
     ['victory', 'defeat'].includes(config.resultMode);
   if (!validRoute || !validStage || !validRole || !validBattleLevel || !validResultMode) {
-    console.warn('[QA] Invalid smoke scenario config', config);
+    if (import.meta.env.DEV) console.warn('[QA] Invalid smoke scenario config', config);
     return false;
   }
 
@@ -223,8 +222,7 @@ window.__pilotQaSmoke = (config) => {
 window.__pilotQaForceBoss = (templateId) => {
   const validBossTemplates = ['boss-bastion', 'boss-hunt', 'boss-lockdown'];
   if (!validBossTemplates.includes(templateId)) {
-    // eslint-disable-next-line no-console
-    console.warn(`[QA] Invalid boss template: ${templateId}. Valid: ${validBossTemplates.join(', ')}`);
+    if (import.meta.env.DEV) console.warn(`[QA] Invalid boss template: ${templateId}. Valid: ${validBossTemplates.join(', ')}`);
     return;
   }
   window.localStorage.setItem('pilot-qa-force-boss', templateId);

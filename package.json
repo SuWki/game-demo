@@ -20,11 +20,11 @@
   },
   "license": "ISC",
   "dependencies": {
-    "phaser": "^3.90.0",
-    "playwright": "^1.61.1"
+    "phaser": "^3.90.0"
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "playwright": "^1.61.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
     "xlsx": "^0.18.5"

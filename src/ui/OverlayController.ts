@@ -69,6 +69,7 @@ export class OverlayController {
   private readonly tooltipLayer: HTMLDivElement;
 
   private activeTooltipTarget: HTMLElement | null = null;
+  private activeRafHandle: number | null = null;
 
   public constructor(root: HTMLElement) {
     this.root = root;
@@ -659,6 +660,10 @@ export class OverlayController {
     duration: number,
     formatter?: (val: number) => string
   ): void {
+    // 取消上一个未完成的 rAF，避免操作已移除的 DOM
+    if (this.activeRafHandle !== null) {
+      cancelAnimationFrame(this.activeRafHandle);
+    }
     const startTime = performance.now();
     const range = end - start;
 
@@ -673,13 +678,14 @@ export class OverlayController {
       element.textContent = formatter ? formatter(current) : String(current);
 
       if (progress < 1) {
-        requestAnimationFrame(updateCounter);
+        this.activeRafHandle = requestAnimationFrame(updateCounter);
       } else {
         element.textContent = formatter ? formatter(end) : String(end);
+        this.activeRafHandle = null;
       }
     };
 
-    requestAnimationFrame(updateCounter);
+    this.activeRafHandle = requestAnimationFrame(updateCounter);
   }
 
   private showResultDetails(result: RunResult): void {
