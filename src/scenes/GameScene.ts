@@ -150,7 +150,8 @@ export class GameScene extends Phaser.Scene {
   private enemyLabelCursor = 0;
 
   private readonly damageNumberTexts: Phaser.GameObjects.Text[] = [];
-  private lastDamageCount = 0; // Track last frame's damage count to detect new ones
+  /** 已处理过粒子特效的伤害数字对象引用集合，避免重复发射。 */
+  private processedDamageNumbers: WeakSet<object> = new WeakSet();
 
   
   private killStreakText: Phaser.GameObjects.Text | null = null;
@@ -703,8 +704,18 @@ export class GameScene extends Phaser.Scene {
     this.input.off('pointerdown');
     this.input.off('pointermove');
     this.input.off('pointerup');
+    // 清理所有对象池引用，防止场景重启时复用已销毁的 GameObject
     this.runtimePreviewImages.length = 0;
     this.runtimePreviewImageCursor = 0;
+    this.enemyLabelTexts.length = 0;
+    this.enemyLabelCursor = 0;
+    this.damageNumberTexts.length = 0;
+    this.processedDamageNumbers = new WeakSet();
+    this.dyingEnemies = [];
+    this.lastSeenEnemyHp.clear();
+    this.safeZoneText = null;
+    this.safeZoneHintText = null;
+    this.killStreakText = null;
     this.services.debugPanel.unbind();
     this.cleanupAllParticles();
   }
@@ -1448,9 +1459,10 @@ export class GameScene extends Phaser.Scene {
       const isDash = dn.kind === 'dash';
       const isPierce = dn.kind === 'pierce';
 
-      let text = this.damageNumberTexts[i];
-      if (!text) {
-        // New damage number - trigger particle effect
+      // 仅对首次出现的伤害数字发射粒子特效
+      const isNew = !this.processedDamageNumbers.has(dn);
+      if (isNew) {
+        this.processedDamageNumbers.add(dn);
         if (isCrit) {
           this.emitCritBurst(screen.x, screen.y);
         } else if (isPierce) {
@@ -1460,7 +1472,10 @@ export class GameScene extends Phaser.Scene {
         } else {
           this.emitHitSpark(screen.x, screen.y, false);
         }
-        
+      }
+
+      let text = this.damageNumberTexts[i];
+      if (!text) {
         text = this.add.text(0, 0, '', {
           fontFamily: 'Arial, sans-serif',
           fontSize: '14px',
@@ -1490,7 +1505,6 @@ export class GameScene extends Phaser.Scene {
     for (let i = dnCount; i < this.damageNumberTexts.length; i += 1) {
       this.damageNumberTexts[i].setVisible(false);
     }
-    this.lastDamageCount = dnCount;
   }
 
   private renderDyingEnemies(

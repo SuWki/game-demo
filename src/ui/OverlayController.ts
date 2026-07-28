@@ -69,7 +69,8 @@ export class OverlayController {
   private readonly tooltipLayer: HTMLDivElement;
 
   private activeTooltipTarget: HTMLElement | null = null;
-  private activeRafHandle: number | null = null;
+  /** 每个元素独立的 rAF 句柄，避免多个计数器动画互相取消。 */
+  private readonly rafHandles: WeakMap<HTMLElement, number> = new WeakMap();
 
   public constructor(root: HTMLElement) {
     this.root = root;
@@ -470,6 +471,8 @@ export class OverlayController {
     const isVictory = outcome === 'victory';
 
     this.hideHud();
+    this.hidePanel();
+    this.clearToasts();
     this.screenLayer.classList.remove('hidden');
     this.screenLayer.innerHTML = `
       <section class="screen-minimal boss-ending-screen ${isVictory ? 'is-victory' : 'is-defeat'}">
@@ -660,9 +663,10 @@ export class OverlayController {
     duration: number,
     formatter?: (val: number) => string
   ): void {
-    // 取消上一个未完成的 rAF，避免操作已移除的 DOM
-    if (this.activeRafHandle !== null) {
-      cancelAnimationFrame(this.activeRafHandle);
+    // 取消该元素上未完成的 rAF，避免操作已移除的 DOM
+    const prevHandle = this.rafHandles.get(element);
+    if (prevHandle !== undefined) {
+      cancelAnimationFrame(prevHandle);
     }
     const startTime = performance.now();
     const range = end - start;
@@ -678,151 +682,17 @@ export class OverlayController {
       element.textContent = formatter ? formatter(current) : String(current);
 
       if (progress < 1) {
-        this.activeRafHandle = requestAnimationFrame(updateCounter);
+        this.rafHandles.set(element, requestAnimationFrame(updateCounter));
       } else {
         element.textContent = formatter ? formatter(end) : String(end);
-        this.activeRafHandle = null;
+        this.rafHandles.delete(element);
       }
     };
 
-    this.activeRafHandle = requestAnimationFrame(updateCounter);
+    this.rafHandles.set(element, requestAnimationFrame(updateCounter));
   }
 
-  private showResultDetails(result: RunResult): void {
-    this.hideScreen();
-    this.panelLayer.className = 'panel-layer panel-layer-center';
-    this.panelLayer.classList.remove('hidden');
-
-    const routeLabel = this.getRouteDisplayLabel(result.routeId);
-    const eventHistory = result.eventHistory ?? [];
-    const anomalyHistory = eventHistory.filter((record) => record.anomalyClass);
-    const anomalyRoleCounts = this.getAnomalyRoleCounts(eventHistory);
-    const turnRecord = this.getResultAnomalyTurnRecord(result);
-
-    // 本局选择记录
-    const upgradeTimeline = result.selectedUpgrades && result.selectedUpgrades.length > 0
-      ? result.selectedUpgrades.map((upgrade, index) => `
-          <div class="detail-timeline-item">
-            <div class="detail-timeline-marker" style="background: ${RARITY_COLOR_MAP[upgrade.rarity]};">
-              ${index + 1}
-            </div>
-            <div class="detail-timeline-content">
-              <strong>${upgrade.name}</strong>
-              ${upgrade.routeId ? `<small style="color: ${ROUTE_COLOR_MAP[upgrade.routeId]};">${this.getRouteBadgeText(upgrade.routeId)}</small>` : '<small>通用</small>'}
-            </div>
-          </div>
-        `).join('')
-      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">本局未获得强化</p>';
-
-    const anomalyTimeline = anomalyHistory.length > 0
-      ? anomalyHistory.map((record, index) => `
-          <div class="detail-timeline-item is-anomaly">
-            <div class="detail-timeline-marker" style="background: ${this.getAnomalyRoleColor(record.anomalyRole)};">
-              ${record.nodeIndex ?? index + 1}
-            </div>
-            <div class="detail-timeline-content">
-              <strong>${record.eventName ?? record.eventId}</strong>
-              <small>${record.optionLabel ?? record.optionId}${record.nodeIndex ? ` · 第 ${record.nodeIndex} 节点` : ''}</small>
-              <div class="detail-timeline-tags">
-                ${record === turnRecord ? '<span class="choice-effect-tag is-route-turn">转折点</span>' : ''}
-                ${record.anomalyRole ? `<span class="choice-effect-tag is-anomaly-role">${this.getAnomalyRoleLabel(record.anomalyRole)}</span>` : ''}
-                ${record.routeId ? `<span class="choice-effect-tag">${this.getRouteBadgeText(record.routeId)}</span>` : ''}
-                ${record.anomalyClass ? `<span class="choice-effect-tag">${this.getEventClassLabel({ anomalyClass: record.anomalyClass } as EventDefinition)}</span>` : ''}
-              </div>
-            </div>
-          </div>
-        `).join('')
-      : '<p style="text-align: center; color: rgba(255,255,255,0.5);">本局无明显转折</p>';
-
-    this.panelLayer.innerHTML = `
-      <section class="floating-panel dock-panel commercial-choice-panel panel-result-details">
-        <div class="tray-header">
-          <div class="tray-title-group">
-<span class="panel-eyebrow">战斗结算</span>
-<h2 class="panel-title">战斗回顾</h2>
-          </div>
-        </div>
-
-        <div class="result-details-content">
-          <div class="result-details-section">
-            <h3 class="detail-section-title">收尾</h3>
-            <div class="detail-summary-stack">
-              <div class="detail-summary-card detail-summary-card-focus">
-                <strong>${result.summary}</strong>
-                <small>${this.getResultRouteRecap(result)}</small>
-              </div>
-              <div class="detail-summary-card is-muted">
-                <strong>${result.buildSummary}</strong>
-                <small>${result.replayPrompt}</small>
-              </div>
-            </div>
-          </div>
-
-          <div class="result-details-section">
-            <h3 class="detail-section-title">转折</h3>
-            <div class="detail-anomaly-strip">
-              <span><small>带起节奏</small><strong>${anomalyRoleCounts.direction}</strong></span>
-              <span><small>火力强化</small><strong>${anomalyRoleCounts.core}</strong></span>
-              <span><small>全面强化</small><strong>${anomalyRoleCounts.transform}</strong></span>
-              <span><small>最终补强</small><strong>${anomalyRoleCounts.finisher}</strong></span>
-            </div>
-            <div class="detail-timeline-scroll">
-              ${anomalyTimeline}
-            </div>
-          </div>
-
-          <div class="result-details-section">
-            <h3 class="detail-section-title">拿了什么</h3>
-            <div class="detail-timeline-scroll">
-              ${upgradeTimeline}
-            </div>
-          </div>
-
-          <div class="result-details-section">
-            <h3 class="detail-section-title">最后样子</h3>
-            <div class="detail-stats-grid">
-              <div class="detail-stat-card">
-                <span>存活时间</span>
-                <strong>${this.formatDuration(result.runDurationSec)}</strong>
-              </div>
-              <div class="detail-stat-card">
-                <span>击杀数</span>
-                <strong>${result.battleWins}</strong>
-              </div>
-              <div class="detail-stat-card">
-                <span>等级</span>
-                <strong>Lv.${result.levelReached}</strong>
-              </div>
-              <div class="detail-stat-card">
-                <span>流派</span>
-                <strong>${routeLabel}</strong>
-              </div>
-              <div class="detail-stat-card">
-                <span>关卡</span>
-                <strong>${result.nodesCleared}</strong>
-              </div>
-              <div class="detail-stat-card">
-                <span>拿牌数</span>
-                <strong>${result.selectedUpgrades?.length ?? 0}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="result-details-actions">
-          <button class="text-action text-action-primary" data-action="close">
-            <span>先看到这</span>
-            <small>回到上一屏</small>
-          </button>
-        </div>
-      </section>
-    `;
-
-    this.bindClick('[data-action="close"]', () => {
-      this.hidePanel();
-      this.screenLayer.classList.remove('hidden');
-    });
-  }
+  // NOTE: showResultDetails 已移除（未被任何调用方引用的私有死代码）。
 
   public pushToast(message: string, tone: ToastTone = 'neutral'): void {
     const toast = document.createElement('div');
@@ -955,30 +825,6 @@ export class OverlayController {
       <div class="route-progress-bar" aria-label="关卡进度">
         <div class="progress-track">
           ${modernNodes}
-        </div>
-      </div>
-    `;
-
-    const nodes = phaseTrack.map((phase, index) => {
-      const icon = nodeIcons[phase.state] || '○';
-      const color = nodeColors[phase.state] || '#2d3748';
-      const isBoss = phase.state.includes('boss');
-      const isActive = phase.state === 'active' || phase.state === 'boss-active';
-
-      return `
-        <div class="progress-node ${phase.state} ${isActive ? 'is-active' : ''}"
-             style="color: ${color};"
-             title="${phase.label}">
-          <span class="progress-node-icon ${isBoss ? 'is-boss' : ''}">${icon}</span>
-          ${isActive ? `<span class="progress-node-label">${phase.label}</span>` : ''}
-        </div>
-      `;
-    }).join('');
-
-    return `
-      <div class="route-progress-bar" aria-label="关卡进度">
-        <div class="progress-track">
-          ${nodes}
         </div>
       </div>
     `;
